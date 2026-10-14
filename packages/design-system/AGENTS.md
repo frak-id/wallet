@@ -32,6 +32,9 @@ import { brand, alias } from "@frak-labs/design-system/tokens";
 - **Tests co-located** (`*.test.tsx`), jsdom, run via design-system-unit project.
 - **Variant styling — `recipe()` is the default.** Use `recipe()` (from `@vanilla-extract/recipes`) for any component with variants, single- or multi-axis — it owns `base` + variants + `defaultVariants`/`compoundVariants`, and multi-axis components collapse to one `component({ size, tone })` call instead of hand-joining parallel maps. Use `styleVariants()` **only** for an enumerated/iterated key→class map that is looped over rather than selected by a component prop (e.g. `Spinner` `leafRotations`). Use plain `style()` for one-offs with no variants.
 
+- **`gallery/` is a dev-only test surface, not shipped** — outside `src/` and `exports`, so knip ignores it. `bun run --cwd packages/design-system gallery` serves it; `test:gallery` drives it with Playwright (`gallery/specs/*.check.ts`, never matched by vitest). Add a section to `gallery/sections.tsx` and the spec covers it automatically. The spec asserts the defects listed in `gallery/specs/known-findings.ts` still occur, so fixing one fails until its entry is deleted. Pixel baselines are opt-in (`test:gallery:pixels`, `test:gallery:update`) and gitignored.
+- **Gallery charts use only these 13 chart exports** (`Area, AreaChart, Bar, BarChart, BarXAxis, Grid, NumericYAxis, PieChart, PieSlice, PieSliceLabels, ReferenceLine, ChartTooltip, XAxis`).
+
 ## Anti-Patterns
 
 Default exports · wildcard re-exports · raw hex in components · bypassing `Box` with manual layout CSS · importing brand tokens directly in components.

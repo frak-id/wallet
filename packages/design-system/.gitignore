@@ -1,0 +1,5 @@
+# Gallery
+/gallery/dist/
+/gallery/test-results/
+/gallery/snapshots/
+/playwright-report/
