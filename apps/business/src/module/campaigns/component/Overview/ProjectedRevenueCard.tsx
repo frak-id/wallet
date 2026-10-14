@@ -94,9 +94,8 @@ export function ProjectedRevenueCard({
                             data={data}
                             locale={i18n.language}
                             margin={chartMargin}
-                            xDataKey="date"
                         >
-                            <Grid vertical={false} />
+                            <Grid />
                             <Area
                                 dataKey="actual"
                                 fill={vars.icon.success}
@@ -108,7 +107,7 @@ export function ProjectedRevenueCard({
                                 fill={vars.border.default}
                                 stroke={vars.border.default}
                             />
-                            <XAxis tickMode="data" />
+                            <XAxis />
                             <NumericYAxis
                                 formatter={(v) => `${v / 1000}k€`}
                                 ticks={[0, 5000, 10000, 15000]}

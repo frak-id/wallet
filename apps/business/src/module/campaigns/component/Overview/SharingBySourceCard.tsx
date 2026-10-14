@@ -118,14 +118,9 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                                 <Stack space="m">
                                     <Inline align="center" space="none">
                                         <PieChart
-                                            cornerRadius={2}
                                             data={segments}
-                                            hoverOffset={8}
                                             hoveredIndex={hoveredIndex}
-                                            innerRadius={59}
                                             onHoverChange={setHoveredIndex}
-                                            padAngle={0.02}
-                                            size={186}
                                         >
                                             {segments.map((s, i) => (
                                                 <PieSlice

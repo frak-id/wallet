@@ -1,29 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { TooltipData } from "./chart-context";
 
-export interface ScheduledTooltipControls<T> {
-    tooltipData: T | null;
-    setTooltipData: React.Dispatch<React.SetStateAction<T | null>>;
-    scheduleTooltip: (tooltip: T, dedupeKey?: string) => void;
-    clearTooltip: () => void;
-    resetTooltipDedupe: () => void;
-}
-
-function defaultDedupeKey<T>(tooltip: T): string {
-    if (
-        typeof tooltip === "object" &&
-        tooltip !== null &&
-        "index" in tooltip &&
-        typeof (tooltip as { index: unknown }).index === "number"
-    ) {
-        return String((tooltip as { index: number }).index);
-    }
-    return JSON.stringify(tooltip);
-}
-
-export function useScheduledTooltip<T>(): ScheduledTooltipControls<T> {
-    const [tooltipData, setTooltipData] = useState<T | null>(null);
+export function useScheduledTooltip() {
+    const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
     const lastKeyRef = useRef<string | null>(null);
-    const pendingRef = useRef<T | null>(null);
+    const pendingRef = useRef<TooltipData | null>(null);
     const rafRef = useRef<number | null>(null);
     const pendingKeyRef = useRef<string | null>(null);
 
@@ -35,17 +16,20 @@ export function useScheduledTooltip<T>(): ScheduledTooltipControls<T> {
         };
     }, []);
 
-    const commitTooltip = useCallback((tooltip: T, dedupeKey: string) => {
-        if (dedupeKey === lastKeyRef.current) {
-            return;
-        }
-        lastKeyRef.current = dedupeKey;
-        setTooltipData(tooltip);
-    }, []);
+    const commitTooltip = useCallback(
+        (tooltip: TooltipData, dedupeKey: string) => {
+            if (dedupeKey === lastKeyRef.current) {
+                return;
+            }
+            lastKeyRef.current = dedupeKey;
+            setTooltipData(tooltip);
+        },
+        []
+    );
 
     const scheduleTooltip = useCallback(
-        (tooltip: T, dedupeKey?: string) => {
-            const key = dedupeKey ?? defaultDedupeKey(tooltip);
+        (tooltip: TooltipData) => {
+            const key = String(tooltip.index);
             pendingRef.current = tooltip;
             pendingKeyRef.current = key;
             if (key === lastKeyRef.current) {
@@ -83,7 +67,6 @@ export function useScheduledTooltip<T>(): ScheduledTooltipControls<T> {
 
     return {
         tooltipData,
-        setTooltipData,
         scheduleTooltip,
         clearTooltip,
         resetTooltipDedupe,

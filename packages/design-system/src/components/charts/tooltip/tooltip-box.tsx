@@ -1,41 +1,29 @@
-import clsx from "clsx";
 import { motion, useSpring } from "motion/react";
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { type SpringConfig, useChartConfig } from "../chart-config-context";
+import * as styles from "../charts.css";
 
-export interface TooltipBoxProps {
+const BOX_SPRING = { stiffness: 100, damping: 20 };
+const OFFSET = 16;
+
+interface TooltipBoxProps {
     /** X position in pixels (relative to container) */
     x: number;
-    /** Y position in pixels (relative to container) */
-    y: number;
+    /** Top position in pixels (relative to container) */
+    top: number;
     /** Whether the tooltip is visible */
     visible: boolean;
     /** Container ref for portal rendering */
     containerRef: RefObject<HTMLDivElement | null>;
     /** Container width for flip detection */
     containerWidth: number;
-    /** Container height for bounds clamping */
-    containerHeight: number;
-    /** Offset from the target position */
-    offset?: number;
-    /** Custom class name */
-    className?: string;
     /** Tooltip content */
     children: React.ReactNode;
-    /** Override left position (bypasses internal calculation) */
-    left?: number | ReturnType<typeof useSpring>;
-    /** Override top position (bypasses internal calculation) */
-    top?: number | ReturnType<typeof useSpring>;
-    /** Force flip direction (for custom positioning) */
-    flipped?: boolean;
-    /** Per-chart override; falls back to `ChartConfigProvider.tooltipBoxSpring`. */
-    springConfig?: SpringConfig;
 }
 
-// Inner-only-on-visible so `useSpring` initializes at the cursor's actual x/y
-// instead of (0, 0) on first hover.
+// Inner-only-on-visible so `useSpring` initializes at the cursor's actual x
+// instead of 0 on first hover.
 export function TooltipBox(props: TooltipBoxProps) {
     const [mounted, setMounted] = useState(false);
 
@@ -55,84 +43,36 @@ export function TooltipBox(props: TooltipBoxProps) {
 
 function TooltipBoxInner({
     x,
-    y,
+    top,
     containerWidth,
-    containerHeight,
-    offset = 16,
-    className = "",
     children,
-    left: leftOverride,
-    top: topOverride,
-    flipped: flippedOverride,
-    springConfig,
     container,
 }: Omit<TooltipBoxProps, "visible" | "containerRef"> & {
     container: HTMLElement;
 }) {
-    const { tooltipBoxSpring } = useChartConfig();
-    const effectiveSpring = springConfig ?? tooltipBoxSpring;
-
     const tooltipRef = useRef<HTMLDivElement>(null);
     const tooltipWidthRef = useRef(180);
-    const tooltipHeightRef = useRef(80);
 
     const tw = tooltipWidthRef.current;
-    const th = tooltipHeightRef.current;
-    const shouldFlipX = x + tw + offset > containerWidth;
-    const targetX = shouldFlipX ? x - offset - tw : x + offset;
-    const targetY = Math.max(
-        offset,
-        Math.min(y - th / 2, containerHeight - th - offset)
-    );
+    const shouldFlipX = x + tw + OFFSET > containerWidth;
+    const targetX = shouldFlipX ? x - OFFSET - tw : x + OFFSET;
 
-    const animatedLeft = useSpring(targetX, effectiveSpring);
-    const animatedTop = useSpring(targetY, effectiveSpring);
+    const animatedLeft = useSpring(targetX, BOX_SPRING);
 
-    if (leftOverride === undefined) {
-        animatedLeft.set(targetX);
-    }
-    if (topOverride === undefined) {
-        animatedTop.set(targetY);
-    }
+    animatedLeft.set(targetX);
 
     useLayoutEffect(() => {
         if (!tooltipRef.current) {
             return;
         }
-        const el = tooltipRef.current;
-        const w = el.offsetWidth;
-        const h = el.offsetHeight;
+        const w = tooltipRef.current.offsetWidth;
         if (w > 0) {
             tooltipWidthRef.current = w;
         }
-        if (h > 0) {
-            tooltipHeightRef.current = h;
-        }
         const w2 = tooltipWidthRef.current;
-        const h2 = tooltipHeightRef.current;
-        const flip = x + w2 + offset > containerWidth;
-        const tx = flip ? x - offset - w2 : x + offset;
-        const ty = Math.max(
-            offset,
-            Math.min(y - h2 / 2, containerHeight - h2 - offset)
-        );
-        if (leftOverride === undefined) {
-            animatedLeft.set(tx);
-        }
-        if (topOverride === undefined) {
-            animatedTop.set(ty);
-        }
-    }, [
-        x,
-        y,
-        containerWidth,
-        containerHeight,
-        offset,
-        leftOverride,
-        topOverride,
-        animatedLeft,
-        animatedTop,
-    ]);
+        const flip = x + w2 + OFFSET > containerWidth;
+        animatedLeft.set(flip ? x - OFFSET - w2 : x + OFFSET);
+    }, [x, containerWidth, animatedLeft]);
 
     const prevFlipRef = useRef(shouldFlipX);
     const [flipKey, setFlipKey] = useState(0);
@@ -144,25 +84,26 @@ function TooltipBoxInner({
         }
     }, [shouldFlipX]);
 
-    const finalLeft = leftOverride ?? animatedLeft;
-    const finalTop = topOverride ?? animatedTop;
-    const isFlipped = flippedOverride ?? shouldFlipX;
-    const transformOrigin = isFlipped ? "right top" : "left top";
+    const transformOrigin = shouldFlipX ? "right top" : "left top";
 
     return createPortal(
         <motion.div
             animate={{ opacity: 1 }}
-            className={clsx("pointer-events-none absolute z-50", className)}
+            className={styles.floating}
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}
             ref={tooltipRef}
-            style={{ left: finalLeft, top: finalTop }}
+            style={{ left: animatedLeft, top }}
             transition={{ duration: 0.1 }}
         >
             <motion.div
                 animate={{ scale: 1, opacity: 1, x: 0 }}
-                className="min-w-[140px] overflow-hidden rounded-lg bg-chart-tooltip-background text-chart-tooltip-foreground shadow-lg backdrop-blur-md"
-                initial={{ scale: 0.85, opacity: 0, x: isFlipped ? 20 : -20 }}
+                className={styles.tooltipBox}
+                initial={{
+                    scale: 0.85,
+                    opacity: 0,
+                    x: shouldFlipX ? 20 : -20,
+                }}
                 key={flipKey}
                 style={{ transformOrigin }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}

@@ -2,12 +2,10 @@ import { localPoint } from "@visx/event";
 import { ParentSize } from "@visx/responsive";
 import { scaleBand, scaleLinear } from "@visx/scale";
 import clsx from "clsx";
-import type { Transition } from "motion/react";
 import {
     Children,
     isValidElement,
     memo,
-    type ReactElement,
     type ReactNode,
     useCallback,
     useEffect,
@@ -15,239 +13,95 @@ import {
     useRef,
     useState,
 } from "react";
-import { DEFAULT_ANIMATION_EASING } from "./animation";
-import type { BarProps } from "./bar";
-import {
-    ChartProvider,
-    type LineConfig,
-    type Margin,
-    type TooltipData,
-} from "./chart-context";
-import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
-import { shortDateFmt } from "./chart-formatters";
+import { ANIMATION_DURATION_MS } from "./animation";
+import { Bar, type BarProps } from "./bar";
+import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
+import * as styles from "./charts.css";
 import { useScheduledTooltip } from "./use-scheduled-tooltip";
 
-export type BarOrientation = "vertical" | "horizontal";
-
 export interface BarChartProps {
-    /** Data array - each item should have an x-axis key and numeric values */
-    data: Record<string, unknown>[];
-    /** Key in data for the categorical axis. Default: "name" */
-    xDataKey?: string;
+    /** One item per x position, keyed by `label`, plus the numeric series. */
+    data: ({ label: string } & Record<string, unknown>)[];
     /** Chart margins */
-    margin?: Partial<Margin>;
-    /** Animation duration in milliseconds. Default: 1100 */
-    animationDuration?: number;
-    /** CSS easing for bar grow transitions. */
-    animationEasing?: string;
-    /** Motion enter transition (spring or cubic-bezier tween). */
-    enterTransition?: Transition;
-    /** Signature of motion URL state — triggers enter replay when it changes. */
-    revealSignature?: string;
-    /** Aspect ratio as "width / height". Default: "2 / 1" */
-    aspectRatio?: string;
+    margin: Margin;
     /** Additional class name for the container */
     className?: string;
-    /** Gap between bar groups as a fraction of band width (0-1). Default: 0.2 */
-    barGap?: number;
-    /** Fixed bar width in pixels. If not set, bars auto-size to fill the band. */
-    barWidth?: number;
-    /** Bar chart orientation. Default: "vertical" */
-    orientation?: BarOrientation;
-    /** Whether to stack bars instead of grouping them. Default: false */
-    stacked?: boolean;
-    /** Gap between stacked bar segments in pixels. Default: 0 */
-    stackGap?: number;
-    /** BCP-47 locale for date/number formatting in axis & tooltip. Default "en-US". */
+    /** BCP-47 locale for number formatting in the tooltip. Default "en-US". */
     locale?: string;
-    /** Child components (Bar, Grid, ChartTooltip, etc.) */
+    /** Child components (Bar, ChartTooltip, etc.) */
     children: ReactNode;
 }
 
-const DEFAULT_MARGIN: Margin = { top: 40, right: 40, bottom: 40, left: 40 };
+const BAR_WIDTH = 16;
+const BAR_GAP = 0.2;
 
-// Extract bar configs from children synchronously
+function categoryAccessor(d: Record<string, unknown>): string {
+    return String(d.label ?? "");
+}
+
+function xAccessorDate(d: Record<string, unknown>): Date {
+    const value = d.label;
+    if (value instanceof Date) {
+        return value;
+    }
+    return new Date();
+}
+
 function extractBarConfigs(children: ReactNode): LineConfig[] {
     const configs: LineConfig[] = [];
 
     Children.forEach(children, (child) => {
-        if (!isValidElement(child)) {
+        if (!isValidElement(child) || child.type !== Bar) {
             return;
         }
 
-        const childType = child.type as {
-            displayName?: string;
-            name?: string;
-        };
-        const componentName =
-            typeof child.type === "function"
-                ? childType.displayName || childType.name || ""
-                : "";
-
-        const props = child.props as BarProps | undefined;
-        const isBarComponent =
-            componentName === "Bar" ||
-            (props &&
-                typeof props.dataKey === "string" &&
-                props.dataKey.length > 0);
-
-        if (isBarComponent && props?.dataKey) {
-            // Use stroke for tooltip dot color if provided, otherwise fall back to fill
-            // This allows gradient/pattern fills to have a solid dot color
-            const dotColor =
-                props.stroke || props.fill || "var(--chart-line-primary)";
-            configs.push({
-                dataKey: props.dataKey,
-                stroke: dotColor,
-                strokeWidth: 0,
-            });
-        }
+        const props = child.props as BarProps;
+        configs.push({ dataKey: props.dataKey, stroke: props.fill });
     });
 
     return configs;
 }
 
-// Check if a component should render after the mouse overlay
-function isPostOverlayComponent(child: ReactElement): boolean {
-    const childType = child.type as {
-        displayName?: string;
-        name?: string;
-        __isChartMarkers?: boolean;
-    };
-
-    if (childType.__isChartMarkers) {
-        return true;
-    }
-
-    const componentName =
-        typeof child.type === "function"
-            ? childType.displayName || childType.name || ""
-            : "";
-
-    return componentName === "ChartMarkers" || componentName === "MarkerGroup";
-}
-
-interface ChartInnerProps {
+interface BarChartCoreProps {
     width: number;
     height: number;
     data: Record<string, unknown>[];
-    xDataKey: string;
     margin: Margin;
-    animationDuration: number;
-    animationEasing: string;
-    enterTransition?: Transition;
-    revealSignature?: string;
-    barGap: number;
-    barWidthProp?: number;
-    orientation: BarOrientation;
-    stacked: boolean;
-    stackGap: number;
     locale: string;
     children: ReactNode;
     containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function ChartInner(props: ChartInnerProps) {
-    const { width, height } = props;
-    if (width < 10 || height < 10) {
-        return null;
-    }
-    return <ChartCore {...props} />;
-}
-
-const ChartCore = memo(function ChartCore({
+const BarChartCore = memo(function BarChartCore({
     width,
     height,
     data,
-    xDataKey,
     margin,
-    animationDuration,
-    animationEasing,
-    enterTransition,
-    revealSignature = "",
-    barGap,
-    barWidthProp,
-    orientation,
-    stacked,
-    stackGap,
     locale,
     children,
     containerRef,
-}: ChartInnerProps) {
-    const { tooltipData, setTooltipData, scheduleTooltip, clearTooltip } =
-        useScheduledTooltip<TooltipData>();
+}: BarChartCoreProps) {
+    const { tooltipData, scheduleTooltip, clearTooltip } =
+        useScheduledTooltip();
     const [isLoaded, setIsLoaded] = useState(false);
     const [revealEpoch, setRevealEpoch] = useState(0);
     const hoveredBarIndex = tooltipData?.index ?? null;
 
-    const isHorizontal = orientation === "horizontal";
-
-    // Extract bar configs synchronously from children
     const lines = useMemo(() => extractBarConfigs(children), [children]);
 
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
-    // Category accessor function - returns string for categorical scale
-    const categoryAccessor = useCallback(
-        (d: Record<string, unknown>): string => {
-            const value = d[xDataKey];
-            if (value instanceof Date) {
-                return shortDateFmt.format(value);
-            }
-            return String(value ?? "");
-        },
-        [xDataKey]
-    );
-
-    // For compatibility with ChartContext, provide a Date-based xAccessor
-    const xAccessorDate = useCallback(
-        (d: Record<string, unknown>): Date => {
-            const value = d[xDataKey];
-            if (value instanceof Date) {
-                return value;
-            }
-            return new Date();
-        },
-        [xDataKey]
-    );
-
-    // Category scale (band) - for the categorical axis
     const categoryScale = useMemo(() => {
         const domain = data.map((d) => categoryAccessor(d));
-        const range: [number, number] = isHorizontal
-            ? [0, innerHeight]
-            : [0, innerWidth];
         return scaleBand<string>({
-            range,
+            range: [0, innerWidth],
             domain,
-            padding: barGap,
+            padding: BAR_GAP,
         });
-    }, [innerWidth, innerHeight, data, categoryAccessor, barGap, isHorizontal]);
+    }, [innerWidth, data]);
 
-    // Band width for bars - use prop if provided, otherwise use scale's bandwidth
-    const bandWidth = barWidthProp ?? categoryScale.bandwidth();
-
-    // Compute max value considering stacking
     const maxValue = useMemo(() => {
-        if (stacked) {
-            // For stacked bars, sum all values at each data point
-            let max = 0;
-            for (const d of data) {
-                let sum = 0;
-                for (const line of lines) {
-                    const value = d[line.dataKey];
-                    if (typeof value === "number") {
-                        sum += value;
-                    }
-                }
-                if (sum > max) {
-                    max = sum;
-                }
-            }
-            return max || 100;
-        }
-        // For grouped bars, find max single value
         let max = 0;
         for (const line of lines) {
             for (const d of data) {
@@ -258,57 +112,28 @@ const ChartCore = memo(function ChartCore({
             }
         }
         return max || 100;
-    }, [data, lines, stacked]);
+    }, [data, lines]);
 
-    // Value scale (linear) - for the value axis
-    const valueScale = useMemo(() => {
-        const range = isHorizontal ? [0, innerWidth] : [innerHeight, 0];
-        return scaleLinear({
-            range,
-            domain: [0, maxValue * 1.1],
-            nice: true,
-        });
-    }, [innerWidth, innerHeight, maxValue, isHorizontal]);
+    const valueScale = useMemo(
+        () =>
+            scaleLinear({
+                range: [innerHeight, 0],
+                domain: [0, maxValue * 1.1],
+                nice: true,
+            }),
+        [innerHeight, maxValue]
+    );
 
-    // Compute stack offsets for stacked bars
-    const stackOffsets = useMemo(() => {
-        if (!stacked) {
-            return undefined;
-        }
-        const offsets = new Map<number, Map<string, number>>();
-        for (let i = 0; i < data.length; i++) {
-            const d = data[i];
-            if (!d) {
-                continue;
-            }
-            const pointOffsets = new Map<string, number>();
-            let cumulative = 0;
-            for (const line of lines) {
-                pointOffsets.set(line.dataKey, cumulative);
-                const value = d[line.dataKey];
-                if (typeof value === "number") {
-                    cumulative += value;
-                }
-            }
-            offsets.set(i, pointOffsets);
-        }
-        return offsets;
-    }, [data, lines, stacked]);
-
-    // Column width for tooltip indicator
     const columnWidth = useMemo(() => {
         if (data.length < 1) {
             return 0;
         }
-        return isHorizontal
-            ? innerHeight / data.length
-            : innerWidth / data.length;
-    }, [innerWidth, innerHeight, data.length, isHorizontal]);
+        return innerWidth / data.length;
+    }, [innerWidth, data.length]);
 
-    // Pre-compute labels for ticker animation
     const dateLabels = useMemo(
         () => data.map((d) => categoryAccessor(d)),
-        [data, categoryAccessor]
+        [data]
     );
 
     // Create a fake time scale for compatibility with ChartContext
@@ -326,18 +151,15 @@ const ChartCore = memo(function ChartCore({
         return scale;
     }, [categoryScale, innerWidth, data.length]);
 
-    // Animation timing — replay when motion settings change
-    // biome-ignore lint/correctness/useExhaustiveDependencies: revealSignature
     useEffect(() => {
         setRevealEpoch((n) => n + 1);
         setIsLoaded(false);
         const timer = setTimeout(() => {
             setIsLoaded(true);
-        }, animationDuration);
+        }, ANIMATION_DURATION_MS);
         return () => clearTimeout(timer);
-    }, [animationDuration, revealSignature]);
+    }, []);
 
-    // Mouse move handler
     const handleMouseMove = useCallback(
         (event: React.MouseEvent<SVGGElement>) => {
             const point = localPoint(event);
@@ -345,9 +167,7 @@ const ChartCore = memo(function ChartCore({
                 return;
             }
 
-            const pos = isHorizontal
-                ? point.y - margin.top
-                : point.x - margin.left;
+            const pos = point.x - margin.left;
 
             // Find which band the mouse is over
             const bandIndex = Math.floor(pos / columnWidth);
@@ -361,96 +181,32 @@ const ChartCore = memo(function ChartCore({
                 return;
             }
 
-            // Calculate positions for each bar
             const yPositions: Record<string, number> = {};
             const xPositions: Record<string, number> = {};
             const barPos = categoryScale(categoryAccessor(d)) ?? 0;
 
-            if (isHorizontal) {
-                // Horizontal bars: dots at end of bar (x = value), centered vertically in band
-                const seriesCount = lines.length;
-                const groupGap = seriesCount > 1 ? 4 : 0;
-                const individualBarHeight =
-                    seriesCount > 0
-                        ? (bandWidth - groupGap * (seriesCount - 1)) /
-                          seriesCount
-                        : bandWidth;
+            const seriesCount = lines.length;
+            const groupGap = seriesCount > 1 ? 4 : 0;
+            const individualBarWidth =
+                seriesCount > 0
+                    ? (BAR_WIDTH - groupGap * (seriesCount - 1)) / seriesCount
+                    : BAR_WIDTH;
 
-                if (stacked) {
-                    // Stacked horizontal: all bars same y, x at cumulative end
-                    let cumulative = 0;
-                    for (const line of lines) {
-                        const value = d[line.dataKey];
-                        if (typeof value === "number") {
-                            cumulative += value;
-                            xPositions[line.dataKey] =
-                                valueScale(cumulative) ?? 0;
-                            yPositions[line.dataKey] = barPos + bandWidth / 2;
-                        }
-                    }
-                } else {
-                    // Grouped horizontal: each bar at its own y position
-                    lines.forEach((line, idx) => {
-                        const value = d[line.dataKey];
-                        if (typeof value === "number") {
-                            xPositions[line.dataKey] = valueScale(value) ?? 0;
-                            yPositions[line.dataKey] =
-                                barPos +
-                                idx * (individualBarHeight + groupGap) +
-                                individualBarHeight / 2;
-                        }
-                    });
+            lines.forEach((line, idx) => {
+                const value = d[line.dataKey];
+                if (typeof value === "number") {
+                    yPositions[line.dataKey] = valueScale(value) ?? 0;
+                    xPositions[line.dataKey] =
+                        barPos +
+                        idx * (individualBarWidth + groupGap) +
+                        individualBarWidth / 2;
                 }
-            } else if (stacked) {
-                // Vertical stacked bars
-                let cumulative = 0;
-                let seriesIdx = 0;
-                for (const line of lines) {
-                    const value = d[line.dataKey];
-                    if (typeof value === "number") {
-                        cumulative += value;
-                        const gapOffset = seriesIdx * stackGap;
-                        yPositions[line.dataKey] =
-                            (valueScale(cumulative) ?? 0) - gapOffset;
-                        seriesIdx++;
-                    }
-                }
-            } else {
-                // Vertical grouped bars
-                const seriesCount = lines.length;
-                const groupGap = seriesCount > 1 ? 4 : 0;
-                const individualBarWidth =
-                    seriesCount > 0
-                        ? (bandWidth - groupGap * (seriesCount - 1)) /
-                          seriesCount
-                        : bandWidth;
-
-                lines.forEach((line, idx) => {
-                    const value = d[line.dataKey];
-                    if (typeof value === "number") {
-                        yPositions[line.dataKey] = valueScale(value) ?? 0;
-                        xPositions[line.dataKey] =
-                            barPos +
-                            idx * (individualBarWidth + groupGap) +
-                            individualBarWidth / 2;
-                    }
-                });
-            }
-
-            // Tooltip position: for horizontal, position at max bar end; for vertical, center of band
-            let tooltipX: number;
-            if (isHorizontal) {
-                // Position tooltip at the end of the longest bar
-                const maxX = Math.max(...Object.values(xPositions), 0);
-                tooltipX = maxX;
-            } else {
-                tooltipX = barPos + bandWidth / 2;
-            }
+            });
 
             scheduleTooltip({
                 point: d,
                 index: clampedIndex,
-                x: tooltipX,
+                x: barPos + BAR_WIDTH / 2,
                 yPositions,
                 xPositions:
                     Object.keys(xPositions).length > 0 ? xPositions : undefined,
@@ -462,43 +218,10 @@ const ChartCore = memo(function ChartCore({
             data,
             lines,
             margin.left,
-            margin.top,
-            categoryAccessor,
             columnWidth,
-            bandWidth,
-            isHorizontal,
-            stacked,
-            stackGap,
             scheduleTooltip,
         ]
     );
-
-    const handleMouseLeave = useCallback(() => {
-        clearTooltip();
-    }, [clearTooltip]);
-
-    const canInteract = isLoaded;
-
-    // Separate children into defs, pre-overlay, and post-overlay
-    const defsChildren: ReactElement[] = [];
-    const preOverlayChildren: ReactElement[] = [];
-    const postOverlayChildren: ReactElement[] = [];
-
-    Children.forEach(children, (child) => {
-        if (!isValidElement(child)) {
-            return;
-        }
-
-        if (isGradientDefComponent(child)) {
-            defsChildren.push(child);
-        } else if (isPatternDefComponent(child)) {
-            preOverlayChildren.push(child);
-        } else if (isPostOverlayComponent(child)) {
-            postOverlayChildren.push(child);
-        } else {
-            preOverlayChildren.push(child);
-        }
-    });
 
     const contextValue = {
         data,
@@ -508,39 +231,26 @@ const ChartCore = memo(function ChartCore({
         >,
         yScale: valueScale,
         width,
-        height,
         innerWidth,
         innerHeight,
         margin,
-        columnWidth,
         tooltipData,
-        setTooltipData,
         containerRef,
         lines,
         isLoaded,
-        animationDuration,
-        animationEasing,
-        enterTransition,
         revealEpoch,
         xAccessor: xAccessorDate,
         dateLabels,
         locale,
-        // Bar-specific properties
         barScale: categoryScale,
-        bandWidth,
+        bandWidth: BAR_WIDTH,
         hoveredBarIndex,
         barXAccessor: categoryAccessor,
-        orientation,
-        stacked,
-        stackOffsets,
     };
 
     return (
         <ChartProvider value={contextValue}>
             <svg aria-hidden="true" height={height} width={width}>
-                {/* Gradient and pattern definitions */}
-                {defsChildren.length > 0 && <defs>{defsChildren}</defs>}
-
                 <rect
                     fill="transparent"
                     height={height}
@@ -550,9 +260,9 @@ const ChartCore = memo(function ChartCore({
                 />
 
                 <g
-                    onMouseLeave={canInteract ? handleMouseLeave : undefined}
-                    onMouseMove={canInteract ? handleMouseMove : undefined}
-                    style={{ cursor: canInteract ? "crosshair" : "default" }}
+                    onMouseLeave={isLoaded ? clearTooltip : undefined}
+                    onMouseMove={isLoaded ? handleMouseMove : undefined}
+                    style={{ cursor: isLoaded ? "crosshair" : "default" }}
                     transform={`translate(${margin.left},${margin.top})`}
                 >
                     {/* Background rect for mouse event detection */}
@@ -564,11 +274,7 @@ const ChartCore = memo(function ChartCore({
                         y={0}
                     />
 
-                    {/* SVG children rendered before markers */}
-                    {preOverlayChildren}
-
-                    {/* Markers rendered last so they're on top for interaction */}
-                    {postOverlayChildren}
+                    {children}
                 </g>
             </svg>
         </ChartProvider>
@@ -577,54 +283,34 @@ const ChartCore = memo(function ChartCore({
 
 export function BarChart({
     data,
-    xDataKey = "name",
-    margin: marginProp,
-    animationDuration = 1100,
-    animationEasing = DEFAULT_ANIMATION_EASING,
-    enterTransition,
-    revealSignature,
-    aspectRatio = "2 / 1",
-    className = "",
-    barGap = 0.2,
-    barWidth,
-    orientation = "vertical",
-    stacked = false,
-    stackGap = 0,
+    margin,
+    className,
     locale = "en-US",
     children,
 }: BarChartProps) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const margin = { ...DEFAULT_MARGIN, ...marginProp };
 
     return (
         <div
-            className={clsx("frak-chart", "relative w-full", className)}
+            className={clsx(styles.chartRoot, className)}
             ref={containerRef}
-            style={{ aspectRatio }}
+            style={{ aspectRatio: "2 / 1" }}
         >
             <ParentSize debounceTime={10}>
-                {({ width, height }) => (
-                    <ChartInner
-                        animationDuration={animationDuration}
-                        animationEasing={animationEasing}
-                        barGap={barGap}
-                        barWidthProp={barWidth}
-                        containerRef={containerRef}
-                        data={data}
-                        enterTransition={enterTransition}
-                        height={height}
-                        locale={locale}
-                        margin={margin}
-                        orientation={orientation}
-                        revealSignature={revealSignature}
-                        stacked={stacked}
-                        stackGap={stackGap}
-                        width={width}
-                        xDataKey={xDataKey}
-                    >
-                        {children}
-                    </ChartInner>
-                )}
+                {({ width, height }) =>
+                    width < 10 || height < 10 ? null : (
+                        <BarChartCore
+                            containerRef={containerRef}
+                            data={data}
+                            height={height}
+                            locale={locale}
+                            margin={margin}
+                            width={width}
+                        >
+                            {children}
+                        </BarChartCore>
+                    )
+                }
             </ParentSize>
         </div>
     );

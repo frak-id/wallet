@@ -1,18 +1,13 @@
 import type { TooltipData } from "./chart-context";
 import type { ChartSelection } from "./use-chart-interaction";
 
-// Pure geometry for the hover-highlight band, split out from the hook so it can
-// be unit-tested without React/motion (see __tests__).
-//
 // The band is the pixel x-range one data point either side of the hovered point:
 //   [ xScale(t(idx-1)), xScale(t(idx+1)) ]
-// `<HighlightSegment>` then re-strokes the base path clipped to that band, so the
-// highlight always traces the line itself. Selecting the band by data index
-// assumes x is monotone along the path, which holds for a time series. On a curve
-// that overshoots in x (curveNatural, curveBasis) a band edge can land a few
-// pixels short, slightly narrowing the bright slice but never detaching it.
+// `<HighlightSegment>` re-strokes the base path clipped to that band. Selecting
+// the band by data index assumes x is monotone along the path (true for a time
+// series).
 
-export interface SegmentBounds {
+interface SegmentBounds {
     /** Left edge of the highlight band, in pixels. */
     x: number;
     /** Width of the highlight band, in pixels. */
@@ -20,7 +15,7 @@ export interface SegmentBounds {
     isActive: boolean;
 }
 
-export const INACTIVE_SEGMENT: SegmentBounds = {
+const INACTIVE_SEGMENT: SegmentBounds = {
     x: 0,
     width: 0,
     isActive: false,

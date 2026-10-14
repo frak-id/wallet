@@ -1,65 +1,46 @@
-import type { ReactNode } from "react";
 import { getIntFmt } from "../chart-formatters";
+import * as styles from "../charts.css";
 
 export interface TooltipRow {
     color: string;
     label: string;
-    value: string | number;
+    value: number;
 }
 
-export interface TooltipContentProps {
+interface TooltipContentProps {
     title?: string;
     rows: TooltipRow[];
-    /** Optional additional content (e.g., markers) */
-    children?: ReactNode;
-    /** BCP-47 locale for numeric value formatting. Default "en-US". */
-    locale?: string;
+    /** BCP-47 locale for numeric value formatting. */
+    locale: string;
 }
 
-export function TooltipContent({
-    title,
-    rows,
-    children,
-    locale = "en-US",
-}: TooltipContentProps) {
+export function TooltipContent({ title, rows, locale }: TooltipContentProps) {
     const intFmt = getIntFmt(locale);
     return (
-        <div className="overflow-hidden">
-            <div className="px-3 py-2.5">
-                {title && (
-                    <div className="mb-2 font-medium text-chart-tooltip-foreground text-xs">
-                        {title}
-                    </div>
-                )}
-                <div className="space-y-1.5">
+        <div className={styles.tooltipClip}>
+            <div className={styles.tooltipBody}>
+                {title && <div className={styles.tooltipTitle}>{title}</div>}
+                <div>
                     {rows.map((row) => (
                         <div
-                            className="flex items-center justify-between gap-4"
+                            className={styles.tooltipRow}
                             key={`${row.label}-${row.color}`}
                         >
-                            <div className="flex items-center gap-2">
+                            <div className={styles.tooltipKey}>
                                 <span
-                                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                    className={styles.tooltipSwatch}
                                     style={{ backgroundColor: row.color }}
                                 />
-                                <span className="text-chart-tooltip-muted text-sm">
+                                <span className={styles.tooltipLabel}>
                                     {row.label}
                                 </span>
                             </div>
-                            <span className="font-medium text-chart-tooltip-foreground text-sm tabular-nums">
-                                {typeof row.value === "number"
-                                    ? intFmt.format(row.value)
-                                    : row.value}
+                            <span className={styles.tooltipValue}>
+                                {intFmt.format(row.value)}
                             </span>
                         </div>
                     ))}
                 </div>
-
-                {children && (
-                    <div className="mt-2 transition-opacity duration-200 ease-out">
-                        {children}
-                    </div>
-                )}
             </div>
         </div>
     );
