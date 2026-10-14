@@ -32,9 +32,7 @@ interface UseChartInteractionParams {
 
 interface ChartInteractionResult {
     tooltipData: TooltipData | null;
-    setTooltipData: React.Dispatch<React.SetStateAction<TooltipData | null>>;
     selection: ChartSelection | null;
-    clearSelection: () => void;
     interactionHandlers: {
         onMouseMove?: (event: React.MouseEvent<SVGGElement>) => void;
         onMouseLeave?: () => void;
@@ -58,13 +56,8 @@ export function useChartInteraction({
     canInteract,
 }: UseChartInteractionParams): ChartInteractionResult {
     const [selection, setSelection] = useState<ChartSelection | null>(null);
-    const {
-        tooltipData,
-        setTooltipData,
-        scheduleTooltip,
-        clearTooltip,
-        resetTooltipDedupe,
-    } = useScheduledTooltip<TooltipData>();
+    const { tooltipData, scheduleTooltip, clearTooltip, resetTooltipDedupe } =
+        useScheduledTooltip();
 
     const isDraggingRef = useRef(false);
     const dragStartXRef = useRef<number>(0);
@@ -298,10 +291,6 @@ export function useChartInteraction({
         setSelection(null);
     }, [clearTooltip]);
 
-    const clearSelection = useCallback(() => {
-        setSelection(null);
-    }, []);
-
     const interactionHandlers = canInteract
         ? {
               onMouseMove: handleMouseMove,
@@ -321,9 +310,7 @@ export function useChartInteraction({
 
     return {
         tooltipData,
-        setTooltipData,
         selection,
-        clearSelection,
         interactionHandlers,
         interactionStyle,
     };

@@ -1,27 +1,19 @@
-import type { ReactNode } from "react";
 import { getIntFmt } from "../chart-formatters";
 
 export interface TooltipRow {
     color: string;
     label: string;
-    value: string | number;
+    value: number;
 }
 
-export interface TooltipContentProps {
+interface TooltipContentProps {
     title?: string;
     rows: TooltipRow[];
-    /** Optional additional content (e.g., markers) */
-    children?: ReactNode;
-    /** BCP-47 locale for numeric value formatting. Default "en-US". */
-    locale?: string;
+    /** BCP-47 locale for numeric value formatting. */
+    locale: string;
 }
 
-export function TooltipContent({
-    title,
-    rows,
-    children,
-    locale = "en-US",
-}: TooltipContentProps) {
+export function TooltipContent({ title, rows, locale }: TooltipContentProps) {
     const intFmt = getIntFmt(locale);
     return (
         <div className="overflow-hidden">
@@ -47,19 +39,11 @@ export function TooltipContent({
                                 </span>
                             </div>
                             <span className="font-medium text-chart-tooltip-foreground text-sm tabular-nums">
-                                {typeof row.value === "number"
-                                    ? intFmt.format(row.value)
-                                    : row.value}
+                                {intFmt.format(row.value)}
                             </span>
                         </div>
                     ))}
                 </div>
-
-                {children && (
-                    <div className="mt-2 transition-opacity duration-200 ease-out">
-                        {children}
-                    </div>
-                )}
             </div>
         </div>
     );

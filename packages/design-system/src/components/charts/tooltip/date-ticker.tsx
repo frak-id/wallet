@@ -5,20 +5,19 @@ const TICKER_ITEM_HEIGHT = 24;
 /** Full scroll stacks are skipped above this count — single label + instant updates. */
 const COMPACT_TICKER_THRESHOLD = 60;
 
-export interface DateTickerProps {
+interface DateTickerProps {
     currentIndex: number;
     labels: string[];
-    visible: boolean;
 }
 
 const DateTickerCompact = memo(function DateTickerCompact({
     currentIndex,
     labels,
-}: Omit<DateTickerProps, "visible">) {
+}: DateTickerProps) {
     const label = labels[currentIndex] ?? labels[0] ?? "";
 
     return (
-        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
+        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg">
             <div className="flex h-6 items-center justify-center">
                 <span className="whitespace-nowrap font-medium text-sm">
                     {label}
@@ -31,7 +30,7 @@ const DateTickerCompact = memo(function DateTickerCompact({
 const DateTickerInner = memo(function DateTickerInner({
     currentIndex,
     labels,
-}: Omit<DateTickerProps, "visible">) {
+}: DateTickerProps) {
     // Parse labels into month and day parts. Locale-independent: the day is the
     // token containing digits, the month is the alphabetic token — so both
     // "Jan 1" (en) and "1 janv." (fr) classify correctly regardless of order.
@@ -137,7 +136,7 @@ const DateTickerInner = memo(function DateTickerInner({
     );
 
     return (
-        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
+        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg">
             <div className="relative h-6 overflow-hidden">
                 <div className="flex items-center justify-center gap-1">
                     {dayFirst ? [dayStack, monthStack] : [monthStack, dayStack]}
@@ -147,11 +146,7 @@ const DateTickerInner = memo(function DateTickerInner({
     );
 });
 
-export function DateTicker({ currentIndex, labels, visible }: DateTickerProps) {
-    if (!visible || labels.length === 0) {
-        return null;
-    }
-
+export function DateTicker({ currentIndex, labels }: DateTickerProps) {
     if (labels.length > COMPACT_TICKER_THRESHOLD) {
         return (
             <DateTickerCompact currentIndex={currentIndex} labels={labels} />

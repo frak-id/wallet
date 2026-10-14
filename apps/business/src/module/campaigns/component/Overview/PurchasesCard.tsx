@@ -73,18 +73,12 @@ export function PurchasesCard({ series }: { series: OverviewSeries }) {
                 ) : (
                     <>
                         <BarChart
-                            barWidth={16}
                             className={styles.chartBox}
                             data={data}
                             locale={i18n.language}
                             margin={chartMargin}
-                            xDataKey="label"
                         >
-                            <Bar
-                                dataKey="value"
-                                fill={vars.icon.action}
-                                lineCap="butt"
-                            />
+                            <Bar dataKey="value" fill={vars.icon.action} />
                             <ReferenceLine
                                 label={t(
                                     "campaigns.overview.purchases.avgPerMonth",
@@ -96,7 +90,7 @@ export function PurchasesCard({ series }: { series: OverviewSeries }) {
                                 )}
                                 y={avgPerMonth}
                             />
-                            <BarXAxis fadeNearCursor={false} />
+                            <BarXAxis />
                             <NumericYAxis
                                 formatter={(v) =>
                                     v === 0 ? "0" : `${v / 1000}k`

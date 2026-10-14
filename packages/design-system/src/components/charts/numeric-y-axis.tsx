@@ -7,20 +7,16 @@ export interface NumericYAxisProps {
     ticks?: number[];
     /** Formats each tick value into its label. */
     formatter?: (value: number) => string;
-    /** Which side of the plot to render labels on. Default: "right" */
-    side?: "left" | "right";
 }
 
 /**
  * Numeric value ticks for the linear y-scale, rendered as an HTML overlay in
- * the chart margin (portaled into the container) so it escapes the area
- * chart's left-to-right reveal clip. bklit ships only categorical axes; this
- * restores the numeric ticks the dashboard design calls for.
+ * the right chart margin (portaled into the container) so it escapes the area
+ * chart's left-to-right reveal clip.
  */
 export function NumericYAxis({
     ticks,
     formatter = (v) => `${v}`,
-    side = "right",
 }: NumericYAxisProps) {
     const { containerRef, yScale, margin } = useChartStable();
     const [mounted, setMounted] = useState(false);
@@ -42,8 +38,8 @@ export function NumericYAxis({
             style={{
                 top: 0,
                 bottom: 0,
-                [side]: 0,
-                width: side === "right" ? margin.right : margin.left,
+                right: 0,
+                width: margin.right,
             }}
         >
             {tickValues.map((value) => (
@@ -53,7 +49,7 @@ export function NumericYAxis({
                     style={{
                         top: margin.top + yScale(value),
                         transform: "translateY(-50%)",
-                        [side]: 4,
+                        right: 4,
                     }}
                 >
                     {formatter(value)}

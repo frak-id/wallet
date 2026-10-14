@@ -3,43 +3,26 @@ import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
 import { getShortDateFmt } from "./chart-formatters";
 
-export interface XAxisProps {
-    /** Number of ticks to show (including first and last). Default: 5. Used when `tickMode` is `"domain"`. */
-    numTicks?: number;
-    /** Width of the date ticker box for fade calculation. Default: 50 */
-    tickerHalfWidth?: number;
-    /**
-     * `"domain"` — evenly spaced ticks across the time domain (default).
-     * `"data"` — one label per data row at its x value (better with sparse or monthly bars).
-     */
-    tickMode?: "domain" | "data";
-}
+const TICKER_HALF_WIDTH = 50;
 
 interface XAxisLabelProps {
     label: string;
     x: number;
     crosshairX: number | null;
     isHovering: boolean;
-    tickerHalfWidth: number;
 }
 
-function XAxisLabel({
-    label,
-    x,
-    crosshairX,
-    isHovering,
-    tickerHalfWidth,
-}: XAxisLabelProps) {
+function XAxisLabel({ label, x, crosshairX, isHovering }: XAxisLabelProps) {
     const fadeBuffer = 20;
-    const fadeRadius = tickerHalfWidth + fadeBuffer;
+    const fadeRadius = TICKER_HALF_WIDTH + fadeBuffer;
 
     let opacity = 1;
     if (isHovering && crosshairX !== null) {
         const distance = Math.abs(x - crosshairX);
-        if (distance < tickerHalfWidth) {
+        if (distance < TICKER_HALF_WIDTH) {
             opacity = 0;
         } else if (distance < fadeRadius) {
-            opacity = (distance - tickerHalfWidth) / fadeBuffer;
+            opacity = (distance - TICKER_HALF_WIDTH) / fadeBuffer;
         }
     }
 
@@ -67,7 +50,8 @@ function XAxisLabel({
     );
 }
 
-export function XAxis(props: XAxisProps) {
+/** One label per data row at its x value. */
+export function XAxis() {
     const { containerRef } = useChartStable();
     const [mounted, setMounted] = useState(false);
 
@@ -80,66 +64,27 @@ export function XAxis(props: XAxisProps) {
         return null;
     }
 
-    return <XAxisInner {...props} container={container} />;
+    return <XAxisInner container={container} />;
 }
 
 const XAxisInner = memo(function XAxisInner({
-    numTicks = 5,
-    tickerHalfWidth = 50,
-    tickMode = "domain",
     container,
-}: XAxisProps & { container: HTMLDivElement }) {
+}: {
+    container: HTMLDivElement;
+}) {
     const { xScale, margin, tooltipData, data, xAccessor, dateLabels, locale } =
         useChart();
     const shortDateFmt = getShortDateFmt(locale);
 
-    // Generate tick labels: evenly spaced along the domain, or one per data row
-    const labelsToShow = useMemo(() => {
-        if (tickMode === "data") {
-            return data.map((d, i) => ({
+    const labelsToShow = useMemo(
+        () =>
+            data.map((d, i) => ({
                 date: xAccessor(d),
                 x: (xScale(xAccessor(d)) ?? 0) + margin.left,
                 label: dateLabels[i] ?? shortDateFmt.format(xAccessor(d)),
-            }));
-        }
-
-        const domain = xScale.domain();
-        const startDate = domain[0];
-        const endDate = domain[1];
-
-        if (!(startDate && endDate)) {
-            return [];
-        }
-
-        const startTime = startDate.getTime();
-        const endTime = endDate.getTime();
-        const timeRange = endTime - startTime;
-
-        // Create evenly spaced dates from start to end
-        const tickCount = Math.max(2, numTicks); // At least first and last
-        const dates: Date[] = [];
-
-        for (let i = 0; i < tickCount; i++) {
-            const t = i / (tickCount - 1); // 0 to 1
-            const time = startTime + t * timeRange;
-            dates.push(new Date(time));
-        }
-
-        return dates.map((date) => ({
-            date,
-            x: (xScale(date) ?? 0) + margin.left,
-            label: shortDateFmt.format(date),
-        }));
-    }, [
-        tickMode,
-        data,
-        xAccessor,
-        xScale,
-        margin.left,
-        dateLabels,
-        numTicks,
-        shortDateFmt,
-    ]);
+            })),
+        [data, xAccessor, xScale, margin.left, dateLabels, shortDateFmt]
+    );
 
     const isHovering = tooltipData !== null;
     const crosshairX = tooltipData ? tooltipData.x + margin.left : null;
@@ -152,7 +97,6 @@ const XAxisInner = memo(function XAxisInner({
                     isHovering={isHovering}
                     key={`${item.date.getTime()}-${item.x}`}
                     label={item.label}
-                    tickerHalfWidth={tickerHalfWidth}
                     x={item.x}
                 />
             ))}

@@ -51,14 +51,9 @@ function SharingPie({
             <Stack space="m">
                 <Inline align="center" space="none">
                     <PieChart
-                        cornerRadius={2}
                         data={segments}
-                        hoverOffset={8}
                         hoveredIndex={hoveredIndex}
-                        innerRadius={59}
                         onHoverChange={setHoveredIndex}
-                        padAngle={0.02}
-                        size={186}
                     >
                         {segments.map((s, i) => (
                             <PieSlice index={i} key={s.label} />
@@ -108,9 +103,8 @@ function ProjectedRevenue({ data }: { data: readonly AreaPoint[] }) {
                     data={[...data]}
                     locale={LOCALE}
                     margin={areaMargin}
-                    xDataKey="date"
                 >
-                    <Grid vertical={false} />
+                    <Grid />
                     <Area
                         dataKey="actual"
                         fill={vars.icon.success}
@@ -121,7 +115,7 @@ function ProjectedRevenue({ data }: { data: readonly AreaPoint[] }) {
                         fill={vars.border.default}
                         stroke={vars.border.default}
                     />
-                    <XAxis tickMode="data" />
+                    <XAxis />
                     <NumericYAxis
                         formatter={(v) => `${v / 1000}k€`}
                         ticks={[0, 5000, 10000, 15000]}
@@ -191,20 +185,14 @@ function Purchases({
         <Card radius="m">
             <Stack space="m">
                 <BarChart
-                    barWidth={16}
                     className={chartBox}
                     data={[...data]}
                     locale={LOCALE}
                     margin={purchasesMargin}
-                    xDataKey="label"
                 >
-                    <Bar
-                        dataKey="value"
-                        fill={vars.icon.action}
-                        lineCap="butt"
-                    />
+                    <Bar dataKey="value" fill={vars.icon.action} />
                     <ReferenceLine label={`${average}\navg/mo`} y={average} />
-                    <BarXAxis fadeNearCursor={false} />
+                    <BarXAxis />
                     <NumericYAxis
                         formatter={(v) => (v === 0 ? "0" : `${v / 1000}k`)}
                         ticks={[0, 5000]}
@@ -250,15 +238,13 @@ function DailySeries({
     return (
         <Card radius="m">
             <BarChart
-                barWidth={16}
                 className={chartBoxTall}
                 data={[...data]}
                 locale={LOCALE}
                 margin={dailyMargin}
-                xDataKey="label"
             >
-                <Bar dataKey="value" fill={color} lineCap="butt" />
-                <BarXAxis fadeNearCursor={false} />
+                <Bar dataKey="value" fill={color} />
+                <BarXAxis />
                 <NumericYAxis />
                 <ChartTooltip
                     rows={(point) => [

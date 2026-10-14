@@ -173,15 +173,13 @@ function DailySeriesCard({
                     </Text>
                 ) : (
                     <BarChart
-                        barWidth={16}
                         className={styles.chartBox}
                         data={data}
                         locale={locale}
                         margin={chartMargin}
-                        xDataKey="label"
                     >
-                        <Bar dataKey="value" fill={color} lineCap="butt" />
-                        <BarXAxis fadeNearCursor={false} />
+                        <Bar dataKey="value" fill={color} />
+                        <BarXAxis />
                         <NumericYAxis />
                         <ChartTooltip
                             rows={(point) => [
