@@ -32,19 +32,19 @@ export function RewardCampaign() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
-    const draft = campaignStore((s) => s.draft);
+    const rule = campaignStore((s) => s.draft.rule);
     const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
     const currencyGlyph = useCampaignCurrencyGlyph();
 
     // Off a purchase there is no basket to compute on, so the fixed model is
     // the only one that can pay out — preselect it and lock the choice.
-    const isPurchase = isPurchaseCampaign(draft.rule);
+    const isPurchase = isPurchaseCampaign(rule);
 
     const defaultValues = useMemo(() => {
-        const values = draftToRewardForm(draft);
+        const values = draftToRewardForm({ rule });
         return isPurchase ? values : { ...values, model: "fixed" as const };
-    }, [draft, isPurchase]);
+    }, [rule, isPurchase]);
 
     const form = useForm<RewardFormValues>({
         values: defaultValues,
@@ -54,8 +54,8 @@ export function RewardCampaign() {
     const model = useWatch({ control: form.control, name: "model" });
 
     // A scoped campaign can pay on the matched items; a negated scope must.
-    const isScoped = supportsMatchedBasis(draft);
-    const basisLocked = requiresMatchedBasis(draft);
+    const isScoped = supportsMatchedBasis({ rule });
+    const basisLocked = requiresMatchedBasis({ rule });
 
     const watched = useWatch({ control: form.control });
     const isValid = isRewardFormValid(
@@ -67,6 +67,7 @@ export function RewardCampaign() {
     );
 
     async function persist(values: RewardFormValues) {
+        const { draft } = campaignStore.getState();
         const updated = rewardFormToDraft(values, { ...draft, merchantId });
         updateDraft(() => updated);
         return saveCampaign.mutateAsync(updated);
