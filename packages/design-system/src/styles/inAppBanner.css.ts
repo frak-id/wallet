@@ -8,6 +8,7 @@ import {
     onDark,
     overlay,
     safeArea,
+    zIndex,
 } from "../tokens.css";
 
 /**
@@ -26,7 +27,8 @@ export const container = style({
     top: `max(${alias.spacing.xs}, ${safeArea.top})`,
     left: alias.spacing.m,
     right: alias.spacing.m,
-    zIndex: 1000,
+    // Load-bearing on merchant pages (<frak-banner>); in the wallet, modals portal later and win the tie.
+    zIndex: zIndex.modal,
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xxs,

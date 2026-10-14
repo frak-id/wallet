@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, safeArea } from "@frak-labs/design-system/tokens";
+import { alias, safeArea, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
@@ -10,7 +10,7 @@ import { style } from "@vanilla-extract/css";
 export const gate = style({
     position: "fixed",
     inset: 0,
-    zIndex: 9999,
+    zIndex: zIndex.gate,
     display: "flex",
     flexDirection: "column",
     backgroundColor: vars.surface.background2,
