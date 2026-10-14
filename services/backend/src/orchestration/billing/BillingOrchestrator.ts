@@ -522,20 +522,59 @@ export class BillingOrchestrator {
         return this.billingDocuments.findById(merchantId, id);
     }
 
+    /**
+     * Re-renders an ALREADY-ISSUED deposit/withdraw PDF with the current
+     * template and overwrites the stored object in place. Reads only the
+     * frozen row (no recomputation) and writes nothing to the database, so
+     * amounts, references and `pdfGeneratedAt` are untouched. Returns the
+     * storage key, or null when the row has nothing to re-render.
+     */
+    async rerenderIssuedPdf(
+        document: BillingDocumentSelect
+    ): Promise<string | null> {
+        if (!document.pdfStorageKey) return null;
+        const bytes = await this.renderPdfBytes(document);
+        if (!bytes) return null;
+        return this.billingStorage.upload({
+            merchantId: document.merchantId,
+            kind: document.kind,
+            id: document.id,
+            body: bytes,
+        });
+    }
+
     private async generateAndStorePdf(
         document: BillingDocumentSelect
     ): Promise<void> {
+        const bytes = await this.renderPdfBytes(document);
+        if (!bytes) return;
+
+        const key = await this.billingStorage.upload({
+            merchantId: document.merchantId,
+            kind: document.kind,
+            id: document.id,
+            body: bytes,
+        });
+
+        await this.billingDocuments.setPdf(document.merchantId, document.id, {
+            pdfStorageKey: key,
+        });
+    }
+
+    private async renderPdfBytes(
+        document: BillingDocumentSelect
+    ): Promise<Uint8Array | null> {
         if (document.kind !== "deposit" && document.kind !== "withdraw") {
-            return; // monthly_bill rendering is Phase 3.
+            return null;
         }
         if (document.details?.kind !== document.kind) {
-            return;
+            return null;
         }
 
         const merchant = await this.merchant.findById(document.merchantId);
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
-        const bytes = await this.pdf.render({
+        return this.pdf.render({
             kind: document.kind,
             reference: document.reference,
             documentDate: document.documentDate,
@@ -568,17 +607,6 @@ export class BillingOrchestrator {
                           note: document.details.note,
                       }
                     : undefined,
-        });
-
-        const key = await this.billingStorage.upload({
-            merchantId: document.merchantId,
-            kind: document.kind,
-            id: document.id,
-            body: bytes,
-        });
-
-        await this.billingDocuments.setPdf(document.merchantId, document.id, {
-            pdfStorageKey: key,
         });
     }
 }

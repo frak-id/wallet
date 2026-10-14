@@ -324,6 +324,46 @@ describe("BillingOrchestrator", () => {
         });
     });
 
+    describe("rerenderIssuedPdf", () => {
+        it("re-renders a stored deposit PDF in place without writing the row", async () => {
+            const issued = makeDeposit({
+                pdfStorageKey: "merchant-1/deposit/deposit-1.pdf",
+                pdfGeneratedAt: new Date(),
+            });
+            const setPdf = vi.fn();
+            const render = vi
+                .fn()
+                .mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
+            const upload = vi
+                .fn()
+                .mockResolvedValue("merchant-1/deposit/deposit-1.pdf");
+            const orchestrator = makeOrchestrator({
+                billingDocuments: { setPdf },
+                billingStorage: { upload },
+                pdf: { render },
+            });
+
+            const key = await orchestrator.rerenderIssuedPdf(issued);
+
+            expect(key).toBe("merchant-1/deposit/deposit-1.pdf");
+            expect(render).toHaveBeenCalledTimes(1);
+            expect(upload).toHaveBeenCalledWith(
+                expect.objectContaining({ id: "deposit-1", kind: "deposit" })
+            );
+            expect(setPdf).not.toHaveBeenCalled();
+        });
+
+        it("skips a document without a stored PDF", async () => {
+            const render = vi.fn();
+            const orchestrator = makeOrchestrator({ pdf: { render } });
+
+            expect(
+                await orchestrator.rerenderIssuedPdf(makeDeposit())
+            ).toBeNull();
+            expect(render).not.toHaveBeenCalled();
+        });
+    });
+
     describe("createWithdraw guards", () => {
         const baseInput = {
             remainingBankAmount: "400",

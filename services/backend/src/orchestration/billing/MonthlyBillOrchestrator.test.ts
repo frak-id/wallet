@@ -773,6 +773,59 @@ describe("MonthlyBillOrchestrator", () => {
         });
     });
 
+    describe("rerenderIssuedPdf", () => {
+        it("re-renders an issued bill in place without touching the row", async () => {
+            const issued = makeMonthlyBillDoc({
+                pdfGeneratedAt: new Date(),
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+            });
+            const updateMonthlyBillDetails = vi.fn();
+            const setPdf = vi.fn();
+            const clearPdf = vi.fn();
+            const render = vi
+                .fn()
+                .mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
+            const upload = vi
+                .fn()
+                .mockResolvedValue("merchant-1/monthly_bill/bill-1.pdf");
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    aggregateDepositWithdrawByCurrency: vi
+                        .fn()
+                        .mockResolvedValue([]),
+                    updateMonthlyBillDetails,
+                    setPdf,
+                    clearPdf,
+                },
+                billingStorage: { upload },
+                pdf: { render },
+            });
+
+            const key = await orchestrator.rerenderIssuedPdf(issued);
+
+            expect(key).toBe("merchant-1/monthly_bill/bill-1.pdf");
+            expect(render).toHaveBeenCalledTimes(1);
+            expect(upload).toHaveBeenCalledTimes(1);
+            expect(updateMonthlyBillDetails).not.toHaveBeenCalled();
+            expect(setPdf).not.toHaveBeenCalled();
+            expect(clearPdf).not.toHaveBeenCalled();
+        });
+
+        it("skips a bill that has no stored PDF", async () => {
+            const render = vi.fn();
+            const orchestrator = makeOrchestrator({ pdf: { render } });
+
+            const key = await orchestrator.rerenderIssuedPdf(
+                makeMonthlyBillDoc({ pdfStorageKey: null })
+            );
+
+            expect(key).toBeNull();
+            expect(render).not.toHaveBeenCalled();
+        });
+    });
+
     describe("backfillAllMerchantBills", () => {
         const fullAccountingInfo = {
             companyName: "Acme",

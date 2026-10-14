@@ -1,12 +1,17 @@
 import Decimal from "decimal.js";
 import type { PDFFont } from "pdf-lib";
+import { drawBreakdownCard } from "./BreakdownCard";
+import { grossUpAvailable } from "./breakdown";
 import {
     FRAK_FEE_RATE,
+    fiatFor,
     formatMoney,
+    formatSigned,
     GRAY,
     MARGIN,
     PAGE_WIDTH,
     type PageCursor,
+    ratePercent,
     VAT_RATE,
 } from "./primitives";
 import type { BillingPdfDocumentDto } from "./types";
@@ -99,7 +104,7 @@ export function drawRewardTable(
         });
         cursor.newLine(15);
     }
-    cursor.newLine(8);
+    cursor.newLine(18);
 }
 
 /**
@@ -261,10 +266,11 @@ export function drawTvaAndRecap(
 }
 
 /**
- * The campaign-bank ledger status, below the recap: the amount initially
- * credited (opening balance) and the balance remaining after this bill
- * (closing balance), one pair per currency ledger, shown in that ledger's
- * fiat currency (never hardcoded EUR).
+ * The campaign-bank account status, below the recap: per currency ledger, the
+ * amount initially credited and how it breaks down into TVA, Frak fees (shown
+ * as one total, then each) and the amount available for rewards — the same
+ * reading as the dashboards' budget card. Amounts are in the ledger's own
+ * fiat currency.
  */
 export function drawLedgerStatus(
     cursor: PageCursor,
@@ -273,20 +279,56 @@ export function drawLedgerStatus(
 ): void {
     cursor.ensureSpace(60);
     cursor.text("État du compte", { size: 13, useFont: bold });
-    cursor.newLine(20);
+    cursor.newLine(22);
 
-    for (const ledger of monthlyBill.ledgers) {
-        cursor.ensureSpace(36);
-        cursor.text(
-            `Montant initial crédité : ${formatMoney(ledger.openingBalance, ledger.currency)}`,
-            { size: 10 }
-        );
-        cursor.newLine(15);
-        cursor.text(
-            `Solde restant sur le compte après cette facture : ${formatMoney(ledger.closingBalance, ledger.currency)}`,
-            { size: 10 }
-        );
-        cursor.newLine(18);
+    const { vatApplicable, ledgers } = monthlyBill;
+    for (const ledger of ledgers) {
+        const { currency } = ledger;
+        const parts = grossUpAvailable(ledger.openingBalance, vatApplicable);
+        const feesAndVat = new Decimal(parts.vat).plus(parts.frakFee);
+
+        if (ledgers.length > 1) {
+            cursor.ensureSpace(240);
+            cursor.text(`Compte en ${fiatFor(currency).code}`, {
+                size: 9,
+                color: GRAY,
+            });
+            cursor.newLine(14);
+        }
+        drawBreakdownCard(cursor, bold, {
+            headlineLabel: "Montant initial crédité",
+            headlineValue: formatMoney(parts.gross, currency),
+            headlineCaption: vatApplicable
+                ? "TVA et frais Frak inclus"
+                : "Frais Frak inclus",
+            rows: [
+                {
+                    label: vatApplicable
+                        ? "Total TVA + frais Frak"
+                        : "Total frais Frak (TVA non applicable)",
+                    value: formatSigned("-", feesAndVat.toFixed(2), currency),
+                    strong: true,
+                },
+                ...(vatApplicable
+                    ? [
+                          {
+                              label: `dont TVA (${ratePercent(VAT_RATE)})`,
+                              value: formatSigned("-", parts.vat, currency),
+                              sub: true,
+                          },
+                      ]
+                    : []),
+                {
+                    label: `dont Frais Frak (${ratePercent(FRAK_FEE_RATE)})`,
+                    value: formatSigned("-", parts.frakFee, currency),
+                    sub: true,
+                },
+            ],
+            totalLabel: "Disponible pour les récompenses",
+            totalValue: formatMoney(parts.available, currency),
+            totalCaption:
+                "Montant du compte disponible pour distribuer des récompenses aux utilisateurs finaux, une fois la TVA et les frais Frak déduits.",
+        });
     }
 }
 

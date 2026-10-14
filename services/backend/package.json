@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
+    "previews:billing": "bun run scripts/generateBillingPdfPreviews.ts",
     "openapi:generate": "bun run scripts/generate-openapi.ts",
     "openapi:check": "bun run openapi:generate && git diff --exit-code user-openapi.json",
     "dev": "bun sst dev bun dev:watch",

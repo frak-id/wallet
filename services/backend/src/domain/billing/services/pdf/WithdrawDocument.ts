@@ -1,5 +1,11 @@
 import type { PDFFont } from "pdf-lib";
-import { drawVatLine, formatMoney, type PageCursor } from "./primitives";
+import { type BreakdownRow, drawBreakdownCard } from "./BreakdownCard";
+import {
+    formatMoney,
+    formatSigned,
+    isVatApplicable,
+    type PageCursor,
+} from "./primitives";
 import type { BillingPdfDocumentDto } from "./types";
 
 export function drawWithdrawDetails(
@@ -8,33 +14,40 @@ export function drawWithdrawDetails(
     currency: string,
     bold: PDFFont
 ): void {
-    cursor.text("Détail de la restitution", { size: 12, useFont: bold });
-    cursor.newLine(18);
-    cursor.text(
-        `Montant restant sur le compte : ${formatMoney(withdraw.remainingBankAmount, currency)}`
-    );
-    cursor.newLine(15);
-
     const ratioPct = (
         Number.parseFloat(withdraw.distributedRatio) * 100
     ).toFixed(2);
-    cursor.text(`Ratio distribué : ${ratioPct} %`);
-    cursor.newLine(15);
 
-    drawVatLine(cursor, "TVA restituée", withdraw.restitutedVat, currency);
-    cursor.text(
-        `Frais Frak restitués : ${formatMoney(withdraw.restitutedFrakFee, currency)}`
-    );
-    cursor.newLine(15);
-    cursor.text(
-        `Total envoyé sur le compte de destination : ${formatMoney(withdraw.bankSent, currency)}`,
-        { useFont: bold }
-    );
-    cursor.newLine(18);
-    cursor.text(`Compte de destination : ${withdraw.maskedIban}`, {
-        size: 10,
+    const rows: BreakdownRow[] = [
+        {
+            label: isVatApplicable(withdraw.restitutedVat)
+                ? "TVA restituée"
+                : "TVA restituée (autoliquidation / non applicable)",
+            value: formatSigned("+", withdraw.restitutedVat, currency),
+        },
+        {
+            label: "Frais Frak restitués",
+            value: formatSigned("+", withdraw.restitutedFrakFee, currency),
+        },
+        {
+            label: `Ratio du dépôt distribué en récompenses : ${ratioPct} %`,
+            value: "",
+            sub: true,
+        },
+    ];
+
+    cursor.text("Détail de la restitution", { size: 13, useFont: bold });
+    cursor.newLine(22);
+    drawBreakdownCard(cursor, bold, {
+        headlineLabel: "Montant restant sur le compte",
+        headlineValue: formatMoney(withdraw.remainingBankAmount, currency),
+        headlineCaption: "Disponible pour les récompenses, non distribué",
+        rows,
+        totalLabel: "Total envoyé sur le compte de destination",
+        totalValue: formatMoney(withdraw.bankSent, currency),
+        totalCaption: `Compte de destination : ${withdraw.maskedIban}`,
     });
-    cursor.newLine(16);
+
     if (withdraw.note) {
         cursor.newLine(6);
         cursor.text(`Note : ${withdraw.note}`, { size: 9 });
