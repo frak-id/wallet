@@ -38,6 +38,16 @@ function seriesLines(container: HTMLElement, stroke: string) {
     return container.querySelectorAll(`path[stroke="${stroke}"]`);
 }
 
+function pathXs(path: Element | undefined) {
+    const d = path?.getAttribute("d") ?? "";
+    const ends =
+        d.match(/[ML][^MLC]+|C(?:[^MLC,]+,[^MLC,]+,){2}[^MLC]+/g) ?? [];
+    return ends.map((segment) => {
+        const coords = segment.slice(1).split(",").map(Number);
+        return coords[coords.length - 2];
+    });
+}
+
 async function hoverAt(container: HTMLElement, fraction: number) {
     const surface = container.querySelector("svg > g");
     if (!surface) {
@@ -105,6 +115,29 @@ describe("AreaChart", () => {
 
         expect(seriesLines(container, ACTUAL)).toHaveLength(1);
         expect(seriesLines(container, FORECAST)).toHaveLength(0);
+    });
+
+    it("ends a series line at its last value instead of dropping to the top", () => {
+        const { container } = renderProjectedRevenueChart();
+
+        expect(pathXs(seriesLines(container, ACTUAL)[0])).toEqual([
+            0,
+            INNER_WIDTH / 2,
+        ]);
+        expect(pathXs(seriesLines(container, FORECAST)[0])).toEqual([
+            INNER_WIDTH / 2,
+            INNER_WIDTH,
+        ]);
+    });
+
+    it("puts a hover dot only on the series present at that point", async () => {
+        const { container } = renderProjectedRevenueChart();
+
+        await hoverAt(container, 1);
+
+        await waitFor(() =>
+            expect(container.querySelectorAll("circle[r='5']")).toHaveLength(1)
+        );
     });
 
     it("labels the x axis with one short date per data point", async () => {
