@@ -2,7 +2,7 @@
 
 import type * as WalletShared from "@frak-labs/wallet-shared";
 import type * as ReactRouter from "@tanstack/react-router";
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 // `vi` must come from "vitest" directly: `vi.mock` is hoisted above module
 // imports, so routing it through the fixtures module would reference an
@@ -157,5 +157,22 @@ describe("MoneriumCallback", () => {
         render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
         await waitFor(() => expect(outcomes()).toEqual(["no_code"]));
+    });
+
+    test("Try again reopens the bank flow on the wallet instead of the profile", async ({
+        queryWrapper,
+    }) => {
+        mockSearch.current = { error: "access_denied" };
+
+        const { findByText } = render(<MoneriumCallback />, {
+            wrapper: queryWrapper.wrapper,
+        });
+        fireEvent.click(await findByText("monerium.callback.tryAgain"));
+
+        expect(mockOpenModal).toHaveBeenCalledWith({ id: "moneriumBankFlow" });
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/wallet",
+            replace: true,
+        });
     });
 });

@@ -72,4 +72,65 @@ describe("ibanStore", () => {
         expect(ibanStore.getState().knownIbans[0]?.own).toBe(false);
         expect(ibanStore.getState().syncedWallet).toBeNull();
     });
+
+    test("re-saving a third-party IBAN as own clears names and country", () => {
+        const iban = "DE89370400440532013000";
+        ibanStore.getState().addIban({
+            ...entry(iban, "Ada"),
+            firstName: "Ada",
+            lastName: "Lovelace",
+            country: "DE",
+        });
+        ibanStore.getState().addIban({
+            iban,
+            firstName: "",
+            lastName: "",
+            pseudo: "Mine",
+            own: true,
+        });
+        expect(ibanStore.getState().knownIbans).toEqual([
+            {
+                iban,
+                firstName: "",
+                lastName: "",
+                pseudo: "Mine",
+                own: true,
+                country: undefined,
+            },
+        ]);
+    });
+
+    test("syncing a different wallet replaces the saved list", () => {
+        const walletA = "0x1111111111111111111111111111111111111111";
+        const walletB = "0x2222222222222222222222222222222222222222";
+        ibanStore
+            .getState()
+            .mergeRemoteIbans([entry("DE89370400440532013000", "A")], walletA);
+        ibanStore.getState().setLastUsedIban("DE89370400440532013000");
+        ibanStore
+            .getState()
+            .mergeRemoteIbans(
+                [entry("FR7630006000011234567890189", "B")],
+                walletB
+            );
+        expect(ibanStore.getState().knownIbans.map((e) => e.pseudo)).toEqual([
+            "B",
+        ]);
+        expect(ibanStore.getState().lastUsedIban).toBeNull();
+        expect(ibanStore.getState().syncedWallet).toBe(walletB);
+    });
+
+    test("the first sync keeps entries saved before any wallet was recorded", () => {
+        ibanStore.getState().addIban(entry("DE89370400440532013000", "Local"));
+        ibanStore
+            .getState()
+            .mergeRemoteIbans(
+                [entry("FR7630006000011234567890189", "Remote")],
+                "0x1111111111111111111111111111111111111111"
+            );
+        expect(ibanStore.getState().knownIbans.map((e) => e.pseudo)).toEqual([
+            "Local",
+            "Remote",
+        ]);
+    });
 });

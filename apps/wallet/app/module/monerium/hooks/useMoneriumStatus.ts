@@ -59,5 +59,6 @@ export function useMoneriumStatus({
         refetch: query.refetch,
         refresh: refreshMutation.mutateAsync,
         isRefreshing: refreshMutation.isPending,
+        refreshError: refreshMutation.error,
     };
 }

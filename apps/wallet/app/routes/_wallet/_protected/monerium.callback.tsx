@@ -132,7 +132,10 @@ function MoneriumCallback() {
         mutate({ code, state });
     }, [code, state, error, mutate]);
 
-    const goToProfile = () => navigate({ to: "/profile", replace: true });
+    const retryFlow = () => {
+        modalStore.getState().openModal({ id: "moneriumBankFlow" });
+        navigate({ to: "/wallet", replace: true });
+    };
     const goToWallet = () => navigate({ to: "/wallet", replace: true });
 
     const isExchanging = Boolean(code && state) && !exchangeError;
@@ -163,7 +166,7 @@ function MoneriumCallback() {
                 return (
                     <Outcome
                         kind={kind}
-                        onRetry={goToProfile}
+                        onRetry={retryFlow}
                         onClose={handleClose}
                     />
                 );

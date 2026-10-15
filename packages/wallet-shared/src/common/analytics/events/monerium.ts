@@ -33,9 +33,9 @@ export type MoneriumEventMap = {
     monerium_siwe_outcome: {
         outcome: "success" | MoneriumSiweFailure;
     };
-    /** The silent reconnect failed, the user is sent to the Monerium portal instead. */
+    /** The silent reconnect was rejected or failed, the user is sent to the Monerium portal instead. */
     monerium_siwe_fallback: {
-        reason: MoneriumSiweFailure;
+        reason: Exclude<MoneriumSiweFailure, "cancelled">;
     };
     monerium_order_placed: {
         own: boolean;

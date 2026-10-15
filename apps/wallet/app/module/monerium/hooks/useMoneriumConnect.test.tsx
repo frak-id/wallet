@@ -144,7 +144,7 @@ describe("useMoneriumConnect", () => {
         ]);
     });
 
-    test("a cancelled signature falls back to the portal too", async ({
+    test("a cancelled signature stops without opening the portal", async ({
         queryWrapper,
     }) => {
         mocks.prepare.mockResolvedValue({
@@ -156,13 +156,17 @@ describe("useMoneriumConnect", () => {
         );
 
         const { result } = setup(queryWrapper, true);
-        await result.current.connectAsync({});
+        await expect(result.current.connectAsync({})).rejects.toMatchObject({
+            name: "NotAllowedError",
+        });
 
         expect(mocks.siwe).not.toHaveBeenCalled();
-        expect(assign).toHaveBeenCalled();
+        expect(mocks.start).not.toHaveBeenCalled();
+        expect(assign).not.toHaveBeenCalled();
         expect(events("monerium_siwe_outcome")).toEqual([
             { outcome: "cancelled" },
         ]);
+        expect(events("monerium_siwe_fallback")).toEqual([]);
     });
 
     test("without silentReconnect the portal is used directly", async ({

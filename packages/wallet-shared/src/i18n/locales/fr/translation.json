@@ -1004,10 +1004,16 @@
         "connecting": "Connexion...",
         "disconnect": "Déconnecter",
         "completeSetup": "Finaliser",
+        "disconnectConfirm": {
+            "title": "Déconnecter Monerium ?",
+            "description": "Tu devras te reconnecter à Monerium pour transférer tes gains.",
+            "cancel": "Annuler",
+            "confirm": "Déconnecter"
+        },
         "linkWallet": "Lier le porte-monnaie",
         "status": {
             "settingUp": "Configuration...",
-            "created": "Compte créé, terminez la vérification sur Monerium",
+            "created": "Compte créé, termine la vérification sur Monerium",
             "pending": "Vérification en cours",
             "approved": "Vérifié ✓",
             "rejected": "Vérification échouée"
@@ -1023,13 +1029,13 @@
             "balance": "Solde :",
             "max": "MAX",
             "destinationIban": "IBAN de destination",
-            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de porte-monnaie actuelle.",
+            "ibanWarning": "Attention : Cet IBAN n'est pas lié à ton adresse de porte-monnaie actuelle.",
             "submit": "Retirer vers la banque",
             "submitting": "Envoi de l'ordre...",
             "confirmBiometric": "Confirmer avec la biométrie...",
             "success": "Ordre soumis ! Les fonds arriveront dans 1 à 2 jours ouvrables.",
             "tryAgain": "Réessayer",
-            "noIban": "Aucun IBAN lié. Veuillez d'abord compléter la vérification Monerium.",
+            "noIban": "Aucun IBAN lié. Termine d'abord la vérification Monerium.",
             "amountRequired": "Le montant est requis",
             "amountInvalid": "Le montant doit être supérieur à 0"
         },
@@ -1039,7 +1045,7 @@
             "errorTitle": "Connexion impossible",
             "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
             "expiredTitle": "Lien expiré",
-            "expiredDescription": "Cette connexion a pris trop de temps ou a déjà été utilisée. Recommence depuis ton profil.",
+            "expiredDescription": "Cette connexion a pris trop de temps ou a déjà été utilisée. Recommence depuis le début.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -1086,7 +1092,7 @@
                 "title": "Associe ton porte-monnaie",
                 "description": "Ton porte-monnaie n'est pas encore connecté à ton compte Monerium, connecte-le pour transférer tes gains.",
                 "featureTitle": "Associe ton compte Monerium à ton porte-monnaie",
-                "featureDescription": "Pour utiliser pleinement ton porte-monnaie, nous avons besoin de lié ton compte.",
+                "featureDescription": "Pour utiliser pleinement ton porte-monnaie, nous avons besoin de lier ton compte.",
                 "cta": "Associer mon compte"
             },
             "linking": {
@@ -1103,12 +1109,12 @@
                 "amount": {
                     "title": "Montant à transférer",
                     "walletLabel": "Porte-monnaie Frak",
-                    "totalBalance": "Total balance",
+                    "totalBalance": "Solde total",
                     "ibanLabel": "IBAN",
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
                     "continue": "Continuer",
-                    "insufficientBalance": "Total balance Insuffisante",
+                    "insufficientBalance": "Solde insuffisant",
                     "aboveMax": "Les transferts de {{max}}€ ou plus vers un tiers ne sont pas encore possibles. Envoie-les plutôt vers ton propre compte."
                 },
                 "recap": {
@@ -1123,7 +1129,7 @@
                 },
                 "success": {
                     "title": "Ta demande de transfert de {{amount}} € a été prise en compte",
-                    "description": "Tu recevras ton gain sous 10 secondes."
+                    "description": "Ton transfert est en route. Tu peux le suivre dans ton historique."
                 },
                 "ibanManager": {
                     "title": "Gérer mes IBAN",
@@ -1138,7 +1144,7 @@
                     "ibanPlaceholder": "FR76...",
                     "save": "Enregistrer",
                     "remove": "Supprimer",
-                    "empty": "Aucun IBAN enregistré. Ajoutes-en un pour commencer.",
+                    "empty": "Aucun IBAN enregistré. Ajoute-en un pour commencer.",
                     "select": "Sélectionner",
                     "ownToggle": "C'est mon propre compte",
                     "ownToggleDescription": "Pas besoin de nom, et aucun plafond de montant.",

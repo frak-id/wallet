@@ -151,4 +151,43 @@ describe("useMoneriumBeneficiarySync", () => {
             expect(ibanStore.getState().syncedWallet).toBe(WALLET)
         );
     });
+
+    test("drops third-party beneficiaries without a usable name", async ({
+        queryWrapper,
+    }) => {
+        mocks.get.mockResolvedValue({
+            data: {
+                beneficiaries: [
+                    {
+                        iban: "FR7630006000011234567890189",
+                        own: false,
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                    {
+                        iban: "ES9121000418450200051332",
+                        own: false,
+                        firstName: "A",
+                        lastName: "Lovelace",
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                    {
+                        iban: "DE89370400440532013000",
+                        own: true,
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                ],
+            },
+            error: null,
+        });
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+        expect(ibanStore.getState().knownIbans.map((e) => e.iban)).toEqual([
+            "DE89370400440532013000",
+        ]);
+    });
 });

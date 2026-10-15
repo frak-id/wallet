@@ -27,8 +27,8 @@ function classifySiweFailure(error: unknown): MoneriumSiweFailure {
 
 /**
  * Connects the wallet to Monerium: a silent Sign-In-With-Ethereum when the
- * backend says it is worth trying, the Monerium portal otherwise or on any
- * SIWE failure, including a dismissed signature prompt.
+ * backend says it is worth trying, the Monerium portal otherwise or when SIWE
+ * is rejected or fails. A dismissed signature prompt stops and surfaces as an error.
  */
 export function useMoneriumConnect() {
     const queryClient = useQueryClient();
@@ -81,6 +81,7 @@ export function useMoneriumConnect() {
                 } catch (error) {
                     const reason = classifySiweFailure(error);
                     trackEvent("monerium_siwe_outcome", { outcome: reason });
+                    if (reason === "cancelled") throw error;
                     trackEvent("monerium_siwe_fallback", { reason });
                     if (reason === "error") {
                         recordError(error, { source: "monerium_api" });

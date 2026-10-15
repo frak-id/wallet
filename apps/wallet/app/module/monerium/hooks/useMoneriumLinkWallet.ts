@@ -11,6 +11,7 @@ import {
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import type { MoneriumStatus } from "@/module/monerium/utils/deriveSetupScreen";
 import { unwrapMoneriumResponse } from "@/module/monerium/utils/moneriumErrors";
+import { refreshStatusOnStateChange } from "@/module/monerium/utils/refreshStaleStatus";
 
 export function useMoneriumLinkWallet() {
     const { address } = useConnection();
@@ -44,6 +45,9 @@ export function useMoneriumLinkWallet() {
                 (status) => status && { ...status, walletLink }
             );
             client.invalidateQueries({ queryKey: moneriumKey.status });
+        },
+        onError: (error, _variable, _result, { client }) => {
+            refreshStatusOnStateChange(error, client);
         },
     });
 
