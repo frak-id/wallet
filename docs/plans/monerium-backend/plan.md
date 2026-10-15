@@ -1,6 +1,7 @@
 # Monerium: move the integration server-side
 
-Status: in progress on `feat/monerium-backend` (2026-10-15). Tracks FRA-258 and FRA-361.
+Status: implemented and reviewed on `feat/monerium-backend` (2026-10-15), not deployed.
+Tracks FRA-258 and FRA-361. Blocked on the DB migration and a sandbox run (below).
 
 Goal: the Monerium OAuth tokens and every Monerium API call move from the wallet
 (localStorage + `/monerium-api` nginx proxy) to `services/backend`, which is what
@@ -123,7 +124,15 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   it, set `MONERIUM_SIWE_ENABLED=false`; the portal fallback already covers it.
 - Wallet merge: the loser wallet's connection is not migrated (needs a re-link on the
   winner address at Monerium anyway).
-- DB migration for the three tables.
+- DB migration for the three tables (columns in `services/backend/src/domain/monerium/db/schema.ts`,
+  including `wallet_link_pending_at`, `profile_state_changed_at` and `placement_accepted`). It must
+  ship before the backend: the routes and the `moneriumSync` cron read these tables.
+- `MONERIUM_CLIENT_ID` set on every backend stage, and `${FRAK_WALLET_URL}/monerium/callback`
+  registered as a redirect URI for that client id at Monerium.
+- Mobile push taps: the `frak-firebase` plugin does not open `data.url` on iOS or Android, for any
+  notification. Needs a native change and a mobile release; the wallet already handles
+  `/wallet?open=monerium` once the URL reaches it.
+- Production launch: flip `isMoneriumEnabled` once Monerium approves the production application.
 
 ## Implementation notes (backend lane)
 
