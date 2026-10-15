@@ -57,6 +57,8 @@ export type BillingPdfDocumentDto = {
             totalDeposited: string;
             totalWithdrawn: string;
             totalRewarded: string;
+            /** Cumulative settled rewards up to `periodEnd` (not just this period). */
+            rewardedToDate: string;
         }>;
         fiatTotals: { eur: string; usd: string; gbp: string };
         /**

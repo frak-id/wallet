@@ -2,18 +2,14 @@ import { type MotionValue, motion } from "motion/react";
 import { type RefObject, useId } from "react";
 
 // Hover-highlight overlay: re-strokes the base path `d`, clipped to a vertical
-// band whose x/width spring to track the hovered point, so only the segment
-// around the dot shows brighter. The band comes from `useHighlightSegment`;
-// because the bright stroke reuses the base `d`, it follows whatever curve is
-// drawn (see `highlight-segment-bounds.ts` for the band-extent caveat).
+// band whose x/width spring to track the hovered point.
 
-export interface HighlightSegmentProps {
+interface HighlightSegmentProps {
     /** Ref to the rendered base stroke `<path>` — its `d` is re-used verbatim. */
     pathRef: RefObject<SVGPathElement | null>;
-    /** Whether to render (caller gates on showHighlight + active + loaded). */
+    /** Whether to render (caller gates on active + loaded). */
     visible: boolean;
     stroke: string;
-    strokeWidth: number;
     /** Plot height — the clip band spans it fully. */
     height: number;
     /** Spring-eased left edge of the clip band (px). */
@@ -26,7 +22,6 @@ export function HighlightSegment({
     pathRef,
     visible,
     stroke,
-    strokeWidth,
     height,
     x,
     width,
@@ -51,7 +46,7 @@ export function HighlightSegment({
                 initial={{ opacity: 0 }}
                 stroke={stroke}
                 strokeLinecap="round"
-                strokeWidth={strokeWidth}
+                strokeWidth={2}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
             />
         </>

@@ -10,6 +10,7 @@ describe("design-system tokens", () => {
             expect(zIndex.modal).toBe(1000);
             expect(zIndex.popover).toBe(1100);
             expect(zIndex.toast).toBe(9999);
+            expect(zIndex.gate).toBe(10000);
         });
     });
 

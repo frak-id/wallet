@@ -2,9 +2,25 @@ import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import type { PropsWithChildren } from "react";
 import { useMemo } from "react";
 import { createClient } from "viem";
-import { createConfig, WagmiProvider } from "wagmi";
+import { createConfig, createStorage, noopStorage, WagmiProvider } from "wagmi";
 import { currentChain } from "../blockchain/provider";
+import { localStorageIfAllowed } from "../common/utils/browserStorage";
 import { smartAccountConnector } from "../wallet/smartWallet/connector";
+
+// wagmi's default storage, minus its `window.localStorage` read that throws when storage is denied (third-party iframe, Incognito).
+function wagmiStorage(): Pick<Storage, "getItem" | "setItem" | "removeItem"> {
+    const storage = localStorageIfAllowed();
+    if (!storage) return noopStorage;
+    return {
+        getItem: (key) => storage.getItem(key),
+        removeItem: (key) => storage.removeItem(key),
+        setItem: (key, value) => {
+            try {
+                storage.setItem(key, value);
+            } catch {}
+        },
+    };
+}
 
 /**
  * Wagmi provider with dynamic configuration
@@ -19,6 +35,7 @@ export function WagmiProviderWithDynamicConfig({
                 chains: [currentChain],
                 connectors: [smartAccountConnector()],
                 multiInjectedProviderDiscovery: false,
+                storage: createStorage({ storage: wagmiStorage() }),
                 client: ({ chain }) =>
                     createClient({
                         chain,

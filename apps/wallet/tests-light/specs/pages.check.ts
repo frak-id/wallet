@@ -3,6 +3,7 @@ import { expect, test } from "../fixtures";
 test.describe("Wallet Dashboard", () => {
     test("should render the wallet page", async ({ page }) => {
         await page.goto("/wallet");
+        await expect(page.getByRole("main")).toContainText("12,50EUR");
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveScreenshot("wallet-dashboard.png", {
             animations: "disabled",
@@ -15,11 +16,27 @@ test.describe("Wallet Dashboard", () => {
             route.fulfill({
                 status: 200,
                 contentType: "application/json",
-                body: JSON.stringify({ totalBalance: "0" }),
+                body: JSON.stringify({
+                    total: {
+                        amount: 0,
+                        eurAmount: 0,
+                        usdAmount: 0,
+                        gbpAmount: 0,
+                    },
+                    balances: [],
+                }),
             })
         );
 
         await page.goto("/wallet");
+        await expect(page.getByRole("main")).toContainText("0,00EUR");
+        await page.getByRole("button", { name: "Transfer to my bank" }).click();
+        const emptyTransfer = page.getByRole("dialog", {
+            name: "You don't have any money to transfer yet",
+        });
+        await expect(emptyTransfer).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(emptyTransfer).toBeHidden();
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveScreenshot("wallet-zero-balance.png", {
             animations: "disabled",

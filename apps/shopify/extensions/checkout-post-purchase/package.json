@@ -4,7 +4,7 @@
     "private": true,
     "license": "UNLICENSED",
     "dependencies": {
-        "@shopify/ui-extensions": "~2026.4.4",
+        "@shopify/ui-extensions": "~2026.7.4",
         "preact": "catalog:"
     }
 }

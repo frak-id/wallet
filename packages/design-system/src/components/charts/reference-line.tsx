@@ -1,3 +1,4 @@
+import { vars } from "../../theme.css";
 import { useChartStable } from "./chart-context";
 
 export interface ReferenceLineProps {
@@ -5,20 +6,13 @@ export interface ReferenceLineProps {
     y: number;
     /** Optional label drawn in the right gutter. Use "\n" for multiple lines. */
     label?: string;
-    /** Line + label color. Default: var(--chart-line-primary) */
-    color?: string;
 }
 
 /**
  * Horizontal reference line (e.g. an average) drawn across the plot in data
- * coordinates, with an optional label in the right margin. bklit has no
- * built-in reference line.
+ * coordinates, with an optional label in the right margin.
  */
-export function ReferenceLine({
-    y,
-    label,
-    color = "var(--chart-line-primary)",
-}: ReferenceLineProps) {
+export function ReferenceLine({ y, label }: ReferenceLineProps) {
     const { yScale, innerWidth } = useChartStable();
     const yy = yScale(y);
     const lines = label ? label.split("\n") : [];
@@ -26,7 +20,7 @@ export function ReferenceLine({
     return (
         <g>
             <line
-                stroke={color}
+                stroke={vars.icon.action}
                 strokeDasharray="4 4"
                 strokeWidth={1}
                 x1={0}
@@ -36,7 +30,7 @@ export function ReferenceLine({
             />
             {lines.length > 0 ? (
                 <text
-                    fill={color}
+                    fill={vars.icon.action}
                     fontSize={11}
                     fontWeight={500}
                     x={innerWidth + 4}

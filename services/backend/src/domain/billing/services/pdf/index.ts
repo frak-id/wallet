@@ -10,7 +10,6 @@ import {
 } from "./MonthlyBillDocument";
 import { PAGE_HEIGHT, PAGE_WIDTH, PageCursor } from "./primitives";
 import {
-    drawAmounts,
     drawAttestation,
     drawBrandLogo,
     drawFooters,
@@ -64,10 +63,9 @@ export class BillingPdfService {
 
         drawHeader(cursor, dto, bold);
         drawPartyBlocks(cursor, dto, bold);
-        drawAmounts(cursor, dto, bold);
 
         if (dto.kind === "deposit" && dto.deposit) {
-            drawDepositDetails(cursor, dto.deposit, dto.currency);
+            drawDepositDetails(cursor, dto, dto.deposit, bold);
         }
         if (dto.kind === "withdraw" && dto.withdraw) {
             drawWithdrawDetails(cursor, dto.withdraw, dto.currency, bold);

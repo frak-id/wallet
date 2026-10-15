@@ -1,7 +1,19 @@
 import { db, type PgRunner } from "@backend-infrastructure";
 import { isUniqueViolation } from "@backend-utils";
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { and, asc, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
+import {
+    and,
+    asc,
+    desc,
+    eq,
+    gt,
+    gte,
+    isNotNull,
+    isNull,
+    lt,
+    lte,
+    sql,
+} from "drizzle-orm";
 import {
     type BillingDocumentInsert,
     type BillingDocumentSelect,
@@ -107,6 +119,33 @@ export class BillingDocumentRepository {
                     : isNull(billingDocumentsTable.voidedAt)
             ),
             orderBy: desc(billingDocumentsTable.documentDate),
+        });
+    }
+
+    /**
+     * Non-voided documents that already have a stored PDF, oldest first —
+     * the work list of the template re-render script. Read-only.
+     */
+    async listWithStoredPdf({
+        merchantId,
+        kind,
+        id,
+    }: {
+        merchantId?: string;
+        kind?: BillingDocumentKind;
+        id?: string;
+    } = {}): Promise<BillingDocumentSelect[]> {
+        return db.query.billingDocumentsTable.findMany({
+            where: and(
+                isNotNull(billingDocumentsTable.pdfStorageKey),
+                isNull(billingDocumentsTable.voidedAt),
+                merchantId
+                    ? eq(billingDocumentsTable.merchantId, merchantId)
+                    : undefined,
+                kind ? eq(billingDocumentsTable.kind, kind) : undefined,
+                id ? eq(billingDocumentsTable.id, id) : undefined
+            ),
+            orderBy: asc(billingDocumentsTable.createdAt),
         });
     }
 

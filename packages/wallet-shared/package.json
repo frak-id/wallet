@@ -42,6 +42,7 @@
     "./common/utils/storeUrls": "./src/common/utils/storeUrls.ts",
     "./common/utils/translationKeyPathToObject": "./src/common/utils/translationKeyPathToObject.ts",
     "./common/utils/safeSession": "./src/common/utils/safeSession.ts",
+    "./common/utils/browserStorage": "./src/common/utils/browserStorage.ts",
     "./common/utils/lifecycleEvents": "./src/common/utils/lifecycleEvents.ts",
     "./common/utils/base64url": "./src/common/utils/base64url.ts",
     "./common/utils/queryOptions": "./src/common/utils/queryOptions.ts",
@@ -109,7 +110,7 @@
     "bun-types": "latest",
     "i18next-resources-for-ts": "catalog:",
     "jsdom": "catalog:",
-    "msw": "^3.0.2",
+    "msw": "^3.0.3",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

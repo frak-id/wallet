@@ -15,6 +15,11 @@ export const skeleton = recipe({
         animationDuration: "1.5s",
         animationTimingFunction: "cubic-bezier(0.4, 0, 0.6, 1)",
         animationIterationCount: "infinite",
+        "@media": {
+            "(prefers-reduced-motion: reduce)": {
+                animationName: "none",
+            },
+        },
         selectors: {
             "[data-theme='dark'] &": {
                 backgroundColor: brand.colors.neutral.grey500,

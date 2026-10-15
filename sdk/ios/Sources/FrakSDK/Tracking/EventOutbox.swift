@@ -254,8 +254,8 @@ actor EventOutbox {
         eventLoop: for event in pending {
             // `break`, not `return`: the caller that flipped consent is about to `purge()`, but a
             // purge that does not land leaves every event this drain already uploaded on disk with
-            // no record it went, and `Interaction.arrival` carries no idempotency key — a
-            // duplicated referral payout. The cancellation path below must `return` instead.
+            // no record it went, so the next drain re-sends them. The cancellation path below must
+            // `return` instead.
             guard await trackingAllowed() else {
                 logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
                 break eventLoop

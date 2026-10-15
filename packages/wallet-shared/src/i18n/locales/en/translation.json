@@ -76,8 +76,13 @@
     },
     "wallet": {
         "pageTitle": "Wallet",
+        "tabBar": {
+            "wallet": "Wallet",
+            "explorer": "Explorer",
+            "profile": "Profile"
+        },
         "profile": {
-            "pageTitle": "Profil",
+            "pageTitle": "Profile",
             "notificationSettings": "Notifications",
             "manageNotifications": "Manage notifications",
             "enableNotifications": "Enable notifications",

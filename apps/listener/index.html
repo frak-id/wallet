@@ -15,6 +15,19 @@
         <link rel="dns-prefetch" href="https://metrics.frak.id">
 
         <!-- Inter @font-face is inlined by the inlineFontFaces Vite plugin (vite.config.ts) -->
+
+        <!-- A throw while the module graph loads kills bootstrap() before analytics exists; the SDK reports the last error it sees before connecting -->
+        <script>
+        addEventListener("error", (event) => {
+            parent.postMessage(
+                {
+                    iframeLifecycle: "boot-error",
+                    data: { message: String(event.message) },
+                },
+                "*"
+            );
+        });
+        </script>
     </head>
     <body>
         <div id="root"></div>

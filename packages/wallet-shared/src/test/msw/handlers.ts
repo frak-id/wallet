@@ -10,15 +10,13 @@ export const handlers = [
     // Balance endpoints
     http.get(`${BACKEND_URL}/user/wallet/balance`, () => {
         return HttpResponse.json({
-            balance: "1000000000000000000",
-            formatted: "1.0",
-        });
-    }),
-
-    http.get(`${BACKEND_URL}/user/wallet/balance/pending`, () => {
-        return HttpResponse.json({
-            pending: "500000000000000000",
-            formatted: "0.5",
+            total: {
+                amount: 1,
+                eurAmount: 1,
+                usdAmount: 1.09,
+                gbpAmount: 0.87,
+            },
+            balances: [],
         });
     }),
 

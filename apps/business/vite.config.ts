@@ -7,11 +7,13 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     assertBundleEsVersion,
     assertEagerBundleBudget,
+    blockchainVendorChunkGroup,
     getSandboxEnv,
     getSstResource,
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
+    reactVendorChunkGroup,
 } from "../../packages/dev-tooling/index.ts";
 
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
@@ -26,30 +28,17 @@ const EAGER_JS_BUDGET_GZIP = 275 * 1024;
 function buildChunkGroups() {
     return [
         // Vendor split — stable libraries first for long-term browser cache.
-        {
-            name: "react-vendor",
-            // Trailing `[\\/]` boundary is load-bearing: without it, `react`
-            // also matches `react-hook-form` / `react-i18next` / `react-day-
-            // picker` and sweeps those post-auth libs into the eager chunk.
-            test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
-            priority: 40,
-            minShareCount: 1,
-        },
+        { ...reactVendorChunkGroup, priority: 40 },
         {
             name: "tanstack-vendor",
             test: /node_modules[\\/]@tanstack/,
             priority: 32,
             minShareCount: 1,
         },
-        {
-            // Must stay *below* `app-shell`: a higher priority buckets the
-            // eager `__vitePreload` helper here and drags this ~48 KB chunk
-            // into the eager closure.
-            name: "blockchain-vendor",
-            test: /node_modules[\\/](viem|@noble|@scure)/,
-            priority: 25,
-            minShareCount: 1,
-        },
+        // Must stay *below* `app-shell`: a higher priority buckets the eager
+        // `__vitePreload` helper here and drags this ~48 KB chunk into the
+        // eager closure.
+        { ...blockchainVendorChunkGroup, priority: 25 },
         // `@radix-ui/react-collection` alone, above `ui-vendor` so it claims
         // the package first. Its `OrderedDict extends Map` declares a
         // `toSorted` method es-check reads as `Array.prototype.toSorted`;

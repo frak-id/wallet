@@ -1,4 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import * as en from "@frak-labs/wallet-shared/i18n/locales/en";
+import * as fr from "@frak-labs/wallet-shared/i18n/locales/fr";
+import { act, render, screen, within } from "@testing-library/react";
+import i18next from "i18next";
+import { I18nextProvider, initReactI18next } from "react-i18next";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./index";
 
@@ -57,5 +61,35 @@ describe("AppShell error containment", () => {
 
         expect(screen.getByText("content")).toBeInTheDocument();
         expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+});
+
+describe("AppShell tab labels", () => {
+    it("follow the active language", async () => {
+        const i18n = i18next.createInstance();
+        await i18n.use(initReactI18next).init({
+            lng: "en",
+            resources: {
+                en: { translation: en.translation },
+                fr: { translation: fr.translation },
+            },
+        });
+        render(
+            <I18nextProvider i18n={i18n}>
+                <AppShell navigation={true}>
+                    <p>content</p>
+                </AppShell>
+            </I18nextProvider>
+        );
+        const tabNames = () =>
+            within(screen.getByRole("navigation"))
+                .getAllByRole("link")
+                .map((link) => link.textContent);
+
+        expect(tabNames()).toEqual(["Wallet", "Explorer", "Profile"]);
+
+        await act(() => i18n.changeLanguage("fr"));
+
+        expect(tabNames()).toEqual(["Porte-monnaie", "Explorer", "Profil"]);
     });
 });

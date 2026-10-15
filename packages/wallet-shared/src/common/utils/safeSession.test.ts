@@ -261,6 +261,17 @@ describe("safeSession utilities", () => {
             expect(getFromLocalStorage("non-existent-key")).toBeUndefined();
             expect(getFromLocalStorage("empty-key")).toBeUndefined();
         });
+
+        test("should return undefined when storage access is denied", () => {
+            const spy = vi
+                .spyOn(window, "localStorage", "get")
+                .mockImplementation(() => {
+                    throw new DOMException("Access is denied", "SecurityError");
+                });
+
+            expect(getFromLocalStorage("frak_session_store")).toBeUndefined();
+            spy.mockRestore();
+        });
     });
 
     describe("getSafeSession without a persisted store", () => {

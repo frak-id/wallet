@@ -4,6 +4,7 @@ import {
     fontSize,
     safeArea,
     shadow,
+    zIndex,
 } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
@@ -47,7 +48,7 @@ export const bannerLayout = style({
     left: brand.scale[400],
     right: brand.scale[400],
     bottom: `calc(${brand.scale[400]} + ${safeArea.bottom})`,
-    zIndex: 50,
+    zIndex: zIndex.fixed,
     border: "none",
     boxShadow: shadow.dialog,
     animation: `${subtlePulse} 2.4s ease-in-out infinite`,

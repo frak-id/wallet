@@ -3,23 +3,26 @@
 Ordered. Each item names its precondition, so anything with an unmet precondition can be skipped
 without re-deriving why.
 
-Detail on any item is in [`open.md`](./open.md); this file is sequencing only. Neither file is
-mirrored into Linear — [`open.md`](./open.md) §0 records which tracker owns what, and why searching
-here first is not optional.
+Detail on any item is in [`open.md`](./open.md); this file is sequencing only. Almost none of it is
+in Linear — [`open.md`](./open.md) §0 records which tracker owns what, which native issues exist, and
+why searching here first is not optional.
 
 ## Where the line is
 
-`1.0.0-beta.1` is published on Maven Central and the SwiftPM mirror, and **nothing consumes it yet**.
-That is the whole strategic position: the ABI is nominally frozen but practically still free, and
-that stops the moment a merchant integrates.
+`1.0.0` is published on Maven Central and the SwiftPM mirror (2026-09-08, release commit
+`949a5eaf6`). The ABI is frozen at it: a breaking change takes a new major. Nothing in this repo
+consumes the published artifact; whether a merchant app does is unknown outside this repo.
 
-Two things follow. Every ABI decision in `open.md` §1 should be taken while the beta line is still
-uncontended. And the first external consumer should be deliberate, not accidental — it converts the
-remaining ABI budget to zero.
+Two things follow. The ABI decisions in `open.md` §1 were not taken before the cut, so each is now a
+major, an additive change, or an accepted cost. And the first external consumer is no longer a
+threshold; it is the first evidence that the published form works.
 
-## 1. Decide the ABI items — before `1.0.0`
+## 1. Decide the ABI items — against 1.0.0 as the baseline
 
-**Precondition:** none. This is the only work that gets *more* expensive by waiting.
+**Precondition:** none. All five were open at the cut: the Android dumps at HEAD equal the ones at
+`android-v1.0.0`, `purchase` is still `(String, String, String)`, `FrakContext`, `SharingResult` and
+`FrakEnvironment` are still closed hierarchies, and `FrakError` has no retryable axis. Take each in
+the next major, make it additively, or record in `docs/native-sdk/decisions.md` that it is accepted as is.
 
 Five items, unowned, in [`open.md`](./open.md) §1:
 
@@ -46,7 +49,8 @@ message for the failure case.
   (the orphaned Compose sheet) and cannot be worked around — a single-screen harness cannot
   reproduce it.
 - Call sites for the five public members with none: `setTrackingEnabled`, `resetAnonymousId`,
-  `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload.
+  `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. Still none at
+  2026-10-13, after both harnesses were split into tabs; `example/native-android` has no `NavHost`.
 
 ## 3. Port `ServerClock` to iOS, and bound it
 
@@ -56,7 +60,8 @@ The clock-skew fix shipped on Android only, which makes it the largest remaining
 device 61 s fast fails every proof, non-retryably. Two things to fix together, since the port should
 not carry the flaw:
 
-- `ServerClock` has no upper bound — a proxy sending `Date: 2100` skews every proof.
+- Android's `ServerClock` adopts only a `Date` between 2025-01-01 and 2100-01-01 (`net/ServerClock.kt`).
+  The port should carry that bound; iOS still stamps from `Date()` (`AnonymousIdStore.swift:71`).
 - It is not persisted, so a cold start runs on the device clock until the first response.
 
 ## 4. The device tier
@@ -72,10 +77,13 @@ Manual passes have happened on both platforms and are not a substitute: they cov
 one build, on one screen. They cannot catch what the harness itself gets wrong, and it has been
 caught doing exactly that three times.
 
-One piece of this does **not** need the tier and can land now: **9.13(c), a build-output CSS
-assertion.** Vanilla Extract emits static CSS at build time and `@vanilla-extract/vite-plugin` is
-already a dependency. No test in the repo reads emitted CSS, which is why a cascade bug survived a
-test named for the exact behaviour it broke.
+**Done: 9.13(c), asserting the real cascade.** `apps/wallet/tests-light/specs/sharing.check.ts` reads
+the computed radius and shadow in a real browser on every PR (`wallet-pages` job, `180a11fbf`), and
+`assert-real-assertions.ts` fails a spec whose only assertion is a screenshot. `Ambassador.test.tsx`
+compiles the real `.css.ts` and asserts the shipped declarations (`2020de05c`).
+
+The first slice of the tier that needs no device is running the UIKit suites on a simulator: Linear
+FRA-314, audit NSD-12. CI already pays for the macOS runner.
 
 ## 5. Rewards conformance, then the sharing-link corpus
 
@@ -94,28 +102,32 @@ test named for the exact behaviour it broke.
 
 ## 6. First external consumer
 
-**Precondition:** §1 decided.
+**Precondition:** none. 1.0.0 shipped with §1 open, so §1 no longer gates it.
 
 Get one consumer building against the **published artifact**, not the Gradle composite build or the
 SwiftPM path dependency. Everything to date has been validated through a substitution that hides
-whole classes of packaging defect.
+whole classes of packaging defect. iOS already resolves its published tag on every release
+(`verify-published` in `release-ios-sdk.yml`); Android has no equivalent job, and the harness's
+`id.frak.sdk:core:1.0.0` coordinate is replaced by the local build.
 
-This is the point of no return for the ABI. Do not reach it with §1 open.
+The ABI's point of no return was the 1.0.0 cut. This step now buys evidence, not budget.
 
 ## 7. Contract items needing an owner
 
 **Precondition:** an owner. None of these is blocked on engineering.
 
-- **The kill switch.** `?sdkv=` and `x-frak-sdk-version` are accepted and logged and drive nothing.
-  The shape is also wrong — per-merchant where a bad release is fleet-wide and version-scoped. Now
-  that a version is published, this is the mechanism for retiring it.
-- **`native=1` footer ownership.** The marker's meaning changed, and both mismatch directions are
-  bad: a double-rendered footer with a lying result channel, or no footer and a dead funnel. Needs a
-  capability param or a return-channel ack. `sdkv` is already carried and could gate it.
+- **The kill switch.** `?sdkVersion=` and `x-frak-sdk-version` are accepted and logged and drive
+  nothing. The shape is also wrong — per-merchant where a bad release is fleet-wide and
+  version-scoped. With 1.0.0 published, this is the mechanism for retiring it.
+- **`embed=native` footer ownership.** The contract still calls the marker `native=1`; that param no
+  longer exists (audit NSD-17). Its meaning changed, and both mismatch directions are bad: a
+  double-rendered footer with a lying result channel, or no footer and a dead funnel. Needs a
+  capability param or a return-channel ack. `sdkVersion` is already carried and could gate it.
 - **S4** — decide whether the iOS resolve cache stays backed up, and record it either way.
 - **Dark mode** — does the sheet follow the system setting?
-- **`ROLLOUT-STEP-3`** — the identity proof-of-possession arms go mandatory, gated on a store binary
-  being live. See [`../identity-proof-of-possession/`](../identity-proof-of-possession/).
+- **Done: `ROLLOUT-STEP-3`** — closed in `d6dffc705` (2026-09-18, FRA-294). The identity
+  proof-of-possession arms are mandatory. See
+  [`../identity-proof-of-possession/`](../identity-proof-of-possession/).
 
 ## 8. Longer term
 
@@ -123,7 +135,7 @@ Not scheduled, listed so they are not rediscovered as new ideas.
 
 | | Precondition |
 |---|---|
-| Native `FrakShareButton` / `FrakBanner` / `FrakPostPurchaseCard`, no web view | a sharing performance measurement on the WebView path that nobody has taken |
+| Native `FrakShareButton` / `FrakBanner` / `FrakPostPurchaseCard`, no web view | a sharing performance measurement on the WebView path that nobody has taken (Linear FRA-292 was canceled 2026-10-05; the gate stands) |
 | `allowedPackageIds` auto-verification (Digital Asset Links, AASA) | launch is manual admin entry today |
 | Android silent identity linking via a bound Service | — |
 | `frakAction=share` mapping an inbound URL or push payload to a sheet | — |

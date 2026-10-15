@@ -14,6 +14,7 @@
  * cached entries are available without a network round-trip.
  */
 
+import { sessionStorageIfAllowed } from "@frak-labs/wallet-shared/common/utils/browserStorage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/query-core";
 import {
@@ -32,7 +33,7 @@ export const queryClient = new QueryClient({
 });
 
 const persister = createAsyncStoragePersister({
-    storage: globalThis.sessionStorage,
+    storage: sessionStorageIfAllowed(),
     throttleTime: 50,
 });
 

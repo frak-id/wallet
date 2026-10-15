@@ -22,6 +22,7 @@ export const DEPOSIT_OBJET =
     "Alimentation du wallet maître Frak à utiliser pour les campagnes de récompenses client";
 export const DEPOSIT_ATTESTATION = [
     "Ce document atteste que Frak Labs a bien reçu les fonds mentionnés ci-dessus pour être crédités sur le wallet de campagne de l'annonceur.",
+    "Après déduction de la TVA et des frais Frak, le montant final est le montant disponible pour distribuer des récompenses aux utilisateurs finaux de l'annonceur.",
     "Ce crédit constitue une avance sur budget publicitaire, à consommer au fil des campagnes actives, et ne constitue pas une facture.",
 ];
 
@@ -31,6 +32,11 @@ export const DEPOSIT_ATTESTATION = [
  */
 export const WITHDRAW_OBJET =
     "Restitution des fonds non consommés du wallet de campagne Frak";
+export const DEPOSIT_HEADLINE_LABEL = "Montant déposé";
+export const DEPOSIT_TOTAL_LABEL = "Disponible pour les récompenses";
+export const DEPOSIT_TOTAL_CAPTION =
+    "Montant final, une fois la TVA et les frais Frak déduits.";
+
 export const WITHDRAW_ATTESTATION = [
     "Ce document atteste que Frak Labs a restitué à l'annonceur les fonds non consommés mentionnés ci-dessus, initialement crédités sur son wallet de campagne.",
     "Ce remboursement correspond au solde d'avance sur budget publicitaire non consommé, et ne constitue pas une facture.",

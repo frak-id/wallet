@@ -129,18 +129,17 @@ field-agnostic protection for every caller of the schema.
 ## SKU plumbing
 
 `purchase_items.sku` and `purchase_items.total_price` (both nullable) are
-declared in the Drizzle schema. The `local` and `dev` migrations ship with
-it; **`prod` does not** — the DB team owns that step, and the rollout is
-staged in
-[`docs/plans/purchase-items-line-key-migration.md`](../../../docs/plans/purchase-items-line-key-migration.md).
+declared in the Drizzle schema, and every stage has the migration
+(`prod`: `services/bootstrap/drizzle/prod/0021_aspiring_shiva.sql`).
 
-The backend **cannot be deployed to a stage whose database has not taken the
+The backend **cannot run against a database that has not taken the
 change**. Inserts reference `total_price` and bind their conflict target to
 the line constraint below, so both must exist first or every purchase webhook
 fails on write.
 
-`sku` is optional at every hop; items without it never match SKU conditions —
-no error, graceful degradation.
+`sku` is optional at every hop, with no error when it is missing. An item
+without one never matches a positive SKU condition, but it does satisfy the
+negated ones (`neq`, `not_in`, `not_exists`) on every platform.
 
 **`sku` is part of item identity.** A line is keyed on
 `(purchase_id, external_id, sku)`, because `external_id` is the *parent*
@@ -184,7 +183,7 @@ Per provider:
 | Shopify | `line_items[].sku` (native) |
 | WooCommerce | `line_items[].sku`, forwarded by the plugin's payload filter |
 | PrestaShop | `order_detail.product_reference`, sent as `sku` when non-empty |
-| Magento | `getSku()`, sent unconditionally — an item with no SKU therefore arrives as `""`, which satisfies `exists`, `neq` and `not_in` instead of being skipped. Out of scope pending a dedicated review |
+| Magento | `getSku()`, sent unconditionally, so an item with no SKU arrives as `""`; `toPurchaseItem` stores it as `null`, the same as an omitted SKU. The plugin is otherwise out of scope pending a dedicated review |
 | Custom | optional `sku` added to the public webhook contract |
 
 ## Line money

@@ -5,7 +5,7 @@
 export function decimateTimeSeries<T extends Record<string, unknown>>(
     data: T[],
     maxPoints: number,
-    valueKeys: string[] = []
+    valueKeys: string[]
 ): T[] {
     const len = data.length;
     if (maxPoints >= len || maxPoints < 3) {
@@ -13,15 +13,6 @@ export function decimateTimeSeries<T extends Record<string, unknown>>(
     }
 
     const getY = (point: T, index: number): number => {
-        if (valueKeys.length === 0) {
-            for (const val of Object.values(point)) {
-                if (typeof val === "number") {
-                    return val;
-                }
-            }
-            return index;
-        }
-
         let sum = 0;
         let count = 0;
         for (const key of valueKeys) {

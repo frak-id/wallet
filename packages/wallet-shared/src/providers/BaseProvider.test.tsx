@@ -10,6 +10,8 @@ vi.mock("@frak-labs/app-essentials/blockchain", () => ({
 vi.mock("wagmi", () => ({
     WagmiProvider: vi.fn(({ children }) => children),
     createConfig: vi.fn(() => ({ chains: [] })),
+    createStorage: vi.fn(() => ({})),
+    noopStorage: {},
 }));
 
 vi.mock("viem", () => ({

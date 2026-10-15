@@ -31,6 +31,15 @@ import type {
 } from "../../infrastructure/pricing/PricingRepository";
 import { buildPdfBuyer } from "./shared";
 
+/** What the monthly-bill render needs beyond the frozen document row. */
+type MonthlyBillPdfData = {
+    annexAssetLogs: AnnexAssetLogRow[];
+    priceByToken: Map<Address, TokenPrice | undefined>;
+    merchant: MerchantSelectForBill | null;
+    /** Freshly computed details; fills ledger fields a frozen legacy bill lacks. */
+    details?: BillingDocumentDetails;
+};
+
 /** The merchant row shape this orchestrator reads (bank address + accounting). */
 type MerchantSelectForBill = Awaited<
     ReturnType<MerchantRepository["findById"]>
@@ -823,11 +832,7 @@ export class MonthlyBillOrchestrator {
 
     private async tryGenerateAndStorePdf(
         document: BillingDocumentSelect,
-        pdfData: {
-            annexAssetLogs: AnnexAssetLogRow[];
-            priceByToken: Map<Address, TokenPrice | undefined>;
-            merchant: MerchantSelectForBill | null;
-        }
+        pdfData: MonthlyBillPdfData
     ): Promise<void> {
         try {
             await this.generateAndStorePdf(document, pdfData);
@@ -847,22 +852,82 @@ export class MonthlyBillOrchestrator {
      */
     private async generateAndStorePdf(
         document: BillingDocumentSelect,
-        pdfData: {
-            annexAssetLogs: AnnexAssetLogRow[];
-            priceByToken: Map<Address, TokenPrice | undefined>;
-            merchant: MerchantSelectForBill | null;
-        }
+        pdfData: MonthlyBillPdfData
     ): Promise<void> {
+        const bytes = await this.renderPdfBytes(document, pdfData);
+        if (!bytes) return;
+
+        const key = await this.billingStorage.upload({
+            merchantId: document.merchantId,
+            kind: document.kind,
+            id: document.id,
+            body: bytes,
+        });
+
+        await this.billingDocuments.setPdf(document.merchantId, document.id, {
+            pdfStorageKey: key,
+        });
+    }
+
+    /**
+     * Re-renders an ALREADY-ISSUED bill PDF with the current template,
+     * overwriting the stored object in place. Frozen `details` and amounts
+     * are used as-is and nothing is written to the database; only the reward
+     * annex rows are re-read, as at the original render.
+     */
+    async rerenderIssuedPdf(
+        document: BillingDocumentSelect
+    ): Promise<string | null> {
+        if (
+            document.kind !== "monthly_bill" ||
+            !document.pdfStorageKey ||
+            !document.periodStart ||
+            !document.periodEnd
+        ) {
+            return null;
+        }
+        const computed = await this.computeBillData(
+            document.merchantId,
+            document.periodStart,
+            document.periodEnd,
+            { fetchAnnexRows: true, primaryCurrency: document.currency }
+        );
+        const bytes = await this.renderPdfBytes(document, computed);
+        if (!bytes) return null;
+        return this.billingStorage.upload({
+            merchantId: document.merchantId,
+            kind: document.kind,
+            id: document.id,
+            body: bytes,
+        });
+    }
+
+    private async renderPdfBytes(
+        document: BillingDocumentSelect,
+        pdfData: MonthlyBillPdfData
+    ): Promise<Uint8Array | null> {
         if (
             document.kind !== "monthly_bill" ||
             document.details?.kind !== "monthly_bill" ||
             !document.periodStart ||
             !document.periodEnd
         ) {
-            return;
+            return null;
         }
         const details = document.details;
         const { annexAssetLogs, priceByToken, merchant } = pdfData;
+        const freshLedgers =
+            pdfData.details?.kind === "monthly_bill"
+                ? pdfData.details.ledgers
+                : details.ledgers;
+        const ledgers = details.ledgers.map((ledger) => ({
+            ...ledger,
+            rewardedToDate:
+                ledger.rewardedToDate ??
+                freshLedgers.find((fresh) => fresh.currency === ledger.currency)
+                    ?.rewardedToDate ??
+                "0",
+        }));
 
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
@@ -915,7 +980,7 @@ export class MonthlyBillOrchestrator {
             });
         }
 
-        const bytes = await this.pdf.render({
+        return this.pdf.render({
             kind: "monthly_bill",
             reference: document.reference,
             documentDate: document.documentDate,
@@ -932,22 +997,11 @@ export class MonthlyBillOrchestrator {
                 vatApplicable: isVatApplicable(
                     merchant?.accountingInfo?.country
                 ),
-                ledgers: details.ledgers,
+                ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,
                 otherRewards,
             },
-        });
-
-        const key = await this.billingStorage.upload({
-            merchantId: document.merchantId,
-            kind: document.kind,
-            id: document.id,
-            body: bytes,
-        });
-
-        await this.billingDocuments.setPdf(document.merchantId, document.id, {
-            pdfStorageKey: key,
         });
     }
 }

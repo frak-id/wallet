@@ -1,5 +1,7 @@
-import { lazy, Suspense } from "react";
-import { useListenerUI } from "@/ui/ListenerUiProvider";
+import { RpcErrorCodes } from "@frak-labs/frame-connector";
+import { recordError } from "@frak-labs/wallet-shared/common/analytics";
+import { lazy, Suspense, useErrorBoundary, useState } from "react";
+import { type UIRequest, useListenerUI } from "@/ui/ListenerUiProvider";
 
 /**
  * Lazy import of the modal UI
@@ -23,11 +25,31 @@ const ListenerSharingPage = lazy(sharingImport);
  * Render the listener UI if needed
  */
 export function ListenerUiRenderer() {
-    const { currentRequest } = useListenerUI();
+    const { currentRequest, clearRequest } = useListenerUI();
+    const [crashedRequest, setCrashedRequest] = useState<UIRequest>();
+
+    // The iframe is already shown when the UI renders: a crash left unsettled
+    // is an invisible overlay over the merchant page and a hanging SDK promise.
+    useErrorBoundary((error) => {
+        recordError(error, {
+            source: "error_boundary",
+            context: { surface: currentRequest?.type },
+        });
+        if (!currentRequest) return;
+        void currentRequest.emitter({
+            error: {
+                code: RpcErrorCodes.serverError,
+                message: "The Frak UI failed to render",
+            },
+        });
+        clearRequest();
+        setCrashedRequest(currentRequest);
+    });
+
     /**
      * If no request, do not display anything
      */
-    if (!currentRequest) {
+    if (!currentRequest || currentRequest === crashedRequest) {
         return null;
     }
 

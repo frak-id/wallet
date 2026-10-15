@@ -59,12 +59,7 @@ export function ExplorerSortSheet({
 
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent
-                hideHandle={true}
-                edgeToEdge={true}
-                surface="muted"
-                aria-describedby={undefined}
-            >
+            <DrawerContent hideHandle={true} edgeToEdge={true} surface="muted">
                 {/* Visually-hidden accessible name for the dialog; the visible
                     heading below carries the DS typography (ResponsiveModal
                     pattern). */}

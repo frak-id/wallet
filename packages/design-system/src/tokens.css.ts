@@ -299,6 +299,8 @@ export const zIndex = {
     modal: 1000,
     popover: 1100,
     toast: 9999,
+    // Lock, forced-update and crash screens: nothing may paint over them.
+    gate: 10000,
 } as const;
 
 export const transition = {

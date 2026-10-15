@@ -53,6 +53,7 @@ const MonthlyBillLedgerSchema = t.Object({
     totalDeposited: t.String(),
     totalWithdrawn: t.String(),
     totalRewarded: t.String(),
+    rewardedToDate: t.Optional(t.String()),
 });
 
 const MonthlyBillDetailsSchema = t.Object({

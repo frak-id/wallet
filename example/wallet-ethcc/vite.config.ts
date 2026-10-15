@@ -3,7 +3,11 @@ import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
-import { onwarn } from "../../packages/dev-tooling/index.ts";
+import {
+    blockchainVendorChunkGroup,
+    onwarn,
+    reactVendorChunkGroup,
+} from "../../packages/dev-tooling/index.ts";
 
 const DEBUG = process.env.DEBUG === "true";
 const isProd = process.env.STAGE?.includes("prod") ?? false;
@@ -49,16 +53,8 @@ export default defineConfig((): UserConfig => {
                     codeSplitting: {
                         minShareCount: 1,
                         groups: [
-                            {
-                                name: "react-vendor",
-                                test: /node_modules[\\/](react|react-dom|scheduler)/,
-                                priority: 40,
-                            },
-                            {
-                                name: "blockchain-vendor",
-                                test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
-                                priority: 35,
-                            },
+                            { ...reactVendorChunkGroup, priority: 40 },
+                            { ...blockchainVendorChunkGroup, priority: 35 },
                             {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](@radix-ui|vaul|sonner|lucide-react|class-variance-authority)/,

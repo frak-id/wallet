@@ -6,6 +6,25 @@ import { useCallback, useSyncExternalStore } from "react";
  */
 const subscribers = new Map<string, Set<() => void>>();
 
+/** Stands in for `sessionStorage` when the browser denies it (third-party iframe, Incognito). */
+const deniedStorageFlags = new Map<string, string>();
+
+function readFlag(key: string): string | null {
+    try {
+        return sessionStorage.getItem(key);
+    } catch {
+        return deniedStorageFlags.get(key) ?? null;
+    }
+}
+
+function writeFlag(key: string, value: string): void {
+    try {
+        sessionStorage.setItem(key, value);
+    } catch {
+        deniedStorageFlags.set(key, value);
+    }
+}
+
 /**
  * Simple hook to manage a boolean flag in sessionStorage
  * Automatically syncs across all components using the same key (same window and cross-window)
@@ -42,8 +61,7 @@ export function useSessionFlag(key: string, defaultValue = false) {
     // Get current value from sessionStorage
     const getSnapshot = useCallback(() => {
         if (typeof window === "undefined") return defaultValue;
-        const stored = sessionStorage.getItem(key);
-        return stored === "true";
+        return readFlag(key) === "true";
     }, [key, defaultValue]);
 
     const value = useSyncExternalStore(
@@ -55,7 +73,7 @@ export function useSessionFlag(key: string, defaultValue = false) {
     // Set value in sessionStorage and notify all subscribers
     const setValue = useCallback(
         (newValue: boolean) => {
-            sessionStorage.setItem(key, String(newValue));
+            writeFlag(key, String(newValue));
 
             // Notify all subscribers in current window (useSyncExternalStore requires this)
             subscribers.get(key)?.forEach((callback) => {

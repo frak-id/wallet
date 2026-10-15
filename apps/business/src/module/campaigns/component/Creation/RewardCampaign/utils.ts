@@ -86,12 +86,16 @@ export type RewardFormValues = {
  * only accepts it when every reward reflects the exclusion in its basis
  * (`CampaignManagementService.validateRuleDefinition`).
  */
-export function requiresMatchedBasis(draft: CampaignDraft): boolean {
+export function requiresMatchedBasis(
+    draft: Pick<CampaignDraft, "rule">
+): boolean {
     return isNegativeProductScope(draft.rule.productScope);
 }
 
 /** A basis choice only exists on a scoped campaign. */
-export function supportsMatchedBasis(draft: CampaignDraft): boolean {
+export function supportsMatchedBasis(
+    draft: Pick<CampaignDraft, "rule">
+): boolean {
     return !!draft.rule.productScope;
 }
 
@@ -423,7 +427,9 @@ function tieredDraftToForm(
     };
 }
 
-export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
+export function draftToRewardForm(
+    draft: Pick<CampaignDraft, "rule">
+): RewardFormValues {
     const { rule } = draft;
     const referrer = rule.rewards.find((r) => r.recipient === "referrer");
     const referee = rule.rewards.find((r) => r.recipient === "referee");

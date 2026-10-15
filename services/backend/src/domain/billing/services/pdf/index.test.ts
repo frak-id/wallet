@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
+import { grossUpAvailable } from "./breakdown";
 import {
     type BillingPdfDocumentDto,
     BillingPdfService,
@@ -75,6 +76,7 @@ const monthlyBillDto: BillingPdfDocumentDto = {
                 totalDeposited: "500",
                 totalWithdrawn: "50",
                 totalRewarded: "150",
+                rewardedToDate: "250",
             },
         ],
         fiatTotals: { eur: "150", usd: "165", gbp: "130" },
@@ -221,6 +223,69 @@ describe("BillingPdfService", () => {
                     },
                 ],
             } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+    });
+});
+
+describe("grossUpAvailable", () => {
+    it("splits a credited amount into TVA, Frak fees and the amount available", () => {
+        expect(grossUpAvailable("800", true)).toEqual({
+            gross: "1200.00",
+            vat: "200.00",
+            frakFee: "200.00",
+            available: "800.00",
+        });
+    });
+
+    it("has no TVA line for a non-FR merchant", () => {
+        expect(grossUpAvailable("800", false)).toEqual({
+            gross: "1000.00",
+            vat: "0.00",
+            frakFee: "200.00",
+            available: "800.00",
+        });
+    });
+
+    it("always prints figures that add up (gross = available + fees + TVA)", () => {
+        const parts = grossUpAvailable("123.456789", true);
+        const sum =
+            Number(parts.available) + Number(parts.frakFee) + Number(parts.vat);
+        expect(Number(parts.gross)).toBeCloseTo(sum, 10);
+    });
+});
+
+describe("BillingPdfService new layout", () => {
+    const service = new BillingPdfService();
+
+    it("renders a deposit with a gifted amount and no VAT", async () => {
+        const bytes = await service.render({
+            ...depositDto,
+            grossAmount: "1000",
+            netAmount: "850",
+            deposit: {
+                vatAmount: "0",
+                frakFeeAmount: "200",
+                giftedAmount: "50",
+            },
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+    });
+
+    it("renders a multi-ledger monthly bill status for a non-FR merchant", async () => {
+        const base = monthlyBillDto.monthlyBill as NonNullable<
+            BillingPdfDocumentDto["monthlyBill"]
+        >;
+        const bytes = await service.render({
+            ...monthlyBillDto,
+            monthlyBill: {
+                ...base,
+                vatApplicable: false,
+                ledgers: [
+                    ...base.ledgers,
+                    { ...base.ledgers[0], currency: "usdc" },
+                ],
+            },
         });
         expect(bytes.length).toBeGreaterThan(0);
     });

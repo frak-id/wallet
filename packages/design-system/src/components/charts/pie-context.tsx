@@ -1,41 +1,22 @@
-import type { Transition } from "motion/react";
-import { createContext, type RefObject, useContext } from "react";
+import { createContext, useContext } from "react";
 
-// CSS variable references for pie chart theming
-const pieCssVars = {
-    background: "var(--chart-background)",
-    foreground: "var(--chart-foreground)",
-    foregroundMuted: "var(--chart-foreground-muted)",
-    label: "var(--chart-label)",
-    // Default slice colors from chart palette
-    slice1: "var(--chart-1)",
-    slice2: "var(--chart-2)",
-    slice3: "var(--chart-3)",
-    slice4: "var(--chart-4)",
-    slice5: "var(--chart-5)",
-};
-
-// Default slice color palette
-export const defaultPieColors = [
-    pieCssVars.slice1,
-    pieCssVars.slice2,
-    pieCssVars.slice3,
-    pieCssVars.slice4,
-    pieCssVars.slice5,
-];
+export const PIE_SIZE = 186;
+export const PIE_CENTER = PIE_SIZE / 2;
+export const PIE_HOVER_OFFSET = 8;
+export const PIE_INNER_RADIUS = 59;
+export const PIE_OUTER_RADIUS = PIE_CENTER - PIE_HOVER_OFFSET;
+export const PIE_CORNER_RADIUS = 2;
+export const PIE_PAD_ANGLE = 0.02;
 
 export interface PieData {
     /** Display label for the slice */
     label: string;
     /** Value for the slice (determines slice size relative to total) */
     value: number;
-    /** Optional color override - falls back to palette */
-    color?: string;
-    /** Optional fill override for patterns/gradients (e.g., "url(#patternId)") */
-    fill?: string;
+    /** Slice color */
+    color: string;
 }
 
-/** Arc data computed by visx Pie */
 export interface PieArcData {
     data: PieData;
     index: number;
@@ -45,43 +26,11 @@ export interface PieArcData {
     value: number;
 }
 
-export interface PieContextValue {
-    // Data
-    data: PieData[];
+interface PieContextValue {
     arcs: PieArcData[];
-
-    // Dimensions
-    size: number;
-    center: number;
-    outerRadius: number;
-    innerRadius: number;
-    padAngle: number;
-    cornerRadius: number;
-
-    // Hover effect
-    hoverOffset: number;
-
-    // Hover state
     hoveredIndex: number | null;
     setHoveredIndex: (index: number | null) => void;
-
-    // Animation state
-    animationKey: number;
-    isLoaded: boolean;
-    enterTransition?: Transition;
-    enterStaggerScale: number;
-
-    // Container ref for portals
-    containerRef: RefObject<HTMLDivElement | null>;
-
-    // Computed values
     totalValue: number;
-
-    // Get color for a slice index
-    getColor: (index: number) => string;
-
-    // Get fill for a slice index (supports patterns/gradients)
-    getFill: (index: number) => string;
 }
 
 const PieContext = createContext<PieContextValue | null>(null);

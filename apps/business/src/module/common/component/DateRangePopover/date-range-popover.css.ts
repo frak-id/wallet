@@ -3,12 +3,6 @@ import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
-// Lift above a fixed header (z-index 1) when needed; the popover portals to
-// <body> with z-index auto otherwise.
-export const popoverContent = style({
-    zIndex: 50,
-});
-
 export const panel = style({
     display: "flex",
     gap: alias.spacing.m,

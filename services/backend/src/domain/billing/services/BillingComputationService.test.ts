@@ -271,6 +271,8 @@ describe("BillingComputationService", () => {
             expect(result.totalDeposited).toBe("500.000000000000000000");
             expect(result.totalWithdrawn).toBe("50.000000000000000000");
             expect(result.totalRewarded).toBe("150.000000000000000000");
+            // rewardedToDate = 100 before + 150 in period
+            expect(result.rewardedToDate).toBe("250.000000000000000000");
         });
 
         it("allows a negative balance (admin-entry-incomplete ledger, not clamped)", () => {

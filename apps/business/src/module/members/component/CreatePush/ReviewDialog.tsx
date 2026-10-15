@@ -63,10 +63,7 @@ export function ReviewDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent
-                className={styles.modal}
-                aria-describedby={undefined}
-            >
+            <DialogContent className={styles.modal}>
                 <Stack space={"m"} align={"center"}>
                     <IconCircle size={"md"}>
                         <SendIcon className={styles.badgeIcon} />

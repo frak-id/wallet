@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createRequire } from "node:module";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { pino } from "pino";
 
@@ -84,7 +85,8 @@ export const log = pino({
     },
     transport: isRunningLocally
         ? {
-              target: "pino-pretty",
+              // Absolute: under vite's module runner pino cannot resolve a bare target from its call sites.
+              target: createRequire(import.meta.url).resolve("pino-pretty"),
               options: {
                   colorize: true,
               },

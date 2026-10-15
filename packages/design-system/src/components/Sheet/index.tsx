@@ -85,7 +85,6 @@ export function SheetContent({
                 <Overlay />
             </RadixDialog.Overlay>
             <RadixDialog.Content
-                aria-describedby={undefined}
                 className={clsx(
                     sheetContent({ side, size, padded }),
                     className

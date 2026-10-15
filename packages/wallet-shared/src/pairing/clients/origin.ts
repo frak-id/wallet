@@ -8,6 +8,7 @@ import {
 } from "zustand/middleware";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
+import { sessionStorageIfAllowed } from "../../common/utils/browserStorage";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { recordDistantAuthenticator } from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
@@ -87,12 +88,13 @@ const PAIRING_PERSIST_TTL_MS = 10 * 60 * 1_000;
 /**
  * sessionStorage adapter that wraps every value with a timestamp and drops
  * entries older than {@link PAIRING_PERSIST_TTL_MS} on read. Returns null
- * (no persisted state) in non-browser contexts.
+ * (no persisted state) when there is no usable sessionStorage.
  */
 const sessionStorageWithTtl: StateStorage = {
     getItem: (name) => {
-        if (typeof window === "undefined") return null;
-        const raw = window.sessionStorage.getItem(name);
+        const storage = sessionStorageIfAllowed();
+        if (!storage) return null;
+        const raw = storage.getItem(name);
         if (!raw) return null;
         try {
             const { value, persistedAt } = JSON.parse(raw) as {
@@ -100,25 +102,23 @@ const sessionStorageWithTtl: StateStorage = {
                 persistedAt: number;
             };
             if (Date.now() - persistedAt > PAIRING_PERSIST_TTL_MS) {
-                window.sessionStorage.removeItem(name);
+                storage.removeItem(name);
                 return null;
             }
             return value;
         } catch {
-            window.sessionStorage.removeItem(name);
+            storage.removeItem(name);
             return null;
         }
     },
     setItem: (name, value) => {
-        if (typeof window === "undefined") return;
-        window.sessionStorage.setItem(
+        sessionStorageIfAllowed()?.setItem(
             name,
             JSON.stringify({ value, persistedAt: Date.now() })
         );
     },
     removeItem: (name) => {
-        if (typeof window === "undefined") return;
-        window.sessionStorage.removeItem(name);
+        sessionStorageIfAllowed()?.removeItem(name);
     },
 };
 

@@ -115,7 +115,7 @@
     "qr": "catalog:"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "catalog:",

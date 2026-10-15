@@ -19,6 +19,7 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { clearAllCache } from "../utils/cache";
+import { HANDSHAKE_TIMEOUT_MS, trackHandshake } from "./handshakeTracking";
 import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
@@ -188,34 +189,13 @@ export async function createIFrameFrakClient({
             sdk_version: process.env.SDK_VERSION,
         });
 
-        // Race the connection against the heartbeat timeout so we can
-        // distinguish "connected" from "timeout" cleanly without touching
-        // the heartbeat plumbing. 30s matches `HEARTBEAT_TIMEOUT`.
-        let settled = false;
-        const timeoutHandle = setTimeout(() => {
-            if (settled) return;
-            settled = true;
-            openPanel?.track("sdk_iframe_handshake_failed", {
-                reason: "timeout",
-            });
-        }, 30_000);
-        lifecycleManager.isConnected
-            .then(() => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeoutHandle);
-                openPanel?.track("sdk_iframe_connected", {
-                    handshake_duration_ms: Date.now() - handshakeStartedAt,
-                });
-            })
-            .catch(() => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeoutHandle);
-                openPanel?.track("sdk_iframe_handshake_failed", {
-                    reason: "unknown",
-                });
-            });
+        const panel = openPanel;
+        trackHandshake({
+            track: (event, properties) => panel.track(event, properties),
+            isConnected: lifecycleManager.isConnected,
+            iframe,
+            startedAt: handshakeStartedAt,
+        });
     }
 
     const waitForSetup = postConnectionSetup({
@@ -256,7 +236,6 @@ function setupHeartbeat(
     lifecycleManager: IframeLifecycleManager
 ) {
     const HEARTBEAT_INTERVAL = 250; // Fallback discovery ping until we are connected
-    const HEARTBEAT_TIMEOUT = 30_000;
     let heartbeatInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;
 
@@ -269,7 +248,7 @@ function setupHeartbeat(
         sendHeartbeat();
         heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
-        timeoutId = setTimeout(stopHeartbeat, HEARTBEAT_TIMEOUT);
+        timeoutId = setTimeout(stopHeartbeat, HANDSHAKE_TIMEOUT_MS);
 
         await lifecycleManager.isConnected;
         stopHeartbeat();

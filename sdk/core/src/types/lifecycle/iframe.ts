@@ -8,7 +8,14 @@ export type IFrameLifecycleEvent =
           data?: never;
       }
     | DoBackupEvent
-    | RedirectRequestEvent;
+    | RedirectRequestEvent
+    | BootErrorEvent;
+
+/** Posted by the listener page itself when its scripts throw before boot. */
+type BootErrorEvent = {
+    iframeLifecycle: "boot-error";
+    data: { message: string };
+};
 
 type DoBackupEvent = {
     iframeLifecycle: "do-backup";

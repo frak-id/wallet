@@ -30,8 +30,8 @@ public class Interaction internal constructor(
     public companion object {
         /**
          * A referral arrival. Built for you by [id.frak.sdk.AppLinkApi.handleReferral]; tracking one
-         * yourself for a link the SDK already handled double-counts it, as the `arrival` schema
-         * carries no idempotency key.
+         * yourself for a link the SDK already handled only sends it twice, since the backend keeps the
+         * first referral.
          */
         @JvmStatic
         public fun arrival(

@@ -10,7 +10,7 @@ what a reader needs in order not to undo it. The planning documents that got it 
 map, the admission plan, the progress log and the flip runbook) are deleted — everything in them
 was either executed, recorded here, or wrong.
 
-**Blocks:** native SDK work ([`../native-sdk/`](../native-sdk/)).
+**Related:** native SDK work ([`../native-sdk/`](../native-sdk/)), released at 1.0.0.
 
 ---
 
@@ -33,12 +33,11 @@ proven** — precisely the pre-install population holding unsettled attribution.
 
 | # | Item | Why it is not done |
 |---|---|---|
-| 1 | **Prod migration for `checkout_token`** | `local/0039` and `dev/0043` are generated and committed; `drizzle/prod/` is still at `0020`. `InstallCodeRepository` names `checkout_token` in raw SQL, so a prod backend on the old schema raises `42703` on every `install-code/generate` and `install-code/resolve`. Generated on `dev` alongside the other prod migrations coming later — **must land before this reaches `main`** |
 | 2 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
 | 4 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential — but one minted only while a wallet is connected, so a replay hits `WALLET_CONFLICT` unless the original link never committed. Bind `SHA-256(walletAddress)` as `frak-ensure-v2` with v1 fallback; only `sdk/core` mints it (no native signer), so the dual-accept is bounded by CDN bundle churn, not store review. Low, when picked up |
 | 5 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
 | 6 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket — but do not close it with a burn either, since `createIFrameFrakClient` and AID-012 both rely on the token surviving a repeat. Bind it to its target, or consume with an idempotency window. Medium: a replay only wins a group that never got its wallet |
-| 7 | **AID-005 — latch the legacy node** | The one item here more reachable than the rest. `migrateLegacyIdentity` executes with no proof, so a *successful* migration still leaves the legacy node unlatched while `mergeGroups` repoints it into the live group — a live alias, not an orphan, whose id is published as `c` in every pre-derivation `fCtx` link. No capture step, no expiry. G27 in `MERGE-SURFACE-MAP.md` is the fix that keeps the legacy tail: `frak-migrate-v1` signed over **both** ids plus a first-writer-wins marker. Distinct from §3 — what is deliberate there is the unflipped `refuseUnproven`, not the unlatchable alias |
+| 7 | **AID-005 — latch the legacy node** | The one item here more reachable than the rest. `migrateLegacyIdentity` executes with no proof, so a *successful* migration still leaves the legacy node unlatched while `mergeGroups` repoints it into the live group — a live alias, not an orphan, whose id is published as `c` in every pre-derivation `fCtx` link. No capture step, no expiry. No fix is on file: the legacy id is public, so a migrate proof signed over it would prove nothing. Distinct from §3 — what is deliberate there is the unflipped `refuseUnproven`, not the unlatchable alias |
 | 8 | **AID-013 — no cross-merchant proof-scoping test** | The property holds and is load-bearing; nothing pins it. Cheapest item on this list |
 | 9 | **AID-008, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
 
@@ -114,9 +113,10 @@ were deleted. The counters stayed — they measure, they no longer gate.
 - **The header→body promotion (`x-frak-client-id`) is kept.** It lands on the same bare exit, so it
   is no longer a proofless door, and deleting it would break a header caller that *does* carry a
   proof.
-- **`install-code/generate` prefers `checkoutToken` over `anonymousId`.** The id reaching that page
-  comes from a buyer-writable cart attribute; the token is derived from the order server-side. Get
-  this backwards and Gate 2 ships inert.
+- **The wallet sends `checkoutToken` over `anonymousId` to `install-code/generate`**
+  (`useGenerateInstallCode.ts`); the route itself rejects both together (`AMBIGUOUS_CREDENTIAL`). The id
+  reaching that page comes from a buyer-writable cart attribute; the token is derived from the order
+  server-side. Get this backwards and Gate 2 ships inert.
 - **The execute-side proof keeps its released key, `proofs.merge`.** The symmetric `mergeExecute`
   name was reverted before shipping: the SST and SDK pipelines fire concurrently, so renaming the
   one key a live listener reads would have dropped every in-app-browser merge until the CDN caught

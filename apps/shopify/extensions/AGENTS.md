@@ -88,7 +88,7 @@ Theme detection works by parsing theme JSON templates and matching block type su
 
 - **Block naming**: snake_case (`referral_button`, not `referralButton`)
 - **Locales**: `en.default.json` is source of truth. Match keys when adding translations.
-- **Extension API version**: matches main app (`2026-04`)
+- **Extension API version**: matches main app (`2026-07`): the three extension tomls, both `shopify.app.*.toml` and `ApiVersion.July26` in `app/shopify.server.ts`. `check:shopify-api-version` only gates the post-purchase toml against `@shopify/ui-extensions`; keep the rest in step by hand.
 - **Monorepo workspace**: `checkout-post-purchase` and `checkout-web-pixel` are workspaces of `apps/shopify` (`extensions/*`), not of the repo root. `theme-components` has no `package.json` — it is pure Liquid and is not a workspace.
 
 ## ANTI-PATTERNS

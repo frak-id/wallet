@@ -132,6 +132,8 @@ export type MonthlyLedgerResult = {
     totalDeposited: string;
     totalWithdrawn: string;
     totalRewarded: string;
+    /** Settled rewards since the account's start, up to `periodEnd`. */
+    rewardedToDate: string;
 };
 
 export type AnnexRowFiatInput = {
@@ -344,6 +346,7 @@ export class BillingComputationService {
             .plus(totalDeposited)
             .minus(totalWithdrawn)
             .minus(totalRewarded);
+        const rewardedToDate = new Decimal(rewardedBefore).plus(totalRewarded);
 
         return {
             openingBalance: toMoneyString(openingBalance),
@@ -351,6 +354,7 @@ export class BillingComputationService {
             totalDeposited: toMoneyString(totalDeposited),
             totalWithdrawn: toMoneyString(totalWithdrawn),
             totalRewarded: toMoneyString(totalRewarded),
+            rewardedToDate: toMoneyString(rewardedToDate),
         };
     }
 

@@ -1,44 +1,30 @@
-import { usePie } from "./pie-context";
+import {
+    PIE_HOVER_OFFSET,
+    PIE_INNER_RADIUS,
+    PIE_OUTER_RADIUS,
+    usePie,
+} from "./pie-context";
 
-export interface PieSliceLabelsProps {
-    /** Formats a slice's fraction (0–1) into its label. Default: rounded %. */
-    formatter?: (fraction: number) => string;
-    /** Label color. Default: white (sits on coloured slices). */
-    color?: string;
-    /** Hide labels for slices smaller than this fraction. Default: 0.05 */
-    minFraction?: number;
-}
+const MIN_FRACTION = 0.05;
 
 /**
- * Percentage labels centred on each pie/donut slice. bklit's PieSlice draws no
- * labels; the dashboard donut shows each segment's share, so we render them
- * from the same arc data the slices use.
+ * Percentage labels centred on each pie/donut slice, rendered from the same
+ * arc data the slices use.
  */
-export function PieSliceLabels({
-    formatter = (f) => `${Math.round(f * 100)}%`,
-    color = "#ffffff",
-    minFraction = 0.05,
-}: PieSliceLabelsProps) {
-    const {
-        arcs,
-        innerRadius,
-        outerRadius,
-        totalValue,
-        hoveredIndex,
-        hoverOffset,
-    } = usePie();
+export function PieSliceLabels() {
+    const { arcs, totalValue, hoveredIndex } = usePie();
 
     if (totalValue <= 0) {
         return null;
     }
 
-    const radius = (innerRadius + outerRadius) / 2;
+    const radius = (PIE_INNER_RADIUS + PIE_OUTER_RADIUS) / 2;
 
     return (
         <>
             {arcs.map((arc) => {
                 const fraction = arc.value / totalValue;
-                if (fraction < minFraction) {
+                if (fraction < MIN_FRACTION) {
                     return null;
                 }
                 const mid = (arc.startAngle + arc.endAngle) / 2;
@@ -47,8 +33,8 @@ export function PieSliceLabels({
                 // Follow the slice's translate-on-hover so the label rides with it.
                 const isHovered = hoveredIndex === arc.index;
                 const isFaded = hoveredIndex !== null && !isHovered;
-                const dx = isHovered ? Math.sin(mid) * hoverOffset : 0;
-                const dy = isHovered ? -Math.cos(mid) * hoverOffset : 0;
+                const dx = isHovered ? Math.sin(mid) * PIE_HOVER_OFFSET : 0;
+                const dy = isHovered ? -Math.cos(mid) * PIE_HOVER_OFFSET : 0;
                 return (
                     // Transform on a wrapping <g> (not <text>) — more robust
                     // across browsers (Safari) for animating SVG transforms.
@@ -61,7 +47,7 @@ export function PieSliceLabels({
                     >
                         <text
                             dy="0.32em"
-                            fill={color}
+                            fill="#ffffff"
                             fillOpacity={isFaded ? 0.4 : 1}
                             fontSize={11}
                             fontWeight={600}
@@ -71,7 +57,7 @@ export function PieSliceLabels({
                             x={x}
                             y={y}
                         >
-                            {formatter(fraction)}
+                            {`${Math.round(fraction * 100)}%`}
                         </text>
                     </g>
                 );

@@ -1,75 +1,11 @@
-import { motion } from "motion/react";
 import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useChart, useChartStable } from "./chart-context";
+import { useChartStable } from "./chart-context";
+import * as styles from "./charts.css";
 
-export interface BarXAxisProps {
-    /** Width of the date ticker box for fade calculation. Default: 50 */
-    tickerHalfWidth?: number;
-    /** Whether to show all labels or skip some for dense data. Default: false */
-    showAllLabels?: boolean;
-    /** Maximum number of labels to show. Default: 12 */
-    maxLabels?: number;
-    /**
-     * Fade labels near the cursor on hover (makes room for the date ticker
-     * pill on time-series charts). Default: true. Set false for categorical
-     * bars with no ticker, so month labels stay visible while hovering.
-     */
-    fadeNearCursor?: boolean;
-}
+const MAX_LABELS = 12;
 
-interface BarXAxisLabelProps {
-    label: string;
-    x: number;
-    crosshairX: number | null;
-    isHovering: boolean;
-    tickerHalfWidth: number;
-}
-
-function BarXAxisLabel({
-    label,
-    x,
-    crosshairX,
-    isHovering,
-    tickerHalfWidth,
-}: BarXAxisLabelProps) {
-    const fadeBuffer = 20;
-    const fadeRadius = tickerHalfWidth + fadeBuffer;
-
-    let opacity = 1;
-    if (isHovering && crosshairX !== null) {
-        const distance = Math.abs(x - crosshairX);
-        if (distance < tickerHalfWidth) {
-            opacity = 0;
-        } else if (distance < fadeRadius) {
-            opacity = (distance - tickerHalfWidth) / fadeBuffer;
-        }
-    }
-
-    return (
-        <div
-            className="absolute"
-            style={{
-                left: x,
-                bottom: 12,
-                width: 0,
-                display: "flex",
-                justifyContent: "center",
-            }}
-        >
-            <motion.span
-                animate={{ opacity }}
-                className="whitespace-nowrap text-chart-label text-xs"
-                initial={{ opacity: 1 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-                {label}
-            </motion.span>
-        </div>
-    );
-}
-
-export function BarXAxis(props: BarXAxisProps) {
+export function BarXAxis() {
     const { containerRef, barScale } = useChartStable();
     const [mounted, setMounted] = useState(false);
 
@@ -86,20 +22,17 @@ export function BarXAxis(props: BarXAxisProps) {
         return null;
     }
 
-    return <BarXAxisInner {...props} container={container} />;
+    return <BarXAxisInner container={container} />;
 }
 
 const BarXAxisInner = memo(function BarXAxisInner({
-    tickerHalfWidth = 50,
-    showAllLabels = false,
-    maxLabels = 12,
-    fadeNearCursor = true,
     container,
-}: BarXAxisProps & { container: HTMLDivElement }) {
-    const { margin, tooltipData, barScale, bandWidth, barXAccessor, data } =
-        useChart();
+}: {
+    container: HTMLDivElement;
+}) {
+    const { margin, barScale, bandWidth, barXAccessor, data } =
+        useChartStable();
 
-    // Generate labels for each bar
     const labelsToShow = useMemo(() => {
         if (!(barScale && bandWidth && barXAccessor)) {
             return [];
@@ -113,38 +46,31 @@ const BarXAxisInner = memo(function BarXAxisInner({
             return { label, x };
         });
 
-        // If showAllLabels is true or we have fewer than maxLabels, show all
-        if (showAllLabels || allLabels.length <= maxLabels) {
+        if (allLabels.length <= MAX_LABELS) {
             return allLabels;
         }
 
-        // Otherwise, skip some labels to avoid crowding
-        const step = Math.ceil(allLabels.length / maxLabels);
+        // Skip some labels to avoid crowding
+        const step = Math.ceil(allLabels.length / MAX_LABELS);
         return allLabels.filter((_, i) => i % step === 0);
-    }, [
-        barScale,
-        bandWidth,
-        barXAccessor,
-        data,
-        margin.left,
-        showAllLabels,
-        maxLabels,
-    ]);
-
-    const isHovering = fadeNearCursor && tooltipData !== null;
-    const crosshairX = tooltipData ? tooltipData.x + margin.left : null;
+    }, [barScale, bandWidth, barXAccessor, data, margin.left]);
 
     return createPortal(
-        <div className="pointer-events-none absolute inset-0">
+        <div className={styles.overlay}>
             {labelsToShow.map((item) => (
-                <BarXAxisLabel
-                    crosshairX={crosshairX}
-                    isHovering={isHovering}
+                <div
+                    className={styles.xTick}
                     key={`${item.label}-${item.x}`}
-                    label={item.label}
-                    tickerHalfWidth={tickerHalfWidth}
-                    x={item.x}
-                />
+                    style={{
+                        left: item.x,
+                        bottom: 12,
+                        width: 0,
+                        display: "flex",
+                        justifyContent: "center",
+                    }}
+                >
+                    <span className={styles.xTickLabel}>{item.label}</span>
+                </div>
             ))}
         </div>,
         container

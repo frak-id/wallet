@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
@@ -10,7 +10,7 @@ import { style } from "@vanilla-extract/css";
 
 export const toast = style({
     position: "relative",
-    zIndex: 1000,
+    zIndex: zIndex.toast - 1,
     maxWidth: "90vw",
     width: "auto",
 });

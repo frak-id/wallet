@@ -38,9 +38,12 @@ export const FLOORS: Floor[] = [
     },
 ];
 
-/** A workflow referencing any of these signs or publishes a release artifact. */
-export const PUBLISH_SECRET =
-    /secrets\.(NPM_TOKEN|CENTRAL_PORTAL_\w+|ORG_GRADLE_PROJECT_SIGNING\w+|ANDROID_KEY\w+|APPSTORE_\w+|GOOGLE_PLAY_\w+|IOS_MIRROR_\w+)/;
+/**
+ * A workflow matching this signs or publishes a release artifact. npm publishes
+ * through OIDC with no secret, so its entry points are matched by name.
+ */
+export const PUBLISHES_ARTIFACTS =
+    /secrets\.(CENTRAL_PORTAL_\w+|ORG_GRADLE_PROJECT_SIGNING\w+|ANDROID_KEY\w+|APPSTORE_\w+|GOOGLE_PLAY_\w+|IOS_MIRROR_\w+)|publish-sdk\.ts|changeset:release/;
 
 type Trap = { match: RegExp; flags?: Flag[]; why: string };
 

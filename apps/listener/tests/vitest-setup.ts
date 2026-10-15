@@ -25,7 +25,6 @@ vi.mock("@openpanel/web", () => ({
         track() {}
         identify() {}
         setGlobalProperties() {}
-        setProfileId() {}
         clear() {}
     },
 }));

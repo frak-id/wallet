@@ -2,7 +2,6 @@ import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import {
     initAnalytics,
     recordError,
-    setAnalyticsDeviceId,
 } from "@frak-labs/wallet-shared/common/analytics";
 import {
     defaultNS,
@@ -141,10 +140,8 @@ export async function bootstrapStandalonePage(
     { deviceId }: { deviceId?: string } = {}
 ): Promise<void> {
     setupBigIntSerialization();
-    initAnalytics("wallet_standalone");
-    // Before any event: this page is opened by a host that already owns the
-    // anonymous id, and re-keying after the first event splits the session.
-    setAnalyticsDeviceId(deviceId);
+    // Opened by a host that already owns the anonymous id.
+    initAnalytics("wallet_standalone", { hostAnonymousId: deviceId });
     wireErrorReporting();
 
     await initI18n();

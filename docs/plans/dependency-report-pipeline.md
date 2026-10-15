@@ -94,7 +94,7 @@ What the first run surfaced that nothing in the repo was watching:
 - Three deprecated packages sitting at their latest version, which no version delta would ever catch.
 - `actions/upload-artifact` pinned at both `@v4` and `@v7` in different workflows.
 
-**SHA-pinning is a class finding, not 25 of them.** `PUBLISH_SECRET` flags any action appearing in a
+**SHA-pinning is a class finding, not 25 of them.** `PUBLISHES_ARTIFACTS` flags any action appearing in a
 workflow that holds a signing credential, which is 17 of 25 pins — true, deterministic, and useless
 as 17 near-identical entries. The collector keeps the flag on every one; the prompt consolidates them
 into a single entry with one table. Editorial problems belong in the prompt, not in the collector.
