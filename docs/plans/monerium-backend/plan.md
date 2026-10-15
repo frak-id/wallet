@@ -140,7 +140,25 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   `NotificationTypeSchema` is untouched.
 - The sync job notifies only for transitions it applies itself; a `GET /status` refresh
   that observes a change first updates the cache silently.
-- `user-openapi.json` was regenerated: it only gained the Monerium routes.
+- `user-openapi.json` excludes `/user/wallet/monerium` (wallet-private; the generator filters it).
+- Review fixes. Schema additions for the migration: `monerium_connections.wallet_link_pending_at` and
+  `profile_state_changed_at` (nullable timestamps), `monerium_tracked_orders.placement_accepted`
+  (boolean, not null, default false). Token blobs are now versioned (`0x01` prefix) and bound to
+  `wallet:column` as AAD, so tokens stored by an earlier build do not decrypt (reconnect).
+- Sync: due rows are claimed with one `UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED)`,
+  never-checked rows first, rechecks back off with age (profiles 10 min/1 h/6 h up to 30 days, links
+  2/15 min up to 24 h, orders 2/10/30 min up to 14 days). Any 429 (user-facing included) pauses the
+  background poll for `Retry-After` or 60 s. Unknown orders are dropped after 1 h (24 h after a 202).
+- Behaviour the wallet may see: `GET /status?refresh=true` is served from the cache when the wallet
+  already forced a refresh in the last 5 s; `GET /orders` and `/beneficiaries` share a 5 s per-wallet
+  upstream read (cleared by a placement); `/beneficiaries` omits third parties without both names;
+  an upstream 401 on order/link placement answers 409 `MONERIUM_REAUTH_REQUIRED`, a 403 409
+  `MONERIUM_PROFILE_NOT_APPROVED`; rejection messages are fixed strings; a SIWE state lives 10 min and
+  `siweFailedAt` lapses after 7 days; every Monerium route is rate limited per wallet (60/min, auth 20,
+  orders 10) on top of the IP buckets.
+- Request bounds: iban 42, names 100, country 2, memo 140, amount 16, message 128, state 64, code 512,
+  signature 16 384 hex chars (smart-account signatures are not measured in the repo).
+- `deploy.yml` forwards `MONERIUM_SIWE_ENABLED` (repo/environment variable, default `true`).
 
 ## Implementation notes (wallet lane)
 
