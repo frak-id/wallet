@@ -36,6 +36,8 @@ type MonthlyBillPdfData = {
     annexAssetLogs: AnnexAssetLogRow[];
     priceByToken: Map<Address, TokenPrice | undefined>;
     merchant: MerchantSelectForBill | null;
+    /** Freshly computed details; fills ledger fields a frozen legacy bill lacks. */
+    details?: BillingDocumentDetails;
 };
 
 /** The merchant row shape this orchestrator reads (bank address + accounting). */
@@ -914,6 +916,18 @@ export class MonthlyBillOrchestrator {
         }
         const details = document.details;
         const { annexAssetLogs, priceByToken, merchant } = pdfData;
+        const freshLedgers =
+            pdfData.details?.kind === "monthly_bill"
+                ? pdfData.details.ledgers
+                : details.ledgers;
+        const ledgers = details.ledgers.map((ledger) => ({
+            ...ledger,
+            rewardedToDate:
+                ledger.rewardedToDate ??
+                freshLedgers.find((fresh) => fresh.currency === ledger.currency)
+                    ?.rewardedToDate ??
+                "0",
+        }));
 
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
@@ -983,7 +997,7 @@ export class MonthlyBillOrchestrator {
                 vatApplicable: isVatApplicable(
                     merchant?.accountingInfo?.country
                 ),
-                ledgers: details.ledgers,
+                ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,
                 otherRewards,

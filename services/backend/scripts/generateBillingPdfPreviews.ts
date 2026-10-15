@@ -11,7 +11,8 @@ import {
  *
  *   bun run --cwd services/backend previews:billing
  *
- * Figures are coherent: 1 200 = 200 TVA + 200 Frak fees + 800 available.
+ * Figures are coherent: 1 200 = 200 TVA + 200 Frak fees + 100 distributed
+ * + 700 available.
  */
 const OUT_DIR = join(import.meta.dir, "../../../docs/previews");
 
@@ -88,6 +89,7 @@ const monthlyBill: BillingPdfDocumentDto = {
                 totalDeposited: "0",
                 totalWithdrawn: "0",
                 totalRewarded: "100",
+                rewardedToDate: "100",
             },
         ],
         fiatTotals: { eur: "100", usd: "108", gbp: "86" },

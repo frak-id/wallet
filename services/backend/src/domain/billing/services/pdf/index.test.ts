@@ -76,6 +76,7 @@ const monthlyBillDto: BillingPdfDocumentDto = {
                 totalDeposited: "500",
                 totalWithdrawn: "50",
                 totalRewarded: "150",
+                rewardedToDate: "250",
             },
         ],
         fiatTotals: { eur: "150", usd: "165", gbp: "130" },

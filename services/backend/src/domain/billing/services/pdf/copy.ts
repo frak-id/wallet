@@ -35,7 +35,7 @@ export const WITHDRAW_OBJET =
 export const DEPOSIT_HEADLINE_LABEL = "Montant déposé";
 export const DEPOSIT_TOTAL_LABEL = "Disponible pour les récompenses";
 export const DEPOSIT_TOTAL_CAPTION =
-    "Montant final, une fois la TVA et les frais Frak déduits : c'est le budget disponible pour distribuer des récompenses à vos utilisateurs finaux.";
+    "Montant final, une fois la TVA et les frais Frak déduits.";
 
 export const WITHDRAW_ATTESTATION = [
     "Ce document atteste que Frak Labs a restitué à l'annonceur les fonds non consommés mentionnés ci-dessus, initialement crédités sur son wallet de campagne.",

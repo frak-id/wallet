@@ -603,6 +603,7 @@ describe("MonthlyBillOrchestrator", () => {
             // instead (the reward deductions silently dropped).
             expect(eureLedger.openingBalance).toBe("800.000000000000000000");
             expect(eureLedger.closingBalance).toBe("750.000000000000000000");
+            expect(eureLedger.rewardedToDate).toBe("250.000000000000000000");
         });
     });
 
@@ -811,6 +812,63 @@ describe("MonthlyBillOrchestrator", () => {
             expect(updateMonthlyBillDetails).not.toHaveBeenCalled();
             expect(setPdf).not.toHaveBeenCalled();
             expect(clearPdf).not.toHaveBeenCalled();
+        });
+
+        it("fills the cumulative distributed rewards of a legacy bill from fresh data", async () => {
+            const legacy = makeMonthlyBillDoc({
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+                details: {
+                    kind: "monthly_bill",
+                    ledgers: [
+                        {
+                            currency: "eure",
+                            openingBalance: "800",
+                            closingBalance: "750",
+                            totalDeposited: "0",
+                            totalWithdrawn: "0",
+                            totalRewarded: "50",
+                        },
+                    ],
+                    annexRowCount: 0,
+                    fiatTotals: { eur: "0", usd: "0", gbp: "0" },
+                },
+            });
+            const render = vi
+                .fn()
+                .mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    aggregateDepositWithdrawByCurrency: vi
+                        .fn()
+                        .mockResolvedValue([]),
+                },
+                assetLogs: {
+                    sumSettledByToken: vi
+                        .fn()
+                        .mockResolvedValueOnce([
+                            {
+                                tokenAddress: currentStablecoins.eure,
+                                total: "200",
+                            },
+                        ])
+                        .mockResolvedValueOnce([
+                            {
+                                tokenAddress: currentStablecoins.eure,
+                                total: "50",
+                            },
+                        ]),
+                },
+                pdf: { render },
+            });
+
+            await orchestrator.rerenderIssuedPdf(legacy);
+
+            const dto = render.mock.calls[0][0];
+            expect(dto.monthlyBill.ledgers[0].closingBalance).toBe("750");
+            expect(dto.monthlyBill.ledgers[0].rewardedToDate).toBe(
+                "250.000000000000000000"
+            );
         });
 
         it("skips a bill that has no stored PDF", async () => {

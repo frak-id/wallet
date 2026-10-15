@@ -266,11 +266,10 @@ export function drawTvaAndRecap(
 }
 
 /**
- * The campaign-bank account status, below the recap: per currency ledger, the
- * amount initially credited and how it breaks down into TVA, Frak fees (shown
- * as one total, then each) and the amount available for rewards — the same
- * reading as the dashboards' budget card. Amounts are in the ledger's own
- * fiat currency.
+ * The campaign-bank account status to date, below the recap: per currency
+ * ledger, the amount initially credited, the TVA and Frak fees (one total, then
+ * each), the rewards already distributed, and what remains available. Amounts
+ * are in the ledger's own fiat currency.
  */
 export function drawLedgerStatus(
     cursor: PageCursor,
@@ -284,11 +283,18 @@ export function drawLedgerStatus(
     const { vatApplicable, ledgers } = monthlyBill;
     for (const ledger of ledgers) {
         const { currency } = ledger;
-        const parts = grossUpAvailable(ledger.openingBalance, vatApplicable);
+        const distributed = new Decimal(ledger.rewardedToDate).toDecimalPlaces(
+            2
+        );
+        const credited = new Decimal(ledger.closingBalance).plus(
+            ledger.rewardedToDate
+        );
+        const parts = grossUpAvailable(credited.toFixed(), vatApplicable);
         const feesAndVat = new Decimal(parts.vat).plus(parts.frakFee);
+        const remaining = new Decimal(parts.available).minus(distributed);
 
         if (ledgers.length > 1) {
-            cursor.ensureSpace(240);
+            cursor.ensureSpace(260);
             cursor.text(`Compte en ${fiatFor(currency).code}`, {
                 size: 9,
                 color: GRAY,
@@ -323,11 +329,16 @@ export function drawLedgerStatus(
                     value: formatSigned("-", parts.frakFee, currency),
                     sub: true,
                 },
+                {
+                    label: "Récompenses déjà distribuées",
+                    value: formatSigned("-", distributed.toFixed(2), currency),
+                    strong: true,
+                },
             ],
             totalLabel: "Disponible pour les récompenses",
-            totalValue: formatMoney(parts.available, currency),
+            totalValue: formatMoney(remaining.toFixed(2), currency),
             totalCaption:
-                "Montant du compte disponible pour distribuer des récompenses aux utilisateurs finaux, une fois la TVA et les frais Frak déduits.",
+                "Solde à date, une fois la TVA, les frais Frak et les récompenses déjà distribuées déduits.",
         });
     }
 }

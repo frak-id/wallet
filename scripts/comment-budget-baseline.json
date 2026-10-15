@@ -624,7 +624,7 @@
     "services/backend/src/orchestration/TakeAdsIngestionOrchestrator.ts": 5,
     "services/backend/src/orchestration/billing/BillingOrchestrator.test.ts": 1,
     "services/backend/src/orchestration/billing/BillingOrchestrator.ts": 14,
-    "services/backend/src/orchestration/billing/MonthlyBillOrchestrator.test.ts": 6,
+    "services/backend/src/orchestration/billing/MonthlyBillOrchestrator.test.ts": 5,
     "services/backend/src/orchestration/billing/MonthlyBillOrchestrator.ts": 12,
     "services/backend/src/orchestration/billing/shared.ts": 1,
     "services/backend/src/orchestration/campaigns/CampaignOverviewOrchestrator.ts": 7,
