@@ -124,19 +124,19 @@ describe("BarChart", () => {
         );
     });
 
-    it("labels the y axis with the given ticks through the formatter", async () => {
+    it("labels the y axis with the given ticks inside the data range, through the formatter", async () => {
         const { container } = render(
             <BarChart data={data} margin={margin}>
                 <Bar dataKey="value" fill={BAR_FILL} />
                 <NumericYAxis
                     formatter={(v) => (v === 0 ? "0" : `${v / 1000}k`)}
-                    ticks={[0, 5000]}
+                    ticks={[0, 1000, 5000]}
                 />
             </BarChart>
         );
 
         await waitFor(() =>
-            expect(textsOf(container, styles.yTickLabel)).toEqual(["0", "5k"])
+            expect(textsOf(container, styles.yTickLabel)).toEqual(["0", "1k"])
         );
     });
 

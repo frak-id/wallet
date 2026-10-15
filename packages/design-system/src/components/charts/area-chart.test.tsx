@@ -72,7 +72,7 @@ function renderProjectedRevenueChart({
             <Area dataKey="actual" fill={ACTUAL} stroke={ACTUAL} />
             <Area dataKey="forecast" fill={FORECAST} stroke={FORECAST} />
             <XAxis />
-            <NumericYAxis ticks={[0, 1000]} />
+            <NumericYAxis ticks={[0, 250, 1000]} />
             <ChartTooltip
                 rows={(point) =>
                     [
@@ -152,7 +152,7 @@ describe("AreaChart", () => {
         );
     });
 
-    it("labels the y axis with the given ticks", async () => {
+    it("labels the y axis with the given ticks that fall inside the data range", async () => {
         const { container } = renderProjectedRevenueChart();
 
         await waitFor(() =>
@@ -160,8 +160,30 @@ describe("AreaChart", () => {
                 Array.from(
                     container.querySelectorAll(`.${styles.yTickLabel}`)
                 ).map((el) => el.textContent)
-            ).toEqual(["0", "1000"])
+            ).toEqual(["0", "250"])
         );
+    });
+
+    it("marks a value that has no neighbour to draw a line to", () => {
+        const { container } = render(
+            <AreaChart
+                data={[
+                    { date: new Date(2026, 0, 1), actual: 100, forecast: 100 },
+                    { date: new Date(2026, 1, 1), forecast: 300 },
+                ]}
+                margin={margin}
+            >
+                <Area dataKey="actual" fill={ACTUAL} stroke={ACTUAL} />
+                <Area dataKey="forecast" fill={FORECAST} stroke={FORECAST} />
+            </AreaChart>
+        );
+
+        expect(
+            container.querySelectorAll(`circle[fill="${ACTUAL}"]`)
+        ).toHaveLength(1);
+        expect(
+            container.querySelectorAll(`circle[fill="${FORECAST}"]`)
+        ).toHaveLength(0);
     });
 
     it("shows only the series present at the first hovered point", async () => {

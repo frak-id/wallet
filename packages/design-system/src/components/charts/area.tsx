@@ -36,6 +36,14 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
         [dataKey, yScale]
     );
 
+    // A value with no defined neighbour forms no line segment, so mark it.
+    const lonePoints = renderData.filter(
+        (d, i) =>
+            isDefined(d) &&
+            !(renderData[i - 1] && isDefined(renderData[i - 1])) &&
+            !(renderData[i + 1] && isDefined(renderData[i + 1]))
+    );
+
     return (
         <>
             <defs>
@@ -81,6 +89,15 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
                     x={(d) => xScale(xAccessor(d)) ?? 0}
                     y={getY}
                 />
+                {lonePoints.map((d) => (
+                    <circle
+                        cx={xScale(xAccessor(d)) ?? 0}
+                        cy={getY(d)}
+                        fill={stroke}
+                        key={xAccessor(d).getTime()}
+                        r={3}
+                    />
+                ))}
             </SeriesHoverDim>
 
             <SeriesHighlightLayer
