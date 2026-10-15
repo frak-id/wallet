@@ -1270,6 +1270,68 @@
                                           "type": "string"
                                         }
                                       }
+                                    },
+                                    "ambassador": {
+                                      "type": "object",
+                                      "properties": {
+                                        "heroTitle": {
+                                          "type": "string"
+                                        },
+                                        "heroLede": {
+                                          "type": "string"
+                                        },
+                                        "heroRewardCaption": {
+                                          "type": "string"
+                                        },
+                                        "heroCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "rewardHeading": {
+                                          "type": "string"
+                                        },
+                                        "rewardLede": {
+                                          "type": "string"
+                                        },
+                                        "rewardCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "referralCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "faq1Question": {
+                                          "type": "string"
+                                        },
+                                        "faq1Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq2Question": {
+                                          "type": "string"
+                                        },
+                                        "faq2Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq3Question": {
+                                          "type": "string"
+                                        },
+                                        "faq3Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq4Question": {
+                                          "type": "string"
+                                        },
+                                        "faq4Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq5Question": {
+                                          "type": "string"
+                                        },
+                                        "faq5Answer": {
+                                          "type": "string"
+                                        },
+                                        "heroImageUrl": {
+                                          "type": "string"
+                                        }
+                                      }
                                     }
                                   }
                                 },
@@ -1399,6 +1461,68 @@
                                   "type": "string"
                                 },
                                 "css": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "ambassador": {
+                              "type": "object",
+                              "properties": {
+                                "heroTitle": {
+                                  "type": "string"
+                                },
+                                "heroLede": {
+                                  "type": "string"
+                                },
+                                "heroRewardCaption": {
+                                  "type": "string"
+                                },
+                                "heroCtaLabel": {
+                                  "type": "string"
+                                },
+                                "rewardHeading": {
+                                  "type": "string"
+                                },
+                                "rewardLede": {
+                                  "type": "string"
+                                },
+                                "rewardCtaLabel": {
+                                  "type": "string"
+                                },
+                                "referralCtaLabel": {
+                                  "type": "string"
+                                },
+                                "faq1Question": {
+                                  "type": "string"
+                                },
+                                "faq1Answer": {
+                                  "type": "string"
+                                },
+                                "faq2Question": {
+                                  "type": "string"
+                                },
+                                "faq2Answer": {
+                                  "type": "string"
+                                },
+                                "faq3Question": {
+                                  "type": "string"
+                                },
+                                "faq3Answer": {
+                                  "type": "string"
+                                },
+                                "faq4Question": {
+                                  "type": "string"
+                                },
+                                "faq4Answer": {
+                                  "type": "string"
+                                },
+                                "faq5Question": {
+                                  "type": "string"
+                                },
+                                "faq5Answer": {
+                                  "type": "string"
+                                },
+                                "heroImageUrl": {
                                   "type": "string"
                                 }
                               }
@@ -8549,6 +8673,2754 @@
           }
         },
         "operationId": "postUserWalletMergeSettle"
+      }
+    },
+    "/user/wallet/monerium/status": {
+      "get": {
+        "parameters": [
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "format": "boolean",
+                  "default": false,
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "connection",
+                    "profile",
+                    "walletLink",
+                    "silentReconnect",
+                    "environment"
+                  ],
+                  "properties": {
+                    "connection": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "connected",
+                        "reauth_required"
+                      ]
+                    },
+                    "profile": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "kind",
+                        "state"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "corporate"
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "created",
+                            "incomplete",
+                            "pending",
+                            "review",
+                            "approved",
+                            "rejected",
+                            "closed"
+                          ]
+                        },
+                        "reasonCode": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "walletLink": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "pending",
+                        "linked"
+                      ]
+                    },
+                    "silentReconnect": {
+                      "type": "boolean"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "enum": [
+                        "sandbox",
+                        "production"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletMoneriumStatus"
+      }
+    },
+    "/user/wallet/monerium/auth/start": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "authMode": {
+                    "type": "string",
+                    "enum": [
+                      "login",
+                      "signup"
+                    ]
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "authMode": {
+                    "type": "string",
+                    "enum": [
+                      "login",
+                      "signup"
+                    ]
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "authMode": {
+                    "type": "string",
+                    "enum": [
+                      "login",
+                      "signup"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "url"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumAuthStart"
+      }
+    },
+    "/user/wallet/monerium/auth/callback": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "state"
+                ],
+                "properties": {
+                  "code": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "state"
+                ],
+                "properties": {
+                  "code": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "state"
+                ],
+                "properties": {
+                  "code": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "connection",
+                    "profile",
+                    "walletLink",
+                    "silentReconnect",
+                    "environment"
+                  ],
+                  "properties": {
+                    "connection": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "connected",
+                        "reauth_required"
+                      ]
+                    },
+                    "profile": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "kind",
+                        "state"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "corporate"
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "created",
+                            "incomplete",
+                            "pending",
+                            "review",
+                            "approved",
+                            "rejected",
+                            "closed"
+                          ]
+                        },
+                        "reasonCode": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "walletLink": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "pending",
+                        "linked"
+                      ]
+                    },
+                    "silentReconnect": {
+                      "type": "boolean"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "enum": [
+                        "sandbox",
+                        "production"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumAuthCallback"
+      }
+    },
+    "/user/wallet/monerium/auth/siwe/prepare": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "state",
+                    "message"
+                  ],
+                  "properties": {
+                    "state": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumAuthSiwePrepare"
+      }
+    },
+    "/user/wallet/monerium/auth/siwe": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "state",
+                  "signature"
+                ],
+                "properties": {
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "state",
+                  "signature"
+                ],
+                "properties": {
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "state",
+                  "signature"
+                ],
+                "properties": {
+                  "state": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "connection",
+                    "profile",
+                    "walletLink",
+                    "silentReconnect",
+                    "environment"
+                  ],
+                  "properties": {
+                    "connection": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "connected",
+                        "reauth_required"
+                      ]
+                    },
+                    "profile": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "kind",
+                        "state"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "corporate"
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "created",
+                            "incomplete",
+                            "pending",
+                            "review",
+                            "approved",
+                            "rejected",
+                            "closed"
+                          ]
+                        },
+                        "reasonCode": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "walletLink": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "pending",
+                        "linked"
+                      ]
+                    },
+                    "silentReconnect": {
+                      "type": "boolean"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "enum": [
+                        "sandbox",
+                        "production"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumAuthSiwe"
+      }
+    },
+    "/user/wallet/monerium/connection": {
+      "delete": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true,
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteUserWalletMoneriumConnection"
+      }
+    },
+    "/user/wallet/monerium/wallet/link": {
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "signature"
+                ],
+                "properties": {
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "signature"
+                ],
+                "properties": {
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "signature"
+                ],
+                "properties": {
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "walletLink"
+                  ],
+                  "properties": {
+                    "walletLink": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "pending",
+                        "linked"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumWalletLink"
+      }
+    },
+    "/user/wallet/monerium/orders": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "orders"
+                  ],
+                  "properties": {
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "kind",
+                          "state",
+                          "amount",
+                          "currency",
+                          "chain",
+                          "address",
+                          "counterpart",
+                          "placedAt",
+                          "txHashes"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "issue",
+                              "redeem"
+                            ]
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "placed",
+                              "pending",
+                              "processed",
+                              "rejected"
+                            ]
+                          },
+                          "amount": {
+                            "type": "string"
+                          },
+                          "currency": {
+                            "type": "string"
+                          },
+                          "chain": {
+                            "type": "string"
+                          },
+                          "address": {
+                            "pattern": "0x[0-9a-fA-F]{40}",
+                            "type": "string"
+                          },
+                          "counterpart": {
+                            "type": "object",
+                            "required": [
+                              "own"
+                            ],
+                            "properties": {
+                              "iban": {
+                                "type": "string"
+                              },
+                              "own": {
+                                "type": "boolean"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "companyName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "memo": {
+                            "type": "string"
+                          },
+                          "placedAt": {
+                            "type": "string"
+                          },
+                          "processedAt": {
+                            "type": "string"
+                          },
+                          "rejectedReason": {
+                            "type": "string"
+                          },
+                          "txHashes": {
+                            "type": "array",
+                            "items": {
+                              "pattern": "0x[0-9a-fA-F]*",
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletMoneriumOrders"
+      },
+      "post": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "amount",
+                  "iban",
+                  "counterpart",
+                  "message",
+                  "signature"
+                ],
+                "properties": {
+                  "orderId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  },
+                  "iban": {
+                    "type": "string"
+                  },
+                  "counterpart": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "own"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": true,
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "own",
+                          "firstName",
+                          "lastName",
+                          "country"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": false,
+                            "type": "boolean"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "memo": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "amount",
+                  "iban",
+                  "counterpart",
+                  "message",
+                  "signature"
+                ],
+                "properties": {
+                  "orderId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  },
+                  "iban": {
+                    "type": "string"
+                  },
+                  "counterpart": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "own"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": true,
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "own",
+                          "firstName",
+                          "lastName",
+                          "country"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": false,
+                            "type": "boolean"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "memo": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "amount",
+                  "iban",
+                  "counterpart",
+                  "message",
+                  "signature"
+                ],
+                "properties": {
+                  "orderId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  },
+                  "iban": {
+                    "type": "string"
+                  },
+                  "counterpart": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "own"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": true,
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "own",
+                          "firstName",
+                          "lastName",
+                          "country"
+                        ],
+                        "properties": {
+                          "own": {
+                            "const": false,
+                            "type": "boolean"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "memo": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "signature": {
+                    "pattern": "0x[0-9a-fA-F]*",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "orderId",
+                    "order"
+                  ],
+                  "properties": {
+                    "orderId": {
+                      "type": "string"
+                    },
+                    "order": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "kind",
+                        "state",
+                        "amount",
+                        "currency",
+                        "chain",
+                        "address",
+                        "counterpart",
+                        "placedAt",
+                        "txHashes"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "issue",
+                            "redeem"
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "placed",
+                            "pending",
+                            "processed",
+                            "rejected"
+                          ]
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "chain": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "pattern": "0x[0-9a-fA-F]{40}",
+                          "type": "string"
+                        },
+                        "counterpart": {
+                          "type": "object",
+                          "required": [
+                            "own"
+                          ],
+                          "properties": {
+                            "iban": {
+                              "type": "string"
+                            },
+                            "own": {
+                              "type": "boolean"
+                            },
+                            "firstName": {
+                              "type": "string"
+                            },
+                            "lastName": {
+                              "type": "string"
+                            },
+                            "companyName": {
+                              "type": "string"
+                            },
+                            "country": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "memo": {
+                          "type": "string"
+                        },
+                        "placedAt": {
+                          "type": "string"
+                        },
+                        "processedAt": {
+                          "type": "string"
+                        },
+                        "rejectedReason": {
+                          "type": "string"
+                        },
+                        "txHashes": {
+                          "type": "array",
+                          "items": {
+                            "pattern": "0x[0-9a-fA-F]*",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletMoneriumOrders"
+      }
+    },
+    "/user/wallet/monerium/beneficiaries": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "beneficiaries"
+                  ],
+                  "properties": {
+                    "beneficiaries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "iban",
+                          "own",
+                          "lastUsedAt"
+                        ],
+                        "properties": {
+                          "iban": {
+                            "type": "string"
+                          },
+                          "own": {
+                            "type": "boolean"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          },
+                          "lastUsedAt": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Response for status 422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletMoneriumBeneficiaries"
       }
     }
   },

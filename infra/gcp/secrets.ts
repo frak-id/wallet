@@ -5,6 +5,7 @@ import {
     erpcUrl,
     fcmServiceAccount,
     jwtBusinessSecret,
+    moneriumClientId,
     mongoNexusUri,
     nexusRpcSecret,
     pimlicoApiKey,
@@ -139,6 +140,9 @@ export const elysiaEnv = {
     // Shopify related
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     SHOPIFY_CLIENT_ID: shopifyClientId.value,
+
+    // Monerium (EUR e-money): OAuth tokens stay server-side
+    MONERIUM_CLIENT_ID: moneriumClientId.value,
 
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
