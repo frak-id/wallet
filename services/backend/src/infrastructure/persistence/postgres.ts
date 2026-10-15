@@ -31,6 +31,11 @@ import {
     merchantsTable,
 } from "../../domain/merchant/db/schema";
 import {
+    moneriumConnectionsTable,
+    moneriumPendingAuthsTable,
+    moneriumTrackedOrdersTable,
+} from "../../domain/monerium/db/schema";
+import {
     notificationBroadcastsTable,
     notificationSentTable,
     pushTokensTable,
@@ -102,6 +107,9 @@ export const db = drizzle({
         businessAccountsTable,
         businessSessionsTable,
         businessEmailCodesTable,
+        moneriumConnectionsTable,
+        moneriumPendingAuthsTable,
+        moneriumTrackedOrdersTable,
     },
 });
 
