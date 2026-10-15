@@ -61,6 +61,22 @@ describe("decimateTimeSeries", () => {
         expect(sampled.some((p) => p.v === 1000)).toBe(true);
     });
 
+    it("never returns the same point twice", () => {
+        const data = series(1000, (i) => Math.sin(i / 10));
+
+        const indexes = decimateTimeSeries(data, 64, ["v"]).map((p) => p.i);
+
+        expect(new Set(indexes).size).toBe(indexes.length);
+    });
+
+    it("keeps a spike in the first bucket", () => {
+        const data = series(1000, (i) => (i === 5 ? 1000 : 0));
+
+        const sampled = decimateTimeSeries(data, 64, ["v"]);
+
+        expect(sampled.some((p) => p.v === 1000)).toBe(true);
+    });
+
     it("only returns points taken from the input", () => {
         const data = series(200, (i) => i * i);
 
