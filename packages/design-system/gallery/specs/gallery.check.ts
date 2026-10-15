@@ -415,7 +415,15 @@ for (const { id, title } of sections) {
             );
             const isChart = id.startsWith("chart-");
             const section = await openSection(page, id, { fakeClock: isChart });
-            if (isChart) await page.clock.runFor(CHART_SETTLE_MS);
+            if (isChart) {
+                await page.clock.runFor(CHART_SETTLE_MS);
+                // Repaint from scratch: raster tiles kept from the enter animation vary run to run.
+                await section.evaluate((el: HTMLElement) => {
+                    el.style.display = "none";
+                    void el.offsetHeight;
+                    el.style.display = "";
+                });
+            }
             await expect(section).toBeVisible();
             await expect(section).toHaveScreenshot(`${id}.png`, {
                 animations: "disabled",
