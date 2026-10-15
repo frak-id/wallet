@@ -124,3 +124,20 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 - Wallet merge: the loser wallet's connection is not migrated (needs a re-link on the
   winner address at Monerium anyway).
 - DB migration for the three tables.
+
+## Implementation notes (backend lane)
+
+- Tables: columns and indexes are in `services/backend/src/domain/monerium/db/schema.ts`
+  (registered in `infrastructure/persistence/postgres.ts`); the migration is still the DB
+  owner's. Token and verifier columns are `text` holding hex AES-256-GCM blobs.
+- Error statuses: `MONERIUM_AUTH_STATE_INVALID` 400; `MONERIUM_NOT_CONNECTED`,
+  `MONERIUM_REAUTH_REQUIRED`, `MONERIUM_SIWE_UNAVAILABLE`, `MONERIUM_PROFILE_NOT_APPROVED`,
+  `MONERIUM_WALLET_NOT_LINKED` and a reused order id (`MONERIUM_ORDER_REJECTED`) 409;
+  `MONERIUM_TOKEN_EXCHANGE_FAILED`, `MONERIUM_SIWE_REJECTED`, `MONERIUM_LINK_REJECTED`,
+  `MONERIUM_ORDER_REJECTED` and every order-validation code 422;
+  `MONERIUM_UPSTREAM_UNAVAILABLE` 502 (Monerium 5xx, 429, timeout, or missing client id).
+- Pushes use `sendNotification` (no `notification_sent` row), so the shared
+  `NotificationTypeSchema` is untouched.
+- The sync job notifies only for transitions it applies itself; a `GET /status` refresh
+  that observes a change first updates the cache silently.
+- `user-openapi.json` was regenerated: it only gained the Monerium routes.

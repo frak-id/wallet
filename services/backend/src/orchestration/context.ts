@@ -6,6 +6,7 @@ import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
+import { MoneriumContext } from "../domain/monerium/context";
 import { NotificationContext } from "../domain/notifications/context";
 import { PairingContext } from "../domain/pairing/context";
 import { PurchasesContext } from "../domain/purchases/context";
@@ -38,6 +39,7 @@ import {
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
+import { MoneriumSyncOrchestrator } from "./monerium";
 import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
@@ -260,6 +262,14 @@ const installCredentialOrchestrator = new InstallCredentialOrchestrator(
     PurchasesContext.repositories.purchaseClaim
 );
 
+const moneriumSyncOrchestrator = new MoneriumSyncOrchestrator(
+    MoneriumContext.repositories.connection,
+    MoneriumContext.repositories.trackedOrder,
+    MoneriumContext.services.status,
+    MoneriumContext.services.orders,
+    NotificationContext.services.notifications
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -289,5 +299,6 @@ export namespace OrchestrationContext {
         affiliateReporting: affiliateReportingOrchestrator,
         billing: billingOrchestrator,
         monthlyBill: monthlyBillOrchestrator,
+        moneriumSync: moneriumSyncOrchestrator,
     };
 }
