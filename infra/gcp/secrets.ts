@@ -143,6 +143,8 @@ export const elysiaEnv = {
 
     // Monerium (EUR e-money): OAuth tokens stay server-side
     MONERIUM_CLIENT_ID: moneriumClientId.value,
+    // `|| default`, never `??`: an unset `${{ vars.X }}` arrives as the empty string.
+    MONERIUM_SIWE_ENABLED: process.env.MONERIUM_SIWE_ENABLED?.trim() || "true",
 
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
