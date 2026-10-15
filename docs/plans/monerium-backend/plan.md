@@ -141,3 +141,12 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 - The sync job notifies only for transitions it applies itself; a `GET /status` refresh
   that observes a change first updates the cache silently.
 - `user-openapi.json` was regenerated: it only gained the Monerium routes.
+
+## Implementation notes (wallet lane)
+
+- Wallet types come from `@backend-domain/monerium/schemas` (type-only imports, erased at build); no backend runtime code reaches the wallet bundle. The `MoneriumErrorCode` union drives an exhaustive code → i18n key map in `moneriumErrors.ts`.
+- Backend contract assumptions: error bodies carry `code` (`t.ErrorResponse`); `GET /status?refresh=true` bypasses the 60 s cache; `POST /auth/siwe` returns the status DTO; `POST /orders` memo omitted when empty.
+- Push link: `data.url = ${FRAK_WALLET_URL}/wallet?open=monerium`. Web: the service worker opens/navigates to it and the `/wallet` route opens the bank flow once, then strips `open`. Tauri: the deep-link resolver forwards `open=monerium` for `wallet` links, but the `frak-firebase` plugin has no notification-tap handler that opens `data.url`, so a tap on mobile does not navigate yet (native change, out of this lane).
+- Persisted state: `frak_monerium_store` v2 (UI flag only; v1 tokens purged by `migrate`), `frak_iban_store` v1 (`own`, `country`, `syncedWallet`). Both keys are removed on logout.
+- Removed wallet env: `MONERIUM_CLIENT_ID` (vite define, Dockerfile, `infra/gcp/wallet.ts`), `MONERIUM_API_HOST`, nginx `/monerium-api/` and its CORS map. The wallet nginx.conf is now copied to `conf.d/default.conf` (no envsubst).
+- The recap memo is no longer pre-filled with the beneficiary label; empty means `MONERIUM_DEFAULT_MEMO` server-side.

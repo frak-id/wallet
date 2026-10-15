@@ -20,6 +20,9 @@ type MoneriumScreenProps = {
     ctaOnClick?: () => void;
     ctaLoading?: boolean;
     ctaDisabled?: boolean;
+    secondaryLabel?: string;
+    secondaryOnClick?: () => void;
+    secondaryLoading?: boolean;
     leftIcon?: "close" | "back";
     topRight?: ReactNode;
 };
@@ -30,7 +33,7 @@ type MoneriumScreenProps = {
  * Renders a full-screen DetailSheet with:
  *  - a close button (top-left)
  *  - flexible content area
- *  - sticky CTA footer
+ *  - sticky CTA footer, with an optional secondary action under the primary
  */
 export function MoneriumScreen({
     onClose,
@@ -40,6 +43,9 @@ export function MoneriumScreen({
     ctaOnClick,
     ctaLoading,
     ctaDisabled,
+    secondaryLabel,
+    secondaryOnClick,
+    secondaryLoading,
     leftIcon = "close",
     topRight,
 }: MoneriumScreenProps) {
@@ -96,6 +102,18 @@ export function MoneriumScreen({
                     >
                         {ctaLabel}
                     </Button>
+                    {secondaryLabel && secondaryOnClick ? (
+                        <Button
+                            variant="ghost"
+                            width="full"
+                            size="large"
+                            fontSize="s"
+                            onClick={secondaryOnClick}
+                            loading={secondaryLoading}
+                        >
+                            {secondaryLabel}
+                        </Button>
+                    ) : null}
                 </DetailSheetFooter>
             ) : null}
         </DetailSheet>

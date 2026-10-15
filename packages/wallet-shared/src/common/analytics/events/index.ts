@@ -48,6 +48,8 @@ export type {
 export type {
     MoneriumCallbackOutcome,
     MoneriumEventMap,
+    MoneriumOrderAmountBucket,
+    MoneriumSiweFailure,
 } from "./monerium";
 export type {
     NotificationEventMap,

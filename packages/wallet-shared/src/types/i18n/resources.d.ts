@@ -550,6 +550,11 @@ export default interface Resources {
         "rejected": "Verification failed"
       },
       "bankFlow": {
+        "blocked": {
+          "cta": "Open Monerium",
+          "description": "Monerium couldn't verify this account. Open Monerium to see why and what you can do next.",
+          "title": "Verification not completed"
+        },
         "info": {
           "cta": "Accept and continue",
           "description": "To transfer your earnings to your bank account, you need to complete your secure payment account setup.",
@@ -560,15 +565,16 @@ export default interface Resources {
           "feature3Description": "Your transactions are protected and comply with current security standards.",
           "feature3Title": "Secure your transfers",
           "redirectNotice": "You will be redirected to our financial partner, Monerium, to:",
+          "secondaryCta": "I already have a Monerium account",
           "title": "Complete your account to claim your earnings."
         },
         "kyc": {
-          "cta": "Verify my identity",
-          "description": "To transfer your earnings, you need to verify your identity.",
+          "cta": "Continue on Monerium",
+          "description": "Your account is created but not complete yet. Finish the steps on Monerium to transfer your earnings.",
           "featureDescription": "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.",
           "featureTitle": "Verify your identity",
-          "notice": "This step is quick and secure.",
-          "title": "Complete your identity verification"
+          "notice": "You'll come back to Frak Wallet automatically when you're done.",
+          "title": "Finish setting up your Monerium account"
         },
         "link": {
           "cta": "Link my account",
@@ -577,6 +583,21 @@ export default interface Resources {
           "featureTitle": "Link your Monerium account to your wallet",
           "title": "Link your wallet"
         },
+        "linking": {
+          "checkAgain": "Check again",
+          "description": "Monerium is linking your wallet to your account. It usually only takes a moment.",
+          "title": "Linking your wallet"
+        },
+        "loadError": {
+          "description": "We couldn't get the status of your Monerium account. Please try again.",
+          "retry": "Try again",
+          "title": "Couldn't load your account"
+        },
+        "reconnect": {
+          "cta": "Reconnect",
+          "description": "Your Monerium session has expired. Reconnect to keep transferring your earnings.",
+          "title": "Reconnect your Monerium account"
+        },
         "success": {
           "cta": "Transfer my earnings",
           "description": "Your account is ready. You can now transfer your earnings to your bank account with ease.",
@@ -584,7 +605,7 @@ export default interface Resources {
         },
         "transfer": {
           "amount": {
-            "aboveMax": "Transfers of {{max}}€ or more require additional documentation.",
+            "aboveMax": "Transfers of {{max}}€ or more to someone else aren't supported yet. Send it to your own account instead.",
             "continue": "Continue",
             "ibanEmpty": "No IBAN saved",
             "ibanLabel": "IBAN",
@@ -596,13 +617,21 @@ export default interface Resources {
           },
           "ibanManager": {
             "addNew": "Add an IBAN",
+            "countryInvalid": "Select a country",
+            "countryLabel": "Beneficiary country",
+            "countryPlaceholder": "Select a country",
             "empty": "No IBAN saved. Add one to get started.",
             "firstNameLabel": "First name",
             "firstNamePlaceholder": "e.g. John",
+            "ibanInvalid": "This IBAN isn't valid",
             "ibanLabel": "IBAN",
             "ibanPlaceholder": "FR76...",
             "lastNameLabel": "Last name",
             "lastNamePlaceholder": "e.g. Doe",
+            "nameInvalid": "Enter at least {{min}} characters",
+            "ownAccountLabel": "My account",
+            "ownToggle": "This is my own account",
+            "ownToggleDescription": "No name needed, and no amount limit.",
             "pseudoLabel": "Pseudo / note",
             "pseudoPlaceholder": "Defaults to first + last name",
             "remove": "Remove",
@@ -616,6 +645,8 @@ export default interface Resources {
             "beneficiaryLabel": "Beneficiary",
             "cancel": "Cancel",
             "confirm": "Confirm transfer",
+            "memoInvalid": "The note must be between {{min}} and {{max}} characters.",
+            "memoPlaceholder": "Optional",
             "title": "Summary",
             "warning": "Once confirmed, this operation cannot be cancelled"
           },
@@ -623,21 +654,52 @@ export default interface Resources {
             "description": "You will receive your payout within 10 seconds.",
             "title": "Your transfer request of {{amount}} € has been received"
           }
+        },
+        "verification": {
+          "checkAgain": "Check again",
+          "description": "Monerium is reviewing your identity. This can take from a few minutes to a couple of days.",
+          "pushCta": "Notify me",
+          "pushDescription": "We'll send you a notification as soon as your account is verified.",
+          "pushTitle": "Get notified",
+          "title": "Verification in progress"
         }
       },
       "callback": {
         "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
         "cancelledTitle": "Connection cancelled",
-        "csrfDescription": "We couldn't verify the connection request. Please retry from the start.",
-        "csrfTitle": "Security check failed",
         "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
         "errorTitle": "Connection failed",
+        "expiredDescription": "This sign-in took too long or was already used. Please start again from your profile.",
+        "expiredTitle": "Link expired",
         "tryAgain": "Try again"
       },
       "completeSetup": "Complete setup",
       "connect": "Connect",
       "connecting": "Connecting...",
       "disconnect": "Disconnect",
+      "errors": {
+        "amountLimit": "This amount is above the limit for transfers to someone else. Send it to your own account instead.",
+        "authStateInvalid": "This sign-in link has expired. Please start again.",
+        "cancelled": "Signature cancelled. Nothing was sent.",
+        "generic": "Something went wrong. Please try again.",
+        "invalidAmount": "Enter a valid amount.",
+        "invalidCounterpart": "Check the recipient's name and country.",
+        "invalidIban": "This IBAN isn't valid.",
+        "invalidMemo": "The note must be between 5 and 140 characters.",
+        "invalidMessage": "The transfer couldn't be confirmed. Please try again.",
+        "linkRejected": "Monerium refused to link this wallet. Please try again or contact support.",
+        "messageExpired": "The confirmation expired. Please try again.",
+        "network": "We couldn't reach the server. Check your connection and try again.",
+        "notConnected": "Your Monerium account isn't connected yet.",
+        "orderRejected": "Monerium rejected this transfer. Check the details and try again.",
+        "profileNotApproved": "Your Monerium profile isn't verified yet.",
+        "reauthRequired": "Your Monerium session has expired. Reconnect to continue.",
+        "siweRejected": "Monerium couldn't confirm your wallet. Sign in on Monerium instead.",
+        "siweUnavailable": "Quick reconnect isn't available right now. Sign in on Monerium instead.",
+        "tokenExchangeFailed": "Monerium didn't accept the connection. Please try again.",
+        "upstreamUnavailable": "Monerium is temporarily unavailable. Please try again in a few minutes.",
+        "walletNotLinked": "This wallet isn't linked to your Monerium account yet."
+      },
       "linkWallet": "Link wallet",
       "offramp": {
         "amountInvalid": "Amount must be greater than 0",
@@ -674,6 +736,7 @@ export default interface Resources {
           "rejected": "Rejected"
         }
       },
+      "reconnect": "Reconnect",
       "status": {
         "approved": "Verified ✓",
         "created": "Account created, complete verification on Monerium",

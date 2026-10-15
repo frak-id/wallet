@@ -1,8 +1,8 @@
+import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
 import { act, renderHook } from "@testing-library/react";
 import { vi } from "vitest";
-import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 import { modalStore } from "@/module/stores/modalStore";
 import {
     afterEach,
@@ -54,7 +54,7 @@ const rewardDetail = {
 } as const;
 const moneriumOrderDetail = {
     id: "moneriumOrderDetail",
-    order: {} as MoneriumOrder,
+    order: {} as MoneriumOrderDto,
 } as const;
 
 const store = () => modalStore.getState();

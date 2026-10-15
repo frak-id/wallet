@@ -1,3 +1,4 @@
+import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import {
     DetailSheet,
@@ -21,14 +22,10 @@ import { arbitrum, arbitrumSepolia } from "viem/chains";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { maskIban } from "@/module/monerium/utils/maskIban";
-import type {
-    MoneriumOrder,
-    MoneriumOrderState,
-} from "@/module/monerium/utils/moneriumTypes";
 import * as styles from "./index.css";
 
 type MoneriumOrderDetailModalProps = {
-    order: MoneriumOrder;
+    order: MoneriumOrderDto;
     onClose: () => void;
 };
 
@@ -60,7 +57,7 @@ function DetailHeader({
     locale,
     t,
 }: {
-    order: MoneriumOrder;
+    order: MoneriumOrderDto;
     locale: string;
     t: TFunction;
 }) {
@@ -79,7 +76,7 @@ function DetailHeader({
             : "disabled";
 
     const walletName = t("monerium.order.detail.walletName");
-    const iban = order.counterpart.identifier.iban;
+    const iban = order.counterpart.iban;
     const ibanLabel = iban ? maskIban(iban) : t("monerium.order.detail.bank");
 
     const directionLabel =
@@ -114,7 +111,7 @@ function DetailHeader({
     );
 }
 
-function OrderHeroIcon({ state }: { state: MoneriumOrderState }) {
+function OrderHeroIcon({ state }: { state: MoneriumOrderDto["state"] }) {
     return (
         <div className={styles.heroIconWrapper}>
             <BankIcon color={vars.text.secondary} width={32} height={32} />
@@ -123,7 +120,7 @@ function OrderHeroIcon({ state }: { state: MoneriumOrderState }) {
     );
 }
 
-function HeroBadge({ state }: { state: MoneriumOrderState }) {
+function HeroBadge({ state }: { state: MoneriumOrderDto["state"] }) {
     if (state === "placed" || state === "pending") {
         return (
             <div className={styles.heroBadge}>
@@ -153,17 +150,17 @@ function HeroBadge({ state }: { state: MoneriumOrderState }) {
     return null;
 }
 
-function DetailCard({ order, t }: { order: MoneriumOrder; t: TFunction }) {
+function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
     const memo = order.memo?.trim();
     const walletName = t("monerium.order.detail.walletName");
-    const iban = order.counterpart.identifier.iban;
+    const iban = order.counterpart.iban;
     const ibanLabel = iban ? maskIban(iban) : t("monerium.order.detail.bank");
 
     // For redeem: from wallet → to IBAN. For issue: from IBAN → to wallet.
     const fromLabel = order.kind === "redeem" ? walletName : ibanLabel;
     const toLabel = order.kind === "redeem" ? ibanLabel : walletName;
 
-    const txHash = order.meta.txHashes?.[0];
+    const txHash = order.txHashes[0];
 
     return (
         <Stack space="m">
@@ -229,11 +226,11 @@ function DetailCard({ order, t }: { order: MoneriumOrder; t: TFunction }) {
 }
 
 function formatOrderDateTime(
-    order: MoneriumOrder,
+    order: MoneriumOrderDto,
     locale: string,
     t: TFunction
 ): string {
-    const sourceIso = order.meta.processedAt ?? order.meta.placedAt;
+    const sourceIso = order.processedAt ?? order.placedAt;
     const parsed = sourceIso ? Date.parse(sourceIso) : Number.NaN;
     if (!Number.isFinite(parsed)) return "";
 

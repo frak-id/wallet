@@ -2,6 +2,11 @@ import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { IBAN_STORE_NAME, ibanStore } from "@/module/monerium/store/ibanStore";
+import {
+    MONERIUM_STORE_NAME,
+    moneriumStore,
+} from "@/module/monerium/store/moneriumStore";
 import { notificationAdapter } from "@/module/notification/adapter";
 
 function cleanLocalStorage() {
@@ -13,6 +18,8 @@ function cleanLocalStorage() {
         "frak_user",
         "frak_userSetupLater",
         "frak_demoPrivateKey",
+        MONERIUM_STORE_NAME,
+        IBAN_STORE_NAME,
     ];
     for (const item of localStorageItems) {
         window.localStorage.removeItem(item);
@@ -39,6 +46,10 @@ export function useLogout() {
         trackEvent("logout");
         await notificationAdapter.unsubscribe().catch(() => {});
         sessionStore.getState().clearSession();
+        // Saved IBANs and names are personal data; the server-side Monerium
+        // connection deliberately survives logout.
+        moneriumStore.getState().reset();
+        ibanStore.getState().reset();
         queryClient.removeQueries();
         setTimeout(() => {
             cleanLocalStorage();

@@ -1,3 +1,4 @@
+import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -12,10 +13,6 @@ import { formatCurrency } from "@frak-labs/wallet-shared";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { maskIban } from "@/module/monerium/utils/maskIban";
-import type {
-    MoneriumOrder,
-    MoneriumOrderState,
-} from "@/module/monerium/utils/moneriumTypes";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -24,7 +21,11 @@ import * as styles from "./index.css";
  * opens a detail modal that mirrors the reward-detail layout, so the two
  * surfaces feel like siblings rather than ad-hoc screens.
  */
-export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
+export function MoneriumOrderHistoryItem({
+    order,
+}: {
+    order: MoneriumOrderDto;
+}) {
     const { t, i18n } = useTranslation();
     const locale = i18n.language;
 
@@ -87,7 +88,7 @@ export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
     );
 }
 
-function OrderIcon({ state }: { state: MoneriumOrderState }) {
+function OrderIcon({ state }: { state: MoneriumOrderDto["state"] }) {
     return (
         <div className={styles.iconWrapper}>
             <BankIcon color={vars.text.secondary} width={20} height={20} />
@@ -96,7 +97,7 @@ function OrderIcon({ state }: { state: MoneriumOrderState }) {
     );
 }
 
-function Badge({ state }: { state: MoneriumOrderState }) {
+function Badge({ state }: { state: MoneriumOrderDto["state"] }) {
     if (state === "placed" || state === "pending") {
         return (
             <div className={styles.badge}>
@@ -132,8 +133,8 @@ function DisplayAmount({
     kind,
 }: {
     amount: string;
-    state: MoneriumOrderState;
-    kind: MoneriumOrder["kind"];
+    state: MoneriumOrderDto["state"];
+    kind: MoneriumOrderDto["kind"];
 }) {
     if (state === "rejected") {
         return (
@@ -161,21 +162,21 @@ function DisplayAmount({
 }
 
 function buildSubtitle(
-    order: MoneriumOrder,
+    order: MoneriumOrderDto,
     locale: string,
     t: TFunction
 ): string {
     const date = formatOrderDate(order, locale, t);
-    const iban = order.counterpart.identifier.iban;
+    const iban = order.counterpart.iban;
     return iban ? `${maskIban(iban)} · ${date}` : date;
 }
 
 function formatOrderDate(
-    order: MoneriumOrder,
+    order: MoneriumOrderDto,
     locale: string,
     t: TFunction
 ): string {
-    const sourceIso = order.meta.processedAt ?? order.meta.placedAt;
+    const sourceIso = order.processedAt ?? order.placedAt;
     const parsed = sourceIso ? Date.parse(sourceIso) : Number.NaN;
     if (!Number.isFinite(parsed)) return "";
 

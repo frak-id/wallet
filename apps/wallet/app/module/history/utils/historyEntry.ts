@@ -1,5 +1,5 @@
+import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
-import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 
 /**
  * Unified history entry rendered in both the wallet home preview and the
@@ -22,7 +22,7 @@ export type HistoryEntry =
           kind: "monerium-order";
           id: string;
           timestamp: number;
-          order: MoneriumOrder;
+          order: MoneriumOrderDto;
       };
 
 /**
@@ -48,8 +48,8 @@ export function rewardToHistoryEntry(reward: RewardHistoryItem): HistoryEntry {
  * Falls back to `Date.now()` if both are missing/invalid — Monerium
  * guarantees `placedAt` in the schema, so this is purely defensive.
  */
-export function orderToHistoryEntry(order: MoneriumOrder): HistoryEntry {
-    const sourceIso = order.meta.processedAt ?? order.meta.placedAt;
+export function orderToHistoryEntry(order: MoneriumOrderDto): HistoryEntry {
+    const sourceIso = order.processedAt ?? order.placedAt;
     const parsed = sourceIso ? Date.parse(sourceIso) : Number.NaN;
     const ms = Number.isFinite(parsed) ? parsed : Date.now();
 
@@ -68,7 +68,7 @@ export function orderToHistoryEntry(order: MoneriumOrder): HistoryEntry {
  */
 export function mergeHistoryEntries(
     rewards: RewardHistoryItem[],
-    orders: MoneriumOrder[]
+    orders: MoneriumOrderDto[]
 ): HistoryEntry[] {
     const entries: HistoryEntry[] = [
         ...rewards.map(rewardToHistoryEntry),
