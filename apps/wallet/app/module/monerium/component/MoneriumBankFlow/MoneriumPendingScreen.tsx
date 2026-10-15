@@ -4,6 +4,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
 import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
+import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { MoneriumScreen } from "./MoneriumScreen";
@@ -55,7 +56,7 @@ export function MoneriumPendingScreen({
     variant,
 }: MoneriumPendingScreenProps) {
     const { t } = useTranslation();
-    const { refresh, isRefreshing } = useMoneriumStatus();
+    const { refresh, isRefreshing, refreshError } = useMoneriumStatus();
     const isVerification = variant === "verification";
 
     return (
@@ -81,6 +82,11 @@ export function MoneriumPendingScreen({
                         : "monerium.bankFlow.linking.description"
                 )}
             </Text>
+            {refreshError ? (
+                <Text variant="bodySmall" color="error">
+                    {t(getMoneriumErrorKey(refreshError))}
+                </Text>
+            ) : null}
             {isVerification ? <PushOptIn /> : null}
         </MoneriumScreen>
     );

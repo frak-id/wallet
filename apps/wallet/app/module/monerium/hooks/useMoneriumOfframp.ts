@@ -4,7 +4,11 @@ import {
     normalizeIban,
     normalizeRedeemAmount,
 } from "@frak-labs/app-essentials/monerium";
-import { authenticatedWalletApi, trackEvent } from "@frak-labs/wallet-shared";
+import {
+    authenticatedWalletApi,
+    balanceKey,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useSignMessage } from "wagmi";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
@@ -14,6 +18,7 @@ import {
     getMoneriumErrorCode,
     unwrapMoneriumResponse,
 } from "@/module/monerium/utils/moneriumErrors";
+import { refreshStatusOnStateChange } from "@/module/monerium/utils/refreshStaleStatus";
 
 export type PlaceOrderParams = {
     /** Generated once per recap screen so a retry cannot pay twice. */
@@ -58,7 +63,7 @@ export function useMoneriumOfframp() {
             });
             const signature = await signMessageAsync({ message });
 
-            return unwrapMoneriumResponse(
+            const placed = unwrapMoneriumResponse(
                 await authenticatedWalletApi.monerium.orders.post({
                     orderId,
                     amount: normalizedAmount,
@@ -69,6 +74,10 @@ export function useMoneriumOfframp() {
                     signature,
                 })
             );
+            if (placed.order?.state === "rejected") {
+                throw createMoneriumError("MONERIUM_ORDER_REJECTED");
+            }
+            return placed;
         },
         onSuccess: (_data, { amount, counterpart }, _result, { client }) => {
             trackEvent("monerium_order_placed", {
@@ -77,8 +86,10 @@ export function useMoneriumOfframp() {
             });
             client.invalidateQueries({ queryKey: moneriumKey.orders });
             client.invalidateQueries({ queryKey: moneriumKey.status });
+            client.invalidateQueries({ queryKey: balanceKey.baseKey });
         },
-        onError: (error, { amount, counterpart }) => {
+        onError: (error, { amount, counterpart }, _result, { client }) => {
+            refreshStatusOnStateChange(error, client);
             trackEvent("monerium_order_failed", {
                 own: counterpart.own,
                 amount_bucket: getAmountBucket(amount),

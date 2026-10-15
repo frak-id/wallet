@@ -95,17 +95,25 @@ export const ibanStore = create<IbanStoreState>()(
                         return { knownIbans: [...state.knownIbans, trimmed] };
                     }
                     return {
-                        knownIbans: state.knownIbans.map((i) =>
-                            i.iban === normalized
-                                ? {
-                                      ...trimmed,
-                                      firstName:
-                                          trimmed.firstName || i.firstName,
-                                      lastName: trimmed.lastName || i.lastName,
-                                      pseudo: trimmed.pseudo || i.pseudo,
-                                  }
-                                : i
-                        ),
+                        knownIbans: state.knownIbans.map((i) => {
+                            if (i.iban !== normalized) return i;
+                            const pseudo = trimmed.pseudo || i.pseudo;
+                            if (trimmed.own) {
+                                return {
+                                    ...trimmed,
+                                    firstName: "",
+                                    lastName: "",
+                                    country: undefined,
+                                    pseudo,
+                                };
+                            }
+                            return {
+                                ...trimmed,
+                                firstName: trimmed.firstName || i.firstName,
+                                lastName: trimmed.lastName || i.lastName,
+                                pseudo,
+                            };
+                        }),
                     };
                 }),
 
@@ -127,10 +135,20 @@ export const ibanStore = create<IbanStoreState>()(
                 set({ lastUsedIban: iban ? normalizeIban(iban) : null }),
 
             mergeRemoteIbans: (remote, wallet) =>
-                set((state) => ({
-                    knownIbans: mergeIbanEntries(state.knownIbans, remote),
-                    syncedWallet: wallet,
-                })),
+                set((state) => {
+                    const otherWallet =
+                        state.syncedWallet !== null &&
+                        state.syncedWallet.toLowerCase() !==
+                            wallet.toLowerCase();
+                    return {
+                        knownIbans: mergeIbanEntries(
+                            otherWallet ? [] : state.knownIbans,
+                            remote
+                        ),
+                        lastUsedIban: otherWallet ? null : state.lastUsedIban,
+                        syncedWallet: wallet,
+                    };
+                }),
 
             reset: () => set(initialState),
         }),

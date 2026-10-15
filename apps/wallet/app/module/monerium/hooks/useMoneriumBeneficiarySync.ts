@@ -1,4 +1,7 @@
-import { normalizeIban } from "@frak-labs/app-essentials/monerium";
+import {
+    isValidCounterpartName,
+    normalizeIban,
+} from "@frak-labs/app-essentials/monerium";
 import { authenticatedWalletApi, recordError } from "@frak-labs/wallet-shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,7 +46,14 @@ export async function syncMoneriumBeneficiaries(
         await authenticatedWalletApi.monerium.beneficiaries.get()
     );
     ibanStore.getState().mergeRemoteIbans(
-        beneficiaries.map((b) => beneficiaryToIbanEntry(b, ownLabel)),
+        beneficiaries
+            .filter(
+                (b) =>
+                    b.own ||
+                    (isValidCounterpartName(b.firstName ?? "") &&
+                        isValidCounterpartName(b.lastName ?? ""))
+            )
+            .map((b) => beneficiaryToIbanEntry(b, ownLabel)),
         wallet
     );
 }

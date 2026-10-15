@@ -1004,6 +1004,12 @@
         "connecting": "Connecting...",
         "disconnect": "Disconnect",
         "completeSetup": "Complete setup",
+        "disconnectConfirm": {
+            "title": "Disconnect Monerium?",
+            "description": "You will need to sign in to Monerium again to transfer your earnings.",
+            "cancel": "Cancel",
+            "confirm": "Disconnect"
+        },
         "linkWallet": "Link wallet",
         "status": {
             "settingUp": "Setting up...",
@@ -1039,7 +1045,7 @@
             "errorTitle": "Connection failed",
             "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
             "expiredTitle": "Link expired",
-            "expiredDescription": "This sign-in took too long or was already used. Please start again from your profile.",
+            "expiredDescription": "This sign-in took too long or was already used. Please start again.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -1123,7 +1129,7 @@
                 },
                 "success": {
                     "title": "Your transfer request of {{amount}} € has been received",
-                    "description": "You will receive your payout within 10 seconds."
+                    "description": "Your transfer is on its way. You can follow it in your history."
                 },
                 "ibanManager": {
                     "title": "Manage my IBANs",

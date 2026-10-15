@@ -650,7 +650,7 @@ export default interface Resources {
             "warning": "Once confirmed, this operation cannot be cancelled"
           },
           "success": {
-            "description": "You will receive your payout within 10 seconds.",
+            "description": "Your transfer is on its way. You can follow it in your history.",
             "title": "Your transfer request of {{amount}} € has been received"
           }
         },
@@ -668,7 +668,7 @@ export default interface Resources {
         "cancelledTitle": "Connection cancelled",
         "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
         "errorTitle": "Connection failed",
-        "expiredDescription": "This sign-in took too long or was already used. Please start again from your profile.",
+        "expiredDescription": "This sign-in took too long or was already used. Please start again.",
         "expiredTitle": "Link expired",
         "tryAgain": "Try again"
       },
@@ -676,6 +676,12 @@ export default interface Resources {
       "connect": "Connect",
       "connecting": "Connecting...",
       "disconnect": "Disconnect",
+      "disconnectConfirm": {
+        "cancel": "Cancel",
+        "confirm": "Disconnect",
+        "description": "You will need to sign in to Monerium again to transfer your earnings.",
+        "title": "Disconnect Monerium?"
+      },
       "errors": {
         "amountLimit": "This amount is above the limit for transfers to someone else. Send it to your own account instead.",
         "authStateInvalid": "This sign-in link has expired. Please start again.",
