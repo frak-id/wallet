@@ -9,18 +9,19 @@ import {
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useConnection } from "wagmi";
-import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
+import { useMoneriumConnect } from "@/module/monerium/hooks/useMoneriumConnect";
+import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
 import { FeatureRow } from "./FeatureRow";
 import { MoneriumScreen } from "./MoneriumScreen";
 
 type MoneriumConnectScreenProps = {
     onClose: () => void;
     /**
-     * - `"info"` — first-time explanation with 3 feature rows
-     * - `"kyc"`  — KYC pending reminder with 1 feature row
+     * - `"info"`       first-time explanation, with a secondary "I already have an account"
+     * - `"reconnect"`  the Monerium session expired
+     * - `"onboarding"` connected, but the profile is not complete on Monerium yet
      */
-    variant: "info" | "kyc";
+    variant: "info" | "reconnect" | "onboarding";
 };
 
 type FeatureConfig = {
@@ -47,7 +48,7 @@ const infoFeatures: FeatureConfig[] = [
     },
 ];
 
-const kycFeatures: FeatureConfig[] = [
+const onboardingFeatures: FeatureConfig[] = [
     {
         icon: <PersonIcon width={24} height={24} />,
         titleKey: "monerium.bankFlow.kyc.featureTitle",
@@ -55,7 +56,18 @@ const kycFeatures: FeatureConfig[] = [
     },
 ];
 
-const variantConfig = {
+type VariantConfig = {
+    titleKey: DefaultTranslationKey;
+    descriptionKey: DefaultTranslationKey;
+    noticeKey?: DefaultTranslationKey;
+    ctaKey: DefaultTranslationKey;
+    features: FeatureConfig[];
+};
+
+const variantConfig: Record<
+    MoneriumConnectScreenProps["variant"],
+    VariantConfig
+> = {
     info: {
         titleKey: "monerium.bankFlow.info.title",
         descriptionKey: "monerium.bankFlow.info.description",
@@ -63,62 +75,82 @@ const variantConfig = {
         ctaKey: "monerium.bankFlow.info.cta",
         features: infoFeatures,
     },
-    kyc: {
+    reconnect: {
+        titleKey: "monerium.bankFlow.reconnect.title",
+        descriptionKey: "monerium.bankFlow.reconnect.description",
+        ctaKey: "monerium.bankFlow.reconnect.cta",
+        features: [],
+    },
+    onboarding: {
         titleKey: "monerium.bankFlow.kyc.title",
         descriptionKey: "monerium.bankFlow.kyc.description",
         noticeKey: "monerium.bankFlow.kyc.notice",
         ctaKey: "monerium.bankFlow.kyc.cta",
-        features: kycFeatures,
+        features: onboardingFeatures,
     },
-} as const;
+};
 
 /**
- * Shared screen for both the initial Monerium info and the KYC-pending
- * reminder.  Both redirect to Monerium OAuth on CTA click; only the
- * copy and feature list differ.
+ * Screen that sends the user to Monerium: a first connection, a reconnect
+ * after the session expired, or finishing the onboarding there.
  */
 export function MoneriumConnectScreen({
     onClose,
     variant,
 }: MoneriumConnectScreenProps) {
     const { t } = useTranslation();
-    const { address } = useConnection();
-    const { connect, isConnecting } = useMoneriumAuth();
+    const { connect, isConnecting, error } = useMoneriumConnect();
     const config = variantConfig[variant];
-
-    const handleConnect = () => {
-        if (address) connect(address);
-    };
 
     return (
         <MoneriumScreen
             onClose={onClose}
             title={t(config.titleKey)}
             ctaLabel={t(config.ctaKey)}
-            ctaOnClick={handleConnect}
+            ctaOnClick={() => connect({})}
             ctaLoading={isConnecting}
+            secondaryLabel={
+                variant === "info"
+                    ? t("monerium.bankFlow.info.secondaryCta")
+                    : undefined
+            }
+            secondaryOnClick={
+                variant === "info"
+                    ? () => connect({ authMode: "login" })
+                    : undefined
+            }
         >
             <Stack space="m">
                 <Text variant="body" color="secondary">
                     {t(config.descriptionKey)}
                 </Text>
-                <Text variant="body" color="secondary">
-                    {t(config.noticeKey)}
-                </Text>
+                {config.noticeKey ? (
+                    <Text variant="body" color="secondary">
+                        {t(config.noticeKey)}
+                    </Text>
+                ) : null}
             </Stack>
 
-            <Card variant="elevated" padding="none">
-                <Stack space="none">
-                    {config.features.map((feature) => (
-                        <FeatureRow
-                            key={feature.titleKey}
-                            icon={feature.icon}
-                            title={t(feature.titleKey)}
-                            description={t(feature.descriptionKey)}
-                        />
-                    ))}
-                </Stack>
-            </Card>
+            {config.features.length > 0 ? (
+                <Card variant="elevated" padding="none">
+                    <Stack space="none">
+                        {config.features.map((feature) => (
+                            <FeatureRow
+                                key={feature.titleKey}
+                                icon={feature.icon}
+                                title={t(feature.titleKey)}
+                                description={t(feature.descriptionKey)}
+                            />
+                        ))}
+                    </Stack>
+                </Card>
+            ) : null}
+
+            {error ? (
+                <Text variant="bodySmall" color="error">
+                    {t(getMoneriumErrorKey(error))}
+                </Text>
+            ) : null}
         </MoneriumScreen>
     );
 }

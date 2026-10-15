@@ -1,26 +1,30 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { recordError, trackEvent } from "@frak-labs/wallet-shared";
+import {
+    authenticatedWalletApi,
+    recordError,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { MoneriumScreen } from "@/module/monerium/component/MoneriumBankFlow/MoneriumScreen";
+import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
+import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import {
-    isPendingAuthExpired,
-    moneriumStore,
-} from "@/module/monerium/store/moneriumStore";
-import { exchangeCodeForTokens } from "@/module/monerium/utils/moneriumApi";
+    getMoneriumErrorCode,
+    unwrapMoneriumResponse,
+} from "@/module/monerium/utils/moneriumErrors";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./monerium.callback.css";
 
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     beforeLoad: () => {
-        if (isRunningInProd) {
+        if (!isMoneriumEnabled) {
             throw redirect({ to: "/wallet", replace: true });
         }
     },
@@ -32,7 +36,7 @@ export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     }),
 });
 
-type OutcomeKind = "cancelled" | "csrf" | "error";
+type OutcomeKind = "cancelled" | "expired" | "error";
 
 const OUTCOME_COPY: Record<
     OutcomeKind,
@@ -42,9 +46,9 @@ const OUTCOME_COPY: Record<
         title: "monerium.callback.cancelledTitle",
         description: "monerium.callback.cancelledDescription",
     },
-    csrf: {
-        title: "monerium.callback.csrfTitle",
-        description: "monerium.callback.csrfDescription",
+    expired: {
+        title: "monerium.callback.expiredTitle",
+        description: "monerium.callback.expiredDescription",
     },
     error: {
         title: "monerium.callback.errorTitle",
@@ -84,120 +88,54 @@ function MoneriumCallback() {
     const navigate = useNavigate();
     const { code, state, error } = Route.useSearch();
     const hasStartedRef = useRef(false);
-    const [stateMismatch, setStateMismatch] = useState(false);
-    const [sessionExpired, setSessionExpired] = useState(false);
-    const pendingCodeVerifier = moneriumStore((s) => s.pendingCodeVerifier);
-    const pendingState = moneriumStore((s) => s.pendingState);
-    const pendingAuthCreatedAt = moneriumStore((s) => s.pendingAuthCreatedAt);
-    // The TTL is enforced here as well as on rehydration: a tab that was
-    // never reloaded still holds a pair from an abandoned redirect.
-    const hasUsablePendingAuth =
-        Boolean(pendingCodeVerifier) &&
-        Boolean(pendingState) &&
-        !isPendingAuthExpired(pendingAuthCreatedAt);
 
-    const { mutate, isPending, isError, isSuccess } = useMutation({
-        mutationFn: async ({
-            code,
-            codeVerifier,
-        }: {
-            code: string;
-            codeVerifier: string;
-        }) => {
-            const tokens = await exchangeCodeForTokens(code, codeVerifier);
-            // Pending auth cleared in `onSuccess` — clearing here would flip
-            // the subscribed selector before react-query flags `isSuccess`
-            // and flash the error screen during the redirect.
-            moneriumStore
-                .getState()
-                .setTokens(
-                    tokens.access_token,
-                    tokens.refresh_token,
-                    tokens.expires_in
-                );
-        },
-        onSuccess: () => {
+    const {
+        mutate,
+        isPending,
+        isSuccess,
+        error: exchangeError,
+    } = useMutation({
+        mutationFn: async ({ code, state }: { code: string; state: string }) =>
+            unwrapMoneriumResponse(
+                await authenticatedWalletApi.monerium.auth.callback.post({
+                    code,
+                    state,
+                })
+            ),
+        onSuccess: (status, _variables, _result, { client }) => {
             trackEvent("monerium_callback_outcome", { outcome: "exchanged" });
-            // Re-open the bank flow so `useMoneriumFlowSync` routes to the
-            // right post-connect screen. SPA nav (not `window.location`)
-            // because the modal store is in-memory.
+            client.setQueryData(moneriumKey.status, status);
+            // SPA navigation, not `window.location`: the modal store is in-memory.
             modalStore.getState().openModal({ id: "moneriumBankFlow" });
             navigate({ to: "/wallet", replace: true });
-            moneriumStore.getState().clearPendingAuth();
         },
         onError: (err) => {
-            trackEvent("monerium_callback_outcome", { outcome: "error" });
-            recordError(err, { source: "monerium_callback" });
+            const expired =
+                getMoneriumErrorCode(err) === "MONERIUM_AUTH_STATE_INVALID";
+            trackEvent("monerium_callback_outcome", {
+                outcome: expired ? "session_expired" : "error",
+            });
+            if (!expired) recordError(err, { source: "monerium_callback" });
         },
     });
 
     useEffect(() => {
         if (hasStartedRef.current) return;
-        if (!code) {
-            // No code in the callback URL: either the user cancelled (when
-            // `error` is set) or the route was hit directly without an
-            // OAuth context. Either way, terminal — record once.
-            hasStartedRef.current = true;
+        hasStartedRef.current = true;
+
+        if (!code || !state) {
             trackEvent("monerium_callback_outcome", {
                 outcome: error ? "cancelled" : "no_code",
             });
             return;
         }
-        if (!hasUsablePendingAuth || !pendingCodeVerifier) {
-            // Code present but our PKCE verifier is gone or stale (already
-            // consumed, cleared, or the redirect took too long). Surface as
-            // a recoverable error rather than the generic CSRF screen.
-            if (sessionExpired) return;
-            setSessionExpired(true);
-            trackEvent("monerium_callback_outcome", {
-                outcome: "session_expired",
-            });
-            return;
-        }
-
-        hasStartedRef.current = true;
-
-        // CSRF guard: spec requires the returned `state` to match what we
-        // stored before the redirect. Mismatch means the callback isn't
-        // ours — but we deliberately do NOT clear `pendingAuth` here:
-        // a mismatch could be a transient race (e.g. double delivery on
-        // Android) and clearing would turn it into a permanent error,
-        // forcing the user to restart the entire flow. Leaving the
-        // verifier in place lets a subsequent valid callback succeed.
-        if (state !== pendingState) {
-            trackEvent("monerium_callback_outcome", {
-                outcome: "csrf_mismatch",
-            });
-            recordError(new Error("Monerium OAuth state mismatch"), {
-                source: "monerium_callback",
-            });
-            setStateMismatch(true);
-            return;
-        }
-
-        mutate({ code, codeVerifier: pendingCodeVerifier });
-    }, [
-        code,
-        state,
-        pendingCodeVerifier,
-        pendingState,
-        pendingAuthCreatedAt,
-        mutate,
-        sessionExpired,
-        error,
-    ]);
+        mutate({ code, state });
+    }, [code, state, error, mutate]);
 
     const goToProfile = () => navigate({ to: "/profile", replace: true });
     const goToWallet = () => navigate({ to: "/wallet", replace: true });
 
-    // Spinner while the exchange is in-flight, just succeeded (before the
-    // redirect lands), or about to start (initial mount with code + verifier).
-    const isExchangingCode =
-        !stateMismatch &&
-        !sessionExpired &&
-        (isPending ||
-            isSuccess ||
-            (Boolean(code) && hasUsablePendingAuth && !isError));
+    const isExchanging = Boolean(code && state) && !exchangeError;
 
     return (
         <DetailOverlay
@@ -205,7 +143,7 @@ function MoneriumCallback() {
             labelKey="wallet.modal.moneriumCallback.ariaLabel"
         >
             {({ handleClose }) => {
-                if (isExchangingCode) {
+                if (isExchanging || isPending || isSuccess) {
                     return (
                         <div className={styles.spinnerWrap}>
                             <Spinner />
@@ -213,13 +151,14 @@ function MoneriumCallback() {
                     );
                 }
 
-                const kind: OutcomeKind = stateMismatch
-                    ? "csrf"
-                    : sessionExpired
-                      ? "error"
-                      : !code && error
-                        ? "cancelled"
-                        : "error";
+                const kind: OutcomeKind = exchangeError
+                    ? getMoneriumErrorCode(exchangeError) ===
+                      "MONERIUM_AUTH_STATE_INVALID"
+                        ? "expired"
+                        : "error"
+                    : error
+                      ? "cancelled"
+                      : "error";
 
                 return (
                     <Outcome

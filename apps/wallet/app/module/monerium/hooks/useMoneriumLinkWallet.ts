@@ -1,3 +1,5 @@
+import { MONERIUM_ADDRESS_LINKING_MESSAGE } from "@frak-labs/app-essentials/monerium";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -7,11 +9,8 @@ import {
     useSignMessage,
 } from "wagmi";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { getProfiles, linkAddress } from "@/module/monerium/utils/moneriumApi";
-import {
-    ADDRESS_LINKING_MESSAGE,
-    moneriumConfig,
-} from "@/module/monerium/utils/moneriumConfig";
+import type { MoneriumStatus } from "@/module/monerium/utils/deriveSetupScreen";
+import { unwrapMoneriumResponse } from "@/module/monerium/utils/moneriumErrors";
 
 export function useMoneriumLinkWallet() {
     const { address } = useConnection();
@@ -24,35 +23,27 @@ export function useMoneriumLinkWallet() {
             if (!address) throw new Error("No wallet connected");
             if (!client) throw new Error("No client available");
 
-            const profiles = await getProfiles();
-            if (!profiles?.profiles.length) {
-                throw new Error("No profile detected");
-            }
-
             const deployed = await isSmartAccountDeployed(client, address);
             if (!deployed) {
-                await sendTransactionAsync({
-                    to: address,
-                    value: 0n,
-                });
+                await sendTransactionAsync({ to: address, value: 0n });
             }
 
             const signature = await signMessageAsync({
-                message: ADDRESS_LINKING_MESSAGE,
+                message: MONERIUM_ADDRESS_LINKING_MESSAGE,
             });
 
-            return await linkAddress({
-                profile: profiles.profiles[0].id,
-                address,
-                signature,
-                message: ADDRESS_LINKING_MESSAGE,
-                chain: moneriumConfig.chain,
-            });
+            return unwrapMoneriumResponse(
+                await authenticatedWalletApi.monerium.wallet.link.post({
+                    signature,
+                })
+            );
         },
-        onSuccess: (_data, _variable, _result, { client }) => {
-            client.invalidateQueries({
-                queryKey: moneriumKey.all,
-            });
+        onSuccess: ({ walletLink }, _variable, _result, { client }) => {
+            client.setQueryData<MoneriumStatus>(
+                moneriumKey.status,
+                (status) => status && { ...status, walletLink }
+            );
+            client.invalidateQueries({ queryKey: moneriumKey.status });
         },
     });
 

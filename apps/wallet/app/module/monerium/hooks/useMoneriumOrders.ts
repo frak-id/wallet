@@ -1,51 +1,40 @@
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import { useConnection } from "wagmi";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
+import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import {
-    isMoneriumConnected,
-    moneriumStore,
-} from "@/module/monerium/store/moneriumStore";
-import {
-    getOrders,
     isMoneriumRetryable,
-} from "@/module/monerium/utils/moneriumApi";
+    unwrapMoneriumResponse,
+} from "@/module/monerium/utils/moneriumErrors";
+import { useMoneriumStatus } from "./useMoneriumStatus";
 
-/**
- * Match `useMoneriumAddresses` cadence. Order state transitions are slow
- * enough (SEPA settlement is hours to days) that a fresh fetch on focus +
- * a 5-minute stale window is plenty.
- */
+/** SEPA settlement takes hours to days: a focus refetch past 5 minutes is plenty. */
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
-/**
- * Read the authenticated user's Monerium orders for the currently connected
- * wallet address.
- *
- * Filters via `?address=` so that smart-account users only see orders that
- * originated from their own address — even if the underlying Monerium
- * profile has other linked addresses.
- *
- * See <https://monerium.dev/api-docs/v2> → `GET /orders`.
- */
+/** Orders of the session wallet, as the backend's flattened DTO. */
 export function useMoneriumOrders() {
-    const { address: walletAddress } = useConnection();
-    const isConnected = moneriumStore(isMoneriumConnected);
+    const { status } = useMoneriumStatus();
+    const isConnected = status?.connection === "connected";
 
     const query = useQuery({
-        queryKey: moneriumKey.orders.byAddress(walletAddress),
+        queryKey: moneriumKey.orders,
         queryFn: async () => {
-            if (!walletAddress) return { orders: [] };
-            return getOrders({ address: walletAddress });
+            const { orders } = unwrapMoneriumResponse(
+                await authenticatedWalletApi.monerium.orders.get()
+            );
+            return orders;
         },
-        enabled: isConnected && walletAddress !== undefined,
+        enabled: isMoneriumEnabled && isConnected,
         staleTime: FIVE_MINUTES_MS,
         refetchOnWindowFocus: true,
-        retry: (failureCount, err) =>
-            failureCount < 3 && isMoneriumRetryable(err),
+        // Counterpart IBANs never reach the persisted query cache.
+        meta: { storable: false },
+        retry: (failureCount, error) =>
+            failureCount < 3 && isMoneriumRetryable(error),
     });
 
     return {
-        orders: query.data?.orders ?? [],
+        orders: query.data ?? [],
         isLoading: query.isLoading,
         error: query.error,
         refetch: query.refetch,

@@ -1,3 +1,7 @@
+import {
+    MONERIUM_LIMITS,
+    normalizeRedeemAmount,
+} from "@frak-labs/app-essentials/monerium";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -9,7 +13,6 @@ import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
-import { MAX_REDEEM_AMOUNT_EUR } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
     ibanStore,
     selectEffectiveIban,
@@ -28,10 +31,8 @@ type MoneriumTransferAmountScreenProps = {
 };
 
 function parseAmount(value: string): number {
-    const normalized = value.replace(",", ".").trim();
-    if (normalized.length === 0) return 0;
-    const parsed = Number.parseFloat(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
+    const normalized = normalizeRedeemAmount(value);
+    return normalized ? Number.parseFloat(normalized) : 0;
 }
 
 function SwitcherIcon() {
@@ -68,7 +69,10 @@ export function MoneriumTransferAmountScreen({
     const numericAmount = parseAmount(amount);
     const hasAmount = numericAmount > 0;
     const isInsufficient = hasAmount && numericAmount > eureBalance;
-    const isAboveMax = hasAmount && numericAmount >= MAX_REDEEM_AMOUNT_EUR;
+    const isAboveMax =
+        hasAmount &&
+        selectedIban?.own === false &&
+        numericAmount >= MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR;
     const canContinue =
         hasAmount && !isInsufficient && !isAboveMax && selectedIban !== null;
 
@@ -185,7 +189,7 @@ export function MoneriumTransferAmountScreen({
                 ) : isAboveMax ? (
                     <Text variant="caption" color="error">
                         {t("monerium.bankFlow.transfer.amount.aboveMax", {
-                            max: MAX_REDEEM_AMOUNT_EUR,
+                            max: MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR,
                         })}
                     </Text>
                 ) : null}

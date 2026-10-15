@@ -973,4 +973,50 @@ describe("monerium OAuth callback", () => {
             search: {},
         });
     });
+
+    test("forwards error and error_description so a cancel is not read as no_code", async () => {
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
+
+        openUrlHandler([
+            "https://wallet-dev.frak.id/monerium/callback?error=access_denied&error_description=User%20cancelled",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: {
+                error: "access_denied",
+                error_description: "User cancelled",
+            },
+            replace: true,
+        });
+    });
+
+    test("routes the push link /wallet?open=monerium with the param", async () => {
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
+
+        openUrlHandler(["https://wallet-dev.frak.id/wallet?open=monerium"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/wallet",
+            search: { open: "monerium" },
+            replace: true,
+        });
+    });
+
+    test("drops an unknown open value", async () => {
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
+
+        openUrlHandler(["https://wallet-dev.frak.id/wallet?open=elsewhere"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/wallet",
+            replace: true,
+        });
+    });
 });

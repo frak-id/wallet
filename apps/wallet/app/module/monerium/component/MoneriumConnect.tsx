@@ -6,24 +6,41 @@ import {
     InfoRow,
     infoCardStyles,
 } from "@/module/common/component/InfoCard";
-import {
-    isMoneriumConnected,
-    moneriumStore,
-} from "@/module/monerium/store/moneriumStore";
+import { useMoneriumDisconnect } from "@/module/monerium/hooks/useMoneriumDisconnect";
+import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
 import { modalStore } from "@/module/stores/modalStore";
 
 /**
  * Settings-level entry point for Monerium.
  *
- * When not connected: "Connect" opens the bank-flow modal (which walks
- * the user through OAuth → KYC → wallet linking → transfer).
- * When connected: "Disconnect" clears the local tokens.
+ * "Connect" and "Reconnect" open the bank-flow modal; "Disconnect" makes the
+ * backend forget the connection.
  */
 export function MoneriumConnect() {
     const { t } = useTranslation();
-    const isConnected = moneriumStore(isMoneriumConnected);
+    const { status } = useMoneriumStatus();
+    const { disconnect, isPending } = useMoneriumDisconnect();
     const openModal = modalStore((s) => s.openModal);
-    const disconnect = moneriumStore((s) => s.disconnect);
+
+    const openFlow = () => openModal({ id: "moneriumBankFlow" });
+
+    const action = (() => {
+        if (!status) return null;
+        if (status.connection === "connected") {
+            return {
+                label: t("monerium.disconnect"),
+                onClick: () => disconnect(),
+            };
+        }
+        return {
+            label: t(
+                status.connection === "reauth_required"
+                    ? "monerium.reconnect"
+                    : "monerium.connect"
+            ),
+            onClick: openFlow,
+        };
+    })();
 
     return (
         <InfoCard>
@@ -31,11 +48,12 @@ export function MoneriumConnect() {
                 icon={PersonIcon}
                 label={t("monerium.account")}
                 action={
-                    isConnected ? (
+                    action ? (
                         <button
                             type="button"
                             className={infoCardStyles.actionButton}
-                            onClick={disconnect}
+                            onClick={action.onClick}
+                            disabled={isPending}
                         >
                             <Text
                                 as="span"
@@ -43,27 +61,10 @@ export function MoneriumConnect() {
                                 color="action"
                                 weight="medium"
                             >
-                                {t("monerium.disconnect")}
+                                {action.label}
                             </Text>
                         </button>
-                    ) : (
-                        <button
-                            type="button"
-                            className={infoCardStyles.actionButton}
-                            onClick={() =>
-                                openModal({ id: "moneriumBankFlow" })
-                            }
-                        >
-                            <Text
-                                as="span"
-                                variant="bodySmall"
-                                color="action"
-                                weight="medium"
-                            >
-                                {t("monerium.connect")}
-                            </Text>
-                        </button>
-                    )
+                    ) : null
                 }
             />
         </InfoCard>

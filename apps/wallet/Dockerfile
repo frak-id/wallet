@@ -62,15 +62,13 @@ ARG BACKEND_URL
 ARG ERPC_URL
 ARG FRAK_WALLET_URL
 ARG OPEN_PANEL_API_URL
-ARG MONERIUM_CLIENT_ID
 
 ENV NODE_ENV=$NODE_ENV \
     STAGE=$STAGE \
     BACKEND_URL=$BACKEND_URL \
     ERPC_URL=$ERPC_URL \
     FRAK_WALLET_URL=$FRAK_WALLET_URL \
-    OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL \
-    MONERIUM_CLIENT_ID=$MONERIUM_CLIENT_ID
+    OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
 
 WORKDIR /app/apps/wallet
 RUN --mount=type=secret,id=DRPC_API_KEY \
@@ -79,14 +77,12 @@ RUN --mount=type=secret,id=DRPC_API_KEY \
     --mount=type=secret,id=VAPID_PUBLIC_KEY \
     --mount=type=secret,id=OPEN_PANEL_WALLET_CLIENT_ID \
     --mount=type=secret,id=ANDROID_SHA256_FINGERPRINT \
-    --mount=type=secret,id=MONERIUM_CLIENT_ID \
     export DRPC_API_KEY=$(cat /run/secrets/DRPC_API_KEY) && \
     export PIMLICO_API_KEY=$(cat /run/secrets/PIMLICO_API_KEY) && \
     export NEXUS_RPC_SECRET=$(cat /run/secrets/NEXUS_RPC_SECRET) && \
     export VAPID_PUBLIC_KEY=$(cat /run/secrets/VAPID_PUBLIC_KEY) && \
     export OPEN_PANEL_WALLET_CLIENT_ID=$(cat /run/secrets/OPEN_PANEL_WALLET_CLIENT_ID) && \
     export ANDROID_SHA256_FINGERPRINT=$(cat /run/secrets/ANDROID_SHA256_FINGERPRINT) && \
-    export MONERIUM_CLIENT_ID=$(cat /run/secrets/MONERIUM_CLIENT_ID) && \
     bun run build
 
 # Parallel gzip pre-compression — one process per CPU instead of serial -exec.
@@ -99,13 +95,8 @@ RUN find dist -type f \
 
 FROM nginx:1.31.6-alpine
 COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
-# nginx envsubst on /etc/nginx/templates/*.template at container startup; the
-# NGINX_ENVSUBST_FILTER scopes substitution to MONERIUM_* env vars so nginx's
-# own $uri/$http_* are left untouched. MONERIUM_API_HOST is set per-stage on
-# the pod via Pulumi.
-COPY apps/wallet/nginx.conf /etc/nginx/templates/default.conf.template
-# Not a template: `include`d by nginx.conf from every block that declares an
+COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf
+# `include`d by nginx.conf from every block that declares an
 # `add_header` of its own, since that suppresses inheritance of the rest.
 COPY apps/wallet/nginx-security-headers.conf /etc/nginx/security-headers.conf
-ENV NGINX_ENVSUBST_FILTER='^MONERIUM_'
 EXPOSE 80

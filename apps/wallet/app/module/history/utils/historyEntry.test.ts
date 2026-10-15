@@ -1,10 +1,10 @@
+import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
 import {
     mergeHistoryEntries,
     orderToHistoryEntry,
     rewardToHistoryEntry,
 } from "@/module/history/utils/historyEntry";
-import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 
 function makeReward(
@@ -22,24 +22,23 @@ function makeReward(
     } as RewardHistoryItem;
 }
 
-function makeOrder(overrides: Partial<MoneriumOrder> = {}): MoneriumOrder {
+function makeOrder(
+    overrides: Partial<MoneriumOrderDto> = {}
+): MoneriumOrderDto {
     return {
         id: "ord-1",
-        profile: "prof-1",
-        address: "0xabc",
+        address: "0x0000000000000000000000000000000000000abc",
         kind: "redeem",
         chain: "arbitrum",
         amount: "10.00",
         currency: "eur",
-        counterpart: {
-            identifier: { standard: "iban", iban: "EE52" },
-            details: {},
-        },
+        counterpart: { iban: "EE52", own: false },
         memo: "",
-        meta: { placedAt: "2024-01-01T10:00:00Z" },
+        placedAt: "2024-01-01T10:00:00Z",
+        txHashes: [],
         state: "pending",
         ...overrides,
-    } as MoneriumOrder;
+    };
 }
 
 describe("historyEntry adapters", () => {
@@ -67,10 +66,8 @@ describe("historyEntry adapters", () => {
         test("prefers processedAt over placedAt for timestamp", () => {
             const entry = orderToHistoryEntry(
                 makeOrder({
-                    meta: {
-                        placedAt: "2024-01-01T10:00:00Z",
-                        processedAt: "2024-01-01T12:00:00Z",
-                    },
+                    placedAt: "2024-01-01T10:00:00Z",
+                    processedAt: "2024-01-01T12:00:00Z",
                 })
             );
             expect(entry.timestamp).toBe(
@@ -106,7 +103,7 @@ describe("historyEntry adapters", () => {
             });
             const olderOrder = makeOrder({
                 id: "ord-old",
-                meta: { placedAt: "2020-01-01T00:00:00Z" },
+                placedAt: "2020-01-01T00:00:00Z",
             });
 
             const merged = mergeHistoryEntries([older, newer], [olderOrder]);

@@ -12,6 +12,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -117,14 +118,16 @@ export function TransferModal({ onClose }: TransferModalProps) {
                 </Box>
 
                 <Box display={"flex"} flexDirection={"column"} gap={"none"}>
-                    <OptionRow
-                        icon={<BankIcon width={24} height={24} />}
-                        title={t("wallet.transferModal.bankAccount")}
-                        description={t(
-                            "wallet.transferModal.bankAccountDescription"
-                        )}
-                        onClick={handleBankClick}
-                    />
+                    {isMoneriumEnabled ? (
+                        <OptionRow
+                            icon={<BankIcon width={24} height={24} />}
+                            title={t("wallet.transferModal.bankAccount")}
+                            description={t(
+                                "wallet.transferModal.bankAccountDescription"
+                            )}
+                            onClick={handleBankClick}
+                        />
+                    ) : null}
                     <OptionRow
                         icon={<WalletIcon width={24} height={24} />}
                         title={t("wallet.transferModal.wallet")}

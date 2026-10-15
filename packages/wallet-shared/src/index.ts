@@ -93,6 +93,8 @@ export {
     type ModalEventMap,
     type MoneriumCallbackOutcome,
     type MoneriumEventMap,
+    type MoneriumOrderAmountBucket,
+    type MoneriumSiweFailure,
     merchantKey,
     type NotificationEventMap,
     type NotificationOptInOutcome,

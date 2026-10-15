@@ -8,28 +8,30 @@ import type { ReactElement } from "react";
 // imports, so routing it through the fixtures module would reference an
 // uninitialized binding.
 import { vi } from "vitest";
-import {
-    moneriumStore,
-    PENDING_AUTH_TTL_MS,
-} from "@/module/monerium/store/moneriumStore";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 type Search = { code?: string; state?: string; error?: string };
 
-const { mockSearch, mockExchange, mockTrackEvent } = vi.hoisted(() => ({
+const {
+    mockSearch,
+    mockCallback,
+    mockTrackEvent,
+    mockNavigate,
+    mockOpenModal,
+} = vi.hoisted(() => ({
     mockSearch: { current: {} as Search },
-    mockExchange: vi.fn(),
+    mockCallback: vi.fn(),
     mockTrackEvent: vi.fn(),
+    mockNavigate: vi.fn(),
+    mockOpenModal: vi.fn(),
 }));
 
 // `Route.useSearch()` reads the router context, which no bare `render` has.
-// Mocking the factory keeps `Route.options.component` reachable without
-// standing up a `RouterProvider`.
 vi.mock("@tanstack/react-router", async (importOriginal) => {
     const actual = await importOriginal<typeof ReactRouter>();
     return {
         ...actual,
-        useNavigate: () => vi.fn(),
+        useNavigate: () => mockNavigate,
         createFileRoute: () => (options: Record<string, unknown>) => ({
             options,
             useSearch: () => mockSearch.current,
@@ -37,13 +39,20 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     };
 });
 
-vi.mock("@/module/monerium/utils/moneriumApi", () => ({
-    exchangeCodeForTokens: mockExchange,
+vi.mock("@/module/stores/modalStore", () => ({
+    modalStore: { getState: () => ({ openModal: mockOpenModal }) },
 }));
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
-    return { ...actual, trackEvent: mockTrackEvent, recordError: vi.fn() };
+    return {
+        ...actual,
+        trackEvent: mockTrackEvent,
+        recordError: vi.fn(),
+        authenticatedWalletApi: {
+            monerium: { auth: { callback: { post: mockCallback } } },
+        },
+    };
 });
 
 vi.mock("react-i18next", () => ({
@@ -54,8 +63,13 @@ import { Route } from "./monerium.callback";
 
 const MoneriumCallback = Route.options.component as () => ReactElement;
 
-const VERIFIER = "verifier-abc";
-const STATE = "state-xyz";
+const STATUS = {
+    connection: "connected",
+    profile: null,
+    walletLink: "none",
+    silentReconnect: false,
+    environment: "sandbox",
+};
 
 function outcomes(): string[] {
     return mockTrackEvent.mock.calls
@@ -63,114 +77,67 @@ function outcomes(): string[] {
         .map(([, payload]) => (payload as { outcome: string }).outcome);
 }
 
-describe("MoneriumCallback — pending auth guard", () => {
+describe("MoneriumCallback", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        moneriumStore.getState().disconnect();
         mockSearch.current = {};
-        mockExchange.mockResolvedValue({
-            access_token: "access-token",
-            refresh_token: "refresh-token",
-            expires_in: 3600,
-        });
+        mockCallback.mockResolvedValue({ data: STATUS, error: null });
     });
 
-    test("exchanges the code when the pending pair is fresh", async ({
+    test("forwards code and state to the backend, then opens the bank flow", async ({
         queryWrapper,
     }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        mockSearch.current = { code: "auth-code", state: STATE };
+        mockSearch.current = { code: "auth-code", state: "st" };
 
         render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
         await waitFor(() =>
-            expect(mockExchange).toHaveBeenCalledWith("auth-code", VERIFIER)
+            expect(mockCallback).toHaveBeenCalledWith({
+                code: "auth-code",
+                state: "st",
+            })
         );
         await waitFor(() => expect(outcomes()).toContain("exchanged"));
-        expect(moneriumStore.getState().accessToken).toBe("access-token");
-    });
-
-    test("refuses to exchange a pair older than the TTL", async ({
-        queryWrapper,
-    }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        moneriumStore.setState({
-            pendingAuthCreatedAt: Date.now() - (PENDING_AUTH_TTL_MS + 1000),
+        expect(mockOpenModal).toHaveBeenCalledWith({ id: "moneriumBankFlow" });
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/wallet",
+            replace: true,
         });
-        mockSearch.current = { code: "auth-code", state: STATE };
-
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
-
-        await waitFor(() => expect(outcomes()).toContain("session_expired"));
-        expect(mockExchange).not.toHaveBeenCalled();
     });
 
-    test("refuses to exchange a pair stamped in the future", async ({
+    test("reports session_expired when the backend no longer knows the state", async ({
         queryWrapper,
     }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        moneriumStore.setState({
-            pendingAuthCreatedAt: Date.now() + 10 * PENDING_AUTH_TTL_MS,
+        mockCallback.mockResolvedValue({
+            data: null,
+            error: {
+                status: 400,
+                value: { code: "MONERIUM_AUTH_STATE_INVALID" },
+            },
         });
-        mockSearch.current = { code: "auth-code", state: STATE };
+        mockSearch.current = { code: "auth-code", state: "st" };
 
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
-
-        await waitFor(() => expect(outcomes()).toContain("session_expired"));
-        expect(mockExchange).not.toHaveBeenCalled();
-    });
-
-    test("reports session_expired when no pending pair is stored", async ({
-        queryWrapper,
-    }) => {
-        mockSearch.current = { code: "auth-code", state: STATE };
-
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
-
-        await waitFor(() => expect(outcomes()).toContain("session_expired"));
-        expect(mockExchange).not.toHaveBeenCalled();
-    });
-
-    test("a state mismatch keeps the pending pair for a later callback", async ({
-        queryWrapper,
-    }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        mockSearch.current = { code: "auth-code", state: "not-ours" };
-
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
-
-        await waitFor(() => expect(outcomes()).toContain("csrf_mismatch"));
-        expect(mockExchange).not.toHaveBeenCalled();
-        expect(moneriumStore.getState().pendingCodeVerifier).toBe(VERIFIER);
-    });
-
-    test("an expired pair is refused before the CSRF check", async ({
-        queryWrapper,
-    }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        moneriumStore.setState({
-            pendingAuthCreatedAt: Date.now() - (PENDING_AUTH_TTL_MS + 1000),
+        const { findByText } = render(<MoneriumCallback />, {
+            wrapper: queryWrapper.wrapper,
         });
-        mockSearch.current = { code: "auth-code", state: "not-ours" };
-
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
         await waitFor(() => expect(outcomes()).toContain("session_expired"));
-        expect(outcomes()).not.toContain("csrf_mismatch");
+        expect(await findByText("monerium.callback.expiredTitle")).toBeTruthy();
+        expect(mockOpenModal).not.toHaveBeenCalled();
     });
 
-    test("clears the pending pair once the exchange succeeds", async ({
+    test("reports error on any other backend failure", async ({
         queryWrapper,
     }) => {
-        moneriumStore.getState().setPendingAuth(VERIFIER, STATE);
-        mockSearch.current = { code: "auth-code", state: STATE };
+        mockCallback.mockResolvedValue({
+            data: null,
+            error: { status: 502, value: {} },
+        });
+        mockSearch.current = { code: "auth-code", state: "st" };
 
         render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
-        await waitFor(() =>
-            expect(moneriumStore.getState().pendingCodeVerifier).toBeNull()
-        );
-        expect(moneriumStore.getState().pendingAuthCreatedAt).toBeNull();
+        await waitFor(() => expect(outcomes()).toContain("error"));
     });
 
     test("records cancelled when the provider returns an error and no code", async ({
@@ -180,7 +147,15 @@ describe("MoneriumCallback — pending auth guard", () => {
 
         render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
-        await waitFor(() => expect(outcomes()).toContain("cancelled"));
-        expect(mockExchange).not.toHaveBeenCalled();
+        await waitFor(() => expect(outcomes()).toEqual(["cancelled"]));
+        expect(mockCallback).not.toHaveBeenCalled();
+    });
+
+    test("records no_code when hit without any OAuth context", async ({
+        queryWrapper,
+    }) => {
+        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
+
+        await waitFor(() => expect(outcomes()).toEqual(["no_code"]));
     });
 });

@@ -1038,8 +1038,8 @@
             "cancelledDescription": "Tu peux relancer la connexion à Monerium quand tu le souhaites.",
             "errorTitle": "Connexion impossible",
             "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
-            "csrfTitle": "Vérification de sécurité échouée",
-            "csrfDescription": "Nous n'avons pas pu vérifier la demande de connexion. Recommence depuis le début.",
+            "expiredTitle": "Lien expiré",
+            "expiredDescription": "Cette connexion a pris trop de temps ou a déjà été utilisée. Recommence depuis ton profil.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -1053,15 +1053,34 @@
                 "feature2Description": "Pour recevoir tes gains directement sur ton compte bancaire.",
                 "feature3Title": "Sécuriser tes transferts",
                 "feature3Description": "Tes transactions sont protégées et conformes aux normes de sécurité en vigueur.",
-                "cta": "Accepter et continuer"
+                "cta": "Accepter et continuer",
+                "secondaryCta": "J'ai déjà un compte Monerium"
             },
             "kyc": {
-                "title": "Finalise la vérification de ton identité",
-                "description": "Pour transférer tes gains, tu dois vérifier ton identité.",
-                "notice": "Cette étape est rapide et sécurisée.",
+                "title": "Termine la configuration de ton compte Monerium",
+                "description": "Ton compte est créé, mais il n'est pas encore complet. Termine les étapes sur Monerium pour transférer tes gains.",
+                "notice": "Tu reviendras automatiquement sur Frak Wallet une fois terminé.",
                 "featureTitle": "Vérifie ton identité",
                 "featureDescription": "Pour sécuriser ton compte et confirmer que tu es bien le titulaire des gains, nous utilisons un partenaire financier, Monerium.",
-                "cta": "Vérifier mon identité"
+                "cta": "Continuer sur Monerium"
+            },
+            "reconnect": {
+                "title": "Reconnecte ton compte Monerium",
+                "description": "Ta session Monerium a expiré. Reconnecte-toi pour continuer à transférer tes gains.",
+                "cta": "Me reconnecter"
+            },
+            "verification": {
+                "title": "Vérification en cours",
+                "description": "Monerium vérifie ton identité. Cela peut prendre de quelques minutes à quelques jours.",
+                "pushTitle": "Reçois une alerte",
+                "pushDescription": "Nous t'enverrons une notification dès que ton compte sera vérifié.",
+                "pushCta": "Me prévenir",
+                "checkAgain": "Vérifier à nouveau"
+            },
+            "blocked": {
+                "title": "Vérification non aboutie",
+                "description": "Monerium n'a pas pu vérifier ce compte. Ouvre Monerium pour en connaître la raison et voir ce que tu peux faire.",
+                "cta": "Ouvrir Monerium"
             },
             "link": {
                 "title": "Associe ton porte-monnaie",
@@ -1069,6 +1088,11 @@
                 "featureTitle": "Associe ton compte Monerium à ton porte-monnaie",
                 "featureDescription": "Pour utiliser pleinement ton porte-monnaie, nous avons besoin de lié ton compte.",
                 "cta": "Associer mon compte"
+            },
+            "linking": {
+                "title": "Association en cours",
+                "description": "Monerium associe ton porte-monnaie à ton compte. Cela ne prend généralement qu'un instant.",
+                "checkAgain": "Vérifier à nouveau"
             },
             "success": {
                 "title": "Tu peux maintenant transférer tes gains 🎉",
@@ -1085,7 +1109,7 @@
                     "modify": "Modifier",
                     "continue": "Continuer",
                     "insufficientBalance": "Total balance Insuffisante",
-                    "aboveMax": "Les transferts de {{max}}€ ou plus nécessitent des documents supplémentaires."
+                    "aboveMax": "Les transferts de {{max}}€ ou plus vers un tiers ne sont pas encore possibles. Envoie-les plutôt vers ton propre compte."
                 },
                 "recap": {
                     "title": "Récapitulatif",
@@ -1094,7 +1118,8 @@
                     "beneficiaryLabel": "Bénéficiaire",
                     "addNote": "Ajouter une note",
                     "warning": "Une fois validée, l'opération ne peut être annulée",
-                    "confirm": "Confirmer le transfert"
+                    "confirm": "Confirmer le transfert",
+                    "memoInvalid": "La note doit contenir entre {{min}} et {{max}} caractères."
                 },
                 "success": {
                     "title": "Ta demande de transfert de {{amount}} € a été prise en compte",
@@ -1114,8 +1139,21 @@
                     "save": "Enregistrer",
                     "remove": "Supprimer",
                     "empty": "Aucun IBAN enregistré. Ajoutes-en un pour commencer.",
-                    "select": "Sélectionner"
+                    "select": "Sélectionner",
+                    "ownToggle": "C'est mon propre compte",
+                    "ownToggleDescription": "Pas besoin de nom, et aucun plafond de montant.",
+                    "countryLabel": "Pays du bénéficiaire",
+                    "countryPlaceholder": "Choisir un pays",
+                    "countryInvalid": "Choisis un pays",
+                    "ibanInvalid": "Cet IBAN n'est pas valide",
+                    "nameInvalid": "Saisis au moins {{min}} caractères",
+                    "ownAccountLabel": "Mon compte"
                 }
+            },
+            "loadError": {
+                "title": "Impossible de charger ton compte",
+                "description": "Nous n'avons pas pu récupérer l'état de ton compte Monerium. Réessaye.",
+                "retry": "Réessayer"
             }
         },
         "order": {
@@ -1137,6 +1175,30 @@
                 "to": "À",
                 "transaction": "Transaction"
             }
+        },
+        "reconnect": "Reconnecter",
+        "errors": {
+            "generic": "Une erreur est survenue. Réessaye.",
+            "network": "Impossible de joindre le serveur. Vérifie ta connexion et réessaye.",
+            "cancelled": "Signature annulée. Rien n'a été envoyé.",
+            "notConnected": "Ton compte Monerium n'est pas encore connecté.",
+            "reauthRequired": "Ta session Monerium a expiré. Reconnecte-toi pour continuer.",
+            "authStateInvalid": "Ce lien de connexion a expiré. Recommence depuis le début.",
+            "tokenExchangeFailed": "Monerium n'a pas accepté la connexion. Réessaye.",
+            "siweRejected": "Monerium n'a pas pu confirmer ton porte-monnaie. Connecte-toi plutôt sur Monerium.",
+            "siweUnavailable": "La reconnexion rapide n'est pas disponible pour le moment. Connecte-toi plutôt sur Monerium.",
+            "profileNotApproved": "Ton profil Monerium n'est pas encore vérifié.",
+            "linkRejected": "Monerium a refusé d'associer ce porte-monnaie. Réessaye ou contacte le support.",
+            "invalidAmount": "Saisis un montant valide.",
+            "amountLimit": "Ce montant dépasse le plafond des virements vers un tiers. Envoie-le plutôt vers ton propre compte.",
+            "invalidIban": "Cet IBAN n'est pas valide.",
+            "invalidCounterpart": "Vérifie le nom et le pays du bénéficiaire.",
+            "invalidMemo": "La note doit contenir entre 5 et 140 caractères.",
+            "invalidMessage": "Le transfert n'a pas pu être confirmé. Réessaye.",
+            "messageExpired": "La confirmation a expiré. Réessaye.",
+            "walletNotLinked": "Ce porte-monnaie n'est pas encore associé à ton compte Monerium.",
+            "orderRejected": "Monerium a refusé ce transfert. Vérifie les informations et réessaye.",
+            "upstreamUnavailable": "Monerium est momentanément indisponible. Réessaye dans quelques minutes."
         }
     },
     "favorites": {

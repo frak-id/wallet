@@ -4,6 +4,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { LinkIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { useMoneriumLinkWallet } from "@/module/monerium/hooks/useMoneriumLinkWallet";
+import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
 import { FeatureRow } from "./FeatureRow";
 import { MoneriumScreen } from "./MoneriumScreen";
 
@@ -13,7 +14,7 @@ type MoneriumLinkScreenProps = {
 
 export function MoneriumLinkScreen({ onClose }: MoneriumLinkScreenProps) {
     const { t } = useTranslation();
-    const { linkWallet, isPending } = useMoneriumLinkWallet();
+    const { linkWallet, isPending, error } = useMoneriumLinkWallet();
 
     return (
         <MoneriumScreen
@@ -38,6 +39,12 @@ export function MoneriumLinkScreen({ onClose }: MoneriumLinkScreenProps) {
                     />
                 </Stack>
             </Card>
+
+            {error ? (
+                <Text variant="bodySmall" color="error">
+                    {t(getMoneriumErrorKey(error))}
+                </Text>
+            ) : null}
         </MoneriumScreen>
     );
 }

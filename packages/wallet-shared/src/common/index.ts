@@ -40,6 +40,8 @@ export type {
     ModalEventMap,
     MoneriumCallbackOutcome,
     MoneriumEventMap,
+    MoneriumOrderAmountBucket,
+    MoneriumSiweFailure,
     NotificationEventMap,
     NotificationOptInOutcome,
     NotificationTogglePhase,

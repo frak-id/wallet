@@ -16,6 +16,10 @@ type DeepLinkParams = {
     mode?: string;
     code?: string;
     state?: string;
+    error?: string;
+    error_description?: string;
+    /** Wallet screen to open on landing; only `monerium` is honoured. */
+    open?: string;
     m?: string;
     a?: string;
     /** `frak-install-v1` proof. Search param, not a fragment: see `routeResolvers.install`. */
@@ -34,6 +38,9 @@ function extractSearchParams(
         mode: searchParams.get("mode") ?? undefined,
         code: searchParams.get("code") ?? undefined,
         state: searchParams.get("state") ?? undefined,
+        error: searchParams.get("error") ?? undefined,
+        error_description: searchParams.get("error_description") ?? undefined,
+        open: searchParams.get("open") ?? undefined,
         m: searchParams.get("m") ?? undefined,
         a: searchParams.get("a") ?? undefined,
         p: searchParams.get("p") ?? undefined,
@@ -237,15 +244,23 @@ function storePendingActions(params: DeepLinkParams) {
 
 type Route = { to: string; search?: Record<string, string> };
 
-/**
- * Resolve a monerium OAuth callback deep link.
- */
+/** Resolve a monerium OAuth callback deep link, cancelled ones included. */
 const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
     const search: Record<string, string> = {};
     if (params.code) search.code = params.code;
     if (params.state) search.state = params.state;
+    if (params.error) search.error = params.error;
+    if (params.error_description) {
+        search.error_description = params.error_description;
+    }
     return { to: "/monerium/callback", search };
 };
+
+/** The `/wallet?open=monerium` push link; any other `open` value is dropped. */
+const resolveWalletRoute = (params: DeepLinkParams): Route =>
+    params.open === "monerium"
+        ? { to: "/wallet", search: { open: "monerium" } }
+        : { to: "/wallet" };
 
 /**
  * Resolve a pairing deep link. Aliased under `pair`, `pairing`, and the
@@ -310,6 +325,7 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
         search: params.to ? { to: params.to } : undefined,
     }),
     receive: () => ({ to: "/wallet" }),
+    wallet: resolveWalletRoute,
     // Campaign-launch notification deep link: opens the explorer with the
     // merchant's detail modal. Falls back to the explorer list when no
     // (or a malformed) merchantId is present in the path.
