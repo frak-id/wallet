@@ -646,7 +646,6 @@ export default interface Resources {
             "cancel": "Cancel",
             "confirm": "Confirm transfer",
             "memoInvalid": "The note must be between {{min}} and {{max}} characters.",
-            "memoPlaceholder": "Optional",
             "title": "Summary",
             "warning": "Once confirmed, this operation cannot be cancelled"
           },
