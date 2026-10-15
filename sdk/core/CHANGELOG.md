@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 1.5.3
+
+### Patch Changes
+
+- [#339](https://github.com/frak-id/wallet/pull/339) [`5acdddd`](https://github.com/frak-id/wallet/commit/5acddddadfd836d3bf77c0a5070f0e79471149f6) Thanks [@KONFeature](https://github.com/KONFeature)! - `sdk_iframe_handshake_failed` with `reason: "timeout"` now says why: whether the wallet listener ever answered (`listener_seen`), the error that stopped it booting (`listener_error`), the page state over the wait (`visibility_state`, `was_hidden`, `online`) and how long the iframe took to load (`iframe_load_ms`). A connection that lands after the timeout is still reported, as `sdk_iframe_connected` with `after_timeout: true`.
+
 ## 1.5.2
 
 ### Patch Changes
