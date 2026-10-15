@@ -1,5 +1,12 @@
 # @frak-labs/components
 
+## 1.3.3
+
+### Patch Changes
+
+- Updated dependencies [[`5acdddd`](https://github.com/frak-id/wallet/commit/5acddddadfd836d3bf77c0a5070f0e79471149f6)]:
+  - @frak-labs/core-sdk@1.5.3
+
 ## 1.3.2
 
 ### Patch Changes
