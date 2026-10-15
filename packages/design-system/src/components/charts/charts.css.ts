@@ -101,8 +101,8 @@ export const datePill = style({
     overflow: "hidden",
     borderRadius: "9999px",
     padding: "0.25rem 1rem",
-    backgroundColor: "#18181b",
-    color: "#ffffff",
+    backgroundColor: vars.text.primary,
+    color: vars.surface.background,
     boxShadow: shadowLg,
 });
 
