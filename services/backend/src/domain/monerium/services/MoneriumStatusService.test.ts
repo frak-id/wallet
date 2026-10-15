@@ -27,6 +27,8 @@ function row(
         accessTokenEncrypted: "x",
         accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
         refreshTokenEncrypted: "y",
+        walletLinkPendingAt: null,
+        profileStateChangedAt: null,
         siweFailedAt: null,
         stateCheckedAt: new Date(),
         createdAt: new Date(),
@@ -64,6 +66,14 @@ describe("silentReconnect", () => {
             new Date(),
             true,
             false,
+        ],
+        [
+            "reauth, linked, SIWE failed 8 days ago",
+            "reauth_required",
+            "linked",
+            new Date(Date.now() - 8 * 24 * 60 * 60_000),
+            true,
+            true,
         ],
         [
             "reauth, linked, SIWE disabled",
@@ -252,6 +262,136 @@ describe("MoneriumStatusService", () => {
         client.listAddresses.mockResolvedValue([]);
         const status = await service.getStatus(WALLET, { refresh: true });
         expect(status.walletLink).toBe("pending");
+    });
+
+    function approvedContext(client: {
+        getAuthContext: ReturnType<typeof vi.fn>;
+    }) {
+        client.getAuthContext.mockResolvedValue({
+            userId: "u",
+            defaultProfile: "p",
+            profiles: [{ id: "p", kind: "personal", state: "approved" }],
+        });
+    }
+
+    it("stamps when the link entered pending and keeps the stamp while it stays pending", async () => {
+        const pendingAt = new Date(Date.now() - 3 * 60 * 60_000);
+        const { service, client, connections } = setup(
+            row({
+                walletLinkState: "pending",
+                walletLinkPendingAt: pendingAt,
+                profileState: "approved",
+            })
+        );
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([]);
+
+        await service.refreshFromMonerium(WALLET);
+
+        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
+            { walletLinkState: "pending", walletLinkPendingAt: pendingAt }
+        );
+    });
+
+    it("gives up on a link that stayed pending for more than 24 hours", async () => {
+        const { service, client, connections } = setup(
+            row({
+                walletLinkState: "pending",
+                walletLinkPendingAt: new Date(Date.now() - 25 * 60 * 60_000),
+            })
+        );
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([]);
+
+        await service.refreshFromMonerium(WALLET);
+
+        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
+            { walletLinkState: "none", walletLinkPendingAt: null }
+        );
+    });
+
+    it("does not downgrade a link written as pending while the refresh was in flight", async () => {
+        const { service, client, connections } = setup(row());
+        approvedContext(client);
+        client.listAddresses.mockImplementation(async () => {
+            connections.findByWallet.mockResolvedValue(
+                row({
+                    walletLinkState: "pending",
+                    walletLinkPendingAt: new Date(),
+                })
+            );
+            return [];
+        });
+
+        await service.refreshFromMonerium(WALLET);
+
+        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
+            { walletLinkState: "pending" }
+        );
+    });
+
+    it("clears the pending stamp once the address is listed", async () => {
+        const { service, client, connections } = setup(
+            row({ walletLinkState: "pending", walletLinkPendingAt: new Date() })
+        );
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([
+            { address: WALLET, chains: ["arbitrumsepolia"] },
+        ]);
+
+        await service.refreshFromMonerium(WALLET);
+
+        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
+            { walletLinkState: "linked", walletLinkPendingAt: null }
+        );
+    });
+
+    it("stamps the profile state change only when the state moved", async () => {
+        const { service, client, connections } = setup(
+            row({ profileState: "pending" })
+        );
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([]);
+        await service.refreshFromMonerium(WALLET);
+        expect(
+            connections.updateIfProfileState.mock.calls[0][2]
+        ).toHaveProperty("profileStateChangedAt", expect.any(Date));
+
+        const same = setup(row({ profileState: "approved" }));
+        approvedContext(same.client);
+        same.client.listAddresses.mockResolvedValue([]);
+        await same.service.refreshFromMonerium(WALLET);
+        expect(
+            same.connections.updateIfProfileState.mock.calls[0][2]
+        ).not.toHaveProperty("profileStateChangedAt");
+    });
+
+    it("lets a wallet force at most one upstream refresh per 5 seconds", async () => {
+        const { service, client } = setup(row());
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([]);
+
+        await service.getStatus(WALLET, { refresh: true });
+        await service.getStatus(WALLET, { refresh: true });
+        expect(client.getAuthContext).toHaveBeenCalledOnce();
+
+        vi.useFakeTimers();
+        vi.setSystemTime(Date.now() + 6_000);
+        await service.getStatus(WALLET, { refresh: true });
+        vi.useRealTimers();
+        expect(client.getAuthContext).toHaveBeenCalledTimes(2);
+    });
+
+    it("forces again right away after a failed forced refresh", async () => {
+        const { service, client } = setup(row());
+        client.getAuthContext.mockRejectedValueOnce(
+            new MoneriumApiError(503, undefined, "down")
+        );
+        await service.getStatus(WALLET, { refresh: true });
+        approvedContext(client);
+        client.listAddresses.mockResolvedValue([]);
+        await service.getStatus(WALLET, { refresh: true });
+        expect(client.getAuthContext).toHaveBeenCalledTimes(2);
     });
 
     it("returns the cache when Monerium fails", async () => {

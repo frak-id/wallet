@@ -267,7 +267,8 @@ const moneriumSyncOrchestrator = new MoneriumSyncOrchestrator(
     MoneriumContext.repositories.trackedOrder,
     MoneriumContext.services.status,
     MoneriumContext.services.orders,
-    NotificationContext.services.notifications
+    NotificationContext.services.notifications,
+    MoneriumContext.rateLimitPause
 );
 
 export namespace OrchestrationContext {

@@ -80,6 +80,33 @@ describe("deriveBeneficiaries", () => {
         ).toEqual([]);
     });
 
+    it("drops third parties without a usable first and last name, keeps own payouts", () => {
+        const result = deriveBeneficiaries([
+            order({
+                counterpart: {
+                    iban: "FR7630006000011234567890189",
+                    own: false,
+                    companyName: "Acme SAS",
+                },
+            }),
+            order({
+                counterpart: { iban: "ES9121000418450200051332", own: false },
+            }),
+            order({
+                counterpart: {
+                    iban: "IT60X0542811101000000123456",
+                    own: false,
+                    firstName: "A",
+                    lastName: "Lovelace",
+                },
+            }),
+            order({
+                counterpart: { iban: "NL91ABNA0417164300", own: true },
+            }),
+        ]);
+        expect(result.map((b) => b.iban)).toEqual(["NL91ABNA0417164300"]);
+    });
+
     it("keeps pending and placed orders", () => {
         expect(deriveBeneficiaries([order({ state: "pending" })])).toHaveLength(
             1
@@ -95,6 +122,8 @@ describe("deriveBeneficiaries", () => {
                 counterpart: {
                     iban: `FR76300060000112345678901${String(index).padStart(2, "0")}`,
                     own: false,
+                    firstName: "Ada",
+                    lastName: "Lovelace",
                 },
             })
         );

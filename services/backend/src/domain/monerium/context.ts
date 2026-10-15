@@ -49,6 +49,7 @@ const orderService = new MoneriumOrderService(
 );
 
 export namespace MoneriumContext {
+    export const rateLimitPause = apiClient.rateLimitPause;
     export const repositories = {
         connection: connectionRepository,
         pendingAuth: pendingAuthRepository,

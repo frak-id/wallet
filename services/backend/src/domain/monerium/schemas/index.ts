@@ -62,8 +62,8 @@ export const MoneriumAuthStartResponseSchema = t.Object({
 });
 
 export const MoneriumAuthCallbackBodySchema = t.Object({
-    code: t.String({ minLength: 1 }),
-    state: t.String({ minLength: 1 }),
+    code: t.String({ minLength: 1, maxLength: 512 }),
+    state: t.String({ minLength: 1, maxLength: 64 }),
 });
 
 export const MoneriumSiwePrepareResponseSchema = t.Object({
@@ -71,13 +71,16 @@ export const MoneriumSiwePrepareResponseSchema = t.Object({
     message: t.String(),
 });
 
+/** Smart-account signatures (ERC-1271, ERC-6492 wrapped passkeys) run to a few KB of hex. */
+const SIGNATURE_MAX_LENGTH = 16_384;
+
 export const MoneriumSiweBodySchema = t.Object({
-    state: t.String({ minLength: 1 }),
-    signature: t.Hex(),
+    state: t.String({ minLength: 1, maxLength: 64 }),
+    signature: t.Hex({ maxLength: SIGNATURE_MAX_LENGTH }),
 });
 
 export const MoneriumLinkWalletBodySchema = t.Object({
-    signature: t.Hex(),
+    signature: t.Hex({ maxLength: SIGNATURE_MAX_LENGTH }),
 });
 
 export const MoneriumLinkWalletResponseSchema = t.Object({
@@ -124,20 +127,20 @@ export const MoneriumOrdersResponseSchema = t.Object({
 export const MoneriumPlaceOrderBodySchema = t.Object({
     /** Client-generated UUID, reused on retry so a network failure cannot double-pay. */
     orderId: t.String({ format: "uuid" }),
-    amount: t.String(),
-    iban: t.String(),
+    amount: t.String({ maxLength: 16 }),
+    iban: t.String({ maxLength: 42 }),
     counterpart: t.Union([
         t.Object({ own: t.Literal(true) }),
         t.Object({
             own: t.Literal(false),
-            firstName: t.String(),
-            lastName: t.String(),
-            country: t.String(),
+            firstName: t.String({ maxLength: 100 }),
+            lastName: t.String({ maxLength: 100 }),
+            country: t.String({ maxLength: 2 }),
         }),
     ]),
-    memo: t.Optional(t.String()),
-    message: t.String(),
-    signature: t.Hex(),
+    memo: t.Optional(t.String({ maxLength: 140 })),
+    message: t.String({ maxLength: 128 }),
+    signature: t.Hex({ maxLength: SIGNATURE_MAX_LENGTH }),
 });
 export type MoneriumPlaceOrderBody = Static<
     typeof MoneriumPlaceOrderBodySchema

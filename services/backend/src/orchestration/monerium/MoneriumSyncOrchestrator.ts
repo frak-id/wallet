@@ -3,24 +3,40 @@ import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import { requireMoneriumConfig } from "../../domain/monerium/config";
 import { MoneriumApiError } from "../../domain/monerium/errors";
+import type { RecheckTier } from "../../domain/monerium/repositories/dueTiers";
 import type { MoneriumConnectionRepository } from "../../domain/monerium/repositories/MoneriumConnectionRepository";
 import type { MoneriumTrackedOrderRepository } from "../../domain/monerium/repositories/MoneriumTrackedOrderRepository";
 import type { MoneriumOrderService } from "../../domain/monerium/services/MoneriumOrderService";
-import type { MoneriumStatusService } from "../../domain/monerium/services/MoneriumStatusService";
+import type { MoneriumRateLimitPause } from "../../domain/monerium/services/MoneriumRateLimitPause";
+import {
+    LINK_PENDING_MAX_AGE_MS,
+    type MoneriumStatusService,
+} from "../../domain/monerium/services/MoneriumStatusService";
 import type { NotificationsService } from "../../domain/notifications/services/NotificationsService";
 import { moneriumMessages } from "./moneriumMessages";
 
 const MINUTE_MS = 60_000;
-const DAY_MS = 24 * 60 * MINUTE_MS;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
 
+/** Recheck cadence stretches with the age of what is being waited on, and ends with the last tier. */
 export const MONERIUM_SYNC = {
-    ORDER_RECHECK_MS: 2 * MINUTE_MS,
-    ORDER_MAX_AGE_MS: 14 * DAY_MS,
-    PROFILE_RECHECK_MS: 10 * MINUTE_MS,
-    PROFILE_MAX_AGE_MS: 30 * DAY_MS,
-    LINK_RECHECK_MS: 2 * MINUTE_MS,
+    ORDER_TIERS: [
+        { maxAgeMs: HOUR_MS, recheckMs: 2 * MINUTE_MS },
+        { maxAgeMs: DAY_MS, recheckMs: 10 * MINUTE_MS },
+        { maxAgeMs: 14 * DAY_MS, recheckMs: 30 * MINUTE_MS },
+    ],
+    PROFILE_TIERS: [
+        { maxAgeMs: DAY_MS, recheckMs: 10 * MINUTE_MS },
+        { maxAgeMs: 7 * DAY_MS, recheckMs: HOUR_MS },
+        { maxAgeMs: 30 * DAY_MS, recheckMs: 6 * HOUR_MS },
+    ],
+    LINK_TIERS: [
+        { maxAgeMs: HOUR_MS, recheckMs: 2 * MINUTE_MS },
+        { maxAgeMs: LINK_PENDING_MAX_AGE_MS, recheckMs: 15 * MINUTE_MS },
+    ],
     BATCH_CAP: 50,
-} as const;
+} as const satisfies Record<string, RecheckTier[] | number>;
 
 export type MoneriumSyncSummary = {
     orders: number;
@@ -29,20 +45,32 @@ export type MoneriumSyncSummary = {
     stoppedOnRateLimit: boolean;
 };
 
+const UNDEFINED_TABLE = "42P01";
+let missingTablesLogged = false;
+
+function isMissingTable(error: unknown): boolean {
+    let current: unknown = error;
+    for (let depth = 0; depth < 3; depth++) {
+        if (typeof current !== "object" || current === null) return false;
+        if ("code" in current && current.code === UNDEFINED_TABLE) return true;
+        current = "cause" in current ? current.cause : null;
+    }
+    return false;
+}
+
 /**
  * Polls Monerium for what changed since the user last looked, because the OAuth plan has
- * no webhooks. Each transition is applied with a compare-and-set, and only the pod that
- * wins it sends the push, so a transition is never announced twice.
+ * no webhooks. Due rows are claimed in one statement so pods never share them, each
+ * transition is a compare-and-set, and only the pod that wins it sends the push.
  */
 export class MoneriumSyncOrchestrator {
-    private pausedUntil = 0;
-
     constructor(
         private readonly connections: MoneriumConnectionRepository,
         private readonly trackedOrders: MoneriumTrackedOrderRepository,
         private readonly status: MoneriumStatusService,
         private readonly orders: MoneriumOrderService,
-        private readonly notifications: NotificationsService
+        private readonly notifications: NotificationsService,
+        private readonly rateLimitPause: MoneriumRateLimitPause
     ) {}
 
     async syncTick(now = new Date()): Promise<MoneriumSyncSummary> {
@@ -52,7 +80,7 @@ export class MoneriumSyncOrchestrator {
             links: 0,
             stoppedOnRateLimit: false,
         };
-        if (now.getTime() < this.pausedUntil) return summary;
+        if (this.rateLimitPause.isPaused(now.getTime())) return summary;
 
         let walletUrl: string;
         try {
@@ -61,30 +89,13 @@ export class MoneriumSyncOrchestrator {
             return summary;
         }
 
-        const ago = (ms: number) => new Date(now.getTime() - ms);
-        const dueOrders = await this.trackedOrders.findInFlightDue({
-            checkedBefore: ago(MONERIUM_SYNC.ORDER_RECHECK_MS),
-            createdAfter: ago(MONERIUM_SYNC.ORDER_MAX_AGE_MS),
-            limit: MONERIUM_SYNC.BATCH_CAP,
-        });
-        const dueProfiles = await this.connections.findDueForProfileSync({
-            checkedBefore: ago(MONERIUM_SYNC.PROFILE_RECHECK_MS),
-            createdAfter: ago(MONERIUM_SYNC.PROFILE_MAX_AGE_MS),
-            limit: MONERIUM_SYNC.BATCH_CAP,
-        });
-        const dueLinks = await this.connections.findDueForLinkSync({
-            checkedBefore: ago(MONERIUM_SYNC.LINK_RECHECK_MS),
-            createdAfter: ago(MONERIUM_SYNC.PROFILE_MAX_AGE_MS),
-            limit: MONERIUM_SYNC.BATCH_CAP,
-        });
+        const due = await this.claimDue(now);
+        if (!due) return summary;
+        const { dueOrders, dueProfiles, dueLinks } = due;
 
         for (const order of dueOrders) {
             if (summary.stoppedOnRateLimit) break;
-            await this.guard(
-                summary,
-                () => this.syncOrder(order, walletUrl),
-                () => this.trackedOrders.markChecked(order.id)
-            );
+            await this.guard(summary, () => this.syncOrder(order, walletUrl));
             summary.orders++;
         }
 
@@ -93,13 +104,8 @@ export class MoneriumSyncOrchestrator {
             if (summary.stoppedOnRateLimit) break;
             if (seen.has(connection.wallet)) continue;
             seen.add(connection.wallet);
-            await this.guard(
-                summary,
-                () => this.syncConnection(connection.wallet, walletUrl),
-                () =>
-                    this.connections.update(connection.wallet, {
-                        stateCheckedAt: new Date(),
-                    })
+            await this.guard(summary, () =>
+                this.syncConnection(connection.wallet, walletUrl)
             );
             if (dueProfiles.includes(connection)) summary.profiles++;
             else summary.links++;
@@ -107,19 +113,47 @@ export class MoneriumSyncOrchestrator {
         return summary;
     }
 
-    /** A 429 ends the tick and pauses the next ones; any other failure only defers that item. */
+    /** Null while the tables are missing: the first deploy can precede the migration. */
+    private async claimDue(now: Date) {
+        const claim = { now, limit: MONERIUM_SYNC.BATCH_CAP };
+        try {
+            return {
+                dueOrders: await this.trackedOrders.claimInFlightDue({
+                    ...claim,
+                    tiers: [...MONERIUM_SYNC.ORDER_TIERS],
+                }),
+                dueProfiles: await this.connections.claimDueForProfileSync({
+                    ...claim,
+                    tiers: [...MONERIUM_SYNC.PROFILE_TIERS],
+                }),
+                dueLinks: await this.connections.claimDueForLinkSync({
+                    ...claim,
+                    tiers: [...MONERIUM_SYNC.LINK_TIERS],
+                }),
+            };
+        } catch (error) {
+            if (!isMissingTable(error)) throw error;
+            if (!missingTablesLogged) {
+                missingTablesLogged = true;
+                log.warn(
+                    "[MoneriumSync] monerium tables are missing, skipping until the migration is applied"
+                );
+            }
+            return null;
+        }
+    }
+
+    /** A 429 ends the tick and pauses the next ones; any other failure only costs that item its turn. */
     private async guard(
         summary: MoneriumSyncSummary,
-        task: () => Promise<void>,
-        defer: () => Promise<void>
+        task: () => Promise<void>
     ): Promise<void> {
         try {
             await task();
         } catch (error) {
             if (error instanceof MoneriumApiError && error.status === 429) {
                 summary.stoppedOnRateLimit = true;
-                this.pausedUntil =
-                    Date.now() + (error.retryAfterSeconds ?? 0) * 1000;
+                this.rateLimitPause.pause(error.retryAfterSeconds);
                 log.warn("[MoneriumSync] rate limited, stopping the tick");
                 return;
             }
@@ -127,7 +161,6 @@ export class MoneriumSyncOrchestrator {
                 { error: error instanceof Error ? error.message : "unknown" },
                 "[MoneriumSync] item failed, deferred to a later tick"
             );
-            await defer().catch(() => undefined);
         }
     }
 

@@ -33,6 +33,8 @@ function connection(
         accessTokenEncrypted: "x",
         accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
         refreshTokenEncrypted: "y",
+        walletLinkPendingAt: null,
+        profileStateChangedAt: null,
         siweFailedAt: null,
         stateCheckedAt: new Date(),
         createdAt: new Date(),
@@ -91,6 +93,8 @@ function setup(
         insertIfAbsent: vi.fn(async () => true),
         deleteById: vi.fn(async () => undefined),
         transition: vi.fn(async () => true),
+        markChecked: vi.fn(async () => undefined),
+        markPlacementAccepted: vi.fn(async () => undefined),
     };
     const client = {
         placeRedeemOrder: vi.fn(),
@@ -152,12 +156,41 @@ describe("MoneriumOrderService.placeOrder", () => {
         });
     });
 
-    it("answers order null on an upstream 202", async () => {
-        const { service, client } = setup();
+    it("answers order null on an upstream 202 and remembers it was accepted", async () => {
+        const { service, client, trackedOrders } = setup();
         client.placeRedeemOrder.mockResolvedValue({ kind: "accepted" });
         await expect(
             service.placeOrder({ wallet: WALLET, body: body() })
         ).resolves.toEqual({ orderId: ORDER_ID, order: null });
+        expect(trackedOrders.markPlacementAccepted).toHaveBeenCalledWith(
+            ORDER_ID
+        );
+    });
+
+    it("rejects with 409 when the insert lost a race to another wallet's order id", async () => {
+        const { service, client, trackedOrders } = setup();
+        trackedOrders.insertIfAbsent.mockResolvedValue(false);
+        trackedOrders.findById
+            .mockResolvedValueOnce(undefined)
+            .mockResolvedValueOnce({ id: ORDER_ID, wallet: OTHER_WALLET });
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({ status: 409 });
+        expect(client.placeRedeemOrder).not.toHaveBeenCalled();
+    });
+
+    it("keeps going when the insert lost a race to the same wallet", async () => {
+        const { service, client, trackedOrders } = setup();
+        trackedOrders.insertIfAbsent.mockResolvedValue(false);
+        trackedOrders.findById
+            .mockResolvedValueOnce(undefined)
+            .mockResolvedValueOnce({ id: ORDER_ID, wallet: WALLET });
+        client.placeRedeemOrder.mockResolvedValue({ kind: "accepted" });
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).resolves.toMatchObject({ orderId: ORDER_ID });
     });
 
     it("returns the existing order on a retry with a known id for the same wallet", async () => {
@@ -265,20 +298,72 @@ describe("MoneriumOrderService.placeOrder", () => {
         ).resolves.toMatchObject({ orderId: ORDER_ID });
     });
 
-    it("maps a Monerium 4xx to 422 with Monerium's message and forgets the tracked row", async () => {
+    it("maps a Monerium 4xx to 422 with a fixed message and forgets the tracked row", async () => {
         const { service, client, trackedOrders } = setup();
         client.placeRedeemOrder.mockRejectedValue(
-            new MoneriumApiError(400, undefined, "Insufficient funds")
+            new MoneriumApiError(400, "E_42", `Insufficient funds for ${IBAN}`)
         );
 
-        await expect(
-            service.placeOrder({ wallet: WALLET, body: body() })
-        ).rejects.toMatchObject({
+        const error = await service
+            .placeOrder({ wallet: WALLET, body: body() })
+            .catch((e) => e);
+        expect(error).toMatchObject({
             status: 422,
             code: "MONERIUM_ORDER_REJECTED",
-            message: "Insufficient funds",
         });
+        expect(error.message).not.toContain(IBAN);
+        expect(error.message).not.toContain("Insufficient");
         expect(trackedOrders.deleteById).toHaveBeenCalledWith(ORDER_ID);
+    });
+
+    it.each([
+        [401, "MONERIUM_REAUTH_REQUIRED"],
+        [403, "MONERIUM_PROFILE_NOT_APPROVED"],
+    ])(
+        "answers 409 for an upstream %i that survived the token retry",
+        async (status, code) => {
+            const { service, client, trackedOrders } = setup();
+            client.placeRedeemOrder.mockRejectedValue(
+                new MoneriumApiError(status, undefined, "free text")
+            );
+            await expect(
+                service.placeOrder({ wallet: WALLET, body: body() })
+            ).rejects.toMatchObject({ status: 409, code });
+            expect(trackedOrders.deleteById).toHaveBeenCalledWith(ORDER_ID);
+        }
+    );
+
+    it("lets a corporate profile pay a third party above the personal document threshold", async () => {
+        const amount = "20000";
+        const thirdParty = {
+            ...body(),
+            amount,
+            counterpart: {
+                own: false as const,
+                firstName: "Jane",
+                lastName: "Doe",
+                country: "DE",
+            },
+            message: buildRedeemOrderMessage({
+                amount,
+                iban: IBAN,
+                at: new Date(Date.now() + 2 * 60_000),
+            }),
+        };
+        const corporate = setup({
+            connection: connection({ profileKind: "corporate" }),
+        });
+        corporate.client.placeRedeemOrder.mockResolvedValue({
+            kind: "accepted",
+        });
+        await expect(
+            corporate.service.placeOrder({ wallet: WALLET, body: thirdParty })
+        ).resolves.toMatchObject({ orderId: ORDER_ID });
+
+        const personal = setup();
+        await expect(
+            personal.service.placeOrder({ wallet: WALLET, body: thirdParty })
+        ).rejects.toMatchObject({ code: "MONERIUM_AMOUNT_LIMIT" });
     });
 
     it.each([
@@ -328,25 +413,78 @@ describe("MoneriumOrderService.placeOrder", () => {
 });
 
 describe("MoneriumOrderService.syncTrackedOrder", () => {
-    it("returns the new state only to the caller that won the transition", async () => {
-        const { service, client, trackedOrders } = setup();
-        client.getOrder.mockResolvedValue(record("processed"));
-
-        const tracked = {
+    const HOUR = 60 * 60_000;
+    function tracked(overrides: Record<string, unknown> = {}) {
+        return {
             id: ORDER_ID,
             wallet: WALLET,
             amount: "12.5",
             state: "placed" as const,
+            placementAccepted: false,
             lastCheckedAt: null,
             createdAt: new Date(),
             updatedAt: new Date(),
+            ...overrides,
         };
-        await expect(service.syncTrackedOrder(tracked)).resolves.toBe(
+    }
+
+    it("returns the new state only to the caller that won the transition", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.getOrder.mockResolvedValue(record("processed"));
+
+        await expect(service.syncTrackedOrder(tracked())).resolves.toBe(
             "processed"
         );
 
         trackedOrders.transition.mockResolvedValueOnce(false);
-        await expect(service.syncTrackedOrder(tracked)).resolves.toBeNull();
+        await expect(service.syncTrackedOrder(tracked())).resolves.toBeNull();
+    });
+
+    it("keeps an order Monerium does not know for the first hour", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.getOrder.mockRejectedValue(
+            new MoneriumApiError(404, undefined, "nope")
+        );
+        await service.syncTrackedOrder(
+            tracked({ createdAt: new Date(Date.now() - 30 * 60_000) })
+        );
+        expect(trackedOrders.deleteById).not.toHaveBeenCalled();
+        expect(trackedOrders.markChecked).toHaveBeenCalledWith(ORDER_ID);
+    });
+
+    it("forgets an order Monerium still does not know after an hour", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.getOrder.mockRejectedValue(
+            new MoneriumApiError(404, undefined, "nope")
+        );
+        await expect(
+            service.syncTrackedOrder(
+                tracked({ createdAt: new Date(Date.now() - 2 * HOUR) })
+            )
+        ).resolves.toBeNull();
+        expect(trackedOrders.deleteById).toHaveBeenCalledWith(ORDER_ID);
+    });
+
+    it("waits a day for an order whose placement was accepted with a 202", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.getOrder.mockRejectedValue(
+            new MoneriumApiError(404, undefined, "nope")
+        );
+        await service.syncTrackedOrder(
+            tracked({
+                placementAccepted: true,
+                createdAt: new Date(Date.now() - 5 * HOUR),
+            })
+        );
+        expect(trackedOrders.deleteById).not.toHaveBeenCalled();
+
+        await service.syncTrackedOrder(
+            tracked({
+                placementAccepted: true,
+                createdAt: new Date(Date.now() - 25 * HOUR),
+            })
+        );
+        expect(trackedOrders.deleteById).toHaveBeenCalledWith(ORDER_ID);
     });
 });
 
@@ -370,5 +508,43 @@ describe("MoneriumOrderService.listOrders", () => {
         expect(client.listOrders).toHaveBeenCalledWith("token", {
             address: WALLET,
         });
+    });
+
+    it("shares one upstream list between orders and beneficiaries within a few seconds", async () => {
+        const { service, client } = setup();
+        client.listOrders.mockResolvedValue([record()]);
+
+        await service.listOrders(WALLET);
+        await service.listBeneficiaries(WALLET);
+        await service.listOrders(WALLET);
+
+        expect(client.listOrders).toHaveBeenCalledOnce();
+    });
+
+    it("lists again after the wallet placed an order", async () => {
+        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
+        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
+        const { service, client } = setup();
+        client.listOrders.mockResolvedValue([]);
+        client.placeRedeemOrder.mockResolvedValue({ kind: "accepted" });
+
+        await service.listOrders(WALLET);
+        await service.placeOrder({ wallet: WALLET, body: body() });
+        await service.listOrders(WALLET);
+
+        expect(client.listOrders).toHaveBeenCalledTimes(2);
+        vi.unstubAllEnvs();
+    });
+
+    it("does not keep a failed upstream list", async () => {
+        const { service, client } = setup();
+        client.listOrders
+            .mockRejectedValueOnce(new MoneriumApiError(503, undefined, "down"))
+            .mockResolvedValueOnce([]);
+
+        await expect(service.listOrders(WALLET)).rejects.toMatchObject({
+            status: 502,
+        });
+        await expect(service.listOrders(WALLET)).resolves.toEqual([]);
     });
 });

@@ -93,9 +93,11 @@ function assertMessageMatches(
     }
 }
 
+/** The document threshold binds personal third-party payouts only; corporate profiles are exempt. */
 export function validateRedeemOrder(
     body: MoneriumPlaceOrderBody,
-    now: Date
+    now: Date,
+    profileKind: "personal" | "corporate" | null
 ): ValidatedRedeemOrder {
     const amount = normalizeRedeemAmount(body.amount);
     if (!amount) {
@@ -103,6 +105,7 @@ export function validateRedeemOrder(
     }
     if (
         !body.counterpart.own &&
+        profileKind !== "corporate" &&
         Number.parseFloat(amount) >=
             MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR
     ) {

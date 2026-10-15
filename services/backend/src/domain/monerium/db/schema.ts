@@ -3,6 +3,7 @@ import type {
     MoneriumProfileState,
 } from "@frak-labs/app-essentials/monerium";
 import {
+    boolean,
     index,
     pgTable,
     text,
@@ -45,6 +46,8 @@ export const moneriumConnectionsTable = pgTable(
         accessTokenEncrypted: text("access_token_encrypted"),
         accessTokenExpiresAt: timestamp("access_token_expires_at"),
         refreshTokenEncrypted: text("refresh_token_encrypted"),
+        walletLinkPendingAt: timestamp("wallet_link_pending_at"),
+        profileStateChangedAt: timestamp("profile_state_changed_at"),
         siweFailedAt: timestamp("siwe_failed_at"),
         stateCheckedAt: timestamp("state_checked_at"),
         createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -62,7 +65,7 @@ export const moneriumConnectionsTable = pgTable(
     ]
 );
 
-/** Single-use OAuth/SIWE handshakes, 30 minutes TTL, bound to the session wallet. */
+/** Single-use OAuth/SIWE handshakes, bound to the session wallet. OAuth lives 30 minutes, SIWE as long as its message (10). */
 export const moneriumPendingAuthsTable = pgTable(
     "monerium_pending_auths",
     {
@@ -92,6 +95,9 @@ export const moneriumTrackedOrdersTable = pgTable(
         state: varchar("state", { length: 16 })
             .notNull()
             .$type<MoneriumOrderState>(),
+        placementAccepted: boolean("placement_accepted")
+            .notNull()
+            .default(false),
         lastCheckedAt: timestamp("last_checked_at"),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         updatedAt: timestamp("updated_at").notNull().defaultNow(),
