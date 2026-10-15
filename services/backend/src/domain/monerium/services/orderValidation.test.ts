@@ -48,7 +48,7 @@ const thirdParty = {
 
 describe("validateRedeemOrder", () => {
     it("accepts an own payout and defaults the memo", () => {
-        const result = validateRedeemOrder(bodyWith(), NOW);
+        const result = validateRedeemOrder(bodyWith(), NOW, "personal");
         expect(result).toMatchObject({
             amount: "12.5",
             iban: IBAN,
@@ -65,7 +65,8 @@ describe("validateRedeemOrder", () => {
                 iban: "de89 3704 0044 0532 0130 00",
                 messageAmount: "12.5",
             }),
-            NOW
+            NOW,
+            "personal"
         );
         expect(result.amount).toBe("12.5");
         expect(result.iban).toBe(IBAN);
@@ -81,7 +82,8 @@ describe("validateRedeemOrder", () => {
                 },
                 memo: "  Rent for October ",
             }),
-            NOW
+            NOW,
+            "personal"
         );
         expect(result.details).toEqual({
             firstName: "Satoshi",
@@ -97,7 +99,11 @@ describe("validateRedeemOrder", () => {
         ["1.234", "MONERIUM_INVALID_AMOUNT"],
     ])("rejects amount %s", (amount, code) => {
         expect(() =>
-            validateRedeemOrder(bodyWith({ amount, messageAmount: "1" }), NOW)
+            validateRedeemOrder(
+                bodyWith({ amount, messageAmount: "1" }),
+                NOW,
+                "personal"
+            )
         ).toThrowError(expect.objectContaining({ status: 422, code }));
     });
 
@@ -105,7 +111,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ iban: "DE89370400440532013001" }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_INVALID_IBAN" })
@@ -120,7 +127,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ counterpart: { ...thirdParty, ...patch } }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_INVALID_COUNTERPART" })
@@ -130,7 +138,7 @@ describe("validateRedeemOrder", () => {
     it("rejects a memo outside 5 to 140 characters", () => {
         for (const memo of ["abcd", "x".repeat(141)]) {
             expect(() =>
-                validateRedeemOrder(bodyWith({ memo }), NOW)
+                validateRedeemOrder(bodyWith({ memo }), NOW, "personal")
             ).toThrowError(
                 expect.objectContaining({ code: "MONERIUM_INVALID_MEMO" })
             );
@@ -138,14 +146,14 @@ describe("validateRedeemOrder", () => {
     });
 
     it("treats a blank memo as absent", () => {
-        expect(validateRedeemOrder(bodyWith({ memo: "   " }), NOW).memo).toBe(
-            MONERIUM_DEFAULT_MEMO
-        );
+        expect(
+            validateRedeemOrder(bodyWith({ memo: "   " }), NOW, "personal").memo
+        ).toBe(MONERIUM_DEFAULT_MEMO);
     });
 
     it("rejects a message that does not parse", () => {
         expect(() =>
-            validateRedeemOrder(bodyWith({ message: "hello" }), NOW)
+            validateRedeemOrder(bodyWith({ message: "hello" }), NOW, "personal")
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_INVALID_MESSAGE" })
         );
@@ -153,7 +161,11 @@ describe("validateRedeemOrder", () => {
 
     it("rejects a message whose amount differs from the body", () => {
         expect(() =>
-            validateRedeemOrder(bodyWith({ messageAmount: "99" }), NOW)
+            validateRedeemOrder(
+                bodyWith({ messageAmount: "99" }),
+                NOW,
+                "personal"
+            )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_INVALID_MESSAGE" })
         );
@@ -163,7 +175,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ messageIban: "FR7630006000011234567890189" }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_INVALID_MESSAGE" })
@@ -174,7 +187,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ messageAt: new Date("2026-10-15T11:54:00Z") }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_MESSAGE_EXPIRED" })
@@ -185,7 +199,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ messageAt: new Date("2026-10-15T12:12:00Z") }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_MESSAGE_EXPIRED" })
@@ -196,7 +211,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ messageAt: new Date("2026-10-15T11:56:00Z") }),
-                NOW
+                NOW,
+                "personal"
             )
         ).not.toThrow();
     });
@@ -205,7 +221,8 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ amount: "15000", counterpart: thirdParty }),
-                NOW
+                NOW,
+                "personal"
             )
         ).toThrowError(
             expect.objectContaining({ code: "MONERIUM_AMOUNT_LIMIT" })
@@ -213,14 +230,25 @@ describe("validateRedeemOrder", () => {
         expect(() =>
             validateRedeemOrder(
                 bodyWith({ amount: "14999.99", counterpart: thirdParty }),
-                NOW
+                NOW,
+                "personal"
             )
         ).not.toThrow();
     });
 
+    it("exempts corporate profiles from the cap, not personal ones or unknown kinds", () => {
+        const body = bodyWith({ amount: "20000", counterpart: thirdParty });
+        expect(() => validateRedeemOrder(body, NOW, "corporate")).not.toThrow();
+        for (const kind of ["personal", null] as const) {
+            expect(() => validateRedeemOrder(body, NOW, kind)).toThrowError(
+                expect.objectContaining({ code: "MONERIUM_AMOUNT_LIMIT" })
+            );
+        }
+    });
+
     it("exempts own payouts from the cap", () => {
         expect(() =>
-            validateRedeemOrder(bodyWith({ amount: "50000" }), NOW)
+            validateRedeemOrder(bodyWith({ amount: "50000" }), NOW, "personal")
         ).not.toThrow();
     });
 });

@@ -1,10 +1,13 @@
+import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { MONERIUM_ADDRESS_LINKING_MESSAGE } from "@frak-labs/app-essentials/monerium";
 import type { Address, Hex } from "viem";
 import { requireMoneriumConfig } from "../config";
 import {
+    connectionErrorFor,
     MoneriumApiError,
     notConnected,
+    profileNotApproved,
     reauthRequired,
     rethrowUpstream,
 } from "../errors";
@@ -16,8 +19,11 @@ import type { MoneriumTokenService } from "./MoneriumTokenService";
 
 const ALREADY_LINKED = /already/i;
 
-function linkRejected(message: string): HttpError {
-    return HttpError.unprocessable(moneriumErrorCodes.linkRejected, message);
+function linkRejected(): HttpError {
+    return HttpError.unprocessable(
+        moneriumErrorCodes.linkRejected,
+        "Monerium refused to link this wallet"
+    );
 }
 
 export class MoneriumLinkService {
@@ -52,25 +58,28 @@ export class MoneriumLinkService {
         } catch (error) {
             if (!(error instanceof MoneriumApiError)) throw error;
             if (error.isUpstreamFailure) return rethrowUpstream(error);
+            const connectionError = connectionErrorFor(error);
+            if (connectionError) throw connectionError;
             if (!ALREADY_LINKED.test(error.message)) {
-                throw linkRejected(error.message);
+                log.warn(
+                    { status: error.status, moneriumCode: error.moneriumCode },
+                    "[Monerium] wallet link refused"
+                );
+                throw linkRejected();
             }
-            walletLink = await this.confirmAlreadyLinked(
-                params.wallet,
-                error.message
-            );
+            walletLink = await this.confirmAlreadyLinked(params.wallet);
         }
 
         await this.connections.update(params.wallet, {
             walletLinkState: walletLink,
+            walletLinkPendingAt: walletLink === "pending" ? new Date() : null,
         });
         return { walletLink };
     }
 
     /** "Already linked" may mean linked to somebody else, so only our own profile's record counts. */
     private async confirmAlreadyLinked(
-        wallet: Address,
-        message: string
+        wallet: Address
     ): Promise<MoneriumWalletLinkState> {
         try {
             const { after } = await this.status.refreshFromMonerium(wallet);
@@ -79,7 +88,7 @@ export class MoneriumLinkService {
             if (error instanceof HttpError) throw error;
             rethrowUpstream(error);
         }
-        throw linkRejected(message);
+        throw linkRejected();
     }
 
     /** The cached profile may predate its approval, so a miss is re-checked once upstream. */
@@ -97,10 +106,7 @@ export class MoneriumLinkService {
             }
         }
         if (row.profileState !== "approved" || !row.profileId) {
-            throw HttpError.conflict(
-                moneriumErrorCodes.profileNotApproved,
-                "The Monerium profile is not approved yet"
-            );
+            throw profileNotApproved();
         }
         return row.profileId;
     }

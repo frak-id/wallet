@@ -18,6 +18,7 @@ import {
     MoneriumStatusResponseSchema,
     MoneriumSuccessResponseSchema,
 } from "../../../../domain/monerium/schemas";
+import { moneriumWalletContext, walletRateLimit } from "./walletRateLimit";
 
 const errors = {
     400: t.ErrorResponse,
@@ -31,6 +32,7 @@ const { auth, status, link, orders } = MoneriumContext.services;
 
 const authRoutes = new Elysia({ prefix: "/auth" })
     .use(sessionContext)
+    .use(moneriumWalletContext)
     .use(
         rateLimitMiddleware({
             bucket: "monerium-auth",
@@ -38,6 +40,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
             maxRequests: 20,
         })
     )
+    .use(walletRateLimit("monerium-auth-wallet", 20))
     .post(
         "/start",
         ({ walletSession, body }) =>
@@ -91,6 +94,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 
 const placeOrderRoute = new Elysia()
     .use(sessionContext)
+    .use(moneriumWalletContext)
     .use(
         rateLimitMiddleware({
             bucket: "monerium-place-order",
@@ -98,6 +102,7 @@ const placeOrderRoute = new Elysia()
             maxRequests: 10,
         })
     )
+    .use(walletRateLimit("monerium-place-order-wallet", 10))
     .post(
         "/orders",
         ({ walletSession, body }) =>
@@ -111,6 +116,8 @@ const placeOrderRoute = new Elysia()
 
 export const moneriumRoutes = new Elysia({ prefix: "/monerium" })
     .use(sessionContext)
+    .use(moneriumWalletContext)
+    .use(walletRateLimit("monerium-wallet", 60))
     .get(
         "/status",
         ({ walletSession, query }) =>

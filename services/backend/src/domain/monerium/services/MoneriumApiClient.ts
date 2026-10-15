@@ -5,6 +5,7 @@ import type {
 import type { Address, Hex } from "viem";
 import { type MoneriumConfig, requireMoneriumConfig } from "../config";
 import { MoneriumApiError } from "../errors";
+import { MoneriumRateLimitPause } from "./MoneriumRateLimitPause";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const ACCEPT_HEADER = "application/vnd.monerium.api-v2+json";
@@ -78,9 +79,12 @@ export type MoneriumRedeemOrderRequest = {
     memo: string;
 };
 
+/** `rejected` is a clear verdict on the signature, `not_eligible` a portal redirect, `unexpected` anything else. */
 export type MoneriumSiweOutcome =
     | { kind: "code"; code: string }
-    | { kind: "error"; error: string; description?: string };
+    | { kind: "rejected"; error: string; description?: string }
+    | { kind: "not_eligible" }
+    | { kind: "unexpected"; error: string };
 
 type RequestOptions = {
     method: "GET" | "POST";
@@ -91,27 +95,36 @@ type RequestOptions = {
     redirect?: "manual" | "follow";
 };
 
-/** Reads the OAuth result off the redirect Monerium answers to a SIWE `POST /auth`. */
+/** The redirect must come back to our own redirect URI carrying the state we sent. */
 export function parseSiweLocation(
-    location: string | null
+    location: string | null,
+    expected: { redirectUri: string; state: string }
 ): MoneriumSiweOutcome {
-    if (!location) return { kind: "error", error: "missing_location" };
+    if (!location) return { kind: "unexpected", error: "missing_location" };
     let url: URL;
+    let target: URL;
     try {
         url = new URL(location);
+        target = new URL(expected.redirectUri);
     } catch {
-        return { kind: "error", error: "invalid_location" };
+        return { kind: "unexpected", error: "invalid_location" };
+    }
+    if (url.origin + url.pathname !== target.origin + target.pathname) {
+        return { kind: "unexpected", error: "unexpected_redirect" };
+    }
+    if (url.searchParams.get("state") !== expected.state) {
+        return { kind: "unexpected", error: "state_mismatch" };
     }
     const error = url.searchParams.get("error");
     if (error) {
         return {
-            kind: "error",
+            kind: "rejected",
             error,
             description: url.searchParams.get("error_description") ?? undefined,
         };
     }
     const code = url.searchParams.get("code");
-    if (!code) return { kind: "error", error: "missing_code" };
+    if (!code) return { kind: "unexpected", error: "missing_code" };
     return { kind: "code", code };
 }
 
@@ -153,7 +166,8 @@ async function toApiError(response: Response): Promise<MoneriumApiError> {
 export class MoneriumApiClient {
     constructor(
         private readonly fetchImpl: typeof fetch,
-        private readonly getConfig: () => MoneriumConfig = requireMoneriumConfig
+        private readonly getConfig: () => MoneriumConfig = requireMoneriumConfig,
+        readonly rateLimitPause = new MoneriumRateLimitPause()
     ) {}
 
     private async send(
@@ -179,8 +193,9 @@ export class MoneriumApiClient {
             body = JSON.stringify(options.json);
         }
 
+        let response: Response;
         try {
-            return await this.fetchImpl(url, {
+            response = await this.fetchImpl(url, {
                 method: options.method,
                 headers,
                 body,
@@ -194,6 +209,12 @@ export class MoneriumApiClient {
                 error instanceof Error ? error.message : "Monerium unreachable"
             );
         }
+        if (response.status === 429) {
+            this.rateLimitPause.pause(
+                parseRetryAfter(response.headers.get("retry-after"))
+            );
+        }
+        return response;
     }
 
     private async requestJson<T>(
@@ -259,7 +280,7 @@ export class MoneriumApiClient {
         });
     }
 
-    /** Never throws on a rejected signature: the caller records it. Upstream failures do throw. */
+    /** Never throws on a rejected signature: the caller decides. Upstream failures do throw. */
     async submitSiwe(params: {
         message: string;
         signature: Hex;
@@ -282,13 +303,17 @@ export class MoneriumApiClient {
             },
         });
 
+        if (response.status === 307) return { kind: "not_eligible" };
         if (response.status >= 300 && response.status < 400) {
-            return parseSiweLocation(response.headers.get("location"));
+            return parseSiweLocation(response.headers.get("location"), {
+                redirectUri: config.redirectUri,
+                state: params.state,
+            });
         }
         const failure = await toApiError(response);
         if (failure.isUpstreamFailure) throw failure;
         return {
-            kind: "error",
+            kind: "rejected",
             error: failure.moneriumCode ?? `http_${response.status}`,
             description: failure.message,
         };

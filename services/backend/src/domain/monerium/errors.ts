@@ -47,3 +47,20 @@ export function rethrowUpstream(error: unknown): never {
     }
     throw error;
 }
+
+export function profileNotApproved(): HttpError {
+    return HttpError.conflict(
+        moneriumErrorCodes.profileNotApproved,
+        "The Monerium profile is not approved yet"
+    );
+}
+
+/**
+ * 401 after the token retry means the grant is gone; 403 means the profile may not do
+ * this yet, which reconnecting would not change. Anything else has no connection answer.
+ */
+export function connectionErrorFor(error: MoneriumApiError): HttpError | null {
+    if (error.status === 401) return reauthRequired();
+    if (error.status === 403) return profileNotApproved();
+    return null;
+}

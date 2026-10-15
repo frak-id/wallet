@@ -28,39 +28,72 @@ function clientWith(response: Response) {
     };
 }
 
+const expected = {
+    redirectUri: "https://wallet.test/monerium/callback",
+    state: "s",
+};
+
 describe("parseSiweLocation", () => {
     it("reads the authorization code", () => {
         expect(
             parseSiweLocation(
-                "https://wallet.test/monerium/callback?code=abc&state=s"
+                "https://wallet.test/monerium/callback?code=abc&state=s",
+                expected
             )
         ).toEqual({ kind: "code", code: "abc" });
     });
 
-    it("reads an error with its description", () => {
+    it("reads an error with its description as a rejection", () => {
         expect(
             parseSiweLocation(
-                "https://wallet.test/monerium/callback?error=invalid_request&error_description=No+such+address"
+                "https://wallet.test/monerium/callback?error=invalid_request&error_description=No+such+address&state=s",
+                expected
             )
         ).toEqual({
-            kind: "error",
+            kind: "rejected",
             error: "invalid_request",
             description: "No such address",
         });
     });
 
-    it("treats a missing or unusable Location as an error", () => {
-        expect(parseSiweLocation(null)).toMatchObject({
-            kind: "error",
+    it("treats a missing or unusable Location as unexpected", () => {
+        expect(parseSiweLocation(null, expected)).toMatchObject({
+            kind: "unexpected",
             error: "missing_location",
         });
-        expect(parseSiweLocation("not a url")).toMatchObject({
-            kind: "error",
+        expect(parseSiweLocation("not a url", expected)).toMatchObject({
+            kind: "unexpected",
             error: "invalid_location",
         });
         expect(
-            parseSiweLocation("https://wallet.test/monerium/callback")
-        ).toMatchObject({ kind: "error", error: "missing_code" });
+            parseSiweLocation(
+                "https://wallet.test/monerium/callback?state=s",
+                expected
+            )
+        ).toMatchObject({ kind: "unexpected", error: "missing_code" });
+    });
+
+    it("refuses a redirect to another origin or path", () => {
+        for (const location of [
+            "https://evil.test/monerium/callback?code=abc&state=s",
+            "https://wallet.test/other?code=abc&state=s",
+        ]) {
+            expect(parseSiweLocation(location, expected)).toEqual({
+                kind: "unexpected",
+                error: "unexpected_redirect",
+            });
+        }
+    });
+
+    it("refuses a redirect that does not carry our state", () => {
+        for (const query of ["code=abc", "code=abc&state=other"]) {
+            expect(
+                parseSiweLocation(
+                    `https://wallet.test/monerium/callback?${query}`,
+                    expected
+                )
+            ).toEqual({ kind: "unexpected", error: "state_mismatch" });
+        }
     });
 });
 
@@ -70,7 +103,8 @@ describe("MoneriumApiClient", () => {
             new Response(null, {
                 status: 302,
                 headers: {
-                    location: "https://wallet.test/monerium/callback?code=xyz",
+                    location:
+                        "https://wallet.test/monerium/callback?code=xyz&state=state-1",
                 },
             })
         );
@@ -116,9 +150,43 @@ describe("MoneriumApiClient", () => {
                 state: "s",
             })
         ).resolves.toMatchObject({
-            kind: "error",
+            kind: "rejected",
             description: "Invalid signature",
         });
+    });
+
+    it("reports a 307 to the portal as not eligible", async () => {
+        const { client } = clientWith(
+            new Response(null, {
+                status: 307,
+                headers: { location: "https://monerium.app/signup" },
+            })
+        );
+        await expect(
+            client.submitSiwe({
+                message: "m",
+                signature: "0x01",
+                codeChallenge: "c",
+                state: "s",
+            })
+        ).resolves.toEqual({ kind: "not_eligible" });
+    });
+
+    it("does not accept a code from a redirect to a foreign origin", async () => {
+        const { client } = clientWith(
+            new Response(null, {
+                status: 302,
+                headers: { location: "https://evil.test/cb?code=x&state=s" },
+            })
+        );
+        await expect(
+            client.submitSiwe({
+                message: "m",
+                signature: "0x01",
+                codeChallenge: "c",
+                state: "s",
+            })
+        ).resolves.toMatchObject({ kind: "unexpected" });
     });
 
     it("throws on a SIWE 5xx so it is not recorded as a rejection", async () => {
@@ -144,6 +212,13 @@ describe("MoneriumApiClient", () => {
         expect(error).toBeInstanceOf(MoneriumApiError);
         expect(error).toMatchObject({ status: 429, retryAfterSeconds: 42 });
         expect(error.isUpstreamFailure).toBe(true);
+    });
+
+    it("shares a 429 pause, defaulting to 60 s without Retry-After", async () => {
+        const { client } = clientWith(new Response("{}", { status: 429 }));
+        await client.getAuthContext("token").catch(() => undefined);
+        expect(client.rateLimitPause.isPaused(Date.now() + 59_000)).toBe(true);
+        expect(client.rateLimitPause.isPaused(Date.now() + 61_000)).toBe(false);
     });
 
     it("maps a transport failure to status 0", async () => {

@@ -1,11 +1,22 @@
 import { db } from "@backend-infrastructure";
 import type { MoneriumProfileState } from "@frak-labs/app-essentials/monerium";
-import { and, eq, gt, isNull, lt, notInArray, or, type SQL } from "drizzle-orm";
+import {
+    and,
+    eq,
+    inArray,
+    isNull,
+    notInArray,
+    or,
+    type SQL,
+} from "drizzle-orm";
 import type { Address } from "viem";
 import {
     type MoneriumConnectionRow,
     moneriumConnectionsTable,
 } from "../db/schema";
+import { dueWithBackoff, oldestCheckFirst, type RecheckTier } from "./dueTiers";
+
+type ClaimParams = { now: Date; tiers: RecheckTier[]; limit: number };
 
 export type MoneriumConnectionPatch = Partial<
     Omit<MoneriumConnectionRow, "wallet" | "createdAt" | "updatedAt">
@@ -54,12 +65,14 @@ export class MoneriumConnectionRepository {
             .values({
                 wallet: params.wallet,
                 moneriumUserId: params.moneriumUserId,
+                profileStateChangedAt: new Date(),
                 ...tokens,
             })
             .onConflictDoUpdate({
                 target: moneriumConnectionsTable.wallet,
                 set: {
                     ...tokens,
+                    profileStateChangedAt: new Date(),
                     ...(params.moneriumUserId
                         ? { moneriumUserId: params.moneriumUserId }
                         : {}),
@@ -135,57 +148,67 @@ export class MoneriumConnectionRepository {
             .where(eq(moneriumConnectionsTable.wallet, wallet));
     }
 
-    /** Connected wallets whose profile can still change, oldest check first. */
-    findDueForProfileSync(params: {
-        checkedBefore: Date;
-        createdAfter: Date;
-        limit: number;
-    }): Promise<MoneriumConnectionRow[]> {
-        return this.findDue(
-            or(
-                isNull(moneriumConnectionsTable.profileState),
-                notInArray(
-                    moneriumConnectionsTable.profileState,
-                    TERMINAL_PROFILE_STATES
-                )
+    /**
+     * Claims connected wallets whose profile can still change: `state_checked_at` is
+     * stamped in the same statement, so concurrent pods never get the same row.
+     */
+    claimDueForProfileSync(
+        params: ClaimParams
+    ): Promise<MoneriumConnectionRow[]> {
+        return this.claimDue(
+            and(
+                or(
+                    isNull(moneriumConnectionsTable.profileState),
+                    notInArray(
+                        moneriumConnectionsTable.profileState,
+                        TERMINAL_PROFILE_STATES
+                    )
+                ),
+                dueWithBackoff({
+                    since: moneriumConnectionsTable.profileStateChangedAt,
+                    fallback: moneriumConnectionsTable.createdAt,
+                    checkedAt: moneriumConnectionsTable.stateCheckedAt,
+                    tiers: params.tiers,
+                    now: params.now,
+                })
             ),
             params
         );
     }
 
-    findDueForLinkSync(params: {
-        checkedBefore: Date;
-        createdAfter: Date;
-        limit: number;
-    }): Promise<MoneriumConnectionRow[]> {
-        return this.findDue(
-            eq(moneriumConnectionsTable.walletLinkState, "pending"),
+    claimDueForLinkSync(params: ClaimParams): Promise<MoneriumConnectionRow[]> {
+        return this.claimDue(
+            and(
+                eq(moneriumConnectionsTable.walletLinkState, "pending"),
+                dueWithBackoff({
+                    since: moneriumConnectionsTable.walletLinkPendingAt,
+                    fallback: moneriumConnectionsTable.updatedAt,
+                    checkedAt: moneriumConnectionsTable.stateCheckedAt,
+                    tiers: params.tiers,
+                    now: params.now,
+                })
+            ),
             params
         );
     }
 
-    private findDue(
+    private claimDue(
         condition: SQL | undefined,
-        params: { checkedBefore: Date; createdAfter: Date; limit: number }
+        params: ClaimParams
     ): Promise<MoneriumConnectionRow[]> {
-        return db
-            .select()
+        const due = db
+            .select({ wallet: moneriumConnectionsTable.wallet })
             .from(moneriumConnectionsTable)
             .where(
-                and(
-                    eq(moneriumConnectionsTable.status, "connected"),
-                    condition,
-                    or(
-                        isNull(moneriumConnectionsTable.stateCheckedAt),
-                        lt(
-                            moneriumConnectionsTable.stateCheckedAt,
-                            params.checkedBefore
-                        )
-                    ),
-                    gt(moneriumConnectionsTable.createdAt, params.createdAfter)
-                )
+                and(eq(moneriumConnectionsTable.status, "connected"), condition)
             )
-            .orderBy(moneriumConnectionsTable.stateCheckedAt)
-            .limit(params.limit);
+            .orderBy(oldestCheckFirst(moneriumConnectionsTable.stateCheckedAt))
+            .limit(params.limit)
+            .for("update", { skipLocked: true });
+        return db
+            .update(moneriumConnectionsTable)
+            .set({ stateCheckedAt: params.now })
+            .where(inArray(moneriumConnectionsTable.wallet, due))
+            .returning();
     }
 }

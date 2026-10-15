@@ -1,13 +1,30 @@
+import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
-import { MoneriumApiError, notConnected, reauthRequired } from "../errors";
+import {
+    MoneriumApiError,
+    notConnected,
+    reauthRequired,
+    upstreamUnavailable,
+} from "../errors";
 import type {
     LockedConnectionWriter,
     MoneriumConnectionRepository,
 } from "../repositories/MoneriumConnectionRepository";
 import type { MoneriumApiClient } from "./MoneriumApiClient";
-import type { MoneriumTokenCipher } from "./MoneriumTokenCipher";
+import {
+    MoneriumCipherIntegrityError,
+    type MoneriumTokenCipher,
+} from "./MoneriumTokenCipher";
 
 export const ACCESS_TOKEN_GRACE_MS = 60_000;
+
+const DEAD_GRANT = /invalid.?grant|refresh.?token|expired|revoked/i;
+
+/** Only a 400/401 that says the refresh token itself is dead: config errors are 400s too. */
+function isDeadGrant(error: MoneriumApiError): boolean {
+    if (error.status !== 400 && error.status !== 401) return false;
+    return DEAD_GRANT.test(`${error.moneriumCode ?? ""} ${error.message}`);
+}
 
 type RefreshOutcome =
     | { kind: "token"; accessToken: string }
@@ -34,7 +51,7 @@ export class MoneriumTokenService {
         if (row.status === "reauth_required") throw reauthRequired();
 
         if (!options.rejectedToken) {
-            const cached = await this.readFreshToken(row);
+            const cached = await this.readFreshToken(wallet, row);
             if (cached) return cached;
         }
 
@@ -45,11 +62,15 @@ export class MoneriumTokenService {
                 if (locked.status === "reauth_required") {
                     return { kind: "reauth" };
                 }
-                const current = await this.readFreshToken(locked);
+                const current = await this.readFreshToken(wallet, locked);
                 if (current && current !== options.rejectedToken) {
                     return { kind: "token", accessToken: current };
                 }
-                return this.refresh(locked.refreshTokenEncrypted, write);
+                return this.refresh(
+                    wallet,
+                    locked.refreshTokenEncrypted,
+                    write
+                );
             }
         );
 
@@ -76,10 +97,13 @@ export class MoneriumTokenService {
         }
     }
 
-    private async readFreshToken(row: {
-        accessTokenEncrypted: string | null;
-        accessTokenExpiresAt: Date | null;
-    }): Promise<string | null> {
+    private async readFreshToken(
+        wallet: Address,
+        row: {
+            accessTokenEncrypted: string | null;
+            accessTokenExpiresAt: Date | null;
+        }
+    ): Promise<string | null> {
         if (!row.accessTokenEncrypted || !row.accessTokenExpiresAt) return null;
         if (
             row.accessTokenExpiresAt.getTime() - ACCESS_TOKEN_GRACE_MS <=
@@ -88,14 +112,22 @@ export class MoneriumTokenService {
             return null;
         }
         try {
-            return await this.cipher.decrypt(row.accessTokenEncrypted);
+            return await this.cipher.decrypt(
+                row.accessTokenEncrypted,
+                wallet,
+                "access_token_encrypted"
+            );
         } catch {
             return null;
         }
     }
 
-    /** The reauth wipe is returned, not thrown: throwing would roll the wipe back with the transaction. */
+    /**
+     * The reauth wipe is returned, not thrown: throwing would roll it back with the
+     * transaction. It happens only for a refresh token that is provably dead.
+     */
     private async refresh(
+        wallet: Address,
         refreshTokenEncrypted: string | null,
         write: LockedConnectionWriter
     ): Promise<RefreshOutcome> {
@@ -112,30 +144,47 @@ export class MoneriumTokenService {
 
         let refreshToken: string;
         try {
-            refreshToken = await this.cipher.decrypt(refreshTokenEncrypted);
-        } catch {
-            return wipe();
+            refreshToken = await this.cipher.decrypt(
+                refreshTokenEncrypted,
+                wallet,
+                "refresh_token_encrypted"
+            );
+        } catch (error) {
+            if (error instanceof MoneriumCipherIntegrityError) return wipe();
+            log.error(
+                { error: error instanceof Error ? error.message : "unknown" },
+                "[Monerium] token encryption key unavailable, keeping the connection"
+            );
+            throw error;
         }
 
         try {
             const tokens = await this.client.refreshAccessToken(refreshToken);
             await write({
                 accessTokenEncrypted: await this.cipher.encrypt(
-                    tokens.accessToken
+                    tokens.accessToken,
+                    wallet,
+                    "access_token_encrypted"
                 ),
                 accessTokenExpiresAt: new Date(
                     Date.now() + tokens.expiresInSeconds * 1000
                 ),
                 refreshTokenEncrypted: await this.cipher.encrypt(
-                    tokens.refreshToken
+                    tokens.refreshToken,
+                    wallet,
+                    "refresh_token_encrypted"
                 ),
             });
             return { kind: "token", accessToken: tokens.accessToken };
         } catch (error) {
-            if (error instanceof MoneriumApiError && !error.isUpstreamFailure) {
-                return wipe();
-            }
-            throw error;
+            if (!(error instanceof MoneriumApiError)) throw error;
+            if (isDeadGrant(error)) return wipe();
+            log.error(
+                { status: error.status, moneriumCode: error.moneriumCode },
+                "[Monerium] token refresh failed, keeping the connection"
+            );
+            if (error.isUpstreamFailure) throw error;
+            throw upstreamUnavailable();
         }
     }
 }

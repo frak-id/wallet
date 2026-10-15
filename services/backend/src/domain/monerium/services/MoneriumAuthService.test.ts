@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import { getAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import type { MoneriumPendingAuthRow } from "../db/schema";
@@ -14,6 +15,7 @@ import { codeChallengeS256 } from "./pkce";
 
 const WALLET = "0x00000000000000000000000000000000000000aa" as const;
 const OTHER = "0x00000000000000000000000000000000000000bb" as const;
+const DAY_MS = 24 * 60 * 60_000;
 const cipher = new MoneriumTokenCipher(new AdminWalletsRepository());
 
 const STATUS = {
@@ -113,7 +115,9 @@ describe("MoneriumAuthService", () => {
             const stored = pending.get(state);
             expect(stored).toMatchObject({ wallet: WALLET, method: "oauth" });
             const verifier = await cipher.decrypt(
-                stored?.codeVerifierEncrypted ?? ""
+                stored?.codeVerifierEncrypted ?? "",
+                WALLET,
+                "code_verifier_encrypted"
             );
             expect(codeChallengeS256(verifier)).toBe(
                 params.get("code_challenge")
@@ -150,6 +154,9 @@ describe("MoneriumAuthService", () => {
             });
 
             expect(result).toEqual(STATUS);
+            expect(connections.upsertConnected).toHaveBeenCalledWith(
+                expect.objectContaining({ clearSiweFailure: true })
+            );
             const exchange = client.exchangeAuthorizationCode.mock
                 .calls[0] as unknown as [
                 { code: string; codeVerifier: string },
@@ -160,12 +167,20 @@ describe("MoneriumAuthService", () => {
                 .calls[0] as unknown as [
                 { accessTokenEncrypted: string; refreshTokenEncrypted: string },
             ];
-            expect(await cipher.decrypt(saved[0].accessTokenEncrypted)).toBe(
-                "access"
-            );
-            expect(await cipher.decrypt(saved[0].refreshTokenEncrypted)).toBe(
-                "refresh"
-            );
+            expect(
+                await cipher.decrypt(
+                    saved[0].accessTokenEncrypted,
+                    WALLET,
+                    "access_token_encrypted"
+                )
+            ).toBe("access");
+            expect(
+                await cipher.decrypt(
+                    saved[0].refreshTokenEncrypted,
+                    WALLET,
+                    "refresh_token_encrypted"
+                )
+            ).toBe("refresh");
         });
 
         it("is single use", async () => {
@@ -274,6 +289,13 @@ describe("MoneriumAuthService", () => {
             ["connected", { ...eligible, status: "connected" }],
             ["not linked", { ...eligible, walletLinkState: "none" }],
             ["failed before", { ...eligible, siweFailedAt: new Date() }],
+            [
+                "failed 6 days ago",
+                {
+                    ...eligible,
+                    siweFailedAt: new Date(Date.now() - 6 * DAY_MS),
+                },
+            ],
         ])("refuses to prepare for %s", async (_name, connection) => {
             const { service } = setup({ connection });
             await expect(
@@ -282,6 +304,31 @@ describe("MoneriumAuthService", () => {
                 status: 409,
                 code: "MONERIUM_SIWE_UNAVAILABLE",
             });
+        });
+
+        it("offers SIWE again once a failure is older than 7 days", async () => {
+            const { service } = setup({
+                connection: {
+                    ...eligible,
+                    siweFailedAt: new Date(Date.now() - 8 * DAY_MS),
+                },
+            });
+            await expect(
+                service.prepareSiwe({ wallet: WALLET })
+            ).resolves.toMatchObject({ state: expect.any(String) });
+        });
+
+        it("signs the EIP-55 checksummed address and lets the handshake live as long as the message", async () => {
+            const { service, pending } = setup({ connection: eligible });
+            const { message, state } = await service.prepareSiwe({
+                wallet: WALLET,
+            });
+            expect(message).toContain(getAddress(WALLET));
+            expect(message).not.toContain(WALLET);
+            const ttl =
+                (pending.get(state)?.expiresAt.getTime() ?? 0) - Date.now();
+            expect(ttl).toBeGreaterThan(9 * 60_000);
+            expect(ttl).toBeLessThanOrEqual(10 * 60_000);
         });
 
         it("refuses to prepare when SIWE is disabled", async () => {
@@ -329,7 +376,7 @@ describe("MoneriumAuthService", () => {
             });
             const { state } = await service.prepareSiwe({ wallet: WALLET });
             client.submitSiwe.mockResolvedValue({
-                kind: "error",
+                kind: "rejected",
                 error: "access_denied",
                 description: "Address not linked",
             });
@@ -351,8 +398,66 @@ describe("MoneriumAuthService", () => {
             expect(connections.upsertConnected).not.toHaveBeenCalled();
             expect(log.warn).toHaveBeenCalledOnce();
             const logged = JSON.stringify(vi.mocked(log.warn).mock.calls[0]);
-            expect(logged).toContain("Address not linked");
+            expect(logged).toContain("access_denied");
             expect(logged).not.toContain("0xsecret");
+        });
+
+        it("records the failure when Monerium sends the wallet to the portal (not eligible)", async () => {
+            const { service, client, connections } = setup({
+                connection: eligible,
+            });
+            const { state } = await service.prepareSiwe({ wallet: WALLET });
+            client.submitSiwe.mockResolvedValue({ kind: "not_eligible" });
+
+            await expect(
+                service.submitSiwe({
+                    wallet: WALLET,
+                    state,
+                    signature: "0xabc",
+                })
+            ).rejects.toMatchObject({ code: "MONERIUM_SIWE_REJECTED" });
+            expect(connections.update).toHaveBeenCalledWith(WALLET, {
+                siweFailedAt: expect.any(Date),
+            });
+        });
+
+        it("answers 422 without recording a failure on an unexpected redirect", async () => {
+            const { service, client, connections } = setup({
+                connection: eligible,
+            });
+            const { state } = await service.prepareSiwe({ wallet: WALLET });
+            client.submitSiwe.mockResolvedValue({
+                kind: "unexpected",
+                error: "state_mismatch",
+            });
+
+            await expect(
+                service.submitSiwe({
+                    wallet: WALLET,
+                    state,
+                    signature: "0xabc",
+                })
+            ).rejects.toMatchObject({ code: "MONERIUM_SIWE_REJECTED" });
+            expect(connections.update).not.toHaveBeenCalled();
+        });
+
+        it("rejects an expired SIWE state before calling Monerium and keeps the wallet eligible", async () => {
+            const { service, client, connections, pending } = setup({
+                connection: eligible,
+            });
+            const { state } = await service.prepareSiwe({ wallet: WALLET });
+            const row = pending.get(state);
+            if (row) row.expiresAt = new Date(Date.now() - 1000);
+
+            await expect(
+                service.submitSiwe({
+                    wallet: WALLET,
+                    state,
+                    signature: "0xabc",
+                })
+            ).rejects.toMatchObject({ code: "MONERIUM_AUTH_STATE_INVALID" });
+            expect(client.submitSiwe).not.toHaveBeenCalled();
+            expect(connections.update).not.toHaveBeenCalled();
         });
 
         it("does not record a failure when Monerium is down", async () => {

@@ -1,8 +1,13 @@
+import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import { requireMoneriumConfig } from "../config";
-import type { MoneriumTrackedOrderRow } from "../db/schema";
+import type {
+    MoneriumConnectionRow,
+    MoneriumTrackedOrderRow,
+} from "../db/schema";
 import {
+    connectionErrorFor,
     MoneriumApiError,
     notConnected,
     reauthRequired,
@@ -15,7 +20,10 @@ import {
     type MoneriumPlaceOrderBody,
     moneriumErrorCodes,
 } from "../schemas";
-import type { MoneriumApiClient } from "./MoneriumApiClient";
+import type {
+    MoneriumApiClient,
+    MoneriumOrderRecord,
+} from "./MoneriumApiClient";
 import type { MoneriumStatusService } from "./MoneriumStatusService";
 import type { MoneriumTokenService } from "./MoneriumTokenService";
 import {
@@ -25,21 +33,40 @@ import {
     toOrderDto,
 } from "./orderMapping";
 import { validateRedeemOrder } from "./orderValidation";
+import { TtlCoalescer } from "./TtlCoalescer";
 
 export type PlaceOrderResult = {
     orderId: string;
     order: MoneriumOrderDto | null;
 };
 
+function orderIdTaken(): HttpError {
+    return HttpError.conflict(
+        moneriumErrorCodes.orderRejected,
+        "This order id is already used"
+    );
+}
+
 function sameWallet(a: Address, b: Address): boolean {
     return a.toLowerCase() === b.toLowerCase();
 }
 
-function orderRejected(message: string): HttpError {
-    return HttpError.unprocessable(moneriumErrorCodes.orderRejected, message);
+export const ORDER_LIST_COALESCE_MS = 5_000;
+export const UNKNOWN_ORDER_MAX_AGE_MS = 60 * 60_000;
+export const ACCEPTED_ORDER_MAX_AGE_MS = 24 * 60 * 60_000;
+
+function orderRejected(): HttpError {
+    return HttpError.unprocessable(
+        moneriumErrorCodes.orderRejected,
+        "Monerium refused the order"
+    );
 }
 
 export class MoneriumOrderService {
+    private readonly orderLists = new TtlCoalescer<MoneriumOrderRecord[]>(
+        ORDER_LIST_COALESCE_MS
+    );
+
     constructor(
         private readonly connections: MoneriumConnectionRepository,
         private readonly trackedOrders: MoneriumTrackedOrderRepository,
@@ -53,6 +80,7 @@ export class MoneriumOrderService {
         return sortNewestFirst(records.map(toOrderDto));
     }
 
+    /** Past payout targets the wallet can reuse: third parties without a usable name are left out. */
     async listBeneficiaries(wallet: Address): Promise<MoneriumBeneficiary[]> {
         return deriveBeneficiaries(await this.listOrders(wallet));
     }
@@ -63,32 +91,27 @@ export class MoneriumOrderService {
         body: MoneriumPlaceOrderBody;
     }): Promise<PlaceOrderResult> {
         const { wallet, body } = params;
-        await this.requireConnected(wallet);
+        const connection = await this.requireConnected(wallet);
 
         const known = await this.trackedOrders.findById(body.orderId);
         if (known && !sameWallet(known.wallet, wallet)) {
-            throw HttpError.conflict(
-                moneriumErrorCodes.orderRejected,
-                "This order id is already used"
-            );
+            throw orderIdTaken();
         }
         if (known) {
             const existing = await this.findExistingOrder(wallet, body.orderId);
             if (existing) return { orderId: body.orderId, order: existing };
         }
 
-        const order = validateRedeemOrder(body, new Date());
+        const order = validateRedeemOrder(
+            body,
+            new Date(),
+            connection.profileKind
+        );
         await this.requireLinkedWallet(wallet);
         const config = requireMoneriumConfig();
 
         const inserted =
-            !known &&
-            (await this.trackedOrders.insertIfAbsent({
-                id: body.orderId,
-                wallet,
-                amount: order.amount,
-                state: "placed",
-            }));
+            !known && (await this.trackNewOrder(wallet, body, order.amount));
 
         try {
             const outcome = await this.tokens.withAccessToken(
@@ -106,7 +129,9 @@ export class MoneriumOrderService {
                         memo: order.memo,
                     })
             );
+            this.orderLists.invalidate(wallet.toLowerCase());
             if (outcome.kind === "accepted") {
+                await this.trackedOrders.markPlacementAccepted(body.orderId);
                 return { orderId: body.orderId, order: null };
             }
             const dto = toOrderDto(outcome.order);
@@ -150,7 +175,11 @@ export class MoneriumOrderService {
         tracked: MoneriumTrackedOrderRow
     ): Promise<MoneriumOrderDto["state"] | null> {
         const order = await this.fetchTrackedOrder(tracked);
-        if (!order || order.state === tracked.state) {
+        if (!order) {
+            await this.dropOrKeepUnknown(tracked);
+            return null;
+        }
+        if (order.state === tracked.state) {
             await this.trackedOrders.markChecked(tracked.id);
             return null;
         }
@@ -160,6 +189,38 @@ export class MoneriumOrderService {
             order.state
         );
         return moved ? order.state : null;
+    }
+
+    /** Monerium never heard of it: a failed placement is forgotten after an hour, an accepted (202) one after a day. */
+    private async dropOrKeepUnknown(
+        tracked: MoneriumTrackedOrderRow
+    ): Promise<void> {
+        const maxAgeMs = tracked.placementAccepted
+            ? ACCEPTED_ORDER_MAX_AGE_MS
+            : UNKNOWN_ORDER_MAX_AGE_MS;
+        if (Date.now() - tracked.createdAt.getTime() > maxAgeMs) {
+            await this.trackedOrders.deleteById(tracked.id);
+            return;
+        }
+        await this.trackedOrders.markChecked(tracked.id);
+    }
+
+    /** False when the id was already tracked for this wallet; another wallet's row is a conflict. */
+    private async trackNewOrder(
+        wallet: Address,
+        body: MoneriumPlaceOrderBody,
+        amount: string
+    ): Promise<boolean> {
+        const inserted = await this.trackedOrders.insertIfAbsent({
+            id: body.orderId,
+            wallet,
+            amount,
+            state: "placed",
+        });
+        if (inserted) return true;
+        const winner = await this.trackedOrders.findById(body.orderId);
+        if (winner && !sameWallet(winner.wallet, wallet)) throw orderIdTaken();
+        return false;
     }
 
     private async handlePlacementFailure(
@@ -176,9 +237,16 @@ export class MoneriumOrderService {
             );
             if (existing) return { orderId: context.orderId, order: existing };
         }
-        if (context.created)
+        const connectionError = connectionErrorFor(error);
+        if (context.created) {
             await this.trackedOrders.deleteById(context.orderId);
-        throw orderRejected(error.message);
+        }
+        if (connectionError) throw connectionError;
+        log.warn(
+            { status: error.status, moneriumCode: error.moneriumCode },
+            "[Monerium] order refused"
+        );
+        throw orderRejected();
     }
 
     private async findExistingOrder(
@@ -196,8 +264,10 @@ export class MoneriumOrderService {
     private async fetchOrders(wallet: Address) {
         await this.requireConnected(wallet);
         try {
-            return await this.tokens.withAccessToken(wallet, (accessToken) =>
-                this.client.listOrders(accessToken, { address: wallet })
+            return await this.orderLists.run(wallet.toLowerCase(), () =>
+                this.tokens.withAccessToken(wallet, (accessToken) =>
+                    this.client.listOrders(accessToken, { address: wallet })
+                )
             );
         } catch (error) {
             if (error instanceof HttpError) throw error;
@@ -205,10 +275,13 @@ export class MoneriumOrderService {
         }
     }
 
-    private async requireConnected(wallet: Address): Promise<void> {
+    private async requireConnected(
+        wallet: Address
+    ): Promise<MoneriumConnectionRow> {
         const row = await this.connections.findByWallet(wallet);
         if (!row) throw notConnected();
         if (row.status === "reauth_required") throw reauthRequired();
+        return row;
     }
 
     private async requireLinkedWallet(wallet: Address): Promise<void> {

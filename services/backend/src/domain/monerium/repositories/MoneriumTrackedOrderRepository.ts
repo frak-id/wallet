@@ -1,11 +1,12 @@
 import { db } from "@backend-infrastructure";
 import type { MoneriumOrderState } from "@frak-labs/app-essentials/monerium";
-import { and, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Address } from "viem";
 import {
     type MoneriumTrackedOrderRow,
     moneriumTrackedOrdersTable,
 } from "../db/schema";
+import { dueWithBackoff, oldestCheckFirst, type RecheckTier } from "./dueTiers";
 
 export class MoneriumTrackedOrderRepository {
     async findById(id: string): Promise<MoneriumTrackedOrderRow | undefined> {
@@ -30,6 +31,13 @@ export class MoneriumTrackedOrderRepository {
             .onConflictDoNothing()
             .returning({ id: moneriumTrackedOrdersTable.id });
         return inserted.length > 0;
+    }
+
+    async markPlacementAccepted(id: string): Promise<void> {
+        await db
+            .update(moneriumTrackedOrdersTable)
+            .set({ placementAccepted: true })
+            .where(eq(moneriumTrackedOrdersTable.id, id));
     }
 
     async deleteById(id: string): Promise<void> {
@@ -77,13 +85,14 @@ export class MoneriumTrackedOrderRepository {
             .where(eq(moneriumTrackedOrdersTable.id, id));
     }
 
-    findInFlightDue(params: {
-        checkedBefore: Date;
-        createdAfter: Date;
+    /** Claims in-flight orders: `last_checked_at` is stamped in the same statement, so pods never share a row. */
+    claimInFlightDue(params: {
+        now: Date;
+        tiers: RecheckTier[];
         limit: number;
     }): Promise<MoneriumTrackedOrderRow[]> {
-        return db
-            .select()
+        const due = db
+            .select({ id: moneriumTrackedOrdersTable.id })
             .from(moneriumTrackedOrdersTable)
             .where(
                 and(
@@ -91,20 +100,22 @@ export class MoneriumTrackedOrderRepository {
                         "placed",
                         "pending",
                     ]),
-                    or(
-                        isNull(moneriumTrackedOrdersTable.lastCheckedAt),
-                        lt(
-                            moneriumTrackedOrdersTable.lastCheckedAt,
-                            params.checkedBefore
-                        )
-                    ),
-                    gt(
-                        moneriumTrackedOrdersTable.createdAt,
-                        params.createdAfter
-                    )
+                    dueWithBackoff({
+                        since: moneriumTrackedOrdersTable.createdAt,
+                        fallback: moneriumTrackedOrdersTable.createdAt,
+                        checkedAt: moneriumTrackedOrdersTable.lastCheckedAt,
+                        tiers: params.tiers,
+                        now: params.now,
+                    })
                 )
             )
-            .orderBy(moneriumTrackedOrdersTable.lastCheckedAt)
-            .limit(params.limit);
+            .orderBy(oldestCheckFirst(moneriumTrackedOrdersTable.lastCheckedAt))
+            .limit(params.limit)
+            .for("update", { skipLocked: true });
+        return db
+            .update(moneriumTrackedOrdersTable)
+            .set({ lastCheckedAt: params.now })
+            .where(inArray(moneriumTrackedOrdersTable.id, due))
+            .returning();
     }
 }
