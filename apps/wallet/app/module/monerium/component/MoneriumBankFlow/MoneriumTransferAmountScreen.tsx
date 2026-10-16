@@ -1,4 +1,5 @@
 import {
+    isMoneriumOwnPayoutAvailable,
     MONERIUM_LIMITS,
     normalizeRedeemAmount,
 } from "@frak-labs/app-essentials/monerium";
@@ -13,6 +14,7 @@ import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
+import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
 import {
     ibanStore,
     selectEffectiveIban,
@@ -73,8 +75,17 @@ export function MoneriumTransferAmountScreen({
         hasAmount &&
         selectedIban?.own === false &&
         numericAmount >= MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR;
+    const { status } = useMoneriumStatus();
+    const isOwnUnavailable =
+        selectedIban?.own === true &&
+        status !== undefined &&
+        !isMoneriumOwnPayoutAvailable(status.profile?.state);
     const canContinue =
-        hasAmount && !isInsufficient && !isAboveMax && selectedIban !== null;
+        hasAmount &&
+        !isInsufficient &&
+        !isAboveMax &&
+        !isOwnUnavailable &&
+        selectedIban !== null;
 
     function handleAmountInput(event: React.ChangeEvent<HTMLInputElement>) {
         const raw = event.target.value;
@@ -180,7 +191,11 @@ export function MoneriumTransferAmountScreen({
                         €
                     </Text>
                 </Inline>
-                {isInsufficient ? (
+                {isOwnUnavailable ? (
+                    <Text variant="caption" color="error">
+                        {t("monerium.bankFlow.transfer.amount.ownUnavailable")}
+                    </Text>
+                ) : isInsufficient ? (
                     <Text variant="caption" color="error">
                         {t(
                             "monerium.bankFlow.transfer.amount.insufficientBalance"

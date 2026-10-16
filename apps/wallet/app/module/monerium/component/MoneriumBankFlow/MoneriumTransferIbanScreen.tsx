@@ -1,4 +1,7 @@
-import { MONERIUM_LIMITS } from "@frak-labs/app-essentials/monerium";
+import {
+    isMoneriumOwnPayoutAvailable,
+    MONERIUM_LIMITS,
+} from "@frak-labs/app-essentials/monerium";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -6,6 +9,7 @@ import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
 import {
     type IbanEntry,
     ibanStore,
@@ -43,7 +47,10 @@ export function MoneriumTransferIbanScreen() {
     const effectiveIban = ibanStore(selectEffectiveIban);
     const currentIban = (currentOverride ?? effectiveIban)?.iban ?? null;
 
-    const [own, setOwn] = useState(false);
+    const { status } = useMoneriumStatus();
+    const canPayOwn = isMoneriumOwnPayoutAvailable(status?.profile?.state);
+    const [ownChecked, setOwn] = useState(false);
+    const own = canPayOwn && ownChecked;
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [iban, setIban] = useState("");
@@ -102,29 +109,31 @@ export function MoneriumTransferIbanScreen() {
             <Stack space="m">
                 <Text variant="heading4">{t(`${IBAN_KEY}.addNew`)}</Text>
 
-                <Card variant="elevated" padding="none">
-                    <Inline
-                        space="m"
-                        alignY="center"
-                        align="space-between"
-                        wrap={false}
-                        className={styles.transferCellPadding}
-                    >
-                        <Stack space="xxs">
-                            <Text variant="body" weight="medium">
-                                {t(`${IBAN_KEY}.ownToggle`)}
-                            </Text>
-                            <Text variant="bodySmall" color="secondary">
-                                {t(`${IBAN_KEY}.ownToggleDescription`)}
-                            </Text>
-                        </Stack>
-                        <Switch
-                            aria-label={t(`${IBAN_KEY}.ownToggle`)}
-                            checked={own}
-                            onCheckedChange={setOwn}
-                        />
-                    </Inline>
-                </Card>
+                {canPayOwn ? (
+                    <Card variant="elevated" padding="none">
+                        <Inline
+                            space="m"
+                            alignY="center"
+                            align="space-between"
+                            wrap={false}
+                            className={styles.transferCellPadding}
+                        >
+                            <Stack space="xxs">
+                                <Text variant="body" weight="medium">
+                                    {t(`${IBAN_KEY}.ownToggle`)}
+                                </Text>
+                                <Text variant="bodySmall" color="secondary">
+                                    {t(`${IBAN_KEY}.ownToggleDescription`)}
+                                </Text>
+                            </Stack>
+                            <Switch
+                                aria-label={t(`${IBAN_KEY}.ownToggle`)}
+                                checked={own}
+                                onCheckedChange={setOwn}
+                            />
+                        </Inline>
+                    </Card>
+                ) : null}
 
                 <MoneriumField
                     label={t(`${IBAN_KEY}.ibanLabel`)}

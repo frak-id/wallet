@@ -43,6 +43,13 @@ export function isMoneriumProfileUsable(
     return state === "approved" || environment === "sandbox";
 }
 
+/** An own payout reuses the profile's approved identity: a profile still under review cannot make one. */
+export function isMoneriumOwnPayoutAvailable(
+    state: MoneriumProfileState | null | undefined
+): boolean {
+    return state === "approved";
+}
+
 export type MoneriumOrderState =
     | "placed"
     | "pending"

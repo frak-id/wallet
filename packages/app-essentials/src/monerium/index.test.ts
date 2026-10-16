@@ -3,6 +3,7 @@ import {
     buildRedeemOrderMessage,
     formatMessageTimestamp,
     getIbanCountry,
+    isMoneriumOwnPayoutAvailable,
     isMoneriumProfileUsable,
     isValidCounterpartName,
     isValidCountryCode,
@@ -158,6 +159,21 @@ describe("isMoneriumProfileUsable", () => {
                 false
             );
             expect(isMoneriumProfileUsable("closed", environment)).toBe(false);
+        }
+    });
+});
+
+describe("isMoneriumOwnPayoutAvailable", () => {
+    it("needs an approved profile, even in sandbox", () => {
+        expect(isMoneriumOwnPayoutAvailable("approved")).toBe(true);
+        for (const state of [
+            "created",
+            "incomplete",
+            "pending",
+            "review",
+            null,
+        ] as const) {
+            expect(isMoneriumOwnPayoutAvailable(state)).toBe(false);
         }
     });
 });

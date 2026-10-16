@@ -611,6 +611,7 @@ export default interface Resources {
             "ibanLabel": "IBAN",
             "insufficientBalance": "Insufficient balance",
             "modify": "Edit",
+            "ownUnavailable": "Sending to your own account needs a verified Monerium profile. Pick another IBAN.",
             "title": "Amount to transfer",
             "totalBalance": "Total balance",
             "walletLabel": "Frak Wallet"

@@ -1,5 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
+import { isMoneriumOwnPayoutAvailable } from "@frak-labs/app-essentials/monerium";
 import type { Address } from "viem";
 import { requireMoneriumConfig } from "../config";
 import type {
@@ -10,6 +11,7 @@ import {
     connectionErrorFor,
     MoneriumApiError,
     notConnected,
+    profileNotApproved,
     reauthRequired,
     rethrowUpstream,
 } from "../errors";
@@ -108,6 +110,7 @@ export class MoneriumOrderService {
             connection.profileKind
         );
         await this.requireLinkedWallet(wallet);
+        if (order.own) await this.requireOwnPayoutProfile(wallet, connection);
         const config = requireMoneriumConfig();
 
         const inserted =
@@ -282,6 +285,22 @@ export class MoneriumOrderService {
         if (!row) throw notConnected();
         if (row.status === "reauth_required") throw reauthRequired();
         return row;
+    }
+
+    /** Monerium answers a bare 400 otherwise; the cached state may predate an approval, so it is re-checked once. */
+    private async requireOwnPayoutProfile(
+        wallet: Address,
+        connection: MoneriumConnectionRow
+    ): Promise<void> {
+        if (isMoneriumOwnPayoutAvailable(connection.profileState)) return;
+        try {
+            const { after } = await this.status.refreshFromMonerium(wallet);
+            if (isMoneriumOwnPayoutAvailable(after.profileState)) return;
+        } catch (error) {
+            if (error instanceof HttpError) throw error;
+            rethrowUpstream(error);
+        }
+        throw profileNotApproved();
     }
 
     private async requireLinkedWallet(wallet: Address): Promise<void> {

@@ -1115,7 +1115,8 @@
                     "modify": "Modifier",
                     "continue": "Continuer",
                     "insufficientBalance": "Solde insuffisant",
-                    "aboveMax": "Les transferts de {{max}}€ ou plus vers un tiers ne sont pas encore possibles. Envoie-les plutôt vers ton propre compte."
+                    "aboveMax": "Les transferts de {{max}}€ ou plus vers un tiers ne sont pas encore possibles. Envoie-les plutôt vers ton propre compte.",
+                    "ownUnavailable": "Les virements vers ton propre compte demandent un profil Monerium vérifié. Choisis un autre IBAN."
                 },
                 "recap": {
                     "title": "Récapitulatif",

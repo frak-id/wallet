@@ -287,6 +287,47 @@ describe("MoneriumOrderService.placeOrder", () => {
         expect(client.placeRedeemOrder).not.toHaveBeenCalled();
     });
 
+    it("refuses an own payout from a profile that is not approved, without calling Monerium", async () => {
+        const pending = connection({ profileState: "pending" });
+        const { service, status, client, trackedOrders } = setup({
+            connection: pending,
+        });
+        status.refreshFromMonerium.mockResolvedValue({ after: pending });
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "MONERIUM_PROFILE_NOT_APPROVED",
+        });
+        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
+        expect(trackedOrders.insertIfAbsent).not.toHaveBeenCalled();
+        expect(client.placeRedeemOrder).not.toHaveBeenCalled();
+    });
+
+    it("lets a pending profile pay a named third party", async () => {
+        const { service, status, client } = setup({
+            connection: connection({ profileState: "pending" }),
+        });
+        client.placeRedeemOrder.mockResolvedValue({ kind: "accepted" });
+
+        await expect(
+            service.placeOrder({
+                wallet: WALLET,
+                body: {
+                    ...body(),
+                    counterpart: {
+                        own: false,
+                        firstName: "Jo",
+                        lastName: "Doe",
+                        country: "FR",
+                    },
+                },
+            })
+        ).resolves.toMatchObject({ orderId: ORDER_ID });
+        expect(status.refreshFromMonerium).not.toHaveBeenCalled();
+    });
+
     it("proceeds when the refresh shows the wallet got linked", async () => {
         const { service, status, client } = setup({
             connection: connection({ walletLinkState: "pending" }),

@@ -1115,7 +1115,8 @@
                     "modify": "Edit",
                     "continue": "Continue",
                     "insufficientBalance": "Insufficient balance",
-                    "aboveMax": "Transfers of {{max}}€ or more to someone else aren't supported yet. Send it to your own account instead."
+                    "aboveMax": "Transfers of {{max}}€ or more to someone else aren't supported yet. Send it to your own account instead.",
+                    "ownUnavailable": "Sending to your own account needs a verified Monerium profile. Pick another IBAN."
                 },
                 "recap": {
                     "title": "Summary",
