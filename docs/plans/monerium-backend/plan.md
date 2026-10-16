@@ -16,7 +16,7 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   builds the message the user signs with it; the backend validates with it.
 - Route schemas: `services/backend/src/domain/monerium/schemas/index.ts`
   (incl. `moneriumErrorCodes`).
-- Routes (stubs to implement): `services/backend/src/api/user/wallet/monerium/index.ts`,
+- Routes: `services/backend/src/api/user/wallet/monerium/index.ts`,
   mounted at `/user/wallet/monerium`, all `withWalletAuthent`. Wallet side:
   `authenticatedWalletApi.monerium.*`.
 
@@ -72,8 +72,9 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 9. **Orders** validated with the shared helpers: message must parse, its amount and
    shortened IBAN must equal the body's, timestamp within [now − 5 min, now + 10 min];
    memo 5–140 or `MONERIUM_DEFAULT_MEMO`; names ≥ 2, ISO alpha-2 country for
-   third-party; the 15 000 EUR cap applies to third-party payouts only (own payouts are
-   exempt per Monerium). The order `id` is the client UUID; a retry with a known id
+   third-party; the 15 000 EUR cap applies to personal third-party payouts only (own
+   payouts and corporate profiles are exempt per Monerium; one shared
+   `exceedsThirdPartyLimit` in `app-essentials/monerium` for both sides). The order `id` is the client UUID; a retry with a known id
    returns the existing order. Upstream 202 → `order: null`.
 10. **Tracked orders** store only id, wallet, amount, state — no IBAN, no names.
 11. **Sync job** (`MutexCron` → orchestrator, since it spans monerium + notifications):
@@ -97,23 +98,28 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 
 ## Wallet decisions
 
-1. One `GET /status` query drives the flow; polls every 30 s while a profile or a link is
-   pending and the sheet is open; "Check again" forces `refresh=true`.
-2. Connect: `silentReconnect` → SIWE (prepare → sign → submit); any failure → analytics +
-   portal (`/auth/start` → `window.location` / `openExternalUrl` on Tauri).
+1. One `GET /status` query drives the flow; polls every 30 s while the derived screen is
+   onboarding, verification or linking and the sheet is open; "Check again" forces `refresh=true`.
+2. Connect: `silentReconnect` → SIWE (prepare → sign → submit); a cancelled passkey prompt
+   stops, any other failure → analytics + portal (`/auth/start` → `window.location` / `openExternalUrl` on Tauri).
 3. Callback route forwards `{code,state}` to the backend; `error` → cancelled screen; the
-   deep-link resolver forwards `error` too.
+   deep-link resolver forwards `error` too. Success navigates to `/wallet?open=monerium`,
+   which opens the bank flow. The `frakwallet://monerium-callback` alias is gone: the
+   redirect URI is the https one, fixed server-side.
 4. Screens per state: none → info; reauth → reconnect; created/incomplete → finish on
    Monerium; pending/review → "verification in progress" with push opt-in and "Check
    again"; rejected/closed → blocked screen; approved + unlinked → link; link pending →
    waiting; linked → success once → transfer. Sandbox never reviews identities (profiles
-   stay `pending` yet can link and pay), so `isMoneriumProfileUsable` in
+   stay `pending` yet can link and pay third parties; own payouts need `approved`), so `isMoneriumProfileUsable` in
    `app-essentials/monerium` lets any open profile through in sandbox, on both the screen
    choice and the backend link gate.
 5. Offramp: `normalizeRedeemAmount`, `buildRedeemOrderMessage` signed 2 min ahead, one
-   `crypto.randomUUID()` per recap screen reused on retry, invalidate orders + status.
+   order id per transfer intent (amount + IBAN) kept in `moneriumFlowStore`: reused on retry
+   and on back/forward with the same intent, renewed when the amount (by value) or IBAN changes,
+   after a success, after a `MONERIUM_ORDER_REJECTED` and on close (a 502 the user retries from the amount screen cannot pay twice);
+   invalidate orders + status.
 6. IBAN form: mod-97, names ≥ 2, country defaulting to the IBAN's, "This is my own
-   account" (own payout: no names, no 15 000 cap).
+   account" (own payout: no names, no 15 000 cap; corporate profiles have no cap either).
 7. Saved IBANs stay on the device. A one-off sync per (device, wallet) merges
    `GET /beneficiaries` into the local store (local entries win). Logout wipes both
    Monerium stores; the server connection survives logout by design.
@@ -130,7 +136,11 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   winner address at Monerium anyway).
 - DB migration for the three tables (columns in `services/backend/src/domain/monerium/db/schema.ts`,
   including `wallet_link_pending_at`, `profile_state_changed_at` and `placement_accepted`). It must
-  ship before the backend: the routes and the `moneriumSync` cron read these tables.
+  ship before the backend: the routes and the `moneriumSync` cron read these tables. The sync
+  indexes are now one partial index per table (`monerium_connections_sync_idx`,
+  `monerium_tracked_orders_sync_idx`); a local migration generated before that change is stale.
+- Confirm at Monerium that no `frakwallet://` redirect URI is still registered for the client id
+  (the wallet no longer routes `frakwallet://monerium-callback`).
 - `MONERIUM_CLIENT_ID` set on every backend stage, and `${FRAK_WALLET_URL}/monerium/callback`
   registered as a redirect URI for that client id at Monerium.
 - `MONERIUM_APP_NAME` (static in `infra/gcp/secrets.ts`: "Frak" in prod, "Frak Legacy" in
@@ -164,8 +174,15 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   `wallet:column` as AAD, so tokens stored by an earlier build do not decrypt (reconnect).
 - Sync: due rows are claimed with one `UPDATE ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED)`,
   never-checked rows first, rechecks back off with age (profiles 10 min/1 h/6 h up to 30 days, links
-  2/15 min up to 24 h, orders 2/10/30 min up to 14 days). Any 429 (user-facing included) pauses the
-  background poll for `Retry-After` or 60 s. Unknown orders are dropped after 1 h (24 h after a 202).
+  2/15 min up to 24 h, orders 2/10/30 min up to 14 days). Phases (orders, profiles, links) are claimed
+  one at a time and the tick stops as soon as the shared pause is set: any 429 (user-facing included)
+  pauses the background poll for `Retry-After` or 60 s. Only orders of `connected` wallets are claimed.
+  Unknown orders are dropped after 1 h (24 h after a 202); terminal tracked orders are deleted after
+  7 days and any tracked order after 30 days. No push on the first observation of a profile state.
+- Placement failures: a 2xx Monerium answer with an unreadable body is a 502 and keeps the tracked
+  row (the order may exist); an `HttpError` raised before Monerium saw the order deletes the row the
+  request created. A refresh writes the wallet-link fields only when they change, so a concurrent
+  link write is not overwritten.
 - Behaviour the wallet may see: `GET /status?refresh=true` is served from the cache when the wallet
   already forced a refresh in the last 5 s; `GET /orders` and `/beneficiaries` share a 5 s per-wallet
   upstream read (cleared by a placement); `/beneficiaries` omits third parties without both names;
@@ -182,7 +199,7 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 ## Implementation notes (wallet lane)
 
 - Wallet types come from `@backend-domain/monerium/schemas` (type-only imports, erased at build); no backend runtime code reaches the wallet bundle. The `MoneriumErrorCode` union drives an exhaustive code → i18n key map in `moneriumErrors.ts`.
-- Backend contract assumptions: error bodies carry `code` (`t.ErrorResponse`); `GET /status?refresh=true` bypasses the 60 s cache; `POST /auth/siwe` returns the status DTO; `POST /orders` memo omitted when empty.
+- Backend contract assumptions: error bodies carry `code` (`t.ErrorResponse`); `GET /status?refresh=true` bypasses the 60 s cache (at most one forced refresh per wallet per 5 s); `POST /auth/siwe` returns the status DTO; `POST /orders` memo omitted when empty.
 - Push link: `data.url = ${FRAK_WALLET_URL}/wallet?open=monerium`. Web: the service worker opens/navigates to it and the `/wallet` route opens the bank flow once, then strips `open`. Tauri: the deep-link resolver forwards `open=monerium` for `wallet` links, but the `frak-firebase` plugin has no notification-tap handler that opens `data.url`, so a tap on mobile does not navigate yet (native change, out of this lane).
 - Persisted state: `frak_monerium_store` v2 (UI flag only; v1 tokens purged by `migrate`), `frak_iban_store` v1 (`own`, `country`, `syncedWallet`). Both keys are removed on logout.
 - Removed wallet env: `MONERIUM_CLIENT_ID` (vite define, Dockerfile, `infra/gcp/wallet.ts`), `MONERIUM_API_HOST`, nginx `/monerium-api/` and its CORS map. The wallet nginx.conf is now copied to `conf.d/default.conf` (no envsubst).
