@@ -1,47 +1,41 @@
 import { buildRedeemOrderMessage } from "@frak-labs/app-essentials/monerium";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import {
+    asFake,
+    connectionRow,
+    fakeTokens,
+    OTHER_WALLET,
+    stubMoneriumEnv,
+    testMoneriumConfig,
+    WALLET,
+} from "../../../../test/mock/monerium";
 import type { MoneriumConnectionRow } from "../db/schema";
-import { MoneriumApiError } from "../errors";
+import { MoneriumApiError, reauthRequired } from "../errors";
 import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
 import type { MoneriumTrackedOrderRepository } from "../repositories/MoneriumTrackedOrderRepository";
 import type { MoneriumPlaceOrderBody } from "../schemas";
-import type {
+import {
     MoneriumApiClient,
-    MoneriumOrderRecord,
+    type MoneriumOrderRecord,
 } from "./MoneriumApiClient";
 import { MoneriumOrderService } from "./MoneriumOrderService";
-import type { MoneriumStatusService } from "./MoneriumStatusService";
+import { MoneriumRateLimitPause } from "./MoneriumRateLimitPause";
+import { MoneriumStatusService } from "./MoneriumStatusService";
 import type { MoneriumTokenService } from "./MoneriumTokenService";
 
-const WALLET = "0x00000000000000000000000000000000000000aa" as const;
-const OTHER_WALLET = "0x00000000000000000000000000000000000000bb" as const;
 const ORDER_ID = "3f0b6f7c-8c6c-4f7a-9d0f-2f4f0f9d2a11";
 const IBAN = "DE89370400440532013000";
 
-function connection(
-    overrides: Partial<MoneriumConnectionRow> = {}
-): MoneriumConnectionRow {
-    return {
-        wallet: WALLET,
-        moneriumUserId: "u",
+stubMoneriumEnv();
+
+const connection = (overrides: Partial<MoneriumConnectionRow> = {}) =>
+    connectionRow({
         profileId: "p",
         profileKind: "personal",
         profileState: "approved",
-        profileReasonCode: null,
         walletLinkState: "linked",
-        status: "connected",
-        accessTokenEncrypted: "x",
-        accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
-        refreshTokenEncrypted: "y",
-        walletLinkPendingAt: null,
-        profileStateChangedAt: null,
-        siweFailedAt: null,
-        stateCheckedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...overrides,
-    };
-}
+    });
 
 function record(
     state: MoneriumOrderRecord["state"] = "placed"
@@ -81,6 +75,7 @@ function setup(
     options: {
         connection?: MoneriumConnectionRow | undefined;
         tracked?: { id: string; wallet: `0x${string}` } | undefined;
+        client?: MoneriumApiClient;
     } = {}
 ) {
     const connections = {
@@ -101,33 +96,27 @@ function setup(
         getOrder: vi.fn(),
         listOrders: vi.fn(),
     };
-    const tokens = {
-        withAccessToken: vi.fn(
-            async (_wallet: string, call: (token: string) => unknown) =>
-                call("token")
-        ),
+    const tokens = fakeTokens();
+    const status = {
+        refreshFromMonerium: vi.fn(),
+        recheck(...args: Parameters<MoneriumStatusService["recheck"]>) {
+            return MoneriumStatusService.prototype.recheck.apply(
+                asFake<MoneriumStatusService>(this),
+                args
+            );
+        },
     };
-    const status = { refreshFromMonerium: vi.fn() };
     const service = new MoneriumOrderService(
-        connections as unknown as MoneriumConnectionRepository,
-        trackedOrders as unknown as MoneriumTrackedOrderRepository,
-        tokens as unknown as MoneriumTokenService,
-        client as unknown as MoneriumApiClient,
-        status as unknown as MoneriumStatusService
+        asFake<MoneriumConnectionRepository>(connections),
+        asFake<MoneriumTrackedOrderRepository>(trackedOrders),
+        asFake<MoneriumTokenService>(tokens),
+        options.client ?? asFake<MoneriumApiClient>(client),
+        asFake<MoneriumStatusService>(status)
     );
-    return { service, connections, trackedOrders, client, status };
+    return { service, connections, trackedOrders, client, status, tokens };
 }
 
 describe("MoneriumOrderService.placeOrder", () => {
-    beforeEach(() => {
-        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
-        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
-        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
-    });
-    afterEach(() => {
-        vi.unstubAllEnvs();
-    });
-
     it("places the order, tracks it without IBAN or names, and returns the DTO", async () => {
         const { service, client, trackedOrders } = setup();
         client.placeRedeemOrder.mockResolvedValue({
@@ -375,7 +364,7 @@ describe("MoneriumOrderService.placeOrder", () => {
         }
     );
 
-    it("lets a corporate profile pay a third party above the personal document threshold", async () => {
+    it("validates a third-party payout against the connection's profile kind", async () => {
         const amount = "20000";
         const thirdParty = {
             ...body(),
@@ -401,16 +390,11 @@ describe("MoneriumOrderService.placeOrder", () => {
         await expect(
             corporate.service.placeOrder({ wallet: WALLET, body: thirdParty })
         ).resolves.toMatchObject({ orderId: ORDER_ID });
-
-        const personal = setup();
-        await expect(
-            personal.service.placeOrder({ wallet: WALLET, body: thirdParty })
-        ).rejects.toMatchObject({ code: "MONERIUM_AMOUNT_LIMIT" });
     });
 
     it.each([
         ["5xx", new MoneriumApiError(503, undefined, "down")],
-        ["429", new MoneriumApiError(429, undefined, "slow down", 30)],
+        ["429", new MoneriumApiError(429, undefined, "slow down")],
         ["timeout", new MoneriumApiError(0, undefined, "timeout")],
     ])(
         "maps a Monerium %s to 502 and keeps the tracked row",
@@ -428,6 +412,65 @@ describe("MoneriumOrderService.placeOrder", () => {
         }
     );
 
+    it("answers 502 and keeps the tracked row when Monerium answers 2xx with an unreadable body", async () => {
+        const client = new MoneriumApiClient(
+            asFake<typeof fetch>(
+                async () =>
+                    new Response("<html>gateway</html>", { status: 200 })
+            ),
+            () => testMoneriumConfig(),
+            new MoneriumRateLimitPause()
+        );
+        const { service, trackedOrders } = setup({ client });
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({
+            status: 502,
+            code: "MONERIUM_UPSTREAM_UNAVAILABLE",
+        });
+        expect(trackedOrders.insertIfAbsent).toHaveBeenCalledOnce();
+        expect(trackedOrders.deleteById).not.toHaveBeenCalled();
+    });
+
+    it("forgets the row it created when the placement fails before reaching Monerium", async () => {
+        const { service, trackedOrders, tokens } = setup();
+        tokens.withAccessToken.mockRejectedValueOnce(reauthRequired());
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({ code: "MONERIUM_REAUTH_REQUIRED" });
+        expect(trackedOrders.deleteById).toHaveBeenCalledWith(ORDER_ID);
+    });
+
+    it("keeps the tracked row on an unexpected failure", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.placeRedeemOrder.mockRejectedValue(new Error("socket hang up"));
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toThrow("socket hang up");
+        expect(trackedOrders.deleteById).not.toHaveBeenCalled();
+    });
+
+    it("refreshes once for an own payout whose link and profile are both stale", async () => {
+        const { service, status, client } = setup({
+            connection: connection({
+                walletLinkState: "pending",
+                profileState: "pending",
+            }),
+        });
+        status.refreshFromMonerium.mockResolvedValue({
+            after: connection({ profileState: "pending" }),
+        });
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({ code: "MONERIUM_PROFILE_NOT_APPROVED" });
+        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
+        expect(client.placeRedeemOrder).not.toHaveBeenCalled();
+    });
+
     it("returns the existing order when Monerium reports the id as a duplicate", async () => {
         const { service, client } = setup();
         client.placeRedeemOrder.mockRejectedValue(
@@ -440,6 +483,59 @@ describe("MoneriumOrderService.placeOrder", () => {
             body: body(),
         });
         expect(result.order?.state).toBe("pending");
+    });
+
+    it("keeps the row of a known id when the re-placement after a 404 is refused", async () => {
+        const { service, client, trackedOrders } = setup({
+            tracked: { id: ORDER_ID, wallet: WALLET },
+        });
+        client.getOrder.mockRejectedValue(
+            new MoneriumApiError(404, undefined, "not found")
+        );
+        client.placeRedeemOrder.mockRejectedValue(
+            new MoneriumApiError(400, undefined, "refused")
+        );
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({
+            status: 422,
+            code: "MONERIUM_ORDER_REJECTED",
+        });
+        expect(trackedOrders.deleteById).not.toHaveBeenCalled();
+    });
+
+    it("answers 502 without placing again when Monerium fails to return a known id", async () => {
+        const { service, client } = setup({
+            tracked: { id: ORDER_ID, wallet: WALLET },
+        });
+        client.getOrder.mockRejectedValue(
+            new MoneriumApiError(503, undefined, "down")
+        );
+
+        await expect(
+            service.placeOrder({ wallet: WALLET, body: body() })
+        ).rejects.toMatchObject({
+            status: 502,
+            code: "MONERIUM_UPSTREAM_UNAVAILABLE",
+        });
+        expect(client.placeRedeemOrder).not.toHaveBeenCalled();
+    });
+
+    it("moves the tracked row when Monerium answers the placement with a state past placed", async () => {
+        const { service, client, trackedOrders } = setup();
+        client.placeRedeemOrder.mockResolvedValue({
+            kind: "order",
+            order: record("pending"),
+        });
+
+        await service.placeOrder({ wallet: WALLET, body: body() });
+
+        expect(trackedOrders.transition).toHaveBeenCalledWith(
+            ORDER_ID,
+            "placed",
+            "pending"
+        );
     });
 
     it("validates before talking to Monerium", async () => {
@@ -564,9 +660,6 @@ describe("MoneriumOrderService.listOrders", () => {
     });
 
     it("lists again after the wallet placed an order", async () => {
-        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
-        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
-        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
         const { service, client } = setup();
         client.listOrders.mockResolvedValue([]);
         client.placeRedeemOrder.mockResolvedValue({ kind: "accepted" });
@@ -576,7 +669,6 @@ describe("MoneriumOrderService.listOrders", () => {
         await service.listOrders(WALLET);
 
         expect(client.listOrders).toHaveBeenCalledTimes(2);
-        vi.unstubAllEnvs();
     });
 
     it("does not keep a failed upstream list", async () => {

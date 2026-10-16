@@ -1,4 +1,4 @@
-export const DEFAULT_RATE_LIMIT_PAUSE_MS = 60_000;
+const DEFAULT_RATE_LIMIT_PAUSE_MS = 60_000;
 
 /** Set by any 429 from Monerium. Background polling stops while it holds; user-facing calls go through. */
 export class MoneriumRateLimitPause {

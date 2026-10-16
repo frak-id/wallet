@@ -1,12 +1,18 @@
 import { db } from "@backend-infrastructure";
 import type { MoneriumOrderState } from "@frak-labs/app-essentials/monerium";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, exists, inArray, lt, or } from "drizzle-orm";
 import type { Address } from "viem";
 import {
     type MoneriumTrackedOrderRow,
+    moneriumConnectionsTable,
     moneriumTrackedOrdersTable,
 } from "../db/schema";
 import { dueWithBackoff, oldestCheckFirst, type RecheckTier } from "./dueTiers";
+
+const DAY_MS = 24 * 60 * 60_000;
+const TERMINAL_ORDER_RETENTION_MS = 7 * DAY_MS;
+/** Well past the last sync tier (14 days), so nothing still polled is dropped. */
+const TRACKED_ORDER_MAX_AGE_MS = 30 * DAY_MS;
 
 export class MoneriumTrackedOrderRepository {
     async findById(id: string): Promise<MoneriumTrackedOrderRow | undefined> {
@@ -85,12 +91,53 @@ export class MoneriumTrackedOrderRepository {
             .where(eq(moneriumTrackedOrdersTable.id, id));
     }
 
-    /** Claims in-flight orders: `last_checked_at` is stamped in the same statement, so pods never share a row. */
+    /** Drops settled orders after a week and anything tracked for over a month. */
+    async deleteStale(now: Date): Promise<void> {
+        await db
+            .delete(moneriumTrackedOrdersTable)
+            .where(
+                or(
+                    and(
+                        inArray(moneriumTrackedOrdersTable.state, [
+                            "processed",
+                            "rejected",
+                        ]),
+                        lt(
+                            moneriumTrackedOrdersTable.updatedAt,
+                            new Date(
+                                now.getTime() - TERMINAL_ORDER_RETENTION_MS
+                            )
+                        )
+                    ),
+                    lt(
+                        moneriumTrackedOrdersTable.createdAt,
+                        new Date(now.getTime() - TRACKED_ORDER_MAX_AGE_MS)
+                    )
+                )
+            );
+    }
+
+    /**
+     * Claims in-flight orders of connected wallets: `last_checked_at` is stamped in the
+     * same statement, so pods never share a row. A reconnect resumes the others.
+     */
     claimInFlightDue(params: {
         now: Date;
-        tiers: RecheckTier[];
+        tiers: readonly RecheckTier[];
         limit: number;
     }): Promise<MoneriumTrackedOrderRow[]> {
+        const connected = db
+            .select({ wallet: moneriumConnectionsTable.wallet })
+            .from(moneriumConnectionsTable)
+            .where(
+                and(
+                    eq(
+                        moneriumConnectionsTable.wallet,
+                        moneriumTrackedOrdersTable.wallet
+                    ),
+                    eq(moneriumConnectionsTable.status, "connected")
+                )
+            );
         const due = db
             .select({ id: moneriumTrackedOrdersTable.id })
             .from(moneriumTrackedOrdersTable)
@@ -100,9 +147,9 @@ export class MoneriumTrackedOrderRepository {
                         "placed",
                         "pending",
                     ]),
+                    exists(connected),
                     dueWithBackoff({
-                        since: moneriumTrackedOrdersTable.createdAt,
-                        fallback: moneriumTrackedOrdersTable.createdAt,
+                        started: moneriumTrackedOrdersTable.createdAt,
                         checkedAt: moneriumTrackedOrdersTable.lastCheckedAt,
                         tiers: params.tiers,
                         now: params.now,

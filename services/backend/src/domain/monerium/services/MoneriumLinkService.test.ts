@@ -1,13 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+    asFake,
+    connectionRow,
+    fakeTokens,
+    stubMoneriumEnv,
+    WALLET,
+} from "../../../../test/mock/monerium";
 import type { MoneriumConnectionRow } from "../db/schema";
 import { MoneriumApiError } from "../errors";
 import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
 import type { MoneriumApiClient } from "./MoneriumApiClient";
 import { MoneriumLinkService } from "./MoneriumLinkService";
-import type { MoneriumStatusService } from "./MoneriumStatusService";
+import { MoneriumStatusService } from "./MoneriumStatusService";
 import type { MoneriumTokenService } from "./MoneriumTokenService";
-
-const WALLET = "0x00000000000000000000000000000000000000aa" as const;
 
 const moneriumEnv = vi.hoisted(() => ({
     environment: "sandbox" as "sandbox" | "production",
@@ -23,61 +28,44 @@ vi.mock("../config", async (importOriginal) => {
     };
 });
 
-function approvedRow(
-    overrides: Partial<MoneriumConnectionRow> = {}
-): MoneriumConnectionRow {
-    return {
-        wallet: WALLET,
-        moneriumUserId: "u",
+stubMoneriumEnv();
+
+const approvedRow = (overrides: Partial<MoneriumConnectionRow> = {}) =>
+    connectionRow({
         profileId: "p",
         profileKind: "personal",
         profileState: "approved",
-        profileReasonCode: null,
-        walletLinkState: "none",
-        walletLinkPendingAt: null,
-        profileStateChangedAt: null,
-        status: "connected",
-        accessTokenEncrypted: "x",
         accessTokenExpiresAt: new Date(),
-        refreshTokenEncrypted: "y",
-        siweFailedAt: null,
-        stateCheckedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...overrides,
-    };
-}
+    });
 
-function setup(row = approvedRow()) {
+function setup(row: MoneriumConnectionRow | null = approvedRow()) {
     const connections = {
-        findByWallet: vi.fn(async () => row),
+        findByWallet: vi.fn(async () => row ?? undefined),
         update: vi.fn(async () => undefined),
     };
     const client = { linkAddress: vi.fn() };
-    const tokens = {
-        withAccessToken: vi.fn(
-            async (_wallet: string, call: (token: string) => unknown) =>
-                call("token")
-        ),
+    const tokens = fakeTokens();
+    const status = {
+        refreshFromMonerium: vi.fn(),
+        recheck(...args: Parameters<MoneriumStatusService["recheck"]>) {
+            return MoneriumStatusService.prototype.recheck.apply(
+                asFake<MoneriumStatusService>(this),
+                args
+            );
+        },
     };
-    const status = { refreshFromMonerium: vi.fn() };
     const service = new MoneriumLinkService(
-        connections as unknown as MoneriumConnectionRepository,
-        tokens as unknown as MoneriumTokenService,
-        client as unknown as MoneriumApiClient,
-        status as unknown as MoneriumStatusService
+        asFake<MoneriumConnectionRepository>(connections),
+        asFake<MoneriumTokenService>(tokens),
+        asFake<MoneriumApiClient>(client),
+        asFake<MoneriumStatusService>(status)
     );
     return { service, connections, client, status };
 }
 
 describe("MoneriumLinkService.linkWallet", () => {
-    beforeEach(() => {
-        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
-        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
-        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
-    });
     afterEach(() => {
-        vi.unstubAllEnvs();
         moneriumEnv.environment = "sandbox";
     });
 
@@ -109,29 +97,57 @@ describe("MoneriumLinkService.linkWallet", () => {
         expect(client.linkAddress).not.toHaveBeenCalled();
     });
 
-    it("stamps when the link entered pending on a 202", async () => {
-        const { service, client, connections } = setup();
-        client.linkAddress.mockResolvedValue("accepted");
+    it.each([
+        ["accepted", "pending", expect.any(Date)],
+        ["created", "linked", null],
+    ] as const)(
+        "stores a %s link as %s, stamping the pending time only for pending",
+        async (outcome, walletLinkState, walletLinkPendingAt) => {
+            const { service, client, connections } = setup();
+            client.linkAddress.mockResolvedValue(outcome);
+
+            await service.linkWallet({ wallet: WALLET, signature: "0xabc" });
+
+            expect(connections.update).toHaveBeenCalledWith(WALLET, {
+                walletLinkState,
+                walletLinkPendingAt,
+            });
+        }
+    );
+
+    it("answers 409 not connected without a row", async () => {
+        const { service, client } = setup(null);
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "MONERIUM_NOT_CONNECTED",
+        });
+        expect(client.linkAddress).not.toHaveBeenCalled();
+    });
+
+    it("answers 409 re-authentication needed for an expired connection", async () => {
+        const { service } = setup(approvedRow({ status: "reauth_required" }));
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).rejects.toMatchObject({ code: "MONERIUM_REAUTH_REQUIRED" });
+    });
+
+    it("re-checks upstream when the approved profile has no cached id", async () => {
+        const { service, client, status } = setup(
+            approvedRow({ profileId: null })
+        );
+        status.refreshFromMonerium.mockResolvedValue({ after: approvedRow() });
+        client.linkAddress.mockResolvedValue("created");
 
         await expect(
             service.linkWallet({ wallet: WALLET, signature: "0xabc" })
-        ).resolves.toEqual({ walletLink: "pending" });
-        expect(connections.update).toHaveBeenCalledWith(WALLET, {
-            walletLinkState: "pending",
-            walletLinkPendingAt: expect.any(Date),
-        });
-    });
-
-    it("clears the pending stamp when the link is created right away", async () => {
-        const { service, client, connections } = setup();
-        client.linkAddress.mockResolvedValue("created");
-
-        await service.linkWallet({ wallet: WALLET, signature: "0xabc" });
-
-        expect(connections.update).toHaveBeenCalledWith(WALLET, {
-            walletLinkState: "linked",
-            walletLinkPendingAt: null,
-        });
+        ).resolves.toEqual({ walletLink: "linked" });
+        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
+        expect(client.linkAddress).toHaveBeenCalledWith(
+            "token",
+            expect.objectContaining({ profile: "p" })
+        );
     });
 
     it.each([
@@ -146,6 +162,35 @@ describe("MoneriumLinkService.linkWallet", () => {
             service.linkWallet({ wallet: WALLET, signature: "0xabc" })
         ).rejects.toMatchObject({ status: 409, code });
         expect(connections.update).not.toHaveBeenCalled();
+    });
+
+    function alreadyLinked(walletLinkState: "linked" | "none") {
+        const ctx = setup();
+        ctx.client.linkAddress.mockRejectedValue(
+            new MoneriumApiError(409, undefined, "Address already linked")
+        );
+        ctx.status.refreshFromMonerium.mockResolvedValue({
+            after: approvedRow({ walletLinkState }),
+        });
+        return ctx;
+    }
+
+    it("accepts an already-linked answer once our own profile lists the wallet", async () => {
+        const { service, status } = alreadyLinked("linked");
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).resolves.toEqual({ walletLink: "linked" });
+        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
+    });
+
+    it("refuses an already-linked answer our own profile does not confirm", async () => {
+        const { service } = alreadyLinked("none");
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).rejects.toMatchObject({
+            status: 422,
+            code: "MONERIUM_LINK_REJECTED",
+        });
     });
 
     it("never hands Monerium's message to the client", async () => {

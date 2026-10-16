@@ -8,7 +8,7 @@ const VERSION_BYTES = 1;
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 
-export type MoneriumSecretColumn =
+type MoneriumSecretColumn =
     | "access_token_encrypted"
     | "refresh_token_encrypted"
     | "code_verifier_encrypted";
@@ -31,20 +31,16 @@ function aad(wallet: Address, column: MoneriumSecretColumn): Buffer {
  * authenticated, so a blob copied to another row does not decrypt.
  */
 export class MoneriumTokenCipher {
-    private encryptionKey: Buffer | null = null;
-
     constructor(
         private readonly adminWalletsRepository: AdminWalletsRepository
     ) {}
 
     private async getKey(): Promise<Buffer> {
-        if (this.encryptionKey) return this.encryptionKey;
-        const keyBytes =
+        return Buffer.from(
             await this.adminWalletsRepository.deriveKeyBytes(
                 KEY_DERIVATION_LABEL
-            );
-        this.encryptionKey = Buffer.from(keyBytes);
-        return this.encryptionKey;
+            )
+        );
     }
 
     async encrypt(

@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import { MONERIUM_LIMITS } from "@frak-labs/app-essentials/monerium";
 import type { Static } from "elysia";
 
 export const MoneriumProfileStateSchema = t.Union([
@@ -138,7 +139,7 @@ export const MoneriumPlaceOrderBodySchema = t.Object({
             country: t.String({ maxLength: 2 }),
         }),
     ]),
-    memo: t.Optional(t.String({ maxLength: 140 })),
+    memo: t.Optional(t.String({ maxLength: MONERIUM_LIMITS.MEMO_MAX_LENGTH })),
     message: t.String({ maxLength: 128 }),
     signature: t.Hex({ maxLength: SIGNATURE_MAX_LENGTH }),
 });
@@ -160,6 +161,7 @@ export const MoneriumBeneficiarySchema = t.Object({
     country: t.Optional(t.String()),
     lastUsedAt: t.String(),
 });
+export type MoneriumBeneficiaryDto = Static<typeof MoneriumBeneficiarySchema>;
 
 export const MoneriumBeneficiariesResponseSchema = t.Object({
     beneficiaries: t.Array(MoneriumBeneficiarySchema),

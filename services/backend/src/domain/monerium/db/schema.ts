@@ -1,7 +1,9 @@
 import type {
     MoneriumOrderState,
+    MoneriumProfileKind,
     MoneriumProfileState,
 } from "@frak-labs/app-essentials/monerium";
+import { sql } from "drizzle-orm";
 import {
     boolean,
     index,
@@ -18,7 +20,7 @@ import type {
     MoneriumWalletLinkState,
 } from "../schemas";
 
-export type MoneriumConnectionStatus = Exclude<MoneriumConnectionState, "none">;
+type MoneriumConnectionStatus = Exclude<MoneriumConnectionState, "none">;
 export type MoneriumAuthMethod = "oauth" | "siwe";
 
 /** One Monerium connection per smart-account address. Token columns hold AES-256-GCM blobs. */
@@ -28,9 +30,9 @@ export const moneriumConnectionsTable = pgTable(
         wallet: customHex("wallet").primaryKey().$type<Address>(),
         moneriumUserId: varchar("monerium_user_id"),
         profileId: varchar("profile_id"),
-        profileKind: varchar("profile_kind", { length: 16 }).$type<
-            "personal" | "corporate"
-        >(),
+        profileKind: varchar("profile_kind", {
+            length: 16,
+        }).$type<MoneriumProfileKind>(),
         profileState: varchar("profile_state", {
             length: 16,
         }).$type<MoneriumProfileState>(),
@@ -54,14 +56,10 @@ export const moneriumConnectionsTable = pgTable(
         updatedAt: timestamp("updated_at").notNull().defaultNow(),
     },
     (table) => [
-        index("monerium_connections_profile_sync_idx").on(
-            table.profileState,
-            table.stateCheckedAt
-        ),
-        index("monerium_connections_link_sync_idx").on(
-            table.walletLinkState,
-            table.stateCheckedAt
-        ),
+        // Serves both sync claims: they filter on `status` and sort never-checked first.
+        index("monerium_connections_sync_idx")
+            .on(table.stateCheckedAt.asc().nullsFirst())
+            .where(sql`status = 'connected'`),
     ]
 );
 
@@ -104,10 +102,9 @@ export const moneriumTrackedOrdersTable = pgTable(
     },
     (table) => [
         index("monerium_tracked_orders_wallet_idx").on(table.wallet),
-        index("monerium_tracked_orders_sync_idx").on(
-            table.state,
-            table.lastCheckedAt
-        ),
+        index("monerium_tracked_orders_sync_idx")
+            .on(table.lastCheckedAt.asc().nullsFirst())
+            .where(sql`state in ('placed', 'pending')`),
     ]
 );
 

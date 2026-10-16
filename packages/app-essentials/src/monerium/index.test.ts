@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
     buildRedeemOrderMessage,
+    exceedsThirdPartyLimit,
     formatMessageTimestamp,
     getIbanCountry,
     isMoneriumOwnPayoutAvailable,
     isMoneriumProfileUsable,
+    isPayableCounterpart,
     isValidCounterpartName,
     isValidCountryCode,
     isValidIban,
@@ -81,6 +83,33 @@ describe("field rules", () => {
         expect(isValidCountryCode("fr")).toBe(false);
         expect(isValidCountryCode("FRA")).toBe(false);
     });
+
+    it.each([
+        [{ own: true }, true],
+        [{ own: false, firstName: "Ada", lastName: "Lovelace" }, true],
+        [{ own: false, firstName: "Ada" }, false],
+        [{ own: false, firstName: "A", lastName: "Lovelace" }, false],
+    ])("isPayableCounterpart(%o) is %s", (counterpart, expected) => {
+        expect(isPayableCounterpart(counterpart)).toBe(expected);
+    });
+});
+
+describe("exceedsThirdPartyLimit", () => {
+    it.each([
+        ["14999.99", false, "personal", false],
+        ["15000", false, "personal", true],
+        ["15000,00", false, null, true],
+        ["15000", true, "personal", false],
+        ["15000", false, "corporate", false],
+        ["garbage", false, "personal", false],
+    ] as const)(
+        "%s own=%s kind=%s → %s",
+        (amount, own, profileKind, expected) => {
+            expect(exceedsThirdPartyLimit(amount, { own, profileKind })).toBe(
+                expected
+            );
+        }
+    );
 });
 
 describe("redeem order message", () => {

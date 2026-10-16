@@ -9,18 +9,16 @@ function at(date: Date): SQL {
 }
 
 /**
- * Due when the last check is older than the recheck of the tier the row's age falls
- * in. Rows older than the last tier are never due. `since` falls back to `fallback`
- * where it is null.
+ * Due when the last check is older than the recheck of the tier the age since `started`
+ * falls in. Rows older than the last tier, or with a null `started`, are never due.
  */
 export function dueWithBackoff(params: {
-    since: PgColumn;
-    fallback: PgColumn;
+    started: SQL | PgColumn;
     checkedAt: PgColumn;
-    tiers: RecheckTier[];
+    tiers: readonly RecheckTier[];
     now: Date;
 }): SQL {
-    const started = sql`coalesce(${params.since}, ${params.fallback})`;
+    const { started } = params;
     const clauses: SQL[] = [];
     let lowerAgeMs = 0;
     for (const tier of params.tiers) {

@@ -1,4 +1,5 @@
 import { adminWalletsRepository } from "@backend-infrastructure";
+import { requireMoneriumConfig } from "./config";
 import { MoneriumConnectionRepository } from "./repositories/MoneriumConnectionRepository";
 import { MoneriumPendingAuthRepository } from "./repositories/MoneriumPendingAuthRepository";
 import { MoneriumTrackedOrderRepository } from "./repositories/MoneriumTrackedOrderRepository";
@@ -6,6 +7,7 @@ import { MoneriumApiClient } from "./services/MoneriumApiClient";
 import { MoneriumAuthService } from "./services/MoneriumAuthService";
 import { MoneriumLinkService } from "./services/MoneriumLinkService";
 import { MoneriumOrderService } from "./services/MoneriumOrderService";
+import { MoneriumRateLimitPause } from "./services/MoneriumRateLimitPause";
 import { MoneriumStatusService } from "./services/MoneriumStatusService";
 import { MoneriumTokenCipher } from "./services/MoneriumTokenCipher";
 import { MoneriumTokenService } from "./services/MoneriumTokenService";
@@ -15,7 +17,12 @@ const pendingAuthRepository = new MoneriumPendingAuthRepository();
 const trackedOrderRepository = new MoneriumTrackedOrderRepository();
 
 const cipher = new MoneriumTokenCipher(adminWalletsRepository);
-const apiClient = new MoneriumApiClient(fetch);
+const moneriumRateLimitPause = new MoneriumRateLimitPause();
+const apiClient = new MoneriumApiClient(
+    fetch,
+    requireMoneriumConfig,
+    moneriumRateLimitPause
+);
 const tokenService = new MoneriumTokenService(
     connectionRepository,
     cipher,
@@ -49,7 +56,7 @@ const orderService = new MoneriumOrderService(
 );
 
 export namespace MoneriumContext {
-    export const rateLimitPause = apiClient.rateLimitPause;
+    export const rateLimitPause = moneriumRateLimitPause;
     export const repositories = {
         connection: connectionRepository,
         pendingAuth: pendingAuthRepository,

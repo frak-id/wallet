@@ -9,7 +9,6 @@ const MONERIUM_SIWE_RESOURCE = "https://monerium.com/siwe";
 /** Monerium requires an expiration time and the three resources, in this order. EIP-4361 wants the EIP-55 address. */
 export function buildMoneriumSiweMessage(params: {
     address: Address;
-    appName: string;
     config: MoneriumConfig;
     now: Date;
     nonce?: string;
@@ -17,7 +16,7 @@ export function buildMoneriumSiweMessage(params: {
     return createSiweMessage({
         domain: params.config.siweDomain,
         address: getAddress(params.address),
-        statement: `Allow ${params.appName} to access my data on Monerium`,
+        statement: `Allow ${params.config.siweAppName} to access my data on Monerium`,
         uri: params.config.redirectUri,
         version: "1",
         chainId: params.config.chainId,

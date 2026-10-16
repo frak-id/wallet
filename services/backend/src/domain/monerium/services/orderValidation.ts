@@ -1,19 +1,25 @@
 import { HttpError } from "@backend-utils";
 import {
+    exceedsThirdPartyLimit,
     isValidCounterpartName,
     isValidCountryCode,
     isValidIban,
     isValidMemo,
     MONERIUM_DEFAULT_MEMO,
     MONERIUM_LIMITS,
+    type MoneriumProfileKind,
     normalizeIban,
     normalizeRedeemAmount,
     parseRedeemOrderMessage,
     shortenIban,
 } from "@frak-labs/app-essentials/monerium";
-import { type MoneriumPlaceOrderBody, moneriumErrorCodes } from "../schemas";
+import {
+    type MoneriumErrorCode,
+    type MoneriumPlaceOrderBody,
+    moneriumErrorCodes,
+} from "../schemas";
 
-export type ValidatedRedeemOrder = {
+type ValidatedRedeemOrder = {
     amount: string;
     iban: string;
     memo: string;
@@ -23,10 +29,7 @@ export type ValidatedRedeemOrder = {
         | { firstName: string; lastName: string; country: string };
 };
 
-function reject(
-    code: (typeof moneriumErrorCodes)[keyof typeof moneriumErrorCodes],
-    message: string
-): HttpError {
+function reject(code: MoneriumErrorCode, message: string): HttpError {
     return HttpError.unprocessable(code, message);
 }
 
@@ -93,21 +96,20 @@ function assertMessageMatches(
     }
 }
 
-/** The document threshold binds personal third-party payouts only; corporate profiles are exempt. */
 export function validateRedeemOrder(
     body: MoneriumPlaceOrderBody,
     now: Date,
-    profileKind: "personal" | "corporate" | null
+    profileKind: MoneriumProfileKind | null
 ): ValidatedRedeemOrder {
     const amount = normalizeRedeemAmount(body.amount);
     if (!amount) {
         throw reject(moneriumErrorCodes.invalidAmount, "Invalid amount");
     }
     if (
-        !body.counterpart.own &&
-        profileKind !== "corporate" &&
-        Number.parseFloat(amount) >=
-            MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR
+        exceedsThirdPartyLimit(amount, {
+            own: body.counterpart.own,
+            profileKind,
+        })
     ) {
         throw reject(
             moneriumErrorCodes.amountLimit,

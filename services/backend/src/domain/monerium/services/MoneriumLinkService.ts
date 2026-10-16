@@ -1,4 +1,3 @@
-import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import {
     isMoneriumProfileUsable,
@@ -9,9 +8,9 @@ import { type MoneriumConfig, requireMoneriumConfig } from "../config";
 import {
     connectionErrorFor,
     MoneriumApiError,
-    notConnected,
     profileNotApproved,
-    reauthRequired,
+    refusalError,
+    requireConnectedRow,
     rethrowUpstream,
 } from "../errors";
 import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
@@ -26,6 +25,14 @@ function linkRejected(): HttpError {
     return HttpError.unprocessable(
         moneriumErrorCodes.linkRejected,
         "Monerium refused to link this wallet"
+    );
+}
+
+function isAlreadyLinked(error: MoneriumApiError): boolean {
+    return (
+        !error.isUpstreamFailure &&
+        !connectionErrorFor(error) &&
+        ALREADY_LINKED.test(error.message)
     );
 }
 
@@ -63,15 +70,8 @@ export class MoneriumLinkService {
             walletLink = outcome === "accepted" ? "pending" : "linked";
         } catch (error) {
             if (!(error instanceof MoneriumApiError)) throw error;
-            if (error.isUpstreamFailure) return rethrowUpstream(error);
-            const connectionError = connectionErrorFor(error);
-            if (connectionError) throw connectionError;
-            if (!ALREADY_LINKED.test(error.message)) {
-                log.warn(
-                    { status: error.status, moneriumCode: error.moneriumCode },
-                    "[Monerium] wallet link refused"
-                );
-                throw linkRejected();
+            if (!isAlreadyLinked(error)) {
+                throw refusalError(error, linkRejected, "wallet link");
             }
             walletLink = await this.confirmAlreadyLinked(params.wallet);
         }
@@ -87,13 +87,10 @@ export class MoneriumLinkService {
     private async confirmAlreadyLinked(
         wallet: Address
     ): Promise<MoneriumWalletLinkState> {
-        try {
-            const { after } = await this.status.refreshFromMonerium(wallet);
-            if (after.walletLinkState === "linked") return "linked";
-        } catch (error) {
-            if (error instanceof HttpError) throw error;
-            rethrowUpstream(error);
-        }
+        const { after } = await this.status
+            .refreshFromMonerium(wallet)
+            .catch(rethrowUpstream);
+        if (after.walletLinkState === "linked") return "linked";
         throw linkRejected();
     }
 
@@ -102,24 +99,16 @@ export class MoneriumLinkService {
         wallet: Address,
         environment: MoneriumConfig["environment"]
     ): Promise<string> {
-        let row = await this.connections.findByWallet(wallet);
-        if (!row) throw notConnected();
-        if (row.status === "reauth_required") throw reauthRequired();
-
-        if (!isMoneriumProfileUsable(row.profileState, environment)) {
-            try {
-                row = (await this.status.refreshFromMonerium(wallet)).after;
-            } catch (error) {
-                if (error instanceof HttpError) throw error;
-                rethrowUpstream(error);
-            }
-        }
-        if (
-            !isMoneriumProfileUsable(row.profileState, environment) ||
-            !row.profileId
-        ) {
-            throw profileNotApproved();
-        }
-        return row.profileId;
+        const row = await this.connections.findByWallet(wallet);
+        requireConnectedRow(row);
+        const usable = await this.status.recheck(
+            wallet,
+            row,
+            (candidate) =>
+                isMoneriumProfileUsable(candidate.profileState, environment) &&
+                candidate.profileId !== null
+        );
+        if (!usable?.profileId) throw profileNotApproved();
+        return usable.profileId;
     }
 }

@@ -1,9 +1,11 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import {
+    describeError,
     MoneriumApiError,
     notConnected,
     reauthRequired,
+    requireConnectedRow,
     upstreamUnavailable,
 } from "../errors";
 import type {
@@ -16,7 +18,7 @@ import {
     type MoneriumTokenCipher,
 } from "./MoneriumTokenCipher";
 
-export const ACCESS_TOKEN_GRACE_MS = 60_000;
+const ACCESS_TOKEN_GRACE_MS = 60_000;
 
 const DEAD_GRANT = /invalid.?grant|refresh.?token|expired|revoked/i;
 
@@ -47,8 +49,7 @@ export class MoneriumTokenService {
         options: { rejectedToken?: string } = {}
     ): Promise<string> {
         const row = await this.connections.findByWallet(wallet);
-        if (!row) throw notConnected();
-        if (row.status === "reauth_required") throw reauthRequired();
+        requireConnectedRow(row);
 
         if (!options.rejectedToken) {
             const cached = await this.readFreshToken(wallet, row);
@@ -152,7 +153,7 @@ export class MoneriumTokenService {
         } catch (error) {
             if (error instanceof MoneriumCipherIntegrityError) return wipe();
             log.error(
-                { error: error instanceof Error ? error.message : "unknown" },
+                { error: describeError(error) },
                 "[Monerium] token encryption key unavailable, keeping the connection"
             );
             throw error;

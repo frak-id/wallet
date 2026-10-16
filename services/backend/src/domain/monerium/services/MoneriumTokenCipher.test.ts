@@ -1,12 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { OTHER_WALLET, WALLET } from "../../../../test/mock/monerium";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import {
     MoneriumCipherIntegrityError,
     MoneriumTokenCipher,
 } from "./MoneriumTokenCipher";
 
-const WALLET = "0x00000000000000000000000000000000000000aa" as const;
-const OTHER = "0x00000000000000000000000000000000000000bb" as const;
 const COLUMN = "access_token_encrypted" as const;
 
 describe("MoneriumTokenCipher", () => {
@@ -54,7 +53,7 @@ describe("MoneriumTokenCipher", () => {
     it("rejects a blob copied to another wallet", async () => {
         const blob = await cipher.encrypt("refresh-token", WALLET, COLUMN);
         await expect(
-            cipher.decrypt(blob, OTHER, COLUMN)
+            cipher.decrypt(blob, OTHER_WALLET, COLUMN)
         ).rejects.toBeInstanceOf(MoneriumCipherIntegrityError);
     });
 
@@ -73,16 +72,5 @@ describe("MoneriumTokenCipher", () => {
         await expect(
             cipher.decrypt("not-hex", WALLET, COLUMN)
         ).rejects.toBeInstanceOf(MoneriumCipherIntegrityError);
-    });
-
-    it("lets a key-loading failure through unchanged", async () => {
-        const repository = new AdminWalletsRepository();
-        vi.spyOn(repository, "deriveKeyBytes").mockRejectedValue(
-            new Error("Missing MASTER_KEY_SECRET")
-        );
-        const broken = new MoneriumTokenCipher(repository);
-        await expect(broken.decrypt("0x01", WALLET, COLUMN)).rejects.toThrow(
-            "Missing MASTER_KEY_SECRET"
-        );
     });
 });

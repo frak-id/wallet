@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+    asFake,
+    connectionRow,
+    fakeTokens,
+    stubMoneriumEnv,
+    WALLET,
+} from "../../../../test/mock/monerium";
 import type { MoneriumConnectionRow } from "../db/schema";
 import { MoneriumApiError } from "../errors";
 import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
@@ -10,32 +17,13 @@ import {
 } from "./MoneriumStatusService";
 import type { MoneriumTokenService } from "./MoneriumTokenService";
 
-const WALLET = "0x00000000000000000000000000000000000000aa" as const;
-
-function row(
-    overrides: Partial<MoneriumConnectionRow> = {}
-): MoneriumConnectionRow {
-    return {
-        wallet: WALLET,
-        moneriumUserId: "u",
+const row = (overrides: Partial<MoneriumConnectionRow> = {}) =>
+    connectionRow({
         profileId: "p",
         profileKind: "personal",
         profileState: "pending",
-        profileReasonCode: null,
-        walletLinkState: "none",
-        status: "connected",
-        accessTokenEncrypted: "x",
-        accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
-        refreshTokenEncrypted: "y",
-        walletLinkPendingAt: null,
-        profileStateChangedAt: null,
-        siweFailedAt: null,
-        stateCheckedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...overrides,
-    };
-}
+    });
 
 describe("silentReconnect", () => {
     it.each([
@@ -124,13 +112,9 @@ describe("toStatusResponse", () => {
 });
 
 describe("MoneriumStatusService", () => {
-    beforeEach(() => {
-        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
-        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
-        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
-    });
+    stubMoneriumEnv();
     afterEach(() => {
-        vi.unstubAllEnvs();
+        vi.useRealTimers();
     });
 
     function setup(initial: MoneriumConnectionRow | undefined) {
@@ -140,9 +124,10 @@ describe("MoneriumStatusService", () => {
             updateIfProfileState: vi.fn(
                 async (
                     _wallet: string,
-                    _expected: unknown,
+                    expected: MoneriumConnectionRow["profileState"],
                     patch: Partial<MoneriumConnectionRow>
                 ) => {
+                    if (current?.profileState !== expected) return undefined;
                     current = current && { ...current, ...patch };
                     return current;
                 }
@@ -153,18 +138,47 @@ describe("MoneriumStatusService", () => {
             listProfiles: vi.fn(),
             listAddresses: vi.fn(),
         };
-        const tokens = {
-            withAccessToken: vi.fn(
-                async (_w: string, call: (token: string) => unknown) =>
-                    call("token")
-            ),
-        };
         const service = new MoneriumStatusService(
-            connections as unknown as MoneriumConnectionRepository,
-            tokens as unknown as MoneriumTokenService,
-            client as unknown as MoneriumApiClient
+            asFake<MoneriumConnectionRepository>(connections),
+            asFake<MoneriumTokenService>(fakeTokens()),
+            asFake<MoneriumApiClient>(client)
         );
-        return { service, connections, client };
+        return {
+            service,
+            connections,
+            client,
+            moveTo(next: MoneriumConnectionRow) {
+                current = next;
+            },
+        };
+    }
+
+    function approvedContext(client: {
+        getAuthContext: ReturnType<typeof vi.fn>;
+        listProfiles: ReturnType<typeof vi.fn>;
+    }) {
+        client.getAuthContext.mockResolvedValue({
+            userId: "u",
+            defaultProfile: "p",
+        });
+        client.listProfiles.mockResolvedValue([
+            { id: "p", kind: "personal", state: "approved" },
+        ]);
+    }
+
+    async function refreshPatch(
+        initial: MoneriumConnectionRow,
+        addresses: { address: string; chains: string[] }[] = []
+    ) {
+        const ctx = setup(initial);
+        approvedContext(ctx.client);
+        ctx.client.listAddresses.mockResolvedValue(addresses);
+        const result = await ctx.service.refreshFromMonerium(WALLET);
+        return {
+            ...ctx,
+            ...result,
+            patch: ctx.connections.updateIfProfileState.mock.calls[0][2],
+        };
     }
 
     it("serves a fresh cache without calling Monerium", async () => {
@@ -207,13 +221,7 @@ describe("MoneriumStatusService", () => {
 
     it("forces a refresh with refresh=true even when the cache is fresh", async () => {
         const { service, client } = setup(row());
-        client.getAuthContext.mockResolvedValue({
-            userId: "u",
-            defaultProfile: "p",
-        });
-        client.listProfiles.mockResolvedValue([
-            { id: "p", kind: "personal", state: "approved" },
-        ]);
+        approvedContext(client);
         client.listAddresses.mockResolvedValue([]);
         const status = await service.getStatus(WALLET, { refresh: true });
         expect(status.profile?.state).toBe("approved");
@@ -247,65 +255,42 @@ describe("MoneriumStatusService", () => {
 
     it("keeps a pending link pending until Monerium lists the address", async () => {
         const { service, client } = setup(row({ walletLinkState: "pending" }));
-        client.getAuthContext.mockResolvedValue({
-            userId: "u",
-            defaultProfile: "p",
-        });
-        client.listProfiles.mockResolvedValue([
-            { id: "p", kind: "personal", state: "approved" },
-        ]);
+        approvedContext(client);
         client.listAddresses.mockResolvedValue([]);
         const status = await service.getStatus(WALLET, { refresh: true });
         expect(status.walletLink).toBe("pending");
     });
 
-    function approvedContext(client: {
-        getAuthContext: ReturnType<typeof vi.fn>;
-        listProfiles: ReturnType<typeof vi.fn>;
-    }) {
-        client.getAuthContext.mockResolvedValue({
-            userId: "u",
-            defaultProfile: "p",
-        });
-        client.listProfiles.mockResolvedValue([
-            { id: "p", kind: "personal", state: "approved" },
-        ]);
-    }
-
     it("stamps when the link entered pending and keeps the stamp while it stays pending", async () => {
         const pendingAt = new Date(Date.now() - 3 * 60 * 60_000);
-        const { service, client, connections } = setup(
+        const { after, patch } = await refreshPatch(
             row({
                 walletLinkState: "pending",
                 walletLinkPendingAt: pendingAt,
                 profileState: "approved",
             })
         );
-        approvedContext(client);
-        client.listAddresses.mockResolvedValue([]);
 
-        await service.refreshFromMonerium(WALLET);
-
-        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
-            { walletLinkState: "pending", walletLinkPendingAt: pendingAt }
-        );
+        expect(patch).not.toHaveProperty("walletLinkState");
+        expect(patch).not.toHaveProperty("walletLinkPendingAt");
+        expect(after).toMatchObject({
+            walletLinkState: "pending",
+            walletLinkPendingAt: pendingAt,
+        });
     });
 
     it("gives up on a link that stayed pending for more than 24 hours", async () => {
-        const { service, client, connections } = setup(
+        const { patch } = await refreshPatch(
             row({
                 walletLinkState: "pending",
                 walletLinkPendingAt: new Date(Date.now() - 25 * 60 * 60_000),
             })
         );
-        approvedContext(client);
-        client.listAddresses.mockResolvedValue([]);
 
-        await service.refreshFromMonerium(WALLET);
-
-        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
-            { walletLinkState: "none", walletLinkPendingAt: null }
-        );
+        expect(patch).toMatchObject({
+            walletLinkState: "none",
+            walletLinkPendingAt: null,
+        });
     });
 
     it("does not downgrade a link written as pending while the refresh was in flight", async () => {
@@ -323,46 +308,114 @@ describe("MoneriumStatusService", () => {
 
         await service.refreshFromMonerium(WALLET);
 
-        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
-            { walletLinkState: "pending" }
+        const patch = connections.updateIfProfileState.mock.calls[0][2];
+        expect(patch).not.toHaveProperty("walletLinkState");
+        expect(patch).not.toHaveProperty("walletLinkPendingAt");
+        expect(connections.findByWallet).toHaveBeenCalledOnce();
+    });
+
+    it("answers 409 not connected when the row vanished before the refresh", async () => {
+        const { service } = setup(undefined);
+        await expect(service.refreshFromMonerium(WALLET)).rejects.toMatchObject(
+            { status: 409, code: "MONERIUM_NOT_CONNECTED" }
         );
+    });
+
+    describe("recheck", () => {
+        const isLinked = (candidate: MoneriumConnectionRow) =>
+            candidate.walletLinkState === "linked";
+
+        it("returns the row without calling Monerium when it already satisfies", async () => {
+            const linked = row({ walletLinkState: "linked" });
+            const { service, client } = setup(linked);
+            await expect(
+                service.recheck(WALLET, linked, isLinked)
+            ).resolves.toBe(linked);
+            expect(client.getAuthContext).not.toHaveBeenCalled();
+        });
+
+        it("refreshes once and returns the refreshed row, or null when it still does not satisfy", async () => {
+            const linked = setup(row());
+            approvedContext(linked.client);
+            linked.client.listAddresses.mockResolvedValue([
+                { address: WALLET, chains: ["arbitrumsepolia"] },
+            ]);
+            await expect(
+                linked.service.recheck(WALLET, row(), isLinked)
+            ).resolves.toMatchObject({ walletLinkState: "linked" });
+
+            const unlinked = setup(row());
+            approvedContext(unlinked.client);
+            unlinked.client.listAddresses.mockResolvedValue([]);
+            await expect(
+                unlinked.service.recheck(WALLET, row(), isLinked)
+            ).resolves.toBeNull();
+            expect(unlinked.client.getAuthContext).toHaveBeenCalledOnce();
+        });
+
+        it("answers 502 when the refresh hits a Monerium failure", async () => {
+            const { service, client } = setup(row());
+            client.getAuthContext.mockRejectedValue(
+                new MoneriumApiError(503, undefined, "down")
+            );
+            await expect(
+                service.recheck(WALLET, row(), isLinked)
+            ).rejects.toMatchObject({
+                status: 502,
+                code: "MONERIUM_UPSTREAM_UNAVAILABLE",
+            });
+        });
     });
 
     it("clears the pending stamp once the address is listed", async () => {
-        const { service, client, connections } = setup(
-            row({ walletLinkState: "pending", walletLinkPendingAt: new Date() })
+        const { patch } = await refreshPatch(
+            row({
+                walletLinkState: "pending",
+                walletLinkPendingAt: new Date(),
+            }),
+            [{ address: WALLET, chains: ["arbitrumsepolia"] }]
         );
-        approvedContext(client);
-        client.listAddresses.mockResolvedValue([
-            { address: WALLET, chains: ["arbitrumsepolia"] },
-        ]);
 
-        await service.refreshFromMonerium(WALLET);
-
-        expect(connections.updateIfProfileState.mock.calls[0][2]).toMatchObject(
-            { walletLinkState: "linked", walletLinkPendingAt: null }
-        );
+        expect(patch).toMatchObject({
+            walletLinkState: "linked",
+            walletLinkPendingAt: null,
+        });
     });
 
     it("stamps the profile state change only when the state moved", async () => {
-        const { service, client, connections } = setup(
-            row({ profileState: "pending" })
+        const moved = await refreshPatch(row({ profileState: "pending" }));
+        expect(moved.patch).toHaveProperty(
+            "profileStateChangedAt",
+            expect.any(Date)
         );
-        approvedContext(client);
-        client.listAddresses.mockResolvedValue([]);
-        await service.refreshFromMonerium(WALLET);
-        expect(
-            connections.updateIfProfileState.mock.calls[0][2]
-        ).toHaveProperty("profileStateChangedAt", expect.any(Date));
 
-        const same = setup(row({ profileState: "approved" }));
-        approvedContext(same.client);
-        same.client.listAddresses.mockResolvedValue([]);
-        await same.service.refreshFromMonerium(WALLET);
-        expect(
-            same.connections.updateIfProfileState.mock.calls[0][2]
-        ).not.toHaveProperty("profileStateChangedAt");
+        const same = await refreshPatch(row({ profileState: "approved" }));
+        expect(same.patch).not.toHaveProperty("profileStateChangedAt");
     });
+
+    it.each([
+        ["the state moved", "pending", undefined, true],
+        ["the state is unchanged", "approved", undefined, false],
+        ["another pod moved it first", "pending", "approved", false],
+    ] as const)(
+        "reports profileChanged when %s",
+        async (_name, initial, concurrent, expected) => {
+            const { service, client, moveTo } = setup(
+                row({ profileState: initial })
+            );
+            approvedContext(client);
+            client.listAddresses.mockImplementation(async () => {
+                if (concurrent) moveTo(row({ profileState: concurrent }));
+                return [];
+            });
+
+            const result = await service.refreshFromMonerium(WALLET);
+
+            expect(result.profileChanged).toBe(expected);
+            expect(result.before.profileState).toBe(initial);
+            expect(result.after.profileState).toBe("approved");
+        }
+    );
 
     it("lets a wallet force at most one upstream refresh per 5 seconds", async () => {
         const { service, client } = setup(row());
@@ -376,7 +429,6 @@ describe("MoneriumStatusService", () => {
         vi.useFakeTimers();
         vi.setSystemTime(Date.now() + 6_000);
         await service.getStatus(WALLET, { refresh: true });
-        vi.useRealTimers();
         expect(client.getAuthContext).toHaveBeenCalledTimes(2);
     });
 

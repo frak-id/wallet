@@ -1,13 +1,17 @@
 import { log } from "@backend-infrastructure";
-import { HttpError } from "@backend-utils";
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { moneriumErrorCodes } from "./schemas";
+import {
+    arbitrumChainId,
+    arbitrumSepoliaChainId,
+    isRunningInProd,
+} from "@frak-labs/app-essentials";
+import type { MoneriumEnvironment } from "@frak-labs/app-essentials/monerium";
+import { upstreamUnavailable } from "./errors";
 
-export type MoneriumChain = "arbitrum" | "arbitrumsepolia";
+type MoneriumChain = "arbitrum" | "arbitrumsepolia";
 
 export type MoneriumConfig = {
     clientId: string;
-    environment: "sandbox" | "production";
+    environment: MoneriumEnvironment;
     apiBaseUrl: string;
     chain: MoneriumChain;
     chainId: number;
@@ -45,7 +49,7 @@ export function readMoneriumConfig(
             ? "https://api.monerium.app"
             : "https://api.monerium.dev",
         chain: production ? "arbitrum" : "arbitrumsepolia",
-        chainId: production ? 42161 : 421614,
+        chainId: production ? arbitrumChainId : arbitrumSepoliaChainId,
         walletUrl,
         redirectUri: `${walletUrl}/monerium/callback`,
         siweDomain,
@@ -66,8 +70,5 @@ export function requireMoneriumConfig(): MoneriumConfig {
             "[Monerium] MONERIUM_CLIENT_ID, MONERIUM_APP_NAME or FRAK_WALLET_URL is missing, Monerium routes answer 502"
         );
     }
-    throw HttpError.badGateway(
-        moneriumErrorCodes.upstreamUnavailable,
-        "Monerium is not available right now"
-    );
+    throw upstreamUnavailable();
 }

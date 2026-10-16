@@ -1,20 +1,11 @@
 import {
-    isValidCounterpartName,
+    isPayableCounterpart,
     normalizeIban,
 } from "@frak-labs/app-essentials/monerium";
-import type { MoneriumOrderDto } from "../schemas";
+import type { MoneriumBeneficiaryDto, MoneriumOrderDto } from "../schemas";
 import type { MoneriumOrderRecord } from "./MoneriumApiClient";
 
-export const MAX_BENEFICIARIES = 20;
-
-export type MoneriumBeneficiary = {
-    iban: string;
-    own: boolean;
-    firstName?: string;
-    lastName?: string;
-    country?: string;
-    lastUsedAt: string;
-};
+const MAX_BENEFICIARIES = 20;
 
 export function toOrderDto(record: MoneriumOrderRecord): MoneriumOrderDto {
     const details = record.counterpart.details ?? {};
@@ -58,23 +49,22 @@ export function sortNewestFirst(
 }
 
 function canBePaidAgain(order: MoneriumOrderDto): boolean {
-    const { iban, own, firstName, lastName } = order.counterpart;
-    if (order.kind !== "redeem" || order.state === "rejected" || !iban) {
+    if (
+        order.kind !== "redeem" ||
+        order.state === "rejected" ||
+        !order.counterpart.iban
+    ) {
         return false;
     }
-    return (
-        own ||
-        (isValidCounterpartName(firstName ?? "") &&
-            isValidCounterpartName(lastName ?? ""))
-    );
+    return isPayableCounterpart(order.counterpart);
 }
 
 /** Past payout targets, unique by normalized IBAN, newest first. Third parties without both names cannot be paid again and are dropped. */
 export function deriveBeneficiaries(
     orders: MoneriumOrderDto[]
-): MoneriumBeneficiary[] {
+): MoneriumBeneficiaryDto[] {
     const seen = new Set<string>();
-    const beneficiaries: MoneriumBeneficiary[] = [];
+    const beneficiaries: MoneriumBeneficiaryDto[] = [];
     for (const order of sortNewestFirst(orders)) {
         const {
             iban: rawIban,

@@ -1,9 +1,12 @@
 import { log } from "@backend-infrastructure";
-import type { Address } from "viem";
+import { type Address, isAddress, isAddressEqual } from "viem";
 import { type MoneriumConfig, requireMoneriumConfig } from "../config";
 import type { MoneriumConnectionRow } from "../db/schema";
-import { MoneriumApiError } from "../errors";
-import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
+import { describeError, notConnected, rethrowUpstream } from "../errors";
+import type {
+    MoneriumConnectionPatch,
+    MoneriumConnectionRepository,
+} from "../repositories/MoneriumConnectionRepository";
 import type { MoneriumStatusResponse } from "../schemas";
 import type {
     MoneriumApiClient,
@@ -12,12 +15,12 @@ import type {
 import type { MoneriumTokenService } from "./MoneriumTokenService";
 import { TtlCoalescer } from "./TtlCoalescer";
 
-export const STATUS_CACHE_TTL_MS = 60_000;
-export const FORCED_REFRESH_COALESCE_MS = 5_000;
-export const SIWE_FAILURE_TTL_MS = 7 * 24 * 60 * 60_000;
+const STATUS_CACHE_TTL_MS = 60_000;
+const FORCED_REFRESH_COALESCE_MS = 5_000;
+const SIWE_FAILURE_TTL_MS = 7 * 24 * 60 * 60_000;
 export const LINK_PENDING_MAX_AGE_MS = 24 * 60 * 60_000;
 
-export type MoneriumRefreshResult = {
+type MoneriumRefreshResult = {
     before: MoneriumConnectionRow;
     after: MoneriumConnectionRow;
     /** True only for the caller that actually moved the cached profile state. */
@@ -84,10 +87,10 @@ function pickProfile(
     return profiles.find((p) => p.id === defaultProfile) ?? profiles[0];
 }
 
-type LinkResolution = {
-    state: MoneriumConnectionRow["walletLinkState"];
-    pendingAt: Date | null;
-};
+type LinkPatch = Pick<
+    MoneriumConnectionPatch,
+    "walletLinkState" | "walletLinkPendingAt"
+>;
 
 export class MoneriumStatusService {
     private readonly forcedRefreshes = new TtlCoalescer<MoneriumRefreshResult>(
@@ -125,11 +128,23 @@ export class MoneriumStatusService {
         return toStatusResponse(row, config);
     }
 
+    /** `row` when it already satisfies `ready`, else the row after one upstream refresh; null when it still does not. */
+    async recheck(
+        wallet: Address,
+        row: MoneriumConnectionRow,
+        ready: (row: MoneriumConnectionRow) => boolean
+    ): Promise<MoneriumConnectionRow | null> {
+        if (ready(row)) return row;
+        const { after } =
+            await this.refreshFromMonerium(wallet).catch(rethrowUpstream);
+        return ready(after) ? after : null;
+    }
+
     /** Pulls profile and wallet link from Monerium into the cache. Throws on any failure. */
     async refreshFromMonerium(wallet: Address): Promise<MoneriumRefreshResult> {
         const config = requireMoneriumConfig();
         const before = await this.connections.findByWallet(wallet);
-        if (!before) throw new Error("Monerium connection not found");
+        if (!before) throw notConnected();
 
         const snapshot = await this.tokens.withAccessToken(
             wallet,
@@ -139,18 +154,15 @@ export class MoneriumStatusService {
                     this.client.listProfiles(accessToken),
                 ]);
                 const profile = pickProfile(profiles, context.defaultProfile);
-                const link: LinkResolution = profile
-                    ? await this.resolveLinkState(
+                const link = profile
+                    ? await this.resolveLinkPatch(
                           accessToken,
                           profile.id,
                           wallet,
                           before,
                           config
                       )
-                    : {
-                          state: before.walletLinkState,
-                          pendingAt: before.walletLinkPendingAt,
-                      };
+                    : {};
                 return { context, profile, link };
             }
         );
@@ -170,8 +182,7 @@ export class MoneriumStatusService {
                 ...(nextProfileState !== before.profileState
                     ? { profileStateChangedAt: new Date() }
                     : {}),
-                walletLinkState: link.state,
-                walletLinkPendingAt: link.pendingAt,
+                ...link,
                 stateCheckedAt: new Date(),
             }
         );
@@ -188,36 +199,40 @@ export class MoneriumStatusService {
     }
 
     /**
-     * Monerium lists a linked address; a pending link is only known from our own 202,
-     * so it is read fresh (a link may have just been written) and kept for 24 h.
+     * Only the link fields that change: a pending link is known from our own 202 alone,
+     * so leaving them out lets a `linkWallet` written meanwhile win. Pending expires after 24 h.
      */
-    private async resolveLinkState(
+    private async resolveLinkPatch(
         accessToken: string,
         profileId: string,
         wallet: Address,
         before: MoneriumConnectionRow,
         config: MoneriumConfig
-    ): Promise<LinkResolution> {
+    ): Promise<LinkPatch> {
         const addresses = await this.client.listAddresses(accessToken, {
             profile: profileId,
             chain: config.chain,
         });
-        const linked = addresses.some(
+        const listed = addresses.some(
             (record) =>
-                record.address.toLowerCase() === wallet.toLowerCase() &&
+                isAddress(record.address, { strict: false }) &&
+                isAddressEqual(record.address, wallet) &&
                 record.chains.includes(config.chain)
         );
-        if (linked) return { state: "linked", pendingAt: null };
-
-        const current = (await this.connections.findByWallet(wallet)) ?? before;
-        const pendingAt = current.walletLinkPendingAt ?? current.updatedAt;
+        if (listed) {
+            return before.walletLinkState === "linked"
+                ? {}
+                : { walletLinkState: "linked", walletLinkPendingAt: null };
+        }
+        if (before.walletLinkState === "none") return {};
+        const pendingAt = before.walletLinkPendingAt ?? before.updatedAt;
         if (
-            current.walletLinkState === "pending" &&
+            before.walletLinkState === "pending" &&
             Date.now() - pendingAt.getTime() < LINK_PENDING_MAX_AGE_MS
         ) {
-            return { state: "pending", pendingAt };
+            return {};
         }
-        return { state: "none", pendingAt: null };
+        return { walletLinkState: "none", walletLinkPendingAt: null };
     }
 }
 
@@ -226,11 +241,4 @@ function isStale(row: MoneriumConnectionRow): boolean {
         !row.stateCheckedAt ||
         Date.now() - row.stateCheckedAt.getTime() > STATUS_CACHE_TTL_MS
     );
-}
-
-export function describeError(error: unknown): string {
-    if (error instanceof MoneriumApiError) {
-        return `${error.status} ${error.moneriumCode ?? ""}`.trim();
-    }
-    return error instanceof Error ? error.message : "unknown error";
 }

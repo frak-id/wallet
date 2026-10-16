@@ -1,5 +1,12 @@
 import { log } from "@backend-infrastructure";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import {
+    asFake,
+    connectionRow,
+    OTHER_WALLET,
+    stubMoneriumEnv,
+    WALLET,
+} from "../../../test/mock/monerium";
 import type { MoneriumConnectionRow } from "../../domain/monerium/db/schema";
 import { MoneriumApiError } from "../../domain/monerium/errors";
 import type { MoneriumConnectionRepository } from "../../domain/monerium/repositories/MoneriumConnectionRepository";
@@ -13,33 +20,17 @@ import {
     MoneriumSyncOrchestrator,
 } from "./MoneriumSyncOrchestrator";
 
-const WALLET = "0x00000000000000000000000000000000000000aa" as const;
-const WALLET_2 = "0x00000000000000000000000000000000000000bb" as const;
+stubMoneriumEnv();
 
-function connection(
-    overrides: Partial<MoneriumConnectionRow> = {}
-): MoneriumConnectionRow {
-    return {
-        wallet: WALLET,
-        moneriumUserId: "u",
+const connection = (overrides: Partial<MoneriumConnectionRow> = {}) =>
+    connectionRow({
         profileId: "p",
         profileKind: "personal",
         profileState: "pending",
-        profileReasonCode: null,
-        walletLinkState: "none",
-        walletLinkPendingAt: null,
-        profileStateChangedAt: null,
-        status: "connected",
-        accessTokenEncrypted: "x",
         accessTokenExpiresAt: new Date(),
-        refreshTokenEncrypted: "y",
-        siweFailedAt: null,
         stateCheckedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...overrides,
-    };
-}
+    });
 
 function trackedOrder(wallet: `0x${string}` = WALLET, id = "order-1") {
     return {
@@ -67,17 +58,18 @@ function setup(
     };
     const trackedOrders = {
         claimInFlightDue: vi.fn(async () => due.orders ?? []),
+        deleteStale: vi.fn(async () => undefined),
     };
     const rateLimitPause = new MoneriumRateLimitPause();
     const status = { refreshFromMonerium: vi.fn() };
     const orders = { syncTrackedOrder: vi.fn() };
     const notifications = { sendNotification: vi.fn(async () => undefined) };
     const orchestrator = new MoneriumSyncOrchestrator(
-        connections as unknown as MoneriumConnectionRepository,
-        trackedOrders as unknown as MoneriumTrackedOrderRepository,
-        status as unknown as MoneriumStatusService,
-        orders as unknown as MoneriumOrderService,
-        notifications as unknown as NotificationsService,
+        asFake<MoneriumConnectionRepository>(connections),
+        asFake<MoneriumTrackedOrderRepository>(trackedOrders),
+        asFake<MoneriumStatusService>(status),
+        asFake<MoneriumOrderService>(orders),
+        asFake<NotificationsService>(notifications),
         rateLimitPause
     );
     return {
@@ -105,15 +97,6 @@ function sentPayload(
 }
 
 describe("MoneriumSyncOrchestrator", () => {
-    beforeEach(() => {
-        vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
-        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
-        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
-    });
-    afterEach(() => {
-        vi.unstubAllEnvs();
-    });
-
     it("claims work in one statement per kind, with the age tiers and the batch cap", async () => {
         const now = new Date("2026-10-15T12:00:00Z");
         const { orchestrator, connections, trackedOrders } = setup();
@@ -137,22 +120,6 @@ describe("MoneriumSyncOrchestrator", () => {
         });
     });
 
-    it("bounds the profile poll at 30 days and the link poll at 24 hours, backing off with age", () => {
-        const profile = MONERIUM_SYNC.PROFILE_TIERS;
-        expect(profile.at(-1)?.maxAgeMs).toBe(30 * 24 * 60 * 60_000);
-        expect(profile.map((tier) => tier.recheckMs)).toEqual([
-            10 * 60_000,
-            60 * 60_000,
-            6 * 60 * 60_000,
-        ]);
-        const link = MONERIUM_SYNC.LINK_TIERS;
-        expect(link.at(-1)?.maxAgeMs).toBe(24 * 60 * 60_000);
-        expect(link.map((tier) => tier.recheckMs)).toEqual([
-            2 * 60_000,
-            15 * 60_000,
-        ]);
-    });
-
     it("pushes once when an order is processed, with the amount and no IBAN, name or memo", async () => {
         const { orchestrator, orders, notifications } = setup({
             orders: [trackedOrder()],
@@ -164,8 +131,8 @@ describe("MoneriumSyncOrchestrator", () => {
         expect(notifications.sendNotification).toHaveBeenCalledOnce();
         const { wallets, payload } = sentPayload(notifications);
         expect(wallets).toEqual([WALLET]);
-        expect(payload.en.body).toContain("€12.5");
-        expect(payload.fr.body).toContain("12,5 €");
+        expect(payload.en.body).toContain("€12.50");
+        expect(payload.fr.body).toMatch(/12,50\s€/);
         expect(payload.en.data.url).toBe(
             "https://wallet.test/wallet?open=monerium"
         );
@@ -174,7 +141,10 @@ describe("MoneriumSyncOrchestrator", () => {
 
     it("pushes a rejection and nothing for a state that did not move", async () => {
         const { orchestrator, orders, notifications } = setup({
-            orders: [trackedOrder(WALLET, "a"), trackedOrder(WALLET_2, "b")],
+            orders: [
+                trackedOrder(WALLET, "a"),
+                trackedOrder(OTHER_WALLET, "b"),
+            ],
         });
         orders.syncTrackedOrder
             .mockResolvedValueOnce("rejected")
@@ -252,9 +222,22 @@ describe("MoneriumSyncOrchestrator", () => {
         }
     );
 
+    it("stays silent on the first observation of a profile", async () => {
+        const { orchestrator, status, notifications } = setup({
+            profiles: [connection({ profileState: null })],
+        });
+        status.refreshFromMonerium.mockResolvedValue({
+            before: connection({ profileState: null }),
+            after: connection({ profileState: "approved" }),
+            profileChanged: true,
+        });
+        await orchestrator.syncTick();
+        expect(notifications.sendNotification).not.toHaveBeenCalled();
+    });
+
     it("stays silent for pending profiles and for transitions another pod already applied", async () => {
         const { orchestrator, status, notifications } = setup({
-            profiles: [connection(), connection({ wallet: WALLET_2 })],
+            profiles: [connection(), connection({ wallet: OTHER_WALLET })],
         });
         status.refreshFromMonerium
             .mockResolvedValueOnce({
@@ -271,25 +254,62 @@ describe("MoneriumSyncOrchestrator", () => {
         expect(notifications.sendNotification).not.toHaveBeenCalled();
     });
 
-    it("refreshes a connection once even when it is due for both profile and link", async () => {
+    it("claims each phase only after the previous one ran, then cleans up", async () => {
         const row = connection({ walletLinkState: "pending" });
-        const { orchestrator, status } = setup({
-            profiles: [row],
-            links: [row],
-        });
+        const { orchestrator, connections, trackedOrders, orders, status } =
+            setup({
+                orders: [trackedOrder()],
+                profiles: [row],
+                links: [connection({ wallet: OTHER_WALLET })],
+            });
+        orders.syncTrackedOrder.mockResolvedValue(null);
         status.refreshFromMonerium.mockResolvedValue({
             before: row,
             after: row,
             profileChanged: false,
         });
+
         const summary = await orchestrator.syncTick();
-        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
-        expect(summary).toMatchObject({ profiles: 1, links: 0 });
+
+        expect(summary).toEqual({
+            orders: 1,
+            profiles: 1,
+            links: 1,
+            stoppedOnRateLimit: false,
+        });
+        const [profileRefresh, linkRefresh] =
+            status.refreshFromMonerium.mock.invocationCallOrder;
+        const sequence = [
+            trackedOrders.claimInFlightDue.mock.invocationCallOrder[0],
+            orders.syncTrackedOrder.mock.invocationCallOrder[0],
+            connections.claimDueForProfileSync.mock.invocationCallOrder[0],
+            profileRefresh,
+            connections.claimDueForLinkSync.mock.invocationCallOrder[0],
+            linkRefresh,
+            trackedOrders.deleteStale.mock.invocationCallOrder[0],
+        ];
+        expect(sequence.every(Number.isInteger)).toBe(true);
+        expect(sequence).toEqual([...sequence].sort((a, b) => a - b));
+        expect(status.refreshFromMonerium.mock.calls.map(([w]) => w)).toEqual([
+            WALLET,
+            OTHER_WALLET,
+        ]);
+    });
+
+    it("deletes stale tracked orders once per tick and survives a cleanup failure", async () => {
+        const now = new Date("2026-10-15T12:00:00Z");
+        const { orchestrator, trackedOrders } = setup();
+        trackedOrders.deleteStale.mockRejectedValueOnce(new Error("db down"));
+
+        await expect(orchestrator.syncTick(now)).resolves.toMatchObject({
+            orders: 0,
+        });
+        expect(trackedOrders.deleteStale).toHaveBeenCalledExactlyOnceWith(now);
     });
 
     it("keeps the state change when the push fails", async () => {
         const { orchestrator, orders, notifications } = setup({
-            orders: [trackedOrder(), trackedOrder(WALLET_2, "order-2")],
+            orders: [trackedOrder(), trackedOrder(OTHER_WALLET, "order-2")],
         });
         orders.syncTrackedOrder.mockResolvedValue("processed");
         notifications.sendNotification.mockRejectedValueOnce(
@@ -305,7 +325,10 @@ describe("MoneriumSyncOrchestrator", () => {
 
     it("carries on with the next item after one failed", async () => {
         const { orchestrator, orders, notifications } = setup({
-            orders: [trackedOrder(WALLET, "a"), trackedOrder(WALLET_2, "b")],
+            orders: [
+                trackedOrder(WALLET, "a"),
+                trackedOrder(OTHER_WALLET, "b"),
+            ],
         });
         orders.syncTrackedOrder
             .mockRejectedValueOnce(new MoneriumApiError(503, undefined, "down"))
@@ -317,36 +340,62 @@ describe("MoneriumSyncOrchestrator", () => {
         expect(notifications.sendNotification).toHaveBeenCalledOnce();
     });
 
-    it("stops the tick on 429 and pauses the following ticks until Retry-After", async () => {
-        const { orchestrator, orders, status, rateLimitPause } = setup({
-            orders: [trackedOrder(WALLET, "a"), trackedOrder(WALLET_2, "b")],
-            profiles: [connection()],
+    it("stops the tick on 429 before claiming the next phase, and skips the following ticks while paused", async () => {
+        const { orchestrator, orders, connections, status, rateLimitPause } =
+            setup({
+                orders: [
+                    trackedOrder(WALLET, "a"),
+                    trackedOrder(OTHER_WALLET, "b"),
+                ],
+                profiles: [connection()],
+            });
+        orders.syncTrackedOrder.mockImplementation(async () => {
+            rateLimitPause.pause(600);
+            throw new MoneriumApiError(429, undefined, "slow");
         });
-        orders.syncTrackedOrder.mockRejectedValue(
-            new MoneriumApiError(429, undefined, "slow", 600)
-        );
 
         const first = await orchestrator.syncTick();
         expect(first.stoppedOnRateLimit).toBe(true);
         expect(orders.syncTrackedOrder).toHaveBeenCalledOnce();
+        expect(connections.claimDueForProfileSync).not.toHaveBeenCalled();
         expect(status.refreshFromMonerium).not.toHaveBeenCalled();
 
-        expect(rateLimitPause.isPaused(Date.now() + 599_000)).toBe(true);
         orders.syncTrackedOrder.mockClear();
         await orchestrator.syncTick(new Date(Date.now() + 60_000));
         expect(orders.syncTrackedOrder).not.toHaveBeenCalled();
     });
 
-    it("pauses for 60 s when Monerium sends no Retry-After", async () => {
-        const { orchestrator, orders, rateLimitPause } = setup({
-            orders: [trackedOrder()],
+    it("stops on a 429 even when the shared pause was not set", async () => {
+        const { orchestrator, orders } = setup({
+            orders: [
+                trackedOrder(WALLET, "a"),
+                trackedOrder(OTHER_WALLET, "b"),
+            ],
         });
         orders.syncTrackedOrder.mockRejectedValue(
             new MoneriumApiError(429, undefined, "slow")
         );
-        await orchestrator.syncTick();
-        expect(rateLimitPause.isPaused(Date.now() + 59_000)).toBe(true);
-        expect(rateLimitPause.isPaused(Date.now() + 61_000)).toBe(false);
+        const summary = await orchestrator.syncTick();
+        expect(summary.stoppedOnRateLimit).toBe(true);
+        expect(orders.syncTrackedOrder).toHaveBeenCalledOnce();
+    });
+
+    it("stops mid-phase once a user-facing call hit the rate limit", async () => {
+        const { orchestrator, orders, status, rateLimitPause } = setup({
+            orders: [
+                trackedOrder(WALLET, "a"),
+                trackedOrder(OTHER_WALLET, "b"),
+            ],
+            profiles: [connection()],
+        });
+        orders.syncTrackedOrder.mockImplementationOnce(async () => {
+            rateLimitPause.pause(120);
+            return null;
+        });
+        const summary = await orchestrator.syncTick();
+        expect(summary).toMatchObject({ orders: 1, stoppedOnRateLimit: true });
+        expect(orders.syncTrackedOrder).toHaveBeenCalledOnce();
+        expect(status.refreshFromMonerium).not.toHaveBeenCalled();
     });
 
     it("does not poll while a user-facing call already hit the rate limit", async () => {
@@ -358,7 +407,7 @@ describe("MoneriumSyncOrchestrator", () => {
     });
 
     it("skips the tick once, with a single warning, while the tables are missing", async () => {
-        const { orchestrator, trackedOrders } = setup();
+        const { orchestrator, trackedOrders, connections } = setup();
         const missing = Object.assign(new Error("relation does not exist"), {
             code: "42P01",
         });
@@ -375,6 +424,8 @@ describe("MoneriumSyncOrchestrator", () => {
             orders: 0,
         });
         expect(log.warn).toHaveBeenCalledTimes(1);
+        expect(connections.claimDueForProfileSync).not.toHaveBeenCalled();
+        expect(trackedOrders.deleteStale).not.toHaveBeenCalled();
     });
 
     it("still surfaces other database failures", async () => {

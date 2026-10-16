@@ -8,6 +8,7 @@ import {
     notInArray,
     or,
     type SQL,
+    sql,
 } from "drizzle-orm";
 import type { Address } from "viem";
 import {
@@ -16,7 +17,7 @@ import {
 } from "../db/schema";
 import { dueWithBackoff, oldestCheckFirst, type RecheckTier } from "./dueTiers";
 
-type ClaimParams = { now: Date; tiers: RecheckTier[]; limit: number };
+type ClaimParams = { now: Date; tiers: readonly RecheckTier[]; limit: number };
 
 export type MoneriumConnectionPatch = Partial<
     Omit<MoneriumConnectionRow, "wallet" | "createdAt" | "updatedAt">
@@ -48,11 +49,9 @@ export class MoneriumConnectionRepository {
     /** Keeps the profile and link cache of an existing row: a reconnect does not forget them. */
     async upsertConnected(params: {
         wallet: Address;
-        moneriumUserId: string | null;
         accessTokenEncrypted: string;
         accessTokenExpiresAt: Date;
         refreshTokenEncrypted: string;
-        clearSiweFailure: boolean;
     }): Promise<void> {
         const tokens = {
             status: "connected" as const,
@@ -64,7 +63,6 @@ export class MoneriumConnectionRepository {
             .insert(moneriumConnectionsTable)
             .values({
                 wallet: params.wallet,
-                moneriumUserId: params.moneriumUserId,
                 profileStateChangedAt: new Date(),
                 ...tokens,
             })
@@ -73,10 +71,7 @@ export class MoneriumConnectionRepository {
                 set: {
                     ...tokens,
                     profileStateChangedAt: new Date(),
-                    ...(params.moneriumUserId
-                        ? { moneriumUserId: params.moneriumUserId }
-                        : {}),
-                    ...(params.clearSiweFailure ? { siweFailedAt: null } : {}),
+                    siweFailedAt: null,
                     updatedAt: new Date(),
                 },
             });
@@ -165,8 +160,7 @@ export class MoneriumConnectionRepository {
                     )
                 ),
                 dueWithBackoff({
-                    since: moneriumConnectionsTable.profileStateChangedAt,
-                    fallback: moneriumConnectionsTable.createdAt,
+                    started: moneriumConnectionsTable.profileStateChangedAt,
                     checkedAt: moneriumConnectionsTable.stateCheckedAt,
                     tiers: params.tiers,
                     now: params.now,
@@ -181,8 +175,7 @@ export class MoneriumConnectionRepository {
             and(
                 eq(moneriumConnectionsTable.walletLinkState, "pending"),
                 dueWithBackoff({
-                    since: moneriumConnectionsTable.walletLinkPendingAt,
-                    fallback: moneriumConnectionsTable.updatedAt,
+                    started: sql`coalesce(${moneriumConnectionsTable.walletLinkPendingAt}, ${moneriumConnectionsTable.updatedAt})`,
                     checkedAt: moneriumConnectionsTable.stateCheckedAt,
                     tiers: params.tiers,
                     now: params.now,

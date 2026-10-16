@@ -1,4 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+    asFake,
+    connectionRow,
+    OTHER_WALLET,
+    WALLET,
+} from "../../../../test/mock/monerium";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import type { MoneriumConnectionRow } from "../db/schema";
 import { MoneriumApiError } from "../errors";
@@ -10,21 +16,13 @@ import type { MoneriumApiClient } from "./MoneriumApiClient";
 import { MoneriumTokenCipher } from "./MoneriumTokenCipher";
 import { MoneriumTokenService } from "./MoneriumTokenService";
 
-const WALLET = "0x0000000000000000000000000000000000000001" as const;
 const cipher = new MoneriumTokenCipher(new AdminWalletsRepository());
 
-async function connectionRow(
+async function encryptedRow(
     overrides: Partial<MoneriumConnectionRow> = {}
 ): Promise<MoneriumConnectionRow> {
-    return {
-        wallet: WALLET,
+    return connectionRow({
         moneriumUserId: null,
-        profileId: null,
-        profileKind: null,
-        profileState: null,
-        profileReasonCode: null,
-        walletLinkState: "none",
-        status: "connected",
         accessTokenEncrypted: await cipher.encrypt(
             "access-old",
             WALLET,
@@ -36,60 +34,58 @@ async function connectionRow(
             WALLET,
             "refresh_token_encrypted"
         ),
-        walletLinkPendingAt: null,
-        profileStateChangedAt: null,
-        siweFailedAt: null,
         stateCheckedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...overrides,
-    };
+    });
 }
 
-/** In-memory stand-in for the row lock: a throwing task rolls its writes back. */
+/** In-memory repository: callers take the lock one at a time and a throwing task rolls its writes back. */
 function fakeConnections(initial: MoneriumConnectionRow) {
     let row: MoneriumConnectionRow | undefined = initial;
+    let queue: Promise<unknown> = Promise.resolve();
+    const runLocked = async (
+        task: (
+            locked: MoneriumConnectionRow | undefined,
+            write: (patch: MoneriumConnectionPatch) => Promise<void>
+        ) => Promise<unknown>
+    ) => {
+        const snapshot = row;
+        try {
+            return await task(row, async (patch) => {
+                if (row) row = { ...row, ...patch };
+            });
+        } catch (error) {
+            row = snapshot;
+            throw error;
+        }
+    };
     const repository = {
         findByWallet: vi.fn(async () => row),
         withLockedConnection: vi.fn(
-            async (
-                _wallet: string,
-                task: (
-                    locked: MoneriumConnectionRow | undefined,
-                    write: (patch: MoneriumConnectionPatch) => Promise<void>
-                ) => Promise<unknown>
-            ) => {
-                const snapshot = row;
-                try {
-                    return await task(row, async (patch) => {
-                        if (row) row = { ...row, ...patch };
-                    });
-                } catch (error) {
-                    row = snapshot;
-                    throw error;
-                }
+            (_wallet: string, task: Parameters<typeof runLocked>[0]) => {
+                const run = queue.then(() => runLocked(task));
+                queue = run.catch(() => undefined);
+                return run;
             }
         ),
     };
     return {
-        repository: repository as unknown as MoneriumConnectionRepository,
+        repository: asFake<MoneriumConnectionRepository>(repository),
         locked: repository.withLockedConnection,
         current: () => row,
     };
 }
 
 function fakeClient(refresh: MoneriumApiClient["refreshAccessToken"]) {
-    return {
-        refreshAccessToken: vi.fn(refresh),
-    } as unknown as MoneriumApiClient & {
-        refreshAccessToken: ReturnType<typeof vi.fn>;
-    };
+    return asFake<
+        MoneriumApiClient & { refreshAccessToken: ReturnType<typeof vi.fn> }
+    >({ refreshAccessToken: vi.fn(refresh) });
 }
 
 describe("MoneriumTokenService", () => {
     it("returns the stored token without locking while it is valid past the grace period", async () => {
         const store = fakeConnections(
-            await connectionRow({
+            await encryptedRow({
                 accessTokenExpiresAt: new Date(Date.now() + 5 * 60_000),
             })
         );
@@ -109,7 +105,7 @@ describe("MoneriumTokenService", () => {
     });
 
     it("refreshes inside the lock when the token is within the 60 s grace and persists the rotated pair", async () => {
-        const store = fakeConnections(await connectionRow());
+        const store = fakeConnections(await encryptedRow());
         const client = fakeClient(async (refreshToken) => {
             expect(refreshToken).toBe("refresh-old");
             return {
@@ -148,43 +144,66 @@ describe("MoneriumTokenService", () => {
         );
     });
 
-    it("re-checks expiry after taking the lock and skips the refresh when another pod already did it", async () => {
-        const stale = await connectionRow();
-        const fresh = await connectionRow({
-            accessTokenEncrypted: await cipher.encrypt(
-                "access-from-other-pod",
-                WALLET,
-                "access_token_encrypted"
-            ),
-            accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
+    it("two concurrent callers spend the refresh token once", async () => {
+        const store = fakeConnections(await encryptedRow());
+        const client = fakeClient(async (refreshToken) => {
+            expect(refreshToken).toBe("refresh-old");
+            return {
+                accessToken: "access-new",
+                refreshToken: "refresh-new",
+                expiresInSeconds: 3600,
+            };
         });
-        const client = fakeClient(async () => {
-            throw new Error("must not refresh");
-        });
-        const repository = {
-            findByWallet: vi.fn(async () => stale),
-            withLockedConnection: vi.fn(
-                async (
-                    _wallet: string,
-                    task: (
-                        locked: MoneriumConnectionRow,
-                        write: () => Promise<void>
-                    ) => Promise<unknown>
-                ) => task(fresh, async () => undefined)
-            ),
-        } as unknown as MoneriumConnectionRepository;
-
-        const service = new MoneriumTokenService(repository, cipher, client);
-
-        await expect(service.getAccessToken(WALLET)).resolves.toBe(
-            "access-from-other-pod"
+        const service = new MoneriumTokenService(
+            store.repository,
+            cipher,
+            client
         );
-        expect(client.refreshAccessToken).not.toHaveBeenCalled();
+
+        await expect(
+            Promise.all([
+                service.getAccessToken(WALLET),
+                service.getAccessToken(WALLET),
+            ])
+        ).resolves.toEqual(["access-new", "access-new"]);
+        expect(client.refreshAccessToken).toHaveBeenCalledOnce();
+    });
+
+    it("two 401s on the same stale token refresh once", async () => {
+        const store = fakeConnections(
+            await encryptedRow({
+                accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
+            })
+        );
+        const client = fakeClient(async () => ({
+            accessToken: "access-new",
+            refreshToken: "refresh-new",
+            expiresInSeconds: 3600,
+        }));
+        const service = new MoneriumTokenService(
+            store.repository,
+            cipher,
+            client
+        );
+        const call = vi.fn(async (token: string) => {
+            if (token === "access-old") {
+                throw new MoneriumApiError(401, undefined, "no");
+            }
+            return token;
+        });
+
+        await expect(
+            Promise.all([
+                service.withAccessToken(WALLET, call),
+                service.withAccessToken(WALLET, call),
+            ])
+        ).resolves.toEqual(["access-new", "access-new"]);
+        expect(client.refreshAccessToken).toHaveBeenCalledOnce();
     });
 
     it("wipes the tokens and flags reauth_required on a real invalid grant, keeping the profile cache", async () => {
         const store = fakeConnections(
-            await connectionRow({
+            await encryptedRow({
                 profileId: "profile-1",
                 profileKind: "personal",
                 profileState: "approved",
@@ -222,7 +241,7 @@ describe("MoneriumTokenService", () => {
         [401, "Unauthorized", "invalid_grant"],
         [400, "Refresh token has been revoked", undefined],
     ])("wipes on a %i answering %s", async (status, message, code) => {
-        const store = fakeConnections(await connectionRow());
+        const store = fakeConnections(await encryptedRow());
         const service = new MoneriumTokenService(
             store.repository,
             cipher,
@@ -248,7 +267,7 @@ describe("MoneriumTokenService", () => {
     ])(
         "keeps the tokens and answers 502 on a %i (%s) that is not a dead grant",
         async (status, message) => {
-            const store = fakeConnections(await connectionRow());
+            const store = fakeConnections(await encryptedRow());
             const service = new MoneriumTokenService(
                 store.repository,
                 cipher,
@@ -267,7 +286,7 @@ describe("MoneriumTokenService", () => {
     );
 
     it("keeps the tokens and rethrows when the refresh fails upstream", async () => {
-        const store = fakeConnections(await connectionRow());
+        const store = fakeConnections(await encryptedRow());
         const client = fakeClient(async () => {
             throw new MoneriumApiError(503, undefined, "down");
         });
@@ -286,7 +305,7 @@ describe("MoneriumTokenService", () => {
 
     it("keeps the connection when the encryption key cannot be loaded", async () => {
         const admin = new AdminWalletsRepository();
-        const store = fakeConnections(await connectionRow());
+        const store = fakeConnections(await encryptedRow());
         vi.spyOn(admin, "deriveKeyBytes").mockRejectedValue(
             new Error("Missing MASTER_KEY_SECRET")
         );
@@ -305,49 +324,41 @@ describe("MoneriumTokenService", () => {
         expect(store.current()?.refreshTokenEncrypted).not.toBeNull();
     });
 
-    it("treats a refresh token copied from another wallet as a dead connection", async () => {
-        const store = fakeConnections(
-            await connectionRow({
-                refreshTokenEncrypted: await cipher.encrypt(
-                    "refresh-old",
-                    "0x00000000000000000000000000000000000000ff",
-                    "refresh_token_encrypted"
-                ),
-            })
-        );
-        const service = new MoneriumTokenService(
-            store.repository,
-            cipher,
-            fakeClient(async () => {
-                throw new Error("must not refresh");
-            })
-        );
-        await expect(service.getAccessToken(WALLET)).rejects.toMatchObject({
-            code: "MONERIUM_REAUTH_REQUIRED",
-        });
-    });
+    it.each([
+        ["copied from another wallet", OTHER_WALLET],
+        ["failing its auth tag", undefined],
+    ])(
+        "treats a refresh token %s as a dead connection",
+        async (_name, sourceWallet) => {
+            const store = fakeConnections(
+                await encryptedRow({
+                    refreshTokenEncrypted: sourceWallet
+                        ? await cipher.encrypt(
+                              "refresh-old",
+                              sourceWallet,
+                              "refresh_token_encrypted"
+                          )
+                        : "0x1234",
+                })
+            );
+            const service = new MoneriumTokenService(
+                store.repository,
+                cipher,
+                fakeClient(async () => {
+                    throw new Error("must not refresh");
+                })
+            );
 
-    it("treats a refresh token that fails its auth tag as a dead connection", async () => {
-        const store = fakeConnections(
-            await connectionRow({ refreshTokenEncrypted: "0x1234" })
-        );
-        const service = new MoneriumTokenService(
-            store.repository,
-            cipher,
-            fakeClient(async () => {
-                throw new Error("must not refresh");
-            })
-        );
-
-        await expect(service.getAccessToken(WALLET)).rejects.toMatchObject({
-            code: "MONERIUM_REAUTH_REQUIRED",
-        });
-        expect(store.current()?.status).toBe("reauth_required");
-    });
+            await expect(service.getAccessToken(WALLET)).rejects.toMatchObject({
+                code: "MONERIUM_REAUTH_REQUIRED",
+            });
+            expect(store.current()?.status).toBe("reauth_required");
+        }
+    );
 
     it("refreshes and retries once after a 401", async () => {
         const store = fakeConnections(
-            await connectionRow({
+            await encryptedRow({
                 accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
             })
         );
@@ -375,7 +386,7 @@ describe("MoneriumTokenService", () => {
 
     it("does not retry twice on a persistent 401", async () => {
         const store = fakeConnections(
-            await connectionRow({
+            await encryptedRow({
                 accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
             })
         );
@@ -399,9 +410,9 @@ describe("MoneriumTokenService", () => {
     });
 
     it("answers not connected without a row", async () => {
-        const repository = {
+        const repository = asFake<MoneriumConnectionRepository>({
             findByWallet: vi.fn(async () => undefined),
-        } as unknown as MoneriumConnectionRepository;
+        });
         const service = new MoneriumTokenService(
             repository,
             cipher,

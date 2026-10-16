@@ -2,7 +2,7 @@ import type { LocalisedNotificationPayload } from "@backend-domain/notifications
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import { requireMoneriumConfig } from "../../domain/monerium/config";
-import { MoneriumApiError } from "../../domain/monerium/errors";
+import { describeError, MoneriumApiError } from "../../domain/monerium/errors";
 import type { RecheckTier } from "../../domain/monerium/repositories/dueTiers";
 import type { MoneriumConnectionRepository } from "../../domain/monerium/repositories/MoneriumConnectionRepository";
 import type { MoneriumTrackedOrderRepository } from "../../domain/monerium/repositories/MoneriumTrackedOrderRepository";
@@ -36,7 +36,7 @@ export const MONERIUM_SYNC = {
         { maxAgeMs: LINK_PENDING_MAX_AGE_MS, recheckMs: 15 * MINUTE_MS },
     ],
     BATCH_CAP: 50,
-} as const satisfies Record<string, RecheckTier[] | number>;
+} as const satisfies Record<string, readonly RecheckTier[] | number>;
 
 export type MoneriumSyncSummary = {
     orders: number;
@@ -44,6 +44,8 @@ export type MoneriumSyncSummary = {
     links: number;
     stoppedOnRateLimit: boolean;
 };
+
+type SyncPhase = Exclude<keyof MoneriumSyncSummary, "stoppedOnRateLimit">;
 
 const UNDEFINED_TABLE = "42P01";
 let missingTablesLogged = false;
@@ -89,48 +91,77 @@ export class MoneriumSyncOrchestrator {
             return summary;
         }
 
-        const due = await this.claimDue(now);
-        if (!due) return summary;
-        const { dueOrders, dueProfiles, dueLinks } = due;
-
-        for (const order of dueOrders) {
-            if (summary.stoppedOnRateLimit) break;
-            await this.guard(summary, () => this.syncOrder(order, walletUrl));
-            summary.orders++;
-        }
-
-        const seen = new Set<string>();
-        for (const connection of [...dueProfiles, ...dueLinks]) {
-            if (summary.stoppedOnRateLimit) break;
-            if (seen.has(connection.wallet)) continue;
-            seen.add(connection.wallet);
-            await this.guard(summary, () =>
-                this.syncConnection(connection.wallet, walletUrl)
-            );
-            if (dueProfiles.includes(connection)) summary.profiles++;
-            else summary.links++;
-        }
+        const claim = { now, limit: MONERIUM_SYNC.BATCH_CAP };
+        const syncConnection = (row: { wallet: Address }) =>
+            this.syncConnection(row.wallet, walletUrl);
+        const tablesPresent =
+            (await this.runPhase(
+                summary,
+                "orders",
+                () =>
+                    this.trackedOrders.claimInFlightDue({
+                        ...claim,
+                        tiers: MONERIUM_SYNC.ORDER_TIERS,
+                    }),
+                (order) => this.syncOrder(order, walletUrl)
+            )) &&
+            (await this.runPhase(
+                summary,
+                "profiles",
+                () =>
+                    this.connections.claimDueForProfileSync({
+                        ...claim,
+                        tiers: MONERIUM_SYNC.PROFILE_TIERS,
+                    }),
+                syncConnection
+            )) &&
+            (await this.runPhase(
+                summary,
+                "links",
+                () =>
+                    this.connections.claimDueForLinkSync({
+                        ...claim,
+                        tiers: MONERIUM_SYNC.LINK_TIERS,
+                    }),
+                syncConnection
+            ));
+        if (tablesPresent) await this.deleteStaleOrders(now);
         return summary;
     }
 
+    /**
+     * Claims one batch only once the previous phase is done, so a 429 strands as few
+     * stamped rows as possible. False while the tables are missing.
+     */
+    private async runPhase<T>(
+        summary: MoneriumSyncSummary,
+        phase: SyncPhase,
+        claim: () => Promise<T[]>,
+        sync: (item: T) => Promise<void>
+    ): Promise<boolean> {
+        if (this.stopsOnRateLimit(summary)) return true;
+        const due = await this.claimUnlessTablesMissing(claim);
+        if (!due) return false;
+        for (const item of due) {
+            if (this.stopsOnRateLimit(summary)) break;
+            await this.guard(summary, () => sync(item));
+            summary[phase]++;
+        }
+        return true;
+    }
+
+    /** A 429 from any caller, a user request included, pauses the shared instance. */
+    private stopsOnRateLimit(summary: MoneriumSyncSummary): boolean {
+        if (this.rateLimitPause.isPaused()) summary.stoppedOnRateLimit = true;
+        return summary.stoppedOnRateLimit;
+    }
+
     /** Null while the tables are missing: the first deploy can precede the migration. */
-    private async claimDue(now: Date) {
-        const claim = { now, limit: MONERIUM_SYNC.BATCH_CAP };
+    private async claimUnlessTablesMissing<T>(
+        claim: () => Promise<T[]>
+    ): Promise<T[] | null> {
         try {
-            return {
-                dueOrders: await this.trackedOrders.claimInFlightDue({
-                    ...claim,
-                    tiers: [...MONERIUM_SYNC.ORDER_TIERS],
-                }),
-                dueProfiles: await this.connections.claimDueForProfileSync({
-                    ...claim,
-                    tiers: [...MONERIUM_SYNC.PROFILE_TIERS],
-                }),
-                dueLinks: await this.connections.claimDueForLinkSync({
-                    ...claim,
-                    tiers: [...MONERIUM_SYNC.LINK_TIERS],
-                }),
-            };
+            return await claim();
         } catch (error) {
             if (!isMissingTable(error)) throw error;
             if (!missingTablesLogged) {
@@ -143,7 +174,18 @@ export class MoneriumSyncOrchestrator {
         }
     }
 
-    /** A 429 ends the tick and pauses the next ones; any other failure only costs that item its turn. */
+    private async deleteStaleOrders(now: Date): Promise<void> {
+        try {
+            await this.trackedOrders.deleteStale(now);
+        } catch (error) {
+            log.warn(
+                { error: describeError(error) },
+                "[MoneriumSync] stale order cleanup failed"
+            );
+        }
+    }
+
+    /** A 429 ends the tick; any other failure only costs that item its turn. */
     private async guard(
         summary: MoneriumSyncSummary,
         task: () => Promise<void>
@@ -153,12 +195,11 @@ export class MoneriumSyncOrchestrator {
         } catch (error) {
             if (error instanceof MoneriumApiError && error.status === 429) {
                 summary.stoppedOnRateLimit = true;
-                this.rateLimitPause.pause(error.retryAfterSeconds);
                 log.warn("[MoneriumSync] rate limited, stopping the tick");
                 return;
             }
             log.warn(
-                { error: error instanceof Error ? error.message : "unknown" },
+                { error: describeError(error) },
                 "[MoneriumSync] item failed, deferred to a later tick"
             );
         }
@@ -186,9 +227,10 @@ export class MoneriumSyncOrchestrator {
         wallet: Address,
         walletUrl: string
     ): Promise<void> {
-        const { after, profileChanged } =
+        const { before, after, profileChanged } =
             await this.status.refreshFromMonerium(wallet);
-        if (!profileChanged) return;
+        // The first observation is no news: the state may have been reached long ago.
+        if (!profileChanged || before.profileState === null) return;
 
         if (after.profileState === "approved") {
             await this.notify(
@@ -221,7 +263,7 @@ export class MoneriumSyncOrchestrator {
             });
         } catch (error) {
             log.warn(
-                { error: error instanceof Error ? error.message : "unknown" },
+                { error: describeError(error) },
                 "[MoneriumSync] push failed"
             );
         }

@@ -1,23 +1,22 @@
-import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { isMoneriumOwnPayoutAvailable } from "@frak-labs/app-essentials/monerium";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { requireMoneriumConfig } from "../config";
 import type {
     MoneriumConnectionRow,
     MoneriumTrackedOrderRow,
 } from "../db/schema";
 import {
-    connectionErrorFor,
     MoneriumApiError,
-    notConnected,
     profileNotApproved,
-    reauthRequired,
+    refusalError,
+    requireConnectedRow,
     rethrowUpstream,
 } from "../errors";
 import type { MoneriumConnectionRepository } from "../repositories/MoneriumConnectionRepository";
 import type { MoneriumTrackedOrderRepository } from "../repositories/MoneriumTrackedOrderRepository";
 import {
+    type MoneriumBeneficiaryDto,
     type MoneriumOrderDto,
     type MoneriumPlaceOrderBody,
     moneriumErrorCodes,
@@ -30,14 +29,13 @@ import type { MoneriumStatusService } from "./MoneriumStatusService";
 import type { MoneriumTokenService } from "./MoneriumTokenService";
 import {
     deriveBeneficiaries,
-    type MoneriumBeneficiary,
     sortNewestFirst,
     toOrderDto,
 } from "./orderMapping";
 import { validateRedeemOrder } from "./orderValidation";
 import { TtlCoalescer } from "./TtlCoalescer";
 
-export type PlaceOrderResult = {
+type PlaceOrderResult = {
     orderId: string;
     order: MoneriumOrderDto | null;
 };
@@ -49,19 +47,31 @@ function orderIdTaken(): HttpError {
     );
 }
 
-function sameWallet(a: Address, b: Address): boolean {
-    return a.toLowerCase() === b.toLowerCase();
-}
-
-export const ORDER_LIST_COALESCE_MS = 5_000;
-export const UNKNOWN_ORDER_MAX_AGE_MS = 60 * 60_000;
-export const ACCEPTED_ORDER_MAX_AGE_MS = 24 * 60 * 60_000;
+const ORDER_LIST_COALESCE_MS = 5_000;
+const UNKNOWN_ORDER_MAX_AGE_MS = 60 * 60_000;
+const ACCEPTED_ORDER_MAX_AGE_MS = 24 * 60 * 60_000;
 
 function orderRejected(): HttpError {
     return HttpError.unprocessable(
         moneriumErrorCodes.orderRejected,
         "Monerium refused the order"
     );
+}
+
+function walletNotLinked(): HttpError {
+    return HttpError.conflict(
+        moneriumErrorCodes.walletNotLinked,
+        "This wallet is not linked to the Monerium account yet"
+    );
+}
+
+function isLinked(row: MoneriumConnectionRow): boolean {
+    return row.walletLinkState === "linked";
+}
+
+/** Monerium answers a bare 400 otherwise: an own payout reuses the profile's approved identity. */
+function canPayOwn(row: MoneriumConnectionRow): boolean {
+    return isMoneriumOwnPayoutAvailable(row.profileState);
 }
 
 export class MoneriumOrderService {
@@ -83,7 +93,9 @@ export class MoneriumOrderService {
     }
 
     /** Past payout targets the wallet can reuse: third parties without a usable name are left out. */
-    async listBeneficiaries(wallet: Address): Promise<MoneriumBeneficiary[]> {
+    async listBeneficiaries(
+        wallet: Address
+    ): Promise<MoneriumBeneficiaryDto[]> {
         return deriveBeneficiaries(await this.listOrders(wallet));
     }
 
@@ -93,10 +105,11 @@ export class MoneriumOrderService {
         body: MoneriumPlaceOrderBody;
     }): Promise<PlaceOrderResult> {
         const { wallet, body } = params;
-        const connection = await this.requireConnected(wallet);
+        const connection = await this.connections.findByWallet(wallet);
+        requireConnectedRow(connection);
 
         const known = await this.trackedOrders.findById(body.orderId);
-        if (known && !sameWallet(known.wallet, wallet)) {
+        if (known && !isAddressEqual(known.wallet, wallet)) {
             throw orderIdTaken();
         }
         if (known) {
@@ -109,8 +122,17 @@ export class MoneriumOrderService {
             new Date(),
             connection.profileKind
         );
-        await this.requireLinkedWallet(wallet);
-        if (order.own) await this.requireOwnPayoutProfile(wallet, connection);
+        const linked = await this.status.recheck(wallet, connection, isLinked);
+        if (!linked) throw walletNotLinked();
+        if (order.own) {
+            // A refresh made for the link already brought the latest profile state.
+            const approved =
+                linked === connection
+                    ? (await this.status.recheck(wallet, linked, canPayOwn)) !==
+                      null
+                    : canPayOwn(linked);
+            if (!approved) throw profileNotApproved();
+        }
         const config = requireMoneriumConfig();
 
         const inserted =
@@ -156,7 +178,7 @@ export class MoneriumOrderService {
     }
 
     /** Current Monerium view of a tracked order, or null when Monerium does not know it (yet). */
-    async fetchTrackedOrder(
+    private async fetchTrackedOrder(
         tracked: Pick<MoneriumTrackedOrderRow, "id" | "wallet">
     ): Promise<MoneriumOrderDto | null> {
         try {
@@ -222,17 +244,23 @@ export class MoneriumOrderService {
         });
         if (inserted) return true;
         const winner = await this.trackedOrders.findById(body.orderId);
-        if (winner && !sameWallet(winner.wallet, wallet)) throw orderIdTaken();
+        if (winner && !isAddressEqual(winner.wallet, wallet)) {
+            throw orderIdTaken();
+        }
         return false;
     }
 
+    /** An `HttpError` was raised before Monerium saw the order, so the row this call created is dropped. */
     private async handlePlacementFailure(
         error: unknown,
         context: { wallet: Address; orderId: string; created: boolean }
     ): Promise<PlaceOrderResult> {
-        if (!(error instanceof MoneriumApiError)) throw error;
-        if (error.isUpstreamFailure) return rethrowUpstream(error);
-
+        if (!(error instanceof MoneriumApiError)) {
+            if (error instanceof HttpError && context.created) {
+                await this.trackedOrders.deleteById(context.orderId);
+            }
+            throw error;
+        }
         if (error.status === 409) {
             const existing = await this.findExistingOrder(
                 context.wallet,
@@ -240,82 +268,30 @@ export class MoneriumOrderService {
             );
             if (existing) return { orderId: context.orderId, order: existing };
         }
-        const connectionError = connectionErrorFor(error);
-        if (context.created) {
+        const refusal = refusalError(error, orderRejected, "order");
+        if (!error.isUpstreamFailure && context.created) {
             await this.trackedOrders.deleteById(context.orderId);
         }
-        if (connectionError) throw connectionError;
-        log.warn(
-            { status: error.status, moneriumCode: error.moneriumCode },
-            "[Monerium] order refused"
-        );
-        throw orderRejected();
+        throw refusal;
     }
 
-    private async findExistingOrder(
+    private findExistingOrder(
         wallet: Address,
         orderId: string
     ): Promise<MoneriumOrderDto | null> {
-        try {
-            return await this.fetchTrackedOrder({ id: orderId, wallet });
-        } catch (error) {
-            if (error instanceof HttpError) throw error;
-            return rethrowUpstream(error);
-        }
+        return this.fetchTrackedOrder({ id: orderId, wallet }).catch(
+            rethrowUpstream
+        );
     }
 
     private async fetchOrders(wallet: Address) {
-        await this.requireConnected(wallet);
-        try {
-            return await this.orderLists.run(wallet.toLowerCase(), () =>
+        requireConnectedRow(await this.connections.findByWallet(wallet));
+        return this.orderLists
+            .run(wallet.toLowerCase(), () =>
                 this.tokens.withAccessToken(wallet, (accessToken) =>
                     this.client.listOrders(accessToken, { address: wallet })
                 )
-            );
-        } catch (error) {
-            if (error instanceof HttpError) throw error;
-            return rethrowUpstream(error);
-        }
-    }
-
-    private async requireConnected(
-        wallet: Address
-    ): Promise<MoneriumConnectionRow> {
-        const row = await this.connections.findByWallet(wallet);
-        if (!row) throw notConnected();
-        if (row.status === "reauth_required") throw reauthRequired();
-        return row;
-    }
-
-    /** Monerium answers a bare 400 otherwise; the cached state may predate an approval, so it is re-checked once. */
-    private async requireOwnPayoutProfile(
-        wallet: Address,
-        connection: MoneriumConnectionRow
-    ): Promise<void> {
-        if (isMoneriumOwnPayoutAvailable(connection.profileState)) return;
-        try {
-            const { after } = await this.status.refreshFromMonerium(wallet);
-            if (isMoneriumOwnPayoutAvailable(after.profileState)) return;
-        } catch (error) {
-            if (error instanceof HttpError) throw error;
-            rethrowUpstream(error);
-        }
-        throw profileNotApproved();
-    }
-
-    private async requireLinkedWallet(wallet: Address): Promise<void> {
-        const row = await this.connections.findByWallet(wallet);
-        if (row?.walletLinkState === "linked") return;
-        try {
-            const { after } = await this.status.refreshFromMonerium(wallet);
-            if (after.walletLinkState === "linked") return;
-        } catch (error) {
-            if (error instanceof HttpError) throw error;
-            rethrowUpstream(error);
-        }
-        throw HttpError.conflict(
-            moneriumErrorCodes.walletNotLinked,
-            "This wallet is not linked to the Monerium account yet"
-        );
+            )
+            .catch(rethrowUpstream);
     }
 }

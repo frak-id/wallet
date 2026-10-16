@@ -32,6 +32,8 @@ export type MoneriumProfileState =
     | "rejected"
     | "closed";
 
+export type MoneriumProfileKind = "personal" | "corporate";
+
 export type MoneriumEnvironment = "sandbox" | "production";
 
 /** Sandbox never reviews identities: its profiles stay pending, yet can link wallets and pay out. */
@@ -109,6 +111,37 @@ export function isValidCountryCode(code: string): boolean {
 
 export function isValidCounterpartName(name: string): boolean {
     return name.trim().length >= MONERIUM_LIMITS.NAME_MIN_LENGTH;
+}
+
+/** A third party can only be paid with both names; an own payout reuses the profile's identity. */
+export function isPayableCounterpart(counterpart: {
+    own: boolean;
+    firstName?: string;
+    lastName?: string;
+}): boolean {
+    return (
+        counterpart.own ||
+        (isValidCounterpartName(counterpart.firstName ?? "") &&
+            isValidCounterpartName(counterpart.lastName ?? ""))
+    );
+}
+
+/** The document threshold binds personal third-party payouts only; corporate profiles are exempt. */
+export function exceedsThirdPartyLimit(
+    amount: string,
+    payout: {
+        own: boolean;
+        profileKind: MoneriumProfileKind | null | undefined;
+    }
+): boolean {
+    const normalized = normalizeRedeemAmount(amount);
+    return (
+        normalized !== null &&
+        !payout.own &&
+        payout.profileKind !== "corporate" &&
+        Number.parseFloat(normalized) >=
+            MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR
+    );
 }
 
 export function isValidMemo(memo: string): boolean {

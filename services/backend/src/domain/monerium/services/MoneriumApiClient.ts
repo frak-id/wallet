@@ -1,16 +1,17 @@
 import type {
     MoneriumOrderState,
+    MoneriumProfileKind,
     MoneriumProfileState,
 } from "@frak-labs/app-essentials/monerium";
 import type { Address, Hex } from "viem";
-import { type MoneriumConfig, requireMoneriumConfig } from "../config";
+import type { MoneriumConfig } from "../config";
 import { MoneriumApiError } from "../errors";
-import { MoneriumRateLimitPause } from "./MoneriumRateLimitPause";
+import type { MoneriumRateLimitPause } from "./MoneriumRateLimitPause";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const ACCEPT_HEADER = "application/vnd.monerium.api-v2+json";
 
-export type MoneriumTokenResponse = {
+type MoneriumTokenResponse = {
     accessToken: string;
     refreshToken: string;
     expiresInSeconds: number;
@@ -18,23 +19,23 @@ export type MoneriumTokenResponse = {
 
 export type MoneriumProfileSummary = {
     id: string;
-    kind: "personal" | "corporate";
+    kind: MoneriumProfileKind;
     state: MoneriumProfileState;
     reasonCode?: string;
 };
 
-export type MoneriumUserContext = {
+type MoneriumUserContext = {
     userId: string;
     defaultProfile?: string;
 };
 
-export type MoneriumAddressRecord = {
+type MoneriumAddressRecord = {
     profile?: string;
     address: string;
     chains: string[];
 };
 
-export type MoneriumOrderDetails = {
+type MoneriumOrderDetails = {
     own?: boolean;
     firstName?: string;
     lastName?: string;
@@ -64,7 +65,7 @@ export type MoneriumOrderRecord = {
     };
 };
 
-export type MoneriumRedeemOrderRequest = {
+type MoneriumRedeemOrderRequest = {
     id: string;
     address: Address;
     chain: string;
@@ -79,7 +80,7 @@ export type MoneriumRedeemOrderRequest = {
 };
 
 /** `rejected` is a clear verdict on the signature, `not_eligible` a portal redirect, `unexpected` anything else. */
-export type MoneriumSiweOutcome =
+type MoneriumSiweOutcome =
     | { kind: "code"; code: string }
     | { kind: "rejected"; error: string; description?: string }
     | { kind: "not_eligible" }
@@ -153,21 +154,42 @@ async function toApiError(response: Response): Promise<MoneriumApiError> {
         body.error ??
         `Monerium answered ${response.status}`;
     const code = body.error ?? (body.code ? String(body.code) : undefined);
-    return new MoneriumApiError(
-        response.status,
-        code,
-        message,
-        parseRetryAfter(response.headers.get("retry-after"))
-    );
+    return new MoneriumApiError(response.status, code, message);
 }
 
 /** Hand-written client: the official SDK cannot read a manual redirect or tell a 202 from a 200. */
 export class MoneriumApiClient {
     constructor(
         private readonly fetchImpl: typeof fetch,
-        private readonly getConfig: () => MoneriumConfig = requireMoneriumConfig,
-        readonly rateLimitPause = new MoneriumRateLimitPause()
+        private readonly getConfig: () => MoneriumConfig,
+        private readonly rateLimitPause: MoneriumRateLimitPause
     ) {}
+
+    private authorizeParams(params: { codeChallenge: string; state: string }) {
+        const { clientId, redirectUri } = this.getConfig();
+        return {
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            code_challenge: params.codeChallenge,
+            code_challenge_method: "S256",
+            state: params.state,
+        };
+    }
+
+    /** The Monerium portal page the user is sent to for the OAuth authorization code flow. */
+    authorizeUrl(params: {
+        codeChallenge: string;
+        state: string;
+        authMode?: "login" | "signup";
+    }): string {
+        const url = new URL("/auth", this.getConfig().apiBaseUrl);
+        url.search = new URLSearchParams({
+            ...this.authorizeParams(params),
+            response_type: "code",
+            ...(params.authMode ? { auth_mode: params.authMode } : {}),
+        }).toString();
+        return url.toString();
+    }
 
     private async send(
         path: string,
@@ -222,13 +244,22 @@ export class MoneriumApiClient {
     ): Promise<{ status: number; body: T }> {
         const response = await this.send(path, options);
         if (!response.ok) throw await toApiError(response);
-        const text = await response.text();
+        const text = await response.text().catch((error: unknown) => {
+            throw new MoneriumApiError(
+                0,
+                undefined,
+                error instanceof Error
+                    ? error.message
+                    : "Monerium body unreadable"
+            );
+        });
         if (!text) return { status: response.status, body: {} as T };
         try {
             return { status: response.status, body: JSON.parse(text) as T };
         } catch {
+            // A 2xx we cannot read is Monerium's failure, not a verdict on our request.
             throw new MoneriumApiError(
-                response.status,
+                502,
                 undefined,
                 "Monerium answered with invalid JSON"
             );
@@ -291,14 +322,10 @@ export class MoneriumApiClient {
             method: "POST",
             redirect: "manual",
             form: {
-                client_id: config.clientId,
-                code_challenge: params.codeChallenge,
-                code_challenge_method: "S256",
+                ...this.authorizeParams(params),
                 authentication_method: "siwe",
-                redirect_uri: config.redirectUri,
                 message: params.message,
                 signature: params.signature,
-                state: params.state,
             },
         });
 
@@ -362,12 +389,13 @@ export class MoneriumApiClient {
             signature: Hex;
         }
     ): Promise<"created" | "accepted"> {
-        const { status } = await this.requestJson<unknown>("/addresses", {
+        const response = await this.send("/addresses", {
             method: "POST",
             accessToken,
             json: params,
         });
-        return status === 202 ? "accepted" : "created";
+        if (!response.ok) throw await toApiError(response);
+        return response.status === 202 ? "accepted" : "created";
     }
 
     /** 200 returns the order, 202 means Monerium still waits on an on-chain signature. */
@@ -432,10 +460,7 @@ export class MoneriumApiClient {
     }
 }
 
-type MoneriumProfileWire = {
-    id: string;
-    kind: "personal" | "corporate";
-    state: MoneriumProfileState;
+type MoneriumProfileWire = Omit<MoneriumProfileSummary, "reasonCode"> & {
     meta?: { reasonCode?: string };
 };
 

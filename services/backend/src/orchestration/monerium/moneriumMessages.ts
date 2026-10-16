@@ -1,7 +1,10 @@
 import type { LocalisedNotificationPayload } from "@backend-domain/notifications";
 
-function frenchAmount(amount: string): string {
-    return `${amount.replace(".", ",")} €`;
+function euros(amount: string, locale: "en" | "fr"): string {
+    return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "EUR",
+    }).format(Number(amount));
 }
 
 /** Lock-screen copy: amounts are fine, IBANs, names and memos never appear. */
@@ -12,12 +15,12 @@ export const moneriumMessages = {
     ): LocalisedNotificationPayload => ({
         en: {
             title: "Transfer sent",
-            body: `Your transfer of €${amount} has been sent to your bank.`,
+            body: `Your transfer of ${euros(amount, "en")} has been sent to your bank.`,
             data: { url },
         },
         fr: {
             title: "Virement envoyé",
-            body: `Votre virement de ${frenchAmount(amount)} a été envoyé vers votre banque.`,
+            body: `Votre virement de ${euros(amount, "fr")} a été envoyé vers votre banque.`,
             data: { url },
         },
     }),
@@ -27,12 +30,12 @@ export const moneriumMessages = {
     ): LocalisedNotificationPayload => ({
         en: {
             title: "Transfer rejected",
-            body: `Your transfer of €${amount} was rejected. Your funds stay in your wallet.`,
+            body: `Your transfer of ${euros(amount, "en")} was rejected. Your funds stay in your wallet.`,
             data: { url },
         },
         fr: {
             title: "Virement refusé",
-            body: `Votre virement de ${frenchAmount(amount)} a été refusé. Vos fonds restent dans votre portefeuille.`,
+            body: `Votre virement de ${euros(amount, "fr")} a été refusé. Vos fonds restent dans votre portefeuille.`,
             data: { url },
         },
     }),

@@ -19,7 +19,7 @@ import {
 } from "./pkce";
 import { buildMoneriumSiweMessage, SIWE_VALIDITY_MS } from "./siweMessage";
 
-export const PENDING_AUTH_TTL_MS = 30 * 60_000;
+const PENDING_AUTH_TTL_MS = 30 * 60_000;
 
 function invalidState(): HttpError {
     return HttpError.badRequest(
@@ -53,9 +53,13 @@ export class MoneriumAuthService {
         wallet: Address;
         authMode?: "login" | "signup";
     }): Promise<{ url: string }> {
-        const config = requireMoneriumConfig();
         const verifier = generateCodeVerifier();
         const state = generateAuthState();
+        const url = this.client.authorizeUrl({
+            codeChallenge: codeChallengeS256(verifier),
+            state,
+            authMode: params.authMode,
+        });
         await this.pendingAuths.create({
             state,
             wallet: params.wallet,
@@ -68,16 +72,7 @@ export class MoneriumAuthService {
             siweMessage: null,
             expiresAt: new Date(Date.now() + PENDING_AUTH_TTL_MS),
         });
-
-        const url = new URL("/auth", config.apiBaseUrl);
-        url.searchParams.set("client_id", config.clientId);
-        url.searchParams.set("redirect_uri", config.redirectUri);
-        url.searchParams.set("response_type", "code");
-        url.searchParams.set("code_challenge", codeChallengeS256(verifier));
-        url.searchParams.set("code_challenge_method", "S256");
-        url.searchParams.set("state", state);
-        if (params.authMode) url.searchParams.set("auth_mode", params.authMode);
-        return { url: url.toString() };
+        return { url };
     }
 
     async handleCallback(params: {
@@ -91,13 +86,12 @@ export class MoneriumAuthService {
         );
         if (!isUsable(pending, "oauth")) throw invalidState();
 
-        await this.exchangeAndStore({
-            wallet: params.wallet,
-            code: params.code,
-            verifierEncrypted: pending.codeVerifierEncrypted,
-            clearSiweFailure: true,
-        });
-        return this.status.getStatus(params.wallet, { refresh: true });
+        const verifier = await this.cipher.decrypt(
+            pending.codeVerifierEncrypted,
+            params.wallet,
+            "code_verifier_encrypted"
+        );
+        return this.connect(params.wallet, params.code, verifier);
     }
 
     /** Only offered to wallets worth a passkey prompt: see `isSilentReconnectEligible`. */
@@ -117,7 +111,6 @@ export class MoneriumAuthService {
         const now = new Date();
         const message = buildMoneriumSiweMessage({
             address: params.wallet,
-            appName: config.siweAppName,
             config,
             now,
         });
@@ -154,17 +147,14 @@ export class MoneriumAuthService {
             params.wallet,
             "code_verifier_encrypted"
         );
-        let outcome: Awaited<ReturnType<MoneriumApiClient["submitSiwe"]>>;
-        try {
-            outcome = await this.client.submitSiwe({
+        const outcome = await this.client
+            .submitSiwe({
                 message: pending.siweMessage,
                 signature: params.signature,
                 codeChallenge: codeChallengeS256(verifier),
                 state: params.state,
-            });
-        } catch (error) {
-            return rethrowUpstream(error);
-        }
+            })
+            .catch(rethrowUpstream);
 
         if (outcome.kind !== "code") {
             if (outcome.kind !== "unexpected") {
@@ -185,13 +175,7 @@ export class MoneriumAuthService {
             );
         }
 
-        await this.exchangeAndStore({
-            wallet: params.wallet,
-            code: outcome.code,
-            verifierEncrypted: pending.codeVerifierEncrypted,
-            clearSiweFailure: true,
-        });
-        return this.status.getStatus(params.wallet, { refresh: true });
+        return this.connect(params.wallet, outcome.code, verifier);
     }
 
     /** Forgets everything Frak holds for the wallet. Monerium itself is untouched. */
@@ -201,41 +185,31 @@ export class MoneriumAuthService {
         await this.trackedOrders.deleteByWallet(wallet);
     }
 
-    private async exchangeAndStore(params: {
-        wallet: Address;
-        code: string;
-        verifierEncrypted: string;
-        clearSiweFailure: boolean;
-    }): Promise<void> {
-        const verifier = await this.cipher.decrypt(
-            params.verifierEncrypted,
-            params.wallet,
-            "code_verifier_encrypted"
-        );
-        let tokens: Awaited<
-            ReturnType<MoneriumApiClient["exchangeAuthorizationCode"]>
-        >;
-        try {
-            tokens = await this.client.exchangeAuthorizationCode({
-                code: params.code,
-                codeVerifier: verifier,
+    private async connect(
+        wallet: Address,
+        code: string,
+        verifier: string
+    ): Promise<MoneriumStatusResponse> {
+        const tokens = await this.client
+            .exchangeAuthorizationCode({ code, codeVerifier: verifier })
+            .catch((error: unknown) => {
+                if (
+                    error instanceof MoneriumApiError &&
+                    !error.isUpstreamFailure
+                ) {
+                    throw HttpError.unprocessable(
+                        moneriumErrorCodes.tokenExchangeFailed,
+                        "Monerium refused the authorization code"
+                    );
+                }
+                return rethrowUpstream(error);
             });
-        } catch (error) {
-            if (error instanceof MoneriumApiError && !error.isUpstreamFailure) {
-                throw HttpError.unprocessable(
-                    moneriumErrorCodes.tokenExchangeFailed,
-                    "Monerium refused the authorization code"
-                );
-            }
-            return rethrowUpstream(error);
-        }
 
         await this.connections.upsertConnected({
-            wallet: params.wallet,
-            moneriumUserId: null,
+            wallet,
             accessTokenEncrypted: await this.cipher.encrypt(
                 tokens.accessToken,
-                params.wallet,
+                wallet,
                 "access_token_encrypted"
             ),
             accessTokenExpiresAt: new Date(
@@ -243,10 +217,10 @@ export class MoneriumAuthService {
             ),
             refreshTokenEncrypted: await this.cipher.encrypt(
                 tokens.refreshToken,
-                params.wallet,
+                wallet,
                 "refresh_token_encrypted"
             ),
-            clearSiweFailure: params.clearSiweFailure,
         });
+        return this.status.getStatus(wallet, { refresh: true });
     }
 }
