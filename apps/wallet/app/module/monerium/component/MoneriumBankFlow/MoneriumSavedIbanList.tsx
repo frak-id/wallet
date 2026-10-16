@@ -40,11 +40,8 @@ export function MoneriumSavedIbanList({
                     <Card
                         key={entry.iban}
                         variant="elevated"
-                        padding="none"
-                        className={`${styles.transferCellPadding}${
-                            isSelected ? ` ${styles.ibanCardSelected}` : ""
-                        }`}
-                        aria-current={isSelected ? "true" : undefined}
+                        padding="cell"
+                        selected={isSelected}
                     >
                         <Inline
                             space="m"
@@ -55,6 +52,7 @@ export function MoneriumSavedIbanList({
                             <button
                                 type="button"
                                 className={styles.ibanRow}
+                                aria-pressed={isSelected}
                                 onClick={() => onSelect(entry)}
                             >
                                 <Stack space="xxs">
@@ -71,7 +69,8 @@ export function MoneriumSavedIbanList({
                                 className={styles.linkButton}
                                 onClick={() => onRemove(entry.iban)}
                                 aria-label={t(
-                                    "monerium.bankFlow.transfer.ibanManager.remove"
+                                    "monerium.bankFlow.transfer.ibanManager.remove",
+                                    { name: entry.pseudo }
                                 )}
                             >
                                 <Box

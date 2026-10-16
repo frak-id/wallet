@@ -3,10 +3,15 @@ import type * as WalletShared from "@frak-labs/wallet-shared";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { ibanStore } from "@/module/monerium/store/ibanStore";
+import { fail, ok } from "@/tests/moneriumFixtures";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 const WALLET = "0x1111111111111111111111111111111111111111";
-const mocks = vi.hoisted(() => ({ get: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+    get: vi.fn(),
+    recordError: vi.fn(),
+    sessionAddress: { current: null as string | null },
+}));
 
 vi.mock("wagmi", () => ({ useConnection: () => ({ address: WALLET }) }));
 vi.mock("react-i18next", () => ({
@@ -19,7 +24,12 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
     return {
         ...actual,
-        recordError: vi.fn(),
+        recordError: mocks.recordError,
+        sessionStore: {
+            getState: () => ({
+                session: { address: mocks.sessionAddress.current },
+            }),
+        },
         authenticatedWalletApi: {
             monerium: { beneficiaries: { get: mocks.get } },
         },
@@ -41,6 +51,7 @@ describe("beneficiaryToIbanEntry", () => {
                     firstName: "Ada",
                     lastName: "Lovelace",
                     country: "DE",
+                    lastUsedAt: "2026-01-01T00:00:00Z",
                 },
                 "My account"
             )
@@ -57,7 +68,12 @@ describe("beneficiaryToIbanEntry", () => {
     test("own gets the translated label and no names", () => {
         expect(
             beneficiaryToIbanEntry(
-                { iban: "DE89370400440532013000", own: true, firstName: "X" },
+                {
+                    iban: "DE89370400440532013000",
+                    own: true,
+                    firstName: "X",
+                    lastUsedAt: "2026-01-01T00:00:00Z",
+                },
                 "My account"
             )
         ).toMatchObject({
@@ -72,8 +88,9 @@ describe("useMoneriumBeneficiarySync", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         ibanStore.getState().reset();
-        mocks.get.mockResolvedValue({
-            data: {
+        mocks.sessionAddress.current = WALLET;
+        mocks.get.mockResolvedValue(
+            ok({
                 beneficiaries: [
                     {
                         iban: "FR7630006000011234567890189",
@@ -89,9 +106,8 @@ describe("useMoneriumBeneficiarySync", () => {
                         lastUsedAt: "2026-01-01T00:00:00Z",
                     },
                 ],
-            },
-            error: null,
-        });
+            })
+        );
     });
 
     test("merges once, local entries win, then sets the marker", async ({
@@ -155,8 +171,8 @@ describe("useMoneriumBeneficiarySync", () => {
     test("drops third-party beneficiaries without a usable name", async ({
         queryWrapper,
     }) => {
-        mocks.get.mockResolvedValue({
-            data: {
+        mocks.get.mockResolvedValue(
+            ok({
                 beneficiaries: [
                     {
                         iban: "FR7630006000011234567890189",
@@ -176,9 +192,8 @@ describe("useMoneriumBeneficiarySync", () => {
                         lastUsedAt: "2026-01-01T00:00:00Z",
                     },
                 ],
-            },
-            error: null,
-        });
+            })
+        );
         renderHook(() => useMoneriumBeneficiarySync(true), {
             wrapper: queryWrapper.wrapper,
         });
@@ -189,5 +204,39 @@ describe("useMoneriumBeneficiarySync", () => {
         expect(ibanStore.getState().knownIbans.map((e) => e.iban)).toEqual([
             "DE89370400440532013000",
         ]);
+    });
+
+    test("drops the response when the session left that wallet meanwhile", async ({
+        queryWrapper,
+    }) => {
+        mocks.sessionAddress.current = null;
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(mocks.get).toHaveBeenCalledOnce());
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(ibanStore.getState().knownIbans).toEqual([]);
+        expect(ibanStore.getState().syncedWallet).toBeNull();
+    });
+
+    test("a failed sync is reported and retried when the wallet reconnects", async ({
+        queryWrapper,
+    }) => {
+        mocks.get.mockResolvedValueOnce(fail(502));
+        const { rerender } = renderHook(
+            ({ connected }) => useMoneriumBeneficiarySync(connected),
+            { wrapper: queryWrapper.wrapper, initialProps: { connected: true } }
+        );
+
+        await waitFor(() => expect(mocks.recordError).toHaveBeenCalledOnce());
+        expect(ibanStore.getState().syncedWallet).toBeNull();
+
+        rerender({ connected: false });
+        rerender({ connected: true });
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+        expect(mocks.get).toHaveBeenCalledTimes(2);
     });
 });

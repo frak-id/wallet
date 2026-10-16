@@ -62,6 +62,7 @@ export {
     type FreshSdkResult,
     formatCurrency,
     getErrorCode,
+    getErrorStatus,
     getFromLocalStorage,
     getInvoke,
     getOrCreateSessionId,

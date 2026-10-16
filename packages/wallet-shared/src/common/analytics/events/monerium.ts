@@ -1,7 +1,7 @@
-/** Monerium telemetry. Never carries an IBAN, a name, a country or an exact amount. */
 /**
+ * Monerium telemetry. Never carries an IBAN, a name, a country or an exact amount.
  * Portal callback outcomes: `cancelled` (user denied), `session_expired`
- * (backend no longer knows the `state`), `error`, `no_code` (no OAuth context).
+ * (the backend does not know the `state`), `error`, `no_code` (no OAuth context).
  */
 export type MoneriumCallbackOutcome =
     | "exchanged"

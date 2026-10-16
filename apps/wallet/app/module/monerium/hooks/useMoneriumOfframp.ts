@@ -1,3 +1,4 @@
+import type { MoneriumPlaceOrderBody } from "@backend-domain/monerium/schemas";
 import {
     buildRedeemOrderMessage,
     MONERIUM_LIMITS,
@@ -18,18 +19,11 @@ import {
     getMoneriumErrorCode,
     unwrapMoneriumResponse,
 } from "@/module/monerium/utils/moneriumErrors";
-import { refreshStatusOnStateChange } from "@/module/monerium/utils/refreshStaleStatus";
 
-export type PlaceOrderParams = {
-    /** Generated once per recap screen so a retry cannot pay twice. */
-    orderId: string;
-    amount: string;
-    iban: string;
-    counterpart:
-        | { own: true }
-        | { own: false; firstName: string; lastName: string; country: string };
-    memo?: string;
-};
+export type PlaceOrderParams = Pick<
+    MoneriumPlaceOrderBody,
+    "orderId" | "amount" | "iban" | "counterpart" | "memo"
+>;
 
 export function useMoneriumOfframp() {
     const signMessage = useMoneriumSignMessage();
@@ -45,13 +39,6 @@ export function useMoneriumOfframp() {
             const normalizedAmount = normalizeRedeemAmount(amount);
             if (!normalizedAmount) {
                 throw createMoneriumError("MONERIUM_INVALID_AMOUNT");
-            }
-            if (
-                !counterpart.own &&
-                Number.parseFloat(normalizedAmount) >=
-                    MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR
-            ) {
-                throw createMoneriumError("MONERIUM_AMOUNT_LIMIT");
             }
 
             const message = buildRedeemOrderMessage({
@@ -89,7 +76,7 @@ export function useMoneriumOfframp() {
             client.invalidateQueries({ queryKey: balanceKey.baseKey });
         },
         onError: (error, { amount, counterpart }, _result, { client }) => {
-            refreshStatusOnStateChange(error, client);
+            client.invalidateQueries({ queryKey: moneriumKey.status });
             trackEvent("monerium_order_failed", {
                 own: counterpart.own,
                 amount_bucket: getAmountBucket(amount),
@@ -99,10 +86,10 @@ export function useMoneriumOfframp() {
     });
 
     return {
-        placeOrder: mutation.mutateAsync,
+        placeOrder: mutation.mutate,
+        placeOrderAsync: mutation.mutateAsync,
         isPending: mutation.isPending,
         isSuccess: mutation.isSuccess,
-        isError: mutation.isError,
         error: mutation.error,
         reset: mutation.reset,
     };

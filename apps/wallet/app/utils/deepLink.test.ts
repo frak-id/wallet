@@ -880,143 +880,33 @@ describe("monerium OAuth callback", () => {
         vi.useRealTimers();
     });
 
-    test("should handle HTTPS App Link for monerium callback with code and state", async () => {
+    async function openLink(url: string) {
         const navigate = vi.fn();
-
         await initDeepLinks(navigate);
+        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
+        openUrlHandler([url]);
+        return navigate;
+    }
 
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler([
+    test.for([
+        [
             "https://wallet-dev.frak.id/monerium/callback?code=abc123&state=xyz",
-        ]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123", state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle custom scheme monerium-callback with code and state", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler([
-            "frakwallet://monerium-callback?code=abc123&state=xyz",
-        ]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123", state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with only code parameter", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback?code=abc123"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with only state parameter", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback?state=xyz"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with no parameters", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            replace: true,
-            search: {},
-        });
-    });
-
-    test("forwards error and error_description so a cancel is not read as no_code", async () => {
-        const navigate = vi.fn();
-        await initDeepLinks(navigate);
-        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
-
-        openUrlHandler([
-            "https://wallet-dev.frak.id/monerium/callback?error=access_denied&error_description=User%20cancelled",
-        ]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: {
-                error: "access_denied",
-                error_description: "User cancelled",
+            {
+                to: "/monerium/callback",
+                search: { code: "abc123", state: "xyz" },
             },
-            replace: true,
-        });
-    });
-
-    test("routes the push link /wallet?open=monerium with the param", async () => {
-        const navigate = vi.fn();
-        await initDeepLinks(navigate);
-        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
-
-        openUrlHandler(["https://wallet-dev.frak.id/wallet?open=monerium"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/wallet",
-            search: { open: "monerium" },
-            replace: true,
-        });
-    });
-
-    test("drops an unknown open value", async () => {
-        const navigate = vi.fn();
-        await initDeepLinks(navigate);
-        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
-
-        openUrlHandler(["https://wallet-dev.frak.id/wallet?open=elsewhere"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/wallet",
-            replace: true,
-        });
+        ],
+        [
+            "https://wallet-dev.frak.id/monerium/callback?error=access_denied&error_description=User%20cancelled",
+            { to: "/monerium/callback", search: { error: "access_denied" } },
+        ],
+        [
+            "https://wallet-dev.frak.id/wallet?open=monerium",
+            { to: "/wallet", search: { open: "monerium" } },
+        ],
+        ["https://wallet-dev.frak.id/wallet?open=elsewhere", { to: "/wallet" }],
+    ] as const)("%s navigates to %o", async ([url, target]) => {
+        const navigate = await openLink(url);
+        expect(navigate).toHaveBeenCalledWith({ ...target, replace: true });
     });
 });

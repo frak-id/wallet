@@ -17,7 +17,6 @@ type DeepLinkParams = {
     code?: string;
     state?: string;
     error?: string;
-    error_description?: string;
     /** Wallet screen to open on landing; only `monerium` is honoured. */
     open?: string;
     m?: string;
@@ -39,7 +38,6 @@ function extractSearchParams(
         code: searchParams.get("code") ?? undefined,
         state: searchParams.get("state") ?? undefined,
         error: searchParams.get("error") ?? undefined,
-        error_description: searchParams.get("error_description") ?? undefined,
         open: searchParams.get("open") ?? undefined,
         m: searchParams.get("m") ?? undefined,
         a: searchParams.get("a") ?? undefined,
@@ -250,9 +248,6 @@ const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
     if (params.code) search.code = params.code;
     if (params.state) search.state = params.state;
     if (params.error) search.error = params.error;
-    if (params.error_description) {
-        search.error_description = params.error_description;
-    }
     return { to: "/monerium/callback", search };
 };
 
@@ -338,7 +333,6 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     notifications: () => ({ to: "/notifications" }),
     history: () => ({ to: "/history" }),
     monerium: resolveMoneriumRoute,
-    "monerium-callback": resolveMoneriumRoute,
 };
 
 /**

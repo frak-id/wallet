@@ -1,9 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    test,
-} from "../../../../tests/vitest-fixtures";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 import { MONERIUM_STORE_NAME, moneriumStore } from "./moneriumStore";
 
 beforeEach(() => {
@@ -24,22 +19,17 @@ function stored() {
 }
 
 describe("moneriumStore", () => {
-    test("starts without having seen the setup success", () => {
+    test("starts unseen, persists only the UI flag at version 2, and reset clears it", () => {
         expect(moneriumStore.getState().hasSeenSetupSuccess).toBe(false);
-    });
 
-    test("markSetupSuccessSeen persists and reset clears it", () => {
         moneriumStore.getState().markSetupSuccessSeen();
-        expect(stored().state).toEqual({ hasSeenSetupSuccess: true });
+        expect(stored()).toEqual({
+            state: { hasSeenSetupSuccess: true },
+            version: 2,
+        });
 
         moneriumStore.getState().reset();
         expect(moneriumStore.getState().hasSeenSetupSuccess).toBe(false);
-    });
-
-    test("persists only the UI flag at version 2", () => {
-        moneriumStore.getState().markSetupSuccessSeen();
-        expect(stored().version).toBe(2);
-        expect(Object.keys(stored().state)).toEqual(["hasSeenSetupSuccess"]);
     });
 });
 

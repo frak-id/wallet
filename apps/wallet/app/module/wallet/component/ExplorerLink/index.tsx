@@ -9,6 +9,10 @@ const explorerUrl = isRunningInProd
     ? arbitrum.blockExplorers.default.url
     : arbitrumSepolia.blockExplorers.default.url;
 
+export function explorerTxUrl(hash: Hex): string {
+    return `${explorerUrl}/tx/${hash}`;
+}
+
 function formatHash({
     hash,
     format = { start: 2, end: 3 },
@@ -35,7 +39,7 @@ export function ExplorerTxLink({
 }) {
     return (
         <a
-            href={`${explorerUrl}/tx/${hash}`}
+            href={explorerTxUrl(hash)}
             target={"_blank"}
             rel={"noreferrer"}
             className={`${styles.explorerLink} ${className}`}

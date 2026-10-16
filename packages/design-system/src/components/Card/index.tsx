@@ -15,6 +15,8 @@ export function Card({
     padding,
     variant,
     radius,
+    tone,
+    selected,
     children,
     className,
     color: _color,
@@ -22,7 +24,7 @@ export function Card({
 }: CardProps) {
     return (
         <Box
-            className={`${card({ variant, padding, radius })}${className ? ` ${className}` : ""}`}
+            className={`${card({ variant, padding, radius, tone, selected })}${className ? ` ${className}` : ""}`}
             {...rest}
         >
             {children}

@@ -1,3 +1,4 @@
+import type { MoneriumAuthStartBodySchema } from "@backend-domain/monerium/schemas";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     authenticatedWalletApi,
@@ -16,11 +17,16 @@ import {
     unwrapMoneriumResponse,
 } from "@/module/monerium/utils/moneriumErrors";
 
-export type MoneriumAuthMode = "login" | "signup";
+type MoneriumAuthMode = NonNullable<
+    (typeof MoneriumAuthStartBodySchema)["static"]["authMode"]
+>;
 
+/** A declined or unavailable SIWE is expected: the portal takes over without an error report. */
 function classifySiweFailure(error: unknown): MoneriumSiweFailure {
     if (isUserCancelledError(error)) return "cancelled";
-    return getMoneriumErrorCode(error) === "MONERIUM_SIWE_REJECTED"
+    const code = getMoneriumErrorCode(error);
+    return code === "MONERIUM_SIWE_REJECTED" ||
+        code === "MONERIUM_SIWE_UNAVAILABLE"
         ? "rejected"
         : "error";
 }
@@ -79,6 +85,10 @@ export function useMoneriumConnect() {
                     trackEvent("monerium_siwe_outcome", { outcome: "success" });
                     return;
                 } catch (error) {
+                    // The backend may have just turned `silentReconnect` off.
+                    queryClient.invalidateQueries({
+                        queryKey: moneriumKey.status,
+                    });
                     const reason = classifySiweFailure(error);
                     trackEvent("monerium_siwe_outcome", { outcome: reason });
                     if (reason === "cancelled") throw error;

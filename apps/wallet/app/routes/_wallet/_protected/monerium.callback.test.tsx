@@ -3,12 +3,18 @@
 import type * as WalletShared from "@frak-labs/wallet-shared";
 import type * as ReactRouter from "@tanstack/react-router";
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import type { ReactElement } from "react";
-// `vi` must come from "vitest" directly: `vi.mock` is hoisted above module
-// imports, so routing it through the fixtures module would reference an
-// uninitialized binding.
+import { type ReactElement, type ReactNode, StrictMode } from "react";
+// `vi` comes from "vitest": a hoisted `vi.mock` cannot reach a fixtures re-export.
 import { vi } from "vitest";
-import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
+import { fail, moneriumStatus, ok } from "@/tests/moneriumFixtures";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+    type WalletTestFixtures,
+} from "@/tests/vitest-fixtures";
 
 type Search = { code?: string; state?: string; error?: string };
 
@@ -16,14 +22,16 @@ const {
     mockSearch,
     mockCallback,
     mockTrackEvent,
+    mockRecordError,
     mockNavigate,
-    mockOpenModal,
+    mockEnabled,
 } = vi.hoisted(() => ({
     mockSearch: { current: {} as Search },
     mockCallback: vi.fn(),
     mockTrackEvent: vi.fn(),
+    mockRecordError: vi.fn(),
     mockNavigate: vi.fn(),
-    mockOpenModal: vi.fn(),
+    mockEnabled: { current: true },
 }));
 
 // `Route.useSearch()` reads the router context, which no bare `render` has.
@@ -39,8 +47,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     };
 });
 
-vi.mock("@/module/stores/modalStore", () => ({
-    modalStore: { getState: () => ({ openModal: mockOpenModal }) },
+vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
+    get isMoneriumEnabled() {
+        return mockEnabled.current;
+    },
 }));
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
@@ -48,7 +58,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     return {
         ...actual,
         trackEvent: mockTrackEvent,
-        recordError: vi.fn(),
+        recordError: mockRecordError,
         authenticatedWalletApi: {
             monerium: { auth: { callback: { post: mockCallback } } },
         },
@@ -62,13 +72,18 @@ vi.mock("react-i18next", () => ({
 import { Route } from "./monerium.callback";
 
 const MoneriumCallback = Route.options.component as () => ReactElement;
+const beforeLoad = Route.options.beforeLoad as () => void;
 
-const STATUS = {
-    connection: "connected",
+const STATUS = moneriumStatus({
+    environment: "sandbox",
     profile: null,
     walletLink: "none",
-    silentReconnect: false,
-    environment: "sandbox",
+});
+
+const OPEN_BANK_FLOW = {
+    to: "/wallet",
+    search: { open: "monerium" },
+    replace: true,
 };
 
 function outcomes(): string[] {
@@ -77,17 +92,27 @@ function outcomes(): string[] {
         .map(([, payload]) => (payload as { outcome: string }).outcome);
 }
 
+function strictWrapper(queryWrapper: WalletTestFixtures["queryWrapper"]) {
+    return ({ children }: { children: ReactNode }) => (
+        <StrictMode>
+            <queryWrapper.wrapper>{children}</queryWrapper.wrapper>
+        </StrictMode>
+    );
+}
+
 describe("MoneriumCallback", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSearch.current = {};
-        mockCallback.mockResolvedValue({ data: STATUS, error: null });
+        mockEnabled.current = true;
+        mockCallback.mockResolvedValue(ok(STATUS));
     });
 
-    test("forwards code and state to the backend, then opens the bank flow", async ({
+    test("forwards code and state to the backend, caches the status, then opens the bank flow", async ({
         queryWrapper,
     }) => {
         mockSearch.current = { code: "auth-code", state: "st" };
+        const setQueryData = vi.spyOn(queryWrapper.client, "setQueryData");
 
         render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
 
@@ -97,24 +122,30 @@ describe("MoneriumCallback", () => {
                 state: "st",
             })
         );
-        await waitFor(() => expect(outcomes()).toContain("exchanged"));
-        expect(mockOpenModal).toHaveBeenCalledWith({ id: "moneriumBankFlow" });
-        expect(mockNavigate).toHaveBeenCalledWith({
-            to: "/wallet",
-            replace: true,
-        });
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith(OPEN_BANK_FLOW)
+        );
+        expect(outcomes()).toContain("exchanged");
+        expect(setQueryData).toHaveBeenCalledWith(moneriumKey.status, STATUS);
     });
 
-    test("reports session_expired when the backend no longer knows the state", async ({
+    test("exchanges the single-use code only once when the effect runs twice", async ({
         queryWrapper,
     }) => {
-        mockCallback.mockResolvedValue({
-            data: null,
-            error: {
-                status: 400,
-                value: { code: "MONERIUM_AUTH_STATE_INVALID" },
-            },
-        });
+        mockSearch.current = { code: "auth-code", state: "st" };
+
+        render(<MoneriumCallback />, { wrapper: strictWrapper(queryWrapper) });
+
+        await waitFor(() => expect(outcomes()).toContain("exchanged"));
+        expect(mockCallback).toHaveBeenCalledTimes(1);
+    });
+
+    test("reports session_expired without an error report when the backend no longer knows the state", async ({
+        queryWrapper,
+    }) => {
+        mockCallback.mockResolvedValue(
+            fail(400, "MONERIUM_AUTH_STATE_INVALID")
+        );
         mockSearch.current = { code: "auth-code", state: "st" };
 
         const { findByText } = render(<MoneriumCallback />, {
@@ -123,21 +154,23 @@ describe("MoneriumCallback", () => {
 
         await waitFor(() => expect(outcomes()).toContain("session_expired"));
         expect(await findByText("monerium.callback.expiredTitle")).toBeTruthy();
-        expect(mockOpenModal).not.toHaveBeenCalled();
+        expect(mockRecordError).not.toHaveBeenCalled();
+        expect(mockNavigate).not.toHaveBeenCalled();
     });
 
     test("reports error on any other backend failure", async ({
         queryWrapper,
     }) => {
-        mockCallback.mockResolvedValue({
-            data: null,
-            error: { status: 502, value: {} },
-        });
+        mockCallback.mockResolvedValue(fail(502));
         mockSearch.current = { code: "auth-code", state: "st" };
 
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
+        const { findByText } = render(<MoneriumCallback />, {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => expect(outcomes()).toContain("error"));
+        expect(await findByText("monerium.callback.errorTitle")).toBeTruthy();
+        expect(mockRecordError).toHaveBeenCalledOnce();
     });
 
     test("records cancelled when the provider returns an error and no code", async ({
@@ -145,9 +178,14 @@ describe("MoneriumCallback", () => {
     }) => {
         mockSearch.current = { error: "access_denied" };
 
-        render(<MoneriumCallback />, { wrapper: queryWrapper.wrapper });
+        const { findByText } = render(<MoneriumCallback />, {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => expect(outcomes()).toEqual(["cancelled"]));
+        expect(
+            await findByText("monerium.callback.cancelledTitle")
+        ).toBeTruthy();
         expect(mockCallback).not.toHaveBeenCalled();
     });
 
@@ -169,10 +207,31 @@ describe("MoneriumCallback", () => {
         });
         fireEvent.click(await findByText("monerium.callback.tryAgain"));
 
-        expect(mockOpenModal).toHaveBeenCalledWith({ id: "moneriumBankFlow" });
-        expect(mockNavigate).toHaveBeenCalledWith({
-            to: "/wallet",
-            replace: true,
+        expect(mockNavigate).toHaveBeenCalledWith(OPEN_BANK_FLOW);
+    });
+});
+
+describe("monerium callback route guard", () => {
+    function thrownBy(run: () => void): unknown {
+        try {
+            run();
+        } catch (error) {
+            return error;
+        }
+        return undefined;
+    }
+
+    test("redirects to the wallet while Monerium is disabled", () => {
+        mockEnabled.current = false;
+
+        expect(thrownBy(beforeLoad)).toMatchObject({
+            options: { to: "/wallet", replace: true },
         });
+    });
+
+    test("lets the callback through when Monerium is enabled", () => {
+        mockEnabled.current = true;
+
+        expect(thrownBy(beforeLoad)).toBeUndefined();
     });
 });

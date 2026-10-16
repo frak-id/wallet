@@ -543,12 +543,6 @@ export default interface Resources {
     },
     "monerium": {
       "account": "Monerium Account",
-      "badge": {
-        "approved": "Bank connected:",
-        "notLinked": "IBAN not linked to this wallet",
-        "pending": "Bank verification in progress...",
-        "rejected": "Verification failed"
-      },
       "bankFlow": {
         "blocked": {
           "cta": "Open Monerium",
@@ -613,12 +607,11 @@ export default interface Resources {
             "modify": "Edit",
             "ownUnavailable": "Sending to your own account needs a verified Monerium profile. Pick another IBAN.",
             "title": "Amount to transfer",
-            "totalBalance": "Total balance",
+            "totalBalance": "Total balance: {{amount}}",
             "walletLabel": "Frak Wallet"
           },
           "ibanManager": {
             "addNew": "Add an IBAN",
-            "countryInvalid": "Select a country",
             "countryLabel": "Beneficiary country",
             "countryPlaceholder": "Select a country",
             "empty": "No IBAN saved. Add one to get started.",
@@ -635,14 +628,14 @@ export default interface Resources {
             "ownToggleDescription": "No name needed, and no amount limit.",
             "pseudoLabel": "Pseudo / note",
             "pseudoPlaceholder": "Defaults to first + last name",
-            "remove": "Remove",
+            "remove": "Remove {{name}}",
             "save": "Save",
-            "select": "Select",
             "title": "Manage my IBANs"
           },
           "recap": {
             "addNote": "Add a note",
             "amountLabel": "Amount",
+            "beneficiaryIban": "IBAN {{iban}}",
             "beneficiaryLabel": "Beneficiary",
             "cancel": "Cancel",
             "confirm": "Confirm transfer",
@@ -652,7 +645,7 @@ export default interface Resources {
           },
           "success": {
             "description": "Your transfer is on its way. You can follow it in your history.",
-            "title": "Your transfer request of {{amount}} € has been received"
+            "title": "Your transfer request of {{amount}} has been received"
           }
         },
         "verification": {
@@ -675,7 +668,6 @@ export default interface Resources {
       },
       "completeSetup": "Complete setup",
       "connect": "Connect",
-      "connecting": "Connecting...",
       "disconnect": "Disconnect",
       "disconnectConfirm": {
         "cancel": "Cancel",
@@ -691,7 +683,7 @@ export default interface Resources {
         "invalidAmount": "Enter a valid amount.",
         "invalidCounterpart": "Check the recipient's name and country.",
         "invalidIban": "This IBAN isn't valid.",
-        "invalidMemo": "The note must be between 5 and 140 characters.",
+        "invalidMemo": "The note is too short or too long.",
         "invalidMessage": "The transfer couldn't be confirmed. Please try again.",
         "linkRejected": "Monerium refused to link this wallet. Please try again or contact support.",
         "messageExpired": "The confirmation expired. Please try again.",
@@ -705,22 +697,6 @@ export default interface Resources {
         "tokenExchangeFailed": "Monerium didn't accept the connection. Please try again.",
         "upstreamUnavailable": "Monerium is temporarily unavailable. Please try again in a few minutes.",
         "walletNotLinked": "This wallet isn't linked to your Monerium account yet."
-      },
-      "linkWallet": "Link wallet",
-      "offramp": {
-        "amountInvalid": "Amount must be greater than 0",
-        "amountLabel": "Amount (EURe)",
-        "amountRequired": "Amount is required",
-        "balance": "Balance:",
-        "confirmBiometric": "Confirm with biometric...",
-        "destinationIban": "Destination IBAN",
-        "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
-        "max": "MAX",
-        "noIban": "No IBAN linked. Please complete Monerium verification first.",
-        "submit": "Withdraw to bank",
-        "submitting": "Submitting order...",
-        "success": "Order submitted! Funds will arrive in 1-2 business days.",
-        "tryAgain": "Try again"
       },
       "order": {
         "detail": {
@@ -742,14 +718,7 @@ export default interface Resources {
           "rejected": "Rejected"
         }
       },
-      "reconnect": "Reconnect",
-      "status": {
-        "approved": "Verified ✓",
-        "created": "Account created, complete verification on Monerium",
-        "pending": "Verification in progress",
-        "rejected": "Verification failed",
-        "settingUp": "Setting up..."
-      }
+      "reconnect": "Reconnect"
     },
     "onboarding": {
       "activateSecureSpace": "Activate my secure space",

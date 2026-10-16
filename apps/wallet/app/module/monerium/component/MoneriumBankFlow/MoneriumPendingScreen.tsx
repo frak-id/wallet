@@ -3,8 +3,7 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
-import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
+import { useMoneriumStatusRefresh } from "@/module/monerium/hooks/useMoneriumStatus";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { MoneriumScreen } from "./MoneriumScreen";
@@ -56,38 +55,19 @@ export function MoneriumPendingScreen({
     variant,
 }: MoneriumPendingScreenProps) {
     const { t } = useTranslation();
-    const { refresh, isRefreshing, refreshError } = useMoneriumStatus();
-    const isVerification = variant === "verification";
+    const { refresh, isRefreshing, refreshError } = useMoneriumStatusRefresh();
 
     return (
         <MoneriumScreen
             onClose={onClose}
-            title={t(
-                isVerification
-                    ? "monerium.bankFlow.verification.title"
-                    : "monerium.bankFlow.linking.title"
-            )}
-            ctaLabel={t(
-                isVerification
-                    ? "monerium.bankFlow.verification.checkAgain"
-                    : "monerium.bankFlow.linking.checkAgain"
-            )}
-            ctaOnClick={() => refresh().catch(() => undefined)}
+            title={t(`monerium.bankFlow.${variant}.title`)}
+            description={t(`monerium.bankFlow.${variant}.description`)}
+            error={refreshError}
+            ctaLabel={t(`monerium.bankFlow.${variant}.checkAgain`)}
+            ctaOnClick={refresh}
             ctaLoading={isRefreshing}
         >
-            <Text variant="body" color="secondary">
-                {t(
-                    isVerification
-                        ? "monerium.bankFlow.verification.description"
-                        : "monerium.bankFlow.linking.description"
-                )}
-            </Text>
-            {refreshError ? (
-                <Text variant="bodySmall" color="error">
-                    {t(getMoneriumErrorKey(refreshError))}
-                </Text>
-            ) : null}
-            {isVerification ? <PushOptIn /> : null}
+            {variant === "verification" ? <PushOptIn /> : null}
         </MoneriumScreen>
     );
 }

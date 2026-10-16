@@ -62,6 +62,26 @@ describe("DetailSheet", () => {
         expect(document.querySelector(".custom-detail-sheet")).toBeTruthy();
     });
 
+    it("swaps the root class for the background2 surface", () => {
+        const { container, rerender } = render(<DetailSheet>x</DetailSheet>);
+        const defaultClass = (container.firstChild as HTMLElement).className;
+
+        rerender(<DetailSheet surface="background2">x</DetailSheet>);
+        expect((container.firstChild as HTMLElement).className).not.toBe(
+            defaultClass
+        );
+    });
+
+    it("swaps the hero class for the overlay surface", () => {
+        const { container, rerender } = render(<DetailSheetHero />);
+        const defaultClass = (container.firstChild as HTMLElement).className;
+
+        rerender(<DetailSheetHero surface="overlay" />);
+        expect((container.firstChild as HTMLElement).className).not.toBe(
+            defaultClass
+        );
+    });
+
     it("should accept height prop on hero", () => {
         renderDetailSheet({ heroHeight: 400 });
         expect(screen.getByAltText("hero")).toBeTruthy();

@@ -86,6 +86,7 @@ export {
     type ApiErrorKeyMap,
     asApiError,
     getErrorCode,
+    getErrorStatus,
     isPermanentHttpError,
     isTransientHttpError,
     resolveApiErrorKey,

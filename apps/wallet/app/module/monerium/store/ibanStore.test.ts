@@ -73,7 +73,7 @@ describe("ibanStore", () => {
         expect(ibanStore.getState().syncedWallet).toBeNull();
     });
 
-    test("re-saving a third-party IBAN as own clears names and country", () => {
+    test("re-saving an IBAN replaces the saved entry in place", () => {
         const iban = "DE89370400440532013000";
         ibanStore.getState().addIban({
             ...entry(iban, "Ada"),
@@ -95,7 +95,6 @@ describe("ibanStore", () => {
                 lastName: "",
                 pseudo: "Mine",
                 own: true,
-                country: undefined,
             },
         ]);
     });

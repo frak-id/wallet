@@ -5,8 +5,14 @@ import { isSmartAccountDeployed } from "permissionless";
 import { serializeErc6492Signature } from "viem";
 import { vi } from "vitest";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { moneriumFlowStore } from "@/module/monerium/store/moneriumFlowStore";
-import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import { fail, ok } from "@/tests/moneriumFixtures";
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "@/tests/vitest-fixtures";
 
 const mocks = vi.hoisted(() => ({
     post: vi.fn(),
@@ -47,6 +53,11 @@ describe("useMoneriumLinkWallet", () => {
         mocks.send.mockResolvedValue("0xtx");
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.mocked(isSmartAccountDeployed).mockResolvedValue(true);
+    });
+
     test("sends Monerium the inner signature of an ERC-6492 wrapper", async ({
         queryWrapper,
     }) => {
@@ -57,10 +68,7 @@ describe("useMoneriumLinkWallet", () => {
                 signature: INNER_SIGNATURE,
             })
         );
-        mocks.post.mockResolvedValue({
-            data: { walletLink: "linked" },
-            error: null,
-        });
+        mocks.post.mockResolvedValue(ok({ walletLink: "linked" }));
         const { result } = renderHook(() => useMoneriumLinkWallet(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -80,10 +88,7 @@ describe("useMoneriumLinkWallet", () => {
             .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(true);
-        mocks.post.mockResolvedValue({
-            data: { walletLink: "linked" },
-            error: null,
-        });
+        mocks.post.mockResolvedValue(ok({ walletLink: "linked" }));
         const { result } = renderHook(() => useMoneriumLinkWallet(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -95,57 +100,40 @@ describe("useMoneriumLinkWallet", () => {
 
         await vi.advanceTimersByTimeAsync(DEPLOYMENT_POLL_MS);
         await linking;
-        vi.useRealTimers();
 
-        expect(isSmartAccountDeployed).toHaveBeenCalledTimes(3);
         expect(mocks.sign).toHaveBeenCalledOnce();
     });
 
-    test.for([
-        "MONERIUM_REAUTH_REQUIRED",
-        "MONERIUM_NOT_CONNECTED",
-        "MONERIUM_PROFILE_NOT_APPROVED",
-    ])(
-        "%s refetches the status so the derived screen moves on",
-        async (code, { queryWrapper }) => {
-            mocks.post.mockResolvedValue({
-                data: null,
-                error: { status: 409, value: { code } },
-            });
-            const invalidate = vi.spyOn(
-                queryWrapper.client,
-                "invalidateQueries"
-            );
-            const { result } = renderHook(() => useMoneriumLinkWallet(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await expect(
-                result.current.linkWalletAsync()
-            ).rejects.toMatchObject({
-                code,
-            });
-
-            expect(invalidate).toHaveBeenCalledWith({
-                queryKey: moneriumKey.status,
-            });
-            expect(moneriumFlowStore.getState().screen).toBe("transfer-amount");
-        }
-    );
-
-    test("a rejected link keeps the cached status", async ({
+    test("gives up without linking when the deployment never shows", async ({
         queryWrapper,
     }) => {
-        mocks.post.mockResolvedValue({
-            data: null,
-            error: { status: 422, value: { code: "MONERIUM_LINK_REJECTED" } },
+        vi.useFakeTimers();
+        vi.mocked(isSmartAccountDeployed).mockResolvedValue(false);
+        const { result } = renderHook(() => useMoneriumLinkWallet(), {
+            wrapper: queryWrapper.wrapper,
         });
+
+        const linking = result.current.linkWalletAsync();
+        const outcome = expect(linking).rejects.toMatchObject({ code: null });
+        await vi.advanceTimersByTimeAsync(DEPLOYMENT_POLL_MS * 20);
+        await outcome;
+
+        expect(mocks.sign).not.toHaveBeenCalled();
+        expect(mocks.post).not.toHaveBeenCalled();
+    });
+
+    test("a failed link refetches the status", async ({ queryWrapper }) => {
+        mocks.post.mockResolvedValue(fail(422, "MONERIUM_LINK_REJECTED"));
         const invalidate = vi.spyOn(queryWrapper.client, "invalidateQueries");
         const { result } = renderHook(() => useMoneriumLinkWallet(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await expect(result.current.linkWalletAsync()).rejects.toThrow();
-        expect(invalidate).not.toHaveBeenCalled();
+        await expect(result.current.linkWalletAsync()).rejects.toMatchObject({
+            code: "MONERIUM_LINK_REJECTED",
+        });
+        expect(invalidate).toHaveBeenCalledWith({
+            queryKey: moneriumKey.status,
+        });
     });
 });

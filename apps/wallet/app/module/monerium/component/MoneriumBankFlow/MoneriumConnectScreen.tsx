@@ -1,5 +1,3 @@
-import { Card } from "@frak-labs/design-system/components/Card";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     BankIcon,
@@ -10,8 +8,7 @@ import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMoneriumConnect } from "@/module/monerium/hooks/useMoneriumConnect";
-import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
-import { FeatureRow } from "./FeatureRow";
+import { FeatureList } from "./FeatureRow";
 import { MoneriumScreen } from "./MoneriumScreen";
 
 type MoneriumConnectScreenProps = {
@@ -106,9 +103,12 @@ export function MoneriumConnectScreen({
         <MoneriumScreen
             onClose={onClose}
             title={t(config.titleKey)}
+            description={t(config.descriptionKey)}
+            error={error}
             ctaLabel={t(config.ctaKey)}
             ctaOnClick={() => connect({})}
             ctaLoading={isConnecting}
+            busy={isConnecting}
             secondaryLabel={
                 variant === "info"
                     ? t("monerium.bankFlow.info.secondaryCta")
@@ -120,37 +120,18 @@ export function MoneriumConnectScreen({
                     : undefined
             }
         >
-            <Stack space="m">
+            {config.noticeKey ? (
                 <Text variant="body" color="secondary">
-                    {t(config.descriptionKey)}
-                </Text>
-                {config.noticeKey ? (
-                    <Text variant="body" color="secondary">
-                        {t(config.noticeKey)}
-                    </Text>
-                ) : null}
-            </Stack>
-
-            {config.features.length > 0 ? (
-                <Card variant="elevated" padding="none">
-                    <Stack space="none">
-                        {config.features.map((feature) => (
-                            <FeatureRow
-                                key={feature.titleKey}
-                                icon={feature.icon}
-                                title={t(feature.titleKey)}
-                                description={t(feature.descriptionKey)}
-                            />
-                        ))}
-                    </Stack>
-                </Card>
-            ) : null}
-
-            {error ? (
-                <Text variant="bodySmall" color="error">
-                    {t(getMoneriumErrorKey(error))}
+                    {t(config.noticeKey)}
                 </Text>
             ) : null}
+            <FeatureList
+                features={config.features.map((feature) => ({
+                    icon: feature.icon,
+                    title: t(feature.titleKey),
+                    description: t(feature.descriptionKey),
+                }))}
+            />
         </MoneriumScreen>
     );
 }

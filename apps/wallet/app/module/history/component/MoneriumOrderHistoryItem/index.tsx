@@ -2,24 +2,24 @@ import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    BankIcon,
-    CloseIcon,
-    HourglassIcon,
-    LockIcon,
-} from "@frak-labs/design-system/icons";
+import { BankIcon, HourglassIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import { formatCurrency } from "@frak-labs/wallet-shared";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { OrderStateBadge } from "@/module/history/component/OrderStateBadge";
+import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
 import { maskIban } from "@/module/monerium/utils/maskIban";
+import {
+    formatOrderAmount,
+    orderAmountColor,
+    orderStateColor,
+    orderTimestamp,
+} from "@/module/monerium/utils/orderDisplay";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 /**
  * Renders a Monerium order row in the unified history list. Tapping the row
- * opens a detail modal that mirrors the reward-detail layout, so the two
- * surfaces feel like siblings rather than ad-hoc screens.
+ * opens a detail modal that mirrors the reward-detail layout.
  */
 export function MoneriumOrderHistoryItem({
     order,
@@ -27,17 +27,10 @@ export function MoneriumOrderHistoryItem({
     order: MoneriumOrderDto;
 }) {
     const { t, i18n } = useTranslation();
-    const locale = i18n.language;
-
-    const numericAmount = Number.parseFloat(order.amount);
-    const formattedAmount = Number.isFinite(numericAmount)
-        ? formatCurrency(numericAmount, "EUR", locale)
-        : order.amount;
-    // Redeem = outgoing (burn). Issue = incoming (mint).
-    const sign = order.kind === "redeem" ? "-" : "+";
-    const displayAmount = `${sign}${formattedAmount}`;
-
-    const subtitle = buildSubtitle(order, locale, t);
+    const date = formatHistoryDateTime(orderTimestamp(order), i18n.language, t);
+    const iban = order.counterpart.iban;
+    const subtitle = iban ? `${maskIban(iban)} · ${date}` : date;
+    const isWaiting = order.state === "placed" || order.state === "pending";
 
     return (
         <button
@@ -50,7 +43,14 @@ export function MoneriumOrderHistoryItem({
             }
         >
             <Inline space="m" padding="m" fill>
-                <OrderIcon state={order.state} />
+                <div className={styles.iconWrapper}>
+                    <BankIcon
+                        color={vars.text.secondary}
+                        width={20}
+                        height={20}
+                    />
+                    <OrderStateBadge state={order.state} />
+                </div>
                 <Inline space="m" align="space-between" fill>
                     <Stack space="xxs" className={styles.info}>
                         <Text variant="body" weight="medium">
@@ -63,11 +63,7 @@ export function MoneriumOrderHistoryItem({
                             {order.state !== "processed" && (
                                 <Text
                                     variant="bodySmall"
-                                    color={
-                                        order.state === "rejected"
-                                            ? "error"
-                                            : "warning"
-                                    }
+                                    color={orderStateColor(order)}
                                     className={styles.statusText}
                                 >
                                     {t(`monerium.order.state.${order.state}`)}
@@ -76,131 +72,20 @@ export function MoneriumOrderHistoryItem({
                         </Stack>
                     </Stack>
                     <Stack space="xxs" align="right">
-                        <DisplayAmount
-                            amount={displayAmount}
-                            state={order.state}
-                            kind={order.kind}
-                        />
+                        <Inline space="xxs" alignY="center" wrap={false}>
+                            {isWaiting && (
+                                <HourglassIcon color={vars.text.secondary} />
+                            )}
+                            <Text
+                                variant="bodySmall"
+                                color={orderAmountColor(order)}
+                            >
+                                {formatOrderAmount(order, i18n.language)}
+                            </Text>
+                        </Inline>
                     </Stack>
                 </Inline>
             </Inline>
         </button>
     );
-}
-
-function OrderIcon({ state }: { state: MoneriumOrderDto["state"] }) {
-    return (
-        <div className={styles.iconWrapper}>
-            <BankIcon color={vars.text.secondary} width={20} height={20} />
-            <Badge state={state} />
-        </div>
-    );
-}
-
-function Badge({ state }: { state: MoneriumOrderDto["state"] }) {
-    if (state === "placed" || state === "pending") {
-        return (
-            <div className={styles.badge}>
-                <div className={styles.badgeInner({ status: "pending" })}>
-                    <LockIcon
-                        color={vars.surface.background}
-                        width={12}
-                        height={12}
-                    />
-                </div>
-            </div>
-        );
-    }
-    if (state === "rejected") {
-        return (
-            <div className={styles.badge}>
-                <div className={styles.badgeInner({ status: "rejected" })}>
-                    <CloseIcon
-                        color={vars.surface.background}
-                        width={12}
-                        height={12}
-                    />
-                </div>
-            </div>
-        );
-    }
-    return null;
-}
-
-function DisplayAmount({
-    amount,
-    state,
-    kind,
-}: {
-    amount: string;
-    state: MoneriumOrderDto["state"];
-    kind: MoneriumOrderDto["kind"];
-}) {
-    if (state === "rejected") {
-        return (
-            <Text variant="bodySmall" color="disabled">
-                {amount}
-            </Text>
-        );
-    }
-    const Icon =
-        state === "placed" || state === "pending" ? HourglassIcon : undefined;
-    const color =
-        state === "processed"
-            ? kind === "issue"
-                ? "success"
-                : "primary"
-            : "disabled";
-    return (
-        <Inline space="xxs" alignY="center" wrap={false}>
-            {Icon && <Icon color={vars.text.secondary} />}
-            <Text variant="bodySmall" color={color}>
-                {amount}
-            </Text>
-        </Inline>
-    );
-}
-
-function buildSubtitle(
-    order: MoneriumOrderDto,
-    locale: string,
-    t: TFunction
-): string {
-    const date = formatOrderDate(order, locale, t);
-    const iban = order.counterpart.iban;
-    return iban ? `${maskIban(iban)} · ${date}` : date;
-}
-
-function formatOrderDate(
-    order: MoneriumOrderDto,
-    locale: string,
-    t: TFunction
-): string {
-    const sourceIso = order.processedAt ?? order.placedAt;
-    const parsed = sourceIso ? Date.parse(sourceIso) : Number.NaN;
-    if (!Number.isFinite(parsed)) return "";
-
-    const date = new Date(parsed);
-    const now = new Date();
-
-    const time = date.toLocaleTimeString(locale, {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-
-    if (date.toDateString() === now.toDateString()) {
-        return `${t("common.today")}, ${time}`;
-    }
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `${t("common.yesterday")}, ${time}`;
-    }
-
-    const dayMonth = date.toLocaleDateString(locale, {
-        day: "numeric",
-        month: "long",
-    });
-    return `${dayMonth}, ${time}`;
 }

@@ -3,7 +3,7 @@ const ISO_COUNTRY_CODES =
         " "
     );
 
-export type CountryOption = { code: string; name: string };
+type CountryOption = { code: string; name: string };
 
 /** ISO 3166-1 alpha-2 countries named in `locale`, sorted by that name. */
 export function getCountryOptions(locale: string): CountryOption[] {

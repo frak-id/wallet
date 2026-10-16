@@ -8,8 +8,14 @@ import { balanceKey } from "@frak-labs/wallet-shared";
 import { renderHook } from "@testing-library/react";
 import { vi } from "vitest";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { moneriumFlowStore } from "@/module/monerium/store/moneriumFlowStore";
-import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import { fail, ok } from "@/tests/moneriumFixtures";
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "@/tests/vitest-fixtures";
 
 const mocks = vi.hoisted(() => ({
     post: vi.fn(),
@@ -29,11 +35,21 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-import { useMoneriumOfframp } from "./useMoneriumOfframp";
+import {
+    type PlaceOrderParams,
+    useMoneriumOfframp,
+} from "./useMoneriumOfframp";
 
 const ORDER_ID = "6f0c2c43-7a8f-4c1e-9a7b-0d4a2a0d9a11";
 const IBAN = "FR7630006000011234567890189";
 const NOW = new Date("2026-10-15T10:00:30Z");
+const PARAMS: PlaceOrderParams = {
+    orderId: ORDER_ID,
+    amount: "10",
+    iban: IBAN,
+    counterpart: { own: true },
+};
+const PLACED = ok({ orderId: ORDER_ID, order: null });
 
 describe("useMoneriumOfframp", () => {
     beforeEach(() => {
@@ -43,22 +59,23 @@ describe("useMoneriumOfframp", () => {
         mocks.sign.mockResolvedValue("0xsig");
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     test("signs the shared-helper message dated 2 minutes ahead and posts it", async ({
         queryWrapper,
     }) => {
-        mocks.post.mockResolvedValue({
-            data: { orderId: ORDER_ID, order: null },
-            error: null,
-        });
+        mocks.post.mockResolvedValue(PLACED);
+        const invalidate = vi.spyOn(queryWrapper.client, "invalidateQueries");
         const { result } = renderHook(() => useMoneriumOfframp(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.placeOrder({
-            orderId: ORDER_ID,
+        await result.current.placeOrderAsync({
+            ...PARAMS,
             amount: "12,5",
             iban: "FR76 3000 6000 0112 3456 7890 189",
-            counterpart: { own: true },
             memo: "  ",
         });
 
@@ -83,70 +100,34 @@ describe("useMoneriumOfframp", () => {
             own: true,
             amount_bucket: "under_50",
         });
+        for (const queryKey of [
+            moneriumKey.orders,
+            moneriumKey.status,
+            balanceKey.baseKey,
+        ]) {
+            expect(invalidate).toHaveBeenCalledWith({ queryKey });
+        }
     });
 
-    test("reuses the same orderId on retry after a failure", async ({
+    test("posts a third-party payout above the document threshold", async ({
         queryWrapper,
     }) => {
-        mocks.post
-            .mockResolvedValueOnce({
-                data: null,
-                error: { status: 503, value: {} },
-            })
-            .mockResolvedValueOnce({
-                data: { orderId: ORDER_ID, order: null },
-                error: null,
-            });
-        const { result } = renderHook(() => useMoneriumOfframp(), {
-            wrapper: queryWrapper.wrapper,
-        });
-        const params = {
-            orderId: ORDER_ID,
-            amount: "10",
-            iban: IBAN,
-            counterpart: { own: true as const },
-        };
-
-        await expect(result.current.placeOrder(params)).rejects.toThrow();
-        await result.current.placeOrder(params);
-
-        const ids = mocks.post.mock.calls.map(([body]) => body.orderId);
-        expect(ids).toEqual([ORDER_ID, ORDER_ID]);
-    });
-
-    test("refuses a third-party payout at the 15 000 EUR threshold, not an own one", async ({
-        queryWrapper,
-    }) => {
-        mocks.post.mockResolvedValue({
-            data: { orderId: ORDER_ID, order: null },
-            error: null,
-        });
+        mocks.post.mockResolvedValue(PLACED);
         const { result } = renderHook(() => useMoneriumOfframp(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await expect(
-            result.current.placeOrder({
-                orderId: ORDER_ID,
-                amount: "15000",
-                iban: IBAN,
-                counterpart: {
-                    own: false,
-                    firstName: "Ada",
-                    lastName: "Lovelace",
-                    country: "FR",
-                },
-            })
-        ).rejects.toMatchObject({ code: "MONERIUM_AMOUNT_LIMIT" });
-        expect(mocks.sign).not.toHaveBeenCalled();
-
-        await result.current.placeOrder({
-            orderId: ORDER_ID,
+        await result.current.placeOrderAsync({
+            ...PARAMS,
             amount: "15000",
-            iban: IBAN,
-            counterpart: { own: true },
+            counterpart: {
+                own: false,
+                firstName: "Ada",
+                lastName: "Lovelace",
+                country: "FR",
+            },
         });
-        expect(mocks.post).toHaveBeenCalledTimes(1);
+        expect(mocks.post).toHaveBeenCalledOnce();
     });
 
     test("an invalid amount never reaches the signer", async ({
@@ -156,58 +137,23 @@ describe("useMoneriumOfframp", () => {
             wrapper: queryWrapper.wrapper,
         });
         await expect(
-            result.current.placeOrder({
-                orderId: ORDER_ID,
-                amount: "abc",
-                iban: IBAN,
-                counterpart: { own: true },
-            })
+            result.current.placeOrderAsync({ ...PARAMS, amount: "abc" })
         ).rejects.toMatchObject({ code: "MONERIUM_INVALID_AMOUNT" });
         expect(mocks.sign).not.toHaveBeenCalled();
-    });
-
-    test("a successful order also invalidates the EURe balance", async ({
-        queryWrapper,
-    }) => {
-        mocks.post.mockResolvedValue({
-            data: { orderId: ORDER_ID, order: null },
-            error: null,
-        });
-        const invalidate = vi.spyOn(queryWrapper.client, "invalidateQueries");
-        const { result } = renderHook(() => useMoneriumOfframp(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        await result.current.placeOrder({
-            orderId: ORDER_ID,
-            amount: "10",
-            iban: IBAN,
-            counterpart: { own: true },
-        });
-
-        expect(invalidate).toHaveBeenCalledWith({
-            queryKey: balanceKey.baseKey,
-        });
     });
 
     test("an idempotent retry that returns a rejected order is a failure", async ({
         queryWrapper,
     }) => {
-        mocks.post.mockResolvedValue({
-            data: { orderId: ORDER_ID, order: { state: "rejected" } },
-            error: null,
-        });
+        mocks.post.mockResolvedValue(
+            ok({ orderId: ORDER_ID, order: { state: "rejected" } })
+        );
         const { result } = renderHook(() => useMoneriumOfframp(), {
             wrapper: queryWrapper.wrapper,
         });
 
         await expect(
-            result.current.placeOrder({
-                orderId: ORDER_ID,
-                amount: "10",
-                iban: IBAN,
-                counterpart: { own: true },
-            })
+            result.current.placeOrderAsync(PARAMS)
         ).rejects.toMatchObject({ code: "MONERIUM_ORDER_REJECTED" });
         expect(mocks.track).not.toHaveBeenCalledWith(
             "monerium_order_placed",
@@ -215,61 +161,25 @@ describe("useMoneriumOfframp", () => {
         );
     });
 
-    test.for([
-        "MONERIUM_REAUTH_REQUIRED",
-        "MONERIUM_NOT_CONNECTED",
-        "MONERIUM_PROFILE_NOT_APPROVED",
-        "MONERIUM_WALLET_NOT_LINKED",
-    ])(
-        "%s refetches the status and leaves the transfer screens",
-        async (code, { queryWrapper }) => {
-            mocks.post.mockResolvedValue({
-                data: null,
-                error: { status: 409, value: { code } },
-            });
-            moneriumFlowStore.getState().goTo("transfer-recap");
-            const invalidate = vi.spyOn(
-                queryWrapper.client,
-                "invalidateQueries"
-            );
-            const { result } = renderHook(() => useMoneriumOfframp(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await expect(
-                result.current.placeOrder({
-                    orderId: ORDER_ID,
-                    amount: "10",
-                    iban: IBAN,
-                    counterpart: { own: true },
-                })
-            ).rejects.toMatchObject({ code });
-
-            expect(invalidate).toHaveBeenCalledWith({
-                queryKey: moneriumKey.status,
-            });
-            expect(moneriumFlowStore.getState().screen).toBe("transfer-amount");
-        }
-    );
-
-    test("other failures leave the status alone", async ({ queryWrapper }) => {
-        mocks.post.mockResolvedValue({
-            data: null,
-            error: { status: 422, value: { code: "MONERIUM_INVALID_IBAN" } },
-        });
+    test("a failed order refetches the status and reports its code", async ({
+        queryWrapper,
+    }) => {
+        mocks.post.mockResolvedValue(fail(422, "MONERIUM_INVALID_IBAN"));
         const invalidate = vi.spyOn(queryWrapper.client, "invalidateQueries");
         const { result } = renderHook(() => useMoneriumOfframp(), {
             wrapper: queryWrapper.wrapper,
         });
 
         await expect(
-            result.current.placeOrder({
-                orderId: ORDER_ID,
-                amount: "10",
-                iban: IBAN,
-                counterpart: { own: true },
-            })
-        ).rejects.toThrow();
-        expect(invalidate).not.toHaveBeenCalled();
+            result.current.placeOrderAsync(PARAMS)
+        ).rejects.toMatchObject({ code: "MONERIUM_INVALID_IBAN" });
+        expect(invalidate).toHaveBeenCalledWith({
+            queryKey: moneriumKey.status,
+        });
+        expect(mocks.track).toHaveBeenCalledWith("monerium_order_failed", {
+            own: true,
+            amount_bucket: "under_50",
+            code: "MONERIUM_INVALID_IBAN",
+        });
     });
 });

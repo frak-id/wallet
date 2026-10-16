@@ -6,24 +6,21 @@ import {
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FieldError, FieldLabel } from "@/module/common/component/Field";
+import { FieldLabel } from "@/module/common/component/Field";
 import { getCountryOptions } from "@/module/monerium/utils/countries";
 
 type MoneriumCountrySelectProps = {
     value: string;
     onChange: (code: string) => void;
-    invalid: boolean;
 };
 
 export function MoneriumCountrySelect({
     value,
     onChange,
-    invalid,
 }: MoneriumCountrySelectProps) {
     const { t, i18n } = useTranslation();
-    const errorId = useId();
     const options = useMemo(
         () => getCountryOptions(i18n.language),
         [i18n.language]
@@ -38,8 +35,6 @@ export function MoneriumCountrySelect({
                     variant="bare"
                     tone="elevated"
                     aria-label={label}
-                    aria-invalid={invalid}
-                    aria-describedby={invalid ? errorId : undefined}
                 >
                     <SelectValue
                         placeholder={t(
@@ -55,15 +50,6 @@ export function MoneriumCountrySelect({
                     ))}
                 </SelectContent>
             </Select>
-            {invalid ? (
-                <div id={errorId} role="alert">
-                    <FieldError>
-                        {t(
-                            "monerium.bankFlow.transfer.ibanManager.countryInvalid"
-                        )}
-                    </FieldError>
-                </div>
-            ) : null}
         </Stack>
     );
 }

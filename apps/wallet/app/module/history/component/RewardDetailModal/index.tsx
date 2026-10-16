@@ -38,7 +38,7 @@ export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
 
     return (
         <DetailSheet>
-            <DetailSheetHero height={30} className={styles.hero} />
+            <DetailSheetHero height={30} surface="overlay" />
             <DetailSheetBody className={styles.body}>
                 <GlassCloseButton onClick={onClose} />
                 <DetailHeader item={item} locale={locale} />

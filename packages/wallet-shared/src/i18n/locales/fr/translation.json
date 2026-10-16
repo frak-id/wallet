@@ -1001,7 +1001,6 @@
     "monerium": {
         "account": "Compte Monerium",
         "connect": "Se connecter",
-        "connecting": "Connexion...",
         "disconnect": "Déconnecter",
         "completeSetup": "Finaliser",
         "disconnectConfirm": {
@@ -1009,35 +1008,6 @@
             "description": "Tu devras te reconnecter à Monerium pour transférer tes gains.",
             "cancel": "Annuler",
             "confirm": "Déconnecter"
-        },
-        "linkWallet": "Lier le porte-monnaie",
-        "status": {
-            "settingUp": "Configuration...",
-            "created": "Compte créé, termine la vérification sur Monerium",
-            "pending": "Vérification en cours",
-            "approved": "Vérifié ✓",
-            "rejected": "Vérification échouée"
-        },
-        "badge": {
-            "pending": "Vérification bancaire en cours...",
-            "approved": "Banque connectée :",
-            "notLinked": "IBAN non lié à ce porte-monnaie",
-            "rejected": "Vérification échouée"
-        },
-        "offramp": {
-            "amountLabel": "Montant (EURe)",
-            "balance": "Solde :",
-            "max": "MAX",
-            "destinationIban": "IBAN de destination",
-            "ibanWarning": "Attention : Cet IBAN n'est pas lié à ton adresse de porte-monnaie actuelle.",
-            "submit": "Retirer vers la banque",
-            "submitting": "Envoi de l'ordre...",
-            "confirmBiometric": "Confirmer avec la biométrie...",
-            "success": "Ordre soumis ! Les fonds arriveront dans 1 à 2 jours ouvrables.",
-            "tryAgain": "Réessayer",
-            "noIban": "Aucun IBAN lié. Termine d'abord la vérification Monerium.",
-            "amountRequired": "Le montant est requis",
-            "amountInvalid": "Le montant doit être supérieur à 0"
         },
         "callback": {
             "cancelledTitle": "Connexion annulée",
@@ -1109,7 +1079,7 @@
                 "amount": {
                     "title": "Montant à transférer",
                     "walletLabel": "Porte-monnaie Frak",
-                    "totalBalance": "Solde total",
+                    "totalBalance": "Solde total : {{amount}}",
                     "ibanLabel": "IBAN",
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
@@ -1123,13 +1093,14 @@
                     "cancel": "Annuler",
                     "amountLabel": "Montant",
                     "beneficiaryLabel": "Bénéficiaire",
+                    "beneficiaryIban": "IBAN {{iban}}",
                     "addNote": "Ajouter une note",
                     "warning": "Une fois validée, l'opération ne peut être annulée",
                     "confirm": "Confirmer le transfert",
                     "memoInvalid": "La note doit contenir entre {{min}} et {{max}} caractères."
                 },
                 "success": {
-                    "title": "Ta demande de transfert de {{amount}} € a été prise en compte",
+                    "title": "Ta demande de transfert de {{amount}} a été prise en compte",
                     "description": "Ton transfert est en route. Tu peux le suivre dans ton historique."
                 },
                 "ibanManager": {
@@ -1144,14 +1115,12 @@
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Enregistrer",
-                    "remove": "Supprimer",
+                    "remove": "Supprimer {{name}}",
                     "empty": "Aucun IBAN enregistré. Ajoute-en un pour commencer.",
-                    "select": "Sélectionner",
                     "ownToggle": "C'est mon propre compte",
                     "ownToggleDescription": "Pas besoin de nom, et aucun plafond de montant.",
                     "countryLabel": "Pays du bénéficiaire",
                     "countryPlaceholder": "Choisir un pays",
-                    "countryInvalid": "Choisis un pays",
                     "ibanInvalid": "Cet IBAN n'est pas valide",
                     "nameInvalid": "Saisis au moins {{min}} caractères",
                     "ownAccountLabel": "Mon compte"
@@ -1200,7 +1169,7 @@
             "amountLimit": "Ce montant dépasse le plafond des virements vers un tiers. Envoie-le plutôt vers ton propre compte.",
             "invalidIban": "Cet IBAN n'est pas valide.",
             "invalidCounterpart": "Vérifie le nom et le pays du bénéficiaire.",
-            "invalidMemo": "La note doit contenir entre 5 et 140 caractères.",
+            "invalidMemo": "La note est trop courte ou trop longue.",
             "invalidMessage": "Le transfert n'a pas pu être confirmé. Réessaye.",
             "messageExpired": "La confirmation a expiré. Réessaye.",
             "walletNotLinked": "Ce porte-monnaie n'est pas encore associé à ton compte Monerium.",

@@ -1,4 +1,5 @@
 import {
+    exceedsThirdPartyLimit,
     isMoneriumOwnPayoutAvailable,
     MONERIUM_LIMITS,
     normalizeRedeemAmount,
@@ -10,7 +11,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowDownIcon } from "@frak-labs/design-system/icons";
-import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
@@ -22,7 +23,6 @@ import {
 import {
     moneriumFlowStore,
     selectAmount,
-    selectSelectedIbanOverride,
 } from "@/module/monerium/store/moneriumFlowStore";
 import { maskIban } from "@/module/monerium/utils/maskIban";
 import * as styles from "./index.css";
@@ -52,30 +52,32 @@ function SwitcherIcon() {
 export function MoneriumTransferAmountScreen({
     onClose,
 }: MoneriumTransferAmountScreenProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { userBalance } = useGetUserBalance();
 
     const amount = moneriumFlowStore(selectAmount);
     const setAmount = moneriumFlowStore((s) => s.setAmount);
     const goTo = moneriumFlowStore((s) => s.goTo);
-    const selectedOverride = moneriumFlowStore(selectSelectedIbanOverride);
-    const effectiveIban = ibanStore(selectEffectiveIban);
-    const selectedIban = selectedOverride ?? effectiveIban;
+    const selectedIban = ibanStore(selectEffectiveIban);
 
     const eureBalance = useMemo(() => {
-        if (!userBalance?.balances) return 0;
-        const eureToken = userBalance.balances.find((b) => b.symbol === "EURe");
-        return eureToken?.amount ?? 0;
+        const raw =
+            userBalance?.balances?.find((b) => b.symbol === "EURe")?.amount ??
+            0;
+        // Floored to cents: amounts carry two decimals, so the display never rounds above what is sendable.
+        return Math.floor(Number((raw * 100).toFixed(6))) / 100;
     }, [userBalance]);
 
     const numericAmount = parseAmount(amount);
     const hasAmount = numericAmount > 0;
     const isInsufficient = hasAmount && numericAmount > eureBalance;
-    const isAboveMax =
-        hasAmount &&
-        selectedIban?.own === false &&
-        numericAmount >= MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR;
     const { status } = useMoneriumStatus();
+    const isAboveMax =
+        selectedIban !== null &&
+        exceedsThirdPartyLimit(amount, {
+            own: selectedIban.own,
+            profileKind: status?.profile?.kind,
+        });
     const isOwnUnavailable =
         selectedIban?.own === true &&
         status !== undefined &&
@@ -107,10 +109,8 @@ export function MoneriumTransferAmountScreen({
             <Box className={styles.cardsStack}>
                 <Card
                     variant="elevated"
-                    padding="none"
-                    className={`${styles.transferCellPadding}${
-                        isInsufficient ? ` ${styles.walletCardError}` : ""
-                    }`}
+                    padding="cell"
+                    tone={isInsufficient ? "error" : undefined}
                 >
                     <Stack space="xxs">
                         <Text variant="body" weight="medium">
@@ -120,7 +120,16 @@ export function MoneriumTransferAmountScreen({
                             variant="bodySmall"
                             color={isInsufficient ? "error" : "secondary"}
                         >
-                            {`${t("monerium.bankFlow.transfer.amount.totalBalance")} : ${eureBalance}€`}
+                            {t(
+                                "monerium.bankFlow.transfer.amount.totalBalance",
+                                {
+                                    amount: formatCurrency(
+                                        eureBalance,
+                                        "EUR",
+                                        i18n.language
+                                    ),
+                                }
+                            )}
                         </Text>
                     </Stack>
                 </Card>
@@ -129,11 +138,7 @@ export function MoneriumTransferAmountScreen({
                     <SwitcherIcon />
                 </Box>
 
-                <Card
-                    variant="elevated"
-                    padding="none"
-                    className={styles.transferCellPadding}
-                >
+                <Card variant="elevated" padding="cell">
                     <Inline
                         space="m"
                         alignY="center"

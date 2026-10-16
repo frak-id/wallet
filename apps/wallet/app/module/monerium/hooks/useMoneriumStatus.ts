@@ -1,5 +1,5 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import {
     isMoneriumStatusPending,
@@ -13,15 +13,21 @@ import {
 
 const STATUS_POLL_INTERVAL_MS = 30_000;
 
-export async function fetchMoneriumStatus(
-    refresh: boolean
-): Promise<MoneriumStatus> {
+async function fetchMoneriumStatus(refresh: boolean): Promise<MoneriumStatus> {
     return unwrapMoneriumResponse(
         await authenticatedWalletApi.monerium.status.get({
             query: refresh ? { refresh: true } : {},
         })
     );
 }
+
+const statusQuery = {
+    queryKey: moneriumKey.status,
+    queryFn: () => fetchMoneriumStatus(false),
+    enabled: isMoneriumEnabled,
+    retry: (failureCount: number, error: Error) =>
+        failureCount < 2 && isMoneriumRetryable(error),
+};
 
 type UseMoneriumStatusOptions = {
     /** Poll while a profile or wallet link is pending; only the open flow asks for it. */
@@ -31,34 +37,34 @@ type UseMoneriumStatusOptions = {
 export function useMoneriumStatus({
     poll = false,
 }: UseMoneriumStatusOptions = {}) {
-    const queryClient = useQueryClient();
-
     const query = useQuery({
-        queryKey: moneriumKey.status,
-        queryFn: () => fetchMoneriumStatus(false),
-        enabled: isMoneriumEnabled,
-        refetchOnWindowFocus: true,
+        ...statusQuery,
         refetchInterval: (q) =>
             poll && isMoneriumStatusPending(q.state.data)
                 ? STATUS_POLL_INTERVAL_MS
                 : false,
-        retry: (failureCount, error) =>
-            failureCount < 2 && isMoneriumRetryable(error),
-    });
-
-    const refreshMutation = useMutation({
-        mutationFn: () => fetchMoneriumStatus(true),
-        onSuccess: (data) => queryClient.setQueryData(moneriumKey.status, data),
     });
 
     return {
         status: query.data,
-        isLoading: query.isLoading,
         isError: query.isError,
-        error: query.error,
         refetch: query.refetch,
-        refresh: refreshMutation.mutateAsync,
-        isRefreshing: refreshMutation.isPending,
-        refreshError: refreshMutation.error,
+    };
+}
+
+/** Asks the backend to re-read Monerium; a newer status from any source clears the error. */
+export function useMoneriumStatusRefresh() {
+    const { dataUpdatedAt } = useQuery(statusQuery);
+    const { mutate, mutateAsync, isPending, error, submittedAt } = useMutation({
+        mutationFn: () => fetchMoneriumStatus(true),
+        onSuccess: (data, _variables, _result, { client }) =>
+            client.setQueryData(moneriumKey.status, data),
+    });
+
+    return {
+        refresh: () => mutate(),
+        refreshAsync: () => mutateAsync(),
+        isRefreshing: isPending,
+        refreshError: error && submittedAt > dataUpdatedAt ? error : null,
     };
 }

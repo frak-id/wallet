@@ -1,10 +1,10 @@
-import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
 import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
 import {
     mergeHistoryEntries,
     orderToHistoryEntry,
     rewardToHistoryEntry,
 } from "@/module/history/utils/historyEntry";
+import { moneriumOrder } from "@/tests/moneriumFixtures";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 
 function makeReward(
@@ -20,25 +20,6 @@ function makeReward(
         createdAt: 1_700_000_000_000,
         ...overrides,
     } as RewardHistoryItem;
-}
-
-function makeOrder(
-    overrides: Partial<MoneriumOrderDto> = {}
-): MoneriumOrderDto {
-    return {
-        id: "ord-1",
-        address: "0x0000000000000000000000000000000000000abc",
-        kind: "redeem",
-        chain: "arbitrum",
-        amount: "10.00",
-        currency: "eur",
-        counterpart: { iban: "EE52", own: false },
-        memo: "",
-        placedAt: "2024-01-01T10:00:00Z",
-        txHashes: [],
-        state: "pending",
-        ...overrides,
-    };
 }
 
 describe("historyEntry adapters", () => {
@@ -65,7 +46,7 @@ describe("historyEntry adapters", () => {
     describe("orderToHistoryEntry", () => {
         test("prefers processedAt over placedAt for timestamp", () => {
             const entry = orderToHistoryEntry(
-                makeOrder({
+                moneriumOrder({
                     placedAt: "2024-01-01T10:00:00Z",
                     processedAt: "2024-01-01T12:00:00Z",
                 })
@@ -76,14 +57,14 @@ describe("historyEntry adapters", () => {
         });
 
         test("falls back to placedAt when no processedAt", () => {
-            const entry = orderToHistoryEntry(makeOrder());
+            const entry = orderToHistoryEntry(moneriumOrder());
             expect(entry.timestamp).toBe(
                 Math.floor(Date.parse("2024-01-01T10:00:00Z") / 1000)
             );
         });
 
         test("uses order id as entry id", () => {
-            const entry = orderToHistoryEntry(makeOrder({ id: "ord-42" }));
+            const entry = orderToHistoryEntry(moneriumOrder({ id: "ord-42" }));
             expect(entry.id).toBe("ord-42");
             expect(entry.kind).toBe("monerium-order");
         });
@@ -91,9 +72,6 @@ describe("historyEntry adapters", () => {
 
     describe("mergeHistoryEntries", () => {
         test("sorts entries by timestamp descending", () => {
-            // RewardHistoryItem.createdAt is **ms** since epoch — use a real
-            // recent timestamp so it doesn't accidentally rank lower than
-            // an order with an RFC 3339 ISO timestamp (which is also ms-scale).
             const older = makeReward({
                 createdAt: Date.parse("2024-06-01T00:00:00Z"),
             });
@@ -101,7 +79,7 @@ describe("historyEntry adapters", () => {
                 createdAt: Date.parse("2024-07-01T00:00:00Z"),
                 txHash: "0xnew",
             });
-            const olderOrder = makeOrder({
+            const olderOrder = moneriumOrder({
                 id: "ord-old",
                 placedAt: "2020-01-01T00:00:00Z",
             });
@@ -119,7 +97,7 @@ describe("historyEntry adapters", () => {
         test("produces a discriminated union the consumer can switch on", () => {
             const merged = mergeHistoryEntries(
                 [makeReward({ txHash: "0xr1" })],
-                [makeOrder({ id: "ord-1" })]
+                [moneriumOrder({ id: "ord-1" })]
             );
             const kinds = merged.map((e) => e.kind).sort();
             expect(kinds).toEqual(["monerium-order", "reward"]);

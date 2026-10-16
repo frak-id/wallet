@@ -1,26 +1,58 @@
 import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, safeArea, zIndex } from "../../tokens.css";
 
-export const containerStyle = style({
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100dvh",
-    paddingTop: safeArea.top,
-    "@media": {
-        "screen and (min-width: 1024px)": {
-            minHeight: "auto",
-            paddingTop: 0,
-            backgroundColor: vars.surface.background,
+export const containerStyle = recipe({
+    base: {
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100dvh",
+        paddingTop: safeArea.top,
+        "@media": {
+            "screen and (min-width: 1024px)": {
+                minHeight: "auto",
+                paddingTop: 0,
+                backgroundColor: vars.surface.background,
+            },
         },
+    },
+    variants: {
+        /** `background2` lets white elevated cards stand out on the sheet. */
+        surface: {
+            background: {},
+            background2: {
+                backgroundColor: vars.surface.background2,
+                "@media": {
+                    "screen and (min-width: 1024px)": {
+                        backgroundColor: vars.surface.background2,
+                    },
+                },
+            },
+        },
+    },
+    defaultVariants: {
+        surface: "background",
     },
 });
 
-export const heroStyle = style({
-    position: "relative",
-    flexShrink: 0,
-    overflow: "hidden",
-    height: "var(--detail-sheet-hero-height, 350px)",
+export const heroStyle = recipe({
+    base: {
+        position: "relative",
+        flexShrink: 0,
+        overflow: "hidden",
+        height: "var(--detail-sheet-hero-height, 350px)",
+    },
+    variants: {
+        /** `overlay` tints a hero that carries no image. */
+        surface: {
+            none: {},
+            overlay: { backgroundColor: vars.surface.overlay },
+        },
+    },
+    defaultVariants: {
+        surface: "none",
+    },
 });
 
 export const actionsStyle = style({

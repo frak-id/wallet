@@ -289,7 +289,6 @@
     "packages/wallet-shared/src/common/analytics/events/flow.ts": 4,
     "packages/wallet-shared/src/common/analytics/events/install.ts": 3,
     "packages/wallet-shared/src/common/analytics/events/modal.ts": 1,
-    "packages/wallet-shared/src/common/analytics/events/monerium.ts": 1,
     "packages/wallet-shared/src/common/analytics/events/notification.ts": 4,
     "packages/wallet-shared/src/common/analytics/events/pairing.ts": 1,
     "packages/wallet-shared/src/common/analytics/events/sharing.ts": 1,

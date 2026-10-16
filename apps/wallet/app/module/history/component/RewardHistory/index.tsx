@@ -16,13 +16,13 @@ import {
     formatCurrency,
     type RewardHistoryItem as RewardHistoryItemType,
 } from "@frak-labs/wallet-shared";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { HistoryEntryRow } from "@/module/history/component/HistoryEntryRow";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useHistory } from "@/module/history/hook/useHistory";
+import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -122,7 +122,11 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                         </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
-                                {formatRewardDate(item.createdAt, locale, t)}
+                                {formatHistoryDateTime(
+                                    item.createdAt,
+                                    locale,
+                                    t
+                                )}
                             </Text>
                             {item.status !== "consumed" && (
                                 <Text
@@ -173,36 +177,6 @@ function MerchantLogoWithBadge({
             <StatusBadge status={status} role={role} />
         </div>
     );
-}
-
-function formatRewardDate(
-    timestamp: number,
-    locale: string,
-    t: TFunction
-): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    const time = date.toLocaleTimeString(locale, {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-
-    if (date.toDateString() === now.toDateString()) {
-        return `${t("common.today")}, ${time}`;
-    }
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `${t("common.yesterday")}, ${time}`;
-    }
-
-    const dayMonth = date.toLocaleDateString(locale, {
-        day: "numeric",
-        month: "long",
-    });
-    return `${dayMonth}, ${time}`;
 }
 
 const displayAmountIcons: Partial<

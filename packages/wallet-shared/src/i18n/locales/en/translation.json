@@ -1001,7 +1001,6 @@
     "monerium": {
         "account": "Monerium Account",
         "connect": "Connect",
-        "connecting": "Connecting...",
         "disconnect": "Disconnect",
         "completeSetup": "Complete setup",
         "disconnectConfirm": {
@@ -1009,35 +1008,6 @@
             "description": "You will need to sign in to Monerium again to transfer your earnings.",
             "cancel": "Cancel",
             "confirm": "Disconnect"
-        },
-        "linkWallet": "Link wallet",
-        "status": {
-            "settingUp": "Setting up...",
-            "created": "Account created, complete verification on Monerium",
-            "pending": "Verification in progress",
-            "approved": "Verified ✓",
-            "rejected": "Verification failed"
-        },
-        "badge": {
-            "pending": "Bank verification in progress...",
-            "approved": "Bank connected:",
-            "notLinked": "IBAN not linked to this wallet",
-            "rejected": "Verification failed"
-        },
-        "offramp": {
-            "amountLabel": "Amount (EURe)",
-            "balance": "Balance:",
-            "max": "MAX",
-            "destinationIban": "Destination IBAN",
-            "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
-            "submit": "Withdraw to bank",
-            "submitting": "Submitting order...",
-            "confirmBiometric": "Confirm with biometric...",
-            "success": "Order submitted! Funds will arrive in 1-2 business days.",
-            "tryAgain": "Try again",
-            "noIban": "No IBAN linked. Please complete Monerium verification first.",
-            "amountRequired": "Amount is required",
-            "amountInvalid": "Amount must be greater than 0"
         },
         "callback": {
             "cancelledTitle": "Connection cancelled",
@@ -1109,7 +1079,7 @@
                 "amount": {
                     "title": "Amount to transfer",
                     "walletLabel": "Frak Wallet",
-                    "totalBalance": "Total balance",
+                    "totalBalance": "Total balance: {{amount}}",
                     "ibanLabel": "IBAN",
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
@@ -1123,13 +1093,14 @@
                     "cancel": "Cancel",
                     "amountLabel": "Amount",
                     "beneficiaryLabel": "Beneficiary",
+                    "beneficiaryIban": "IBAN {{iban}}",
                     "addNote": "Add a note",
                     "warning": "Once confirmed, this operation cannot be cancelled",
                     "confirm": "Confirm transfer",
                     "memoInvalid": "The note must be between {{min}} and {{max}} characters."
                 },
                 "success": {
-                    "title": "Your transfer request of {{amount}} € has been received",
+                    "title": "Your transfer request of {{amount}} has been received",
                     "description": "Your transfer is on its way. You can follow it in your history."
                 },
                 "ibanManager": {
@@ -1144,14 +1115,12 @@
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Save",
-                    "remove": "Remove",
+                    "remove": "Remove {{name}}",
                     "empty": "No IBAN saved. Add one to get started.",
-                    "select": "Select",
                     "ownToggle": "This is my own account",
                     "ownToggleDescription": "No name needed, and no amount limit.",
                     "countryLabel": "Beneficiary country",
                     "countryPlaceholder": "Select a country",
-                    "countryInvalid": "Select a country",
                     "ibanInvalid": "This IBAN isn't valid",
                     "nameInvalid": "Enter at least {{min}} characters",
                     "ownAccountLabel": "My account"
@@ -1200,7 +1169,7 @@
             "amountLimit": "This amount is above the limit for transfers to someone else. Send it to your own account instead.",
             "invalidIban": "This IBAN isn't valid.",
             "invalidCounterpart": "Check the recipient's name and country.",
-            "invalidMemo": "The note must be between 5 and 140 characters.",
+            "invalidMemo": "The note is too short or too long.",
             "invalidMessage": "The transfer couldn't be confirmed. Please try again.",
             "messageExpired": "The confirmation expired. Please try again.",
             "walletNotLinked": "This wallet isn't linked to your Monerium account yet.",

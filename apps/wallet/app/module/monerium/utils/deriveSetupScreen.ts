@@ -1,7 +1,7 @@
 import type { MoneriumStatusResponse } from "@backend-domain/monerium/schemas";
 import { isMoneriumProfileUsable } from "@frak-labs/app-essentials/monerium";
 
-export type MoneriumSetupScreen =
+type MoneriumSetupScreen =
     | "loading"
     | "info"
     | "reconnect"
@@ -39,23 +39,15 @@ export function deriveSetupScreen(
     return hasSeenSetupSuccess ? "transfer" : "success";
 }
 
-const POLLED_PROFILE_STATES = new Set([
-    "created",
-    "incomplete",
-    "pending",
-    "review",
+const POLLED_SCREENS = new Set<MoneriumSetupScreen>([
+    "onboarding",
+    "verification",
+    "linking",
 ]);
 
 /** No webhooks on the OAuth plan: a pending profile or link is only noticed by asking. */
 export function isMoneriumStatusPending(
     status: MoneriumStatus | undefined
 ): boolean {
-    if (status?.connection !== "connected") return false;
-    const profileState = status.profile?.state;
-    return (
-        (profileState !== undefined &&
-            POLLED_PROFILE_STATES.has(profileState) &&
-            !isMoneriumProfileUsable(profileState, status.environment)) ||
-        status.walletLink === "pending"
-    );
+    return POLLED_SCREENS.has(deriveSetupScreen(status, true));
 }

@@ -26,6 +26,7 @@ type IbanStoreState = {
     /** Wallet whose server-side beneficiaries were last merged on this device. */
     syncedWallet: Address | null;
 
+    /** Expects a `toIbanEntry` result: normalized IBAN, trimmed names. */
     addIban: (entry: IbanEntry) => void;
     removeIban: (iban: string) => void;
     setLastUsedIban: (iban: string | null) => void;
@@ -77,45 +78,15 @@ export const ibanStore = create<IbanStoreState>()(
             ...initialState,
 
             addIban: (entry) =>
-                set((state) => {
-                    const normalized = normalizeIban(entry.iban);
-                    if (normalized.length === 0) return state;
-
-                    const trimmed: IbanEntry = {
-                        ...entry,
-                        iban: normalized,
-                        firstName: entry.firstName.trim(),
-                        lastName: entry.lastName.trim(),
-                        pseudo: entry.pseudo.trim(),
-                    };
-                    const exists = state.knownIbans.some(
-                        (i) => i.iban === normalized
-                    );
-                    if (!exists) {
-                        return { knownIbans: [...state.knownIbans, trimmed] };
-                    }
-                    return {
-                        knownIbans: state.knownIbans.map((i) => {
-                            if (i.iban !== normalized) return i;
-                            const pseudo = trimmed.pseudo || i.pseudo;
-                            if (trimmed.own) {
-                                return {
-                                    ...trimmed,
-                                    firstName: "",
-                                    lastName: "",
-                                    country: undefined,
-                                    pseudo,
-                                };
-                            }
-                            return {
-                                ...trimmed,
-                                firstName: trimmed.firstName || i.firstName,
-                                lastName: trimmed.lastName || i.lastName,
-                                pseudo,
-                            };
-                        }),
-                    };
-                }),
+                set((state) => ({
+                    knownIbans: state.knownIbans.some(
+                        (i) => i.iban === entry.iban
+                    )
+                        ? state.knownIbans.map((i) =>
+                              i.iban === entry.iban ? entry : i
+                          )
+                        : [...state.knownIbans, entry],
+                })),
 
             removeIban: (iban) =>
                 set((state) => {

@@ -8,8 +8,10 @@ import { useClient, useConnection, useSendTransaction } from "wagmi";
 import { useMoneriumSignMessage } from "@/module/monerium/hooks/useMoneriumSignMessage";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import type { MoneriumStatus } from "@/module/monerium/utils/deriveSetupScreen";
-import { unwrapMoneriumResponse } from "@/module/monerium/utils/moneriumErrors";
-import { refreshStatusOnStateChange } from "@/module/monerium/utils/refreshStaleStatus";
+import {
+    createMoneriumError,
+    unwrapMoneriumResponse,
+} from "@/module/monerium/utils/moneriumErrors";
 
 export const DEPLOYMENT_POLL_MS = 1_000;
 const DEPLOYMENT_MAX_POLLS = 15;
@@ -20,6 +22,7 @@ async function waitUntilDeployed(client: Client, address: Address) {
         if (await isSmartAccountDeployed(client, address)) return;
         await sleep(DEPLOYMENT_POLL_MS);
     }
+    throw createMoneriumError(null);
 }
 
 export function useMoneriumLinkWallet() {
@@ -56,8 +59,8 @@ export function useMoneriumLinkWallet() {
             );
             client.invalidateQueries({ queryKey: moneriumKey.status });
         },
-        onError: (error, _variable, _result, { client }) => {
-            refreshStatusOnStateChange(error, client);
+        onError: (_error, _variable, _result, { client }) => {
+            client.invalidateQueries({ queryKey: moneriumKey.status });
         },
     });
 

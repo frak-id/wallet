@@ -1,6 +1,4 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { Text } from "@frak-labs/design-system/components/Text";
 import {
     authenticatedWalletApi,
     recordError,
@@ -19,7 +17,6 @@ import {
     getMoneriumErrorCode,
     unwrapMoneriumResponse,
 } from "@/module/monerium/utils/moneriumErrors";
-import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./monerium.callback.css";
 
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
@@ -71,30 +68,30 @@ function Outcome({
     return (
         <MoneriumScreen
             onClose={onClose}
+            title={t(copy.title)}
+            description={t(copy.description)}
             ctaLabel={t("monerium.callback.tryAgain")}
             ctaOnClick={onRetry}
-        >
-            <Box paddingTop={"m"}>
-                <Text variant="heading1">{t(copy.title)}</Text>
-                <Text variant="body" color="secondary">
-                    {t(copy.description)}
-                </Text>
-            </Box>
-        </MoneriumScreen>
+        />
     );
 }
+
+const isStateExpired = (error: unknown) =>
+    getMoneriumErrorCode(error) === "MONERIUM_AUTH_STATE_INVALID";
 
 function MoneriumCallback() {
     const navigate = useNavigate();
     const { code, state, error } = Route.useSearch();
     const hasStartedRef = useRef(false);
 
-    const {
-        mutate,
-        isPending,
-        isSuccess,
-        error: exchangeError,
-    } = useMutation({
+    const openBankFlow = () =>
+        navigate({
+            to: "/wallet",
+            search: { open: "monerium" },
+            replace: true,
+        });
+
+    const { mutate, error: exchangeError } = useMutation({
         mutationFn: async ({ code, state }: { code: string; state: string }) =>
             unwrapMoneriumResponse(
                 await authenticatedWalletApi.monerium.auth.callback.post({
@@ -105,13 +102,10 @@ function MoneriumCallback() {
         onSuccess: (status, _variables, _result, { client }) => {
             trackEvent("monerium_callback_outcome", { outcome: "exchanged" });
             client.setQueryData(moneriumKey.status, status);
-            // SPA navigation, not `window.location`: the modal store is in-memory.
-            modalStore.getState().openModal({ id: "moneriumBankFlow" });
-            navigate({ to: "/wallet", replace: true });
+            openBankFlow();
         },
         onError: (err) => {
-            const expired =
-                getMoneriumErrorCode(err) === "MONERIUM_AUTH_STATE_INVALID";
+            const expired = isStateExpired(err);
             trackEvent("monerium_callback_outcome", {
                 outcome: expired ? "session_expired" : "error",
             });
@@ -132,13 +126,10 @@ function MoneriumCallback() {
         mutate({ code, state });
     }, [code, state, error, mutate]);
 
-    const retryFlow = () => {
-        modalStore.getState().openModal({ id: "moneriumBankFlow" });
-        navigate({ to: "/wallet", replace: true });
-    };
     const goToWallet = () => navigate({ to: "/wallet", replace: true });
 
     const isExchanging = Boolean(code && state) && !exchangeError;
+    const expired = isStateExpired(exchangeError);
 
     return (
         <DetailOverlay
@@ -146,7 +137,7 @@ function MoneriumCallback() {
             labelKey="wallet.modal.moneriumCallback.ariaLabel"
         >
             {({ handleClose }) => {
-                if (isExchanging || isPending || isSuccess) {
+                if (isExchanging) {
                     return (
                         <div className={styles.spinnerWrap}>
                             <Spinner />
@@ -154,19 +145,16 @@ function MoneriumCallback() {
                     );
                 }
 
-                const kind: OutcomeKind = exchangeError
-                    ? getMoneriumErrorCode(exchangeError) ===
-                      "MONERIUM_AUTH_STATE_INVALID"
-                        ? "expired"
-                        : "error"
-                    : error
+                const kind: OutcomeKind = expired
+                    ? "expired"
+                    : !exchangeError && error
                       ? "cancelled"
                       : "error";
 
                 return (
                     <Outcome
                         kind={kind}
-                        onRetry={retryFlow}
+                        onRetry={openBankFlow}
                         onClose={handleClose}
                     />
                 );

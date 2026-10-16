@@ -1,5 +1,4 @@
 import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import {
     DetailSheet,
     DetailSheetBody,
@@ -8,20 +7,22 @@ import {
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    BankIcon,
-    CloseIcon,
-    ExternalLinkIcon,
-    LockIcon,
-} from "@frak-labs/design-system/icons";
+import { BankIcon, ExternalLinkIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import { formatCurrency } from "@frak-labs/wallet-shared";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { arbitrum, arbitrumSepolia } from "viem/chains";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
+import { OrderStateBadge } from "@/module/history/component/OrderStateBadge";
+import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
 import { maskIban } from "@/module/monerium/utils/maskIban";
+import {
+    formatOrderAmount,
+    orderAmountColor,
+    orderStateColor,
+    orderTimestamp,
+} from "@/module/monerium/utils/orderDisplay";
+import { explorerTxUrl } from "@/module/wallet/component/ExplorerLink";
 import * as styles from "./index.css";
 
 type MoneriumOrderDetailModalProps = {
@@ -29,78 +30,78 @@ type MoneriumOrderDetailModalProps = {
     onClose: () => void;
 };
 
-const explorerUrl = isRunningInProd
-    ? arbitrum.blockExplorers.default.url
-    : arbitrumSepolia.blockExplorers.default.url;
-
 export function MoneriumOrderDetailModal({
     order,
     onClose,
 }: MoneriumOrderDetailModalProps) {
     const { t, i18n } = useTranslation();
-    const locale = i18n.language;
+    const walletName = t("monerium.order.detail.walletName");
+    const iban = order.counterpart.iban;
+    const ibanLabel = iban ? maskIban(iban) : t("monerium.order.detail.bank");
+    const parties =
+        order.kind === "redeem"
+            ? { from: walletName, to: ibanLabel }
+            : { from: ibanLabel, to: walletName };
 
     return (
         <DetailSheet>
-            <DetailSheetHero height={30} className={styles.hero} />
+            <DetailSheetHero height={30} surface="overlay" />
             <DetailSheetBody className={styles.body}>
                 <GlassCloseButton onClick={onClose} />
-                <DetailHeader order={order} locale={locale} t={t} />
-                <DetailCard order={order} t={t} />
+                <DetailHeader
+                    order={order}
+                    parties={parties}
+                    locale={i18n.language}
+                    t={t}
+                />
+                <DetailCard order={order} parties={parties} t={t} />
             </DetailSheetBody>
         </DetailSheet>
     );
 }
 
+type Parties = { from: string; to: string };
+
 function DetailHeader({
     order,
+    parties,
     locale,
     t,
 }: {
     order: MoneriumOrderDto;
+    parties: Parties;
     locale: string;
     t: TFunction;
 }) {
-    const numericAmount = Number.parseFloat(order.amount);
-    const formattedAmount = Number.isFinite(numericAmount)
-        ? formatCurrency(numericAmount, "EUR", locale)
-        : order.amount;
-    const sign = order.kind === "redeem" ? "-" : "+";
-    const displayAmount = `${sign}${formattedAmount}`;
-
-    const amountColor =
-        order.state === "processed"
-            ? order.kind === "issue"
-                ? "success"
-                : "primary"
-            : "disabled";
-
-    const walletName = t("monerium.order.detail.walletName");
-    const iban = order.counterpart.iban;
-    const ibanLabel = iban ? maskIban(iban) : t("monerium.order.detail.bank");
-
-    const directionLabel =
-        order.kind === "redeem"
-            ? `${walletName} → ${ibanLabel}`
-            : `${ibanLabel} → ${walletName}`;
-
     return (
         <Stack space="s" className={styles.headerSection}>
-            <OrderHeroIcon state={order.state} />
+            <div className={styles.heroIconWrapper}>
+                <BankIcon color={vars.text.secondary} width={32} height={32} />
+                <OrderStateBadge state={order.state} size="m" />
+            </div>
             <Stack space="xs">
                 <Text variant="bodySmall" weight="medium" color="secondary">
-                    {directionLabel}
+                    {`${parties.from} → ${parties.to}`}
                 </Text>
-                <Text variant="heading2" weight="semiBold" color={amountColor}>
-                    {displayAmount}
+                <Text
+                    variant="heading2"
+                    weight="semiBold"
+                    color={orderAmountColor(order)}
+                >
+                    {formatOrderAmount(order, locale)}
                 </Text>
                 <Text variant="caption" color="tertiary">
-                    {formatOrderDateTime(order, locale, t)}
+                    {formatHistoryDateTime(
+                        orderTimestamp(order),
+                        locale,
+                        t,
+                        " · "
+                    )}
                 </Text>
                 {order.state !== "processed" && (
                     <Text
                         variant="bodySmall"
-                        color={order.state === "rejected" ? "error" : "warning"}
+                        color={orderStateColor(order)}
                         weight="medium"
                     >
                         {t(`monerium.order.state.${order.state}`)}
@@ -111,55 +112,16 @@ function DetailHeader({
     );
 }
 
-function OrderHeroIcon({ state }: { state: MoneriumOrderDto["state"] }) {
-    return (
-        <div className={styles.heroIconWrapper}>
-            <BankIcon color={vars.text.secondary} width={32} height={32} />
-            <HeroBadge state={state} />
-        </div>
-    );
-}
-
-function HeroBadge({ state }: { state: MoneriumOrderDto["state"] }) {
-    if (state === "placed" || state === "pending") {
-        return (
-            <div className={styles.heroBadge}>
-                <div className={styles.heroBadgeInner({ status: "pending" })}>
-                    <LockIcon
-                        color={vars.surface.background}
-                        width={14}
-                        height={14}
-                    />
-                </div>
-            </div>
-        );
-    }
-    if (state === "rejected") {
-        return (
-            <div className={styles.heroBadge}>
-                <div className={styles.heroBadgeInner({ status: "rejected" })}>
-                    <CloseIcon
-                        color={vars.surface.background}
-                        width={14}
-                        height={14}
-                    />
-                </div>
-            </div>
-        );
-    }
-    return null;
-}
-
-function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
+function DetailCard({
+    order,
+    parties,
+    t,
+}: {
+    order: MoneriumOrderDto;
+    parties: Parties;
+    t: TFunction;
+}) {
     const memo = order.memo?.trim();
-    const walletName = t("monerium.order.detail.walletName");
-    const iban = order.counterpart.iban;
-    const ibanLabel = iban ? maskIban(iban) : t("monerium.order.detail.bank");
-
-    // For redeem: from wallet → to IBAN. For issue: from IBAN → to wallet.
-    const fromLabel = order.kind === "redeem" ? walletName : ibanLabel;
-    const toLabel = order.kind === "redeem" ? ibanLabel : walletName;
-
     const txHash = order.txHashes[0];
 
     return (
@@ -184,7 +146,7 @@ function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
                     label={t("monerium.order.detail.from")}
                     action={
                         <Text variant="bodySmall" weight="medium">
-                            {fromLabel}
+                            {parties.from}
                         </Text>
                     }
                 />
@@ -194,7 +156,7 @@ function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
                     label={t("monerium.order.detail.to")}
                     action={
                         <Text variant="bodySmall" weight="medium">
-                            {toLabel}
+                            {parties.to}
                         </Text>
                     }
                 />
@@ -205,7 +167,7 @@ function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
                         labelVariant="bodySmall"
                         labelColor="secondary"
                         label={t("monerium.order.detail.transaction")}
-                        href={`${explorerUrl}/tx/${txHash}`}
+                        href={explorerTxUrl(txHash)}
                         action={
                             <Inline space="xxs" alignY="center" wrap={false}>
                                 <Text variant="bodySmall" weight="medium">
@@ -223,39 +185,6 @@ function DetailCard({ order, t }: { order: MoneriumOrderDto; t: TFunction }) {
             )}
         </Stack>
     );
-}
-
-function formatOrderDateTime(
-    order: MoneriumOrderDto,
-    locale: string,
-    t: TFunction
-): string {
-    const sourceIso = order.processedAt ?? order.placedAt;
-    const parsed = sourceIso ? Date.parse(sourceIso) : Number.NaN;
-    if (!Number.isFinite(parsed)) return "";
-
-    const date = new Date(parsed);
-    const now = new Date();
-    const time = date.toLocaleTimeString(locale, {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-
-    if (date.toDateString() === now.toDateString()) {
-        return `${t("common.today")} · ${time}`;
-    }
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `${t("common.yesterday")} · ${time}`;
-    }
-
-    const dayMonth = date.toLocaleDateString(locale, {
-        day: "numeric",
-        month: "long",
-    });
-    return `${dayMonth} · ${time}`;
 }
 
 function shortenHash(hash: string): string {

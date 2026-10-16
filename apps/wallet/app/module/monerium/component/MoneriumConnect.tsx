@@ -1,4 +1,3 @@
-import { isMoneriumProfileUsable } from "@frak-labs/app-essentials/monerium";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,6 +19,7 @@ import {
 } from "@/module/common/component/InfoCard";
 import { useMoneriumDisconnect } from "@/module/monerium/hooks/useMoneriumDisconnect";
 import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
+import { deriveSetupScreen } from "@/module/monerium/utils/deriveSetupScreen";
 import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
 import { modalStore } from "@/module/stores/modalStore";
 
@@ -42,11 +42,7 @@ export function MoneriumConnect() {
 
     const actions: RowAction[] = [];
     if (status?.connection === "connected") {
-        const isSetupDone =
-            isMoneriumProfileUsable(
-                status.profile?.state,
-                status.environment
-            ) && status.walletLink === "linked";
+        const isSetupDone = deriveSetupScreen(status, true) === "transfer";
         if (!isSetupDone) {
             actions.push({
                 label: t("monerium.completeSetup"),

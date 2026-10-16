@@ -1,26 +1,23 @@
+import type { MoneriumBeneficiaryDto } from "@backend-domain/monerium/schemas";
 import {
-    isValidCounterpartName,
+    isPayableCounterpart,
     normalizeIban,
 } from "@frak-labs/app-essentials/monerium";
-import { authenticatedWalletApi, recordError } from "@frak-labs/wallet-shared";
+import {
+    authenticatedWalletApi,
+    recordError,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { useConnection } from "wagmi";
 import { type IbanEntry, ibanStore } from "@/module/monerium/store/ibanStore";
 import { maskIban } from "@/module/monerium/utils/maskIban";
 import { unwrapMoneriumResponse } from "@/module/monerium/utils/moneriumErrors";
 
-type Beneficiary = {
-    iban: string;
-    own: boolean;
-    firstName?: string;
-    lastName?: string;
-    country?: string;
-};
-
 export function beneficiaryToIbanEntry(
-    beneficiary: Beneficiary,
+    beneficiary: MoneriumBeneficiaryDto,
     ownLabel: string
 ): IbanEntry {
     const iban = normalizeIban(beneficiary.iban);
@@ -45,14 +42,12 @@ export async function syncMoneriumBeneficiaries(
     const { beneficiaries } = unwrapMoneriumResponse(
         await authenticatedWalletApi.monerium.beneficiaries.get()
     );
+    // A logout or wallet switch during the request must not write these IBANs back.
+    const sessionWallet = sessionStore.getState().session?.address;
+    if (!sessionWallet || !isAddressEqual(sessionWallet, wallet)) return;
     ibanStore.getState().mergeRemoteIbans(
         beneficiaries
-            .filter(
-                (b) =>
-                    b.own ||
-                    (isValidCounterpartName(b.firstName ?? "") &&
-                        isValidCounterpartName(b.lastName ?? ""))
-            )
+            .filter(isPayableCounterpart)
             .map((b) => beneficiaryToIbanEntry(b, ownLabel)),
         wallet
     );

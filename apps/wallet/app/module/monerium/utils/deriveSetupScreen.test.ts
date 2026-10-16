@@ -1,20 +1,10 @@
 import { describe, expect, test } from "vitest";
+import { moneriumStatus } from "@/tests/moneriumFixtures";
 import {
     deriveSetupScreen,
     isMoneriumStatusPending,
     type MoneriumStatus,
 } from "./deriveSetupScreen";
-
-function status(overrides: Partial<MoneriumStatus> = {}): MoneriumStatus {
-    return {
-        connection: "connected",
-        profile: { id: "p", kind: "personal", state: "approved" },
-        walletLink: "linked",
-        silentReconnect: false,
-        environment: "production",
-        ...overrides,
-    };
-}
 
 type ProfileState = NonNullable<MoneriumStatus["profile"]>["state"];
 
@@ -22,7 +12,7 @@ function withProfile(
     state: ProfileState,
     overrides: Partial<MoneriumStatus> = {}
 ) {
-    return status({
+    return moneriumStatus({
         profile: { id: "p", kind: "personal", state },
         ...overrides,
     });
@@ -35,25 +25,29 @@ describe("deriveSetupScreen", () => {
         ["no status yet", undefined, "loading"],
         [
             "never connected",
-            status({ connection: "none", profile: null }),
+            moneriumStatus({ connection: "none", profile: null }),
             "info",
         ],
         [
             "expired session",
-            status({ connection: "reauth_required" }),
+            moneriumStatus({ connection: "reauth_required" }),
             "reconnect",
         ],
-        ["connected without profile", status({ profile: null }), "onboarding"],
+        [
+            "connected without profile",
+            moneriumStatus({ profile: null }),
+            "onboarding",
+        ],
         ["created", withProfile("created"), "onboarding"],
         ["incomplete", withProfile("incomplete"), "onboarding"],
         ["pending", withProfile("pending"), "verification"],
         ["review", withProfile("review"), "verification"],
         ["rejected", withProfile("rejected"), "blocked"],
         ["closed", withProfile("closed"), "blocked"],
-        ["approved, link none", status({ walletLink: "none" }), "link"],
+        ["approved, link none", moneriumStatus({ walletLink: "none" }), "link"],
         [
             "approved, link pending",
-            status({ walletLink: "pending" }),
+            moneriumStatus({ walletLink: "pending" }),
             "linking",
         ],
     ] as const)("%s -> %s", (_, input, expected) => {
@@ -81,19 +75,22 @@ describe("deriveSetupScreen", () => {
 
     test("sandbox without any profile still onboards", () => {
         expect(
-            deriveSetupScreen(status({ ...sandbox, profile: null }), false)
+            deriveSetupScreen(
+                moneriumStatus({ ...sandbox, profile: null }),
+                false
+            )
         ).toBe("onboarding");
     });
 
     test("linked shows the success once, then the transfer", () => {
-        expect(deriveSetupScreen(status(), false)).toBe("success");
-        expect(deriveSetupScreen(status(), true)).toBe("transfer");
+        expect(deriveSetupScreen(moneriumStatus(), false)).toBe("success");
+        expect(deriveSetupScreen(moneriumStatus(), true)).toBe("transfer");
     });
 
     test("a reauth with a rejected cached profile still reconnects first", () => {
         expect(
             deriveSetupScreen(
-                status({
+                moneriumStatus({
                     connection: "reauth_required",
                     profile: { id: "p", kind: "personal", state: "rejected" },
                 }),
@@ -106,13 +103,22 @@ describe("deriveSetupScreen", () => {
 describe("isMoneriumStatusPending", () => {
     test.each([
         ["created", withProfile("created"), true],
+        [
+            "connected without a profile yet",
+            moneriumStatus({ profile: null }),
+            true,
+        ],
         ["review", withProfile("review"), true],
-        ["approved + link pending", status({ walletLink: "pending" }), true],
-        ["approved + linked", status(), false],
+        [
+            "approved + link pending",
+            moneriumStatus({ walletLink: "pending" }),
+            true,
+        ],
+        ["approved + linked", moneriumStatus(), false],
         ["rejected", withProfile("rejected"), false],
         [
             "reauth with pending profile",
-            status({
+            moneriumStatus({
                 connection: "reauth_required",
                 profile: { id: "p", kind: "personal", state: "pending" },
             }),

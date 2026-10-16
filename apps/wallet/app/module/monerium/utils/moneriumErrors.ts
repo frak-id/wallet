@@ -1,21 +1,20 @@
 import type { MoneriumErrorCode } from "@backend-domain/monerium/schemas";
+import {
+    getErrorCode,
+    getErrorStatus,
+    isTransientHttpError,
+    isUserCancellation,
+} from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 
-export type MoneriumError = Error & {
-    /** Backend `code`, or null for network failures and local cancellations. */
+type MoneriumError = Error & {
+    /** Backend `code`, or null for network failures. */
     code: MoneriumErrorCode | null;
     status: number | null;
-    cancelled: boolean;
 };
 
 /** Eden types `error` as `unknown` on undeclared status codes. */
 type EdenResult<T> = { data: T | null; error: unknown };
-
-function readField(source: unknown, key: string): unknown {
-    return typeof source === "object" && source !== null && key in source
-        ? (source as Record<string, unknown>)[key]
-        : undefined;
-}
 
 const errorKeys: Record<MoneriumErrorCode, DefaultTranslationKey> = {
     MONERIUM_NOT_CONNECTED: "monerium.errors.notConnected",
@@ -40,37 +39,23 @@ const errorKeys: Record<MoneriumErrorCode, DefaultTranslationKey> = {
 
 const knownCodes = new Set<string>(Object.keys(errorKeys));
 
-function readCode(value: unknown): MoneriumErrorCode | null {
-    if (typeof value !== "object" || value === null || !("code" in value)) {
-        return null;
-    }
-    const { code } = value;
-    return typeof code === "string" && knownCodes.has(code)
-        ? (code as MoneriumErrorCode)
-        : null;
-}
-
 export function createMoneriumError(
     code: MoneriumErrorCode | null,
-    options: { status?: number; cancelled?: boolean; cause?: unknown } = {}
+    options: { status?: number } = {}
 ): MoneriumError {
     return Object.assign(new Error(code ?? "MONERIUM_REQUEST_FAILED"), {
         code,
         status: options.status ?? null,
-        cancelled: options.cancelled ?? false,
-        cause: options.cause,
     });
 }
 
 /** Unwraps an Eden treaty result, throwing a `MoneriumError` carrying the backend code. */
 export function unwrapMoneriumResponse<T>(response: EdenResult<T>): T {
     if (response.error) {
-        const status = readField(response.error, "status");
+        const code = getErrorCode(response.error);
         throw createMoneriumError(
-            readCode(readField(response.error, "value")),
-            {
-                status: typeof status === "number" ? status : undefined,
-            }
+            code && knownCodes.has(code) ? (code as MoneriumErrorCode) : null,
+            { status: getErrorStatus(response.error) }
         );
     }
     if (response.data === null) {
@@ -79,31 +64,17 @@ export function unwrapMoneriumResponse<T>(response: EdenResult<T>): T {
     return response.data;
 }
 
-const CANCELLED_NAMES = new Set([
-    "NotAllowedError",
-    "AbortError",
-    "UserRejectedRequestError",
-]);
-const CANCELLED_MESSAGE = /reject|cancel|denied|not allowed|aborted/i;
-
 /** A dismissed passkey or wallet prompt, as opposed to a failed request. */
 export function isUserCancelledError(error: unknown): boolean {
-    if (isMoneriumError(error)) return error.cancelled;
-    if (!(error instanceof Error)) return false;
+    if (isMoneriumError(error)) return false;
     return (
-        CANCELLED_NAMES.has(error.name) ||
-        CANCELLED_MESSAGE.test(error.message) ||
-        (error.cause !== undefined && isUserCancelledError(error.cause))
+        isUserCancellation(error) ||
+        (error instanceof Error && error.name === "UserRejectedRequestError")
     );
 }
 
 function isMoneriumError(error: unknown): error is MoneriumError {
-    return (
-        error instanceof Error &&
-        "code" in error &&
-        "cancelled" in error &&
-        "status" in error
-    );
+    return error instanceof Error && "code" in error && "status" in error;
 }
 
 export function getMoneriumErrorCode(error: unknown): MoneriumErrorCode | null {
@@ -123,7 +94,5 @@ export function getMoneriumErrorKey(error: unknown): DefaultTranslationKey {
 
 /** Retrying only helps when the request never got a definitive answer. */
 export function isMoneriumRetryable(error: unknown): boolean {
-    const code = getMoneriumErrorCode(error);
-    if (code) return code === "MONERIUM_UPSTREAM_UNAVAILABLE";
-    return !isMoneriumError(error) || (error.status ?? 0) >= 500;
+    return !isMoneriumError(error) || isTransientHttpError(error);
 }

@@ -26,7 +26,6 @@ export function useMoneriumOrders() {
         },
         enabled: isMoneriumEnabled && isConnected,
         staleTime: FIVE_MINUTES_MS,
-        refetchOnWindowFocus: true,
         // Counterpart IBANs never reach the persisted query cache.
         meta: { storable: false },
         retry: (failureCount, error) =>
