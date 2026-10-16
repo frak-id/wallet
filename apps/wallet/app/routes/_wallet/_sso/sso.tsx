@@ -12,6 +12,7 @@ import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
+    authenticatedBackendApi,
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
@@ -26,7 +27,7 @@ import {
     updateGlobalProperties,
     useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
-import { type QueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
@@ -48,35 +49,52 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
-import { merchantResolvedConfigQueryOptions } from "@/module/common/hook/useMerchantResolvedConfig";
 import {
     isMerchantDomain,
     sanitizeRedirectUrl,
 } from "@/module/common/utils/sanitizeRedirectUrl";
 
-/** The redirect target once proven to be one of the merchant's own domains, since it receives the wallet session. */
+type RedirectBinding =
+    | { ok: true; url: string }
+    | {
+          ok: false;
+          reason:
+              | "invalid_url"
+              | "no_merchant"
+              | "unknown_merchant"
+              | "lookup_failed"
+              | "host_mismatch";
+          host?: string;
+      };
+
+/** Proves the redirect is one of the merchant's own domains, since it receives the wallet session. */
 async function bindRedirectToMerchant(
-    queryClient: QueryClient,
     redirectUrl: string,
     merchantId: string | undefined
-): Promise<string | undefined> {
-    let safeRedirect: string | undefined;
+): Promise<RedirectBinding> {
+    let url: string | undefined;
     try {
-        safeRedirect = sanitizeRedirectUrl(decodeURIComponent(redirectUrl));
-    } catch {
-        return undefined;
+        url = sanitizeRedirectUrl(decodeURIComponent(redirectUrl));
+    } catch {}
+    if (!url) return { ok: false, reason: "invalid_url" };
+    const host = new URL(url).host;
+    if (!merchantId) return { ok: false, reason: "no_merchant", host };
+    const { data, error } = await authenticatedBackendApi.user.merchant.resolve
+        .get({ query: { merchantId } })
+        .catch(() => ({ data: null, error: null }));
+    if (!data) {
+        const status = error?.status;
+        const unknown =
+            typeof status === "number" && status >= 400 && status < 500;
+        return {
+            ok: false,
+            reason: unknown ? "unknown_merchant" : "lookup_failed",
+            host,
+        };
     }
-    if (!safeRedirect || !merchantId) return undefined;
-    // staleTime 0: the shared query caches a failed resolve as `null`.
-    const merchant = await queryClient
-        .fetchQuery({
-            ...merchantResolvedConfigQueryOptions({ merchantId }),
-            staleTime: 0,
-        })
-        .catch(() => null);
-    return merchant && isMerchantDomain(safeRedirect, merchant.allowedDomains)
-        ? safeRedirect
-        : undefined;
+    return isMerchantDomain(url, data.allowedDomains)
+        ? { ok: true, url }
+        : { ok: false, reason: "host_mismatch", host };
 }
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
@@ -86,7 +104,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             p: (search.p as string) || undefined,
         };
     },
-    beforeLoad: async ({ search, context }) => {
+    beforeLoad: async ({ search }) => {
         const compressedString = search.p;
         if (!compressedString) {
             // If no SSO params, redirect to register
@@ -115,22 +133,28 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             proof,
         } = compressedSsoToParams(compressedParam);
 
-        const redirectUrl = requestedRedirectUrl
-            ? await bindRedirectToMerchant(
-                  context.queryClient,
-                  requestedRedirectUrl,
-                  merchantId
-              )
-            : undefined;
-        if (requestedRedirectUrl && !redirectUrl) {
-            const error = new Error(
-                "This sign-in link does not lead back to the merchant's site."
+        let redirectUrl: string | undefined;
+        if (requestedRedirectUrl) {
+            const binding = await bindRedirectToMerchant(
+                requestedRedirectUrl,
+                merchantId
             );
-            recordError(error, {
-                source: "sso",
-                context: { stage: "redirect_binding" },
-            });
-            return { error };
+            if (!binding.ok) {
+                const error = new Error(
+                    "This sign-in link does not lead back to the merchant's site."
+                );
+                recordError(error, {
+                    source: "sso",
+                    context: {
+                        stage: "redirect_binding",
+                        reason: binding.reason,
+                        host: binding.host,
+                        merchant_id: merchantId,
+                    },
+                });
+                return { error };
+            }
+            redirectUrl = binding.url;
         }
 
         // Apply default for directExit: close the popup after completion
@@ -379,7 +403,12 @@ function Sso() {
                     title="An error occurred"
                     description={t(`${view.baseKey}.message`)}
                     footer={
-                        <Button variant="ghost" onClick={() => window.close()}>
+                        <Button
+                            variant="ghost"
+                            onClick={() =>
+                                window.opener ? window.close() : history.back()
+                            }
+                        >
                             Close
                         </Button>
                     }

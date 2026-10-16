@@ -45,6 +45,17 @@ async function expectRefused(page: Page, handoffs: string[]) {
     await expect(proceed).toBeHidden();
 }
 
+/** The `reason` of every refusal the page reports through `recordError`. */
+function captureRefusals(page: Page) {
+    const reasons: unknown[] = [];
+    page.on("console", async (message) => {
+        if (!message.text().startsWith("[recordError:sso]")) return;
+        const context = await message.args()[2]?.jsonValue();
+        reasons.push(context?.reason);
+    });
+    return reasons;
+}
+
 test.beforeEach(async ({ page }) => {
     await page.route("**/*/user/wallet/auth/sdk/generate*", (route) =>
         route.fulfill({ json: SDK_SESSION })
@@ -72,8 +83,10 @@ test.describe("SSO redirect", () => {
             page,
             "https://attacker.example"
         );
+        const reasons = captureRefusals(page);
         await page.goto(ssoLink("https://attacker.example/collect"));
         await expectRefused(page, handoffs);
+        await expect.poll(() => reasons).toEqual(["host_mismatch"]);
     });
 
     test("retries the merchant lookup after a transient failure", async ({
@@ -89,10 +102,12 @@ test.describe("SSO redirect", () => {
             page,
             "https://acme.example.com"
         );
+        const reasons = captureRefusals(page);
         await page.goto(ssoLink("https://acme.example.com/return"));
         await expect(
             page.getByRole("heading", { name: "An error occurred" })
         ).toBeVisible();
+        await expect.poll(() => reasons).toEqual(["lookup_failed"]);
         await page.evaluate((next) => {
             history.pushState({}, "", next);
             dispatchEvent(new PopStateEvent("popstate"));
@@ -113,7 +128,19 @@ test.describe("SSO redirect", () => {
             page,
             "https://acme.example.com"
         );
+        const reasons = captureRefusals(page);
         await page.goto(ssoLink("https://acme.example.com/return"));
         await expectRefused(page, handoffs);
+        await expect.poll(() => reasons).toEqual(["unknown_merchant"]);
+    });
+
+    test("sends a refused redirect back to the page it came from", async ({
+        page,
+    }) => {
+        await captureHandoffs(page, "https://acme.example.com");
+        await page.goto("https://acme.example.com/shop");
+        await page.goto(ssoLink("https://attacker.example/collect"));
+        await page.getByRole("button", { name: "Close" }).click();
+        await expect(page).toHaveURL("https://acme.example.com/shop");
     });
 });
