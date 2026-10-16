@@ -16,3 +16,14 @@ export function sanitizeRedirectUrl(value: unknown): string | undefined {
         return undefined;
     }
 }
+
+/** Whether `url`'s host is one of the merchant's registered domains, `www.` ignored as the listener does. */
+export function isMerchantDomain(
+    url: string,
+    allowedDomains: readonly string[]
+): boolean {
+    const host = new URL(url).host.replace(/^www\./, "");
+    return allowedDomains.some(
+        (domain) => domain.replace(/^www\./, "") === host
+    );
+}

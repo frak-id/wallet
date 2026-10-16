@@ -13,7 +13,7 @@ type MerchantResolvedConfigArgs = {
  * Returns the full {@link MerchantResolveResponse} including `sdkConfig` (and its
  * `attribution` defaults). Callers can `select` only the fields they need.
  */
-function merchantResolvedConfigQueryOptions({
+export function merchantResolvedConfigQueryOptions({
     merchantId,
     lang,
 }: MerchantResolvedConfigArgs) {

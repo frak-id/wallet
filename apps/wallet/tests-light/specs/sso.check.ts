@@ -76,6 +76,33 @@ test.describe("SSO redirect", () => {
         await expectRefused(page, handoffs);
     });
 
+    test("retries the merchant lookup after a transient failure", async ({
+        page,
+    }) => {
+        let failures = 1;
+        await page.route("**/*/user/merchant/resolve*", (route) =>
+            failures-- > 0
+                ? route.fulfill({ status: 503, body: "unavailable" })
+                : route.fallback()
+        );
+        const handoffs = await captureHandoffs(
+            page,
+            "https://acme.example.com"
+        );
+        await page.goto(ssoLink("https://acme.example.com/return"));
+        await expect(
+            page.getByRole("heading", { name: "An error occurred" })
+        ).toBeVisible();
+        await page.evaluate((next) => {
+            history.pushState({}, "", next);
+            dispatchEvent(new PopStateEvent("popstate"));
+        }, ssoLink("https://acme.example.com/again"));
+        await page
+            .getByRole("button", { name: "Continue with my wallet" })
+            .click();
+        await expect.poll(() => handoffs.length, { timeout: 6_000 }).toBe(1);
+    });
+
     test("refuses a redirect when the merchant cannot be resolved", async ({
         page,
     }) => {

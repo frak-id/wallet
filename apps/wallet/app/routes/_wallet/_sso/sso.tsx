@@ -26,7 +26,7 @@ import {
     updateGlobalProperties,
     useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
-import { useMutation } from "@tanstack/react-query";
+import { type QueryClient, useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
@@ -48,7 +48,36 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
-import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
+import { merchantResolvedConfigQueryOptions } from "@/module/common/hook/useMerchantResolvedConfig";
+import {
+    isMerchantDomain,
+    sanitizeRedirectUrl,
+} from "@/module/common/utils/sanitizeRedirectUrl";
+
+/** The redirect target once proven to be one of the merchant's own domains, since it receives the wallet session. */
+async function bindRedirectToMerchant(
+    queryClient: QueryClient,
+    redirectUrl: string,
+    merchantId: string | undefined
+): Promise<string | undefined> {
+    let safeRedirect: string | undefined;
+    try {
+        safeRedirect = sanitizeRedirectUrl(decodeURIComponent(redirectUrl));
+    } catch {
+        return undefined;
+    }
+    if (!safeRedirect || !merchantId) return undefined;
+    // staleTime 0: the shared query caches a failed resolve as `null`.
+    const merchant = await queryClient
+        .fetchQuery({
+            ...merchantResolvedConfigQueryOptions({ merchantId }),
+            staleTime: 0,
+        })
+        .catch(() => null);
+    return merchant && isMerchantDomain(safeRedirect, merchant.allowedDomains)
+        ? safeRedirect
+        : undefined;
+}
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,
@@ -57,7 +86,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             p: (search.p as string) || undefined,
         };
     },
-    beforeLoad: async ({ search }) => {
+    beforeLoad: async ({ search, context }) => {
         const compressedString = search.p;
         if (!compressedString) {
             // If no SSO params, redirect to register
@@ -77,8 +106,32 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         // Convert compressed params to full params
-        const { merchantId, redirectUrl, directExit, lang, metadata, proof } =
-            compressedSsoToParams(compressedParam);
+        const {
+            merchantId,
+            redirectUrl: requestedRedirectUrl,
+            directExit,
+            lang,
+            metadata,
+            proof,
+        } = compressedSsoToParams(compressedParam);
+
+        const redirectUrl = requestedRedirectUrl
+            ? await bindRedirectToMerchant(
+                  context.queryClient,
+                  requestedRedirectUrl,
+                  merchantId
+              )
+            : undefined;
+        if (requestedRedirectUrl && !redirectUrl) {
+            const error = new Error(
+                "This sign-in link does not lead back to the merchant's site."
+            );
+            recordError(error, {
+                source: "sso",
+                context: { stage: "redirect_binding" },
+            });
+            return { error };
+        }
 
         // Apply default for directExit: close the popup after completion
         // unless the caller provided a redirectUrl. This matches the SDK-side
@@ -266,22 +319,9 @@ function Sso() {
     const redirectOrClose = useCallback(() => {
         // Check the current store context
         const ssoContext = authenticationStore.getState().ssoContext;
-        // If we got a redirect, redirect to the page directly with success status
+        // beforeLoad only stores a redirect bound to the merchant's domains.
         if (ssoContext?.redirectUrl) {
-            // Validate the redirect target (https-only, no open redirect) before
-            // using it. sanitizeRedirectUrl strips the hash/query, so we rebuild
-            // from the sanitized origin+pathname and re-add our own sso param.
-            const safeRedirect = sanitizeRedirectUrl(
-                decodeURIComponent(ssoContext.redirectUrl)
-            );
-            if (!safeRedirect) {
-                recordError(new Error("Invalid SSO redirect URL"), {
-                    source: "sso",
-                    context: { stage: "redirect_validation" },
-                });
-                return;
-            }
-            const redirectUrl = new URL(safeRedirect);
+            const redirectUrl = new URL(ssoContext.redirectUrl);
 
             // Get the full SSO params and compress them for URL passthrough
             const session = sessionStore.getState().session;
