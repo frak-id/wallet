@@ -28,14 +28,12 @@ export function isSilentReconnectEligible(
     row: Pick<
         MoneriumConnectionRow,
         "status" | "walletLinkState" | "siweFailedAt"
-    >,
-    config: Pick<MoneriumConfig, "siweEnabled">
+    >
 ): boolean {
     return (
         row.status === "reauth_required" &&
         row.walletLinkState === "linked" &&
-        !isRecentSiweFailure(row.siweFailedAt) &&
-        config.siweEnabled
+        !isRecentSiweFailure(row.siweFailedAt)
     );
 }
 
@@ -48,7 +46,7 @@ function isRecentSiweFailure(failedAt: Date | null): boolean {
 
 export function toStatusResponse(
     row: MoneriumConnectionRow | undefined,
-    config: Pick<MoneriumConfig, "environment" | "siweEnabled">
+    config: Pick<MoneriumConfig, "environment">
 ): MoneriumStatusResponse {
     if (!row) {
         return {
@@ -74,7 +72,7 @@ export function toStatusResponse(
                   }
                 : null,
         walletLink: row.walletLinkState,
-        silentReconnect: isSilentReconnectEligible(row, config),
+        silentReconnect: isSilentReconnectEligible(row),
         environment: config.environment,
     };
 }

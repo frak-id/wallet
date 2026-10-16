@@ -81,7 +81,6 @@ describe("MoneriumAuthService", () => {
     beforeEach(() => {
         vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
         vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
-        vi.stubEnv("MONERIUM_SIWE_ENABLED", "");
         vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
     });
     afterEach(() => {
@@ -337,26 +336,6 @@ describe("MoneriumAuthService", () => {
                 (pending.get(state)?.expiresAt.getTime() ?? 0) - Date.now();
             expect(ttl).toBeGreaterThan(9 * 60_000);
             expect(ttl).toBeLessThanOrEqual(10 * 60_000);
-        });
-
-        it("refuses to prepare without the app name registered at Monerium", async () => {
-            vi.stubEnv("MONERIUM_APP_NAME", "");
-            const { service } = setup({ connection: eligible });
-            await expect(
-                service.prepareSiwe({ wallet: WALLET })
-            ).rejects.toMatchObject({
-                code: "MONERIUM_SIWE_UNAVAILABLE",
-            });
-        });
-
-        it("refuses to prepare when SIWE is disabled", async () => {
-            vi.stubEnv("MONERIUM_SIWE_ENABLED", "false");
-            const { service } = setup({ connection: eligible });
-            await expect(
-                service.prepareSiwe({ wallet: WALLET })
-            ).rejects.toMatchObject({
-                code: "MONERIUM_SIWE_UNAVAILABLE",
-            });
         });
 
         it("exchanges the code from the redirect and clears the failure flag", async () => {

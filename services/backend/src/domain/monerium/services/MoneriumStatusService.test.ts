@@ -38,33 +38,22 @@ function row(
 }
 
 describe("silentReconnect", () => {
-    const enabled = { siweEnabled: true };
-
     it.each([
         [
-            "reauth + linked + no failure + enabled",
+            "reauth + linked + no failure",
             "reauth_required",
             "linked",
             null,
             true,
-            true,
         ],
-        ["connected", "connected", "linked", null, true, false],
-        ["reauth but not linked", "reauth_required", "none", null, true, false],
-        [
-            "reauth but link pending",
-            "reauth_required",
-            "pending",
-            null,
-            true,
-            false,
-        ],
+        ["connected", "connected", "linked", null, false],
+        ["reauth but not linked", "reauth_required", "none", null, false],
+        ["reauth but link pending", "reauth_required", "pending", null, false],
         [
             "reauth, linked, SIWE failed before",
             "reauth_required",
             "linked",
             new Date(),
-            true,
             false,
         ],
         [
@@ -73,24 +62,16 @@ describe("silentReconnect", () => {
             "linked",
             new Date(Date.now() - 8 * 24 * 60 * 60_000),
             true,
-            true,
-        ],
-        [
-            "reauth, linked, SIWE disabled",
-            "reauth_required",
-            "linked",
-            null,
-            false,
-            false,
         ],
     ] as const)(
         "%s",
-        (_name, status, walletLinkState, siweFailedAt, siweEnabled, expected) => {
+        (_name, status, walletLinkState, siweFailedAt, expected) => {
             expect(
-                isSilentReconnectEligible(
-                    { status, walletLinkState, siweFailedAt },
-                    { siweEnabled }
-                )
+                isSilentReconnectEligible({
+                    status,
+                    walletLinkState,
+                    siweFailedAt,
+                })
             ).toBe(expected);
         }
     );
@@ -99,7 +80,7 @@ describe("silentReconnect", () => {
         expect(
             toStatusResponse(
                 row({ status: "reauth_required", walletLinkState: "linked" }),
-                { ...enabled, environment: "production" }
+                { environment: "production" }
             )
         ).toMatchObject({
             connection: "reauth_required",
@@ -112,22 +93,19 @@ describe("silentReconnect", () => {
 
 describe("toStatusResponse", () => {
     it("answers none without a connection", () => {
-        expect(
-            toStatusResponse(undefined, {
-                siweEnabled: true,
+        expect(toStatusResponse(undefined, { environment: "sandbox" })).toEqual(
+            {
+                connection: "none",
+                profile: null,
+                walletLink: "none",
+                silentReconnect: false,
                 environment: "sandbox",
-            })
-        ).toEqual({
-            connection: "none",
-            profile: null,
-            walletLink: "none",
-            silentReconnect: false,
-            environment: "sandbox",
-        });
+            }
+        );
     });
 
     it("includes the reason code only when present", () => {
-        const config = { siweEnabled: true, environment: "sandbox" } as const;
+        const config = { environment: "sandbox" } as const;
         expect(toStatusResponse(row(), config).profile).toEqual({
             id: "p",
             kind: "personal",

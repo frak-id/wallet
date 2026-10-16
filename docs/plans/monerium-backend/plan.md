@@ -58,14 +58,15 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 6. **Pending auth** rows are single-use, bound to the session wallet, 30 min TTL.
 7. **SIWE silent reconnect** (to be validated in sandbox, falls back to the portal):
    viem `createSiweMessage` — domain = wallet host, address = wallet, statement
-   `Allow Frak Wallet to access my data on Monerium`, uri = redirect URI, version 1,
+   `Allow <MONERIUM_APP_NAME> to access my data on Monerium`, uri = redirect URI, version 1,
    chainId 42161 / 421614, `generateSiweNonce()`, expiration +10 min, resources
    `https://monerium.com/siwe`, `https://frak.id/privacy`, `https://frak.id/terms`.
    Submit = `POST /auth` form with `authentication_method=siwe`, `redirect: "manual"`,
    code read from `Location`. A rejection sets `siwe_failed_at` so we never ask that
    wallet for a pointless passkey prompt again, logs Monerium's answer at `warn`, and
    returns 422. `silentReconnect = reauth_required && walletLink == linked &&
-   !siwe_failed_at && MONERIUM_SIWE_ENABLED != "false"`.
+   !siwe_failed_at`. Validated in sandbox on 2026-10-16 with a Kernel passkey (ERC-1271)
+   signature: Monerium answered 302 with a code.
 8. **Status** serves the DB cache and refreshes from Monerium when `refresh=true` or the
    cache is older than 60 s; if Monerium is down, the cache is returned.
 9. **Orders** validated with the shared helpers: message must parse, its amount and
@@ -125,9 +126,6 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 
 ## Open after merge
 
-- Validate SIWE with a smart-account (ERC-1271) signature in sandbox. If Monerium rejects
-  it, set `MONERIUM_SIWE_ENABLED: "false"` in `infra/gcp/secrets.ts`; the portal fallback
-  already covers it.
 - Wallet merge: the loser wallet's connection is not migrated (needs a re-link on the
   winner address at Monerium anyway).
 - DB migration for the three tables (columns in `services/backend/src/domain/monerium/db/schema.ts`,
@@ -177,7 +175,9 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   orders 10) on top of the IP buckets.
 - Request bounds: iban 42, names 100, country 2, memo 140, amount 16, message 128, state 64, code 512,
   signature 16 384 hex chars (smart-account signatures are not measured in the repo).
-- `MONERIUM_SIWE_ENABLED` and `MONERIUM_APP_NAME` are static values in `infra/gcp/secrets.ts`.
+- `MONERIUM_APP_NAME` is a static value in `infra/gcp/secrets.ts` and is required like
+  `MONERIUM_CLIENT_ID`: without it the Monerium routes answer 502. There is no SIWE switch; a
+  rejected SIWE still falls back to the portal and sets `siwe_failed_at`.
 
 ## Implementation notes (wallet lane)
 

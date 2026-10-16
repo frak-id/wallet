@@ -143,8 +143,6 @@ export const elysiaEnv = {
 
     // Monerium (EUR e-money): OAuth tokens stay server-side
     MONERIUM_CLIENT_ID: moneriumClientId.value,
-    // Silent reconnect kill switch: "false" sends every reconnect to the Monerium portal.
-    MONERIUM_SIWE_ENABLED: "true",
     // Must equal the app name registered at Monerium for MONERIUM_CLIENT_ID.
     MONERIUM_APP_NAME: isProd ? "Frak" : "Frak Legacy",
 

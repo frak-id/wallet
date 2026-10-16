@@ -73,6 +73,7 @@ function setup(row = approvedRow()) {
 describe("MoneriumLinkService.linkWallet", () => {
     beforeEach(() => {
         vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
+        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
         vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
     });
     afterEach(() => {

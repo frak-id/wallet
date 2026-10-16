@@ -15,20 +15,20 @@ export type MoneriumConfig = {
     redirectUri: string;
     siweDomain: string;
     /** Must equal the application name registered at Monerium for this client id. */
-    siweAppName: string | null;
-    siweEnabled: boolean;
+    siweAppName: string;
 };
 
 type MoneriumEnv = Record<string, string | undefined>;
 
-/** Null when the client id or the wallet URL is missing or unusable. */
+/** Null when the client id, the app name or the wallet URL is missing or unusable. */
 export function readMoneriumConfig(
     env: MoneriumEnv,
     production: boolean
 ): MoneriumConfig | null {
     const clientId = env.MONERIUM_CLIENT_ID?.trim();
     const rawWalletUrl = env.FRAK_WALLET_URL?.trim();
-    if (!clientId || !rawWalletUrl) return null;
+    const siweAppName = env.MONERIUM_APP_NAME?.trim();
+    if (!clientId || !rawWalletUrl || !siweAppName) return null;
 
     const walletUrl = rawWalletUrl.replace(/\/+$/, "");
     let siweDomain: string;
@@ -38,7 +38,6 @@ export function readMoneriumConfig(
         return null;
     }
 
-    const siweAppName = env.MONERIUM_APP_NAME?.trim() || null;
     return {
         clientId,
         environment: production ? "production" : "sandbox",
@@ -51,8 +50,6 @@ export function readMoneriumConfig(
         redirectUri: `${walletUrl}/monerium/callback`,
         siweDomain,
         siweAppName,
-        siweEnabled:
-            env.MONERIUM_SIWE_ENABLED !== "false" && siweAppName !== null,
     };
 }
 
@@ -66,7 +63,7 @@ export function requireMoneriumConfig(): MoneriumConfig {
     if (!missingConfigLogged) {
         missingConfigLogged = true;
         log.error(
-            "[Monerium] MONERIUM_CLIENT_ID or FRAK_WALLET_URL is missing, Monerium routes answer 502"
+            "[Monerium] MONERIUM_CLIENT_ID, MONERIUM_APP_NAME or FRAK_WALLET_URL is missing, Monerium routes answer 502"
         );
     }
     throw HttpError.badGateway(

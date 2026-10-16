@@ -106,11 +106,7 @@ export class MoneriumAuthService {
     }): Promise<{ state: string; message: string }> {
         const config = requireMoneriumConfig();
         const row = await this.connections.findByWallet(params.wallet);
-        if (
-            !row ||
-            !config.siweAppName ||
-            !isSilentReconnectEligible(row, config)
-        ) {
+        if (!row || !isSilentReconnectEligible(row)) {
             throw HttpError.conflict(
                 moneriumErrorCodes.siweUnavailable,
                 "Silent reconnection is not available for this wallet"

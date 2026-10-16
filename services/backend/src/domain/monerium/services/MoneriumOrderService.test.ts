@@ -121,6 +121,7 @@ function setup(
 describe("MoneriumOrderService.placeOrder", () => {
     beforeEach(() => {
         vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
+        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
         vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
     });
     afterEach(() => {
@@ -564,6 +565,7 @@ describe("MoneriumOrderService.listOrders", () => {
 
     it("lists again after the wallet placed an order", async () => {
         vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
+        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
         vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
         const { service, client } = setup();
         client.listOrders.mockResolvedValue([]);

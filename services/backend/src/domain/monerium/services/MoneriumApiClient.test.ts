@@ -13,7 +13,6 @@ const config: MoneriumConfig = {
     redirectUri: "https://wallet.test/monerium/callback",
     siweDomain: "wallet.test",
     siweAppName: "Frak Sandbox",
-    siweEnabled: true,
 };
 
 function clientWith(response: Response) {
