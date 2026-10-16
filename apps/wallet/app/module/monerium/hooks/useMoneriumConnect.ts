@@ -7,7 +7,7 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSignMessage } from "wagmi";
+import { useMoneriumSignMessage } from "@/module/monerium/hooks/useMoneriumSignMessage";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import type { MoneriumStatus } from "@/module/monerium/utils/deriveSetupScreen";
 import {
@@ -32,13 +32,13 @@ function classifySiweFailure(error: unknown): MoneriumSiweFailure {
  */
 export function useMoneriumConnect() {
     const queryClient = useQueryClient();
-    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const signMessage = useMoneriumSignMessage();
 
     async function reconnectWithSiwe(): Promise<void> {
         const { state, message } = unwrapMoneriumResponse(
             await authenticatedWalletApi.monerium.auth.siwe.prepare.post()
         );
-        const signature = await signMessageAsync({ message });
+        const signature = await signMessage(message);
         const status = unwrapMoneriumResponse(
             await authenticatedWalletApi.monerium.auth.siwe.post({
                 state,

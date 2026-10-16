@@ -1,6 +1,8 @@
 /** @jsxImportSource react */
 import type * as WalletShared from "@frak-labs/wallet-shared";
 import { renderHook } from "@testing-library/react";
+import { isSmartAccountDeployed } from "permissionless";
+import { serializeErc6492Signature } from "viem";
 import { vi } from "vitest";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import { moneriumFlowStore } from "@/module/monerium/store/moneriumFlowStore";
@@ -31,12 +33,72 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-import { useMoneriumLinkWallet } from "./useMoneriumLinkWallet";
+import {
+    DEPLOYMENT_POLL_MS,
+    useMoneriumLinkWallet,
+} from "./useMoneriumLinkWallet";
+
+const INNER_SIGNATURE = `0x${"ab".repeat(65)}` as const;
 
 describe("useMoneriumLinkWallet", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mocks.sign.mockResolvedValue("0xsig");
+        mocks.sign.mockResolvedValue(INNER_SIGNATURE);
+        mocks.send.mockResolvedValue("0xtx");
+    });
+
+    test("sends Monerium the inner signature of an ERC-6492 wrapper", async ({
+        queryWrapper,
+    }) => {
+        mocks.sign.mockResolvedValue(
+            serializeErc6492Signature({
+                address: "0x0000000000000000000000000000000000000f00",
+                data: "0x1234",
+                signature: INNER_SIGNATURE,
+            })
+        );
+        mocks.post.mockResolvedValue({
+            data: { walletLink: "linked" },
+            error: null,
+        });
+        const { result } = renderHook(() => useMoneriumLinkWallet(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.linkWalletAsync();
+
+        expect(mocks.post).toHaveBeenCalledWith({
+            signature: INNER_SIGNATURE,
+        });
+    });
+
+    test("signs only once the fresh deployment is visible", async ({
+        queryWrapper,
+    }) => {
+        vi.useFakeTimers();
+        vi.mocked(isSmartAccountDeployed)
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(true);
+        mocks.post.mockResolvedValue({
+            data: { walletLink: "linked" },
+            error: null,
+        });
+        const { result } = renderHook(() => useMoneriumLinkWallet(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        const linking = result.current.linkWalletAsync();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(mocks.send).toHaveBeenCalledOnce();
+        expect(mocks.sign).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(DEPLOYMENT_POLL_MS);
+        await linking;
+        vi.useRealTimers();
+
+        expect(isSmartAccountDeployed).toHaveBeenCalledTimes(3);
+        expect(mocks.sign).toHaveBeenCalledOnce();
     });
 
     test.for([

@@ -10,7 +10,7 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import { useSignMessage } from "wagmi";
+import { useMoneriumSignMessage } from "@/module/monerium/hooks/useMoneriumSignMessage";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import { getAmountBucket } from "@/module/monerium/utils/amountBucket";
 import {
@@ -32,7 +32,7 @@ export type PlaceOrderParams = {
 };
 
 export function useMoneriumOfframp() {
-    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const signMessage = useMoneriumSignMessage();
 
     const mutation = useMutation({
         mutationFn: async ({
@@ -61,7 +61,7 @@ export function useMoneriumOfframp() {
                     Date.now() + MONERIUM_LIMITS.MESSAGE_FUTURE_OFFSET_MS
                 ),
             });
-            const signature = await signMessageAsync({ message });
+            const signature = await signMessage(message);
 
             const placed = unwrapMoneriumResponse(
                 await authenticatedWalletApi.monerium.orders.post({
