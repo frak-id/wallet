@@ -739,6 +739,29 @@ export default interface Resources {
         "placeholder": "your.email@gmail.com",
         "title": "Enter your email address"
       },
+      "game": {
+        "reward": {
+          "description": "Your reward is pending. It unlocks on your first brand mission.",
+          "title": "You're in the game!"
+        },
+        "rules": {
+          "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
+          "follow": {
+            "description": "Follow @frak on Instagram, where the {{prize}} winner is announced in a story.",
+            "title": "Don't miss the next drop"
+          },
+          "howItWorks": "How it works",
+          "invite": {
+            "description": "You each earn {{reward}}, and every friend who signs up gets you closer to the {{prize}}.",
+            "title": "Invite your friends"
+          },
+          "title": "The Frak Game",
+          "unlock": {
+            "description": "It stays pending until your first brand mission.",
+            "title": "Unlock your {{reward}}"
+          }
+        }
+      },
       "keypass": {
         "description": "A secure key is saved in your password manager to quickly log in via biometrics.",
         "existingAccount": {

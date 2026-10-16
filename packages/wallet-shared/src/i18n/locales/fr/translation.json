@@ -945,6 +945,29 @@
             "descriptionHighlight": "Tes gains sont sécurisés et accessibles à tout moment.",
             "button": "Commencer",
             "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
+        },
+        "game": {
+            "rules": {
+                "title": "Le Jeu Frak",
+                "description": "Un drop sur Instagram chaque mardi et jeudi à 20h.",
+                "howItWorks": "Comment ça marche",
+                "unlock": {
+                    "title": "Débloque ton {{reward}}",
+                    "description": "Il est en attente jusqu'à ta première mission de marque."
+                },
+                "invite": {
+                    "title": "Invite tes amis",
+                    "description": "Vous gagnez {{reward}} chacun, et chaque ami inscrit te rapproche des {{prize}}."
+                },
+                "follow": {
+                    "title": "Ne rate pas le prochain drop",
+                    "description": "Suis @frak sur Instagram, le gagnant des {{prize}} y est annoncé en story."
+                }
+            },
+            "reward": {
+                "title": "Tu es dans le jeu !",
+                "description": "Ta récompense est en attente. Elle se débloque à ta première mission de marque."
+            }
         }
     },
     "reward": {

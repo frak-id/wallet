@@ -945,6 +945,29 @@
             "descriptionHighlight": "Your earnings are secure and accessible at any time.",
             "button": "Get started",
             "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>"
+        },
+        "game": {
+            "rules": {
+                "title": "The Frak Game",
+                "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
+                "howItWorks": "How it works",
+                "unlock": {
+                    "title": "Unlock your {{reward}}",
+                    "description": "It stays pending until your first brand mission."
+                },
+                "invite": {
+                    "title": "Invite your friends",
+                    "description": "You each earn {{reward}}, and every friend who signs up gets you closer to the {{prize}}."
+                },
+                "follow": {
+                    "title": "Don't miss the next drop",
+                    "description": "Follow @frak on Instagram, where the {{prize}} winner is announced in a story."
+                }
+            },
+            "reward": {
+                "title": "You're in the game!",
+                "description": "Your reward is pending. It unlocks on your first brand mission."
+            }
         }
     },
     "reward": {
