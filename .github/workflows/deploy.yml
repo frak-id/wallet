@@ -184,10 +184,6 @@ jobs:
           # Hard-update gate. `0.0.0` = disabled.
           MIN_VERSION_IOS: ${{ vars.MIN_VERSION_IOS || '0.0.0' }}
           MIN_VERSION_ANDROID: ${{ vars.MIN_VERSION_ANDROID || '0.0.0' }}
-          # Monerium silent-reconnect (SIWE) kill switch: set to `false` to force the portal.
-          MONERIUM_SIWE_ENABLED: ${{ vars.MONERIUM_SIWE_ENABLED || 'true' }}
-          # Application name registered at Monerium; SIWE stays off while it is empty.
-          MONERIUM_APP_NAME: ${{ vars.MONERIUM_APP_NAME }}
 
       - name: "🚀 Deploy Apps"
         if: steps.changes.outputs.apps == 'true' || github.event.inputs.force_deploy == 'true'

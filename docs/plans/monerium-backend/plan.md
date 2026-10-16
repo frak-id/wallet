@@ -126,7 +126,8 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 ## Open after merge
 
 - Validate SIWE with a smart-account (ERC-1271) signature in sandbox. If Monerium rejects
-  it, set `MONERIUM_SIWE_ENABLED=false`; the portal fallback already covers it.
+  it, set `MONERIUM_SIWE_ENABLED: "false"` in `infra/gcp/secrets.ts`; the portal fallback
+  already covers it.
 - Wallet merge: the loser wallet's connection is not migrated (needs a re-link on the
   winner address at Monerium anyway).
 - DB migration for the three tables (columns in `services/backend/src/domain/monerium/db/schema.ts`,
@@ -134,10 +135,10 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   ship before the backend: the routes and the `moneriumSync` cron read these tables.
 - `MONERIUM_CLIENT_ID` set on every backend stage, and `${FRAK_WALLET_URL}/monerium/callback`
   registered as a redirect URI for that client id at Monerium.
-- `MONERIUM_APP_NAME` (GitHub var per environment) set to the exact application name
-  registered at Monerium for that client id: the SIWE statement must read `Allow <name> to
-  access my data on Monerium`, or Monerium answers `access_denied` "invalid app name".
-  Empty keeps SIWE off.
+- `MONERIUM_APP_NAME` (static in `infra/gcp/secrets.ts`: "Frak" in prod, "Frak Legacy" in
+  sandbox) must equal the application name registered at Monerium for that client id: the
+  SIWE statement reads `Allow <name> to access my data on Monerium`, or Monerium answers
+  `access_denied` "invalid app name". Rename the app at Monerium and this value together.
 - Mobile push taps: the `frak-firebase` plugin does not open `data.url` on iOS or Android, for any
   notification. Needs a native change and a mobile release; the wallet already handles
   `/wallet?open=monerium` once the URL reaches it.
@@ -176,7 +177,7 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   orders 10) on top of the IP buckets.
 - Request bounds: iban 42, names 100, country 2, memo 140, amount 16, message 128, state 64, code 512,
   signature 16 384 hex chars (smart-account signatures are not measured in the repo).
-- `deploy.yml` forwards `MONERIUM_SIWE_ENABLED` (repo/environment variable, default `true`).
+- `MONERIUM_SIWE_ENABLED` and `MONERIUM_APP_NAME` are static values in `infra/gcp/secrets.ts`.
 
 ## Implementation notes (wallet lane)
 
