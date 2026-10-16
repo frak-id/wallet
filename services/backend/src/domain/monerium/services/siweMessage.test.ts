@@ -12,6 +12,7 @@ const config: MoneriumConfig = {
     walletUrl: "https://wallet.frak.id",
     redirectUri: "https://wallet.frak.id/monerium/callback",
     siweDomain: "wallet.frak.id",
+    siweAppName: "Frak Sandbox",
     siweEnabled: true,
 };
 
@@ -21,6 +22,7 @@ const NOW = new Date("2026-10-15T12:00:00Z");
 describe("buildMoneriumSiweMessage", () => {
     const message = buildMoneriumSiweMessage({
         address: ADDRESS,
+        appName: "Frak Sandbox",
         config,
         now: NOW,
         nonce: "8YOaY6qkvyf7F5lx",
@@ -38,7 +40,7 @@ describe("buildMoneriumSiweMessage", () => {
             version: "1",
             chainId: 42161,
             nonce: "8YOaY6qkvyf7F5lx",
-            statement: "Allow Frak Wallet to access my data on Monerium",
+            statement: "Allow Frak Sandbox to access my data on Monerium",
         });
     });
 
@@ -62,6 +64,7 @@ describe("buildMoneriumSiweMessage", () => {
     it("uses the sandbox chain id outside production", () => {
         const sandbox = buildMoneriumSiweMessage({
             address: ADDRESS,
+            appName: "Frak Sandbox",
             config: { ...config, chainId: 421614 },
             now: NOW,
         });

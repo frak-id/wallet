@@ -4,6 +4,7 @@ import { readMoneriumConfig } from "./config";
 const env = {
     MONERIUM_CLIENT_ID: "client-1",
     FRAK_WALLET_URL: "https://wallet.frak.id/",
+    MONERIUM_APP_NAME: " Frak Sandbox ",
 };
 
 describe("readMoneriumConfig", () => {
@@ -17,6 +18,7 @@ describe("readMoneriumConfig", () => {
             walletUrl: "https://wallet.frak.id",
             redirectUri: "https://wallet.frak.id/monerium/callback",
             siweDomain: "wallet.frak.id",
+            siweAppName: "Frak Sandbox",
             siweEnabled: true,
         });
     });
@@ -50,6 +52,12 @@ describe("readMoneriumConfig", () => {
             readMoneriumConfig({ ...env, MONERIUM_SIWE_ENABLED: "0" }, false)
                 ?.siweEnabled
         ).toBe(true);
+    });
+
+    it("turns SIWE off without the registered app name", () => {
+        expect(
+            readMoneriumConfig({ ...env, MONERIUM_APP_NAME: " " }, false)
+        ).toMatchObject({ siweAppName: null, siweEnabled: false });
     });
 
     it("returns null when the client id or wallet URL is missing or invalid", () => {

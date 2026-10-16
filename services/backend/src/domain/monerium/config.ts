@@ -14,6 +14,8 @@ export type MoneriumConfig = {
     walletUrl: string;
     redirectUri: string;
     siweDomain: string;
+    /** Must equal the application name registered at Monerium for this client id. */
+    siweAppName: string | null;
     siweEnabled: boolean;
 };
 
@@ -36,6 +38,7 @@ export function readMoneriumConfig(
         return null;
     }
 
+    const siweAppName = env.MONERIUM_APP_NAME?.trim() || null;
     return {
         clientId,
         environment: production ? "production" : "sandbox",
@@ -47,7 +50,9 @@ export function readMoneriumConfig(
         walletUrl,
         redirectUri: `${walletUrl}/monerium/callback`,
         siweDomain,
-        siweEnabled: env.MONERIUM_SIWE_ENABLED !== "false",
+        siweAppName,
+        siweEnabled:
+            env.MONERIUM_SIWE_ENABLED !== "false" && siweAppName !== null,
     };
 }
 

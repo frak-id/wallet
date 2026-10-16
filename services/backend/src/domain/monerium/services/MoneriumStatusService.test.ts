@@ -149,6 +149,7 @@ describe("MoneriumStatusService", () => {
     beforeEach(() => {
         vi.stubEnv("MONERIUM_CLIENT_ID", "client-1");
         vi.stubEnv("FRAK_WALLET_URL", "https://wallet.test");
+        vi.stubEnv("MONERIUM_APP_NAME", "Frak Sandbox");
     });
     afterEach(() => {
         vi.unstubAllEnvs();

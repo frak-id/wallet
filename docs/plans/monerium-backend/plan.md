@@ -134,6 +134,10 @@ move is used to ship the best end-user UX we can on the OAuth plan.
   ship before the backend: the routes and the `moneriumSync` cron read these tables.
 - `MONERIUM_CLIENT_ID` set on every backend stage, and `${FRAK_WALLET_URL}/monerium/callback`
   registered as a redirect URI for that client id at Monerium.
+- `MONERIUM_APP_NAME` (GitHub var per environment) set to the exact application name
+  registered at Monerium for that client id: the SIWE statement must read `Allow <name> to
+  access my data on Monerium`, or Monerium answers `access_denied` "invalid app name".
+  Empty keeps SIWE off.
 - Mobile push taps: the `frak-firebase` plugin does not open `data.url` on iOS or Android, for any
   notification. Needs a native change and a mobile release; the wallet already handles
   `/wallet?open=monerium` once the URL reaches it.

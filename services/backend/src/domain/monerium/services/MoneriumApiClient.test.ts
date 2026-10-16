@@ -12,6 +12,7 @@ const config: MoneriumConfig = {
     walletUrl: "https://wallet.test",
     redirectUri: "https://wallet.test/monerium/callback",
     siweDomain: "wallet.test",
+    siweAppName: "Frak Sandbox",
     siweEnabled: true,
 };
 

@@ -145,6 +145,8 @@ export const elysiaEnv = {
     MONERIUM_CLIENT_ID: moneriumClientId.value,
     // `|| default`, never `??`: an unset `${{ vars.X }}` arrives as the empty string.
     MONERIUM_SIWE_ENABLED: process.env.MONERIUM_SIWE_ENABLED?.trim() || "true",
+    // Name registered at Monerium for this client id; empty turns SIWE off.
+    MONERIUM_APP_NAME: process.env.MONERIUM_APP_NAME?.trim() || "",
 
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
