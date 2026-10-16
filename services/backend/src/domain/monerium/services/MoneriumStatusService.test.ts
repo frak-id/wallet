@@ -202,11 +202,11 @@ describe("MoneriumStatusService", () => {
         client.getAuthContext.mockResolvedValue({
             userId: "u2",
             defaultProfile: "p2",
-            profiles: [
-                { id: "p1", kind: "corporate", state: "created" },
-                { id: "p2", kind: "personal", state: "approved" },
-            ],
         });
+        client.listProfiles.mockResolvedValue([
+            { id: "p1", kind: "corporate", state: "created" },
+            { id: "p2", kind: "personal", state: "approved" },
+        ]);
         client.listAddresses.mockResolvedValue([
             {
                 address: WALLET.toUpperCase().replace("0X", "0x"),
@@ -231,19 +231,33 @@ describe("MoneriumStatusService", () => {
         client.getAuthContext.mockResolvedValue({
             userId: "u",
             defaultProfile: "p",
-            profiles: [{ id: "p", kind: "personal", state: "approved" }],
         });
+        client.listProfiles.mockResolvedValue([
+            { id: "p", kind: "personal", state: "approved" },
+        ]);
         client.listAddresses.mockResolvedValue([]);
         const status = await service.getStatus(WALLET, { refresh: true });
         expect(status.profile?.state).toBe("approved");
     });
 
-    it("falls back to the first of /profiles when the context lists none", async () => {
-        const { service, client } = setup(row());
+    it("takes the profile state from /profiles, since /auth/context profiles carry none", async () => {
+        const { service, client } = setup(row({ profileState: null }));
         client.getAuthContext.mockResolvedValue({
             userId: "u",
-            profiles: [],
+            defaultProfile: "p",
+            profiles: [{ id: "p", kind: "personal", name: "Jo", perms: [] }],
         });
+        client.listProfiles.mockResolvedValue([
+            { id: "p", kind: "personal", state: "pending" },
+        ]);
+        client.listAddresses.mockResolvedValue([]);
+        const status = await service.getStatus(WALLET, { refresh: true });
+        expect(status.profile).toMatchObject({ id: "p", state: "pending" });
+    });
+
+    it("falls back to the first of /profiles when the context names no default", async () => {
+        const { service, client } = setup(row());
+        client.getAuthContext.mockResolvedValue({ userId: "u" });
         client.listProfiles.mockResolvedValue([
             { id: "p9", kind: "personal", state: "incomplete" },
         ]);
@@ -257,8 +271,10 @@ describe("MoneriumStatusService", () => {
         client.getAuthContext.mockResolvedValue({
             userId: "u",
             defaultProfile: "p",
-            profiles: [{ id: "p", kind: "personal", state: "approved" }],
         });
+        client.listProfiles.mockResolvedValue([
+            { id: "p", kind: "personal", state: "approved" },
+        ]);
         client.listAddresses.mockResolvedValue([]);
         const status = await service.getStatus(WALLET, { refresh: true });
         expect(status.walletLink).toBe("pending");
@@ -266,12 +282,15 @@ describe("MoneriumStatusService", () => {
 
     function approvedContext(client: {
         getAuthContext: ReturnType<typeof vi.fn>;
+        listProfiles: ReturnType<typeof vi.fn>;
     }) {
         client.getAuthContext.mockResolvedValue({
             userId: "u",
             defaultProfile: "p",
-            profiles: [{ id: "p", kind: "personal", state: "approved" }],
         });
+        client.listProfiles.mockResolvedValue([
+            { id: "p", kind: "personal", state: "approved" },
+        ]);
     }
 
     it("stamps when the link entered pending and keeps the stamp while it stays pending", async () => {

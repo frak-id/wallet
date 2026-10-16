@@ -77,9 +77,6 @@ export class MoneriumAuthService {
         url.searchParams.set("code_challenge_method", "S256");
         url.searchParams.set("state", state);
         if (params.authMode) url.searchParams.set("auth_mode", params.authMode);
-        if (config.environment === "sandbox") {
-            url.searchParams.set("skip_kyc", "true");
-        }
         return { url: url.toString() };
     }
 

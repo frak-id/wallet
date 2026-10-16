@@ -9,7 +9,23 @@ import type { MoneriumTokenService } from "./MoneriumTokenService";
 
 const WALLET = "0x00000000000000000000000000000000000000aa" as const;
 
-function approvedRow(): MoneriumConnectionRow {
+const moneriumEnv = vi.hoisted(() => ({
+    environment: "sandbox" as "sandbox" | "production",
+}));
+vi.mock("../config", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../config")>();
+    return {
+        ...actual,
+        requireMoneriumConfig: () => ({
+            ...actual.requireMoneriumConfig(),
+            environment: moneriumEnv.environment,
+        }),
+    };
+});
+
+function approvedRow(
+    overrides: Partial<MoneriumConnectionRow> = {}
+): MoneriumConnectionRow {
     return {
         wallet: WALLET,
         moneriumUserId: "u",
@@ -28,12 +44,13 @@ function approvedRow(): MoneriumConnectionRow {
         stateCheckedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
+        ...overrides,
     };
 }
 
-function setup() {
+function setup(row = approvedRow()) {
     const connections = {
-        findByWallet: vi.fn(async () => approvedRow()),
+        findByWallet: vi.fn(async () => row),
         update: vi.fn(async () => undefined),
     };
     const client = { linkAddress: vi.fn() };
@@ -60,6 +77,35 @@ describe("MoneriumLinkService.linkWallet", () => {
     });
     afterEach(() => {
         vi.unstubAllEnvs();
+        moneriumEnv.environment = "sandbox";
+    });
+
+    it("links a pending profile in sandbox, where identities are never reviewed", async () => {
+        const { service, client, status } = setup(
+            approvedRow({ profileState: "pending" })
+        );
+        client.linkAddress.mockResolvedValue("created");
+
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).resolves.toEqual({ walletLink: "linked" });
+        expect(status.refreshFromMonerium).not.toHaveBeenCalled();
+    });
+
+    it("refuses a pending profile in production, after one upstream re-check", async () => {
+        moneriumEnv.environment = "production";
+        const pending = approvedRow({ profileState: "pending" });
+        const { service, client, status } = setup(pending);
+        status.refreshFromMonerium.mockResolvedValue({ after: pending });
+
+        await expect(
+            service.linkWallet({ wallet: WALLET, signature: "0xabc" })
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "MONERIUM_PROFILE_NOT_APPROVED",
+        });
+        expect(status.refreshFromMonerium).toHaveBeenCalledOnce();
+        expect(client.linkAddress).not.toHaveBeenCalled();
     });
 
     it("stamps when the link entered pending on a 202", async () => {

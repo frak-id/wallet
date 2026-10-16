@@ -1,4 +1,5 @@
 import type { MoneriumStatusResponse } from "@backend-domain/monerium/schemas";
+import { isMoneriumProfileUsable } from "@frak-labs/app-essentials/monerium";
 
 export type MoneriumSetupScreen =
     | "loading"
@@ -23,19 +24,14 @@ export function deriveSetupScreen(
     if (status.connection === "none") return "info";
     if (status.connection === "reauth_required") return "reconnect";
 
-    switch (status.profile?.state) {
-        case undefined:
-        case "created":
-        case "incomplete":
-            return "onboarding";
-        case "pending":
-        case "review":
-            return "verification";
-        case "rejected":
-        case "closed":
-            return "blocked";
-        case "approved":
-            break;
+    const profileState = status.profile?.state;
+    if (profileState === "rejected" || profileState === "closed") {
+        return "blocked";
+    }
+    if (!isMoneriumProfileUsable(profileState, status.environment)) {
+        return profileState === "pending" || profileState === "review"
+            ? "verification"
+            : "onboarding";
     }
 
     if (status.walletLink === "none") return "link";
@@ -55,9 +51,11 @@ export function isMoneriumStatusPending(
     status: MoneriumStatus | undefined
 ): boolean {
     if (status?.connection !== "connected") return false;
+    const profileState = status.profile?.state;
     return (
-        (status.profile !== null &&
-            POLLED_PROFILE_STATES.has(status.profile.state)) ||
+        (profileState !== undefined &&
+            POLLED_PROFILE_STATES.has(profileState) &&
+            !isMoneriumProfileUsable(profileState, status.environment)) ||
         status.walletLink === "pending"
     );
 }

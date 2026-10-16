@@ -136,13 +136,11 @@ export class MoneriumStatusService {
         const snapshot = await this.tokens.withAccessToken(
             wallet,
             async (accessToken) => {
-                const context = await this.client.getAuthContext(accessToken);
-                const profile =
-                    pickProfile(context.profiles, context.defaultProfile) ??
-                    pickProfile(
-                        await this.client.listProfiles(accessToken),
-                        undefined
-                    );
+                const [context, profiles] = await Promise.all([
+                    this.client.getAuthContext(accessToken),
+                    this.client.listProfiles(accessToken),
+                ]);
+                const profile = pickProfile(profiles, context.defaultProfile);
                 const link: LinkResolution = profile
                     ? await this.resolveLinkState(
                           accessToken,

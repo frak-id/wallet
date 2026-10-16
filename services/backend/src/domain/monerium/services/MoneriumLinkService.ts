@@ -1,8 +1,11 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import { MONERIUM_ADDRESS_LINKING_MESSAGE } from "@frak-labs/app-essentials/monerium";
+import {
+    isMoneriumProfileUsable,
+    MONERIUM_ADDRESS_LINKING_MESSAGE,
+} from "@frak-labs/app-essentials/monerium";
 import type { Address, Hex } from "viem";
-import { requireMoneriumConfig } from "../config";
+import { type MoneriumConfig, requireMoneriumConfig } from "../config";
 import {
     connectionErrorFor,
     MoneriumApiError,
@@ -39,7 +42,10 @@ export class MoneriumLinkService {
         signature: Hex;
     }): Promise<{ walletLink: MoneriumWalletLinkState }> {
         const config = requireMoneriumConfig();
-        const profileId = await this.requireApprovedProfile(params.wallet);
+        const profileId = await this.requireUsableProfile(
+            params.wallet,
+            config.environment
+        );
 
         let walletLink: MoneriumWalletLinkState;
         try {
@@ -92,12 +98,15 @@ export class MoneriumLinkService {
     }
 
     /** The cached profile may predate its approval, so a miss is re-checked once upstream. */
-    private async requireApprovedProfile(wallet: Address): Promise<string> {
+    private async requireUsableProfile(
+        wallet: Address,
+        environment: MoneriumConfig["environment"]
+    ): Promise<string> {
         let row = await this.connections.findByWallet(wallet);
         if (!row) throw notConnected();
         if (row.status === "reauth_required") throw reauthRequired();
 
-        if (row.profileState !== "approved") {
+        if (!isMoneriumProfileUsable(row.profileState, environment)) {
             try {
                 row = (await this.status.refreshFromMonerium(wallet)).after;
             } catch (error) {
@@ -105,7 +114,10 @@ export class MoneriumLinkService {
                 rethrowUpstream(error);
             }
         }
-        if (row.profileState !== "approved" || !row.profileId) {
+        if (
+            !isMoneriumProfileUsable(row.profileState, environment) ||
+            !row.profileId
+        ) {
             throw profileNotApproved();
         }
         return row.profileId;

@@ -50,8 +50,11 @@ move is used to ship the best end-user UX we can on the OAuth plan.
    `isRunningInProd`) / `api.monerium.dev`; `Accept: application/vnd.monerium.api-v2+json`;
    chain `arbitrum` / `arbitrumsepolia`.
 5. **OAuth start** params: `client_id`, `redirect_uri` = `${FRAK_WALLET_URL}/monerium/callback`,
-   `response_type=code`, PKCE S256, `state`, optional `auth_mode`, `skip_kyc=true` in
-   sandbox only. The undocumented `address`/`signature=0x`/`chain` auto-link is dropped.
+   `response_type=code`, PKCE S256, `state`, optional `auth_mode`. No `skip_kyc`: it skips
+   the KYC screens without approving anything (the details are meant to be sent through
+   the API afterwards). The undocumented `address`/`signature=0x`/`chain` auto-link is dropped.
+   Profile state comes from `GET /profiles`: `/auth/context` lists profiles without `state`
+   (checked against sandbox, 2026-10-16), whatever the spec says.
 6. **Pending auth** rows are single-use, bound to the session wallet, 30 min TTL.
 7. **SIWE silent reconnect** (to be validated in sandbox, falls back to the portal):
    viem `createSiweMessage` — domain = wallet host, address = wallet, statement
@@ -102,8 +105,10 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 4. Screens per state: none → info; reauth → reconnect; created/incomplete → finish on
    Monerium; pending/review → "verification in progress" with push opt-in and "Check
    again"; rejected/closed → blocked screen; approved + unlinked → link; link pending →
-   waiting; linked → success once → transfer. No sandbox KYC bypass (sandbox sends
-   `skip_kyc`).
+   waiting; linked → success once → transfer. Sandbox never reviews identities (profiles
+   stay `pending` yet can link and pay), so `isMoneriumProfileUsable` in
+   `app-essentials/monerium` lets any open profile through in sandbox, on both the screen
+   choice and the backend link gate.
 5. Offramp: `normalizeRedeemAmount`, `buildRedeemOrderMessage` signed 2 min ahead, one
    `crypto.randomUUID()` per recap screen reused on retry, invalidate orders + status.
 6. IBAN form: mod-97, names ≥ 2, country defaulting to the IBAN's, "This is my own

@@ -1,3 +1,4 @@
+import { isMoneriumProfileUsable } from "@frak-labs/app-essentials/monerium";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -42,8 +43,10 @@ export function MoneriumConnect() {
     const actions: RowAction[] = [];
     if (status?.connection === "connected") {
         const isSetupDone =
-            status.profile?.state === "approved" &&
-            status.walletLink === "linked";
+            isMoneriumProfileUsable(
+                status.profile?.state,
+                status.environment
+            ) && status.walletLink === "linked";
         if (!isSetupDone) {
             actions.push({
                 label: t("monerium.completeSetup"),

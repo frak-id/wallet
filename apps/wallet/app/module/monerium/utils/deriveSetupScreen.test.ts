@@ -11,14 +11,24 @@ function status(overrides: Partial<MoneriumStatus> = {}): MoneriumStatus {
         profile: { id: "p", kind: "personal", state: "approved" },
         walletLink: "linked",
         silentReconnect: false,
-        environment: "sandbox",
+        environment: "production",
         ...overrides,
     };
 }
 
-function withProfile(state: NonNullable<MoneriumStatus["profile"]>["state"]) {
-    return status({ profile: { id: "p", kind: "personal", state } });
+type ProfileState = NonNullable<MoneriumStatus["profile"]>["state"];
+
+function withProfile(
+    state: ProfileState,
+    overrides: Partial<MoneriumStatus> = {}
+) {
+    return status({
+        profile: { id: "p", kind: "personal", state },
+        ...overrides,
+    });
 }
+
+const sandbox = { environment: "sandbox" } as const;
 
 describe("deriveSetupScreen", () => {
     test.each([
@@ -48,6 +58,31 @@ describe("deriveSetupScreen", () => {
         ],
     ] as const)("%s -> %s", (_, input, expected) => {
         expect(deriveSetupScreen(input, false)).toBe(expected);
+    });
+
+    test.each([
+        ["created", "link"],
+        ["incomplete", "link"],
+        ["pending", "link"],
+        ["review", "link"],
+        ["rejected", "blocked"],
+        ["closed", "blocked"],
+    ] as const)(
+        "sandbox lets a %s profile through -> %s",
+        (state, expected) => {
+            expect(
+                deriveSetupScreen(
+                    withProfile(state, { ...sandbox, walletLink: "none" }),
+                    false
+                )
+            ).toBe(expected);
+        }
+    );
+
+    test("sandbox without any profile still onboards", () => {
+        expect(
+            deriveSetupScreen(status({ ...sandbox, profile: null }), false)
+        ).toBe("onboarding");
     });
 
     test("linked shows the success once, then the transfer", () => {
@@ -84,6 +119,12 @@ describe("isMoneriumStatusPending", () => {
             false,
         ],
         ["undefined", undefined, false],
+        ["sandbox pending + linked", withProfile("pending", sandbox), false],
+        [
+            "sandbox pending + link pending",
+            withProfile("pending", { ...sandbox, walletLink: "pending" }),
+            true,
+        ],
     ] as const)("%s", (_, input, expected) => {
         expect(isMoneriumStatusPending(input)).toBe(expected);
     });

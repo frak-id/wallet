@@ -3,6 +3,7 @@ import {
     buildRedeemOrderMessage,
     formatMessageTimestamp,
     getIbanCountry,
+    isMoneriumProfileUsable,
     isValidCounterpartName,
     isValidCountryCode,
     isValidIban,
@@ -122,5 +123,41 @@ describe("redeem order message", () => {
                 "Send EUR 1 to FR76...0189 at 2024-07-12T12:02:00Z extra"
             )
         ).toBeNull();
+    });
+});
+
+describe("isMoneriumProfileUsable", () => {
+    it("requires an approved profile in production", () => {
+        expect(isMoneriumProfileUsable("approved", "production")).toBe(true);
+        for (const state of [
+            "created",
+            "incomplete",
+            "pending",
+            "review",
+        ] as const) {
+            expect(isMoneriumProfileUsable(state, "production")).toBe(false);
+        }
+    });
+
+    it("accepts any open profile in sandbox, where identities are never reviewed", () => {
+        for (const state of [
+            "created",
+            "incomplete",
+            "pending",
+            "review",
+            "approved",
+        ] as const) {
+            expect(isMoneriumProfileUsable(state, "sandbox")).toBe(true);
+        }
+    });
+
+    it("never accepts a missing, rejected or closed profile", () => {
+        for (const environment of ["sandbox", "production"] as const) {
+            expect(isMoneriumProfileUsable(null, environment)).toBe(false);
+            expect(isMoneriumProfileUsable("rejected", environment)).toBe(
+                false
+            );
+            expect(isMoneriumProfileUsable("closed", environment)).toBe(false);
+        }
     });
 });

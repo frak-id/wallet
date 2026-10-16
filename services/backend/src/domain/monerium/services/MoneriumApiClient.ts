@@ -26,7 +26,6 @@ export type MoneriumProfileSummary = {
 export type MoneriumUserContext = {
     userId: string;
     defaultProfile?: string;
-    profiles: MoneriumProfileSummary[];
 };
 
 export type MoneriumAddressRecord = {
@@ -319,16 +318,15 @@ export class MoneriumApiClient {
         };
     }
 
+    /** Its `profiles` carry permissions but no `state`, whatever the spec says: read profiles from `/profiles`. */
     async getAuthContext(accessToken: string): Promise<MoneriumUserContext> {
         const { body } = await this.requestJson<{
             userId?: string;
             defaultProfile?: string;
-            profiles?: MoneriumProfileWire[];
         }>("/auth/context", { method: "GET", accessToken });
         return {
             userId: body.userId ?? "",
             defaultProfile: body.defaultProfile,
-            profiles: (body.profiles ?? []).map(toProfileSummary),
         };
     }
 

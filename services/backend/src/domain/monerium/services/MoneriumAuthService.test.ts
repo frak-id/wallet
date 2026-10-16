@@ -106,8 +106,12 @@ describe("MoneriumAuthService", () => {
             expect(params.get("response_type")).toBe("code");
             expect(params.get("code_challenge_method")).toBe("S256");
             expect(params.get("auth_mode")).toBe("login");
-            expect(params.get("skip_kyc")).toBe("true");
-            for (const forbidden of ["address", "signature", "chain"]) {
+            for (const forbidden of [
+                "address",
+                "signature",
+                "chain",
+                "skip_kyc",
+            ]) {
                 expect(params.has(forbidden)).toBe(false);
             }
 

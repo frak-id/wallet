@@ -32,6 +32,17 @@ export type MoneriumProfileState =
     | "rejected"
     | "closed";
 
+export type MoneriumEnvironment = "sandbox" | "production";
+
+/** Sandbox never reviews identities: its profiles stay pending, yet can link wallets and pay out. */
+export function isMoneriumProfileUsable(
+    state: MoneriumProfileState | null | undefined,
+    environment: MoneriumEnvironment
+): boolean {
+    if (!state || state === "rejected" || state === "closed") return false;
+    return state === "approved" || environment === "sandbox";
+}
+
 export type MoneriumOrderState =
     | "placed"
     | "pending"
