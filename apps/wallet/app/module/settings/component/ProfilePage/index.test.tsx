@@ -23,8 +23,8 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-vi.mock("@frak-labs/app-essentials", () => ({
-    isRunningInProd: true,
+vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
+    isMoneriumEnabled: false,
 }));
 
 vi.mock("@frak-labs/wallet-shared", async () => {

@@ -1,61 +1,59 @@
 import { create } from "zustand";
-import type { IbanEntry } from "./ibanStore";
 
 /**
- * Every screen in the Monerium bank-flow, flattened into a single enum.
- * Setup screens (info → kyc → link → success) are auto-driven by
- * `useMoneriumFlowSync`; transfer screens are navigated imperatively.
+ * Transfer sub-flow screens. Setup screens are derived from the status
+ * query and never stored.
  */
-export type MoneriumFlowScreen =
-    | "loading"
-    | "info"
-    | "kyc"
-    | "link"
-    | "success"
+type MoneriumTransferScreen =
     | "transfer-amount"
     | "transfer-recap"
     | "transfer-iban";
 
 type MoneriumFlowState = {
-    /** Current visible screen. */
-    screen: MoneriumFlowScreen;
+    screen: MoneriumTransferScreen;
 
-    // Transfer form data, survives screen transitions.
     amount: string;
     note: string;
-    selectedIbanOverride: IbanEntry | null;
+    orderId: string | null;
+    /** What `orderId` was minted for: a retry of the same intent must not pay twice. */
+    orderIntent: string | null;
 
-    goTo: (screen: MoneriumFlowScreen) => void;
+    goTo: (screen: MoneriumTransferScreen) => void;
     setAmount: (amount: string) => void;
     setNote: (note: string) => void;
-    setSelectedIban: (entry: IbanEntry | null) => void;
-    /** Reset transfer form data (called on flow close). */
+    /** The current order id while `intent` is unchanged, a fresh one otherwise. */
+    orderIdFor: (intent: string) => string;
+    forgetOrderId: () => void;
+    /** Reset the transfer sub-flow (called on flow close). */
     resetTransfer: () => void;
 };
 
 const transferDefaults = {
+    screen: "transfer-amount",
     amount: "",
     note: "",
-    selectedIbanOverride: null,
+    orderId: null,
+    orderIntent: null,
 } as const;
 
-/**
- * Single source of truth for the Monerium bank-flow navigation and
- * transfer form state.  NOT persisted — form data resets on flow close.
- */
-export const moneriumFlowStore = create<MoneriumFlowState>()((set) => ({
-    screen: "loading",
+/** Not persisted: transfer form data resets on flow close. */
+export const moneriumFlowStore = create<MoneriumFlowState>()((set, get) => ({
     ...transferDefaults,
 
     goTo: (screen) => set({ screen }),
     setAmount: (amount) => set({ amount }),
     setNote: (note) => set({ note }),
-    setSelectedIban: (selectedIbanOverride) => set({ selectedIbanOverride }),
-    resetTransfer: () => set({ ...transferDefaults, screen: "loading" }),
+    orderIdFor: (intent) => {
+        const { orderId, orderIntent } = get();
+        if (orderId && orderIntent === intent) return orderId;
+        const freshId = crypto.randomUUID();
+        set({ orderId: freshId, orderIntent: intent });
+        return freshId;
+    },
+    forgetOrderId: () => set({ orderId: null, orderIntent: null }),
+    resetTransfer: () => set({ ...transferDefaults }),
 }));
 
 export const selectScreen = (s: MoneriumFlowState) => s.screen;
 export const selectAmount = (s: MoneriumFlowState) => s.amount;
 export const selectNote = (s: MoneriumFlowState) => s.note;
-export const selectSelectedIbanOverride = (s: MoneriumFlowState) =>
-    s.selectedIbanOverride;

@@ -1,22 +1,34 @@
+import { MONERIUM_ADDRESS_LINKING_MESSAGE } from "@frak-labs/app-essentials/monerium";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { isSmartAccountDeployed } from "permissionless";
-import {
-    useClient,
-    useConnection,
-    useSendTransaction,
-    useSignMessage,
-} from "wagmi";
+import { sleep } from "radash";
+import type { Address, Client } from "viem";
+import { useClient, useConnection, useSendTransaction } from "wagmi";
+import { useMoneriumSignMessage } from "@/module/monerium/hooks/useMoneriumSignMessage";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { getProfiles, linkAddress } from "@/module/monerium/utils/moneriumApi";
+import type { MoneriumStatus } from "@/module/monerium/utils/deriveSetupScreen";
 import {
-    ADDRESS_LINKING_MESSAGE,
-    moneriumConfig,
-} from "@/module/monerium/utils/moneriumConfig";
+    createMoneriumError,
+    unwrapMoneriumResponse,
+} from "@/module/monerium/utils/moneriumErrors";
+
+export const DEPLOYMENT_POLL_MS = 1_000;
+const DEPLOYMENT_MAX_POLLS = 15;
+
+/** The receipt can come from a node ahead of the one serving `getCode`; Monerium needs the code. */
+async function waitUntilDeployed(client: Client, address: Address) {
+    for (let poll = 0; poll < DEPLOYMENT_MAX_POLLS; poll++) {
+        if (await isSmartAccountDeployed(client, address)) return;
+        await sleep(DEPLOYMENT_POLL_MS);
+    }
+    throw createMoneriumError(null);
+}
 
 export function useMoneriumLinkWallet() {
     const { address } = useConnection();
     const client = useClient();
-    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const signMessage = useMoneriumSignMessage();
     const { mutateAsync: sendTransactionAsync } = useSendTransaction();
 
     const { mutate, mutateAsync, ...mutationRest } = useMutation({
@@ -24,35 +36,31 @@ export function useMoneriumLinkWallet() {
             if (!address) throw new Error("No wallet connected");
             if (!client) throw new Error("No client available");
 
-            const profiles = await getProfiles();
-            if (!profiles?.profiles.length) {
-                throw new Error("No profile detected");
-            }
-
             const deployed = await isSmartAccountDeployed(client, address);
             if (!deployed) {
-                await sendTransactionAsync({
-                    to: address,
-                    value: 0n,
-                });
+                await sendTransactionAsync({ to: address, value: 0n });
+                await waitUntilDeployed(client, address);
             }
 
-            const signature = await signMessageAsync({
-                message: ADDRESS_LINKING_MESSAGE,
-            });
+            const signature = await signMessage(
+                MONERIUM_ADDRESS_LINKING_MESSAGE
+            );
 
-            return await linkAddress({
-                profile: profiles.profiles[0].id,
-                address,
-                signature,
-                message: ADDRESS_LINKING_MESSAGE,
-                chain: moneriumConfig.chain,
-            });
+            return unwrapMoneriumResponse(
+                await authenticatedWalletApi.monerium.wallet.link.post({
+                    signature,
+                })
+            );
         },
-        onSuccess: (_data, _variable, _result, { client }) => {
-            client.invalidateQueries({
-                queryKey: moneriumKey.all,
-            });
+        onSuccess: ({ walletLink }, _variable, _result, { client }) => {
+            client.setQueryData<MoneriumStatus>(
+                moneriumKey.status,
+                (status) => status && { ...status, walletLink }
+            );
+            client.invalidateQueries({ queryKey: moneriumKey.status });
+        },
+        onError: (_error, _variable, _result, { client }) => {
+            client.invalidateQueries({ queryKey: moneriumKey.status });
         },
     });
 

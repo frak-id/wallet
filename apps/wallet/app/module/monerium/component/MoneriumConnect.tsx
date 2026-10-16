@@ -1,71 +1,126 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle,
+} from "@frak-labs/design-system/components/AlertDialog";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { PersonIcon } from "@frak-labs/design-system/icons";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     InfoCard,
     InfoRow,
     infoCardStyles,
 } from "@/module/common/component/InfoCard";
-import {
-    isMoneriumConnected,
-    moneriumStore,
-} from "@/module/monerium/store/moneriumStore";
+import { useMoneriumDisconnect } from "@/module/monerium/hooks/useMoneriumDisconnect";
+import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
+import { deriveSetupScreen } from "@/module/monerium/utils/deriveSetupScreen";
+import { getMoneriumErrorKey } from "@/module/monerium/utils/moneriumErrors";
 import { modalStore } from "@/module/stores/modalStore";
+
+type RowAction = { label: string; onClick: () => void };
 
 /**
  * Settings-level entry point for Monerium.
  *
- * When not connected: "Connect" opens the bank-flow modal (which walks
- * the user through OAuth → KYC → wallet linking → transfer).
- * When connected: "Disconnect" clears the local tokens.
+ * "Connect", "Reconnect" and "Complete setup" open the bank-flow modal;
+ * "Disconnect" asks for confirmation, then makes the backend forget the connection.
  */
 export function MoneriumConnect() {
     const { t } = useTranslation();
-    const isConnected = moneriumStore(isMoneriumConnected);
+    const { status } = useMoneriumStatus();
+    const { disconnect, isPending, error } = useMoneriumDisconnect();
     const openModal = modalStore((s) => s.openModal);
-    const disconnect = moneriumStore((s) => s.disconnect);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+
+    const openFlow = () => openModal({ id: "moneriumBankFlow" });
+
+    const actions: RowAction[] = [];
+    if (status?.connection === "connected") {
+        const isSetupDone = deriveSetupScreen(status, true) === "transfer";
+        if (!isSetupDone) {
+            actions.push({
+                label: t("monerium.completeSetup"),
+                onClick: openFlow,
+            });
+        }
+        actions.push({
+            label: t("monerium.disconnect"),
+            onClick: () => setConfirmOpen(true),
+        });
+    } else if (status) {
+        actions.push({
+            label: t(
+                status.connection === "reauth_required"
+                    ? "monerium.reconnect"
+                    : "monerium.connect"
+            ),
+            onClick: openFlow,
+        });
+    }
 
     return (
-        <InfoCard>
-            <InfoRow
-                icon={PersonIcon}
-                label={t("monerium.account")}
-                action={
-                    isConnected ? (
-                        <button
-                            type="button"
-                            className={infoCardStyles.actionButton}
-                            onClick={disconnect}
-                        >
-                            <Text
-                                as="span"
-                                variant="bodySmall"
-                                color="action"
-                                weight="medium"
-                            >
-                                {t("monerium.disconnect")}
-                            </Text>
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            className={infoCardStyles.actionButton}
-                            onClick={() =>
-                                openModal({ id: "moneriumBankFlow" })
-                            }
-                        >
-                            <Text
-                                as="span"
-                                variant="bodySmall"
-                                color="action"
-                                weight="medium"
-                            >
-                                {t("monerium.connect")}
-                            </Text>
-                        </button>
-                    )
-                }
-            />
-        </InfoCard>
+        <>
+            <InfoCard>
+                <InfoRow
+                    icon={PersonIcon}
+                    label={t("monerium.account")}
+                    action={
+                        actions.length > 0 ? (
+                            <Box display={"flex"} gap={"m"}>
+                                {actions.map((action) => (
+                                    <button
+                                        key={action.label}
+                                        type="button"
+                                        className={infoCardStyles.actionButton}
+                                        onClick={action.onClick}
+                                        disabled={isPending}
+                                    >
+                                        <Text
+                                            as="span"
+                                            variant="bodySmall"
+                                            color="action"
+                                            weight="medium"
+                                        >
+                                            {action.label}
+                                        </Text>
+                                    </button>
+                                ))}
+                            </Box>
+                        ) : null
+                    }
+                />
+                {error ? (
+                    <Text variant="bodySmall" color="error">
+                        {t(getMoneriumErrorKey(error))}
+                    </Text>
+                ) : null}
+            </InfoCard>
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogTitle>
+                        {t("monerium.disconnectConfirm.title")}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {t("monerium.disconnectConfirm.description")}
+                    </AlertDialogDescription>
+                    <AlertDialogCancel asChild>
+                        <Button variant="secondary">
+                            {t("monerium.disconnectConfirm.cancel")}
+                        </Button>
+                    </AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                        <Button variant="primary" onClick={() => disconnect()}>
+                            {t("monerium.disconnectConfirm.confirm")}
+                        </Button>
+                    </AlertDialogAction>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

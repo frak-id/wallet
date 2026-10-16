@@ -1270,6 +1270,68 @@
                                           "type": "string"
                                         }
                                       }
+                                    },
+                                    "ambassador": {
+                                      "type": "object",
+                                      "properties": {
+                                        "heroTitle": {
+                                          "type": "string"
+                                        },
+                                        "heroLede": {
+                                          "type": "string"
+                                        },
+                                        "heroRewardCaption": {
+                                          "type": "string"
+                                        },
+                                        "heroCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "rewardHeading": {
+                                          "type": "string"
+                                        },
+                                        "rewardLede": {
+                                          "type": "string"
+                                        },
+                                        "rewardCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "referralCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "faq1Question": {
+                                          "type": "string"
+                                        },
+                                        "faq1Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq2Question": {
+                                          "type": "string"
+                                        },
+                                        "faq2Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq3Question": {
+                                          "type": "string"
+                                        },
+                                        "faq3Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq4Question": {
+                                          "type": "string"
+                                        },
+                                        "faq4Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq5Question": {
+                                          "type": "string"
+                                        },
+                                        "faq5Answer": {
+                                          "type": "string"
+                                        },
+                                        "heroImageUrl": {
+                                          "type": "string"
+                                        }
+                                      }
                                     }
                                   }
                                 },
@@ -1399,6 +1461,68 @@
                                   "type": "string"
                                 },
                                 "css": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "ambassador": {
+                              "type": "object",
+                              "properties": {
+                                "heroTitle": {
+                                  "type": "string"
+                                },
+                                "heroLede": {
+                                  "type": "string"
+                                },
+                                "heroRewardCaption": {
+                                  "type": "string"
+                                },
+                                "heroCtaLabel": {
+                                  "type": "string"
+                                },
+                                "rewardHeading": {
+                                  "type": "string"
+                                },
+                                "rewardLede": {
+                                  "type": "string"
+                                },
+                                "rewardCtaLabel": {
+                                  "type": "string"
+                                },
+                                "referralCtaLabel": {
+                                  "type": "string"
+                                },
+                                "faq1Question": {
+                                  "type": "string"
+                                },
+                                "faq1Answer": {
+                                  "type": "string"
+                                },
+                                "faq2Question": {
+                                  "type": "string"
+                                },
+                                "faq2Answer": {
+                                  "type": "string"
+                                },
+                                "faq3Question": {
+                                  "type": "string"
+                                },
+                                "faq3Answer": {
+                                  "type": "string"
+                                },
+                                "faq4Question": {
+                                  "type": "string"
+                                },
+                                "faq4Answer": {
+                                  "type": "string"
+                                },
+                                "faq5Question": {
+                                  "type": "string"
+                                },
+                                "faq5Answer": {
+                                  "type": "string"
+                                },
+                                "heroImageUrl": {
                                   "type": "string"
                                 }
                               }

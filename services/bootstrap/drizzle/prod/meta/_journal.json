@@ -162,6 +162,13 @@
             "when": 1790871961307,
             "tag": "0022_puzzling_joseph",
             "breakpoints": true
+        },
+        {
+            "idx": 23,
+            "version": "7",
+            "when": 1792153072727,
+            "tag": "0023_plain_thunderbolts",
+            "breakpoints": true
         }
     ]
 }

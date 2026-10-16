@@ -295,6 +295,20 @@
             "when": 1790591719744,
             "tag": "0041_little_proteus",
             "breakpoints": true
+        },
+        {
+            "idx": 42,
+            "version": "7",
+            "when": 1792139437030,
+            "tag": "0042_high_rawhide_kid",
+            "breakpoints": true
+        },
+        {
+            "idx": 43,
+            "version": "7",
+            "when": 1792153043851,
+            "tag": "0043_outgoing_old_lace",
+            "breakpoints": true
         }
     ]
 }

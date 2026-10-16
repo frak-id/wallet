@@ -1,4 +1,5 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -26,5 +27,18 @@ export function FeatureRow({ icon, title, description }: FeatureRowProps) {
                 </Stack>
             </Inline>
         </Box>
+    );
+}
+
+export function FeatureList({ features }: { features: FeatureRowProps[] }) {
+    if (features.length === 0) return null;
+    return (
+        <Card variant="elevated" padding="none">
+            <Stack space="none">
+                {features.map((feature) => (
+                    <FeatureRow key={feature.title} {...feature} />
+                ))}
+            </Stack>
+        </Card>
     );
 }

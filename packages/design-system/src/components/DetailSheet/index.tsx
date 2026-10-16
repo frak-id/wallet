@@ -1,3 +1,4 @@
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import clsx from "clsx";
 import type { ComponentProps, CSSProperties } from "react";
 import {
@@ -15,10 +16,14 @@ import {
 export function DetailSheet({
     className,
     children,
+    surface,
     ...props
-}: ComponentProps<"div">) {
+}: ComponentProps<"div"> & RecipeVariants<typeof containerStyle>) {
     return (
-        <div className={clsx(containerStyle, className)} {...props}>
+        <div
+            className={clsx(containerStyle({ surface }), className)}
+            {...props}
+        >
             {children}
         </div>
     );
@@ -33,12 +38,15 @@ export function DetailSheetHero({
     className,
     children,
     height = 350,
+    surface,
     style,
     ...props
-}: ComponentProps<"div"> & { height?: number | string }) {
+}: ComponentProps<"div"> & {
+    height?: number | string;
+} & RecipeVariants<typeof heroStyle>) {
     return (
         <div
-            className={clsx(heroStyle, className)}
+            className={clsx(heroStyle({ surface }), className)}
             style={
                 {
                     "--detail-sheet-hero-height":

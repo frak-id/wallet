@@ -1,12 +1,19 @@
+import {
+    getIbanCountry,
+    isValidMemo,
+    MONERIUM_DEFAULT_MEMO,
+    MONERIUM_LIMITS,
+    normalizeRedeemAmount,
+} from "@frak-labs/app-essentials/monerium";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Input } from "@frak-labs/design-system/components/Input";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { BankIcon, CloseIcon } from "@frak-labs/design-system/icons";
+import { formatCurrency } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FieldLabel } from "@/module/common/component/Field";
+import { LabelledInput } from "@/module/common/component/LabelledInput";
 import { useMoneriumOfframp } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
     ibanStore,
@@ -16,9 +23,12 @@ import {
     moneriumFlowStore,
     selectAmount,
     selectNote,
-    selectSelectedIbanOverride,
 } from "@/module/monerium/store/moneriumFlowStore";
 import { maskIban } from "@/module/monerium/utils/maskIban";
+import {
+    getMoneriumErrorCode,
+    getMoneriumErrorKey,
+} from "@/module/monerium/utils/moneriumErrors";
 import * as styles from "./index.css";
 import { MoneriumScreen } from "./MoneriumScreen";
 import { MoneriumTransferSuccessModal } from "./MoneriumTransferSuccessModal";
@@ -26,10 +36,6 @@ import { MoneriumTransferSuccessModal } from "./MoneriumTransferSuccessModal";
 type MoneriumTransferRecapScreenProps = {
     onClose: () => void;
 };
-
-function normalizeAmountForApi(raw: string): string {
-    return raw.replace(",", ".").trim();
-}
 
 /**
  * Step 2 of the offramp sub-flow — summary of the transfer (amount,
@@ -39,27 +45,28 @@ function normalizeAmountForApi(raw: string): string {
 export function MoneriumTransferRecapScreen({
     onClose,
 }: MoneriumTransferRecapScreenProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const amount = moneriumFlowStore(selectAmount);
+    const amountValue = Number(normalizeRedeemAmount(amount));
+    const formattedAmount = formatCurrency(amountValue, "EUR", i18n.language);
     const note = moneriumFlowStore(selectNote);
     const setNote = moneriumFlowStore((s) => s.setNote);
     const goTo = moneriumFlowStore((s) => s.goTo);
-    const selectedOverride = moneriumFlowStore(selectSelectedIbanOverride);
-    const effectiveIban = ibanStore(selectEffectiveIban);
-    const selectedIban = selectedOverride ?? effectiveIban;
+    const orderIdFor = moneriumFlowStore((s) => s.orderIdFor);
+    const forgetOrderId = moneriumFlowStore((s) => s.forgetOrderId);
+    const selectedIban = ibanStore(selectEffectiveIban);
 
-    const { placeOrder, isPending, isSuccess, isError, error, reset } =
+    const { placeOrder, isPending, isSuccess, error, reset } =
         useMoneriumOfframp();
 
-    const errorMessage = isError && error ? error.message : null;
+    const errorMessage = error ? t(getMoneriumErrorKey(error)) : null;
 
-    // Pre-fill the memo with the beneficiary's pseudo on mount.
+    const isMemoValid = note.trim() === "" || isValidMemo(note);
+
     useEffect(() => {
-        if (moneriumFlowStore.getState().note.length === 0) {
-            setNote(selectedIban?.pseudo ?? "");
-        }
-    }, [setNote, selectedIban?.pseudo]);
+        if (!selectedIban) goTo("transfer-amount");
+    }, [selectedIban, goTo]);
 
     const noteInputRef = useRef<HTMLInputElement>(null);
     const handleClearNote = useCallback(() => {
@@ -72,20 +79,40 @@ export function MoneriumTransferRecapScreen({
         goTo("transfer-amount");
     }, [reset, goTo]);
 
-    const handleConfirm = useCallback(async () => {
-        if (!selectedIban) return;
-        try {
-            await placeOrder({
-                amount: normalizeAmountForApi(amount),
+    function handleConfirm() {
+        if (!selectedIban || !isMemoValid) return;
+        placeOrder(
+            {
+                orderId: orderIdFor(`${amountValue}:${selectedIban.iban}`),
+                amount,
                 iban: selectedIban.iban,
-                firstName: selectedIban.firstName,
-                lastName: selectedIban.lastName,
+                counterpart: selectedIban.own
+                    ? { own: true }
+                    : {
+                          own: false,
+                          firstName: selectedIban.firstName,
+                          lastName: selectedIban.lastName,
+                          country:
+                              selectedIban.country ??
+                              getIbanCountry(selectedIban.iban) ??
+                              "",
+                      },
                 memo: note,
-            });
-        } catch {
-            // surfaced via `isError` / `error`
-        }
-    }, [amount, note, placeOrder, selectedIban]);
+            },
+            {
+                onSuccess: forgetOrderId,
+                // A refused order keeps its id at Monerium: retrying it would only replay the refusal.
+                onError: (failure) => {
+                    if (
+                        getMoneriumErrorCode(failure) ===
+                        "MONERIUM_ORDER_REJECTED"
+                    ) {
+                        forgetOrderId();
+                    }
+                },
+            }
+        );
+    }
 
     const handleSuccessClose = useCallback(
         (open: boolean) => {
@@ -96,10 +123,7 @@ export function MoneriumTransferRecapScreen({
         [onClose, reset]
     );
 
-    if (!selectedIban) {
-        goTo("transfer-amount");
-        return null;
-    }
+    if (!selectedIban) return null;
 
     return (
         <>
@@ -125,7 +149,7 @@ export function MoneriumTransferRecapScreen({
                 ctaLabel={t("monerium.bankFlow.transfer.recap.confirm")}
                 ctaOnClick={handleConfirm}
                 ctaLoading={isPending}
-                ctaDisabled={isPending}
+                ctaDisabled={isPending || !isMemoValid}
             >
                 <Card variant="elevated" padding="none">
                     <Spread space="m" className={styles.recapRow}>
@@ -141,7 +165,7 @@ export function MoneriumTransferRecapScreen({
                             weight="medium"
                             color="primary"
                         >
-                            {amount} €
+                            {formattedAmount}
                         </Text>
                     </Spread>
                     <Spread space="m" className={styles.recapRow}>
@@ -167,40 +191,46 @@ export function MoneriumTransferRecapScreen({
                                 weight="medium"
                                 color="primary"
                             >
-                                IBAN {maskIban(selectedIban.iban)}
+                                {t(
+                                    "monerium.bankFlow.transfer.recap.beneficiaryIban",
+                                    { iban: maskIban(selectedIban.iban) }
+                                )}
                             </Text>
                         </Box>
                     </Spread>
                 </Card>
 
-                <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
-                    <FieldLabel>
-                        {t("monerium.bankFlow.transfer.recap.addNote")}
-                    </FieldLabel>
-                    <Input
-                        variant="bare"
-                        length="big"
-                        ref={noteInputRef}
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        disabled={isPending}
-                        aria-label={t(
-                            "monerium.bankFlow.transfer.recap.addNote"
-                        )}
-                        rightSection={
-                            note.length > 0 ? (
-                                <button
-                                    type="button"
-                                    className={styles.noteClearButton}
-                                    onClick={handleClearNote}
-                                    aria-label={t("common.close")}
-                                >
-                                    <CloseIcon width={24} height={24} />
-                                </button>
-                            ) : null
-                        }
-                    />
-                </Box>
+                <LabelledInput
+                    label={t("monerium.bankFlow.transfer.recap.addNote")}
+                    ref={noteInputRef}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    disabled={isPending}
+                    placeholder={MONERIUM_DEFAULT_MEMO}
+                    rightSection={
+                        note.length > 0 ? (
+                            <button
+                                type="button"
+                                className={styles.noteClearButton}
+                                onClick={handleClearNote}
+                                aria-label={t("common.close")}
+                            >
+                                <CloseIcon width={24} height={24} />
+                            </button>
+                        ) : null
+                    }
+                    errorMessage={
+                        isMemoValid
+                            ? undefined
+                            : t(
+                                  "monerium.bankFlow.transfer.recap.memoInvalid",
+                                  {
+                                      min: MONERIUM_LIMITS.MEMO_MIN_LENGTH,
+                                      max: MONERIUM_LIMITS.MEMO_MAX_LENGTH,
+                                  }
+                              )
+                    }
+                />
 
                 {/* Pushes the warning to the bottom of the body. */}
                 <Box flexGrow={1} />
@@ -218,7 +248,7 @@ export function MoneriumTransferRecapScreen({
             <MoneriumTransferSuccessModal
                 open={isSuccess}
                 onOpenChange={handleSuccessClose}
-                amount={amount}
+                amount={formattedAmount}
             />
         </>
     );
