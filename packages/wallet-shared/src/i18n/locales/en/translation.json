@@ -387,6 +387,9 @@
                 "errorSelf": "You can't use your own code.",
                 "errorCycle": "This code can't be used with your account.",
                 "errorAlreadyRedeemed": "You already have an active referral code.",
+                "errorDropClosed": "This drop is over. Watch for the next one on Instagram.",
+                "errorDropFull": "This drop is full. Try again on the next one.",
+                "errorAlreadyJoined": "You've already joined this drop.",
                 "errorInvalid": "This code isn't valid.",
                 "errorGeneric": "Something went wrong. Please try again.",
                 "confirmDelete": {

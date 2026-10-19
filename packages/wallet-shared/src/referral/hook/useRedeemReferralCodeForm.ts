@@ -15,6 +15,9 @@ export const REDEEM_ERROR_KEY_MAP = {
         SELF_REFERRAL: "wallet.referral.redeem.errorSelf",
         WOULD_CYCLE: "wallet.referral.redeem.errorCycle",
         ALREADY_REDEEMED: "wallet.referral.redeem.errorAlreadyRedeemed",
+        DROP_CLOSED: "wallet.referral.redeem.errorDropClosed",
+        DROP_FULL: "wallet.referral.redeem.errorDropFull",
+        ALREADY_JOINED: "wallet.referral.redeem.errorAlreadyJoined",
     },
     // 400 = domain-level invalid; 422 = Elysia body validation
     // (e.g. user submitted fewer than 6 chars).

@@ -387,6 +387,9 @@
                 "errorSelf": "Tu ne peux pas utiliser ton propre code.",
                 "errorCycle": "Ce code n'est pas utilisable avec ton compte.",
                 "errorAlreadyRedeemed": "Tu as déjà appliqué un code de parrainage.",
+                "errorDropClosed": "Ce drop est terminé. Guette le prochain sur Instagram.",
+                "errorDropFull": "Ce drop est complet. Retente ta chance au prochain.",
+                "errorAlreadyJoined": "Tu participes déjà à ce drop.",
                 "errorInvalid": "Ce code n'est pas valide.",
                 "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
                 "confirmDelete": {
