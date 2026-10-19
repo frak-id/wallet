@@ -194,6 +194,7 @@ const statusIcons: Partial<
 > = {
     settled: HourglassIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function RewardAmountDisplay({
@@ -272,6 +273,16 @@ function StatusRow({
                     />
                 )}
             </>
+        );
+    }
+
+    if (item.status === "locked") {
+        return (
+            <Box paddingX="m" paddingY="s">
+                <Text variant="bodySmall" color="secondary">
+                    {t("reward.detail.lockedExplanation")}
+                </Text>
+            </Box>
         );
     }
 

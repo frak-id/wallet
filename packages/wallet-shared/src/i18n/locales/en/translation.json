@@ -1001,7 +1001,7 @@
             "consumed": "Consumed",
             "cancelled": "Cancelled",
             "expired": "Expired",
-            "locked": "Unlocks with your first reward from a partner brand"
+            "locked": "Locked"
         },
         "trigger": {
             "unknown": "Reward",
@@ -1036,7 +1036,8 @@
             "generatedOn": "Generated on {{date}} · {{time}}",
             "pendingValidation": "Pending brand validation",
             "estimatedValidation": "Estimated validation",
-            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
+            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
+            "lockedExplanation": "Unlocks with your first reward from a partner brand."
         },
         "frakBonus": {
             "label": "Welcome bonus",

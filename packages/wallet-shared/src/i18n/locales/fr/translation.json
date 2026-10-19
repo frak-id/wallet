@@ -1001,7 +1001,7 @@
             "consumed": "Consommé",
             "cancelled": "Annulé",
             "expired": "Expiré",
-            "locked": "Se débloque dès ta première récompense chez une marque partenaire"
+            "locked": "Verrouillé"
         },
         "trigger": {
             "unknown": "Récompense",
@@ -1036,7 +1036,8 @@
             "generatedOn": "Achat généré le {{date}} · {{time}}",
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
-            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
+            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
+            "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

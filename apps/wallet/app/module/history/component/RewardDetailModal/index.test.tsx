@@ -51,4 +51,18 @@ describe("RewardDetailModal", () => {
             queryByText("reward.frakBonus.detailTitle")
         ).not.toBeInTheDocument();
     });
+
+    test("explains how a locked reward unlocks instead of offering to collect it", () => {
+        const { getByText, queryByText } = render(
+            <RewardDetailModal
+                item={makeItem({ status: "locked" })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(
+            getByText("reward.detail.lockedExplanation")
+        ).toBeInTheDocument();
+        expect(queryByText("reward.detail.toCollect")).not.toBeInTheDocument();
+    });
 });
