@@ -1029,6 +1029,7 @@
             "updatedAt": "Updated on {{date}} · {{time}}",
             "purchaseMadeOn": "Purchase made on {{date}} at {{time}}",
             "purchaseDate": "Purchase date",
+            "earnedDate": "Earned on",
             "rewardGenerated": "Reward generated",
             "toCollect": "To collect",
             "creditedOn": "Credited on",

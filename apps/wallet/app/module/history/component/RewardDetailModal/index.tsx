@@ -133,9 +133,11 @@ function DetailCard({
                     labelVariant="bodySmall"
                     labelColor="secondary"
                     label={
-                        isPending
-                            ? t("reward.detail.generatedDate")
-                            : t("reward.detail.purchaseDate")
+                        !item.purchase
+                            ? t("reward.detail.earnedDate")
+                            : isPending
+                              ? t("reward.detail.generatedDate")
+                              : t("reward.detail.purchaseDate")
                     }
                     action={
                         <Inline space="xxs" alignY="center" wrap={false}>

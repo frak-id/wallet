@@ -845,6 +845,7 @@ export default interface Resources {
       "detail": {
         "creditedOn": "Credited on",
         "description": "Reward detail",
+        "earnedDate": "Earned on",
         "estimatedValidation": "Estimated validation",
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",

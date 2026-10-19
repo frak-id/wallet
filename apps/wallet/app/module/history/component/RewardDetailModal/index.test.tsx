@@ -52,6 +52,33 @@ describe("RewardDetailModal", () => {
         ).not.toBeInTheDocument();
     });
 
+    test("dates a reward without a purchase as earned, not purchased", () => {
+        const { getByText, queryByText } = render(
+            <RewardDetailModal
+                item={makeItem({ status: "locked", trigger: "drop_join" })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(getByText("reward.detail.earnedDate")).toBeInTheDocument();
+        expect(
+            queryByText("reward.detail.purchaseDate")
+        ).not.toBeInTheDocument();
+    });
+
+    test("keeps the purchase date label when a purchase is behind the reward", () => {
+        const { getByText } = render(
+            <RewardDetailModal
+                item={makeItem({
+                    purchase: { id: "p1", amount: 40, currency: "EUR" },
+                })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(getByText("reward.detail.purchaseDate")).toBeInTheDocument();
+    });
+
     test("explains how a locked reward unlocks instead of offering to collect it", () => {
         const { getByText, queryByText } = render(
             <RewardDetailModal
