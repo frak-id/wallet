@@ -953,11 +953,11 @@
                 "howItWorks": "Comment ça marche",
                 "unlock": {
                     "title": "Débloque ton {{reward}}",
-                    "description": "Il est en attente jusqu'à ta première mission de marque."
+                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant."
                 },
                 "invite": {
                     "title": "Invite tes amis",
-                    "description": "Vous gagnez {{reward}} chacun, et chaque ami inscrit te rapproche des {{prize}}."
+                    "description": "Vous gagnez {{reward}} chacun. Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte les {{prize}}."
                 },
                 "follow": {
                     "title": "Ne rate pas le prochain drop",
@@ -966,7 +966,7 @@
             },
             "reward": {
                 "title": "Tu es dans le jeu !",
-                "description": "Ta récompense est en attente. Elle se débloque à ta première mission de marque."
+                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire."
             }
         }
     },

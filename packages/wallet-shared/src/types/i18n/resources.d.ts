@@ -760,7 +760,7 @@ export default interface Resources {
       },
       "game": {
         "reward": {
-          "description": "Your reward is pending. It unlocks on your first brand mission.",
+          "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
           "title": "You're in the game!"
         },
         "rules": {
@@ -771,12 +771,12 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "You each earn {{reward}}, and every friend who signs up gets you closer to the {{prize}}.",
+            "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}.",
             "title": "Invite your friends"
           },
           "title": "The Frak Game",
           "unlock": {
-            "description": "It stays pending until your first brand mission.",
+            "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
             "title": "Unlock your {{reward}}"
           }
         }

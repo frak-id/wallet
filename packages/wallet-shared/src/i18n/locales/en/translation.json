@@ -953,11 +953,11 @@
                 "howItWorks": "How it works",
                 "unlock": {
                     "title": "Unlock your {{reward}}",
-                    "description": "It stays pending until your first brand mission."
+                    "description": "It unlocks with your first reward from a partner brand, by buying or recommending."
                 },
                 "invite": {
                     "title": "Invite your friends",
-                    "description": "You each earn {{reward}}, and every friend who signs up gets you closer to the {{prize}}."
+                    "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}."
                 },
                 "follow": {
                     "title": "Don't miss the next drop",
@@ -966,7 +966,7 @@
             },
             "reward": {
                 "title": "You're in the game!",
-                "description": "Your reward is pending. It unlocks on your first brand mission."
+                "description": "Your reward is pending. It unlocks with your first reward from a partner brand."
             }
         }
     },
