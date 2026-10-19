@@ -89,9 +89,16 @@ vi.mock("@/module/game/component/GameRules", () => ({
     ),
 }));
 vi.mock("@/module/game/component/GameReward", () => ({
-    GameReward: ({ onContinue }: { onContinue: () => void }) => (
+    GameReward: ({
+        onContinue,
+        drop,
+    }: {
+        onContinue: () => void;
+        drop?: { prizeDescription: string };
+    }) => (
         <div>
             <span>game-reward</span>
+            {drop && <span>{drop.prizeDescription}</span>}
             <button type="button" onClick={onContinue}>
                 continue
             </button>
@@ -114,13 +121,24 @@ vi.mock("@/module/onboarding/component/ReferralCodeStep", () => ({
         onApplied,
         headerEnd,
     }: {
-        onApplied: (result: { kind: "user" | "frak" }) => void;
+        onApplied: (result: {
+            kind: "user" | "frak";
+            drop?: { prizeDescription: string };
+        }) => void;
         headerEnd: React.ReactNode;
     }) => (
         <div>
             <span>referral-code-step</span>
             {headerEnd}
-            <button type="button" onClick={() => onApplied({ kind: "frak" })}>
+            <button
+                type="button"
+                onClick={() =>
+                    onApplied({
+                        kind: "frak",
+                        drop: { prizeDescription: "drop-prize" },
+                    })
+                }
+            >
                 apply
             </button>
         </div>
@@ -174,6 +192,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
 
         click("apply");
         expect(screen.getByText("game-reward")).toBeInTheDocument();
+        expect(screen.getByText("drop-prize")).toBeInTheDocument();
 
         click("continue");
         expect(screen.getByText("game-rules")).toBeInTheDocument();

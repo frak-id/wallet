@@ -761,6 +761,11 @@ export default interface Resources {
       "game": {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+          "drop": {
+            "endsAt": "Until {{date}}",
+            "label": "Drop prize",
+            "sponsor": "Offered by {{name}}"
+          },
           "title": "You're in the game!"
         },
         "rules": {

@@ -1,6 +1,8 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { frakGame } from "@/module/game/config";
@@ -10,9 +12,11 @@ import * as styles from "./index.css";
 
 type GameRewardProps = {
     onContinue: () => void;
+    /** The drop the code joined; absent for a friend's code. */
+    drop?: RedeemResult["drop"];
 };
 
-export function GameReward({ onContinue }: GameRewardProps) {
+export function GameReward({ onContinue, drop }: GameRewardProps) {
     const { t, i18n } = useTranslation();
     useConfettiBurst();
 
@@ -35,7 +39,38 @@ export function GameReward({ onContinue }: GameRewardProps) {
                         {t("onboarding.game.reward.description")}
                     </Text>
                 </Box>
+                {drop && <DropCard drop={drop} />}
             </div>
         </PageLayout>
+    );
+}
+
+function DropCard({ drop }: { drop: NonNullable<RedeemResult["drop"]> }) {
+    const { t, i18n } = useTranslation();
+    const endsAt = new Date(drop.endsAt).toLocaleString(i18n.language, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    return (
+        <Card variant="muted" className={styles.dropCard}>
+            <Text variant="bodySmall" color="secondary">
+                {t("onboarding.game.reward.drop.label")}
+            </Text>
+            <Text weight="semiBold">{drop.prizeDescription}</Text>
+            <Text variant="bodySmall" color="secondary">
+                {t("onboarding.game.reward.drop.endsAt", { date: endsAt })}
+            </Text>
+            {drop.sponsor && (
+                <Text variant="bodySmall" color="secondary">
+                    {t("onboarding.game.reward.drop.sponsor", {
+                        name: drop.sponsor.name,
+                    })}
+                </Text>
+            )}
+        </Card>
     );
 }

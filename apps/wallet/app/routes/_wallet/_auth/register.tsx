@@ -182,6 +182,7 @@ function RegisterPage() {
     const { data: referralStatus } = useReferralStatus();
     // The redeem refetches this status, which must not auto-skip the step it was just applied on.
     const referralAppliedRef = useRef(false);
+    const [joinedDrop, setJoinedDrop] = useState<RedeemResult["drop"]>();
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
 
     const openModal = modalStore((s) => s.openModal);
@@ -321,6 +322,7 @@ function RegisterPage() {
                 prefill_source: referralPrefillSource,
             });
             if (frakGame.enabled) {
+                setJoinedDrop(result.drop);
                 goToStep("gameReward");
                 return;
             }
@@ -505,7 +507,10 @@ function RegisterPage() {
                 />
             )}
             {step === "gameReward" && (
-                <GameReward onContinue={() => goToStep("gameRules")} />
+                <GameReward
+                    drop={joinedDrop}
+                    onContinue={() => goToStep("gameRules")}
+                />
             )}
             {step === "gameRules" && (
                 <GameRules onContinue={() => goToStep("notification")} />

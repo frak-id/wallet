@@ -969,7 +969,12 @@
             },
             "reward": {
                 "title": "Tu es dans le jeu !",
-                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire."
+                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
+                "drop": {
+                    "label": "Lot du drop",
+                    "endsAt": "Jusqu'à {{date}}",
+                    "sponsor": "Offert par {{name}}"
+                }
             }
         }
     },

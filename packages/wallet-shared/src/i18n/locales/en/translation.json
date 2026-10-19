@@ -969,7 +969,12 @@
             },
             "reward": {
                 "title": "You're in the game!",
-                "description": "Your reward is pending. It unlocks with your first reward from a partner brand."
+                "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+                "drop": {
+                    "label": "Drop prize",
+                    "endsAt": "Until {{date}}",
+                    "sponsor": "Offered by {{name}}"
+                }
             }
         }
     },

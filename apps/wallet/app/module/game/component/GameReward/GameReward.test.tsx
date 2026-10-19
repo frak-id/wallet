@@ -10,7 +10,8 @@ vi.mock("canvas-confetti", () => ({ default: { create } }));
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
-        t: (key: string) => key,
+        t: (key: string, values?: Record<string, string>) =>
+            values ? `${key} ${JSON.stringify(values)}` : key,
         i18n: { language: "fr-FR" },
     }),
 }));
@@ -62,5 +63,40 @@ describe("GameReward", () => {
             screen.getByRole("button", { name: "onboarding.continue" })
         );
         expect(onContinue).toHaveBeenCalled();
+    });
+
+    it("shows the joined drop's prize, end date and sponsor", () => {
+        render(
+            <GameReward
+                onContinue={vi.fn()}
+                drop={{
+                    id: "d1",
+                    prizeDescription: "100 € en bon d'achat",
+                    startsAt: new Date("2026-10-21T18:00:00Z"),
+                    endsAt: new Date("2026-10-23T18:00:00Z"),
+                    sponsor: {
+                        id: "m1",
+                        name: "Oolution",
+                        domain: "oolution.com",
+                    },
+                }}
+            />
+        );
+
+        expect(screen.getByText("100 € en bon d'achat")).toBeInTheDocument();
+        expect(screen.getByText(/reward\.drop\.endsAt/).textContent).toMatch(
+            /octobre/
+        );
+        expect(screen.getByText(/reward\.drop\.sponsor/).textContent).toContain(
+            "Oolution"
+        );
+    });
+
+    it("shows no drop card for a friend's code", () => {
+        render(<GameReward onContinue={vi.fn()} />);
+
+        expect(
+            screen.queryByText("onboarding.game.reward.drop.label")
+        ).not.toBeInTheDocument();
     });
 });

@@ -30,3 +30,10 @@ export const amount = style({
         },
     },
 });
+
+export const dropCard = style({
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xxs,
+});
