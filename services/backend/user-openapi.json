@@ -7697,6 +7697,9 @@
                             },
                             "domain": {
                               "type": "string"
+                            },
+                            "logoUrl": {
+                              "type": "string"
                             }
                           }
                         }
@@ -8176,6 +8179,9 @@
                               "type": "string"
                             },
                             "domain": {
+                              "type": "string"
+                            },
+                            "logoUrl": {
                               "type": "string"
                             }
                           }

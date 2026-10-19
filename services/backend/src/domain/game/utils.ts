@@ -16,3 +16,8 @@ export function dropJoinExternalEventId(
 ): string {
     return `drop:${dropId}:${identityGroupId}`;
 }
+
+/** One signup reward per referee, ever. */
+export function signupExternalEventId(identityGroupId: string): string {
+    return `signup:${identityGroupId}`;
+}

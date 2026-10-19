@@ -1,17 +1,10 @@
-import { businessMetrics, eventEmitter, log } from "@backend-infrastructure";
+import { businessMetrics, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
-import type { CampaignRuleSelect } from "../../domain/campaign/db/schema";
-import {
-    type CampaignRuleRepository,
-    hasRemainingBudget,
-} from "../../domain/campaign/repositories/CampaignRuleRepository";
 import type { DropSelect } from "../../domain/game/db/schema";
 import type { DropRepository } from "../../domain/game/repositories/DropRepository";
 import type { DropSummary } from "../../domain/game/schemas";
-import { dropJoinExternalEventId, isDropOpen } from "../../domain/game/utils";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { FRAK_CODE_ONBOARDING_WINDOW_MS } from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
 import type {
@@ -20,7 +13,6 @@ import type {
 } from "../../domain/referral-code/schemas";
 import type { ReferralCodeService } from "../../domain/referral-code/services/ReferralCodeService";
 import type { InteractionLogRepository } from "../../domain/rewards/repositories/InteractionLogRepository";
-import { interactionTypes } from "../../domain/rewards/schemas";
 import type { FrakGameOrchestrator } from "../game";
 
 type FrakCodeRejection = Parameters<typeof businessMetrics.frakCodeRejected>[0];
@@ -44,7 +36,6 @@ export class ReferralCodeRedemptionOrchestrator {
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly dropRepository: DropRepository,
-        private readonly campaignRuleRepository: CampaignRuleRepository,
         private readonly frakGame: FrakGameOrchestrator
     ) {}
 
@@ -76,10 +67,19 @@ export class ReferralCodeRedemptionOrchestrator {
             );
         }
 
+        // Read before linking: once linked, a retry fails as ALREADY_REDEEMED.
+        const paysSignup =
+            referralCode.kind === "user" &&
+            params.context === "onboarding" &&
+            (await this.isNewAccount(params.refereeIdentityGroupId));
+
         await this.linkReferrer(referralCode, params.refereeIdentityGroupId);
 
-        if (referralCode.kind === "user") {
-            await this.emitReferralSignup(referralCode, params);
+        if (paysSignup) {
+            await this.frakGame.recordSignup(
+                referralCode,
+                params.refereeIdentityGroupId
+            );
         }
 
         return {
@@ -147,27 +147,6 @@ export class ReferralCodeRedemptionOrchestrator {
         });
     }
 
-    /** Pays both sides once the rule is live; one per referee, ever. */
-    private async emitReferralSignup(
-        referralCode: ReferralCodeSelect,
-        { refereeIdentityGroupId, context }: RedeemParams
-    ): Promise<void> {
-        if (context !== "onboarding") return;
-        if (!(await this.isNewAccount(refereeIdentityGroupId))) return;
-
-        const created = await this.interactionLogRepository.createIdempotent({
-            type: interactionTypes.referralSignup,
-            identityGroupId: refereeIdentityGroupId,
-            merchantId: FRAK_MERCHANT_ID,
-            externalEventId: `signup:${refereeIdentityGroupId}`,
-            payload: {
-                referralCodeId: referralCode.id,
-                referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
-            },
-        });
-        if (created) eventEmitter.emit("newInteraction");
-    }
-
     /**
      * Joining never takes the referrer slot, so existing users and users with
      * a friend as referrer can join every drop. A brand-new account still gets
@@ -178,29 +157,14 @@ export class ReferralCodeRedemptionOrchestrator {
         referralCode: ReferralCodeSelect,
         { refereeIdentityGroupId, context }: RedeemParams
     ): Promise<RedeemResult> {
-        const rule = await this.findJoinableRule(drop);
-
-        const joined = await this.interactionLogRepository.createIdempotent({
-            type: interactionTypes.dropJoin,
-            identityGroupId: refereeIdentityGroupId,
-            merchantId: FRAK_MERCHANT_ID,
-            externalEventId: dropJoinExternalEventId(
-                drop.id,
-                refereeIdentityGroupId
-            ),
-            payload: { dropId: drop.id, campaignRuleId: rule.id },
-        });
-        if (!joined) {
-            throw HttpError.conflict(
-                "ALREADY_JOINED",
-                "Already joined this drop"
-            );
-        }
-        eventEmitter.emit("newInteraction");
-
+        // Read before joining: once joined, a retry fails as ALREADY_JOINED.
         const rejection = await this.frakGateRejection(
             refereeIdentityGroupId,
             context
+        );
+        const summary = await this.frakGame.joinDrop(
+            drop,
+            refereeIdentityGroupId
         );
         if (!rejection) {
             // Null when the slot is taken: the user keeps their referrer.
@@ -218,24 +182,8 @@ export class ReferralCodeRedemptionOrchestrator {
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
-            drop: await this.frakGame.summarize(drop),
+            drop: summary,
         };
-    }
-
-    /** The budget check is best effort: the cap itself is `consumeBudget`. */
-    private async findJoinableRule(
-        drop: DropSelect
-    ): Promise<CampaignRuleSelect> {
-        const rule = isDropOpen(drop, new Date())
-            ? await this.campaignRuleRepository.findById(drop.campaignRuleId)
-            : null;
-        if (rule?.status !== "active") {
-            throw HttpError.conflict("DROP_CLOSED", "This drop is closed");
-        }
-        if (!hasRemainingBudget(rule)) {
-            throw HttpError.conflict("DROP_FULL", "This drop is full");
-        }
-        return rule;
     }
 
     private async isNewAccount(identityGroupId: string): Promise<boolean> {

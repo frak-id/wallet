@@ -205,6 +205,7 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 
 const frakGameOrchestrator = new FrakGameOrchestrator(
     GameContext.repositories.drop,
+    CampaignContext.repositories.campaignRule,
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.interactionLog
 );
@@ -216,7 +217,6 @@ const referralCodeRedemptionOrchestrator =
         IdentityContext.repositories.identity,
         RewardsContext.repositories.interactionLog,
         GameContext.repositories.drop,
-        CampaignContext.repositories.campaignRule,
         frakGameOrchestrator
     );
 

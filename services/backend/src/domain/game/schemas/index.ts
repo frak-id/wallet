@@ -12,6 +12,7 @@ const DropSponsorSchema = t.Object({
     id: t.String(),
     name: t.String(),
     domain: t.String(),
+    logoUrl: t.Optional(t.String()),
 });
 
 /** What a wallet needs to show a drop it has joined or can join. */
