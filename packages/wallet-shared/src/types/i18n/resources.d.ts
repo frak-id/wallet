@@ -511,6 +511,25 @@ export default interface Resources {
         "title": "Favorites unavailable"
       }
     },
+    "game": {
+      "leaderboard": {
+        "empty": {
+          "description": "The leaderboard fills up as players score points.",
+          "title": "No scores yet"
+        },
+        "error": {
+          "description": "Something went wrong while loading the leaderboard. Please try again.",
+          "retry": "Try again",
+          "title": "Couldn't load the leaderboard"
+        },
+        "menuLabel": "Frak Game leaderboard",
+        "myRank": "Your rank: #{{rank}}",
+        "notRanked": "You're not ranked yet.",
+        "points": "{{score}} pts",
+        "title": "Leaderboard",
+        "you": "You"
+      }
+    },
     "installCode": {
       "codeCopied": "Reward code copied!",
       "codelessDescription": "Download the app and log in to claim your rewards.",
@@ -738,6 +757,29 @@ export default interface Resources {
         "label": "Email",
         "placeholder": "your.email@gmail.com",
         "title": "Enter your email address"
+      },
+      "game": {
+        "reward": {
+          "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+          "title": "You're in the game!"
+        },
+        "rules": {
+          "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
+          "follow": {
+            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the {{prize}} winner is announced in a story.",
+            "title": "Don't miss the next drop"
+          },
+          "howItWorks": "How it works",
+          "invite": {
+            "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}.",
+            "title": "Invite your friends"
+          },
+          "title": "The Frak Game",
+          "unlock": {
+            "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
+            "title": "Unlock your {{reward}}"
+          }
+        }
       },
       "keypass": {
         "description": "A secure key is saved in your password manager to quickly log in via biometrics.",

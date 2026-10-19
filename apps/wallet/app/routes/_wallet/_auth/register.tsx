@@ -15,11 +15,14 @@ import {
     useReferralStatus,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
+import { GameReward } from "@/module/game/component/GameReward";
+import { GameRules } from "@/module/game/component/GameRules";
+import { frakGame } from "@/module/game/config";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -177,6 +180,8 @@ function RegisterPage() {
         useState<ReferralCodeKind>("user");
 
     const { data: referralStatus } = useReferralStatus();
+    // The redeem refetches this status, which must not auto-skip the step it was just applied on.
+    const referralAppliedRef = useRef(false);
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
 
     const openModal = modalStore((s) => s.openModal);
@@ -259,7 +264,12 @@ function RegisterPage() {
     // Auto-skip referral step if the user already has an applied referrer
     // (e.g. install-referrer resolved before the user reaches this screen).
     useEffect(() => {
-        if (step !== "referralCode" || !hasExistingReferrer) return;
+        if (
+            step !== "referralCode" ||
+            !hasExistingReferrer ||
+            referralAppliedRef.current
+        )
+            return;
         flowRef.current?.track("referral_code_resolved", {
             outcome: "auto_skipped_existing",
             prefill_source: referralPrefillSource,
@@ -304,11 +314,16 @@ function RegisterPage() {
     const handleReferralApplied = useCallback(
         (result: RedeemResult) => {
             if (stepRef.current !== "referralCode") return;
+            referralAppliedRef.current = true;
             flowRef.current?.track("referral_code_resolved", {
                 outcome: "applied",
                 code_kind: result.kind,
                 prefill_source: referralPrefillSource,
             });
+            if (frakGame.enabled) {
+                goToStep("gameReward");
+                return;
+            }
             setReferralToastKind(result.kind);
             setReferralToast("shown");
             goToStep("notification");
@@ -488,6 +503,12 @@ function RegisterPage() {
                     onContinue={() => handleOpenKeypass()}
                     onBack={() => goToStep("emailInput", "backward")}
                 />
+            )}
+            {step === "gameReward" && (
+                <GameReward onContinue={() => goToStep("gameRules")} />
+            )}
+            {step === "gameRules" && (
+                <GameRules onContinue={() => goToStep("notification")} />
             )}
             {step === "referralCode" && !hasExistingReferrer && (
                 <ReferralCodeStep

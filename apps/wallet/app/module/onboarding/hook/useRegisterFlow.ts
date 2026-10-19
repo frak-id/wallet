@@ -16,6 +16,8 @@ export type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
 
 export type FlowStep =
     | OnboardingFlowStep
+    | "gameRules"
+    | "gameReward"
     | "emailInput"
     | "emailAlreadyUsed"
     | "referralCode"
@@ -98,6 +100,15 @@ export function useRegisterFlow({
             translation_key:
                 onboardingSteps[index]?.translationKey ?? "unknown",
         });
+    }, [step]);
+
+    // Fire `game_step_viewed` once we land on a Frak Game step
+    useEffect(() => {
+        if (step === "gameRules" || step === "gameReward") {
+            flowRef.current?.track("game_step_viewed", {
+                step: step === "gameRules" ? "rules" : "reward",
+            });
+        }
     }, [step]);
 
     // Fire `email_input_viewed` once we land on the email step

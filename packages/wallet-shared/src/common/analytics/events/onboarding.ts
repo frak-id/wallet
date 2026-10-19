@@ -56,6 +56,10 @@ type OnboardingMidFlowEvents = {
         code_kind?: ReferralCodeKind;
         prefill_source: ReferralPrefillSource;
     };
+    // Fires once when the user lands on a Frak Game onboarding step.
+    game_step_viewed: OnboardingBaseProps & {
+        step: "rules" | "reward";
+    };
     // Fires once when the user lands on the `emailInput` onboarding step.
     email_input_viewed: OnboardingBaseProps | undefined;
     // Fires when the user leaves the email step: `submitted` advances the

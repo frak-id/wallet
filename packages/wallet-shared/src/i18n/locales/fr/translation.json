@@ -945,6 +945,48 @@
             "descriptionHighlight": "Tes gains sont sécurisés et accessibles à tout moment.",
             "button": "Commencer",
             "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
+        },
+        "game": {
+            "rules": {
+                "title": "Le Jeu Frak",
+                "description": "Un drop sur Instagram chaque mardi et jeudi à 20h.",
+                "howItWorks": "Comment ça marche",
+                "unlock": {
+                    "title": "Débloque ton {{reward}}",
+                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant."
+                },
+                "invite": {
+                    "title": "Invite tes amis",
+                    "description": "Vous gagnez {{reward}} chacun. Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte les {{prize}}."
+                },
+                "follow": {
+                    "title": "Ne rate pas le prochain drop",
+                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant des {{prize}} y est annoncé en story."
+                }
+            },
+            "reward": {
+                "title": "Tu es dans le jeu !",
+                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire."
+            }
+        }
+    },
+    "game": {
+        "leaderboard": {
+            "title": "Classement",
+            "menuLabel": "Classement du Jeu Frak",
+            "myRank": "Ton rang : n°{{rank}}",
+            "notRanked": "Tu n'es pas encore classé.",
+            "you": "Toi",
+            "points": "{{score}} pts",
+            "empty": {
+                "title": "Aucun score pour le moment",
+                "description": "Le classement se remplit au fil des points marqués par les joueurs."
+            },
+            "error": {
+                "title": "Impossible de charger le classement",
+                "description": "Une erreur est survenue lors du chargement du classement. Réessaie.",
+                "retry": "Réessayer"
+            }
         }
     },
     "reward": {

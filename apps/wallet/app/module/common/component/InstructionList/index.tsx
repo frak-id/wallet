@@ -1,11 +1,12 @@
 import { Card } from "@frak-labs/design-system/components/Card";
 import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { ReactNode } from "react";
 import * as styles from "./index.css";
 
 type InstructionStep = {
     title: string;
-    description: string;
+    description: ReactNode;
 };
 
 type InstructionListProps = {
