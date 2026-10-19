@@ -4,6 +4,7 @@ import { AuthContext } from "../domain/auth";
 import { BillingContext } from "../domain/billing/context";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
+import { GameContext } from "../domain/game/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { MoneriumContext } from "../domain/monerium/context";
@@ -26,6 +27,7 @@ import {
     CampaignStatsOrchestrator,
 } from "./campaigns";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
+import { FrakGameOrchestrator } from "./game";
 import {
     AnonymousMergeOrchestrator,
     AuthenticatorLookupOrchestrator,
@@ -201,12 +203,21 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.identityProof
 );
 
+const frakGameOrchestrator = new FrakGameOrchestrator(
+    GameContext.repositories.drop,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.interactionLog
+);
+
 const referralCodeRedemptionOrchestrator =
     new ReferralCodeRedemptionOrchestrator(
         ReferralCodeContext.services.referralCode,
         AttributionContext.repositories.referralLink,
         IdentityContext.repositories.identity,
-        RewardsContext.repositories.interactionLog
+        RewardsContext.repositories.interactionLog,
+        GameContext.repositories.drop,
+        CampaignContext.repositories.campaignRule,
+        frakGameOrchestrator
     );
 
 const walletSessionOrchestrator = new WalletSessionOrchestrator(
@@ -289,6 +300,7 @@ export namespace OrchestrationContext {
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
+        frakGame: frakGameOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
         recoveryClaim: recoveryClaimOrchestrator,

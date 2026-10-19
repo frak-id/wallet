@@ -1,15 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CampaignRuleSelect } from "../../domain/campaign/db/schema";
+import type { DropSelect } from "../../domain/game/db/schema";
+import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { FRAK_REFERRAL_IDENTITY_GROUP_ID } from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
 import { ReferralCodeRedemptionOrchestrator } from "./ReferralCodeRedemptionOrchestrator";
 
-const { frakCodeRejected } = vi.hoisted(() => ({
+const { frakCodeRejected, emit } = vi.hoisted(() => ({
     frakCodeRejected: vi.fn(),
+    emit: vi.fn(),
 }));
 
 vi.mock("@backend-infrastructure", () => ({
     log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     businessMetrics: { frakCodeRejected },
+    eventEmitter: { emit },
 }));
 
 const REFEREE = "referee-group";
@@ -31,6 +36,39 @@ const userCode = code({
     kind: "user",
 });
 
+const openDrop: DropSelect = {
+    id: "drop-1",
+    referralCodeId: "code-id",
+    campaignRuleId: "rule-1",
+    sponsorMerchantId: null,
+    prizeDescription: "100 EUR",
+    startsAt: new Date(Date.now() - HOUR_MS),
+    endsAt: new Date(Date.now() + HOUR_MS),
+    status: "active",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+};
+
+const dropRule = {
+    id: "rule-1",
+    merchantId: FRAK_MERCHANT_ID,
+    status: "active",
+    rule: {
+        trigger: "drop_join",
+        conditions: [],
+        rewards: [
+            {
+                recipient: "referee",
+                type: "token",
+                amountType: "fixed",
+                amount: 1,
+            },
+        ],
+    },
+    budgetConfig: [{ label: "total", durationInSeconds: null, amount: 10 }],
+    budgetUsed: { total: { used: 3 } },
+} as unknown as CampaignRuleSelect;
+
 function makeOrchestrator() {
     const referralCodeService = { findByCode: vi.fn() };
     const referralLinkRepository = {
@@ -44,13 +82,26 @@ function makeOrchestrator() {
     };
     const interactionLogRepository = {
         hasPurchaseForGroup: vi.fn().mockResolvedValue(false),
+        createIdempotent: vi.fn().mockResolvedValue({ id: "interaction" }),
+    };
+    const dropRepository = {
+        findByReferralCodeId: vi.fn().mockResolvedValue(null),
+    };
+    const campaignRuleRepository = {
+        findById: vi.fn().mockResolvedValue(dropRule),
+    };
+    const frakGame = {
+        summarize: vi.fn().mockResolvedValue({ id: "drop-1" }),
     };
 
     const orchestrator = new ReferralCodeRedemptionOrchestrator(
         referralCodeService as never,
         referralLinkRepository as never,
         identityRepository as never,
-        interactionLogRepository as never
+        interactionLogRepository as never,
+        dropRepository as never,
+        campaignRuleRepository as never,
+        frakGame as never
     );
 
     return {
@@ -59,6 +110,8 @@ function makeOrchestrator() {
         referralLinkRepository,
         identityRepository,
         interactionLogRepository,
+        dropRepository,
+        campaignRuleRepository,
     };
 }
 
@@ -182,5 +235,212 @@ describe("ReferralCodeRedemptionOrchestrator.redeem", () => {
             })
         ).rejects.toMatchObject({ code: "NOT_FOUND" });
         expect(frakCodeRejected).not.toHaveBeenCalled();
+    });
+});
+
+describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
+    let ctx: ReturnType<typeof makeOrchestrator>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        ctx = makeOrchestrator();
+        ctx.referralCodeService.findByCode.mockResolvedValue(userCode);
+    });
+
+    it("emits one referral_signup on the Frak merchant for a new account in onboarding", async () => {
+        await ctx.orchestrator.redeem({
+            code: "LOLA10",
+            refereeIdentityGroupId: REFEREE,
+            context: "onboarding",
+        });
+
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledWith({
+            type: "referral_signup",
+            identityGroupId: REFEREE,
+            merchantId: FRAK_MERCHANT_ID,
+            externalEventId: `signup:${REFEREE}`,
+            payload: {
+                referralCodeId: "code-id",
+                referrerIdentityGroupId: "owner-group",
+            },
+        });
+        expect(emit).toHaveBeenCalledWith("newInteraction");
+    });
+
+    it.each([
+        {
+            name: "an account older than the onboarding window",
+            referralCode: userCode,
+            ageMs: 3 * 24 * HOUR_MS,
+        },
+        { name: "a Frak code", referralCode: code(), ageMs: HOUR_MS },
+    ])("does not emit for $name", async ({ referralCode, ageMs }) => {
+        ctx.referralCodeService.findByCode.mockResolvedValue(referralCode);
+        ctx.identityRepository.findGroupById.mockResolvedValue({
+            createdAt: new Date(Date.now() - ageMs),
+        });
+
+        await ctx.orchestrator.redeem({
+            code: referralCode.code,
+            refereeIdentityGroupId: REFEREE,
+            context: "onboarding",
+        });
+
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).not.toHaveBeenCalled();
+    });
+});
+
+describe("ReferralCodeRedemptionOrchestrator drop join", () => {
+    let ctx: ReturnType<typeof makeOrchestrator>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        ctx = makeOrchestrator();
+        ctx.referralCodeService.findByCode.mockResolvedValue(code());
+        ctx.dropRepository.findByReferralCodeId.mockResolvedValue(openDrop);
+    });
+
+    it("joins the drop and sets Frak as referrer for a new account in onboarding", async () => {
+        const result = await ctx.orchestrator.redeem({
+            code: "FRAKPA",
+            refereeIdentityGroupId: REFEREE,
+            context: "onboarding",
+        });
+
+        expect(result).toEqual({
+            referrerIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+            kind: "frak",
+            drop: { id: "drop-1" },
+        });
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledWith({
+            type: "drop_join",
+            identityGroupId: REFEREE,
+            merchantId: FRAK_MERCHANT_ID,
+            externalEventId: `drop:drop-1:${REFEREE}`,
+            payload: { dropId: "drop-1", campaignRuleId: "rule-1" },
+        });
+        expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                referrerIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+            })
+        );
+    });
+
+    it.each([
+        {
+            name: "an existing user",
+            context: undefined,
+            ageMs: HOUR_MS,
+            purchase: false,
+        },
+        {
+            name: "an old account in onboarding",
+            context: "onboarding",
+            ageMs: 3 * 24 * HOUR_MS,
+            purchase: false,
+        },
+        {
+            name: "an account with a purchase",
+            context: "onboarding",
+            ageMs: HOUR_MS,
+            purchase: true,
+        },
+    ] as const)(
+        "lets $name join without touching their referrer",
+        async (testCase) => {
+            ctx.identityRepository.findGroupById.mockResolvedValue({
+                createdAt: new Date(Date.now() - testCase.ageMs),
+            });
+            ctx.interactionLogRepository.hasPurchaseForGroup.mockResolvedValue(
+                testCase.purchase
+            );
+
+            await ctx.orchestrator.redeem({
+                code: "FRAKPA",
+                refereeIdentityGroupId: REFEREE,
+                context: testCase.context,
+            });
+
+            expect(
+                ctx.interactionLogRepository.createIdempotent
+            ).toHaveBeenCalled();
+            expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+            expect(frakCodeRejected).not.toHaveBeenCalled();
+        }
+    );
+
+    it("still joins when the referrer slot is already taken", async () => {
+        ctx.referralLinkRepository.create.mockResolvedValue(null);
+
+        await expect(
+            ctx.orchestrator.redeem({
+                code: "FRAKPA",
+                refereeIdentityGroupId: REFEREE,
+                context: "onboarding",
+            })
+        ).resolves.toMatchObject({ kind: "frak" });
+        expect(ctx.referralLinkRepository.create).toHaveBeenCalled();
+    });
+
+    it("rejects a second join as ALREADY_JOINED", async () => {
+        ctx.interactionLogRepository.createIdempotent.mockResolvedValue(null);
+
+        await expect(
+            ctx.orchestrator.redeem({
+                code: "FRAKPA",
+                refereeIdentityGroupId: REFEREE,
+                context: "onboarding",
+            })
+        ).rejects.toMatchObject({ status: 409, code: "ALREADY_JOINED" });
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        { name: "has ended", drop: { endsAt: new Date(Date.now() - 1000) } },
+        {
+            name: "has not started",
+            drop: { startsAt: new Date(Date.now() + HOUR_MS) },
+        },
+        { name: "is paused", drop: { status: "paused" as const } },
+        { name: "has a paused rule", rule: { status: "paused" as const } },
+    ])("rejects a drop that $name as DROP_CLOSED", async (testCase) => {
+        ctx.dropRepository.findByReferralCodeId.mockResolvedValue({
+            ...openDrop,
+            ...testCase.drop,
+        });
+        ctx.campaignRuleRepository.findById.mockResolvedValue({
+            ...dropRule,
+            ...testCase.rule,
+        });
+
+        await expect(
+            ctx.orchestrator.redeem({
+                code: "FRAKPA",
+                refereeIdentityGroupId: REFEREE,
+            })
+        ).rejects.toMatchObject({ status: 409, code: "DROP_CLOSED" });
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).not.toHaveBeenCalled();
+    });
+
+    it("rejects a drop whose budget cannot pay one more join as DROP_FULL", async () => {
+        ctx.campaignRuleRepository.findById.mockResolvedValue({
+            ...dropRule,
+            budgetUsed: { total: { used: 9.5 } },
+        });
+
+        await expect(
+            ctx.orchestrator.redeem({
+                code: "FRAKPA",
+                refereeIdentityGroupId: REFEREE,
+            })
+        ).rejects.toMatchObject({ status: 409, code: "DROP_FULL" });
     });
 });

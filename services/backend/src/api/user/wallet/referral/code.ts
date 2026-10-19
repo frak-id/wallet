@@ -1,6 +1,7 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { DropSummarySchema } from "../../../../domain/game";
 import {
     RedeemContextSchema,
     ReferralCodeContext,
@@ -97,7 +98,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
         "/redeem",
         async ({ identityGroupId, body }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            const { kind } =
+            const { kind, drop } =
                 await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
                     {
                         code: body.code,
@@ -105,7 +106,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                         context: body.context,
                     }
                 );
-            return { kind };
+            return { kind, drop };
         },
         {
             withAuthedIdentity: true,
@@ -114,7 +115,10 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                 context: t.Optional(RedeemContextSchema),
             }),
             response: {
-                200: t.Object({ kind: ReferralCodeKindSchema }),
+                200: t.Object({
+                    kind: ReferralCodeKindSchema,
+                    drop: t.Optional(DropSummarySchema),
+                }),
                 401: t.String(),
                 429: t.String(),
                 400: t.ErrorResponse,

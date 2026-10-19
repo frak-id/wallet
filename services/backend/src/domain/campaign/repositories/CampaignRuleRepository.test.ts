@@ -1,9 +1,54 @@
 import { describe, expect, it, vi } from "vitest";
-import type { BudgetConfig, BudgetUsed } from "../schemas";
+import type { BudgetConfig, BudgetUsed, RewardDefinition } from "../schemas";
 import {
     CampaignRuleRepository,
+    hasRemainingBudget,
     processBudgetRestore,
 } from "./CampaignRuleRepository";
+
+const fixed = (amount: number): RewardDefinition => ({
+    recipient: "referee",
+    type: "token",
+    amountType: "fixed",
+    amount,
+});
+const cap: BudgetConfig = [
+    { label: "total", durationInSeconds: null, amount: 10 },
+];
+const campaignWith = (
+    rewards: RewardDefinition[],
+    budgetConfig: BudgetConfig | null,
+    used: number
+): Parameters<typeof hasRemainingBudget>[0] => ({
+    rule: { trigger: "drop_join", conditions: [], rewards },
+    budgetConfig,
+    budgetUsed: { total: { used } },
+});
+
+describe("hasRemainingBudget", () => {
+    it.each([
+        { name: "without a budget", config: null, used: 0, room: true },
+        { name: "at an exact fit", config: cap, used: 9, room: true },
+        { name: "one payout short", config: cap, used: 9.5, room: false },
+    ])("reports room $room $name", ({ config, used, room }) => {
+        expect(hasRemainingBudget(campaignWith([fixed(1)], config, used))).toBe(
+            room
+        );
+    });
+
+    it("prices only the fixed rewards", () => {
+        const percentage: RewardDefinition = {
+            recipient: "referrer",
+            type: "token",
+            amountType: "percentage",
+            percent: 50,
+            percentOf: "purchase_amount",
+        };
+        const campaign = campaignWith([fixed(2), percentage, fixed(3)], cap, 6);
+
+        expect(hasRemainingBudget(campaign)).toBe(false);
+    });
+});
 
 describe("CampaignRuleRepository.restoreBudgetsBatch", () => {
     it("groups rewards by campaign and forwards a single restoreBudget call per campaign", async () => {

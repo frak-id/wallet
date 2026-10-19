@@ -1,3 +1,4 @@
+import type { DropSummary } from "@frak-labs/backend-elysia/domain/game/schemas";
 import type {
     RedeemContext,
     ReferralCodeKind,
@@ -19,6 +20,8 @@ type RedeemInput = {
 
 export type RedeemResult = {
     kind: ReferralCodeKind;
+    /** Set when the code was a Frak Game drop code: the user joined it. */
+    drop?: DropSummary;
 };
 
 type UseRedeemReferralCodeProps = {

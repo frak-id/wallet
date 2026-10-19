@@ -7249,7 +7249,8 @@
                               "cancelled",
                               "expired",
                               "bank_depleted",
-                              "consumed"
+                              "consumed",
+                              "locked"
                             ]
                           },
                           "role": {
@@ -7266,7 +7267,9 @@
                               "referral",
                               "create_referral_link",
                               "purchase",
-                              "custom"
+                              "custom",
+                              "referral_signup",
+                              "drop_join"
                             ]
                           },
                           "txHash": {
@@ -7628,6 +7631,76 @@
                         "user",
                         "frak"
                       ]
+                    },
+                    "drop": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "prizeDescription",
+                        "startsAt",
+                        "endsAt",
+                        "sponsor"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "prizeDescription": {
+                          "type": "string"
+                        },
+                        "startsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "endsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "sponsor": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "required": [
+                            "id",
+                            "name",
+                            "domain"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -8020,6 +8093,115 @@
           }
         },
         "operationId": "getUserWalletReferralStatus"
+      }
+    },
+    "/user/wallet/game/drops/current": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "drop"
+                  ],
+                  "properties": {
+                    "drop": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "prizeDescription",
+                        "startsAt",
+                        "endsAt",
+                        "sponsor",
+                        "joined"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "prizeDescription": {
+                          "type": "string"
+                        },
+                        "startsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "endsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "sponsor": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "required": [
+                            "id",
+                            "name",
+                            "domain"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "joined": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletGameDropsCurrent"
       }
     },
     "/user/wallet/merge/preview": {

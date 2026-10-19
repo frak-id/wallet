@@ -646,7 +646,6 @@
     "services/backend/src/orchestration/interaction-submission/handlers/ArrivalHandler.ts": 1,
     "services/backend/src/orchestration/pairing/PairingOrchestrator.ts": 6,
     "services/backend/src/orchestration/pairing/PairingRouterOrchestrator.ts": 2,
-    "services/backend/src/orchestration/referral-code/ReferralCodeRedemptionOrchestrator.ts": 1,
     "services/backend/src/orchestration/schemas/affiliateReportingSchemas.ts": 1,
     "services/backend/src/orchestration/schemas/campaignDetailsSchemas.ts": 3,
     "services/backend/src/orchestration/schemas/campaignOverviewSchemas.ts": 3,
