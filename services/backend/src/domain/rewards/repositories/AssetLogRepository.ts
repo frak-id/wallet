@@ -13,6 +13,7 @@ import {
     ne,
     or,
     type SQL,
+    type SQLWrapper,
     sql,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -38,6 +39,29 @@ import type {
 
 const DEFAULT_EXPIRATION_DAYS = 90;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const missionReward = alias(assetLogsTable, "mission_reward");
+
+/** A live reward at another merchant completes a gated reward's mission. */
+function missionRewardFor(
+    identityGroupId: string | SQLWrapper,
+    gatedMerchantId: string
+) {
+    return and(
+        eq(missionReward.identityGroupId, identityGroupId),
+        ne(missionReward.merchantId, gatedMerchantId),
+        inArray(missionReward.status, [...LIVE_ASSET_STATUSES])
+    );
+}
+
+function lockupOver(
+    availableAt:
+        | typeof assetLogsTable.availableAt
+        | typeof missionReward.availableAt,
+    now: Date
+) {
+    return or(isNull(availableAt), lte(availableAt, now));
+}
 
 /**
  * Hard cap on the per-row annex fetch (`findByMerchantAndDateRange`) — the
@@ -149,7 +173,6 @@ export class AssetLogRepository {
         missionGatedMerchantId: string
     ): Promise<AssetLogSelect[]> {
         const now = new Date();
-        const missionReward = alias(assetLogsTable, "mission_reward");
 
         return db.transaction(async (tx) => {
             const lockable = tx
@@ -168,10 +191,7 @@ export class AssetLogRepository {
                             gt(assetLogsTable.expiresAt, now)
                         ),
                         // Exclude rewards still inside their lockup window.
-                        or(
-                            isNull(assetLogsTable.availableAt),
-                            lte(assetLogsTable.availableAt, now)
-                        ),
+                        lockupOver(assetLogsTable.availableAt, now),
                         // Game rewards wait for a claimable reward elsewhere.
                         or(
                             ne(
@@ -184,25 +204,13 @@ export class AssetLogRepository {
                                     .from(missionReward)
                                     .where(
                                         and(
-                                            eq(
-                                                missionReward.identityGroupId,
-                                                assetLogsTable.identityGroupId
-                                            ),
-                                            ne(
-                                                missionReward.merchantId,
+                                            missionRewardFor(
+                                                assetLogsTable.identityGroupId,
                                                 missionGatedMerchantId
                                             ),
-                                            inArray(missionReward.status, [
-                                                ...LIVE_ASSET_STATUSES,
-                                            ]),
-                                            or(
-                                                isNull(
-                                                    missionReward.availableAt
-                                                ),
-                                                lte(
-                                                    missionReward.availableAt,
-                                                    now
-                                                )
+                                            lockupOver(
+                                                missionReward.availableAt,
+                                                now
                                             )
                                         )
                                     )
@@ -666,20 +674,15 @@ export class AssetLogRepository {
         return result?.count ?? 0;
     }
 
+    /** No lockup check: "locked" means no brand reward yet, not one in its lockup. */
     async hasLiveRewardOutside(
         identityGroupId: string,
         merchantId: string
     ): Promise<boolean> {
         const [row] = await db
-            .select({ id: assetLogsTable.id })
-            .from(assetLogsTable)
-            .where(
-                and(
-                    eq(assetLogsTable.identityGroupId, identityGroupId),
-                    ne(assetLogsTable.merchantId, merchantId),
-                    inArray(assetLogsTable.status, [...LIVE_ASSET_STATUSES])
-                )
-            )
+            .select({ id: missionReward.id })
+            .from(missionReward)
+            .where(missionRewardFor(identityGroupId, merchantId))
             .limit(1);
         return row !== undefined;
     }

@@ -14,7 +14,7 @@ import { FRAK_SHARED_CAMPAIGN_BANK } from "../src/domain/merchant/services/Merch
 import { ReferralCodeContext } from "../src/domain/referral-code";
 
 const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
-  merchant --owner <0xWallet|accountId> --domain <domain> [--name Frak]
+  merchant --owner <0xWallet|accountId> --domain <domain>
       seed the Frak merchant on the shared campaign bank (idempotent)
   signup-rule --referrer <amount> --referee <amount> --budget <amount> [--unlock-days 30]
       publish the referral signup rule (pause it from the business dashboard)
@@ -30,7 +30,6 @@ const { values: opts, positionals } = parseArgs({
     options: {
         owner: { type: "string" },
         domain: { type: "string" },
-        name: { type: "string", default: "Frak" },
         referrer: { type: "string" },
         referee: { type: "string" },
         reward: { type: "string" },
@@ -117,7 +116,7 @@ async function seedMerchant() {
     const merchant = await MerchantContext.repositories.merchant.create({
         id: FRAK_MERCHANT_ID,
         domain: required("domain"),
-        name: opts.name ?? "Frak",
+        name: "Frak",
         ...(isAddress(owner)
             ? { ownerWallet: owner }
             : { ownerAccountId: owner }),

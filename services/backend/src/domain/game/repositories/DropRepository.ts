@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
+import { asc, desc, eq, gt } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { type DropInsert, type DropSelect, dropsTable } from "../db/schema";
 import type { DropStatus } from "../schemas";
+import { isDropOpen } from "../utils";
 
 export class DropRepository {
     async create(drop: DropInsert): Promise<DropSelect> {
@@ -23,19 +24,12 @@ export class DropRepository {
 
     /** The open drop that closes first, when several overlap. */
     async findCurrent(now: Date): Promise<DropSelect | null> {
-        const [drop] = await db
+        const unfinished = await db
             .select()
             .from(dropsTable)
-            .where(
-                and(
-                    eq(dropsTable.status, "active"),
-                    lte(dropsTable.startsAt, now),
-                    gt(dropsTable.endsAt, now)
-                )
-            )
-            .orderBy(asc(dropsTable.endsAt))
-            .limit(1);
-        return drop ?? null;
+            .where(gt(dropsTable.endsAt, now))
+            .orderBy(asc(dropsTable.endsAt));
+        return unfinished.find((drop) => isDropOpen(drop, now)) ?? null;
     }
 
     async list(): Promise<DropSelect[]> {
