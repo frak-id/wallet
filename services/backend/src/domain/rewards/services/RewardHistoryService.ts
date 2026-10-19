@@ -23,6 +23,8 @@ export type RewardEnrichmentData = {
     tokenPrices: TokenPriceMap;
     purchaseAmounts: PurchaseAmountMap;
     referrerPurchases: ReferrerPurchaseMap;
+    /** Pending rewards at this merchant still wait for the user's first mission. */
+    lockedMerchantId?: string;
 };
 
 export class RewardHistoryService {
@@ -40,8 +42,11 @@ export class RewardHistoryService {
             tokenPrices,
             purchaseAmounts,
             referrerPurchases,
+            lockedMerchantId,
         }: RewardEnrichmentData
     ): RewardHistoryItem {
+        const locked =
+            log.status === "pending" && log.merchantId === lockedMerchantId;
         const meta = log.tokenAddress
             ? tokenMetadata.get(log.tokenAddress)
             : undefined;
@@ -64,7 +69,7 @@ export class RewardHistoryService {
                 decimals,
             },
             amount: this.buildTokenAmount(log.amount, price),
-            status: log.status,
+            status: locked ? "locked" : log.status,
             role: log.recipientType,
             trigger: log.interactionType ?? "custom",
             txHash: log.onchainTxHash ?? undefined,

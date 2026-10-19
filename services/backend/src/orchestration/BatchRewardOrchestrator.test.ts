@@ -73,6 +73,7 @@ function makeOrchestrator(opts: {
     rewards: CalculatedReward[];
     referrer: string | null;
     bonusAlreadyClaimed?: boolean;
+    campaignRuleIds?: string[];
 }) {
     const assetLogRepository = {
         hasLiveWelcomeBonus: vi
@@ -87,22 +88,23 @@ function makeOrchestrator(opts: {
             })),
     };
     const campaignRuleRepository = { restoreBudget: vi.fn() };
+    const ruleEngine = {
+        evaluateRules: vi.fn().mockResolvedValue({
+            rewards: opts.rewards,
+            budgetExceeded: false,
+            skippedCampaigns: [],
+            scopeMatchedNoItemCampaigns: [],
+            errors: [],
+            deferForUnpriceableReward: false,
+        }),
+    };
 
     const orchestrator = new BatchRewardOrchestrator(
         {
             findUnprocessedForRewards: vi.fn().mockResolvedValue([purchase]),
         } as never,
         assetLogRepository as never,
-        {
-            evaluateRules: vi.fn().mockResolvedValue({
-                rewards: opts.rewards,
-                budgetExceeded: false,
-                skippedCampaigns: [],
-                scopeMatchedNoItemCampaigns: [],
-                errors: [],
-                deferForUnpriceableReward: false,
-            }),
-        } as never,
+        ruleEngine as never,
         { getReferralChain: vi.fn() } as never,
         { getWalletForGroup: vi.fn().mockResolvedValue(null) } as never,
         {
@@ -113,13 +115,19 @@ function makeOrchestrator(opts: {
                     user: { identityGroupId: USER, walletAddress: null },
                 },
                 referralLinkId: "link-1",
+                campaignRuleIds: opts.campaignRuleIds,
             }),
         } as never,
         { getDefaultRewardToken: vi.fn().mockResolvedValue(TOKEN) } as never,
         campaignRuleRepository as never
     );
 
-    return { orchestrator, assetLogRepository, campaignRuleRepository };
+    return {
+        orchestrator,
+        assetLogRepository,
+        campaignRuleRepository,
+        ruleEngine,
+    };
 }
 
 describe("BatchRewardOrchestrator Frak referral policy", () => {
@@ -159,5 +167,21 @@ describe("BatchRewardOrchestrator Frak referral policy", () => {
             CAMPAIGN,
             10
         );
+    });
+});
+
+describe("BatchRewardOrchestrator campaign binding", () => {
+    it("evaluates only the campaigns the interaction is bound to", async () => {
+        const { orchestrator, ruleEngine } = makeOrchestrator({
+            rewards: [],
+            referrer: null,
+            campaignRuleIds: ["rule-1"],
+        });
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(ruleEngine.evaluateRules.mock.calls[0]?.[0]).toMatchObject({
+            campaignRuleIds: ["rule-1"],
+        });
     });
 });

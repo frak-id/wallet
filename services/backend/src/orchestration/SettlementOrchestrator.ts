@@ -7,6 +7,7 @@ import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import { type Address, getAddress, parseUnits } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
+import { FRAK_MERCHANT_ID } from "../domain/merchant/constants";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import { RewardConfig } from "../domain/rewards/config";
 import type { AssetLogSelect } from "../domain/rewards/db/schema";
@@ -80,7 +81,8 @@ export class SettlementOrchestrator {
 
         const claimedAssetLogs =
             await this.assetLogRepository.claimPendingForSettlement(
-                RewardConfig.settlement.batchSize
+                RewardConfig.settlement.batchSize,
+                FRAK_MERCHANT_ID
             );
 
         if (claimedAssetLogs.length === 0) {

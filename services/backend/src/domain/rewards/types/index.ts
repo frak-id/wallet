@@ -94,11 +94,25 @@ export type CustomPayload = {
     data: Record<string, unknown>;
 };
 
+/** A new user redeemed a friend's code during onboarding. */
+export type ReferralSignupPayload = {
+    referralCodeId: string;
+    referrerIdentityGroupId: string;
+};
+
+/** The user joined a Frak Game drop; only `campaignRuleId` is evaluated. */
+export type DropJoinPayload = {
+    dropId: string;
+    campaignRuleId: string;
+};
+
 export type InteractionPayload =
     | ReferralArrivalPayload
     | CreateReferralLinkPayload
     | PurchasePayload
-    | CustomPayload;
+    | CustomPayload
+    | ReferralSignupPayload
+    | DropJoinPayload;
 
 export type SettlementResult = {
     settledCount: number;

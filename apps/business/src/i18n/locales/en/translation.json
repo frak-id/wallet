@@ -878,7 +878,9 @@
                     "purchase": "Purchase completed",
                     "referral": "Referral",
                     "create_referral_link": "Referral link created",
-                    "custom": "Custom"
+                    "custom": "Custom",
+                    "referral_signup": "Referred signup",
+                    "drop_join": "Drop joined"
                 },
                 "saveError": "Could not save the reward. Check that it is compatible with the product targeting."
             }
@@ -1029,7 +1031,9 @@
                     "purchase": "A customer completes a purchase",
                     "referral": "A referred friend is converted",
                     "create_referral_link": "A user creates a sharing link",
-                    "custom": "A custom interaction is tracked"
+                    "custom": "A custom interaction is tracked",
+                    "referral_signup": "A referred user creates their Frak account",
+                    "drop_join": "A user joins a Frak Game drop"
                 },
                 "productScope": {
                     "title": "Products covered",

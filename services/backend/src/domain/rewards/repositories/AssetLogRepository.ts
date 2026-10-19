@@ -10,10 +10,12 @@ import {
     isNull,
     lt,
     lte,
+    ne,
     or,
     type SQL,
     sql,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 
@@ -142,8 +144,12 @@ export class AssetLogRepository {
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
      * skipped before the push are recovered by `reconcileStuckSettlements`.
      */
-    async claimPendingForSettlement(limit: number): Promise<AssetLogSelect[]> {
+    async claimPendingForSettlement(
+        limit: number,
+        missionGatedMerchantId: string
+    ): Promise<AssetLogSelect[]> {
         const now = new Date();
+        const missionReward = alias(assetLogsTable, "mission_reward");
 
         return db.transaction(async (tx) => {
             const lockable = tx
@@ -165,6 +171,42 @@ export class AssetLogRepository {
                         or(
                             isNull(assetLogsTable.availableAt),
                             lte(assetLogsTable.availableAt, now)
+                        ),
+                        // Game rewards wait for a claimable reward elsewhere.
+                        or(
+                            ne(
+                                assetLogsTable.merchantId,
+                                missionGatedMerchantId
+                            ),
+                            exists(
+                                tx
+                                    .select({ one: sql`1` })
+                                    .from(missionReward)
+                                    .where(
+                                        and(
+                                            eq(
+                                                missionReward.identityGroupId,
+                                                assetLogsTable.identityGroupId
+                                            ),
+                                            ne(
+                                                missionReward.merchantId,
+                                                missionGatedMerchantId
+                                            ),
+                                            inArray(missionReward.status, [
+                                                ...LIVE_ASSET_STATUSES,
+                                            ]),
+                                            or(
+                                                isNull(
+                                                    missionReward.availableAt
+                                                ),
+                                                lte(
+                                                    missionReward.availableAt,
+                                                    now
+                                                )
+                                            )
+                                        )
+                                    )
+                            )
                         ),
                         // Gate on an active wallet node (see method doc).
                         exists(
@@ -622,6 +664,24 @@ export class AssetLogRepository {
                 )
             );
         return result?.count ?? 0;
+    }
+
+    async hasLiveRewardOutside(
+        identityGroupId: string,
+        merchantId: string
+    ): Promise<boolean> {
+        const [row] = await db
+            .select({ id: assetLogsTable.id })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    ne(assetLogsTable.merchantId, merchantId),
+                    inArray(assetLogsTable.status, [...LIVE_ASSET_STATUSES])
+                )
+            )
+            .limit(1);
+        return row !== undefined;
     }
 
     async hasLiveWelcomeBonus(

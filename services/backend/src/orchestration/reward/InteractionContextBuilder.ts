@@ -4,6 +4,7 @@ import type { PurchaseContext } from "../../domain/campaign";
 import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
     CustomPayload,
+    DropJoinPayload,
     PurchasePayload,
 } from "../../domain/rewards/types";
 import type {
@@ -32,10 +33,12 @@ export class InteractionContextBuilder {
                 identityGroupId
             );
 
-        const { trigger, typeContext } = this.buildTypeSpecific(interaction);
+        const { trigger, typeContext, campaignRuleIds } =
+            this.buildTypeSpecific(interaction);
 
         return {
             trigger,
+            campaignRuleIds,
             context: {
                 ...typeContext,
                 attribution: {
@@ -84,6 +87,21 @@ export class InteractionContextBuilder {
                     typeContext: {
                         custom: this.buildCustomContext(payload),
                     },
+                };
+            }
+
+            case "referral_signup":
+                return {
+                    trigger: "referral_signup",
+                    typeContext: {},
+                };
+
+            case "drop_join": {
+                const payload = interaction.payload as DropJoinPayload;
+                return {
+                    trigger: "drop_join",
+                    typeContext: {},
+                    campaignRuleIds: [payload.campaignRuleId],
                 };
             }
         }

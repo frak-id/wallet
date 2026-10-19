@@ -880,6 +880,7 @@ export default interface Resources {
         "cancelled": "Cancelled",
         "consumed": "Consumed",
         "expired": "Expired",
+        "locked": "Unlocks with your first reward from a partner brand",
         "pending": "Awaiting validation by the brand",
         "processing": "Processing",
         "settled": "To collect"

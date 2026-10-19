@@ -100,6 +100,53 @@ describe("RuleEngineService", () => {
     });
 
     describe("evaluateRules", () => {
+        it("evaluates only the listed campaigns when campaignRuleIds is set", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const rule = {
+                trigger: "drop_join" as const,
+                conditions: [],
+                rewards: [],
+            };
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                createMockCampaign({ id: "drop-a", rule }),
+                createMockCampaign({ id: "drop-b", rule }),
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            vi.mocked(mockRewardCalculator.calculateAll).mockImplementation(
+                async (_rewards, _context, campaignRuleId) => ({
+                    calculated: [
+                        createMockCalculatedReward({ campaignRuleId }),
+                    ],
+                    errors: [],
+                    deferForUnpriceableReward: false,
+                })
+            );
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                createMockAssetLogRepository()
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "drop_join",
+                context: createMockContext(),
+                campaignRuleIds: ["drop-b"],
+            });
+
+            expect(result.rewards.map((r) => r.campaignRuleId)).toEqual([
+                "drop-b",
+            ]);
+        });
+
         it("should return empty rewards when user cap is reached", async () => {
             const mockRepository = createMockRepository();
             const mockConditionEvaluator = createMockConditionEvaluator();

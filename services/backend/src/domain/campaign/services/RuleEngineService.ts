@@ -69,6 +69,8 @@ type EvaluateRulesParams = {
     time?: TimeContext;
     /** Fallback token for pricing percentage/tiered rewards that don't pin their own. */
     merchantDefaultToken?: Address;
+    /** Restrict evaluation to these campaigns (e.g. the one rule bound to a drop). */
+    campaignRuleIds?: readonly string[];
 };
 
 export function buildTimeContext(date?: Date): TimeContext {
@@ -89,6 +91,16 @@ export class RuleEngineService {
         private readonly assetLogRepository: AssetLogRepository
     ) {}
 
+    private async findCandidateCampaigns(params: EvaluateRulesParams) {
+        const campaigns = await this.repository.findActiveByMerchant(
+            params.merchantId,
+            params.trigger
+        );
+        const allowedIds = params.campaignRuleIds;
+        if (!allowedIds) return campaigns;
+        return campaigns.filter((c) => allowedIds.includes(c.id));
+    }
+
     async evaluateRules(
         params: EvaluateRulesParams,
         fetchReferralChain?: ReferralChainFetcher
@@ -98,10 +110,7 @@ export class RuleEngineService {
             time: params.time ?? buildTimeContext(),
         };
 
-        const activeCampaigns = await this.repository.findActiveByMerchant(
-            params.merchantId,
-            params.trigger
-        );
+        const activeCampaigns = await this.findCandidateCampaigns(params);
 
         if (activeCampaigns.length === 0) {
             return {

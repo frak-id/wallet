@@ -11,6 +11,7 @@ export type InteractionContextResult = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
     referralLinkId: string | null;
+    campaignRuleIds?: readonly string[];
 };
 
 export type TypeSpecificContextResult = {
@@ -19,4 +20,6 @@ export type TypeSpecificContextResult = {
         purchase?: PurchaseContext;
         custom?: CustomInteractionContext;
     };
+    /** Only these campaigns may reward the interaction. */
+    campaignRuleIds?: readonly string[];
 };

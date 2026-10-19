@@ -997,7 +997,8 @@
             "settled": "À collecter",
             "consumed": "Consommé",
             "cancelled": "Annulé",
-            "expired": "Expiré"
+            "expired": "Expiré",
+            "locked": "Se débloque dès ta première récompense chez une marque partenaire"
         },
         "trigger": {
             "unknown": "Récompense",

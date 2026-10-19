@@ -220,7 +220,7 @@ export class BatchRewardOrchestrator {
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context, referralLinkId } =
+            const { trigger, context, referralLinkId, campaignRuleIds } =
                 await this.contextBuilder.build(
                     interaction,
                     merchantId,
@@ -242,6 +242,7 @@ export class BatchRewardOrchestrator {
                     context,
                     time,
                     merchantDefaultToken,
+                    campaignRuleIds,
                 },
                 (args) => this.referralService.getReferralChain(args)
             );

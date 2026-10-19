@@ -33,16 +33,34 @@ const welcomeBonusLog: DetailedAssetLog = {
     merchantExplorerConfig: null,
 };
 
+const emptyEnrichment = {
+    tokenMetadata: new Map(),
+    tokenPrices: new Map(),
+    purchaseAmounts: new Map(),
+    referrerPurchases: new Map(),
+};
+
 describe("RewardHistoryService", () => {
+    it.each([
+        { status: "pending", merchantId: "frak", shown: "locked" },
+        { status: "expired", merchantId: "frak", shown: "expired" },
+        { status: "pending", merchantId: "merchant-1", shown: "pending" },
+    ] as const)(
+        "shows a $status reward at $merchantId as $shown while the merchant is locked",
+        ({ status, merchantId, shown }) => {
+            const [item] = new RewardHistoryService().buildRewardItems(
+                [{ ...welcomeBonusLog, status, merchantId }],
+                { ...emptyEnrichment, lockedMerchantId: "frak" }
+            );
+
+            expect(item?.status).toBe(shown);
+        }
+    );
+
     it("renders a welcome bonus with its role and the user's own purchase", () => {
         const [item] = new RewardHistoryService().buildRewardItems(
             [welcomeBonusLog],
-            {
-                tokenMetadata: new Map(),
-                tokenPrices: new Map(),
-                purchaseAmounts: new Map(),
-                referrerPurchases: new Map(),
-            }
+            emptyEnrichment
         );
 
         expect(item).toMatchObject({

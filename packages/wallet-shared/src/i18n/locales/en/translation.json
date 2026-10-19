@@ -997,7 +997,8 @@
             "settled": "To collect",
             "consumed": "Consumed",
             "cancelled": "Cancelled",
-            "expired": "Expired"
+            "expired": "Expired",
+            "locked": "Unlocks with your first reward from a partner brand"
         },
         "trigger": {
             "unknown": "Reward",
