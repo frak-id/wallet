@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { cloneElement, type ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { GameRules } from "./index";
 
@@ -8,6 +9,20 @@ vi.mock("react-i18next", () => ({
             values ? `${key} ${JSON.stringify(values)}` : key,
         i18n: { language: "fr-FR" },
     }),
+    Trans: ({
+        i18nKey,
+        values,
+        components,
+    }: {
+        i18nKey: string;
+        values: Record<string, string>;
+        components: { igLink: ReactElement };
+    }) => (
+        <>
+            {`${i18nKey} ${JSON.stringify(values)}`}
+            {cloneElement(components.igLink, {}, "@frak_fr")}
+        </>
+    ),
 }));
 
 describe("GameRules", () => {
@@ -23,6 +38,15 @@ describe("GameRules", () => {
         expect(
             screen.getByText(/rules\.follow\.description/).textContent
         ).toMatch(/"100\s€"/);
+    });
+
+    it("links the follow row to Frak's Instagram account", () => {
+        render(<GameRules onContinue={vi.fn()} />);
+
+        expect(screen.getByRole("link", { name: "@frak_fr" })).toHaveAttribute(
+            "href",
+            "https://www.instagram.com/frak_fr/"
+        );
     });
 
     it("continues from the footer and has no back arrow", () => {

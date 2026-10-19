@@ -766,7 +766,7 @@ export default interface Resources {
         "rules": {
           "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
           "follow": {
-            "description": "Follow @frak on Instagram, where the {{prize}} winner is announced in a story.",
+            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the {{prize}} winner is announced in a story.",
             "title": "Don't miss the next drop"
           },
           "howItWorks": "How it works",

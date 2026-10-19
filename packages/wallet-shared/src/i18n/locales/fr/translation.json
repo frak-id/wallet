@@ -961,7 +961,7 @@
                 },
                 "follow": {
                     "title": "Ne rate pas le prochain drop",
-                    "description": "Suis @frak sur Instagram, le gagnant des {{prize}} y est annoncé en story."
+                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant des {{prize}} y est annoncé en story."
                 }
             },
             "reward": {

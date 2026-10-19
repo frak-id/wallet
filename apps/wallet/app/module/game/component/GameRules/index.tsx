@@ -1,13 +1,16 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useTranslation } from "react-i18next";
+import { ExternalLink } from "@frak-labs/wallet-shared";
+import { Trans, useTranslation } from "react-i18next";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { frakGame } from "@/module/game/config";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as stepStyles from "@/module/onboarding/component/step/index.css";
 import * as styles from "./index.css";
+
+const FRAK_INSTAGRAM_URL = "https://www.instagram.com/frak_fr/";
 
 type GameRulesProps = {
     onContinue: () => void;
@@ -57,9 +60,19 @@ export function GameRules({ onContinue }: GameRulesProps) {
                         },
                         {
                             title: t("onboarding.game.rules.follow.title"),
-                            description: t(
-                                "onboarding.game.rules.follow.description",
-                                values
+                            description: (
+                                <Trans
+                                    i18nKey="onboarding.game.rules.follow.description"
+                                    values={values}
+                                    components={{
+                                        igLink: (
+                                            <ExternalLink
+                                                href={FRAK_INSTAGRAM_URL}
+                                                className={styles.link}
+                                            />
+                                        ),
+                                    }}
+                                />
                             ),
                         },
                     ]}
