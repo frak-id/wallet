@@ -205,7 +205,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         const pending: Array<() => void> = [];
         const startViewTransition = vi.fn((update: () => void) => {
             pending.push(update);
-            return { finished: Promise.resolve() };
+            return { ready: Promise.resolve(), finished: Promise.resolve() };
         });
         Object.assign(document, { startViewTransition });
 
