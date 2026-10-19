@@ -1,6 +1,6 @@
 import { render, within } from "@testing-library/react";
 import type * as React from "react";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 import { ProfilePage } from "./index";
 
@@ -22,6 +22,10 @@ vi.mock("react-i18next", () => ({
         i18n: { language: "fr" },
     }),
 }));
+
+const mockFrakGame = vi.hoisted(() => ({ enabled: false }));
+
+vi.mock("@/module/game/config", () => ({ frakGame: mockFrakGame }));
 
 vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
     isMoneriumEnabled: false,
@@ -78,6 +82,30 @@ vi.mock("@/module/common/component/InfoCard", () => ({
 }));
 
 describe("ProfilePage", () => {
+    beforeEach(() => {
+        mockFrakGame.enabled = false;
+    });
+
+    test("should link to the leaderboard when the game is enabled", () => {
+        mockFrakGame.enabled = true;
+        const view = within(render(<ProfilePage />).container);
+
+        expect(
+            view
+                .getByText("game.leaderboard.menuLabel")
+                .closest("[data-testid='info-row']")
+        ).toHaveAttribute("data-to", "/profile/leaderboard");
+    });
+
+    test("should hide the leaderboard row when the game is disabled", () => {
+        mockFrakGame.enabled = false;
+        const view = within(render(<ProfilePage />).container);
+
+        expect(
+            view.queryByText("game.leaderboard.menuLabel")
+        ).not.toBeInTheDocument();
+    });
+
     test("should render the redesigned profile sections and footer info", async ({
         freshAuthenticationStore,
     }) => {

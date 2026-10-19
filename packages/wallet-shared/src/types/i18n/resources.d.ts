@@ -511,6 +511,25 @@ export default interface Resources {
         "title": "Favorites unavailable"
       }
     },
+    "game": {
+      "leaderboard": {
+        "empty": {
+          "description": "The leaderboard fills up as players score points.",
+          "title": "No scores yet"
+        },
+        "error": {
+          "description": "Something went wrong while loading the leaderboard. Please try again.",
+          "retry": "Try again",
+          "title": "Couldn't load the leaderboard"
+        },
+        "menuLabel": "Frak Game leaderboard",
+        "myRank": "Your rank: #{{rank}}",
+        "notRanked": "You're not ranked yet.",
+        "points": "{{score}} pts",
+        "title": "Leaderboard",
+        "you": "You"
+      }
+    },
     "installCode": {
       "codeCopied": "Reward code copied!",
       "codelessDescription": "Download the app and log in to claim your rewards.",
