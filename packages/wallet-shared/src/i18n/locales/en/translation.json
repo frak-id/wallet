@@ -997,6 +997,12 @@
                 "description": "Something went wrong while loading the leaderboard. Please try again.",
                 "retry": "Try again"
             }
+        },
+        "join": {
+            "title": "Join the drop",
+            "description": "Enter the code from the Instagram story to take part in the drop.",
+            "label": "Drop code",
+            "submit": "Join"
         }
     },
     "reward": {

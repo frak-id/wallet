@@ -997,6 +997,12 @@
                 "description": "Une erreur est survenue lors du chargement du classement. Réessaie.",
                 "retry": "Réessayer"
             }
+        },
+        "join": {
+            "title": "Rejoindre le drop",
+            "description": "Entre le code vu en story sur Instagram pour participer au drop.",
+            "label": "Code du drop",
+            "submit": "Rejoindre"
         }
     },
     "reward": {

@@ -512,6 +512,12 @@ export default interface Resources {
       }
     },
     "game": {
+      "join": {
+        "description": "Enter the code from the Instagram story to take part in the drop.",
+        "label": "Drop code",
+        "submit": "Join",
+        "title": "Join the drop"
+      },
       "leaderboard": {
         "empty": {
           "description": "The leaderboard fills up as players score points.",
