@@ -29,6 +29,8 @@ export type DetailedAssetLog = {
     createdAt: Date;
     settledAt: Date | null;
     availableAt: Date | null;
+    /** Held and not released yet. */
+    held: boolean;
     cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
@@ -100,10 +102,9 @@ export type ReferralSignupPayload = {
     referrerIdentityGroupId: string;
 };
 
-/** The user joined a Frak Game drop; only `campaignRuleId` is evaluated. */
+/** The user joined a Frak Game drop; its rule matches on `drop.id`. */
 export type DropJoinPayload = {
     dropId: string;
-    campaignRuleId: string;
 };
 
 export type InteractionPayload =
@@ -157,4 +158,6 @@ export type CreateAssetLogParams = {
      * up with `BudgetConfigItem.durationInSeconds` and fits comfortably in int4.
      */
     lockupSeconds?: number;
+    /** Create the reward held: it pays only once released. */
+    held?: boolean;
 };

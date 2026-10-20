@@ -22,14 +22,19 @@ export class DropRepository {
         return drop ?? null;
     }
 
-    /** The open drop that closes first, when several overlap. */
-    async findCurrent(now: Date): Promise<DropSelect | null> {
+    /** Open drops, the one closing first first. */
+    async findOpen(now: Date): Promise<DropSelect[]> {
         const unfinished = await db
             .select()
             .from(dropsTable)
             .where(gt(dropsTable.endsAt, now))
             .orderBy(asc(dropsTable.endsAt));
-        return unfinished.find((drop) => isDropOpen(drop, now)) ?? null;
+        return unfinished.filter((drop) => isDropOpen(drop, now));
+    }
+
+    async findCurrent(now: Date): Promise<DropSelect | null> {
+        const [first] = await this.findOpen(now);
+        return first ?? null;
     }
 
     async list(): Promise<DropSelect[]> {

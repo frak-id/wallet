@@ -6,8 +6,8 @@ import {
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
+import { missionSubjectOf } from "../domain/game";
 import type { IdentityRepository } from "../domain/identity";
-import { FRAK_MERCHANT_ID } from "../domain/merchant/constants";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
@@ -58,32 +58,17 @@ export class RewardHistoryOrchestrator {
             return { items: [], totalCount };
         }
 
-        const [enrichment, lockedMerchantId] = await Promise.all([
-            this.buildEnrichmentData(assetLogs),
-            this.findLockedMerchant(group.id, assetLogs),
-        ]);
-        const items = this.rewardHistoryService.buildRewardItems(assetLogs, {
-            ...enrichment,
-            lockedMerchantId,
-        });
+        const enrichment = await this.buildEnrichmentData(assetLogs);
+        const items = this.rewardHistoryService
+            .buildRewardItems(assetLogs, enrichment)
+            .map((item) =>
+                item.status === "locked" &&
+                missionSubjectOf(item.role) === "referee"
+                    ? { ...item, waitsOnFriend: true }
+                    : item
+            );
 
         return { items, totalCount };
-    }
-
-    private async findLockedMerchant(
-        identityGroupId: string,
-        assetLogs: DetailedAssetLog[]
-    ): Promise<string | undefined> {
-        const hasPendingGameReward = assetLogs.some(
-            (log) =>
-                log.merchantId === FRAK_MERCHANT_ID && log.status === "pending"
-        );
-        if (!hasPendingGameReward) return undefined;
-        const missionDone = await this.assetLogRepository.hasLiveRewardOutside(
-            identityGroupId,
-            FRAK_MERCHANT_ID
-        );
-        return missionDone ? undefined : FRAK_MERCHANT_ID;
     }
 
     private async buildEnrichmentData(

@@ -71,6 +71,19 @@ const dropRule = {
     budgetUsed: { total: { used: 3 } },
 } as unknown as CampaignRuleSelect;
 
+const signupRule = {
+    ...dropRule,
+    id: "signup-rule",
+    rule: {
+        trigger: "referral_signup",
+        conditions: [],
+        rewards: [
+            { recipient: "referrer", amountType: "fixed", amount: 2 },
+            { recipient: "referee", amountType: "fixed", amount: 1.5 },
+        ],
+    },
+} as unknown as CampaignRuleSelect;
+
 const GATE_CASES = [
     {
         name: "without the onboarding context",
@@ -116,12 +129,15 @@ function makeOrchestrator() {
     const interactionLogRepository = {
         hasPurchaseForGroup: vi.fn().mockResolvedValue(false),
         createIdempotent: vi.fn().mockResolvedValue({ id: "interaction" }),
+        existsByExternalEvent: vi.fn().mockResolvedValue(false),
     };
     const dropRepository = {
         findByReferralCodeId: vi.fn().mockResolvedValue(null),
+        findOpen: vi.fn().mockResolvedValue([]),
     };
     const campaignRuleRepository = {
         findById: vi.fn().mockResolvedValue(dropRule),
+        findActiveByMerchant: vi.fn().mockResolvedValue([signupRule]),
     };
 
     const frakGame = new FrakGameOrchestrator(
@@ -249,6 +265,62 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
         expect(emit).toHaveBeenCalledWith("newInteraction");
     });
 
+    it("reports the referee's signup reward from the live signup rule", async () => {
+        await expect(ctx.redeem("onboarding")).resolves.toMatchObject({
+            signupReward: 1.5,
+            drop: undefined,
+        });
+    });
+
+    it("joins the referrer's open drop with the signup", async () => {
+        ctx.dropRepository.findOpen.mockResolvedValue([openDrop]);
+        ctx.interactionLogRepository.existsByExternalEvent.mockImplementation(
+            async ({ externalEventId }: { externalEventId: string }) =>
+                externalEventId === "drop:drop-1:owner-group"
+        );
+
+        const result = await ctx.redeem("onboarding");
+
+        expect(result.drop).toMatchObject({ id: "drop-1", reward: 1 });
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: "drop_join",
+                identityGroupId: REFEREE,
+                payload: { dropId: "drop-1" },
+            })
+        );
+    });
+
+    it.each([
+        { name: "the referrer has not joined", joined: false, used: 3 },
+        { name: "the drop is full", joined: true, used: 9.5 },
+    ])("skips the referrer's drop when $name", async (testCase) => {
+        ctx.dropRepository.findOpen.mockResolvedValue([openDrop]);
+        ctx.interactionLogRepository.existsByExternalEvent.mockResolvedValue(
+            testCase.joined
+        );
+        ctx.campaignRuleRepository.findById.mockResolvedValue({
+            ...dropRule,
+            budgetUsed: { total: { used: testCase.used } },
+        });
+
+        const result = await ctx.redeem("onboarding");
+
+        expect(result.drop).toBeUndefined();
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not link the referrer when the referrer's drops cannot be read", async () => {
+        ctx.dropRepository.findOpen.mockRejectedValue(new Error("db down"));
+
+        await expect(ctx.redeem("onboarding")).rejects.toThrow("db down");
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
     it.each([
         {
             name: "a user code without the onboarding context",
@@ -312,6 +384,7 @@ describe("ReferralCodeRedemptionOrchestrator drop join", () => {
             drop: {
                 id: "drop-1",
                 prizeDescription: "100 EUR",
+                reward: 1,
                 startsAt: openDrop.startsAt,
                 endsAt: openDrop.endsAt,
                 sponsor: null,
@@ -324,7 +397,7 @@ describe("ReferralCodeRedemptionOrchestrator drop join", () => {
             identityGroupId: REFEREE,
             merchantId: FRAK_MERCHANT_ID,
             externalEventId: `drop:drop-1:${REFEREE}`,
-            payload: { dropId: "drop-1", campaignRuleId: "rule-1" },
+            payload: { dropId: "drop-1" },
         });
         expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
             expect.objectContaining({

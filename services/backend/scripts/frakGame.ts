@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
 import { currentStablecoins } from "@frak-labs/app-essentials/blockchain";
 import { isAddress } from "viem";
 import { CampaignContext } from "../src/domain/campaign/context";
 import type {
+    CampaignRuleDefinition,
     CampaignTrigger,
     RewardDefinition,
 } from "../src/domain/campaign/schemas";
@@ -22,7 +24,12 @@ const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
               [--sponsor <merchantId>] [--unlock-days 30]
       open a drop on a Frak code issued with scripts/frakReferralCode.ts
   drop list | drop pause <CODE> | drop resume <CODE>
-Amounts are in EURe. --unlock-days: how long a reward waits for the user's first mission.`;
+Amounts are in EURe. --unlock-days: how long a reward waits for its mission.
+Every reward is held until a first brand reward: the referrer's signup reward
+waits for the referee's, every other reward for its own recipient's.`;
+
+// The drop rule outlives the drop so joins processed after the close still pay.
+const DROP_RULE_GRACE_MS = 24 * 60 * 60 * 1000;
 
 const { values: opts, positionals } = parseArgs({
     args: process.argv.slice(2),
@@ -78,14 +85,18 @@ async function publishRule(params: {
     name: string;
     trigger: CampaignTrigger;
     rewards: [RewardDefinition["recipient"], number][];
+    conditions?: CampaignRuleDefinition["conditions"];
+    maxRewardsPerUser?: number;
+    expiresAt?: Date;
 }) {
     const management = CampaignContext.services.management;
     const rule = await management.create({
         merchantId: FRAK_MERCHANT_ID,
         name: params.name,
+        expiresAt: params.expiresAt,
         rule: {
             trigger: params.trigger,
-            conditions: [],
+            conditions: params.conditions ?? [],
             rewards: params.rewards.map(([recipient, amount]) => ({
                 recipient,
                 type: "token",
@@ -93,6 +104,8 @@ async function publishRule(params: {
                 amount,
             })),
             pendingRewardExpirationDays: positive("unlock-days"),
+            maxRewardsPerUser: params.maxRewardsPerUser,
+            holdUntilReleased: true,
         },
         budgetConfig: [
             {
@@ -157,12 +170,17 @@ async function createDrop() {
     const endsAt = date("ends");
     if (endsAt <= startsAt) fail("--ends must be after --starts");
 
+    const dropId = randomUUID();
     const rule = await publishRule({
         name: `Frak Game drop ${code.code}`,
         trigger: "drop_join",
         rewards: [["referee", positive("reward")]],
+        conditions: [{ field: "drop.id", operator: "eq", value: dropId }],
+        maxRewardsPerUser: 1,
+        expiresAt: new Date(endsAt.getTime() + DROP_RULE_GRACE_MS),
     });
     const drop = await GameContext.repositories.drop.create({
+        id: dropId,
         referralCodeId: code.id,
         campaignRuleId: rule.id,
         sponsorMerchantId: opts.sponsor ?? null,

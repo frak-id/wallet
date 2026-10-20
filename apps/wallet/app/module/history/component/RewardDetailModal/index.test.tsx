@@ -92,4 +92,17 @@ describe("RewardDetailModal", () => {
         ).toBeInTheDocument();
         expect(queryByText("reward.detail.toCollect")).not.toBeInTheDocument();
     });
+
+    test("tells a referrer the reward waits on their friend's first brand reward", () => {
+        const { getByText } = render(
+            <RewardDetailModal
+                item={makeItem({ status: "locked", waitsOnFriend: true })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(
+            getByText("reward.detail.lockedOnFriendExplanation")
+        ).toBeInTheDocument();
+    });
 });

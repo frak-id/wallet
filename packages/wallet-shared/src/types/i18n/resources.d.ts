@@ -771,12 +771,14 @@ export default interface Resources {
         "rules": {
           "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
           "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the {{prize}} winner is announced in a story.",
+            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the winner is announced in a story.",
             "title": "Don't miss the next drop"
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}.",
+            "description": "Every friend who signs up earns you points, and the drop's top score wins the prize.",
+            "reward": "You each earn {{reward}}.",
+            "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Invite your friends"
           },
           "title": "The Frak Game",
@@ -855,6 +857,7 @@ export default interface Resources {
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
         "lockedExplanation": "Unlocks with your first reward from a partner brand.",
+        "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",

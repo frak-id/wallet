@@ -21,7 +21,7 @@ import { GameReward } from "./index";
 describe("GameReward", () => {
     it("fires the confetti bursts on mount, respecting reduced motion", async () => {
         confetti.mockClear();
-        render(<GameReward onContinue={vi.fn()} />);
+        render(<GameReward reward={1} onContinue={vi.fn()} />);
 
         await waitFor(() => expect(confetti).toHaveBeenCalledTimes(2));
         expect(create).toHaveBeenCalledWith(
@@ -35,7 +35,9 @@ describe("GameReward", () => {
 
     it("resets the confetti canvas on unmount", async () => {
         confetti.reset.mockClear();
-        const { unmount } = render(<GameReward onContinue={vi.fn()} />);
+        const { unmount } = render(
+            <GameReward reward={1} onContinue={vi.fn()} />
+        );
         await waitFor(() => expect(confetti).toHaveBeenCalled());
 
         unmount();
@@ -46,7 +48,7 @@ describe("GameReward", () => {
     it("does not fire when unmounted before the library has loaded", async () => {
         confetti.mockClear();
         confetti.reset.mockClear();
-        render(<GameReward onContinue={vi.fn()} />).unmount();
+        render(<GameReward reward={1} onContinue={vi.fn()} />).unmount();
 
         await new Promise((resolve) => setTimeout(resolve, 20));
 
@@ -54,11 +56,11 @@ describe("GameReward", () => {
         expect(confetti.reset).not.toHaveBeenCalled();
     });
 
-    it("shows the formatted reward and continues on tap", () => {
+    it("shows the earned reward and continues on tap", () => {
         const onContinue = vi.fn();
-        render(<GameReward onContinue={onContinue} />);
+        render(<GameReward reward={2.5} onContinue={onContinue} />);
 
-        expect(screen.getByText(/^1\s€$/)).toBeInTheDocument();
+        expect(screen.getByText(/^2,50\s€$/)).toBeInTheDocument();
         fireEvent.click(
             screen.getByRole("button", { name: "onboarding.continue" })
         );
@@ -68,10 +70,12 @@ describe("GameReward", () => {
     it("shows the joined drop's prize, end date and sponsor", () => {
         render(
             <GameReward
+                reward={1}
                 onContinue={vi.fn()}
                 drop={{
                     id: "d1",
                     prizeDescription: "100 € en bon d'achat",
+                    reward: 1,
                     startsAt: new Date("2026-10-21T18:00:00Z"),
                     endsAt: new Date("2026-10-23T18:00:00Z"),
                     sponsor: {
@@ -93,7 +97,7 @@ describe("GameReward", () => {
     });
 
     it("shows no drop card for a friend's code", () => {
-        render(<GameReward onContinue={vi.fn()} />);
+        render(<GameReward reward={1} onContinue={vi.fn()} />);
 
         expect(
             screen.queryByText("onboarding.game.reward.drop.label")

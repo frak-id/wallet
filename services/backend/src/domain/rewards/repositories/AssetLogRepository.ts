@@ -10,13 +10,10 @@ import {
     isNull,
     lt,
     lte,
-    ne,
     or,
     type SQL,
-    type SQLWrapper,
     sql,
 } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 
@@ -39,29 +36,6 @@ import type {
 
 const DEFAULT_EXPIRATION_DAYS = 90;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-const missionReward = alias(assetLogsTable, "mission_reward");
-
-/** A live reward at another merchant completes a gated reward's mission. */
-function missionRewardFor(
-    identityGroupId: string | SQLWrapper,
-    gatedMerchantId: string
-) {
-    return and(
-        eq(missionReward.identityGroupId, identityGroupId),
-        ne(missionReward.merchantId, gatedMerchantId),
-        inArray(missionReward.status, [...LIVE_ASSET_STATUSES])
-    );
-}
-
-function lockupOver(
-    availableAt:
-        | typeof assetLogsTable.availableAt
-        | typeof missionReward.availableAt,
-    now: Date
-) {
-    return or(isNull(availableAt), lte(availableAt, now));
-}
 
 /**
  * Hard cap on the per-row annex fetch (`findByMerchantAndDateRange`) — the
@@ -138,6 +112,7 @@ export class AssetLogRepository {
                     p.expirationDays
                 ),
                 availableAt,
+                heldAt: p.held ? new Date() : undefined,
             };
         });
     }
@@ -168,10 +143,7 @@ export class AssetLogRepository {
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
      * skipped before the push are recovered by `reconcileStuckSettlements`.
      */
-    async claimPendingForSettlement(
-        limit: number,
-        missionGatedMerchantId: string
-    ): Promise<AssetLogSelect[]> {
+    async claimPendingForSettlement(limit: number): Promise<AssetLogSelect[]> {
         const now = new Date();
 
         return db.transaction(async (tx) => {
@@ -191,30 +163,13 @@ export class AssetLogRepository {
                             gt(assetLogsTable.expiresAt, now)
                         ),
                         // Exclude rewards still inside their lockup window.
-                        lockupOver(assetLogsTable.availableAt, now),
-                        // Game rewards wait for a claimable reward elsewhere.
                         or(
-                            ne(
-                                assetLogsTable.merchantId,
-                                missionGatedMerchantId
-                            ),
-                            exists(
-                                tx
-                                    .select({ one: sql`1` })
-                                    .from(missionReward)
-                                    .where(
-                                        and(
-                                            missionRewardFor(
-                                                assetLogsTable.identityGroupId,
-                                                missionGatedMerchantId
-                                            ),
-                                            lockupOver(
-                                                missionReward.availableAt,
-                                                now
-                                            )
-                                        )
-                                    )
-                            )
+                            isNull(assetLogsTable.availableAt),
+                            lte(assetLogsTable.availableAt, now)
+                        ),
+                        or(
+                            isNull(assetLogsTable.heldAt),
+                            isNotNull(assetLogsTable.releasedAt)
                         ),
                         // Gate on an active wallet node (see method doc).
                         exists(
@@ -319,6 +274,69 @@ export class AssetLogRepository {
                             )
                         )
                     )
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /**
+     * Release held rewards. Each stays unpaid until its `availableAt` (if
+     * later) and payable for at least `graceMs` after that. A reward already
+     * past its expiry stays expired.
+     */
+    async releaseHeld(
+        items: { id: string; availableAt: Date | null }[],
+        graceMs: number
+    ): Promise<number> {
+        if (items.length === 0) return 0;
+
+        const now = new Date();
+        const rows = JSON.stringify(
+            items.map(({ id, availableAt }) => ({ id, ready_at: availableAt }))
+        );
+        const opensAt = sql`GREATEST(${assetLogsTable.availableAt}, v.ready_at)`;
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                releasedAt: now,
+                availableAt: opensAt,
+                expiresAt: sql`GREATEST(${assetLogsTable.expiresAt}, GREATEST(${opensAt}, ${now.toISOString()}::timestamp) + ${graceMs} * interval '1 millisecond')`,
+            })
+            .from(
+                sql`jsonb_to_recordset(${rows}::jsonb) AS v(id uuid, ready_at timestamp)`
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.id, sql`v.id`),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
+                    gt(assetLogsTable.expiresAt, now)
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /** Hold released rewards again, as long as they are not being paid. */
+    async reholdReleased(ids: string[]): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ releasedAt: null, heldAt: new Date() })
+            .where(
+                and(
+                    inArray(assetLogsTable.id, ids),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNotNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, ["pending", "bank_depleted"])
                 )
             )
             .returning({ id: assetLogsTable.id });
@@ -567,6 +585,7 @@ export class AssetLogRepository {
                 createdAt: assetLogsTable.createdAt,
                 settledAt: assetLogsTable.settledAt,
                 availableAt: assetLogsTable.availableAt,
+                held: sql<boolean>`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL`,
                 cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
@@ -672,19 +691,6 @@ export class AssetLogRepository {
                 )
             );
         return result?.count ?? 0;
-    }
-
-    /** No lockup check: "locked" means no brand reward yet, not one in its lockup. */
-    async hasLiveRewardOutside(
-        identityGroupId: string,
-        merchantId: string
-    ): Promise<boolean> {
-        const [row] = await db
-            .select({ id: missionReward.id })
-            .from(missionReward)
-            .where(missionRewardFor(identityGroupId, merchantId))
-            .limit(1);
-        return row !== undefined;
     }
 
     async hasLiveWelcomeBonus(

@@ -38,6 +38,14 @@ type ProductScopeOutcome = {
 };
 
 /** Flags a campaign whose product scope selected no line item. */
+function holdIfRequired(
+    campaign: CampaignRuleSelect,
+    rewards: CalculatedReward[]
+): CalculatedReward[] {
+    if (!campaign.rule.holdUntilReleased) return rewards;
+    return rewards.map((reward) => ({ ...reward, held: true }));
+}
+
 function collectScopeMiss(
     result: SingleCampaignResult,
     campaignId: string,
@@ -69,8 +77,6 @@ type EvaluateRulesParams = {
     time?: TimeContext;
     /** Fallback token for pricing percentage/tiered rewards that don't pin their own. */
     merchantDefaultToken?: Address;
-    /** Restrict evaluation to these campaigns (e.g. the one rule bound to a drop). */
-    campaignRuleIds?: readonly string[];
 };
 
 export function buildTimeContext(date?: Date): TimeContext {
@@ -91,16 +97,6 @@ export class RuleEngineService {
         private readonly assetLogRepository: AssetLogRepository
     ) {}
 
-    private async findCandidateCampaigns(params: EvaluateRulesParams) {
-        const campaigns = await this.repository.findActiveByMerchant(
-            params.merchantId,
-            params.trigger
-        );
-        const allowedIds = params.campaignRuleIds;
-        if (!allowedIds) return campaigns;
-        return campaigns.filter((c) => allowedIds.includes(c.id));
-    }
-
     async evaluateRules(
         params: EvaluateRulesParams,
         fetchReferralChain?: ReferralChainFetcher
@@ -110,7 +106,10 @@ export class RuleEngineService {
             time: params.time ?? buildTimeContext(),
         };
 
-        const activeCampaigns = await this.findCandidateCampaigns(params);
+        const activeCampaigns = await this.repository.findActiveByMerchant(
+            params.merchantId,
+            params.trigger
+        );
 
         if (activeCampaigns.length === 0) {
             return {
@@ -408,7 +407,7 @@ export class RuleEngineService {
 
         return campaignResult({
             matched: true,
-            rewards: calculated,
+            rewards: holdIfRequired(campaign, calculated),
             errors,
         });
     }

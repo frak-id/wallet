@@ -5,18 +5,19 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { frakGame } from "@/module/game/config";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as styles from "./index.css";
 
 type GameRewardProps = {
     onContinue: () => void;
-    /** The drop the code joined; absent for a friend's code. */
+    /** EURe the redemption earned, still locked. */
+    reward: number;
+    /** The drop joined; absent for a friend's code with no open drop. */
     drop?: RedeemResult["drop"];
 };
 
-export function GameReward({ onContinue, drop }: GameRewardProps) {
+export function GameReward({ onContinue, reward, drop }: GameRewardProps) {
     const { t, i18n } = useTranslation();
     useConfettiBurst();
 
@@ -29,7 +30,7 @@ export function GameReward({ onContinue, drop }: GameRewardProps) {
         >
             <div className={styles.body}>
                 <Text variant="display1" as="p" className={styles.amount}>
-                    {formatGameAmount(frakGame.rewardEur, i18n.language)}
+                    {formatGameAmount(reward, i18n.language)}
                 </Text>
                 <Box display="flex" flexDirection="column" gap="s">
                     <Text variant="heading1" as="h2" align="center">

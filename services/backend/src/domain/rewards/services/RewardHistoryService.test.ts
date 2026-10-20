@@ -14,6 +14,7 @@ const welcomeBonusLog: DetailedAssetLog = {
     createdAt: new Date("2026-09-25T10:00:00Z"),
     settledAt: null,
     availableAt: null,
+    held: false,
     cancellationReason: null,
     onchainTxHash: null,
     interactionType: "purchase",
@@ -42,15 +43,15 @@ const emptyEnrichment = {
 
 describe("RewardHistoryService", () => {
     it.each([
-        { status: "pending", merchantId: "frak", shown: "locked" },
-        { status: "expired", merchantId: "frak", shown: "expired" },
-        { status: "pending", merchantId: "merchant-1", shown: "pending" },
+        { status: "pending", held: true, shown: "locked" },
+        { status: "expired", held: true, shown: "expired" },
+        { status: "pending", held: false, shown: "pending" },
     ] as const)(
-        "shows a $status reward at $merchantId as $shown while the merchant is locked",
-        ({ status, merchantId, shown }) => {
+        "shows a $status reward (held: $held) as $shown",
+        ({ status, held, shown }) => {
             const [item] = new RewardHistoryService().buildRewardItems(
-                [{ ...welcomeBonusLog, status, merchantId }],
-                { ...emptyEnrichment, lockedMerchantId: "frak" }
+                [{ ...welcomeBonusLog, status, held }],
+                emptyEnrichment
             );
 
             expect(item?.status).toBe(shown);

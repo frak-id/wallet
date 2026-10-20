@@ -54,6 +54,7 @@ export type {
     ConditionGroup,
     ConditionOperator,
     CustomInteractionContext,
+    DropContext,
     EvaluationResult,
     FixedRewardDefinition,
     PercentageRewardDefinition,

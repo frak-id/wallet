@@ -960,11 +960,13 @@
                 },
                 "invite": {
                     "title": "Invite tes amis",
-                    "description": "Vous gagnez {{reward}} chacun. Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte les {{prize}}."
+                    "reward": "Vous gagnez {{reward}} chacun.",
+                    "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
+                    "description": "Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte le lot."
                 },
                 "follow": {
                     "title": "Ne rate pas le prochain drop",
-                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant des {{prize}} y est annoncé en story."
+                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant y est annoncé en story."
                 }
             },
             "reward": {
@@ -1043,7 +1045,8 @@
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
-            "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire."
+            "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

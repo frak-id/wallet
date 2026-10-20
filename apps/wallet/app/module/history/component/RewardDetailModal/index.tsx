@@ -282,7 +282,11 @@ function StatusRow({
         return (
             <Box paddingX="m" paddingY="s">
                 <Text variant="bodySmall" color="secondary">
-                    {t("reward.detail.lockedExplanation")}
+                    {t(
+                        item.waitsOnFriend
+                            ? "reward.detail.lockedOnFriendExplanation"
+                            : "reward.detail.lockedExplanation"
+                    )}
                 </Text>
             </Box>
         );

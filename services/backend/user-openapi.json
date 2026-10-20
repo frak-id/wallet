@@ -7320,6 +7320,9 @@
                               }
                             ]
                           },
+                          "waitsOnFriend": {
+                            "type": "boolean"
+                          },
                           "cancellationReason": {
                             "type": "string",
                             "enum": [
@@ -7637,6 +7640,7 @@
                       "required": [
                         "id",
                         "prizeDescription",
+                        "reward",
                         "startsAt",
                         "endsAt",
                         "sponsor"
@@ -7647,6 +7651,9 @@
                         },
                         "prizeDescription": {
                           "type": "string"
+                        },
+                        "reward": {
+                          "type": "number"
                         },
                         "startsAt": {
                           "anyOf": [
@@ -7702,6 +7709,24 @@
                               "type": "string"
                             }
                           }
+                        }
+                      }
+                    },
+                    "signupReward": {
+                      "type": "number"
+                    },
+                    "inviteRewards": {
+                      "type": "object",
+                      "required": [
+                        "referrer",
+                        "referee"
+                      ],
+                      "properties": {
+                        "referrer": {
+                          "type": "number"
+                        },
+                        "referee": {
+                          "type": "number"
                         }
                       }
                     }
@@ -8119,6 +8144,7 @@
                       "required": [
                         "id",
                         "prizeDescription",
+                        "reward",
                         "startsAt",
                         "endsAt",
                         "sponsor",
@@ -8130,6 +8156,9 @@
                         },
                         "prizeDescription": {
                           "type": "string"
+                        },
+                        "reward": {
+                          "type": "number"
                         },
                         "startsAt": {
                           "anyOf": [

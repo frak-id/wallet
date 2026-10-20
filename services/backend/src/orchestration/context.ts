@@ -27,7 +27,7 @@ import {
     CampaignStatsOrchestrator,
 } from "./campaigns";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
-import { FrakGameOrchestrator } from "./game";
+import { FrakGameOrchestrator, MissionUnlockOrchestrator } from "./game";
 import {
     AnonymousMergeOrchestrator,
     AuthenticatorLookupOrchestrator,
@@ -203,6 +203,10 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.identityProof
 );
 
+const missionUnlockOrchestrator = new MissionUnlockOrchestrator(
+    RewardsContext.repositories.assetLog
+);
+
 const frakGameOrchestrator = new FrakGameOrchestrator(
     GameContext.repositories.drop,
     CampaignContext.repositories.campaignRule,
@@ -301,6 +305,7 @@ export namespace OrchestrationContext {
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         frakGame: frakGameOrchestrator,
+        missionUnlock: missionUnlockOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
         recoveryClaim: recoveryClaimOrchestrator,

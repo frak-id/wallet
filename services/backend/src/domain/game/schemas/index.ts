@@ -19,6 +19,8 @@ const DropSponsorSchema = t.Object({
 export const DropSummarySchema = t.Object({
     id: t.String(),
     prizeDescription: t.String(),
+    /** Fixed join reward, in the Frak merchant's token (EURe). */
+    reward: t.Number(),
     startsAt: t.Date(),
     endsAt: t.Date(),
     sponsor: t.Union([DropSponsorSchema, t.Null()]),
@@ -32,3 +34,10 @@ export const CurrentDropResponseSchema = t.Object({
     ]),
 });
 export type CurrentDropResponse = Static<typeof CurrentDropResponseSchema>;
+
+/** What each side of a friend's signup earns, in the Frak merchant's token (EURe). */
+export const InviteRewardsSchema = t.Object({
+    referrer: t.Number(),
+    referee: t.Number(),
+});
+export type InviteRewards = Static<typeof InviteRewardsSchema>;

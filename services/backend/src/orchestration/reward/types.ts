@@ -1,6 +1,7 @@
 import type {
     CampaignTrigger,
     CustomInteractionContext,
+    DropContext,
     PurchaseContext,
     RuleContext,
 } from "../../domain/campaign";
@@ -11,7 +12,6 @@ export type InteractionContextResult = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
     referralLinkId: string | null;
-    campaignRuleIds?: readonly string[];
 };
 
 export type TypeSpecificContextResult = {
@@ -19,7 +19,6 @@ export type TypeSpecificContextResult = {
     typeContext: {
         purchase?: PurchaseContext;
         custom?: CustomInteractionContext;
+        drop?: DropContext;
     };
-    /** Only these campaigns may reward the interaction. */
-    campaignRuleIds?: readonly string[];
 };

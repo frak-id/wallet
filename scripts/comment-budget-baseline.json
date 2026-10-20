@@ -606,7 +606,6 @@
     "services/backend/src/jobs/affiliateIngestion.ts": 2,
     "services/backend/src/jobs/monthlyBillGeneration.ts": 1,
     "services/backend/src/jobs/pairing.ts": 1,
-    "services/backend/src/jobs/settlement.ts": 1,
     "services/backend/src/orchestration/BatchRewardOrchestrator.ts": 1,
     "services/backend/src/orchestration/ExplorerOrchestrator.ts": 2,
     "services/backend/src/orchestration/PurchaseInteractionCreator.ts": 1,

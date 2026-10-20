@@ -58,10 +58,10 @@ describe("InteractionContextBuilder", () => {
         ]);
     });
 
-    it("binds a drop_join to its drop's campaign only", async () => {
+    it("exposes the joined drop to the rule conditions", async () => {
         const interaction = {
             type: "drop_join",
-            payload: { dropId: "drop-1", campaignRuleId: "rule-1" },
+            payload: { dropId: "drop-1" },
         } as InteractionLogSelect;
 
         const result = await buildBuilder().build(
@@ -72,6 +72,6 @@ describe("InteractionContextBuilder", () => {
         );
 
         expect(result.trigger).toBe("drop_join");
-        expect(result.campaignRuleIds).toEqual(["rule-1"]);
+        expect(result.context.drop).toEqual({ id: "drop-1" });
     });
 });

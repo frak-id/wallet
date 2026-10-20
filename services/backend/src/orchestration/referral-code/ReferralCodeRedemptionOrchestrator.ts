@@ -26,7 +26,10 @@ type RedeemParams = {
 export type RedeemResult = {
     referrerIdentityGroupId: string;
     kind: ReferralCodeKind;
+    /** The drop joined: its own code, or the referrer's open drop on a friend's signup. */
     drop?: DropSummary;
+    /** The caller's signup reward, set when a friend's signup was recorded. */
+    signupReward?: number;
 };
 
 export class ReferralCodeRedemptionOrchestrator {
@@ -41,7 +44,8 @@ export class ReferralCodeRedemptionOrchestrator {
 
     /**
      * Redeem a referral code: a friend's or Frak code sets the caller's single
-     * cross-merchant referrer, a drop code joins its drop. Errors are
+     * cross-merchant referrer, a drop code joins its drop. A new account on a
+     * friend's code also joins the friend's open drops. Errors are
      * `HttpError`s: 404 `NOT_FOUND`, 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`,
      * `ALREADY_REDEEMED`, `DROP_CLOSED`, `DROP_FULL`, `ALREADY_JOINED`.
      */
@@ -68,24 +72,36 @@ export class ReferralCodeRedemptionOrchestrator {
         }
 
         // Read before linking: once linked, a retry fails as ALREADY_REDEEMED.
-        const paysSignup =
-            referralCode.kind === "user" &&
-            params.context === "onboarding" &&
-            (await this.isNewAccount(params.refereeIdentityGroupId));
+        const signupPlan = (await this.paysSignup(referralCode, params))
+            ? await this.frakGame.planSignup(referralCode.ownerIdentityGroupId)
+            : null;
 
         await this.linkReferrer(referralCode, params.refereeIdentityGroupId);
 
-        if (paysSignup) {
-            await this.frakGame.recordSignup(
+        const signup =
+            signupPlan &&
+            (await this.frakGame.applySignup(
+                signupPlan,
                 referralCode,
                 params.refereeIdentityGroupId
-            );
-        }
+            ));
 
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
+            drop: signup?.drop,
+            signupReward: signup?.reward,
         };
+    }
+
+    private async paysSignup(
+        referralCode: ReferralCodeSelect,
+        { refereeIdentityGroupId, context }: RedeemParams
+    ): Promise<boolean> {
+        if (referralCode.kind !== "user" || context !== "onboarding") {
+            return false;
+        }
+        return this.isNewAccount(refereeIdentityGroupId);
     }
 
     private async linkReferrer(

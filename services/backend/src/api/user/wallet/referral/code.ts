@@ -1,7 +1,10 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { DropSummarySchema } from "../../../../domain/game";
+import {
+    DropSummarySchema,
+    InviteRewardsSchema,
+} from "../../../../domain/game";
 import {
     RedeemContextSchema,
     ReferralCodeContext,
@@ -98,7 +101,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
         "/redeem",
         async ({ identityGroupId, body }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            const { kind, drop } =
+            const { kind, drop, signupReward } =
                 await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
                     {
                         code: body.code,
@@ -106,7 +109,14 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                         context: body.context,
                     }
                 );
-            return { kind, drop };
+            const inviteRewards =
+                await OrchestrationContext.orchestrators.frakGame.inviteRewards();
+            return {
+                kind,
+                drop,
+                signupReward,
+                inviteRewards: inviteRewards ?? undefined,
+            };
         },
         {
             withAuthedIdentity: true,
@@ -118,6 +128,8 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                 200: t.Object({
                     kind: ReferralCodeKindSchema,
                     drop: t.Optional(DropSummarySchema),
+                    signupReward: t.Optional(t.Number()),
+                    inviteRewards: t.Optional(InviteRewardsSchema),
                 }),
                 401: t.String(),
                 429: t.String(),

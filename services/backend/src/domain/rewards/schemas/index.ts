@@ -48,7 +48,7 @@ export const LIVE_ASSET_STATUSES = [
  * Status surfaced to wallet clients. Superset of {@link AssetStatusSchema}
  * with two display-only states, never persisted to `asset_logs.status`:
  * `consumed` (derived by the wallet from `settled`) and `locked` (a `pending`
- * reward waiting for its recipient's first mission).
+ * reward that is held and not released yet).
  */
 export const RewardDisplayStatusSchema = t.Union([
     ...AssetStatusSchema.anyOf,
@@ -124,6 +124,8 @@ export const RewardHistoryItemSchema = t.Object({
     settledAt: t.Optional(t.Date()),
     /** Timestamp at which a locked reward becomes claimable. Undefined when no lockup. */
     availableAt: t.Optional(t.Date()),
+    /** Set on a `locked` reward that waits on another user's mission (the referee's). */
+    waitsOnFriend: t.Optional(t.Boolean()),
     /** Reason a `cancelled` reward was cancelled. Undefined for non-cancelled rewards. */
     cancellationReason: t.Optional(CancellationReasonSchema),
     purchase: t.Optional(PurchaseInfoSchema),

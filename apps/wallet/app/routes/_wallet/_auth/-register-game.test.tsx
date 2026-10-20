@@ -5,10 +5,22 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 import { modalStore } from "@/module/stores/modalStore";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-const { mockGame, track, referralStatus } = vi.hoisted(() => ({
-    mockGame: { enabled: false, rewardEur: 1, prizeEur: 100 },
+type MockRedeem = {
+    kind: "user" | "frak";
+    drop?: { prizeDescription: string; reward: number };
+    signupReward?: number;
+};
+
+const dropCodeRedeem: MockRedeem = {
+    kind: "frak",
+    drop: { prizeDescription: "drop-prize", reward: 1 },
+};
+
+const { mockGame, track, referralStatus, redeem } = vi.hoisted(() => ({
+    mockGame: { enabled: false },
     track: vi.fn(),
     referralStatus: { data: undefined as unknown },
+    redeem: { result: undefined as unknown },
 }));
 
 vi.mock("@/module/game/config", () => ({ frakGame: mockGame }));
@@ -91,13 +103,16 @@ vi.mock("@/module/game/component/GameRules", () => ({
 vi.mock("@/module/game/component/GameReward", () => ({
     GameReward: ({
         onContinue,
+        reward,
         drop,
     }: {
         onContinue: () => void;
+        reward: number;
         drop?: { prizeDescription: string };
     }) => (
         <div>
             <span>game-reward</span>
+            <span>reward-{reward}</span>
             {drop && <span>{drop.prizeDescription}</span>}
             <button type="button" onClick={onContinue}>
                 continue
@@ -121,10 +136,7 @@ vi.mock("@/module/onboarding/component/ReferralCodeStep", () => ({
         onApplied,
         headerEnd,
     }: {
-        onApplied: (result: {
-            kind: "user" | "frak";
-            drop?: { prizeDescription: string };
-        }) => void;
+        onApplied: (result: MockRedeem) => void;
         headerEnd: React.ReactNode;
     }) => (
         <div>
@@ -132,12 +144,7 @@ vi.mock("@/module/onboarding/component/ReferralCodeStep", () => ({
             {headerEnd}
             <button
                 type="button"
-                onClick={() =>
-                    onApplied({
-                        kind: "frak",
-                        drop: { prizeDescription: "drop-prize" },
-                    })
-                }
+                onClick={() => onApplied(redeem.result as MockRedeem)}
             >
                 apply
             </button>
@@ -161,6 +168,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         modalStore.getState().dismissAll();
         pendingActionsStore.getState().clearAll();
         referralStatus.data = undefined;
+        redeem.result = dropCodeRedeem;
         track.mockClear();
     });
 
@@ -238,6 +246,31 @@ describe("RegisterPage — Frak Game onboarding", () => {
         }
 
         expect(screen.getByText("game-reward")).toBeInTheDocument();
+    });
+
+    test("flag on: a friend's signup shows its own reward plus the friend's drop", () => {
+        mockGame.enabled = true;
+        redeem.result = { ...dropCodeRedeem, kind: "user", signupReward: 1.5 };
+        reachReferralCode();
+
+        click("apply");
+
+        expect(screen.getByText("reward-2.5")).toBeInTheDocument();
+        expect(screen.getByText("drop-prize")).toBeInTheDocument();
+    });
+
+    test("flag on: a code that earns no game reward keeps the applied toast", () => {
+        mockGame.enabled = true;
+        redeem.result = { kind: "frak" };
+        reachReferralCode();
+
+        click("apply");
+
+        expect(screen.queryByText("game-reward")).not.toBeInTheDocument();
+        expect(screen.getByText("notification-step")).toBeInTheDocument();
+        expect(
+            screen.getByText("onboarding.referral.frakAppliedToast")
+        ).toBeInTheDocument();
     });
 
     test("flag on: skipping the code skips the game screens", () => {
