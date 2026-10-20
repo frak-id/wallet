@@ -868,7 +868,9 @@
             "title": "Your referral code",
             "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
             "codeCopied": "Referral code copied!",
-            "manualEntry": "Referral code to enter at sign-up"
+            "manualEntry": "Referral code to enter at sign-up",
+            "openApp": "I already have the Frak app",
+            "openBrowser": "Open in the browser"
         }
     },
     "pendingActions": {

@@ -75,6 +75,26 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
     return { ...actual, trackEvent: mockTrackEvent, recordError: vi.fn() };
 });
 
+const sdkBrowser = vi.hoisted(() => ({
+    mobile: false,
+    inApp: false,
+    triggerDeepLink: vi.fn(),
+    redirectExternal: vi.fn(),
+}));
+
+vi.mock("@frak-labs/core-sdk", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@frak-labs/core-sdk")>();
+    return {
+        ...actual,
+        isMobile: () => sdkBrowser.mobile,
+        get isInAppBrowser() {
+            return sdkBrowser.inApp;
+        },
+        triggerDeepLinkWithFallback: sdkBrowser.triggerDeepLink,
+        redirectToExternalBrowser: sdkBrowser.redirectExternal,
+    };
+});
+
 mockEstimatedRewards.mockResolvedValue({ data: { rewards: [] } });
 
 /**
@@ -116,7 +136,11 @@ describe("InstallView — processing branch", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -133,7 +157,7 @@ describe("InstallView — processing branch", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -148,6 +172,25 @@ describe("InstallView — processing branch", () => {
         await waitFor(() => expect(toWallet).toHaveBeenCalled());
     });
 
+    test("hands a logged-in visitor's shared code over instead of dropping it", async ({
+        queryWrapper,
+    }) => {
+        const toWallet = vi.fn();
+        const toCode = vi.fn();
+
+        render(
+            <InstallView
+                search={{ ref: "FRAK26" }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(toCode).toHaveBeenCalledWith("FRAK26"));
+        expect(toWallet).not.toHaveBeenCalled();
+    });
+
     test("carries the install proof from the `#p=` fragment into the ensure", async ({
         queryWrapper,
     }) => {
@@ -156,7 +199,11 @@ describe("InstallView — processing branch", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -181,7 +228,11 @@ describe("InstallView — processing branch", () => {
         render(
             <InstallView
                 search={{ m: fixture.merchantId, p: fixture.proof }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -205,7 +256,7 @@ describe("InstallView — processing branch", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1", embed: undefined }}
-                navigation={{ toWallet: vi.fn(), toRegister }}
+                navigation={{ toWallet: vi.fn(), toRegister, toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -247,7 +298,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -266,7 +317,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -293,7 +348,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
             render(
                 <InstallView
                     search={{ m: "merchant-1", a: "anon-1" }}
-                    navigation={{ toWallet, toRegister: vi.fn() }}
+                    navigation={{
+                        toWallet,
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
                     processingLayout={Layout}
                 />,
                 { wrapper: queryWrapper.wrapper }
@@ -320,7 +379,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -348,7 +411,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -378,7 +441,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -401,7 +468,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -435,7 +502,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
             render(
                 <InstallView
                     search={{ m: "merchant-1", a: "anon-1" }}
-                    navigation={{ toWallet, toRegister: vi.fn() }}
+                    navigation={{
+                        toWallet,
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
                     processingLayout={Layout}
                 />,
                 { wrapper: queryWrapper.wrapper }
@@ -468,7 +539,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -491,7 +566,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -510,7 +585,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet, toRegister: vi.fn() }}
+                navigation={{ toWallet, toRegister: vi.fn(), toCode: vi.fn() }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -546,7 +621,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -575,7 +654,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -629,7 +712,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -661,7 +748,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -687,7 +778,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -717,7 +812,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -746,7 +845,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -778,7 +881,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -806,7 +913,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: fixture.merchantId }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -840,7 +951,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
             render(
                 <InstallView
                     search={{ m: fixture.merchantId }}
-                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    navigation={{
+                        toWallet: vi.fn(),
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
                     processingLayout={Layout}
                 />,
                 { wrapper: queryWrapper.wrapper }
@@ -878,7 +993,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
             render(
                 <InstallView
                     search={{ m: "merchant-1", a: "anon-1" }}
-                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    navigation={{
+                        toWallet: vi.fn(),
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
                     processingLayout={Layout}
                 />,
                 { wrapper: queryWrapper.wrapper }
@@ -909,7 +1028,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -940,7 +1063,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
                     sid: "s1",
                     clip: "host",
                 }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -971,7 +1098,11 @@ describe("InstallView — install-code branch, post-install detection", () => {
         render(
             <InstallView
                 search={{ m: "merchant-1", a: "anon-1" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -1005,7 +1136,11 @@ describe("InstallView — ref-only referral code branch", () => {
         render(
             <InstallView
                 search={{ ref: "FRAKPA" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper: queryWrapper.wrapper }
@@ -1030,7 +1165,11 @@ describe("InstallView — ref-only referral code branch", () => {
             render(
                 <InstallView
                     search={{ ref: "FRAKPA" }}
-                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    navigation={{
+                        toWallet: vi.fn(),
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
                     processingLayout={Layout}
                 />,
                 { wrapper: queryWrapper.wrapper }
@@ -1045,6 +1184,83 @@ describe("InstallView — ref-only referral code branch", () => {
         }
     );
 
+    test("on mobile, hands the code to an installed app", async ({
+        queryWrapper,
+    }) => {
+        sdkBrowser.mobile = true;
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        fireEvent.click(
+            await screen.findByText("installCode.referral.openApp")
+        );
+
+        expect(sdkBrowser.triggerDeepLink).toHaveBeenCalledWith(
+            "frakwallet://install?ref=FRAKPA"
+        );
+        expect(
+            screen.queryByText("installCode.referral.openBrowser")
+        ).toBeNull();
+        sdkBrowser.mobile = false;
+    });
+
+    test("inside Instagram's browser, offers to reopen the page in the real browser", async ({
+        queryWrapper,
+    }) => {
+        sdkBrowser.mobile = true;
+        sdkBrowser.inApp = true;
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        fireEvent.click(
+            await screen.findByText("installCode.referral.openBrowser")
+        );
+
+        expect(sdkBrowser.redirectExternal).toHaveBeenCalledWith(
+            window.location.href
+        );
+        sdkBrowser.mobile = false;
+        sdkBrowser.inApp = false;
+    });
+
+    test("on desktop, offers no app hand-off", async ({ queryWrapper }) => {
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await screen.findByText("installCode.referral.title");
+        expect(screen.queryByText("installCode.referral.openApp")).toBeNull();
+    });
+
     test("the Android store link carries the referral code, no merchant pair", async () => {
         const originalUserAgent = navigator.userAgent;
         Object.defineProperty(navigator, "userAgent", {
@@ -1055,7 +1271,11 @@ describe("InstallView — ref-only referral code branch", () => {
         render(
             <InstallView
                 search={{ ref: "FRAKPA" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />
         );
@@ -1094,7 +1314,11 @@ describe("InstallView — install-code branch, reward headline", () => {
         render(
             <InstallView
                 search={search}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
                 processingLayout={Layout}
             />,
             { wrapper }

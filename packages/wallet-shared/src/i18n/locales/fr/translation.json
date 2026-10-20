@@ -868,7 +868,9 @@
             "title": "Ton code de parrainage",
             "description": "Télécharge l'app et saisis ce code à l'inscription pour débloquer ton cashback exclusif.",
             "codeCopied": "Code de parrainage copié !",
-            "manualEntry": "Code de parrainage à saisir à l'inscription"
+            "manualEntry": "Code de parrainage à saisir à l'inscription",
+            "openApp": "J'ai déjà l'app Frak",
+            "openBrowser": "Ouvrir dans le navigateur"
         }
     },
     "pendingActions": {

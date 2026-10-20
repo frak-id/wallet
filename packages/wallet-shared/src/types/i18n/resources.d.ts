@@ -561,6 +561,8 @@ export default interface Resources {
         "codeCopied": "Referral code copied!",
         "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
         "manualEntry": "Referral code to enter at sign-up",
+        "openApp": "I already have the Frak app",
+        "openBrowser": "Open in the browser",
         "title": "Your referral code"
       },
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",
