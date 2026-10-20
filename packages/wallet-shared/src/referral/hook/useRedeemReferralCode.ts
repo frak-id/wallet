@@ -1,4 +1,8 @@
 import type {
+    DropSummary,
+    InviteRewards,
+} from "@frak-labs/backend-elysia/domain/game/schemas";
+import type {
     RedeemContext,
     ReferralCodeKind,
 } from "@frak-labs/backend-elysia/domain/referral-code/schemas";
@@ -19,6 +23,12 @@ type RedeemInput = {
 
 export type RedeemResult = {
     kind: ReferralCodeKind;
+    /** The drop joined: its own code, or the friend's open drop on signup. */
+    drop?: DropSummary;
+    /** The caller's Frak Game signup reward, in EURe. */
+    signupReward?: number;
+    /** What each side earns per friend's signup, in EURe. */
+    inviteRewards?: InviteRewards;
 };
 
 type UseRedeemReferralCodeProps = {

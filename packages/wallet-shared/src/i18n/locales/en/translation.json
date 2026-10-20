@@ -387,6 +387,9 @@
                 "errorSelf": "You can't use your own code.",
                 "errorCycle": "This code can't be used with your account.",
                 "errorAlreadyRedeemed": "You already have an active referral code.",
+                "errorDropClosed": "This drop is over. Watch for the next one on Instagram.",
+                "errorDropFull": "This drop is full. Try again on the next one.",
+                "errorAlreadyJoined": "You've already joined this drop.",
                 "errorInvalid": "This code isn't valid.",
                 "errorGeneric": "Something went wrong. Please try again.",
                 "confirmDelete": {
@@ -957,16 +960,23 @@
                 },
                 "invite": {
                     "title": "Invite your friends",
-                    "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}."
+                    "reward": "You each earn {{reward}}.",
+                    "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
+                    "description": "Every friend who signs up earns you points, and the drop's top score wins the prize."
                 },
                 "follow": {
                     "title": "Don't miss the next drop",
-                    "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the {{prize}} winner is announced in a story."
+                    "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the winner is announced in a story."
                 }
             },
             "reward": {
                 "title": "You're in the game!",
-                "description": "Your reward is pending. It unlocks with your first reward from a partner brand."
+                "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+                "drop": {
+                    "label": "Drop prize",
+                    "endsAt": "Until {{date}}",
+                    "sponsor": "Offered by {{name}}"
+                }
             }
         }
     },
@@ -997,7 +1007,8 @@
             "settled": "To collect",
             "consumed": "Consumed",
             "cancelled": "Cancelled",
-            "expired": "Expired"
+            "expired": "Expired",
+            "locked": "Locked"
         },
         "trigger": {
             "unknown": "Reward",
@@ -1025,6 +1036,7 @@
             "updatedAt": "Updated on {{date}} · {{time}}",
             "purchaseMadeOn": "Purchase made on {{date}} at {{time}}",
             "purchaseDate": "Purchase date",
+            "earnedDate": "Earned on",
             "rewardGenerated": "Reward generated",
             "toCollect": "To collect",
             "creditedOn": "Credited on",
@@ -1032,7 +1044,9 @@
             "generatedOn": "Generated on {{date}} · {{time}}",
             "pendingValidation": "Pending brand validation",
             "estimatedValidation": "Estimated validation",
-            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
+            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
+            "lockedExplanation": "Unlocks with your first reward from a partner brand.",
+            "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand."
         },
         "frakBonus": {
             "label": "Welcome bonus",

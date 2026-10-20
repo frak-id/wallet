@@ -29,6 +29,8 @@ export type DetailedAssetLog = {
     createdAt: Date;
     settledAt: Date | null;
     availableAt: Date | null;
+    /** Held and not released yet. */
+    held: boolean;
     cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
@@ -94,11 +96,24 @@ export type CustomPayload = {
     data: Record<string, unknown>;
 };
 
+/** A new user redeemed a friend's code during onboarding. */
+export type ReferralSignupPayload = {
+    referralCodeId: string;
+    referrerIdentityGroupId: string;
+};
+
+/** The user joined a Frak Game drop; its rule matches on `drop.id`. */
+export type DropJoinPayload = {
+    dropId: string;
+};
+
 export type InteractionPayload =
     | ReferralArrivalPayload
     | CreateReferralLinkPayload
     | PurchasePayload
-    | CustomPayload;
+    | CustomPayload
+    | ReferralSignupPayload
+    | DropJoinPayload;
 
 export type SettlementResult = {
     settledCount: number;
@@ -143,4 +158,6 @@ export type CreateAssetLogParams = {
      * up with `BudgetConfigItem.durationInSeconds` and fits comfortably in int4.
      */
     lockupSeconds?: number;
+    /** Create the reward held: it pays only once released. */
+    held?: boolean;
 };

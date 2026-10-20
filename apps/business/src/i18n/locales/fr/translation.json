@@ -878,7 +878,9 @@
                     "purchase": "Achat finalisé",
                     "referral": "Parrainage",
                     "create_referral_link": "Lien de parrainage créé",
-                    "custom": "Personnalisé"
+                    "custom": "Personnalisé",
+                    "referral_signup": "Inscription parrainée",
+                    "drop_join": "Participation à un drop"
                 },
                 "saveError": "Impossible d’enregistrer la récompense. Vérifiez sa compatibilité avec le ciblage produit."
             }
@@ -1029,7 +1031,9 @@
                     "purchase": "Un client finalise un achat",
                     "referral": "Un ami parrainé est converti",
                     "create_referral_link": "Un utilisateur crée un lien de partage",
-                    "custom": "Une interaction personnalisée est suivie"
+                    "custom": "Une interaction personnalisée est suivie",
+                    "referral_signup": "Un filleul crée son compte Frak",
+                    "drop_join": "Un utilisateur participe à un drop du Jeu Frak"
                 },
                 "productScope": {
                     "title": "Produits concernés",

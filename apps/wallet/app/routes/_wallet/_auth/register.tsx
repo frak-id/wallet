@@ -23,6 +23,7 @@ import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { GameReward } from "@/module/game/component/GameReward";
 import { GameRules } from "@/module/game/component/GameRules";
 import { frakGame } from "@/module/game/config";
+import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -182,6 +183,7 @@ function RegisterPage() {
     const { data: referralStatus } = useReferralStatus();
     // The redeem refetches this status, which must not auto-skip the step it was just applied on.
     const referralAppliedRef = useRef(false);
+    const [gameRedeem, setGameRedeem] = useState<RedeemResult>();
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
 
     const openModal = modalStore((s) => s.openModal);
@@ -320,7 +322,8 @@ function RegisterPage() {
                 code_kind: result.kind,
                 prefill_source: referralPrefillSource,
             });
-            if (frakGame.enabled) {
+            if (frakGame.enabled && gameRewardOf(result) > 0) {
+                setGameRedeem(result);
                 goToStep("gameReward");
                 return;
             }
@@ -504,11 +507,19 @@ function RegisterPage() {
                     onBack={() => goToStep("emailInput", "backward")}
                 />
             )}
-            {step === "gameReward" && (
-                <GameReward onContinue={() => goToStep("gameRules")} />
+            {step === "gameReward" && gameRedeem && (
+                <GameReward
+                    reward={gameRewardOf(gameRedeem)}
+                    drop={gameRedeem.drop}
+                    onContinue={() => goToStep("gameRules")}
+                />
             )}
-            {step === "gameRules" && (
-                <GameRules onContinue={() => goToStep("notification")} />
+            {step === "gameRules" && gameRedeem && (
+                <GameRules
+                    reward={gameRewardOf(gameRedeem)}
+                    invite={gameRedeem.inviteRewards}
+                    onContinue={() => goToStep("notification")}
+                />
             )}
             {step === "referralCode" && !hasExistingReferrer && (
                 <ReferralCodeStep

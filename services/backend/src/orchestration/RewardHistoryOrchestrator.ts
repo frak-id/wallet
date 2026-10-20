@@ -6,6 +6,7 @@ import {
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
+import { missionSubjectOf } from "../domain/game";
 import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
@@ -58,10 +59,14 @@ export class RewardHistoryOrchestrator {
         }
 
         const enrichment = await this.buildEnrichmentData(assetLogs);
-        const items = this.rewardHistoryService.buildRewardItems(
-            assetLogs,
-            enrichment
-        );
+        const items = this.rewardHistoryService
+            .buildRewardItems(assetLogs, enrichment)
+            .map((item) =>
+                item.status === "locked" &&
+                missionSubjectOf(item.role) === "referee"
+                    ? { ...item, waitsOnFriend: true }
+                    : item
+            );
 
         return { items, totalCount };
     }

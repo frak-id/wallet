@@ -57,4 +57,21 @@ describe("InteractionContextBuilder", () => {
             expect.objectContaining({ productId: "product-2", sku: undefined }),
         ]);
     });
+
+    it("exposes the joined drop to the rule conditions", async () => {
+        const interaction = {
+            type: "drop_join",
+            payload: { dropId: "drop-1" },
+        } as InteractionLogSelect;
+
+        const result = await buildBuilder().build(
+            interaction,
+            "merchant-1",
+            "identity-1",
+            null
+        );
+
+        expect(result.trigger).toBe("drop_join");
+        expect(result.context.drop).toEqual({ id: "drop-1" });
+    });
 });

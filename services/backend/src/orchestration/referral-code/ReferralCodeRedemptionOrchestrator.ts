@@ -1,6 +1,9 @@
 import { businessMetrics, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
+import type { DropSelect } from "../../domain/game/db/schema";
+import type { DropRepository } from "../../domain/game/repositories/DropRepository";
+import type { DropSummary } from "../../domain/game/schemas";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import { FRAK_CODE_ONBOARDING_WINDOW_MS } from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
@@ -10,55 +13,101 @@ import type {
 } from "../../domain/referral-code/schemas";
 import type { ReferralCodeService } from "../../domain/referral-code/services/ReferralCodeService";
 import type { InteractionLogRepository } from "../../domain/rewards/repositories/InteractionLogRepository";
+import type { FrakGameOrchestrator } from "../game";
 
 type FrakCodeRejection = Parameters<typeof businessMetrics.frakCodeRejected>[0];
+
+type RedeemParams = {
+    code: string;
+    refereeIdentityGroupId: string;
+    context?: RedeemContext;
+};
+
+export type RedeemResult = {
+    referrerIdentityGroupId: string;
+    kind: ReferralCodeKind;
+    /** The drop joined: its own code, or the referrer's open drop on a friend's signup. */
+    drop?: DropSummary;
+    /** The caller's signup reward, set when a friend's signup was recorded. */
+    signupReward?: number;
+};
 
 export class ReferralCodeRedemptionOrchestrator {
     constructor(
         private readonly referralCodeService: ReferralCodeService,
         private readonly referralLinkRepository: ReferralLinkRepository,
         private readonly identityRepository: IdentityRepository,
-        private readonly interactionLogRepository: InteractionLogRepository
+        private readonly interactionLogRepository: InteractionLogRepository,
+        private readonly dropRepository: DropRepository,
+        private readonly frakGame: FrakGameOrchestrator
     ) {}
 
     /**
-     * Redeem someone else's referral code, creating a cross-merchant
-     * `referral_links` row that feeds the reward pipeline as the referrer of
-     * last resort.
-     *
-     * Throws {@link HttpError} on:
-     *  - 404 `NOT_FOUND` — code does not exist, has been revoked, or is a
-     *    Frak code redeemed outside onboarding (never disclosed as such).
-     *  - 400 `SELF_REFERRAL` — owner of the code is the caller.
-     *  - 409 `WOULD_CYCLE` — inserting the edge would close a cycle anywhere
-     *    in the referral graph (scope-agnostic check).
-     *  - 409 `ALREADY_REDEEMED` — caller already has a cross-merchant
-     *    referrer (first redemption wins, no switching).
-     *
-     * Revoked codes are not redeemable. Existing `referral_links` rows that
-     * point to a now-revoked code via `referral_code_id` are preserved —
-     * revocation only blocks future redemptions.
+     * Redeem a referral code: a friend's or Frak code sets the caller's single
+     * cross-merchant referrer, a drop code joins its drop. A new account on a
+     * friend's code also joins the friend's open drops. Errors are
+     * `HttpError`s: 404 `NOT_FOUND`, 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`,
+     * `ALREADY_REDEEMED`, `DROP_CLOSED`, `DROP_FULL`, `ALREADY_JOINED`.
      */
-    async redeem(params: {
-        code: string;
-        refereeIdentityGroupId: string;
-        context?: RedeemContext;
-    }): Promise<{ referrerIdentityGroupId: string; kind: ReferralCodeKind }> {
-        const { code, refereeIdentityGroupId, context } = params;
-
-        const referralCode = await this.referralCodeService.findByCode(code);
+    async redeem(params: RedeemParams): Promise<RedeemResult> {
+        const referralCode = await this.referralCodeService.findByCode(
+            params.code
+        );
         if (!referralCode) {
             throw codeNotFound();
         }
 
         if (referralCode.kind === "frak") {
+            const drop = await this.dropRepository.findByReferralCodeId(
+                referralCode.id
+            );
+            if (drop) {
+                return this.joinDrop(drop, referralCode, params);
+            }
             await this.assertFrakCodeRedeemable(
                 referralCode,
-                refereeIdentityGroupId,
-                context
+                params.refereeIdentityGroupId,
+                params.context
             );
         }
 
+        // Read before linking: once linked, a retry fails as ALREADY_REDEEMED.
+        const signupPlan = (await this.paysSignup(referralCode, params))
+            ? await this.frakGame.planSignup(referralCode.ownerIdentityGroupId)
+            : null;
+
+        await this.linkReferrer(referralCode, params.refereeIdentityGroupId);
+
+        const signup =
+            signupPlan &&
+            (await this.frakGame.applySignup(
+                signupPlan,
+                referralCode,
+                params.refereeIdentityGroupId
+            ));
+
+        return {
+            referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
+            kind: referralCode.kind,
+            drop: signup?.drop,
+            signupReward: signup?.reward,
+        };
+    }
+
+    private async paysSignup(
+        referralCode: ReferralCodeSelect,
+        { refereeIdentityGroupId, context }: RedeemParams
+    ): Promise<boolean> {
+        if (referralCode.kind !== "user" || context !== "onboarding") {
+            return false;
+        }
+        return this.isNewAccount(refereeIdentityGroupId);
+    }
+
+    private async linkReferrer(
+        referralCode: ReferralCodeSelect,
+        refereeIdentityGroupId: string
+    ): Promise<void> {
         if (referralCode.ownerIdentityGroupId === refereeIdentityGroupId) {
             throw HttpError.badRequest(
                 "SELF_REFERRAL",
@@ -77,18 +126,12 @@ export class ReferralCodeRedemptionOrchestrator {
             );
         }
 
-        const created = await this.referralLinkRepository.create({
-            scope: "cross_merchant",
-            merchantId: null,
-            referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
-            refereeIdentityGroupId,
-            source: "code",
-            sourceData: { type: "code", codeId: referralCode.id },
-        });
-
+        const created = await this.createCrossMerchantLink(
+            referralCode,
+            refereeIdentityGroupId
+        );
         if (!created) {
-            // Partial-unique race winner got there first — surface as
-            // already-redeemed rather than a generic error.
+            // Partial-unique race winner got there first.
             throw HttpError.conflict(
                 "ALREADY_REDEEMED",
                 "A cross-merchant referrer is already registered"
@@ -104,11 +147,84 @@ export class ReferralCodeRedemptionOrchestrator {
             },
             "Referral code redeemed"
         );
+    }
+
+    private createCrossMerchantLink(
+        referralCode: ReferralCodeSelect,
+        refereeIdentityGroupId: string
+    ) {
+        return this.referralLinkRepository.create({
+            scope: "cross_merchant",
+            merchantId: null,
+            referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
+            refereeIdentityGroupId,
+            source: "code",
+            sourceData: { type: "code", codeId: referralCode.id },
+        });
+    }
+
+    /**
+     * Joining never takes the referrer slot, so existing users and users with
+     * a friend as referrer can join every drop. A brand-new account still gets
+     * Frak as referrer, like a plain Frak code.
+     */
+    private async joinDrop(
+        drop: DropSelect,
+        referralCode: ReferralCodeSelect,
+        { refereeIdentityGroupId, context }: RedeemParams
+    ): Promise<RedeemResult> {
+        // Read before joining: once joined, a retry fails as ALREADY_JOINED.
+        const rejection = await this.frakGateRejection(
+            refereeIdentityGroupId,
+            context
+        );
+        const summary = await this.frakGame.joinDrop(
+            drop,
+            refereeIdentityGroupId
+        );
+        if (!rejection) {
+            // Null when the slot is taken: the user keeps their referrer.
+            await this.createCrossMerchantLink(
+                referralCode,
+                refereeIdentityGroupId
+            );
+        }
+
+        log.info(
+            { dropId: drop.id, refereeIdentityGroupId, linkedFrak: !rejection },
+            "Drop joined"
+        );
 
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
+            drop: summary,
         };
+    }
+
+    private async isNewAccount(identityGroupId: string): Promise<boolean> {
+        const group =
+            await this.identityRepository.findGroupById(identityGroupId);
+        if (!group?.createdAt) return false;
+        return (
+            Date.now() - group.createdAt.getTime() <=
+            FRAK_CODE_ONBOARDING_WINDOW_MS
+        );
+    }
+
+    private async frakGateRejection(
+        refereeIdentityGroupId: string,
+        context: RedeemContext | undefined
+    ): Promise<FrakCodeRejection | null> {
+        if (context !== "onboarding") return "no_onboarding_context";
+        const [isNew, hasPurchase] = await Promise.all([
+            this.isNewAccount(refereeIdentityGroupId),
+            this.interactionLogRepository.hasPurchaseForGroup(
+                refereeIdentityGroupId
+            ),
+        ]);
+        if (!isNew) return "outside_onboarding_window";
+        return hasPurchase ? "has_purchase" : null;
     }
 
     private async assertFrakCodeRedeemable(
@@ -116,23 +232,10 @@ export class ReferralCodeRedemptionOrchestrator {
         refereeIdentityGroupId: string,
         context: RedeemContext | undefined
     ): Promise<void> {
-        let reason: FrakCodeRejection | null = "no_onboarding_context";
-        if (context === "onboarding") {
-            const [group, hasPurchase] = await Promise.all([
-                this.identityRepository.findGroupById(refereeIdentityGroupId),
-                this.interactionLogRepository.hasPurchaseForGroup(
-                    refereeIdentityGroupId
-                ),
-            ]);
-            const ageMs = group?.createdAt
-                ? Date.now() - group.createdAt.getTime()
-                : Number.POSITIVE_INFINITY;
-            if (ageMs > FRAK_CODE_ONBOARDING_WINDOW_MS) {
-                reason = "outside_onboarding_window";
-            } else {
-                reason = hasPurchase ? "has_purchase" : null;
-            }
-        }
+        const reason = await this.frakGateRejection(
+            refereeIdentityGroupId,
+            context
+        );
         if (!reason) return;
 
         businessMetrics.frakCodeRejected(reason);

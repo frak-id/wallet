@@ -11,37 +11,55 @@ vi.mock("react-i18next", () => ({
     }),
     Trans: ({
         i18nKey,
-        values,
         components,
     }: {
         i18nKey: string;
-        values: Record<string, string>;
         components: { igLink: ReactElement };
     }) => (
         <>
-            {`${i18nKey} ${JSON.stringify(values)}`}
+            {i18nKey}
             {cloneElement(components.igLink, {}, "@frak_fr")}
         </>
     ),
 }));
 
 describe("GameRules", () => {
-    it("formats the reward and prize amounts in the three rows", () => {
-        render(<GameRules onContinue={vi.fn()} />);
+    it("shows the earned reward and what each side of an invite earns", () => {
+        render(
+            <GameRules
+                reward={2.5}
+                invite={{ referrer: 1, referee: 1 }}
+                onContinue={vi.fn()}
+            />
+        );
 
         expect(screen.getByText(/rules\.unlock\.title/).textContent).toMatch(
+            /"2,50\s€"/
+        );
+        expect(screen.getByText(/rules\.invite\.reward /).textContent).toMatch(
             /"1\s€"/
         );
-        const invite = screen.getByText(/rules\.invite\.description/);
-        expect(invite.textContent).toMatch(/"1\s€"/);
-        expect(invite.textContent).toMatch(/"100\s€"/);
-        expect(
-            screen.getByText(/rules\.follow\.description/).textContent
-        ).toMatch(/"100\s€"/);
+    });
+
+    it.each([
+        {
+            name: "different amounts per side",
+            invite: { referrer: 2, referee: 1 },
+            line: /rules\.invite\.rewardSplit .*"2\s€".*"1\s€"/,
+        },
+        {
+            name: "no live signup reward",
+            invite: undefined,
+            line: /^onboarding\.game\.rules\.invite\.description$/,
+        },
+    ])("words the invite row for $name", ({ invite, line }) => {
+        render(<GameRules reward={1} invite={invite} onContinue={vi.fn()} />);
+
+        expect(screen.getByText(line)).toBeInTheDocument();
     });
 
     it("links the follow row to Frak's Instagram account", () => {
-        render(<GameRules onContinue={vi.fn()} />);
+        render(<GameRules reward={1} onContinue={vi.fn()} />);
 
         expect(screen.getByRole("link", { name: "@frak_fr" })).toHaveAttribute(
             "href",
@@ -51,7 +69,7 @@ describe("GameRules", () => {
 
     it("continues from the footer and has no back arrow", () => {
         const onContinue = vi.fn();
-        render(<GameRules onContinue={onContinue} />);
+        render(<GameRules reward={1} onContinue={onContinue} />);
 
         fireEvent.click(
             screen.getByRole("button", { name: "onboarding.continue" })

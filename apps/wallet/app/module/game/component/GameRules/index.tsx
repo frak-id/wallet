@@ -1,27 +1,48 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ExternalLink } from "@frak-labs/wallet-shared";
+import { ExternalLink, type RedeemResult } from "@frak-labs/wallet-shared";
+import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { Trans, useTranslation } from "react-i18next";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { frakGame } from "@/module/game/config";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as stepStyles from "@/module/onboarding/component/step/index.css";
 import * as styles from "./index.css";
 
 const FRAK_INSTAGRAM_URL = "https://www.instagram.com/frak_fr/";
 
+type InviteRewards = NonNullable<RedeemResult["inviteRewards"]>;
+
 type GameRulesProps = {
     onContinue: () => void;
+    /** EURe the redemption earned, still locked. */
+    reward: number;
+    /** Absent when no signup reward is live. */
+    invite?: InviteRewards;
 };
 
-export function GameRules({ onContinue }: GameRulesProps) {
+function inviteDescription(
+    t: DefaultTranslate,
+    locale: string,
+    invite: InviteRewards | undefined
+): string {
+    const points = t("onboarding.game.rules.invite.description");
+    if (!invite) return points;
+    const amounts =
+        invite.referrer === invite.referee
+            ? t("onboarding.game.rules.invite.reward", {
+                  reward: formatGameAmount(invite.referrer, locale),
+              })
+            : t("onboarding.game.rules.invite.rewardSplit", {
+                  referrer: formatGameAmount(invite.referrer, locale),
+                  referee: formatGameAmount(invite.referee, locale),
+              });
+    return `${amounts} ${points}`;
+}
+
+export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
     const { t, i18n } = useTranslation();
-    const values = {
-        reward: formatGameAmount(frakGame.rewardEur, i18n.language),
-        prize: formatGameAmount(frakGame.prizeEur, i18n.language),
-    };
 
     return (
         <PageLayout
@@ -43,19 +64,19 @@ export function GameRules({ onContinue }: GameRulesProps) {
                     title={t("onboarding.game.rules.howItWorks")}
                     steps={[
                         {
-                            title: t(
-                                "onboarding.game.rules.unlock.title",
-                                values
-                            ),
+                            title: t("onboarding.game.rules.unlock.title", {
+                                reward: formatGameAmount(reward, i18n.language),
+                            }),
                             description: t(
                                 "onboarding.game.rules.unlock.description"
                             ),
                         },
                         {
                             title: t("onboarding.game.rules.invite.title"),
-                            description: t(
-                                "onboarding.game.rules.invite.description",
-                                values
+                            description: inviteDescription(
+                                t,
+                                i18n.language,
+                                invite
                             ),
                         },
                         {
@@ -63,7 +84,6 @@ export function GameRules({ onContinue }: GameRulesProps) {
                             description: (
                                 <Trans
                                     i18nKey="onboarding.game.rules.follow.description"
-                                    values={values}
                                     components={{
                                         igLink: (
                                             <ExternalLink

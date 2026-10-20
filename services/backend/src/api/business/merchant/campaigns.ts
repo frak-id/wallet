@@ -33,8 +33,9 @@ import {
     StepUpRequired401,
 } from "../middleware/session";
 
-function resolveRewardTokens(
-    rule: CampaignRuleDefinition,
+/** Resolve reward tokens; holding rewards is reserved to Frak Game rules. */
+export function toMerchantRule(
+    { holdUntilReleased: _held, ...rule }: CampaignRuleDefinition,
     defaultRewardToken: Address | null
 ): CampaignRuleDefinition {
     return {
@@ -282,7 +283,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
                 );
-            const rule = resolveRewardTokens(
+            const rule = toMerchantRule(
                 body.rule as CampaignRuleDefinition,
                 merchant?.defaultRewardToken ?? null
             );
@@ -331,7 +332,7 @@ export const merchantCampaignsRoutes = new Elysia({
                     await MerchantContext.repositories.merchant.findById(
                         merchantId
                     );
-                resolvedRule = resolveRewardTokens(
+                resolvedRule = toMerchantRule(
                     resolvedRule,
                     merchant?.defaultRewardToken ?? null
                 );

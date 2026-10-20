@@ -559,6 +559,7 @@ export class BatchRewardOrchestrator {
                 chainDepth: reward.chainDepth,
                 expirationDays: reward.expirationDays,
                 lockupSeconds: reward.lockupSeconds,
+                held: reward.held,
             });
         }
 

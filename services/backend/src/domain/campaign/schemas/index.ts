@@ -181,6 +181,8 @@ export const CampaignRuleDefinitionSchema = t.Object({
     ),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
+    /** Rewards are created held and pay only once something releases them. */
+    holdUntilReleased: t.Optional(t.Boolean()),
 });
 // Manual type def needed - recursive ConditionGroupSchema breaks Static<> inference
 export type CampaignRuleDefinition = {
@@ -192,6 +194,7 @@ export type CampaignRuleDefinition = {
     defaultLockupSeconds?: number;
     maxRewardsPerUser?: number;
     merchantMaxRewardsPerUser?: number;
+    holdUntilReleased?: boolean;
 };
 
 const BudgetConfigItemSchema = t.Object({

@@ -387,6 +387,9 @@
                 "errorSelf": "Tu ne peux pas utiliser ton propre code.",
                 "errorCycle": "Ce code n'est pas utilisable avec ton compte.",
                 "errorAlreadyRedeemed": "Tu as déjà appliqué un code de parrainage.",
+                "errorDropClosed": "Ce drop est terminé. Guette le prochain sur Instagram.",
+                "errorDropFull": "Ce drop est complet. Retente ta chance au prochain.",
+                "errorAlreadyJoined": "Tu participes déjà à ce drop.",
                 "errorInvalid": "Ce code n'est pas valide.",
                 "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
                 "confirmDelete": {
@@ -957,16 +960,23 @@
                 },
                 "invite": {
                     "title": "Invite tes amis",
-                    "description": "Vous gagnez {{reward}} chacun. Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte les {{prize}}."
+                    "reward": "Vous gagnez {{reward}} chacun.",
+                    "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
+                    "description": "Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte le lot."
                 },
                 "follow": {
                     "title": "Ne rate pas le prochain drop",
-                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant des {{prize}} y est annoncé en story."
+                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant y est annoncé en story."
                 }
             },
             "reward": {
                 "title": "Tu es dans le jeu !",
-                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire."
+                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
+                "drop": {
+                    "label": "Lot du drop",
+                    "endsAt": "Jusqu'à {{date}}",
+                    "sponsor": "Offert par {{name}}"
+                }
             }
         }
     },
@@ -997,7 +1007,8 @@
             "settled": "À collecter",
             "consumed": "Consommé",
             "cancelled": "Annulé",
-            "expired": "Expiré"
+            "expired": "Expiré",
+            "locked": "Verrouillé"
         },
         "trigger": {
             "unknown": "Récompense",
@@ -1025,14 +1036,17 @@
             "updatedAt": "Mis à jour le {{date}} · {{time}}",
             "purchaseMadeOn": "Achat effectué le {{date}} à {{time}}",
             "purchaseDate": "Achat effectué le",
+            "earnedDate": "Gain généré le",
             "rewardGenerated": "Gain généré",
             "toCollect": "À collecter",
             "creditedOn": "Crédité le",
             "generatedDate": "Achat généré le",
-            "generatedOn": "Achat généré le {{date}} · {{time}}",
+            "generatedOn": "Généré le {{date}} · {{time}}",
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
-            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
+            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
+            "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

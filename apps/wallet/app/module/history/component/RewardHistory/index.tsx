@@ -187,6 +187,7 @@ const displayAmountIcons: Partial<
 > = {
     settled: HourglassIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function DisplayAmount({
@@ -209,11 +210,12 @@ function DisplayAmount({
 }
 
 const badgeIcons: Record<
-    "settled" | "pending",
+    "settled" | "pending" | "locked",
     typeof ClockHandsIcon | typeof LockIcon
 > = {
     settled: ClockHandsIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function StatusBadge({
@@ -238,7 +240,7 @@ function StatusBadge({
         );
     }
 
-    if (status !== "settled" && status !== "pending") {
+    if (status !== "settled" && status !== "pending" && status !== "locked") {
         return null;
     }
 

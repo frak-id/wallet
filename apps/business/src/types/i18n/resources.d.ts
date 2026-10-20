@@ -481,8 +481,10 @@ export default interface Resources {
           "trigger": {
             "create_referral_link": "Referral link created",
             "custom": "Custom",
+            "drop_join": "Drop joined",
             "purchase": "Purchase completed",
-            "referral": "Referral"
+            "referral": "Referral",
+            "referral_signup": "Referred signup"
           },
           "triggeredOn": "Triggered on {{trigger}}",
           "value": {
@@ -727,8 +729,10 @@ export default interface Resources {
             "create_referral_link": "A user creates a sharing link",
             "custom": "A custom interaction is tracked",
             "description": "The action a customer must complete for rewards to be distributed.",
+            "drop_join": "A user joins a Frak Game drop",
             "purchase": "A customer completes a purchase",
             "referral": "A referred friend is converted",
+            "referral_signup": "A referred user creates their Frak account",
             "title": "What earns a reward"
           }
         },

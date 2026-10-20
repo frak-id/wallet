@@ -133,9 +133,11 @@ function DetailCard({
                     labelVariant="bodySmall"
                     labelColor="secondary"
                     label={
-                        isPending
-                            ? t("reward.detail.generatedDate")
-                            : t("reward.detail.purchaseDate")
+                        !item.purchase
+                            ? t("reward.detail.earnedDate")
+                            : isPending
+                              ? t("reward.detail.generatedDate")
+                              : t("reward.detail.purchaseDate")
                     }
                     action={
                         <Inline space="xxs" alignY="center" wrap={false}>
@@ -194,6 +196,7 @@ const statusIcons: Partial<
 > = {
     settled: HourglassIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function RewardAmountDisplay({
@@ -272,6 +275,20 @@ function StatusRow({
                     />
                 )}
             </>
+        );
+    }
+
+    if (item.status === "locked") {
+        return (
+            <Box paddingX="m" paddingY="s">
+                <Text variant="bodySmall" color="secondary">
+                    {t(
+                        item.waitsOnFriend
+                            ? "reward.detail.lockedOnFriendExplanation"
+                            : "reward.detail.lockedExplanation"
+                    )}
+                </Text>
+            </Box>
         );
     }
 

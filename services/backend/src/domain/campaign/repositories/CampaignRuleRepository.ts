@@ -70,6 +70,23 @@ function processBudgetUsed(
     return { canConsume: true, updatedUsed, remaining };
 }
 
+/** Room for one more payout of the fixed rewards. Unlocked read: a race can still lose. */
+export function hasRemainingBudget(
+    campaign: Pick<CampaignRuleSelect, "rule" | "budgetConfig" | "budgetUsed">
+): boolean {
+    if (!campaign.budgetConfig?.length) return true;
+    const payout = campaign.rule.rewards.reduce(
+        (sum, reward) =>
+            reward.amountType === "fixed" ? sum + reward.amount : sum,
+        0
+    );
+    return processBudgetUsed(
+        campaign.budgetConfig,
+        campaign.budgetUsed ?? {},
+        payout
+    ).canConsume;
+}
+
 /**
  * Reverse a prior budget consumption. Mirrors the window-reset rule in
  * {@link processBudgetUsed}: for a time-windowed budget whose window has

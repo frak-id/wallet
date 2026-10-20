@@ -761,17 +761,24 @@ export default interface Resources {
       "game": {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+          "drop": {
+            "endsAt": "Until {{date}}",
+            "label": "Drop prize",
+            "sponsor": "Offered by {{name}}"
+          },
           "title": "You're in the game!"
         },
         "rules": {
           "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
           "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the {{prize}} winner is announced in a story.",
+            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the winner is announced in a story.",
             "title": "Don't miss the next drop"
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "You each earn {{reward}}. Every friend who signs up earns you points, and the drop's top score wins the {{prize}}.",
+            "description": "Every friend who signs up earns you points, and the drop's top score wins the prize.",
+            "reward": "You each earn {{reward}}.",
+            "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Invite your friends"
           },
           "title": "The Frak Game",
@@ -845,9 +852,12 @@ export default interface Resources {
       "detail": {
         "creditedOn": "Credited on",
         "description": "Reward detail",
+        "earnedDate": "Earned on",
         "estimatedValidation": "Estimated validation",
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
+        "lockedExplanation": "Unlocks with your first reward from a partner brand.",
+        "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",
@@ -880,6 +890,7 @@ export default interface Resources {
         "cancelled": "Cancelled",
         "consumed": "Consumed",
         "expired": "Expired",
+        "locked": "Locked",
         "pending": "Awaiting validation by the brand",
         "processing": "Processing",
         "settled": "To collect"
@@ -1496,8 +1507,11 @@ export default interface Resources {
           },
           "deleteCta": "Delete active code",
           "description": "Enter a friend's or creator's code and you'll both benefit.",
+          "errorAlreadyJoined": "You've already joined this drop.",
           "errorAlreadyRedeemed": "You already have an active referral code.",
           "errorCycle": "This code can't be used with your account.",
+          "errorDropClosed": "This drop is over. Watch for the next one on Instagram.",
+          "errorDropFull": "This drop is full. Try again on the next one.",
           "errorGeneric": "Something went wrong. Please try again.",
           "errorInvalid": "This code isn't valid.",
           "errorNotFound": "This code does not exist. Make sure it's correct.",

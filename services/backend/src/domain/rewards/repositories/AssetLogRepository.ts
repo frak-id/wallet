@@ -112,6 +112,7 @@ export class AssetLogRepository {
                     p.expirationDays
                 ),
                 availableAt,
+                heldAt: p.held ? new Date() : undefined,
             };
         });
     }
@@ -165,6 +166,10 @@ export class AssetLogRepository {
                         or(
                             isNull(assetLogsTable.availableAt),
                             lte(assetLogsTable.availableAt, now)
+                        ),
+                        or(
+                            isNull(assetLogsTable.heldAt),
+                            isNotNull(assetLogsTable.releasedAt)
                         ),
                         // Gate on an active wallet node (see method doc).
                         exists(
@@ -269,6 +274,69 @@ export class AssetLogRepository {
                             )
                         )
                     )
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /**
+     * Release held rewards. Each stays unpaid until its `availableAt` (if
+     * later) and payable for at least `graceMs` after that. A reward already
+     * past its expiry stays expired.
+     */
+    async releaseHeld(
+        items: { id: string; availableAt: Date | null }[],
+        graceMs: number
+    ): Promise<number> {
+        if (items.length === 0) return 0;
+
+        const now = new Date();
+        const rows = JSON.stringify(
+            items.map(({ id, availableAt }) => ({ id, ready_at: availableAt }))
+        );
+        const opensAt = sql`GREATEST(${assetLogsTable.availableAt}, v.ready_at)`;
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                releasedAt: now,
+                availableAt: opensAt,
+                expiresAt: sql`GREATEST(${assetLogsTable.expiresAt}, GREATEST(${opensAt}, ${now.toISOString()}::timestamp) + ${graceMs} * interval '1 millisecond')`,
+            })
+            .from(
+                sql`jsonb_to_recordset(${rows}::jsonb) AS v(id uuid, ready_at timestamp)`
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.id, sql`v.id`),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
+                    gt(assetLogsTable.expiresAt, now)
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /** Hold released rewards again, as long as they are not being paid. */
+    async reholdReleased(ids: string[]): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ releasedAt: null, heldAt: new Date() })
+            .where(
+                and(
+                    inArray(assetLogsTable.id, ids),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNotNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, ["pending", "bank_depleted"])
                 )
             )
             .returning({ id: assetLogsTable.id });
@@ -517,6 +585,7 @@ export class AssetLogRepository {
                 createdAt: assetLogsTable.createdAt,
                 settledAt: assetLogsTable.settledAt,
                 availableAt: assetLogsTable.availableAt,
+                held: sql<boolean>`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL`,
                 cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,

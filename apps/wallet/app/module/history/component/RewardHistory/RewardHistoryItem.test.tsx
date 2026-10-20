@@ -46,4 +46,14 @@ describe("RewardHistoryItem", () => {
 
         expect(queryByText("reward.frakBonus.label")).not.toBeInTheDocument();
     });
+
+    test("marks a locked row with its unlock condition and padlocks", () => {
+        const { getByText, container } = render(
+            <RewardHistoryItem item={makeItem({ status: "locked" })} />
+        );
+
+        expect(getByText("reward.status.locked")).toBeInTheDocument();
+        // One padlock on the logo badge, one next to the amount.
+        expect(container.querySelectorAll("svg")).toHaveLength(2);
+    });
 });

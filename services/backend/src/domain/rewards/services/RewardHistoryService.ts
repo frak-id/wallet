@@ -64,7 +64,8 @@ export class RewardHistoryService {
                 decimals,
             },
             amount: this.buildTokenAmount(log.amount, price),
-            status: log.status,
+            status:
+                log.status === "pending" && log.held ? "locked" : log.status,
             role: log.recipientType,
             trigger: log.interactionType ?? "custom",
             txHash: log.onchainTxHash ?? undefined,
