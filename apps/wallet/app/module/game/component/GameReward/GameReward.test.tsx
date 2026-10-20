@@ -94,6 +94,34 @@ describe("GameReward", () => {
         expect(screen.getByText(/reward\.drop\.sponsor/).textContent).toContain(
             "Oolution"
         );
+        expect(screen.getByText("O.")).toBeInTheDocument();
+    });
+
+    it("shows the sponsor's logo when it has one", () => {
+        render(
+            <GameReward
+                reward={1}
+                onContinue={vi.fn()}
+                drop={{
+                    id: "d1",
+                    prizeDescription: "Un an de produits",
+                    reward: 1,
+                    startsAt: new Date("2026-10-21T18:00:00Z"),
+                    endsAt: new Date("2026-10-23T18:00:00Z"),
+                    sponsor: {
+                        id: "m1",
+                        name: "Oolution",
+                        domain: "oolution.com",
+                        logoUrl: "https://example.com/oolution.png",
+                    },
+                }}
+            />
+        );
+
+        expect(screen.getByRole("img", { name: "Oolution" })).toHaveAttribute(
+            "src",
+            "https://example.com/oolution.png"
+        );
     });
 
     it("shows no drop card for a friend's code", () => {
