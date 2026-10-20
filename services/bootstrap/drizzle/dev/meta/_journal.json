@@ -330,6 +330,13 @@
             "when": 1792153069916,
             "tag": "0046_charming_texas_twister",
             "breakpoints": true
+        },
+        {
+            "idx": 47,
+            "version": "7",
+            "when": 1792488841330,
+            "tag": "0047_orange_jackal",
+            "breakpoints": true
         }
     ]
 }
