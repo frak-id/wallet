@@ -1,12 +1,14 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import * as styles from "./index.css";
 
 type GameRewardProps = {
@@ -66,11 +68,14 @@ function DropCard({ drop }: { drop: NonNullable<RedeemResult["drop"]> }) {
                 {t("onboarding.game.reward.drop.endsAt", { date: endsAt })}
             </Text>
             {drop.sponsor && (
-                <Text variant="bodySmall" color="secondary">
-                    {t("onboarding.game.reward.drop.sponsor", {
-                        name: drop.sponsor.name,
-                    })}
-                </Text>
+                <Inline space="xs" align="center" alignY="center">
+                    <MerchantLogo merchant={drop.sponsor} />
+                    <Text variant="bodySmall" color="secondary">
+                        {t("onboarding.game.reward.drop.sponsor", {
+                            name: drop.sponsor.name,
+                        })}
+                    </Text>
+                </Inline>
             )}
         </Card>
     );
