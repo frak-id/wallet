@@ -97,6 +97,12 @@ export async function getDefineProps({
         "process.env.WEBAUTHN_RP_ID": JSON.stringify(
             process.env.WEBAUTHN_RP_ID
         ),
+        // Same split as the listener: prod opens id.frak.wallet, every other stage the dev variant.
+        "process.env.DEEP_LINK_SCHEME": JSON.stringify(
+            process.env.STAGE?.includes("prod")
+                ? "frakwallet://"
+                : "frakwallet-dev://"
+        ),
         "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
             getSstResource("ANDROID_SHA256_FINGERPRINT")
         ),

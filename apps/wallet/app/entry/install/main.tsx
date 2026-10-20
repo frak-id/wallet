@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { InstallView } from "@/module/install/component/InstallView";
 import {
     parseInstallSearch,
@@ -47,6 +48,10 @@ bootstrapStandalonePage(
             // everything past the install handoff.
             toWallet: () => window.location.replace("/wallet"),
             toRegister: () => window.location.replace("/register"),
+            toCode: (code) => {
+                const { to, search } = redeemCodeRoute(code);
+                window.location.replace(`${to}?${new URLSearchParams(search)}`);
+            },
         }}
         processingLayout={ProcessingLayout}
     />,

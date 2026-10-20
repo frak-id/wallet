@@ -11,6 +11,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import {
     REDEMPTION_CODE_LENGTH,
+    type RedeemResult,
     referralKey,
     resolveApiErrorKey,
     useRedeemReferralCodeForm,
@@ -66,12 +67,16 @@ export function RedeemReferralCodePage({
     );
 }
 
-function RedeemForm({
+export function RedeemForm({
     onRedeemed,
     initialCode,
+    label,
+    submitLabel,
 }: {
-    onRedeemed: () => void;
+    onRedeemed: (result: RedeemResult) => void;
     initialCode?: string;
+    label?: string;
+    submitLabel?: string;
 }) {
     const { t } = useTranslation();
     const {
@@ -96,13 +101,13 @@ function RedeemForm({
                             weight="medium"
                             color="secondary"
                         >
-                            {t("wallet.referral.redeem.label")}
+                            {label ?? t("wallet.referral.redeem.label")}
                         </Text>
                     </Box>
                     <Input
                         variant="bare"
                         length="big"
-                        aria-label={t("wallet.referral.redeem.label")}
+                        aria-label={label ?? t("wallet.referral.redeem.label")}
                         placeholder={t("wallet.referral.redeem.placeholder")}
                         autoCapitalize="characters"
                         autoComplete="off"
@@ -134,7 +139,10 @@ function RedeemForm({
                     disabled={!canSubmit}
                     loading={isPending}
                 >
-                    {isPending ? null : t("wallet.referral.redeem.submitCta")}
+                    {isPending
+                        ? null
+                        : (submitLabel ??
+                          t("wallet.referral.redeem.submitCta"))}
                 </Button>
                 {errorMessageKey ? (
                     <Text variant="caption" color="error" align="center">

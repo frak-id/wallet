@@ -512,6 +512,12 @@ export default interface Resources {
       }
     },
     "game": {
+      "join": {
+        "description": "Enter the code from the Instagram story to take part in the drop.",
+        "label": "Drop code",
+        "submit": "Join",
+        "title": "Join the drop"
+      },
       "leaderboard": {
         "empty": {
           "description": "The leaderboard fills up as players score points.",
@@ -555,6 +561,8 @@ export default interface Resources {
         "codeCopied": "Referral code copied!",
         "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
         "manualEntry": "Referral code to enter at sign-up",
+        "openApp": "I already have the Frak app",
+        "openBrowser": "Open in the browser",
         "title": "Your referral code"
       },
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",

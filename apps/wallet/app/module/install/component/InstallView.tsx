@@ -1,4 +1,11 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import {
+    DEEP_LINK_SCHEME,
+    isInAppBrowser,
+    isMobile,
+    redirectToExternalBrowser,
+    triggerDeepLinkWithFallback,
+} from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
@@ -50,6 +57,8 @@ import * as styles from "./install.css";
 export type InstallNavigation = {
     toWallet: () => void;
     toRegister: () => void;
+    /** A signed-in visitor carrying a shared code. */
+    toCode: (code: string) => void;
 };
 
 /**
@@ -132,6 +141,7 @@ export function InstallView({
     return (
         <InstallProcessing
             m={m}
+            referralCode={ref && !(m || a) ? ref : undefined}
             a={anonymousId}
             checkoutToken={checkoutToken}
             proof={proof}
@@ -203,10 +213,12 @@ function InstallProcessing({
     a: anonymousId,
     checkoutToken,
     proof,
+    referralCode,
     navigation,
     layout: Layout,
 }: InstallSearch & {
     proof?: string;
+    referralCode?: string;
     navigation: InstallNavigation;
     layout: React.ComponentType<{ children: React.ReactNode }>;
 }) {
@@ -259,7 +271,9 @@ function InstallProcessing({
 
         if (!confirms) {
             sleep(MIN_PROCESSING_MS).then(() => {
-                if (!cancelled) navigation.toWallet();
+                if (cancelled) return;
+                if (referralCode) navigation.toCode(referralCode);
+                else navigation.toWallet();
             });
             return () => {
                 cancelled = true;
@@ -323,6 +337,7 @@ function InstallProcessing({
         anonymousId,
         checkoutToken,
         proof,
+        referralCode,
         navigation,
         confirms,
         queryClient,
@@ -784,7 +799,46 @@ function InstallReferralCodeView({
                 }
                 onCopy={handleCopy}
             />
+            {!chromeless && isMobile() && (
+                <OpenInstalledApp referralCode={referralCode} />
+            )}
         </InstallPageLayout>
+    );
+}
+
+/** For a visitor who already has the app: hand the code to it, or leave the social app's browser first. */
+function OpenInstalledApp({ referralCode }: { referralCode: string }) {
+    const { t } = useTranslation();
+    return (
+        <Stack space="xs">
+            <Button
+                size="large"
+                fontSize="s"
+                width="full"
+                className={styles.copyButton}
+                onClick={() => {
+                    trackEvent("install_open_app_clicked", {
+                        in_app_browser: isInAppBrowser,
+                    });
+                    triggerDeepLinkWithFallback(
+                        `${DEEP_LINK_SCHEME}install?ref=${referralCode}`
+                    );
+                }}
+            >
+                {t("installCode.referral.openApp")}
+            </Button>
+            {isInAppBrowser && (
+                <Button
+                    variant="ghost"
+                    fontSize="s"
+                    onClick={() =>
+                        redirectToExternalBrowser(window.location.href)
+                    }
+                >
+                    {t("installCode.referral.openBrowser")}
+                </Button>
+            )}
+        </Stack>
     );
 }
 

@@ -6,6 +6,7 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -276,7 +277,7 @@ const resolvePairRoute = (params: DeepLinkParams): Route =>
 // `install` and `r` are public actions, so the session arrives as `null`: read it here.
 function resolveReferralCodeRoute(code: string): Route {
     return getSafeSession()?.token
-        ? { to: "/profile/referral/redeem", search: { code } }
+        ? redeemCodeRoute(code)
         : { to: "/register", search: { ref: code } };
 }
 
