@@ -12,11 +12,15 @@ export const Route = createFileRoute("/_wallet/_protected")({
             const search = Object.fromEntries(
                 new URLSearchParams(location.search)
             );
-            pendingActionsStore.getState().addAction({
-                type: "navigation",
-                to: location.pathname,
-                search: Object.keys(search).length > 0 ? search : undefined,
-            });
+            const hasSearch = Object.keys(search).length > 0;
+            // The default landing is no destination: storing it would outrank a code carried into onboarding.
+            if (location.pathname !== "/wallet" || hasSearch) {
+                pendingActionsStore.getState().addAction({
+                    type: "navigation",
+                    to: location.pathname,
+                    search: hasSearch ? search : undefined,
+                });
+            }
             throw redirect({
                 to: "/register",
                 replace: true,
