@@ -63,3 +63,8 @@ strip = false
 # Fast incremental dev builds
 [profile.dev]
 incremental = true
+
+# shortcut: tao 0.37.1 drops a link that cold-starts the iOS app (tauri-apps/tao#1248);
+# remove once tauri-apps/tao#1376 ships in a tao release.
+[patch.crates-io]
+tao = { git = "https://github.com/TartanLeGrand/tao", rev = "09ca3b1d98576e5ffa4e8d9b290c626de0e513af" }
