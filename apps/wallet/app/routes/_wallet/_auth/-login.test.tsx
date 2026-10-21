@@ -137,7 +137,7 @@ describe("LoginPage", () => {
         );
     });
 
-    test("should redirect to the redeem page with a forwarded ref when there are no pending actions", async () => {
+    test("should redirect to the drop join screen with a forwarded ref when there are no pending actions", async () => {
         mockSearch.current = { ref: "FRAKPA" };
 
         render(<LoginPage />);
@@ -145,7 +145,7 @@ describe("LoginPage", () => {
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith({
-                to: "/profile/referral/redeem",
+                to: "/game/join",
                 search: { code: "FRAKPA" },
                 replace: true,
             });
@@ -163,7 +163,7 @@ describe("LoginPage", () => {
             expect(mockExecutePendingActions).toHaveBeenCalled();
         });
         expect(mockNavigate).not.toHaveBeenCalledWith(
-            expect.objectContaining({ to: "/profile/referral/redeem" })
+            expect.objectContaining({ to: "/game/join" })
         );
     });
 });

@@ -1,3 +1,5 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
+
 export const frakGame = {
-    enabled: false,
+    enabled: !isRunningInProd,
 } as const;

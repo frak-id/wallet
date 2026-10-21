@@ -569,7 +569,7 @@ describe("install deep link — ref", () => {
         });
     });
 
-    test("logged in: routes to the redeem page with the code", async () => {
+    test("logged in: routes to the drop join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const navigate = vi.fn();
 
@@ -580,7 +580,7 @@ describe("install deep link — ref", () => {
         openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
 
         expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/redeem",
+            to: "/game/join",
             search: { code: "FRAKPA" },
             replace: true,
         });
@@ -697,13 +697,13 @@ describe("short referral deep link — /r/<code>", () => {
         expect(pendingActionsStore.getState().actions).toHaveLength(0);
     });
 
-    test("logged in: routes to the redeem page with the code", async () => {
+    test("logged in: routes to the drop join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
 
         const navigate = await open("https://wallet.frak.id/r/FRAKPA");
 
         expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/redeem",
+            to: "/game/join",
             search: { code: "FRAKPA" },
             replace: true,
         });
