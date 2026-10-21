@@ -24,6 +24,7 @@ import { GameReward } from "@/module/game/component/GameReward";
 import { GameRules } from "@/module/game/component/GameRules";
 import { frakGame } from "@/module/game/config";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -231,12 +232,17 @@ function RegisterPage() {
     // web we still redirect to `/login` so the user can pick the dedicated
     // login UX (existing-account shortcut, connect another account, QR
     // pairing).
+    const loginCode = referralPrefill.code;
     const handlePostLoginRedirect = useCallback(async () => {
         const navigated = await executePendingActions();
-        if (!navigated) {
-            navigate({ to: "/wallet", replace: true });
-        }
-    }, [executePendingActions, navigate]);
+        if (navigated) return;
+        // An existing user arriving with a code (link or Play referrer) still wants it.
+        navigate(
+            loginCode
+                ? { ...redeemCodeRoute(loginCode), replace: true }
+                : { to: "/wallet", replace: true }
+        );
+    }, [executePendingActions, navigate, loginCode]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: handlePostLoginRedirect,
