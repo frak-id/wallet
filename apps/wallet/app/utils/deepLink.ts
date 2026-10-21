@@ -357,7 +357,14 @@ function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     }
 }
 
-export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
+/**
+ * `coldStartReady` resolves once the router's first load has settled: on iOS a
+ * cold-start link navigated earlier is overwritten by the launch redirects.
+ */
+export async function initDeepLinks(
+    navigate: NavigateFn,
+    coldStartReady: Promise<void> = Promise.resolve()
+): Promise<void> {
     if (!IS_TAURI) {
         return;
     }
@@ -372,11 +379,13 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
             const initialUrls = await getCurrent();
             if (initialUrls && initialUrls.length > 0) {
                 const url = initialUrls[0];
-                setTimeout(() => {
-                    const params = parseDeepLink(url);
-                    if (!params) return;
-                    handleDeepLinkAction(navigate, params, "cold_start");
-                }, 100);
+                void coldStartReady.then(() =>
+                    setTimeout(() => {
+                        const params = parseDeepLink(url);
+                        if (!params) return;
+                        handleDeepLinkAction(navigate, params, "cold_start");
+                    }, 100)
+                );
             }
         } catch {
             // Ignore errors from getCurrent - may not be available on all platforms

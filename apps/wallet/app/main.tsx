@@ -132,11 +132,17 @@ async function main() {
     if (IS_TAURI) {
         await Promise.all([initSafeAreaInsets(), initNativeGlass()]);
         initKeyboardInset();
+        const firstLoadSettled = new Promise<void>((resolve) => {
+            const unsubscribe = router.subscribe("onResolved", () => {
+                unsubscribe();
+                resolve();
+            });
+        });
         await initDeepLinks((options) => {
             return router.navigate(
                 options as Parameters<typeof router.navigate>[0]
             );
-        });
+        }, firstLoadSettled);
     }
 
     await i18next

@@ -113,6 +113,30 @@ describe("initDeepLinks", () => {
         });
     });
 
+    test("holds a cold-start link until the first load settles", async () => {
+        vi.useFakeTimers();
+        getCurrentMock.mockResolvedValue(["frakwallet://pair?id=pair-123"]);
+        let settle = () => {};
+        const firstLoad = new Promise<void>((resolve) => {
+            settle = resolve;
+        });
+
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate, firstLoad);
+        vi.runAllTimers();
+        expect(navigate).not.toHaveBeenCalled();
+
+        settle();
+        await firstLoad;
+        vi.runAllTimers();
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "pair-123", mode: "embedded" },
+            replace: true,
+        });
+    });
+
     test("should handle warm-start send deep link", async () => {
         const navigate = vi.fn();
 
