@@ -870,7 +870,8 @@
             "codeCopied": "Code de parrainage copié !",
             "manualEntry": "Code de parrainage à saisir à l'inscription",
             "openApp": "J'ai déjà l'app Frak",
-            "openBrowser": "Ouvrir dans le navigateur"
+            "openBrowser": "Ouvrir dans le navigateur",
+            "openBrowserHint": "Sinon : ⋯ en haut à droite → Ouvrir dans un navigateur externe"
         }
     },
     "pendingActions": {

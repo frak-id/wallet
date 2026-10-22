@@ -130,6 +130,7 @@ export {
     getQueryParamCaseInsensitive,
     getSupportedCurrency,
     isInAppBrowser,
+    isInstagramBrowser,
     isIOS,
     isMobile,
     normalizeProductDetails,

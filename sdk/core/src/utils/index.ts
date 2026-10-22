@@ -9,6 +9,7 @@ export {
 } from "./browser/deepLinkWithFallback";
 export {
     isInAppBrowser,
+    isInstagramBrowser,
     isIOS,
     isMobile,
     redirectToExternalBrowser,

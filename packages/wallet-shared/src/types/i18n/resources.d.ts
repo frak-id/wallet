@@ -563,6 +563,7 @@ export default interface Resources {
         "manualEntry": "Referral code to enter at sign-up",
         "openApp": "I already have the Frak app",
         "openBrowser": "Open in the browser",
+        "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser",
         "title": "Your referral code"
       },
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",

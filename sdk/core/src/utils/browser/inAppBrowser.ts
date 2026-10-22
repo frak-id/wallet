@@ -52,20 +52,32 @@ function checkInAppBrowser(): boolean {
  */
 export const isInAppBrowser: boolean = /* @__PURE__ */ checkInAppBrowser();
 
+function checkInstagramBrowser(): boolean {
+    if (typeof navigator === "undefined") return false;
+    return navigator.userAgent.toLowerCase().includes("instagram");
+}
+
 /**
- * Redirect to external browser from in-app WebView.
+ * Whether the current browser is Instagram's in-app browser.
+ */
+export const isInstagramBrowser: boolean =
+    /* @__PURE__ */ checkInstagramBrowser();
+
+/**
+ * Redirect to external browser from in-app WebView. Call it from a user tap:
+ * Instagram on iOS ignores the hand-off otherwise.
  *
- * - **iOS**: Uses `x-safari-https://` scheme — server-side 302 redirects
- *   to custom URL schemes are silently swallowed by WKWebView.
- *   Direct `window.location.href` assignment works (confirmed iOS 17+).
- *
- * - **Android**: Uses backend `/common/social` endpoint which returns a PDF
- *   Content-Type response, forcing the WebView to hand off to the default browser.
+ * - **Instagram on iOS**: `instagram://extbrowser/`, after Instagram's own confirm.
+ * - **Other iOS**: `x-safari-https://` (server 302s to schemes are swallowed).
+ * - **Android**: backend `/common/social`, a PDF response the WebView hands off.
  *
  * @param targetUrl - The URL to open in the external browser
  */
 export function redirectToExternalBrowser(targetUrl: string): void {
-    if (isIOS && targetUrl.startsWith("https://")) {
+    if (isIOS && isInstagramBrowser && /^https?:\/\//.test(targetUrl)) {
+        // Instagram silently drops x-safari-* since its v417 (March 2026).
+        window.location.href = `instagram://extbrowser/?url=${encodeURIComponent(targetUrl)}`;
+    } else if (isIOS && targetUrl.startsWith("https://")) {
         window.location.href = `x-safari-https://${targetUrl.slice(8)}`;
     } else if (isIOS && targetUrl.startsWith("http://")) {
         window.location.href = `x-safari-http://${targetUrl.slice(7)}`;

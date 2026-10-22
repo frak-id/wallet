@@ -2,6 +2,8 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     DEEP_LINK_SCHEME,
     isInAppBrowser,
+    isInstagramBrowser,
+    isIOS,
     isMobile,
     redirectToExternalBrowser,
     triggerDeepLinkWithFallback,
@@ -837,6 +839,11 @@ function OpenInstalledApp({ referralCode }: { referralCode: string }) {
                 >
                     {t("installCode.referral.openBrowser")}
                 </Button>
+            )}
+            {isIOS && isInstagramBrowser && (
+                <Text variant="bodySmall" color="secondary" align="center">
+                    {t("installCode.referral.openBrowserHint")}
+                </Text>
             )}
         </Stack>
     );

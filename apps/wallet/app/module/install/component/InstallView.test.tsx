@@ -78,6 +78,8 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
 const sdkBrowser = vi.hoisted(() => ({
     mobile: false,
     inApp: false,
+    ios: false,
+    instagram: false,
     triggerDeepLink: vi.fn(),
     redirectExternal: vi.fn(),
 }));
@@ -89,6 +91,12 @@ vi.mock("@frak-labs/core-sdk", async (importOriginal) => {
         isMobile: () => sdkBrowser.mobile,
         get isInAppBrowser() {
             return sdkBrowser.inApp;
+        },
+        get isIOS() {
+            return sdkBrowser.ios;
+        },
+        get isInstagramBrowser() {
+            return sdkBrowser.instagram;
         },
         triggerDeepLinkWithFallback: sdkBrowser.triggerDeepLink,
         redirectToExternalBrowser: sdkBrowser.redirectExternal,
@@ -1239,8 +1247,40 @@ describe("InstallView — ref-only referral code branch", () => {
         expect(sdkBrowser.redirectExternal).toHaveBeenCalledWith(
             window.location.href
         );
+        expect(
+            screen.queryByText("installCode.referral.openBrowserHint")
+        ).toBeNull();
         sdkBrowser.mobile = false;
         sdkBrowser.inApp = false;
+    });
+
+    test("inside Instagram on iOS, also points to Instagram's own menu", async ({
+        queryWrapper,
+    }) => {
+        sdkBrowser.mobile = true;
+        sdkBrowser.inApp = true;
+        sdkBrowser.ios = true;
+        sdkBrowser.instagram = true;
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        expect(
+            await screen.findByText("installCode.referral.openBrowserHint")
+        ).toBeInTheDocument();
+        sdkBrowser.mobile = false;
+        sdkBrowser.inApp = false;
+        sdkBrowser.ios = false;
+        sdkBrowser.instagram = false;
     });
 
     test("on desktop, offers no app hand-off", async ({ queryWrapper }) => {

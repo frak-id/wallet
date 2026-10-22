@@ -448,7 +448,6 @@
     "sdk/core/src/types/tracking.ts": 2,
     "sdk/core/src/utils/analytics/events/index.ts": 1,
     "sdk/core/src/utils/browser/deepLinkWithFallback.ts": 4,
-    "sdk/core/src/utils/browser/inAppBrowser.ts": 1,
     "sdk/core/src/utils/browser/withBrowserLock.ts": 1,
     "sdk/core/src/utils/cache/withCache.ts": 1,
     "sdk/core/src/utils/i18n/detectPageLanguage.ts": 1,

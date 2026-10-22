@@ -870,7 +870,8 @@
             "codeCopied": "Referral code copied!",
             "manualEntry": "Referral code to enter at sign-up",
             "openApp": "I already have the Frak app",
-            "openBrowser": "Open in the browser"
+            "openBrowser": "Open in the browser",
+            "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser"
         }
     },
     "pendingActions": {
