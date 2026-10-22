@@ -75,7 +75,7 @@ describe("JoinDropPage", () => {
         });
 
         fireEvent.click(screen.getByText(/reward-1/));
-        expect(navigate).toHaveBeenCalledWith({ to: "/wallet", replace: true });
+        expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
     });
 
     it("hands a friend's code back to the referral page", () => {

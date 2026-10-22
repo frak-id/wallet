@@ -523,6 +523,23 @@ export default interface Resources {
         "label": "Game code",
         "submit": "Join",
         "title": "Join the game"
+      },
+      "page": {
+        "buy": "Buy from a partner brand",
+        "error": "Couldn't load the game.",
+        "gain_one": "+{{count}} ticket",
+        "gain_other": "+{{count}} tickets",
+        "locked": "Your tickets are saved, but they only count in the draw if you follow <igLink>@frak_fr</igLink> on Instagram.",
+        "more": "Earn more tickets",
+        "none": {
+          "description": "The next game will be announced on Instagram.",
+          "title": "No game right now"
+        },
+        "retry": "Try again",
+        "share": "Share Frak with a friend",
+        "shareHint": "A share earns 3 tickets if it leads to a purchase.",
+        "tickets_one": "ticket",
+        "tickets_other": "tickets"
       }
     },
     "installCode": {

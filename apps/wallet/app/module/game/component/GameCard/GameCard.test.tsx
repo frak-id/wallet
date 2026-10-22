@@ -46,11 +46,12 @@ describe("GameCard", () => {
         expect(navigate).toHaveBeenCalledWith({ to: "/game/join" });
     });
 
-    it("shows a participant as in the game", () => {
+    it("sends a participant to the game page", () => {
         currentDrop.data = { ...drop, joined: true };
         render(<GameCard />);
 
         expect(screen.getByText("game.card.participating")).toBeInTheDocument();
-        expect(screen.queryByRole("button")).toBeNull();
+        fireEvent.click(screen.getByRole("button"));
+        expect(navigate).toHaveBeenCalledWith({ to: "/game" });
     });
 });

@@ -18,24 +18,21 @@ export function GameCard() {
 
     if (!drop) return null;
 
-    // shortcut: a participant's card opens nothing until the game page exists (FRA-370).
-    const open = drop.joined ? undefined : () => navigate({ to: "/game/join" });
+    const open = () => navigate({ to: drop.joined ? "/game" : "/game/join" });
     const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        open?.();
+        open();
     };
 
     return (
         <Card
             padding="none"
-            className={open ? styles.card : undefined}
-            {...(open && {
-                role: "button",
-                tabIndex: 0,
-                onClick: open,
-                onKeyDown: handleKeyDown,
-            })}
+            className={styles.card}
+            role="button"
+            tabIndex={0}
+            onClick={open}
+            onKeyDown={handleKeyDown}
         >
             <Box className={styles.layoutRow}>
                 <Box className={styles.iconBubble}>
@@ -59,11 +56,9 @@ export function GameCard() {
                         </Badge>
                     </Box>
                 </Box>
-                {open && (
-                    <Box className={styles.chevron}>
-                        <ChevronRightIcon width={16} height={16} />
-                    </Box>
-                )}
+                <Box className={styles.chevron}>
+                    <ChevronRightIcon width={16} height={16} />
+                </Box>
             </Box>
         </Card>
     );

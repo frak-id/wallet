@@ -995,6 +995,23 @@
             "title": "Jeu Frak en cours",
             "participating": "Tu participes",
             "notParticipating": "Pas encore inscrit"
+        },
+        "page": {
+            "tickets_one": "ticket",
+            "tickets_other": "tickets",
+            "locked": "Tes tickets sont gardés, mais ils ne comptent au tirage que si tu suis <igLink>@frak_fr</igLink> sur Instagram.",
+            "more": "Gagne plus de tickets",
+            "share": "Partage Frak à un ami",
+            "buy": "Achète chez une marque partenaire",
+            "gain_one": "+{{count}} ticket",
+            "gain_other": "+{{count}} tickets",
+            "shareHint": "Un partage rapporte 3 tickets s'il mène à un achat.",
+            "none": {
+                "title": "Aucun jeu en cours",
+                "description": "Le prochain jeu sera annoncé sur Instagram."
+            },
+            "error": "Impossible de charger le jeu.",
+            "retry": "Réessayer"
         }
     },
     "reward": {

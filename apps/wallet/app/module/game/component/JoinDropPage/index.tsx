@@ -36,7 +36,7 @@ export function JoinDropPage({ initialCode }: { initialCode?: string }) {
             <GameReward
                 reward={gameRewardOf(joined)}
                 drop={joined.drop}
-                onContinue={() => navigate({ to: "/wallet", replace: true })}
+                onContinue={() => navigate({ to: "/game", replace: true })}
             />
         );
     }
