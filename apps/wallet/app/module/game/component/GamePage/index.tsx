@@ -14,31 +14,28 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
-import { useGameTickets } from "@/module/game/hook/useGameTickets";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 
 export function GamePage() {
     const { t, i18n } = useTranslation();
     const current = useCurrentGame();
     const game = current.data?.game;
-    const participating = current.data?.me.participating;
-    const me = useGameTickets(participating ? game?.id : undefined);
+    const me = current.data?.me;
 
-    if (game && !participating) return <Navigate to="/game/join" replace />;
+    if (game && !me?.participating) {
+        return <Navigate to="/game/join" replace />;
+    }
 
     return (
         <Stack space="m">
             <Back href="/wallet" />
             <Title size="page">{t("game.card.title")}</Title>
-            {current.isError || me.isError ? (
+            {current.isError ? (
                 <EmptyState
                     title={t("game.page.error")}
                     action={{
                         label: t("game.page.retry"),
-                        onClick: () => {
-                            void current.refetch();
-                            void me.refetch();
-                        },
+                        onClick: () => void current.refetch(),
                     }}
                 />
             ) : game === null ? (
@@ -46,7 +43,7 @@ export function GamePage() {
                     title={t("game.page.none.title")}
                     description={t("game.page.none.description")}
                 />
-            ) : !game || !me.data ? (
+            ) : !game || !me ? (
                 <Skeleton variant="rect" height={160} />
             ) : (
                 <GameDetails
@@ -55,8 +52,8 @@ export function GamePage() {
                         formatGameAmount(game.prizeAmount, i18n.language)
                     }
                     endsAt={game.endsAt}
-                    tickets={me.data.tickets}
-                    eligible={me.data.eligible}
+                    tickets={me.tickets}
+                    eligible={me.eligible}
                 />
             )}
         </Stack>

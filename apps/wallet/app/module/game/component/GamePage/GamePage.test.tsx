@@ -2,13 +2,12 @@ import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const { currentGame, tickets } = vi.hoisted(() => ({
+const { currentGame } = vi.hoisted(() => ({
     currentGame: {
         data: undefined as unknown,
         isError: false,
         refetch: vi.fn(),
     },
-    tickets: { data: undefined as unknown, isError: false, refetch: vi.fn() },
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -29,9 +28,6 @@ vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
 }));
-vi.mock("@/module/game/hook/useGameTickets", () => ({
-    useGameTickets: () => tickets,
-}));
 
 import { GamePage } from "./index";
 
@@ -43,12 +39,14 @@ const game = {
     endsAt: new Date("2026-10-30T18:00:00Z"),
     sponsor: null,
 };
-const joined = { game, me: { participating: true, eligible: false } };
+const player = (tickets: number, eligible: boolean) => ({
+    game,
+    me: { participating: true, tickets, eligible },
+});
 
 describe("GamePage", () => {
     it("shows the tickets, prize and end date with the ways to earn more", () => {
-        currentGame.data = joined;
-        tickets.data = { tickets: 4, eligible: true };
+        currentGame.data = player(4, true);
         render(<GamePage />);
 
         expect(screen.getByText("4")).toBeInTheDocument();
@@ -67,8 +65,7 @@ describe("GamePage", () => {
     });
 
     it("warns a non-follower that stored tickets do not count yet", () => {
-        currentGame.data = joined;
-        tickets.data = { tickets: 1, eligible: false };
+        currentGame.data = player(1, false);
         render(<GamePage />);
 
         expect(screen.getByText("game.page.locked")).toBeInTheDocument();
@@ -76,8 +73,10 @@ describe("GamePage", () => {
     });
 
     it("says when no game is open", () => {
-        currentGame.data = { game: null, me: joined.me };
-        tickets.data = undefined;
+        currentGame.data = {
+            game: null,
+            me: { participating: false, tickets: 0, eligible: false },
+        };
         render(<GamePage />);
 
         expect(screen.getByText("game.page.none.title")).toBeInTheDocument();
@@ -86,7 +85,7 @@ describe("GamePage", () => {
     it("sends a user who has not joined to the code screen", () => {
         currentGame.data = {
             game,
-            me: { participating: false, eligible: false },
+            me: { participating: false, tickets: 0, eligible: false },
         };
         render(<GamePage />);
 
