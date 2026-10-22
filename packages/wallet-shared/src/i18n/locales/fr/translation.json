@@ -1002,10 +1002,16 @@
             }
         },
         "join": {
-            "title": "Rejoindre le drop",
-            "description": "Entre le code vu en story sur Instagram pour participer au drop.",
-            "label": "Code du drop",
-            "submit": "Rejoindre"
+            "title": "Participer au jeu",
+            "description": "Entre le code du jeu, partagé en story sur Instagram, pour participer.",
+            "label": "Code du jeu",
+            "submit": "Participer",
+            "findCode": "Trouver le code sur Instagram"
+        },
+        "card": {
+            "title": "Jeu Frak en cours",
+            "participating": "Tu participes",
+            "notParticipating": "Pas encore inscrit"
         }
     },
     "reward": {

@@ -1002,10 +1002,16 @@
             }
         },
         "join": {
-            "title": "Join the drop",
-            "description": "Enter the code from the Instagram story to take part in the drop.",
-            "label": "Drop code",
-            "submit": "Join"
+            "title": "Join the game",
+            "description": "Enter the game code, shared in our Instagram stories, to take part.",
+            "label": "Game code",
+            "submit": "Join",
+            "findCode": "Find the code on Instagram"
+        },
+        "card": {
+            "title": "Frak game in progress",
+            "participating": "You're in",
+            "notParticipating": "Not joined yet"
         }
     },
     "reward": {

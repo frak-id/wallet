@@ -2,12 +2,16 @@ import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, redeemResult } = vi.hoisted(() => ({
+const { navigate, invalidateQueries, redeemResult } = vi.hoisted(() => ({
     navigate: vi.fn(),
+    invalidateQueries: vi.fn(),
     redeemResult: { current: { kind: "frak" } as RedeemResult },
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
+vi.mock("@tanstack/react-query", () => ({
+    useQueryClient: () => ({ invalidateQueries }),
+}));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -55,7 +59,10 @@ const drop = {
 } as unknown as NonNullable<RedeemResult["drop"]>;
 
 describe("JoinDropPage", () => {
-    beforeEach(() => navigate.mockClear());
+    beforeEach(() => {
+        navigate.mockClear();
+        invalidateQueries.mockClear();
+    });
 
     it("pre-fills the code and shows the confetti screen once the drop is joined", () => {
         redeemResult.current = { kind: "frak", drop };
@@ -63,6 +70,9 @@ describe("JoinDropPage", () => {
 
         fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
         expect(screen.getByText(/reward-1 drop-prize/)).toBeInTheDocument();
+        expect(invalidateQueries).toHaveBeenCalledWith({
+            queryKey: ["game", "drops", "current"],
+        });
 
         fireEvent.click(screen.getByText(/reward-1/));
         expect(navigate).toHaveBeenCalledWith({ to: "/wallet", replace: true });

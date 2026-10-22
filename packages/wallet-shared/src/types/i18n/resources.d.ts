@@ -512,11 +512,17 @@ export default interface Resources {
       }
     },
     "game": {
+      "card": {
+        "notParticipating": "Not joined yet",
+        "participating": "You're in",
+        "title": "Frak game in progress"
+      },
       "join": {
-        "description": "Enter the code from the Instagram story to take part in the drop.",
-        "label": "Drop code",
+        "description": "Enter the game code, shared in our Instagram stories, to take part.",
+        "findCode": "Find the code on Instagram",
+        "label": "Game code",
         "submit": "Join",
-        "title": "Join the drop"
+        "title": "Join the game"
       },
       "leaderboard": {
         "empty": {

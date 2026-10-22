@@ -10,6 +10,7 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppShellScroll } from "@/module/common/component/AppShell";
 import { Title } from "@/module/common/component/Title";
+import { GameCard } from "@/module/game/component/GameCard";
 import { useOpenMoneriumFromLink } from "@/module/monerium/hooks/useOpenMoneriumFromLink";
 import { Balance } from "@/module/tokens/component/Balance";
 import { AddEmailCard } from "@/module/wallet/component/AddEmailCard";
@@ -59,6 +60,7 @@ function WalletPage() {
                 <Balance />
                 <AddEmailCard />
                 <WelcomeCard />
+                <GameCard />
                 <EarningsSection />
             </Box>
         </PullToRefresh>

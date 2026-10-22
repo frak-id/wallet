@@ -1,22 +1,29 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { RedeemResult } from "@frak-labs/wallet-shared";
+import { ExternalLink, type RedeemResult } from "@frak-labs/wallet-shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { GameReward } from "@/module/game/component/GameReward";
+import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
+import { currentDropKeys } from "@/module/game/hook/useCurrentDrop";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
 import { RedeemForm } from "@/module/referral/component/RedeemReferralCodePage";
 
 export function JoinDropPage({ initialCode }: { initialCode?: string }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [joined, setJoined] = useState<RedeemResult | null>(null);
 
     const handleRedeemed = (result: RedeemResult) => {
         if (result.drop) {
+            void queryClient.invalidateQueries({
+                queryKey: currentDropKeys.all,
+            });
             setJoined(result);
             return;
         }
@@ -36,7 +43,7 @@ export function JoinDropPage({ initialCode }: { initialCode?: string }) {
 
     return (
         <Stack space="m">
-            <Back href="/profile" />
+            <Back href="/wallet" />
             <Title size="page">{t("game.join.title")}</Title>
             <Text variant="body" color="secondary">
                 {t("game.join.description")}
@@ -47,6 +54,11 @@ export function JoinDropPage({ initialCode }: { initialCode?: string }) {
                 label={t("game.join.label")}
                 submitLabel={t("game.join.submit")}
             />
+            <Text variant="bodySmall" color="secondary" align="center">
+                <ExternalLink href={FRAK_INSTAGRAM_URL}>
+                    {t("game.join.findCode")}
+                </ExternalLink>
+            </Text>
         </Stack>
     );
 }

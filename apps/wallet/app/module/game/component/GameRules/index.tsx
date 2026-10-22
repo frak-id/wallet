@@ -6,11 +6,10 @@ import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { Trans, useTranslation } from "react-i18next";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as stepStyles from "@/module/onboarding/component/step/index.css";
 import * as styles from "./index.css";
-
-const FRAK_INSTAGRAM_URL = "https://www.instagram.com/frak_fr/";
 
 type InviteRewards = NonNullable<RedeemResult["inviteRewards"]>;
 
