@@ -337,6 +337,13 @@
             "when": 1792488841330,
             "tag": "0047_orange_jackal",
             "breakpoints": true
+        },
+        {
+            "idx": 48,
+            "version": "7",
+            "when": 1792688368122,
+            "tag": "0048_clammy_black_panther",
+            "breakpoints": true
         }
     ]
 }

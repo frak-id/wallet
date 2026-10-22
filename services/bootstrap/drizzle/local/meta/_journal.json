@@ -316,6 +316,20 @@
             "when": 1792488837315,
             "tag": "0044_elite_doctor_spectrum",
             "breakpoints": true
+        },
+        {
+            "idx": 45,
+            "version": "7",
+            "when": 1792683530552,
+            "tag": "0045_overjoyed_lady_mastermind",
+            "breakpoints": true
+        },
+        {
+            "idx": 46,
+            "version": "7",
+            "when": 1792688172013,
+            "tag": "0046_omniscient_scalphunter",
+            "breakpoints": true
         }
     ]
 }
