@@ -984,23 +984,6 @@
         }
     },
     "game": {
-        "leaderboard": {
-            "title": "Classement",
-            "menuLabel": "Classement du Jeu Frak",
-            "myRank": "Ton rang : n°{{rank}}",
-            "notRanked": "Tu n'es pas encore classé.",
-            "you": "Toi",
-            "points": "{{score}} pts",
-            "empty": {
-                "title": "Aucun score pour le moment",
-                "description": "Le classement se remplit au fil des points marqués par les joueurs."
-            },
-            "error": {
-                "title": "Impossible de charger le classement",
-                "description": "Une erreur est survenue lors du chargement du classement. Réessaie.",
-                "retry": "Réessayer"
-            }
-        },
         "join": {
             "title": "Participer au jeu",
             "description": "Entre le code du jeu, partagé en story sur Instagram, pour participer.",

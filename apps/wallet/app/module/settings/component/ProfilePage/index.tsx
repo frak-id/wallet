@@ -11,14 +11,13 @@ import {
     useGetActivePairings,
 } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { Mail, ShieldCheck, Trophy } from "lucide-react";
+import { Mail, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { Logout } from "@/module/authentication/component/Logout";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
-import { frakGame } from "@/module/game/config";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
@@ -80,15 +79,6 @@ export function ProfilePage() {
                     to="/profile/referral"
                 />
             </InfoCard>
-            {frakGame.enabled ? (
-                <InfoCard>
-                    <InfoRow
-                        icon={Trophy}
-                        label={t("game.leaderboard.menuLabel")}
-                        to="/profile/leaderboard"
-                    />
-                </InfoCard>
-            ) : null}
             {hasPairings ? (
                 <InfoCard>
                     <InfoRow

@@ -984,23 +984,6 @@
         }
     },
     "game": {
-        "leaderboard": {
-            "title": "Leaderboard",
-            "menuLabel": "Frak Game leaderboard",
-            "myRank": "Your rank: #{{rank}}",
-            "notRanked": "You're not ranked yet.",
-            "you": "You",
-            "points": "{{score}} pts",
-            "empty": {
-                "title": "No scores yet",
-                "description": "The leaderboard fills up as players score points."
-            },
-            "error": {
-                "title": "Couldn't load the leaderboard",
-                "description": "Something went wrong while loading the leaderboard. Please try again.",
-                "retry": "Try again"
-            }
-        },
         "join": {
             "title": "Join the game",
             "description": "Enter the game code, shared in our Instagram stories, to take part.",
