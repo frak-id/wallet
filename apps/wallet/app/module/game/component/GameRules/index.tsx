@@ -26,8 +26,8 @@ function inviteDescription(
     locale: string,
     invite: InviteRewards | undefined
 ): string {
-    const points = t("onboarding.game.rules.invite.description");
-    if (!invite) return points;
+    const tickets = t("onboarding.game.rules.invite.description");
+    if (!invite) return tickets;
     const amounts =
         invite.referrer === invite.referee
             ? t("onboarding.game.rules.invite.reward", {
@@ -37,7 +37,7 @@ function inviteDescription(
                   referrer: formatGameAmount(invite.referrer, locale),
                   referee: formatGameAmount(invite.referee, locale),
               });
-    return `${amounts} ${points}`;
+    return `${amounts} ${tickets}`;
 }
 
 export function GameRules({ onContinue, reward, invite }: GameRulesProps) {

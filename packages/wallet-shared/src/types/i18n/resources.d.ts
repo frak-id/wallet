@@ -767,22 +767,22 @@ export default interface Resources {
           "title": "You're in the game!"
         },
         "rules": {
-          "description": "A drop on Instagram every Tuesday and Thursday at 8pm.",
+          "description": "Collect tickets: a random draw picks the winner when the game ends.",
           "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink> on Instagram, where the winner is announced in a story.",
-            "title": "Don't miss the next drop"
+            "description": "Your tickets count in the draw if you follow <igLink>@frak_fr</igLink> on Instagram. The winner is announced there in a story.",
+            "title": "Follow us for the draw"
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "Every friend who signs up earns you points, and the drop's top score wins the prize.",
+            "description": "1 ticket per share, 3 per purchase at a partner brand, yours or a friend's.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-            "title": "Invite your friends"
+            "title": "Share and earn tickets"
           },
           "title": "The Frak Game",
           "unlock": {
             "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
-            "title": "Unlock your {{reward}}"
+            "title": "Your {{reward}} bonus"
           }
         }
       },

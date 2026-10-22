@@ -955,21 +955,21 @@
         "game": {
             "rules": {
                 "title": "Le Jeu Frak",
-                "description": "Un drop sur Instagram chaque mardi et jeudi à 20h.",
+                "description": "Cumule des tickets : un tirage au sort désigne le gagnant à la fin du jeu.",
                 "howItWorks": "Comment ça marche",
                 "unlock": {
-                    "title": "Débloque ton {{reward}}",
+                    "title": "Ton bonus de {{reward}}",
                     "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant."
                 },
                 "invite": {
-                    "title": "Invite tes amis",
+                    "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "Chaque ami inscrit te rapporte des points, et le meilleur score du drop remporte le lot."
+                    "description": "1 ticket par partage, 3 par achat chez une marque partenaire, le tien ou celui d'un ami."
                 },
                 "follow": {
-                    "title": "Ne rate pas le prochain drop",
-                    "description": "Suis <igLink>@frak_fr</igLink> sur Instagram, le gagnant y est annoncé en story."
+                    "title": "Suis-nous pour le tirage",
+                    "description": "Tes tickets comptent au tirage si tu suis <igLink>@frak_fr</igLink> sur Instagram. Le gagnant y est annoncé en story."
                 }
             },
             "reward": {
