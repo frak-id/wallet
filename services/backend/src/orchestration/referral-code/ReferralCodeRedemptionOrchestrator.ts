@@ -28,7 +28,7 @@ export type RedeemResult = {
     kind: ReferralCodeKind;
     /** The game joined: its own code, or the current open game on a friend's signup. */
     game?: GameSummary;
-    /** Reward queued by this join; absent on a re-join or an empty budget. */
+    /** Join reward: only a new user who entered the game code at signup, once. */
     gameReward?: number;
     /** The caller's signup reward, set when a friend's signup was recorded. */
     signupReward?: number;
@@ -92,7 +92,6 @@ export class ReferralCodeRedemptionOrchestrator {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
             game: signup?.game,
-            gameReward: signup?.gameReward,
             signupReward: signup?.reward,
         };
     }
@@ -168,8 +167,8 @@ export class ReferralCodeRedemptionOrchestrator {
 
     /**
      * Joining never takes the referrer slot, so existing users and users with
-     * a friend as referrer can join the game. A brand-new account still gets
-     * Frak as referrer, like a plain Frak code.
+     * a friend as referrer can join the game, but only a new account from
+     * onboarding earns the join reward and gets Frak as referrer.
      */
     private async joinGame(
         game: GameSelect,
@@ -182,7 +181,8 @@ export class ReferralCodeRedemptionOrchestrator {
         );
         const joined = await this.frakGame.joinGame(
             game,
-            refereeIdentityGroupId
+            refereeIdentityGroupId,
+            !rejection
         );
         if (!rejection) {
             // Null when the slot is taken: the user keeps their referrer.

@@ -93,6 +93,7 @@ export type CustomInteractionContext = {
 
 export type GameRuleContext = {
     id: string;
+    newcomer: boolean;
 };
 
 export type RuleContext = {

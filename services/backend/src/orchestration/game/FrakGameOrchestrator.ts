@@ -33,16 +33,16 @@ type FrakInteraction = Pick<
     "type" | "identityGroupId" | "payload"
 > & { externalEventId: string };
 
-/** `gameReward` is set only when this call created the join interaction. */
+/** `gameReward` is set only for a newcomer whose call created the join interaction. */
 type JoinOutcome = { game: GameSummary; gameReward?: number };
 
 /** Read before the referrer link is written, applied after it. */
 export type SignupPlan = {
     reward?: number;
-    game?: { game: GameSelect; summary: GameSummary; reward?: number };
+    game?: { game: GameSelect; summary: GameSummary };
 };
 
-export type SignupOutcome = { reward?: number } & Partial<JoinOutcome>;
+export type SignupOutcome = { reward?: number; game?: GameSummary };
 
 const NOT_PLAYING = { participating: false, tickets: 0, eligible: false };
 
@@ -107,10 +107,11 @@ export class FrakGameOrchestrator {
         };
     }
 
-    /** 409 `GAME_CLOSED` for a closed game the user never joined; re-joining is harmless. */
+    /** Only a `newcomer` earns the join reward; 409 `GAME_CLOSED` for a closed game never joined. */
     async joinGame(
         game: GameSelect,
-        identityGroupId: string
+        identityGroupId: string,
+        newcomer: boolean
     ): Promise<JoinOutcome> {
         const joinedAt = await this.gamePlayerOrchestrator.joinedAt(
             game.id,
@@ -122,9 +123,9 @@ export class FrakGameOrchestrator {
         }
         const [summary, reward] = await Promise.all([
             this.summarize(game),
-            this.joinReward(game),
+            newcomer ? this.joinReward(game) : undefined,
         ]);
-        const created = await this.writeJoin(game, identityGroupId);
+        const created = await this.writeJoin(game, identityGroupId, newcomer);
         return { game: summary, gameReward: created ? reward : undefined };
     }
 
@@ -135,11 +136,8 @@ export class FrakGameOrchestrator {
             this.gameRepository.findCurrent(new Date()),
         ]);
         if (!game) return { reward: invite?.referee };
-        const [summary, reward] = await Promise.all([
-            this.summarize(game),
-            this.joinReward(game),
-        ]);
-        return { reward: invite?.referee, game: { game, summary, reward } };
+        const summary = await this.summarize(game);
+        return { reward: invite?.referee, game: { game, summary } };
     }
 
     /** Pays both sides once the signup rule is live; one per referee, ever. */
@@ -159,15 +157,8 @@ export class FrakGameOrchestrator {
         });
         if (!plan.game) return { reward: plan.reward };
 
-        const created = await this.writeJoin(
-            plan.game.game,
-            refereeIdentityGroupId
-        );
-        return {
-            reward: plan.reward,
-            game: plan.game.summary,
-            gameReward: created ? plan.game.reward : undefined,
-        };
+        await this.writeJoin(plan.game.game, refereeIdentityGroupId, false);
+        return { reward: plan.reward, game: plan.game.summary };
     }
 
     /** The rule's referee payout, unless it is paused or out of budget; never blocks a join. */
@@ -184,13 +175,14 @@ export class FrakGameOrchestrator {
     /** True when this call created the join interaction, which is what gets paid. */
     private async writeJoin(
         game: GameSelect,
-        identityGroupId: string
+        identityGroupId: string,
+        newcomer: boolean
     ): Promise<boolean> {
         return this.logInteraction({
             type: interactionTypes.gameJoin,
             identityGroupId,
             externalEventId: gameJoinExternalEventId(game.id, identityGroupId),
-            payload: { gameId: game.id },
+            payload: { gameId: game.id, newcomer },
         });
     }
 

@@ -51,6 +51,7 @@ function makeOrchestrator(
     const createIdempotent = vi
         .fn()
         .mockResolvedValue(opts.created === false ? null : { id: "i-1" });
+    const findRule = vi.fn().mockResolvedValue(opts.rule ?? gameRule);
     const orchestrator = new FrakGameOrchestrator(
         {
             findCurrent: vi
@@ -58,14 +59,14 @@ function makeOrchestrator(
                 .mockResolvedValue(opts.game === undefined ? game : opts.game),
         } as never,
         {
-            findById: vi.fn().mockResolvedValue(opts.rule ?? gameRule),
+            findById: findRule,
             findActiveByMerchant: vi.fn().mockResolvedValue([]),
         } as never,
         { findById: vi.fn() } as never,
         { createIdempotent } as never,
         { joinedAt, ticketsOf } as never
     );
-    return { orchestrator, joinedAt, ticketsOf, createIdempotent };
+    return { orchestrator, joinedAt, ticketsOf, createIdempotent, findRule };
 }
 
 describe("FrakGameOrchestrator.getCurrentGame", () => {
@@ -120,7 +121,8 @@ describe("FrakGameOrchestrator.joinGame", () => {
 
             const result = await orchestrator.joinGame(
                 { ...game, ...over },
-                USER
+                USER,
+                true
             );
 
             expect(result.game.id).toBe("game-1");
@@ -140,7 +142,7 @@ describe("FrakGameOrchestrator.joinGame", () => {
         const { orchestrator, createIdempotent } = makeOrchestrator();
 
         await expect(
-            orchestrator.joinGame({ ...game, ...over }, USER)
+            orchestrator.joinGame({ ...game, ...over }, USER, true)
         ).rejects.toMatchObject({ status: 409, code: "GAME_CLOSED" });
         expect(createIdempotent).not.toHaveBeenCalled();
     });
@@ -148,7 +150,7 @@ describe("FrakGameOrchestrator.joinGame", () => {
     it("writes one game_join interaction and reports the gameReward", async () => {
         const { orchestrator, createIdempotent } = makeOrchestrator();
 
-        const result = await orchestrator.joinGame(game, USER);
+        const result = await orchestrator.joinGame(game, USER, true);
 
         expect(result.gameReward).toBe(1);
         expect(createIdempotent).toHaveBeenCalledTimes(1);
@@ -157,14 +159,28 @@ describe("FrakGameOrchestrator.joinGame", () => {
             identityGroupId: USER,
             merchantId: FRAK_MERCHANT_ID,
             externalEventId: `game_join:game-1:${USER}`,
-            payload: { gameId: "game-1" },
+            payload: { gameId: "game-1", newcomer: true },
         });
+    });
+
+    it("skips the rule lookup and writes newcomer false for a non-newcomer", async () => {
+        const { orchestrator, createIdempotent, findRule } = makeOrchestrator();
+
+        const result = await orchestrator.joinGame(game, USER, false);
+
+        expect(result.gameReward).toBeUndefined();
+        expect(findRule).not.toHaveBeenCalled();
+        expect(createIdempotent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                payload: { gameId: "game-1", newcomer: false },
+            })
+        );
     });
 
     it("reports no gameReward when a concurrent join created the interaction", async () => {
         const { orchestrator } = makeOrchestrator({ created: false });
 
-        const result = await orchestrator.joinGame(game, USER);
+        const result = await orchestrator.joinGame(game, USER, true);
 
         expect(result.game.id).toBe("game-1");
         expect(result.gameReward).toBeUndefined();
@@ -179,7 +195,7 @@ describe("FrakGameOrchestrator join without gameReward", () => {
         {
             name: "the campaign rule is paused",
             opts: { rule: withRule({ status: "paused" }) },
-            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER),
+            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER, true),
         },
         {
             name: "the campaign rule has no remaining budget",
@@ -191,7 +207,7 @@ describe("FrakGameOrchestrator join without gameReward", () => {
                     budgetUsed: { global: { used: 1 } },
                 }),
             },
-            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER),
+            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER, true),
         },
         {
             name: "the referee payout is 0",
@@ -200,17 +216,7 @@ describe("FrakGameOrchestrator join without gameReward", () => {
                     rule: { ...gameRule.rule, rewards: [] },
                 }),
             },
-            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER),
-        },
-        {
-            name: "the signup's game_join already existed",
-            opts: { created: false },
-            run: async (o: FrakGameOrchestrator) =>
-                o.applySignup(
-                    await o.planSignup(),
-                    { id: "code-1", ownerIdentityGroupId: "owner" } as never,
-                    USER
-                ),
+            run: (o: FrakGameOrchestrator) => o.joinGame(game, USER, true),
         },
     ])(
         "still writes the join but reports no gameReward when $name",
@@ -231,7 +237,7 @@ describe("FrakGameOrchestrator join without gameReward", () => {
 });
 
 describe("FrakGameOrchestrator.applySignup", () => {
-    it("writes the referee's game_join with the per-group key", async () => {
+    it("writes the referee's game_join as non-newcomer and pays no gameReward", async () => {
         const { orchestrator, createIdempotent } = makeOrchestrator();
         const plan = await orchestrator.planSignup();
 
@@ -241,11 +247,12 @@ describe("FrakGameOrchestrator.applySignup", () => {
             USER
         );
 
-        expect(outcome.gameReward).toBe(1);
+        expect(outcome).not.toHaveProperty("gameReward");
         expect(createIdempotent).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: "game_join",
                 externalEventId: `game_join:game-1:${USER}`,
+                payload: { gameId: "game-1", newcomer: false },
             })
         );
     });

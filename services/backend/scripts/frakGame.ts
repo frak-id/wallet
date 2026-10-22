@@ -186,7 +186,10 @@ async function createGame() {
         name: `Frak Game ${code.code}`,
         trigger: "game_join",
         rewards: [["referee", positive("reward")]],
-        conditions: [{ field: "game.id", operator: "eq", value: gameId }],
+        conditions: [
+            { field: "game.id", operator: "eq", value: gameId },
+            { field: "game.newcomer", operator: "eq", value: true },
+        ],
         maxRewardsPerUser: 1,
         expiresAt: new Date(endsAt.getTime() + GAME_RULE_GRACE_MS),
     });

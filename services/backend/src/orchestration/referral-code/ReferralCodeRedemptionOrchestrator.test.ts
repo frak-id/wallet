@@ -285,7 +285,8 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
         const result = await ctx.redeem("onboarding");
 
         expect(result.game).toMatchObject({ id: "game-1" });
-        expect(result.gameReward).toBe(1);
+        expect(result.signupReward).toBe(1.5);
+        expect(result.gameReward).toBeUndefined();
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).toHaveBeenCalledWith(
@@ -293,22 +294,9 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
                 type: "game_join",
                 identityGroupId: REFEREE,
                 externalEventId: `game_join:game-1:${REFEREE}`,
-                payload: { gameId: "game-1" },
+                payload: { gameId: "game-1", newcomer: false },
             })
         );
-    });
-
-    it("joins without a gameReward when the rule budget is exhausted", async () => {
-        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
-        ctx.campaignRuleRepository.findById.mockResolvedValue({
-            ...gameRule,
-            budgetUsed: { total: { used: 9.5 } },
-        });
-
-        const result = await ctx.redeem("onboarding");
-
-        expect(result.game).toMatchObject({ id: "game-1" });
-        expect(result.gameReward).toBeUndefined();
     });
 
     it("returns no game when none is open", async () => {
@@ -414,7 +402,7 @@ describe("ReferralCodeRedemptionOrchestrator game join", () => {
             identityGroupId: REFEREE,
             merchantId: FRAK_MERCHANT_ID,
             externalEventId: `game_join:game-1:${REFEREE}`,
-            payload: { gameId: "game-1" },
+            payload: { gameId: "game-1", newcomer: true },
         });
         expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -428,11 +416,17 @@ describe("ReferralCodeRedemptionOrchestrator game join", () => {
         async (gate) => {
             ctx.applyGate(gate);
 
-            await ctx.redeem(gate.context);
+            const result = await ctx.redeem(gate.context);
 
+            expect(result.gameReward).toBeUndefined();
             expect(
                 ctx.interactionLogRepository.createIdempotent
-            ).toHaveBeenCalled();
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: "game_join",
+                    payload: { gameId: "game-1", newcomer: false },
+                })
+            );
             expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
             expect(frakCodeRejected).not.toHaveBeenCalled();
         }
@@ -516,7 +510,7 @@ describe("ReferralCodeRedemptionOrchestrator game join", () => {
             ...testCase.rule,
         });
 
-        const result = await ctx.redeem(undefined);
+        const result = await ctx.redeem("onboarding");
 
         expect(result.game).toMatchObject({ id: "game-1" });
         expect(result.gameReward).toBeUndefined();

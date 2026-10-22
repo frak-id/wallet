@@ -98,7 +98,12 @@ export class InteractionContextBuilder {
                 const payload = interaction.payload as GameJoinPayload;
                 return {
                     trigger: "game_join",
-                    typeContext: { game: { id: payload.gameId } },
+                    typeContext: {
+                        game: {
+                            id: payload.gameId,
+                            newcomer: payload.newcomer === true,
+                        },
+                    },
                 };
             }
         }

@@ -102,9 +102,10 @@ export type ReferralSignupPayload = {
     referrerIdentityGroupId: string;
 };
 
-/** The user joined a Frak Game; its rule matches on `game.id`. */
+/** The user joined a Frak Game; its rule matches on `game.id` and `game.newcomer`. */
 export type GameJoinPayload = {
     gameId: string;
+    newcomer: boolean;
 };
 
 export type InteractionPayload =
