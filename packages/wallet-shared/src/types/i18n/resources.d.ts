@@ -776,9 +776,9 @@ export default interface Resources {
       "game": {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
-          "drop": {
+          "game": {
             "endsAt": "Until {{date}}",
-            "label": "Drop prize",
+            "label": "Game prize",
             "sponsor": "Offered by {{name}}"
           },
           "title": "You're in the game!"
@@ -1522,11 +1522,9 @@ export default interface Resources {
           },
           "deleteCta": "Delete active code",
           "description": "Enter a friend's or creator's code and you'll both benefit.",
-          "errorAlreadyJoined": "You've already joined this drop.",
           "errorAlreadyRedeemed": "You already have an active referral code.",
           "errorCycle": "This code can't be used with your account.",
-          "errorDropClosed": "This drop is over. Watch for the next one on Instagram.",
-          "errorDropFull": "This drop is full. Try again on the next one.",
+          "errorGameClosed": "This game isn't open right now. Watch for the next one on Instagram.",
           "errorGeneric": "Something went wrong. Please try again.",
           "errorInvalid": "This code isn't valid.",
           "errorNotFound": "This code does not exist. Make sure it's correct.",

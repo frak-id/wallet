@@ -7269,7 +7269,7 @@
                               "purchase",
                               "custom",
                               "referral_signup",
-                              "drop_join"
+                              "game_join"
                             ]
                           },
                           "txHash": {
@@ -7635,12 +7635,12 @@
                         "frak"
                       ]
                     },
-                    "drop": {
+                    "game": {
                       "type": "object",
                       "required": [
                         "id",
+                        "prizeAmount",
                         "prizeDescription",
-                        "reward",
                         "startsAt",
                         "endsAt",
                         "sponsor"
@@ -7649,11 +7649,14 @@
                         "id": {
                           "type": "string"
                         },
-                        "prizeDescription": {
-                          "type": "string"
-                        },
-                        "reward": {
+                        "prizeAmount": {
                           "type": "number"
+                        },
+                        "prizeDescription": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         },
                         "startsAt": {
                           "anyOf": [
@@ -7711,6 +7714,9 @@
                           }
                         }
                       }
+                    },
+                    "gameReward": {
+                      "type": "number"
                     },
                     "signupReward": {
                       "type": "number"
@@ -8123,7 +8129,7 @@
         "operationId": "getUserWalletReferralStatus"
       }
     },
-    "/user/wallet/game/drops/current": {
+    "/user/wallet/game/current": {
       "get": {
         "responses": {
           "200": {
@@ -8133,32 +8139,35 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "drop"
+                    "game",
+                    "me"
                   ],
                   "properties": {
-                    "drop": {
+                    "game": {
                       "type": [
                         "object",
                         "null"
                       ],
                       "required": [
                         "id",
+                        "prizeAmount",
                         "prizeDescription",
-                        "reward",
                         "startsAt",
                         "endsAt",
-                        "sponsor",
-                        "joined"
+                        "sponsor"
                       ],
                       "properties": {
                         "id": {
                           "type": "string"
                         },
-                        "prizeDescription": {
-                          "type": "string"
-                        },
-                        "reward": {
+                        "prizeAmount": {
                           "type": "number"
+                        },
+                        "prizeDescription": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         },
                         "startsAt": {
                           "anyOf": [
@@ -8214,8 +8223,20 @@
                               "type": "string"
                             }
                           }
+                        }
+                      }
+                    },
+                    "me": {
+                      "type": "object",
+                      "required": [
+                        "participating",
+                        "eligible"
+                      ],
+                      "properties": {
+                        "participating": {
+                          "type": "boolean"
                         },
-                        "joined": {
+                        "eligible": {
                           "type": "boolean"
                         }
                       }
@@ -8236,7 +8257,7 @@
             }
           }
         },
-        "operationId": "getUserWalletGameDropsCurrent"
+        "operationId": "getUserWalletGameCurrent"
       }
     },
     "/user/wallet/merge/preview": {

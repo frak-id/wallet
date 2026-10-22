@@ -15,11 +15,11 @@ type GameRewardProps = {
     onContinue: () => void;
     /** EURe the redemption earned, still locked. */
     reward: number;
-    /** The drop joined; absent for a friend's code with no open drop. */
-    drop?: RedeemResult["drop"];
+    /** The game joined; absent for a friend's code with no open game. */
+    game?: RedeemResult["game"];
 };
 
-export function GameReward({ onContinue, reward, drop }: GameRewardProps) {
+export function GameReward({ onContinue, reward, game }: GameRewardProps) {
     const { t, i18n } = useTranslation();
     useConfettiBurst();
 
@@ -42,15 +42,15 @@ export function GameReward({ onContinue, reward, drop }: GameRewardProps) {
                         {t("onboarding.game.reward.description")}
                     </Text>
                 </Box>
-                {drop && <DropCard drop={drop} />}
+                {game && <JoinedGameCard game={game} />}
             </div>
         </PageLayout>
     );
 }
 
-function DropCard({ drop }: { drop: NonNullable<RedeemResult["drop"]> }) {
+function JoinedGameCard({ game }: { game: NonNullable<RedeemResult["game"]> }) {
     const { t, i18n } = useTranslation();
-    const endsAt = new Date(drop.endsAt).toLocaleString(i18n.language, {
+    const endsAt = new Date(game.endsAt).toLocaleString(i18n.language, {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -59,20 +59,23 @@ function DropCard({ drop }: { drop: NonNullable<RedeemResult["drop"]> }) {
     });
 
     return (
-        <Card variant="muted" className={styles.dropCard}>
+        <Card variant="muted" className={styles.gameCard}>
             <Text variant="bodySmall" color="secondary">
-                {t("onboarding.game.reward.drop.label")}
+                {t("onboarding.game.reward.game.label")}
             </Text>
-            <Text weight="semiBold">{drop.prizeDescription}</Text>
+            <Text weight="semiBold">
+                {game.prizeDescription ??
+                    formatGameAmount(game.prizeAmount, i18n.language)}
+            </Text>
             <Text variant="bodySmall" color="secondary">
-                {t("onboarding.game.reward.drop.endsAt", { date: endsAt })}
+                {t("onboarding.game.reward.game.endsAt", { date: endsAt })}
             </Text>
-            {drop.sponsor && (
+            {game.sponsor && (
                 <Inline space="xs" align="center" alignY="center">
-                    <MerchantLogo merchant={drop.sponsor} />
+                    <MerchantLogo merchant={game.sponsor} />
                     <Text variant="bodySmall" color="secondary">
-                        {t("onboarding.game.reward.drop.sponsor", {
-                            name: drop.sponsor.name,
+                        {t("onboarding.game.reward.game.sponsor", {
+                            name: game.sponsor.name,
                         })}
                     </Text>
                 </Inline>

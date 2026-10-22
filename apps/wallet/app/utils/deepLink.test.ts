@@ -593,7 +593,7 @@ describe("install deep link — ref", () => {
         });
     });
 
-    test("logged in: routes to the drop join screen with the code", async () => {
+    test("logged in: routes to the game join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const navigate = vi.fn();
 
@@ -721,7 +721,7 @@ describe("short referral deep link — /r/<code>", () => {
         expect(pendingActionsStore.getState().actions).toHaveLength(0);
     });
 
-    test("logged in: routes to the drop join screen with the code", async () => {
+    test("logged in: routes to the game join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
 
         const navigate = await open("https://wallet.frak.id/r/FRAKPA");

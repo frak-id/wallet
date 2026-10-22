@@ -8,7 +8,7 @@ export {
     RELEASE_GRACE_MS,
 } from "./missions";
 export {
-    CurrentDropResponseSchema,
-    DropSummarySchema,
+    CurrentGameResponseSchema,
+    GameSummarySchema,
     InviteRewardsSchema,
 } from "./schemas";

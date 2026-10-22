@@ -13,7 +13,7 @@ export const interactionTypes = {
     purchase: "purchase",
     custom: "custom",
     referralSignup: "referral_signup",
-    dropJoin: "drop_join",
+    gameJoin: "game_join",
 } as const;
 
 export const InteractionTypeSchema = t.Union([
@@ -22,7 +22,7 @@ export const InteractionTypeSchema = t.Union([
     t.Literal(interactionTypes.purchase),
     t.Literal(interactionTypes.custom),
     t.Literal(interactionTypes.referralSignup),
-    t.Literal(interactionTypes.dropJoin),
+    t.Literal(interactionTypes.gameJoin),
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
 

@@ -102,9 +102,9 @@ export type ReferralSignupPayload = {
     referrerIdentityGroupId: string;
 };
 
-/** The user joined a Frak Game drop; its rule matches on `drop.id`. */
-export type DropJoinPayload = {
-    dropId: string;
+/** The user joined a Frak Game; its rule matches on `game.id`. */
+export type GameJoinPayload = {
+    gameId: string;
 };
 
 export type InteractionPayload =
@@ -113,7 +113,7 @@ export type InteractionPayload =
     | PurchasePayload
     | CustomPayload
     | ReferralSignupPayload
-    | DropJoinPayload;
+    | GameJoinPayload;
 
 export type SettlementResult = {
     settledCount: number;

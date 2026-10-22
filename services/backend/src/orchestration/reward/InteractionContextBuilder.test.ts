@@ -58,10 +58,10 @@ describe("InteractionContextBuilder", () => {
         ]);
     });
 
-    it("exposes the joined drop to the rule conditions", async () => {
+    it("exposes the joined game to the rule conditions", async () => {
         const interaction = {
-            type: "drop_join",
-            payload: { dropId: "drop-1" },
+            type: "game_join",
+            payload: { gameId: "game-1" },
         } as InteractionLogSelect;
 
         const result = await buildBuilder().build(
@@ -71,7 +71,7 @@ describe("InteractionContextBuilder", () => {
             null
         );
 
-        expect(result.trigger).toBe("drop_join");
-        expect(result.context.drop).toEqual({ id: "drop-1" });
+        expect(result.trigger).toBe("game_join");
+        expect(result.context.game).toEqual({ id: "game-1" });
     });
 });

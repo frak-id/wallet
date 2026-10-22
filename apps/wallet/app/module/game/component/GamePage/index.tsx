@@ -13,43 +13,48 @@ import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
-import { useCurrentDrop } from "@/module/game/hook/useCurrentDrop";
+import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameTickets } from "@/module/game/hook/useGameTickets";
+import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 
 export function GamePage() {
-    const { t } = useTranslation();
-    const game = useCurrentDrop();
-    const drop = game.data;
-    const me = useGameTickets(drop?.joined ? drop.id : undefined);
+    const { t, i18n } = useTranslation();
+    const current = useCurrentGame();
+    const game = current.data?.game;
+    const participating = current.data?.me.participating;
+    const me = useGameTickets(participating ? game?.id : undefined);
 
-    if (drop && !drop.joined) return <Navigate to="/game/join" replace />;
+    if (game && !participating) return <Navigate to="/game/join" replace />;
 
     return (
         <Stack space="m">
             <Back href="/wallet" />
             <Title size="page">{t("game.card.title")}</Title>
-            {game.isError || me.isError ? (
+            {current.isError || me.isError ? (
                 <EmptyState
                     title={t("game.page.error")}
                     action={{
                         label: t("game.page.retry"),
                         onClick: () => {
-                            void game.refetch();
+                            void current.refetch();
                             void me.refetch();
                         },
                     }}
                 />
-            ) : drop === null ? (
+            ) : game === null ? (
                 <EmptyState
                     title={t("game.page.none.title")}
                     description={t("game.page.none.description")}
                 />
-            ) : !drop || !me.data ? (
+            ) : !game || !me.data ? (
                 <Skeleton variant="rect" height={160} />
             ) : (
                 <GameDetails
-                    prize={drop.prizeDescription}
-                    endsAt={drop.endsAt}
+                    prize={
+                        game.prizeDescription ??
+                        formatGameAmount(game.prizeAmount, i18n.language)
+                    }
+                    endsAt={game.endsAt}
                     tickets={me.data.tickets}
                     eligible={me.data.eligible}
                 />
@@ -92,7 +97,7 @@ function GameDetails({
                         {prize}
                     </Text>
                     <Text variant="bodySmall" color="secondary">
-                        {t("onboarding.game.reward.drop.endsAt", {
+                        {t("onboarding.game.reward.game.endsAt", {
                             date: endDate,
                         })}
                     </Text>

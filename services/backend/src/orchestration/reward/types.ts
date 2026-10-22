@@ -1,7 +1,7 @@
 import type {
     CampaignTrigger,
     CustomInteractionContext,
-    DropContext,
+    GameRuleContext,
     PurchaseContext,
     RuleContext,
 } from "../../domain/campaign";
@@ -19,6 +19,6 @@ export type TypeSpecificContextResult = {
     typeContext: {
         purchase?: PurchaseContext;
         custom?: CustomInteractionContext;
-        drop?: DropContext;
+        game?: GameRuleContext;
     };
 };

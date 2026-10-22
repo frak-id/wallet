@@ -7,18 +7,21 @@ import { useNavigate } from "@tanstack/react-router";
 import { Ticket } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useCurrentDrop } from "@/module/game/hook/useCurrentDrop";
+import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
+import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
 
 /** Wallet-home recap of the open game; hidden when there is none, while loading, or on error. */
 export function GameCard() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const { data: drop } = useCurrentDrop();
+    const { data } = useCurrentGame();
 
-    if (!drop) return null;
+    if (!data?.game) return null;
+    const { game, me } = data;
 
-    const open = () => navigate({ to: drop.joined ? "/game" : "/game/join" });
+    const open = () =>
+        navigate({ to: me.participating ? "/game" : "/game/join" });
     const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
@@ -43,14 +46,15 @@ export function GameCard() {
                         {t("game.card.title")}
                     </Text>
                     <Text variant="caption" color="secondary">
-                        {drop.prizeDescription}
+                        {game.prizeDescription ??
+                            formatGameAmount(game.prizeAmount, i18n.language)}
                     </Text>
                     <Box>
                         <Badge
                             size="small"
-                            variant={drop.joined ? "success" : "neutral"}
+                            variant={me.participating ? "success" : "neutral"}
                         >
-                            {drop.joined
+                            {me.participating
                                 ? t("game.card.participating")
                                 : t("game.card.notParticipating")}
                         </Badge>

@@ -2,19 +2,19 @@ import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { frakGame } from "@/module/game/config";
 
-export const currentDropKeys = {
-    all: ["game", "drops", "current"] as const,
+export const currentGameKeys = {
+    all: ["game", "current"] as const,
 };
 
-/** The open game (a drop) and whether the user joined it; `null` when none is open. */
-export function useCurrentDrop() {
+/** The open game (`null` when none is open) and the user's standing in it. */
+export function useCurrentGame() {
     return useQuery({
-        queryKey: currentDropKeys.all,
+        queryKey: currentGameKeys.all,
         queryFn: async () => {
             const { data, error } =
-                await authenticatedWalletApi.game.drops.current.get();
+                await authenticatedWalletApi.game.current.get();
             if (error) throw error;
-            return data.drop;
+            return data;
         },
         enabled: frakGame.enabled,
     });

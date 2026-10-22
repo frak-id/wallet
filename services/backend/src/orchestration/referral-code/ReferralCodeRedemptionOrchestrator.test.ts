@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CampaignRuleSelect } from "../../domain/campaign/db/schema";
-import type { DropSelect } from "../../domain/game/db/schema";
+import type { GameSelect } from "../../domain/game/db/schema";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { FRAK_REFERRAL_IDENTITY_GROUP_ID } from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
@@ -38,11 +38,12 @@ const userCode = code({
     kind: "user",
 });
 
-const openDrop: DropSelect = {
-    id: "drop-1",
+const openGame: GameSelect = {
+    id: "game-1",
     referralCodeId: "code-id",
     campaignRuleId: "rule-1",
     sponsorMerchantId: null,
+    prizeAmount: 100,
     prizeDescription: "100 EUR",
     startsAt: new Date(Date.now() - HOUR_MS),
     endsAt: new Date(Date.now() + HOUR_MS),
@@ -51,12 +52,12 @@ const openDrop: DropSelect = {
     updatedAt: new Date(),
 };
 
-const dropRule = {
+const gameRule = {
     id: "rule-1",
     merchantId: FRAK_MERCHANT_ID,
     status: "active",
     rule: {
-        trigger: "drop_join",
+        trigger: "game_join",
         conditions: [],
         rewards: [
             {
@@ -72,7 +73,7 @@ const dropRule = {
 } as unknown as CampaignRuleSelect;
 
 const signupRule = {
-    ...dropRule,
+    ...gameRule,
     id: "signup-rule",
     rule: {
         trigger: "referral_signup",
@@ -131,27 +132,29 @@ function makeOrchestrator() {
         createIdempotent: vi.fn().mockResolvedValue({ id: "interaction" }),
         existsByExternalEvent: vi.fn().mockResolvedValue(false),
     };
-    const dropRepository = {
+    const gameRepository = {
         findByReferralCodeId: vi.fn().mockResolvedValue(null),
-        findOpen: vi.fn().mockResolvedValue([]),
+        findCurrent: vi.fn().mockResolvedValue(null),
     };
+    const gamePlayer = { joinedAt: vi.fn().mockResolvedValue(null) };
     const campaignRuleRepository = {
-        findById: vi.fn().mockResolvedValue(dropRule),
+        findById: vi.fn().mockResolvedValue(gameRule),
         findActiveByMerchant: vi.fn().mockResolvedValue([signupRule]),
     };
 
     const frakGame = new FrakGameOrchestrator(
-        dropRepository as never,
+        gameRepository as never,
         campaignRuleRepository as never,
         { findById: vi.fn() } as never,
-        interactionLogRepository as never
+        interactionLogRepository as never,
+        gamePlayer as never
     );
     const orchestrator = new ReferralCodeRedemptionOrchestrator(
         referralCodeService as never,
         referralLinkRepository as never,
         identityRepository as never,
         interactionLogRepository as never,
-        dropRepository as never,
+        gameRepository as never,
         frakGame
     );
 
@@ -176,7 +179,8 @@ function makeOrchestrator() {
         referralLinkRepository,
         identityRepository,
         interactionLogRepository,
-        dropRepository,
+        gameRepository,
+        gamePlayer,
         campaignRuleRepository,
     };
 }
@@ -268,54 +272,53 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
     it("reports the referee's signup reward from the live signup rule", async () => {
         await expect(ctx.redeem("onboarding")).resolves.toMatchObject({
             signupReward: 1.5,
-            drop: undefined,
+            game: undefined,
         });
     });
 
-    it("joins the referrer's open drop with the signup", async () => {
-        ctx.dropRepository.findOpen.mockResolvedValue([openDrop]);
-        ctx.interactionLogRepository.existsByExternalEvent.mockImplementation(
-            async ({ externalEventId }: { externalEventId: string }) =>
-                externalEventId === "drop:drop-1:owner-group"
-        );
+    it("joins the current game with the signup of a friend's code", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
 
         const result = await ctx.redeem("onboarding");
 
-        expect(result.drop).toMatchObject({ id: "drop-1", reward: 1 });
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(result.gameReward).toBe(1);
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).toHaveBeenCalledWith(
             expect.objectContaining({
-                type: "drop_join",
+                type: "game_join",
                 identityGroupId: REFEREE,
-                payload: { dropId: "drop-1" },
+                externalEventId: `game_join:game-1:${REFEREE}`,
+                payload: { gameId: "game-1" },
             })
         );
     });
 
-    it.each([
-        { name: "the referrer has not joined", joined: false, used: 3 },
-        { name: "the drop is full", joined: true, used: 9.5 },
-    ])("skips the referrer's drop when $name", async (testCase) => {
-        ctx.dropRepository.findOpen.mockResolvedValue([openDrop]);
-        ctx.interactionLogRepository.existsByExternalEvent.mockResolvedValue(
-            testCase.joined
-        );
+    it("joins without a gameReward when the rule budget is exhausted", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
         ctx.campaignRuleRepository.findById.mockResolvedValue({
-            ...dropRule,
-            budgetUsed: { total: { used: testCase.used } },
+            ...gameRule,
+            budgetUsed: { total: { used: 9.5 } },
         });
 
         const result = await ctx.redeem("onboarding");
 
-        expect(result.drop).toBeUndefined();
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(result.gameReward).toBeUndefined();
+    });
+
+    it("returns no game when none is open", async () => {
+        const result = await ctx.redeem("onboarding");
+
+        expect(result.game).toBeUndefined();
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).toHaveBeenCalledTimes(1);
     });
 
-    it("does not link the referrer when the referrer's drops cannot be read", async () => {
-        ctx.dropRepository.findOpen.mockRejectedValue(new Error("db down"));
+    it("does not link the referrer when the current game cannot be read", async () => {
+        ctx.gameRepository.findCurrent.mockRejectedValue(new Error("db down"));
 
         await expect(ctx.redeem("onboarding")).rejects.toThrow("db down");
         expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
@@ -356,6 +359,16 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
         ).not.toHaveBeenCalled();
     });
 
+    it("does not join the current game for an existing user's friend code", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+
+        await ctx.redeem(undefined);
+
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).not.toHaveBeenCalled();
+    });
+
     it("does not link the referrer when the account check fails", async () => {
         ctx.identityRepository.findGroupById.mockRejectedValue(
             new Error("db down")
@@ -366,38 +379,39 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
     });
 });
 
-describe("ReferralCodeRedemptionOrchestrator drop join", () => {
+describe("ReferralCodeRedemptionOrchestrator game join", () => {
     let ctx: ReturnType<typeof makeOrchestrator>;
 
     beforeEach(() => {
         ctx = makeOrchestrator();
         ctx.referralCodeService.findByCode.mockResolvedValue(code());
-        ctx.dropRepository.findByReferralCodeId.mockResolvedValue(openDrop);
+        ctx.gameRepository.findByReferralCodeId.mockResolvedValue(openGame);
     });
 
-    it("joins the drop and sets Frak as referrer for a new account in onboarding", async () => {
+    it("joins the game and sets Frak as referrer for a new account in onboarding", async () => {
         const result = await ctx.redeem("onboarding");
 
         expect(result).toEqual({
             referrerIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
             kind: "frak",
-            drop: {
-                id: "drop-1",
+            game: {
+                id: "game-1",
+                prizeAmount: 100,
                 prizeDescription: "100 EUR",
-                reward: 1,
-                startsAt: openDrop.startsAt,
-                endsAt: openDrop.endsAt,
+                startsAt: openGame.startsAt,
+                endsAt: openGame.endsAt,
                 sponsor: null,
             },
+            gameReward: 1,
         });
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).toHaveBeenCalledWith({
-            type: "drop_join",
+            type: "game_join",
             identityGroupId: REFEREE,
             merchantId: FRAK_MERCHANT_ID,
-            externalEventId: `drop:drop-1:${REFEREE}`,
-            payload: { dropId: "drop-1" },
+            externalEventId: `game_join:game-1:${REFEREE}`,
+            payload: { gameId: "game-1" },
         });
         expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -441,53 +455,70 @@ describe("ReferralCodeRedemptionOrchestrator drop join", () => {
         ).not.toHaveBeenCalled();
     });
 
-    it("rejects a second join as ALREADY_JOINED", async () => {
-        ctx.interactionLogRepository.createIdempotent.mockResolvedValue(null);
+    it.each([
+        { name: "open", game: {} },
+        { name: "ended", game: { endsAt: new Date(Date.now() - 1000) } },
+        { name: "paused", game: { status: "paused" as const } },
+    ])(
+        "returns a $name game already joined without reward",
+        async (testCase) => {
+            ctx.gameRepository.findByReferralCodeId.mockResolvedValue({
+                ...openGame,
+                ...testCase.game,
+            });
+            ctx.gamePlayer.joinedAt.mockResolvedValue(new Date());
 
-        await expect(ctx.redeem("onboarding")).rejects.toMatchObject({
-            status: 409,
-            code: "ALREADY_JOINED",
-        });
-        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
-        expect(emit).not.toHaveBeenCalled();
-    });
+            const result = await ctx.redeem("onboarding");
+
+            expect(result.game).toMatchObject({ id: "game-1" });
+            expect(result.gameReward).toBeUndefined();
+            expect(
+                ctx.interactionLogRepository.createIdempotent
+            ).not.toHaveBeenCalled();
+            expect(emit).not.toHaveBeenCalled();
+        }
+    );
 
     it.each([
-        { name: "has ended", drop: { endsAt: new Date(Date.now() - 1000) } },
+        { name: "has ended", game: { endsAt: new Date(Date.now() - 1000) } },
         {
             name: "has not started",
-            drop: { startsAt: new Date(Date.now() + HOUR_MS) },
+            game: { startsAt: new Date(Date.now() + HOUR_MS) },
         },
-        { name: "is paused", drop: { status: "paused" as const } },
-        { name: "has a paused rule", rule: { status: "paused" as const } },
-    ])("rejects a drop that $name as DROP_CLOSED", async (testCase) => {
-        ctx.dropRepository.findByReferralCodeId.mockResolvedValue({
-            ...openDrop,
-            ...testCase.drop,
-        });
-        ctx.campaignRuleRepository.findById.mockResolvedValue({
-            ...dropRule,
-            ...testCase.rule,
+        { name: "is paused", game: { status: "paused" as const } },
+    ])("rejects a game that $name as GAME_CLOSED", async (testCase) => {
+        ctx.gameRepository.findByReferralCodeId.mockResolvedValue({
+            ...openGame,
+            ...testCase.game,
         });
 
         await expect(ctx.redeem(undefined)).rejects.toMatchObject({
             status: 409,
-            code: "DROP_CLOSED",
+            code: "GAME_CLOSED",
         });
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).not.toHaveBeenCalled();
     });
 
-    it("rejects a drop whose budget cannot pay one more join as DROP_FULL", async () => {
+    it.each([
+        { name: "paused", rule: { status: "paused" as const } },
+        {
+            name: "out of budget",
+            rule: { budgetUsed: { total: { used: 9.5 } } },
+        },
+    ])("joins without gameReward when the rule is $name", async (testCase) => {
         ctx.campaignRuleRepository.findById.mockResolvedValue({
-            ...dropRule,
-            budgetUsed: { total: { used: 9.5 } },
+            ...gameRule,
+            ...testCase.rule,
         });
 
-        await expect(ctx.redeem(undefined)).rejects.toMatchObject({
-            status: 409,
-            code: "DROP_FULL",
-        });
+        const result = await ctx.redeem(undefined);
+
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(result.gameReward).toBeUndefined();
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledWith(expect.objectContaining({ type: "game_join" }));
     });
 });

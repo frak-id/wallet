@@ -1,39 +1,40 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
-/** `paused` is the kill switch: the drop stops accepting joins at once. */
-export const DropStatusSchema = t.Union([
+/** `paused` is the kill switch: the game stops accepting joins at once. */
+export const GameStatusSchema = t.Union([
     t.Literal("active"),
     t.Literal("paused"),
 ]);
-export type DropStatus = Static<typeof DropStatusSchema>;
+export type GameStatus = Static<typeof GameStatusSchema>;
 
-const DropSponsorSchema = t.Object({
+const GameSponsorSchema = t.Object({
     id: t.String(),
     name: t.String(),
     domain: t.String(),
     logoUrl: t.Optional(t.String()),
 });
 
-/** What a wallet needs to show a drop it has joined or can join. */
-export const DropSummarySchema = t.Object({
+/** What a wallet needs to show a game it has joined or can join. */
+export const GameSummarySchema = t.Object({
     id: t.String(),
-    prizeDescription: t.String(),
-    /** Fixed join reward, in the Frak merchant's token (EURe). */
-    reward: t.Number(),
+    /** Prize value in EUR. */
+    prizeAmount: t.Number(),
+    prizeDescription: t.Union([t.String(), t.Null()]),
     startsAt: t.Date(),
     endsAt: t.Date(),
-    sponsor: t.Union([DropSponsorSchema, t.Null()]),
+    sponsor: t.Union([GameSponsorSchema, t.Null()]),
 });
-export type DropSummary = Static<typeof DropSummarySchema>;
+export type GameSummary = Static<typeof GameSummarySchema>;
 
-export const CurrentDropResponseSchema = t.Object({
-    drop: t.Union([
-        t.Composite([DropSummarySchema, t.Object({ joined: t.Boolean() })]),
-        t.Null(),
-    ]),
+export const CurrentGameResponseSchema = t.Object({
+    game: t.Union([GameSummarySchema, t.Null()]),
+    me: t.Object({
+        participating: t.Boolean(),
+        eligible: t.Boolean(),
+    }),
 });
-export type CurrentDropResponse = Static<typeof CurrentDropResponseSchema>;
+export type CurrentGameResponse = Static<typeof CurrentGameResponseSchema>;
 
 /** What each side of a friend's signup earns, in the Frak merchant's token (EURe). */
 export const InviteRewardsSchema = t.Object({

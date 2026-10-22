@@ -1,20 +1,20 @@
-import type { DropSelect } from "./db/schema";
+import type { GameSelect } from "./db/schema";
 
-export function isDropOpen(
-    drop: Pick<DropSelect, "status" | "startsAt" | "endsAt">,
+export function isGameOpen(
+    game: Pick<GameSelect, "status" | "startsAt" | "endsAt">,
     now: Date
 ): boolean {
     return (
-        drop.status === "active" && drop.startsAt <= now && now < drop.endsAt
+        game.status === "active" && game.startsAt <= now && now < game.endsAt
     );
 }
 
-/** One join per user per drop, enforced by the interaction idempotency index. */
-export function dropJoinExternalEventId(
-    dropId: string,
+/** One join interaction per game per joining group. */
+export function gameJoinExternalEventId(
+    gameId: string,
     identityGroupId: string
 ): string {
-    return `drop:${dropId}:${identityGroupId}`;
+    return `game_join:${gameId}:${identityGroupId}`;
 }
 
 /** One signup reward per referee, ever. */

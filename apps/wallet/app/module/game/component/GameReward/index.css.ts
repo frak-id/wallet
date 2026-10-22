@@ -31,7 +31,7 @@ export const amount = style({
     },
 });
 
-export const dropCard = style({
+export const gameCard = style({
     width: "100%",
     display: "flex",
     flexDirection: "column",

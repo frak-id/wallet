@@ -137,7 +137,7 @@ describe("LoginPage", () => {
         );
     });
 
-    test("should redirect to the drop join screen with a forwarded ref when there are no pending actions", async () => {
+    test("should redirect to the game join screen with a forwarded ref when there are no pending actions", async () => {
         mockSearch.current = { ref: "FRAKPA" };
 
         render(<LoginPage />);

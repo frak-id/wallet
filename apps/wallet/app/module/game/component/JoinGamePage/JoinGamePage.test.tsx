@@ -34,53 +34,66 @@ vi.mock("@/module/referral/component/RedeemReferralCodePage", () => ({
 vi.mock("@/module/game/component/GameReward", () => ({
     GameReward: ({
         reward,
-        drop,
+        game,
         onContinue,
     }: {
         reward: number;
-        drop?: { prizeDescription: string };
+        game?: { prizeDescription: string };
         onContinue: () => void;
     }) => (
         <button type="button" onClick={onContinue}>
-            reward-{reward} {drop?.prizeDescription}
+            reward-{reward} {game?.prizeDescription}
         </button>
     ),
 }));
 
-import { JoinDropPage } from "./index";
+import { JoinGamePage } from "./index";
 
-const drop = {
+const game = {
     id: "d1",
-    prizeDescription: "drop-prize",
-    reward: 1,
+    prizeAmount: 50,
+    prizeDescription: "game-prize",
     startsAt: new Date(),
     endsAt: new Date(),
     sponsor: null,
-} as unknown as NonNullable<RedeemResult["drop"]>;
+} as unknown as NonNullable<RedeemResult["game"]>;
 
-describe("JoinDropPage", () => {
+describe("JoinGamePage", () => {
     beforeEach(() => {
         navigate.mockClear();
         invalidateQueries.mockClear();
     });
 
-    it("pre-fills the code and shows the confetti screen once the drop is joined", () => {
-        redeemResult.current = { kind: "frak", drop };
-        render(<JoinDropPage initialCode="FRAK26" />);
+    it("pre-fills the code and shows the confetti screen once the game is joined", () => {
+        redeemResult.current = { kind: "frak", game, gameReward: 1 };
+        render(<JoinGamePage initialCode="FRAK26" />);
 
         fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
-        expect(screen.getByText(/reward-1 drop-prize/)).toBeInTheDocument();
+        expect(screen.getByText(/reward-1 game-prize/)).toBeInTheDocument();
         expect(invalidateQueries).toHaveBeenCalledWith({
-            queryKey: ["game", "drops", "current"],
+            queryKey: ["game", "current"],
         });
 
         fireEvent.click(screen.getByText(/reward-1/));
         expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
     });
 
+    it("goes straight to the game page when re-joining a game without a reward", () => {
+        redeemResult.current = { kind: "frak", game };
+        render(<JoinGamePage initialCode="FRAK26" />);
+
+        fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
+
+        expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
+        expect(invalidateQueries).toHaveBeenCalledWith({
+            queryKey: ["game", "current"],
+        });
+        expect(screen.queryByText(/reward-/)).not.toBeInTheDocument();
+    });
+
     it("hands a friend's code back to the referral page", () => {
         redeemResult.current = { kind: "user" };
-        render(<JoinDropPage initialCode="LOLA10" />);
+        render(<JoinGamePage initialCode="LOLA10" />);
 
         fireEvent.click(screen.getByRole("button", { name: /LOLA10/ }));
 

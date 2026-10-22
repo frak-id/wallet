@@ -1,5 +1,5 @@
 import type {
-    DropSummary,
+    GameSummary,
     InviteRewards,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
 import type {
@@ -23,8 +23,10 @@ type RedeemInput = {
 
 export type RedeemResult = {
     kind: ReferralCodeKind;
-    /** The drop joined: its own code, or the friend's open drop on signup. */
-    drop?: DropSummary;
+    /** The game joined: its own code, or the current open game on a friend's signup. */
+    game?: GameSummary;
+    /** The Frak Game reward queued by this call, in EURe. */
+    gameReward?: number;
     /** The caller's Frak Game signup reward, in EURe. */
     signupReward?: number;
     /** What each side earns per friend's signup, in EURe. */

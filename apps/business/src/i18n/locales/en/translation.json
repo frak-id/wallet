@@ -880,7 +880,7 @@
                     "create_referral_link": "Referral link created",
                     "custom": "Custom",
                     "referral_signup": "Referred signup",
-                    "drop_join": "Drop joined"
+                    "game_join": "Game joined"
                 },
                 "saveError": "Could not save the reward. Check that it is compatible with the product targeting."
             }
@@ -1033,7 +1033,7 @@
                     "create_referral_link": "A user creates a sharing link",
                     "custom": "A custom interaction is tracked",
                     "referral_signup": "A referred user creates their Frak account",
-                    "drop_join": "A user joins a Frak Game drop"
+                    "game_join": "A user joins a Frak Game"
                 },
                 "productScope": {
                     "title": "Products covered",

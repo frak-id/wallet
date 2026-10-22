@@ -1,9 +1,9 @@
 import { businessMetrics, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
-import type { DropSelect } from "../../domain/game/db/schema";
-import type { DropRepository } from "../../domain/game/repositories/DropRepository";
-import type { DropSummary } from "../../domain/game/schemas";
+import type { GameSelect } from "../../domain/game/db/schema";
+import type { GameRepository } from "../../domain/game/repositories/GameRepository";
+import type { GameSummary } from "../../domain/game/schemas";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import { FRAK_CODE_ONBOARDING_WINDOW_MS } from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
@@ -26,8 +26,10 @@ type RedeemParams = {
 export type RedeemResult = {
     referrerIdentityGroupId: string;
     kind: ReferralCodeKind;
-    /** The drop joined: its own code, or the referrer's open drop on a friend's signup. */
-    drop?: DropSummary;
+    /** The game joined: its own code, or the current open game on a friend's signup. */
+    game?: GameSummary;
+    /** Reward queued by this join; absent on a re-join or an empty budget. */
+    gameReward?: number;
     /** The caller's signup reward, set when a friend's signup was recorded. */
     signupReward?: number;
 };
@@ -38,16 +40,16 @@ export class ReferralCodeRedemptionOrchestrator {
         private readonly referralLinkRepository: ReferralLinkRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly dropRepository: DropRepository,
+        private readonly gameRepository: GameRepository,
         private readonly frakGame: FrakGameOrchestrator
     ) {}
 
     /**
      * Redeem a referral code: a friend's or Frak code sets the caller's single
-     * cross-merchant referrer, a drop code joins its drop. A new account on a
-     * friend's code also joins the friend's open drops. Errors are
-     * `HttpError`s: 404 `NOT_FOUND`, 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`,
-     * `ALREADY_REDEEMED`, `DROP_CLOSED`, `DROP_FULL`, `ALREADY_JOINED`.
+     * cross-merchant referrer, a game code joins its game. A friend's signup
+     * also joins the current open game. Errors are `HttpError`s: 404
+     * `NOT_FOUND`, 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`, `ALREADY_REDEEMED`,
+     * `GAME_CLOSED`.
      */
     async redeem(params: RedeemParams): Promise<RedeemResult> {
         const referralCode = await this.referralCodeService.findByCode(
@@ -58,11 +60,11 @@ export class ReferralCodeRedemptionOrchestrator {
         }
 
         if (referralCode.kind === "frak") {
-            const drop = await this.dropRepository.findByReferralCodeId(
+            const game = await this.gameRepository.findByReferralCodeId(
                 referralCode.id
             );
-            if (drop) {
-                return this.joinDrop(drop, referralCode, params);
+            if (game) {
+                return this.joinGame(game, referralCode, params);
             }
             await this.assertFrakCodeRedeemable(
                 referralCode,
@@ -73,7 +75,7 @@ export class ReferralCodeRedemptionOrchestrator {
 
         // Read before linking: once linked, a retry fails as ALREADY_REDEEMED.
         const signupPlan = (await this.paysSignup(referralCode, params))
-            ? await this.frakGame.planSignup(referralCode.ownerIdentityGroupId)
+            ? await this.frakGame.planSignup()
             : null;
 
         await this.linkReferrer(referralCode, params.refereeIdentityGroupId);
@@ -89,7 +91,8 @@ export class ReferralCodeRedemptionOrchestrator {
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
-            drop: signup?.drop,
+            game: signup?.game,
+            gameReward: signup?.gameReward,
             signupReward: signup?.reward,
         };
     }
@@ -165,21 +168,20 @@ export class ReferralCodeRedemptionOrchestrator {
 
     /**
      * Joining never takes the referrer slot, so existing users and users with
-     * a friend as referrer can join every drop. A brand-new account still gets
+     * a friend as referrer can join the game. A brand-new account still gets
      * Frak as referrer, like a plain Frak code.
      */
-    private async joinDrop(
-        drop: DropSelect,
+    private async joinGame(
+        game: GameSelect,
         referralCode: ReferralCodeSelect,
         { refereeIdentityGroupId, context }: RedeemParams
     ): Promise<RedeemResult> {
-        // Read before joining: once joined, a retry fails as ALREADY_JOINED.
         const rejection = await this.frakGateRejection(
             refereeIdentityGroupId,
             context
         );
-        const summary = await this.frakGame.joinDrop(
-            drop,
+        const joined = await this.frakGame.joinGame(
+            game,
             refereeIdentityGroupId
         );
         if (!rejection) {
@@ -191,14 +193,14 @@ export class ReferralCodeRedemptionOrchestrator {
         }
 
         log.info(
-            { dropId: drop.id, refereeIdentityGroupId, linkedFrak: !rejection },
-            "Drop joined"
+            { gameId: game.id, refereeIdentityGroupId, linkedFrak: !rejection },
+            "Game joined"
         );
 
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             kind: referralCode.kind,
-            drop: summary,
+            ...joined,
         };
     }
 
