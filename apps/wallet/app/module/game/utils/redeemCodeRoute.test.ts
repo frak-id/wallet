@@ -10,7 +10,7 @@ describe("redeemCodeRoute", () => {
         mockGame.enabled = false;
     });
 
-    it("sends a shared code to the drop join screen while the game is on", () => {
+    it("sends a shared code to the game join screen while the game is on", () => {
         mockGame.enabled = true;
 
         expect(redeemCodeRoute("FRAK26")).toEqual({

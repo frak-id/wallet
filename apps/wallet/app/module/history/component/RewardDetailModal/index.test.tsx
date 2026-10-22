@@ -55,7 +55,7 @@ describe("RewardDetailModal", () => {
     test("dates a reward without a purchase as earned, not purchased", () => {
         const { getByText, queryByText } = render(
             <RewardDetailModal
-                item={makeItem({ status: "locked", trigger: "drop_join" })}
+                item={makeItem({ status: "locked", trigger: "game_join" })}
                 onClose={vi.fn()}
             />
         );

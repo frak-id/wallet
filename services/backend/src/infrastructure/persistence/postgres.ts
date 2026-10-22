@@ -18,7 +18,7 @@ import {
     businessSessionsTable,
 } from "../../domain/business-auth/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
-import { dropsTable } from "../../domain/game/db/schema";
+import { gamesTable } from "../../domain/game/db/schema";
 import {
     emailVerificationCodesTable,
     identityGroupsTable,
@@ -100,7 +100,7 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
-        dropsTable,
+        gamesTable,
         affiliateBrandTable,
         affiliateAttributionTable,
         affiliateSyncStateTable,

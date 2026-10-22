@@ -516,7 +516,7 @@ function RegisterPage() {
             {step === "gameReward" && gameRedeem && (
                 <GameReward
                     reward={gameRewardOf(gameRedeem)}
-                    drop={gameRedeem.drop}
+                    game={gameRedeem.game}
                     onContinue={() => goToStep("gameRules")}
                 />
             )}

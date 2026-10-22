@@ -9,22 +9,26 @@ import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { GameReward } from "@/module/game/component/GameReward";
 import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
-import { currentDropKeys } from "@/module/game/hook/useCurrentDrop";
+import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
 import { RedeemForm } from "@/module/referral/component/RedeemReferralCodePage";
 
-export function JoinDropPage({ initialCode }: { initialCode?: string }) {
+export function JoinGamePage({ initialCode }: { initialCode?: string }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [joined, setJoined] = useState<RedeemResult | null>(null);
 
     const handleRedeemed = (result: RedeemResult) => {
-        if (result.drop) {
+        if (result.game) {
             void queryClient.invalidateQueries({
-                queryKey: currentDropKeys.all,
+                queryKey: currentGameKeys.all,
             });
-            setJoined(result);
+            if (gameRewardOf(result) > 0) {
+                setJoined(result);
+                return;
+            }
+            navigate({ to: "/game", replace: true });
             return;
         }
         // A friend's code became the referrer: the referral page shows it as before.
@@ -35,7 +39,7 @@ export function JoinDropPage({ initialCode }: { initialCode?: string }) {
         return (
             <GameReward
                 reward={gameRewardOf(joined)}
-                drop={joined.drop}
+                game={joined.game}
                 onContinue={() => navigate({ to: "/game", replace: true })}
             />
         );

@@ -67,15 +67,15 @@ describe("GameReward", () => {
         expect(onContinue).toHaveBeenCalled();
     });
 
-    it("shows the joined drop's prize, end date and sponsor", () => {
+    it("shows the joined game's prize, end date and sponsor", () => {
         render(
             <GameReward
                 reward={1}
                 onContinue={vi.fn()}
-                drop={{
+                game={{
                     id: "d1",
+                    prizeAmount: 100,
                     prizeDescription: "100 € en bon d'achat",
-                    reward: 1,
                     startsAt: new Date("2026-10-21T18:00:00Z"),
                     endsAt: new Date("2026-10-23T18:00:00Z"),
                     sponsor: {
@@ -88,13 +88,32 @@ describe("GameReward", () => {
         );
 
         expect(screen.getByText("100 € en bon d'achat")).toBeInTheDocument();
-        expect(screen.getByText(/reward\.drop\.endsAt/).textContent).toMatch(
+        expect(screen.getByText(/reward\.game\.endsAt/).textContent).toMatch(
             /octobre/
         );
-        expect(screen.getByText(/reward\.drop\.sponsor/).textContent).toContain(
+        expect(screen.getByText(/reward\.game\.sponsor/).textContent).toContain(
             "Oolution"
         );
         expect(screen.getByText("O.")).toBeInTheDocument();
+    });
+
+    it("shows the formatted prize amount without a description", () => {
+        render(
+            <GameReward
+                reward={1}
+                onContinue={vi.fn()}
+                game={{
+                    id: "d1",
+                    prizeAmount: 100,
+                    prizeDescription: null,
+                    startsAt: new Date("2026-10-21T18:00:00Z"),
+                    endsAt: new Date("2026-10-23T18:00:00Z"),
+                    sponsor: null,
+                }}
+            />
+        );
+
+        expect(screen.getByText(/^100\s€$/)).toBeInTheDocument();
     });
 
     it("shows the sponsor's logo when it has one", () => {
@@ -102,10 +121,10 @@ describe("GameReward", () => {
             <GameReward
                 reward={1}
                 onContinue={vi.fn()}
-                drop={{
+                game={{
                     id: "d1",
+                    prizeAmount: 100,
                     prizeDescription: "Un an de produits",
-                    reward: 1,
                     startsAt: new Date("2026-10-21T18:00:00Z"),
                     endsAt: new Date("2026-10-23T18:00:00Z"),
                     sponsor: {
@@ -124,11 +143,11 @@ describe("GameReward", () => {
         );
     });
 
-    it("shows no drop card for a friend's code", () => {
+    it("shows no game card for a friend's code", () => {
         render(<GameReward reward={1} onContinue={vi.fn()} />);
 
         expect(
-            screen.queryByText("onboarding.game.reward.drop.label")
+            screen.queryByText("onboarding.game.reward.game.label")
         ).not.toBeInTheDocument();
     });
 });

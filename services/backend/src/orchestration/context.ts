@@ -27,7 +27,11 @@ import {
     CampaignStatsOrchestrator,
 } from "./campaigns";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
-import { FrakGameOrchestrator, MissionUnlockOrchestrator } from "./game";
+import {
+    FrakGameOrchestrator,
+    GamePlayerOrchestrator,
+    MissionUnlockOrchestrator,
+} from "./game";
 import {
     AnonymousMergeOrchestrator,
     AuthenticatorLookupOrchestrator,
@@ -207,11 +211,14 @@ const missionUnlockOrchestrator = new MissionUnlockOrchestrator(
     RewardsContext.repositories.assetLog
 );
 
+const gamePlayerOrchestrator = new GamePlayerOrchestrator();
+
 const frakGameOrchestrator = new FrakGameOrchestrator(
-    GameContext.repositories.drop,
+    GameContext.repositories.game,
     CampaignContext.repositories.campaignRule,
     MerchantContext.repositories.merchant,
-    RewardsContext.repositories.interactionLog
+    RewardsContext.repositories.interactionLog,
+    gamePlayerOrchestrator
 );
 
 const referralCodeRedemptionOrchestrator =
@@ -220,7 +227,7 @@ const referralCodeRedemptionOrchestrator =
         AttributionContext.repositories.referralLink,
         IdentityContext.repositories.identity,
         RewardsContext.repositories.interactionLog,
-        GameContext.repositories.drop,
+        GameContext.repositories.game,
         frakGameOrchestrator
     );
 

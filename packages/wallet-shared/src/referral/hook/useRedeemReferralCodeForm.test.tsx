@@ -235,6 +235,29 @@ describe("useRedeemReferralCodeForm", () => {
         );
     });
 
+    test("maps a 409 GAME_CLOSED error to the game closed key", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            error: { value: { code: "GAME_CLOSED" }, status: 409 },
+        } as never);
+
+        const { result } = renderHook(() => useRedeemReferralCodeForm(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        act(() => result.current.handleChange(makeChange("abcdef")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+
+        await waitFor(() =>
+            expect(result.current.errorMessageKey).toBe(
+                "wallet.referral.redeem.errorGameClosed"
+            )
+        );
+    });
+
     test("resetErrorOnChange clears mutation error on edit", async ({
         queryWrapper,
     }) => {

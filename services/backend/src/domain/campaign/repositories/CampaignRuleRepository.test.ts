@@ -20,7 +20,7 @@ const campaignWith = (
     budgetConfig: BudgetConfig | null,
     used: number
 ): Parameters<typeof hasRemainingBudget>[0] => ({
-    rule: { trigger: "drop_join", conditions: [], rewards },
+    rule: { trigger: "game_join", conditions: [], rewards },
     budgetConfig,
     budgetUsed: { total: { used } },
 });

@@ -1,9 +1,9 @@
-import { DropRepository } from "./repositories/DropRepository";
+import { GameRepository } from "./repositories/GameRepository";
 
-const dropRepository = new DropRepository();
+const gameRepository = new GameRepository();
 
 export namespace GameContext {
     export const repositories = {
-        drop: dropRepository,
+        game: gameRepository,
     };
 }

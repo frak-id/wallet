@@ -4,7 +4,7 @@ import type { PurchaseContext } from "../../domain/campaign";
 import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
     CustomPayload,
-    DropJoinPayload,
+    GameJoinPayload,
     PurchasePayload,
 } from "../../domain/rewards/types";
 import type {
@@ -94,11 +94,16 @@ export class InteractionContextBuilder {
                     typeContext: {},
                 };
 
-            case "drop_join": {
-                const payload = interaction.payload as DropJoinPayload;
+            case "game_join": {
+                const payload = interaction.payload as GameJoinPayload;
                 return {
-                    trigger: "drop_join",
-                    typeContext: { drop: { id: payload.dropId } },
+                    trigger: "game_join",
+                    typeContext: {
+                        game: {
+                            id: payload.gameId,
+                            newcomer: payload.newcomer === true,
+                        },
+                    },
                 };
             }
         }

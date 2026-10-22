@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
-import { JoinDropPage } from "@/module/game/component/JoinDropPage";
+import { JoinGamePage } from "@/module/game/component/JoinGamePage";
 import { frakGame } from "@/module/game/config";
 
 type JoinSearch = {
@@ -26,5 +26,5 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
     const { code } = Route.useSearch();
-    return <JoinDropPage initialCode={code} />;
+    return <JoinGamePage initialCode={code} />;
 }

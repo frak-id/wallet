@@ -91,8 +91,9 @@ export type CustomInteractionContext = {
     data: Record<string, unknown>;
 };
 
-export type DropContext = {
+export type GameRuleContext = {
     id: string;
+    newcomer: boolean;
 };
 
 export type RuleContext = {
@@ -101,7 +102,7 @@ export type RuleContext = {
     user: UserContext;
     time: TimeContext;
     custom?: CustomInteractionContext;
-    drop?: DropContext;
+    game?: GameRuleContext;
 };
 
 export type CalculatedReward = {

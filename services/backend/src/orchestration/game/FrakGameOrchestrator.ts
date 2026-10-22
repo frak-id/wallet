@@ -5,16 +5,16 @@ import {
     type CampaignRuleRepository,
     hasRemainingBudget,
 } from "../../domain/campaign/repositories/CampaignRuleRepository";
-import type { DropSelect } from "../../domain/game/db/schema";
-import type { DropRepository } from "../../domain/game/repositories/DropRepository";
+import type { GameSelect } from "../../domain/game/db/schema";
+import type { GameRepository } from "../../domain/game/repositories/GameRepository";
 import type {
-    CurrentDropResponse,
-    DropSummary,
+    CurrentGameResponse,
+    GameSummary,
     InviteRewards,
 } from "../../domain/game/schemas";
 import {
-    dropJoinExternalEventId,
-    isDropOpen,
+    gameJoinExternalEventId,
+    isGameOpen,
     signupExternalEventId,
 } from "../../domain/game/utils";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
@@ -26,25 +26,25 @@ import {
     interactionTypes,
     type RecipientType,
 } from "../../domain/rewards/schemas";
+import type { GamePlayerOrchestrator } from "./GamePlayerOrchestrator";
 
 type FrakInteraction = Pick<
     InteractionLogInsert,
     "type" | "identityGroupId" | "payload"
 > & { externalEventId: string };
 
-type JoinRejection = "DROP_CLOSED" | "DROP_FULL";
-
-const rejectionMessages: Record<JoinRejection, string> = {
-    DROP_CLOSED: "This drop is closed",
-    DROP_FULL: "This drop is full",
-};
-
-type JoinPlan = { drop: DropSelect; summary: DropSummary };
+/** `gameReward` is set only for a newcomer whose call created the join interaction. */
+type JoinOutcome = { game: GameSummary; gameReward?: number };
 
 /** Read before the referrer link is written, applied after it. */
-export type SignupPlan = { reward?: number; drops: JoinPlan[] };
+export type SignupPlan = {
+    reward?: number;
+    game?: { game: GameSelect; summary: GameSummary };
+};
 
-export type SignupOutcome = { reward?: number; drop?: DropSummary };
+export type SignupOutcome = { reward?: number; game?: GameSummary };
+
+const NOT_PLAYING = { participating: false, tickets: 0, eligible: false };
 
 /** Sum of a rule's fixed rewards for `recipient`, in the rule's token. */
 function fixedPayout(rule: CampaignRuleSelect, recipient: RecipientType) {
@@ -59,24 +59,39 @@ function fixedPayout(rule: CampaignRuleSelect, recipient: RecipientType) {
 
 export class FrakGameOrchestrator {
     constructor(
-        private readonly dropRepository: DropRepository,
+        private readonly gameRepository: GameRepository,
         private readonly campaignRuleRepository: CampaignRuleRepository,
         private readonly merchantRepository: MerchantRepository,
-        private readonly interactionLogRepository: InteractionLogRepository
+        private readonly interactionLogRepository: InteractionLogRepository,
+        private readonly gamePlayerOrchestrator: GamePlayerOrchestrator
     ) {}
 
-    async getCurrentDrop(
+    async getCurrentGame(
         identityGroupId: string
-    ): Promise<CurrentDropResponse> {
-        const drop = await this.dropRepository.findCurrent(new Date());
-        if (!drop) return { drop: null };
+    ): Promise<CurrentGameResponse> {
+        const game = await this.gameRepository.findCurrent(new Date());
+        if (!game) return { game: null, me: NOT_PLAYING };
 
-        const [rule, joined] = await Promise.all([
-            this.campaignRuleRepository.findById(drop.campaignRuleId),
-            this.hasJoined(drop.id, identityGroupId),
+        const [summary, joinedAt] = await Promise.all([
+            this.summarize(game),
+            this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
         ]);
-        const summary = await this.summarize(drop, rule);
-        return { drop: { ...summary, joined } };
+        const tickets = joinedAt
+            ? await this.gamePlayerOrchestrator.ticketsOf(
+                  game,
+                  identityGroupId,
+                  joinedAt
+              )
+            : 0;
+        return {
+            game: summary,
+            // Constant until the eligibility rules exist.
+            me: {
+                participating: joinedAt !== null,
+                tickets,
+                eligible: false,
+            },
+        };
     }
 
     /** Per-friend amounts of the live signup rule, null when none is live. */
@@ -92,46 +107,37 @@ export class FrakGameOrchestrator {
         };
     }
 
-    /** 409 `DROP_CLOSED`, `DROP_FULL` or `ALREADY_JOINED`; reads run before the join is written. */
-    async joinDrop(
-        drop: DropSelect,
-        identityGroupId: string
-    ): Promise<DropSummary> {
-        const plan = await this.planJoin(drop);
-        if ("rejection" in plan) {
-            throw HttpError.conflict(
-                plan.rejection,
-                rejectionMessages[plan.rejection]
-            );
+    /** Only a `newcomer` earns the join reward; 409 `GAME_CLOSED` for a closed game never joined. */
+    async joinGame(
+        game: GameSelect,
+        identityGroupId: string,
+        newcomer: boolean
+    ): Promise<JoinOutcome> {
+        const joinedAt = await this.gamePlayerOrchestrator.joinedAt(
+            game.id,
+            identityGroupId
+        );
+        if (joinedAt) return { game: await this.summarize(game) };
+        if (!isGameOpen(game, new Date())) {
+            throw HttpError.conflict("GAME_CLOSED", "This game is closed");
         }
-        if (!(await this.writeJoin(drop, identityGroupId))) {
-            throw HttpError.conflict(
-                "ALREADY_JOINED",
-                "Already joined this drop"
-            );
-        }
-        return plan.summary;
+        const [summary, reward] = await Promise.all([
+            this.summarize(game),
+            newcomer ? this.joinReward(game) : undefined,
+        ]);
+        const created = await this.writeJoin(game, identityGroupId, newcomer);
+        return { game: summary, gameReward: created ? reward : undefined };
     }
 
-    /** The signup reward and the referrer's open drops the referee joins with it. */
-    async planSignup(referrerIdentityGroupId: string): Promise<SignupPlan> {
-        const [invite, open] = await Promise.all([
+    /** The signup reward and the open game the referee joins with it. */
+    async planSignup(): Promise<SignupPlan> {
+        const [invite, game] = await Promise.all([
             this.inviteRewards(),
-            this.dropRepository.findOpen(new Date()),
+            this.gameRepository.findCurrent(new Date()),
         ]);
-        const plans = await Promise.all(
-            open.map(async (drop) => {
-                const [joined, plan] = await Promise.all([
-                    this.hasJoined(drop.id, referrerIdentityGroupId),
-                    this.planJoin(drop),
-                ]);
-                return joined && "summary" in plan ? plan : null;
-            })
-        );
-        return {
-            reward: invite?.referee,
-            drops: plans.filter((plan) => plan !== null),
-        };
+        if (!game) return { reward: invite?.referee };
+        const summary = await this.summarize(game);
+        return { reward: invite?.referee, game: { game, summary } };
     }
 
     /** Pays both sides once the signup rule is live; one per referee, ever. */
@@ -149,47 +155,34 @@ export class FrakGameOrchestrator {
                 referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             },
         });
-        let drop: DropSummary | undefined;
-        for (const join of plan.drops) {
-            if (await this.writeJoin(join.drop, refereeIdentityGroupId)) {
-                drop ??= join.summary;
-            }
+        if (!plan.game) return { reward: plan.reward };
+
+        await this.writeJoin(plan.game.game, refereeIdentityGroupId, false);
+        return { reward: plan.reward, game: plan.game.summary };
+    }
+
+    /** The rule's referee payout, unless it is paused or out of budget; never blocks a join. */
+    private async joinReward(game: GameSelect): Promise<number | undefined> {
+        const rule = await this.campaignRuleRepository.findById(
+            game.campaignRuleId
+        );
+        if (rule?.status !== "active" || !hasRemainingBudget(rule)) {
+            return undefined;
         }
-        return { reward: plan.reward, drop };
+        return fixedPayout(rule, "referee") || undefined;
     }
 
-    private hasJoined(dropId: string, identityGroupId: string) {
-        return this.interactionLogRepository.existsByExternalEvent({
-            merchantId: FRAK_MERCHANT_ID,
-            type: interactionTypes.dropJoin,
-            externalEventId: dropJoinExternalEventId(dropId, identityGroupId),
-        });
-    }
-
-    /** The budget check is best effort: the cap itself is `consumeBudget`. */
-    private async planJoin(
-        drop: DropSelect
-    ): Promise<JoinPlan | { rejection: JoinRejection }> {
-        const rule = isDropOpen(drop, new Date())
-            ? await this.campaignRuleRepository.findById(drop.campaignRuleId)
-            : null;
-        if (rule?.status !== "active") {
-            return { rejection: "DROP_CLOSED" };
-        }
-        if (!hasRemainingBudget(rule)) return { rejection: "DROP_FULL" };
-        return { drop, summary: await this.summarize(drop, rule) };
-    }
-
-    /** False when the user already joined this drop. */
-    private writeJoin(
-        drop: DropSelect,
-        identityGroupId: string
+    /** True when this call created the join interaction, which is what gets paid. */
+    private async writeJoin(
+        game: GameSelect,
+        identityGroupId: string,
+        newcomer: boolean
     ): Promise<boolean> {
         return this.logInteraction({
-            type: interactionTypes.dropJoin,
+            type: interactionTypes.gameJoin,
             identityGroupId,
-            externalEventId: dropJoinExternalEventId(drop.id, identityGroupId),
-            payload: { dropId: drop.id },
+            externalEventId: gameJoinExternalEventId(game.id, identityGroupId),
+            payload: { gameId: game.id, newcomer },
         });
     }
 
@@ -204,19 +197,16 @@ export class FrakGameOrchestrator {
         return created !== null;
     }
 
-    private async summarize(
-        drop: DropSelect,
-        rule: CampaignRuleSelect | null
-    ): Promise<DropSummary> {
-        const sponsor = drop.sponsorMerchantId
-            ? await this.merchantRepository.findById(drop.sponsorMerchantId)
+    private async summarize(game: GameSelect): Promise<GameSummary> {
+        const sponsor = game.sponsorMerchantId
+            ? await this.merchantRepository.findById(game.sponsorMerchantId)
             : null;
         return {
-            id: drop.id,
-            prizeDescription: drop.prizeDescription,
-            reward: rule ? fixedPayout(rule, "referee") : 0,
-            startsAt: drop.startsAt,
-            endsAt: drop.endsAt,
+            id: game.id,
+            prizeAmount: game.prizeAmount,
+            prizeDescription: game.prizeDescription,
+            startsAt: game.startsAt,
+            endsAt: game.endsAt,
             sponsor: sponsor && {
                 id: sponsor.id,
                 name: sponsor.name,

@@ -387,9 +387,7 @@
                 "errorSelf": "You can't use your own code.",
                 "errorCycle": "This code can't be used with your account.",
                 "errorAlreadyRedeemed": "You already have an active referral code.",
-                "errorDropClosed": "This drop is over. Watch for the next one on Instagram.",
-                "errorDropFull": "This drop is full. Try again on the next one.",
-                "errorAlreadyJoined": "You've already joined this drop.",
+                "errorGameClosed": "This game isn't open right now. Watch for the next one on Instagram.",
                 "errorInvalid": "This code isn't valid.",
                 "errorGeneric": "Something went wrong. Please try again.",
                 "confirmDelete": {
@@ -975,8 +973,8 @@
             "reward": {
                 "title": "You're in the game!",
                 "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
-                "drop": {
-                    "label": "Drop prize",
+                "game": {
+                    "label": "Game prize",
                     "endsAt": "Until {{date}}",
                     "sponsor": "Offered by {{name}}"
                 }

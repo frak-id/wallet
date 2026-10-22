@@ -7,13 +7,15 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 type MockRedeem = {
     kind: "user" | "frak";
-    drop?: { prizeDescription: string; reward: number };
+    game?: { prizeDescription: string };
+    gameReward?: number;
     signupReward?: number;
 };
 
-const dropCodeRedeem: MockRedeem = {
+const gameCodeRedeem: MockRedeem = {
     kind: "frak",
-    drop: { prizeDescription: "drop-prize", reward: 1 },
+    game: { prizeDescription: "game-prize" },
+    gameReward: 1,
 };
 
 const { mockGame, track, referralStatus, redeem } = vi.hoisted(() => ({
@@ -104,16 +106,16 @@ vi.mock("@/module/game/component/GameReward", () => ({
     GameReward: ({
         onContinue,
         reward,
-        drop,
+        game,
     }: {
         onContinue: () => void;
         reward: number;
-        drop?: { prizeDescription: string };
+        game?: { prizeDescription: string };
     }) => (
         <div>
             <span>game-reward</span>
             <span>reward-{reward}</span>
-            {drop && <span>{drop.prizeDescription}</span>}
+            {game && <span>{game.prizeDescription}</span>}
             <button type="button" onClick={onContinue}>
                 continue
             </button>
@@ -168,7 +170,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         modalStore.getState().dismissAll();
         pendingActionsStore.getState().clearAll();
         referralStatus.data = undefined;
-        redeem.result = dropCodeRedeem;
+        redeem.result = gameCodeRedeem;
         track.mockClear();
     });
 
@@ -200,7 +202,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
 
         click("apply");
         expect(screen.getByText("game-reward")).toBeInTheDocument();
-        expect(screen.getByText("drop-prize")).toBeInTheDocument();
+        expect(screen.getByText("game-prize")).toBeInTheDocument();
 
         click("continue");
         expect(screen.getByText("game-rules")).toBeInTheDocument();
@@ -248,15 +250,15 @@ describe("RegisterPage — Frak Game onboarding", () => {
         expect(screen.getByText("game-reward")).toBeInTheDocument();
     });
 
-    test("flag on: a friend's signup shows its own reward plus the friend's drop", () => {
+    test("flag on: a friend's signup shows its own reward plus the friend's game", () => {
         mockGame.enabled = true;
-        redeem.result = { ...dropCodeRedeem, kind: "user", signupReward: 1.5 };
+        redeem.result = { ...gameCodeRedeem, kind: "user", signupReward: 1.5 };
         reachReferralCode();
 
         click("apply");
 
         expect(screen.getByText("reward-2.5")).toBeInTheDocument();
-        expect(screen.getByText("drop-prize")).toBeInTheDocument();
+        expect(screen.getByText("game-prize")).toBeInTheDocument();
     });
 
     test("flag on: a code that earns no game reward keeps the applied toast", () => {

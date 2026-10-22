@@ -9,7 +9,7 @@ import type {
     RewardDefinition,
 } from "../src/domain/campaign/schemas";
 import { GameContext } from "../src/domain/game/context";
-import type { DropStatus } from "../src/domain/game/schemas";
+import type { GameStatus } from "../src/domain/game/schemas";
 import { FRAK_MERCHANT_ID } from "../src/domain/merchant/constants";
 import { MerchantContext } from "../src/domain/merchant/context";
 import { FRAK_SHARED_CAMPAIGN_BANK } from "../src/domain/merchant/services/MerchantRegistrationService";
@@ -20,16 +20,16 @@ const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
       seed the Frak merchant on the shared campaign bank (idempotent)
   signup-rule --referrer <amount> --referee <amount> --budget <amount> [--unlock-days 30]
       publish the referral signup rule (pause it from the business dashboard)
-  drop create --code <CODE> --reward <amount> --budget <amount> --starts <iso> --ends <iso> --prize <text>
-              [--sponsor <merchantId>] [--unlock-days 30]
-      open a drop on a Frak code issued with scripts/frakReferralCode.ts
-  drop list | drop pause <CODE> | drop resume <CODE>
-Amounts are in EURe. --unlock-days: how long a reward waits for its mission.
+  game create --code <CODE> --reward <amount> --budget <amount> --starts <iso> --ends <iso> --prize-amount <eur>
+              [--prize <text>] [--sponsor <merchantId>] [--unlock-days 30]
+      open a game on a Frak code issued with scripts/frakReferralCode.ts
+  game list | game pause <CODE> | game resume <CODE>
+Amounts are in EURe, except --prize-amount (EUR). --unlock-days: how long a reward waits for its mission.
 Every reward is held until a first brand reward: the referrer's signup reward
 waits for the referee's, every other reward for its own recipient's.`;
 
-// The drop rule outlives the drop so joins processed after the close still pay.
-const DROP_RULE_GRACE_MS = 24 * 60 * 60 * 1000;
+// The game rule outlives the game so joins processed after the close still pay.
+const GAME_RULE_GRACE_MS = 24 * 60 * 60 * 1000;
 
 const { values: opts, positionals } = parseArgs({
     args: process.argv.slice(2),
@@ -43,6 +43,7 @@ const { values: opts, positionals } = parseArgs({
         budget: { type: "string" },
         starts: { type: "string" },
         ends: { type: "string" },
+        "prize-amount": { type: "string" },
         prize: { type: "string" },
         code: { type: "string" },
         sponsor: { type: "string" },
@@ -160,79 +161,94 @@ async function findFrakCode(raw: string) {
     return code;
 }
 
-async function createDrop() {
+async function createGame() {
     await requireFrakMerchant();
     const code = await findFrakCode(required("code"));
-    if (await GameContext.repositories.drop.findByReferralCodeId(code.id)) {
-        fail(`Code ${code.code} already has a drop`);
+    if (await GameContext.repositories.game.findByReferralCodeId(code.id)) {
+        fail(`Code ${code.code} already has a game`);
     }
     const startsAt = date("starts");
     const endsAt = date("ends");
     if (endsAt <= startsAt) fail("--ends must be after --starts");
+    const prizeAmount = positive("prize-amount");
 
-    const dropId = randomUUID();
+    const now = new Date();
+    const overlapping = (await GameContext.repositories.game.list()).find(
+        (game) =>
+            game.endsAt > now &&
+            game.startsAt < endsAt &&
+            startsAt < game.endsAt
+    );
+    if (overlapping) fail(`The window overlaps game ${overlapping.id}`);
+
+    const gameId = randomUUID();
     const rule = await publishRule({
-        name: `Frak Game drop ${code.code}`,
-        trigger: "drop_join",
+        name: `Frak Game ${code.code}`,
+        trigger: "game_join",
         rewards: [["referee", positive("reward")]],
-        conditions: [{ field: "drop.id", operator: "eq", value: dropId }],
+        conditions: [
+            { field: "game.id", operator: "eq", value: gameId },
+            { field: "game.newcomer", operator: "eq", value: true },
+        ],
         maxRewardsPerUser: 1,
-        expiresAt: new Date(endsAt.getTime() + DROP_RULE_GRACE_MS),
+        expiresAt: new Date(endsAt.getTime() + GAME_RULE_GRACE_MS),
     });
-    const drop = await GameContext.repositories.drop.create({
-        id: dropId,
+    const game = await GameContext.repositories.game.create({
+        id: gameId,
         referralCodeId: code.id,
         campaignRuleId: rule.id,
         sponsorMerchantId: opts.sponsor ?? null,
-        prizeDescription: required("prize"),
+        prizeAmount,
+        prizeDescription: opts.prize ?? null,
         startsAt,
         endsAt,
     });
-    console.log(`Opened drop ${drop.id} on ${code.code} (rule ${rule.id})`);
+    console.log(`Opened game ${game.id} on ${code.code} (rule ${rule.id})`);
 }
 
-async function listDrops() {
-    const drops = await GameContext.repositories.drop.list();
+async function listGames() {
+    const games = await GameContext.repositories.game.list();
     const rows = await Promise.all(
-        drops.map(async (drop) => {
+        games.map(async (game) => {
             const [code, rule] = await Promise.all([
                 ReferralCodeContext.repositories.referralCode.findById(
-                    drop.referralCodeId
+                    game.referralCodeId
                 ),
                 CampaignContext.repositories.campaignRule.findById(
-                    drop.campaignRuleId
+                    game.campaignRuleId
                 ),
             ]);
             return {
                 code: code?.code ?? "?",
-                status: drop.status,
-                startsAt: drop.startsAt.toISOString(),
-                endsAt: drop.endsAt.toISOString(),
+                status: game.status,
+                startsAt: game.startsAt.toISOString(),
+                endsAt: game.endsAt.toISOString(),
                 ruleStatus: rule?.status ?? "?",
                 budgetUsed: JSON.stringify(rule?.budgetUsed ?? {}),
-                prize: drop.prizeDescription,
+                prizeAmount: game.prizeAmount,
+                prize: game.prizeDescription,
             };
         })
     );
     console.table(rows);
 }
 
-async function setDropStatus(raw: string | undefined, status: DropStatus) {
+async function setGameStatus(raw: string | undefined, status: GameStatus) {
     if (!raw) fail(USAGE);
     const code = await findFrakCode(raw);
-    const drop = await GameContext.repositories.drop.setStatus(code.id, status);
-    if (!drop) fail(`No drop on code ${code.code}`);
-    console.log(`Drop ${code.code} is now ${status}`);
+    const game = await GameContext.repositories.game.setStatus(code.id, status);
+    if (!game) fail(`No game on code ${code.code}`);
+    console.log(`Game ${code.code} is now ${status}`);
 }
 
 const [command, action, arg] = positionals;
 if (command === "merchant") await seedMerchant();
 else if (command === "signup-rule") await createSignupRule();
-else if (command === "drop" && action === "create") await createDrop();
-else if (command === "drop" && action === "list") await listDrops();
-else if (command === "drop" && action === "pause")
-    await setDropStatus(arg, "paused");
-else if (command === "drop" && action === "resume")
-    await setDropStatus(arg, "active");
+else if (command === "game" && action === "create") await createGame();
+else if (command === "game" && action === "list") await listGames();
+else if (command === "game" && action === "pause")
+    await setGameStatus(arg, "paused");
+else if (command === "game" && action === "resume")
+    await setGameStatus(arg, "active");
 else fail(USAGE);
 process.exit(0);
