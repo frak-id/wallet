@@ -41,11 +41,13 @@ function makeOrchestrator(
     opts: {
         game?: GameSelect | null;
         joinedAt?: Date | null;
+        tickets?: number;
         created?: boolean;
         rule?: CampaignRuleSelect;
     } = {}
 ) {
     const joinedAt = vi.fn().mockResolvedValue(opts.joinedAt ?? null);
+    const ticketsOf = vi.fn().mockResolvedValue(opts.tickets ?? 0);
     const createIdempotent = vi
         .fn()
         .mockResolvedValue(opts.created === false ? null : { id: "i-1" });
@@ -61,39 +63,46 @@ function makeOrchestrator(
         } as never,
         { findById: vi.fn() } as never,
         { createIdempotent } as never,
-        { joinedAt } as never
+        { joinedAt, ticketsOf } as never
     );
-    return { orchestrator, joinedAt, createIdempotent };
+    return { orchestrator, joinedAt, ticketsOf, createIdempotent };
 }
 
 describe("FrakGameOrchestrator.getCurrentGame", () => {
-    it("reports a participant of the open game", async () => {
-        const { orchestrator, joinedAt } = makeOrchestrator({
+    it("returns the ticket count of a participant", async () => {
+        const { orchestrator, ticketsOf } = makeOrchestrator({
             joinedAt: JOINED_AT,
+            tickets: 7,
         });
 
         const result = await orchestrator.getCurrentGame(USER);
 
-        expect(joinedAt).toHaveBeenCalledWith(game.id, USER);
-        expect(result.me).toEqual({ participating: true, eligible: false });
+        expect(ticketsOf).toHaveBeenCalledWith(game, USER, JOINED_AT);
+        expect(result.me).toEqual({
+            participating: true,
+            tickets: 7,
+            eligible: false,
+        });
     });
 
-    it("reports a user who has not joined", async () => {
-        const { orchestrator } = makeOrchestrator();
+    it("returns 0 tickets without counting when not participating", async () => {
+        const { orchestrator, ticketsOf } = makeOrchestrator();
 
         const result = await orchestrator.getCurrentGame(USER);
 
-        expect(result.me).toEqual({ participating: false, eligible: false });
+        expect(ticketsOf).not.toHaveBeenCalled();
+        expect(result.me.tickets).toBe(0);
+        expect(result.me.participating).toBe(false);
     });
 
-    it("returns no game when none is open", async () => {
+    it("returns 0 tickets when there is no game", async () => {
         const { orchestrator } = makeOrchestrator({ game: null });
 
         const result = await orchestrator.getCurrentGame(USER);
 
         expect(result).toEqual({
             game: null,
-            me: { participating: false, eligible: false },
+            me: { participating: false, tickets: 0, eligible: false },
         });
     });
 });

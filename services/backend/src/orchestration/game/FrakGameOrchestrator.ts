@@ -44,7 +44,7 @@ export type SignupPlan = {
 
 export type SignupOutcome = { reward?: number } & Partial<JoinOutcome>;
 
-const NOT_PLAYING = { participating: false, eligible: false };
+const NOT_PLAYING = { participating: false, tickets: 0, eligible: false };
 
 /** Sum of a rule's fixed rewards for `recipient`, in the rule's token. */
 function fixedPayout(rule: CampaignRuleSelect, recipient: RecipientType) {
@@ -76,10 +76,21 @@ export class FrakGameOrchestrator {
             this.summarize(game),
             this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
         ]);
+        const tickets = joinedAt
+            ? await this.gamePlayerOrchestrator.ticketsOf(
+                  game,
+                  identityGroupId,
+                  joinedAt
+              )
+            : 0;
         return {
             game: summary,
             // Constant until the eligibility rules exist.
-            me: { participating: joinedAt !== null, eligible: false },
+            me: {
+                participating: joinedAt !== null,
+                tickets,
+                eligible: false,
+            },
         };
     }
 

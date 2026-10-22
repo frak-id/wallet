@@ -136,7 +136,10 @@ function makeOrchestrator() {
         findByReferralCodeId: vi.fn().mockResolvedValue(null),
         findCurrent: vi.fn().mockResolvedValue(null),
     };
-    const gamePlayer = { joinedAt: vi.fn().mockResolvedValue(null) };
+    const gamePlayer = {
+        joinedAt: vi.fn().mockResolvedValue(null),
+        ticketsOf: vi.fn().mockResolvedValue(0),
+    };
     const campaignRuleRepository = {
         findById: vi.fn().mockResolvedValue(gameRule),
         findActiveByMerchant: vi.fn().mockResolvedValue([signupRule]),

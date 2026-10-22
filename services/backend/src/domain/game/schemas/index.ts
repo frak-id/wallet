@@ -31,6 +31,7 @@ export const CurrentGameResponseSchema = t.Object({
     game: t.Union([GameSummarySchema, t.Null()]),
     me: t.Object({
         participating: t.Boolean(),
+        tickets: t.Number(),
         eligible: t.Boolean(),
     }),
 });

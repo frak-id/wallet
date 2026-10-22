@@ -8230,11 +8230,15 @@
                       "type": "object",
                       "required": [
                         "participating",
+                        "tickets",
                         "eligible"
                       ],
                       "properties": {
                         "participating": {
                           "type": "boolean"
+                        },
+                        "tickets": {
+                          "type": "number"
                         },
                         "eligible": {
                           "type": "boolean"
