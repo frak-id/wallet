@@ -57,6 +57,8 @@ public enum Frak {
                 configDefault: effective.trackingEnabled,
                 logger: logger
             )
+            // One instance too: the client learns the offset from responses, the identity store stamps with it.
+            let serverClock = ServerClock(logger: logger)
             let newCore = DefaultFrakClient(
                 settings: effective,
                 store: store,
@@ -66,12 +68,14 @@ public enum Frak {
                     logger: logger,
                     // App scope == merchant scope; regenerated if this ever changes.
                     merchantMarker: effective.merchantId ?? effective.bundleId ?? "",
-                    consent: consent
+                    consent: consent,
+                    serverClock: serverClock
                 ),
                 consent: consent,
                 queue: EventQueue(fileURL: EventQueue.defaultFileURL(logger: logger), logger: logger),
                 launcher: SystemAppLauncher(),
-                logger: logger
+                logger: logger,
+                serverClock: serverClock
             )
             core = newCore
             instance = FrakClient(core: newCore)
