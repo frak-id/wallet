@@ -15,6 +15,12 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Identity proofs are stamped with the server's clock.** An iPhone whose clock ran more than
+  60 s fast had every install and merge proof rejected; the SDK now corrects for the offset it sees
+  in the backend's `Date` header. A device that is 30 s or more off logs one warning.
+
 ## [1.0.0] - 2026-09-08
 
 ### Changed
