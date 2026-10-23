@@ -82,7 +82,7 @@ struct ServerClockTests {
 @Suite("Server clock wiring")
 struct ServerClockWiringTests {
     private static let merchantId = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e"
-    // Thu, 23 Oct 2026 15:07:53 GMT
+    // Fri, 23 Oct 2026 15:07:53 GMT
     private static let serverSeconds: Int64 = 1_792_768_073
 
     private func makeHTTP(
@@ -119,7 +119,7 @@ struct ServerClockWiringTests {
         let device = Date(timeIntervalSince1970: TimeInterval(Self.serverSeconds + 90))
         let clock = ServerClock(now: { device })
         let http = makeHTTP(clock: clock) { _ in
-            StubResponse(status: 200, body: "{}", headers: ["Date": "Thu, 23 Oct 2026 15:07:53 GMT"])
+            StubResponse(status: 200, body: "{}", headers: ["Date": "Fri, 23 Oct 2026 15:07:53 GMT"])
         }
         let identity = makeIdentity(clock: clock)
 
@@ -143,7 +143,7 @@ struct ServerClockWiringTests {
         let device = Date(timeIntervalSince1970: TimeInterval(Self.serverSeconds + 90))
         let clock = ServerClock(now: { device })
         let http = makeHTTP(clock: clock) { _ in
-            StubResponse(status: 503, body: "{}", headers: ["Date": "Thu, 23 Oct 2026 15:07:53 GMT"])
+            StubResponse(status: 503, body: "{}", headers: ["Date": "Fri, 23 Oct 2026 15:07:53 GMT"])
         }
 
         _ = try await http.get("/user/merchant/resolve")
