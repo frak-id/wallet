@@ -1,4 +1,5 @@
 export type {
+    SdkAssetPushContext,
     SdkComponentEventMap,
     SdkEventMap,
     SdkHandshakeFailureReason,
