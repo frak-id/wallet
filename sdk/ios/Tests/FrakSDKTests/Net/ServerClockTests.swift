@@ -163,4 +163,63 @@ struct ServerClockWiringTests {
 
         #expect(clock.nowSeconds() == Self.serverSeconds + 90)
     }
+
+    @Test("a merge rejected for a fast device clock succeeds on the next drain, re-signed with the server's time")
+    func fastClockMergeHealsOnNextDrain() async throws {
+        let device = Date(timeIntervalSince1970: TimeInterval(Self.serverSeconds + 120))
+        let clock = ServerClock(now: { device })
+        let requests = RequestLog()
+        let http = makeHTTP(clock: clock) { request in
+            requests.record(request)
+            let headers = ["Date": "Fri, 23 Oct 2026 15:07:53 GMT"]
+            guard let proof = request.stubJSON["proof"] as? String else { throw URLError(.cannotParseResponse) }
+            if try timestamp(of: proof) > Self.serverSeconds + 60 {
+                return StubResponse(status: 403, body: #"{"code":"PROOF_INVALID"}"#, headers: headers)
+            }
+            return StubResponse(status: 200, body: #"{"finalGroupId":"g-1","merged":true}"#, headers: headers)
+        }
+        let identity = makeIdentity(clock: clock)
+        let anonymousId = try #require(await identity.anonymousId())
+        let logger = FrakLogger(level: .none)
+        let queue = EventQueue(
+            fileURL: FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString, isDirectory: true)
+                .appendingPathComponent(EventQueue.fileName),
+            logger: logger
+        )
+        let outbox = EventOutbox(
+            queue: queue,
+            http: http,
+            logger: logger,
+            senders: RowSenders.default(logger: logger),
+            currentClientId: { await identity.anonymousId() },
+            resolveMerchantId: { nil },
+            signProof: { op, merchantId, binding in
+                await identity.signProof(op, merchantId: merchantId, binding: binding)
+            }
+        )
+        await queue.append(
+            QueuedRow(
+                idempotencyKey: "merge-token-1",
+                kind: MergeSender.kind,
+                payload: "{}",
+                clientId: anonymousId,
+                merchantId: Self.merchantId,
+                capturedAt: Date()
+            )
+        )
+
+        await outbox.flush()
+
+        try #require(requests.count == 1)
+        #expect(try timestamp(of: #require(requests.all[0].stubJSON["proof"] as? String)) == Self.serverSeconds + 120)
+        #expect(await queue.read(now: Date()).count == 1)
+
+        await outbox.flush()
+
+        try #require(requests.count == 2)
+        let healed = try timestamp(of: #require(requests.all[1].stubJSON["proof"] as? String))
+        #expect(abs(healed - Self.serverSeconds) <= 2)
+        #expect(await queue.read(now: Date()).isEmpty)
+    }
 }
