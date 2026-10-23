@@ -143,6 +143,7 @@ export {
     withCache,
 } from "./utils";
 export type {
+    SdkAssetPushContext,
     SdkEventMap,
     SdkHandshakeFailureReason,
 } from "./utils/analytics";

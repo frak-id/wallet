@@ -4,6 +4,7 @@ import type { SdkReferralEventMap } from "./referral";
 
 export type { SdkComponentEventMap } from "./component";
 export type {
+    SdkAssetPushContext,
     SdkHandshakeFailureReason,
     SdkLifecycleEventMap,
 } from "./lifecycle";

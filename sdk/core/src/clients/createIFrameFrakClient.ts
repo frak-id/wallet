@@ -19,7 +19,11 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { clearAllCache } from "../utils/cache";
-import { HANDSHAKE_TIMEOUT_MS, trackHandshake } from "./handshakeTracking";
+import {
+    HANDSHAKE_TIMEOUT_MS,
+    type TrackLifecycle,
+    trackHandshake,
+} from "./handshakeTracking";
 import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
@@ -137,6 +141,7 @@ export async function createIFrameFrakClient({
     };
 
     let openPanel: OpenPanel | undefined;
+    let track: TrackLifecycle | undefined;
     if (
         process.env.OPEN_PANEL_API_URL &&
         process.env.OPEN_PANEL_SDK_CLIENT_ID
@@ -190,8 +195,9 @@ export async function createIFrameFrakClient({
         });
 
         const panel = openPanel;
+        track = (event, properties) => panel.track(event, properties);
         trackHandshake({
-            track: (event, properties) => panel.track(event, properties),
+            track,
             isConnected: lifecycleManager.isConnected,
             iframe,
             startedAt: handshakeStartedAt,
@@ -205,6 +211,7 @@ export async function createIFrameFrakClient({
         configPromise,
         contextSent,
         openPanel,
+        track,
         clientId: resolvedClientId,
     })
         .then((stopRepush) => {
@@ -396,6 +403,7 @@ async function postConnectionSetup({
     configPromise,
     contextSent,
     openPanel,
+    track,
     clientId,
 }: {
     config: FrakWalletSdkConfig;
@@ -404,6 +412,7 @@ async function postConnectionSetup({
     configPromise: Promise<MerchantConfigResult> | undefined;
     contextSent: Deferred<void>;
     openPanel: OpenPanel | undefined;
+    track: TrackLifecycle | undefined;
     /** Resolved once by the caller — see `createIFrameFrakClient`. */
     clientId: string | undefined;
 }): Promise<() => void> {
@@ -568,7 +577,11 @@ async function postConnectionSetup({
 
     async function pushBackup() {
         if (typeof window === "undefined") return;
-        const backup = window.localStorage.getItem(BACKUP_KEY);
+        let backup: string | null = null;
+        try {
+            // Blocked storage throws SecurityError: that is "no backup", not a failed push.
+            backup = window.localStorage.getItem(BACKUP_KEY);
+        } catch {}
         if (!backup) return;
         rpcClient.sendLifecycle({
             clientLifecycle: "restore-backup",
@@ -576,20 +589,27 @@ async function postConnectionSetup({
         });
     }
 
-    // Inspect each setup result — a failed CSS/i18n/backup push leaves the
-    // partner UI in a broken-but-connected state (iframe reports
-    // `sdk_iframe_connected`, user sees no modal styles / wrong locale).
-    // Surface it as a distinct handshake reason so dashboards can
-    // distinguish timeout vs. asset-push failures.
-    const results = await Promise.allSettled([
-        pushCss(),
-        pushI18n(),
-        pushBackup(),
-    ]);
-    const hasFailedAssetPush = results.some((r) => r.status === "rejected");
-    if (hasFailedAssetPush) {
-        openPanel?.track("sdk_iframe_handshake_failed", {
+    // A failed push leaves the partner UI connected but unstyled or mis-localized;
+    // report the first one, once, so it stays distinct from a handshake timeout.
+    const pushes = [
+        ["css", pushCss()],
+        ["i18n", pushI18n()],
+        ["backup", pushBackup()],
+    ] as const;
+    const results = await Promise.allSettled(pushes.map(([, push]) => push));
+    const failedIndex = results.findIndex((r) => r.status === "rejected");
+    const failed = results[failedIndex];
+    if (failed?.status === "rejected") {
+        const { reason } = failed;
+        const isError = reason instanceof Error;
+        track?.("sdk_iframe_handshake_failed", {
             reason: "asset_push",
+            asset: pushes[failedIndex][0],
+            error_name: isError ? reason.name : typeof reason,
+            error_message: (isError ? reason.message : String(reason)).slice(
+                0,
+                200
+            ),
         });
     }
 
