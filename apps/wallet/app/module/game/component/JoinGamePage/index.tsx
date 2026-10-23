@@ -19,15 +19,17 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
     const queryClient = useQueryClient();
     const [joined, setJoined] = useState<RedeemResult | null>(null);
 
-    const handleRedeemed = (result: RedeemResult) => {
+    const handleRedeemed = async (result: RedeemResult) => {
         if (result.game) {
-            void queryClient.invalidateQueries({
+            // Refetch, not invalidate: nothing observes the query here, and /game bounces back on a stale non-participant.
+            const refetched = queryClient.refetchQueries({
                 queryKey: currentGameKeys.all,
             });
             if (gameRewardOf(result) > 0) {
                 setJoined(result);
                 return;
             }
+            await refetched;
             navigate({ to: "/game", replace: true });
             return;
         }

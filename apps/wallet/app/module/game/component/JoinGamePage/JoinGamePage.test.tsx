@@ -1,16 +1,16 @@
 import type { RedeemResult } from "@frak-labs/wallet-shared";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, invalidateQueries, redeemResult } = vi.hoisted(() => ({
+const { navigate, refetchQueries, redeemResult } = vi.hoisted(() => ({
     navigate: vi.fn(),
-    invalidateQueries: vi.fn(),
+    refetchQueries: vi.fn(() => Promise.resolve()),
     redeemResult: { current: { kind: "frak" } as RedeemResult },
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
 vi.mock("@tanstack/react-query", () => ({
-    useQueryClient: () => ({ invalidateQueries }),
+    useQueryClient: () => ({ refetchQueries }),
 }));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
@@ -61,7 +61,7 @@ const game = {
 describe("JoinGamePage", () => {
     beforeEach(() => {
         navigate.mockClear();
-        invalidateQueries.mockClear();
+        refetchQueries.mockClear();
     });
 
     it("pre-fills the code and shows the confetti screen once the game is joined", () => {
@@ -70,7 +70,7 @@ describe("JoinGamePage", () => {
 
         fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
         expect(screen.getByText(/reward-1 game-prize/)).toBeInTheDocument();
-        expect(invalidateQueries).toHaveBeenCalledWith({
+        expect(refetchQueries).toHaveBeenCalledWith({
             queryKey: ["game", "current"],
         });
 
@@ -78,14 +78,27 @@ describe("JoinGamePage", () => {
         expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
     });
 
-    it("goes straight to the game page when re-joining a game without a reward", () => {
+    it("goes to the game page once the game is refetched when joining without a reward", async () => {
+        let refetchDone = () => {};
+        refetchQueries.mockReturnValueOnce(
+            new Promise<void>((resolve) => {
+                refetchDone = resolve;
+            })
+        );
         redeemResult.current = { kind: "frak", game };
         render(<JoinGamePage initialCode="FRAK26" />);
 
         fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
+        expect(navigate).not.toHaveBeenCalled();
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
-        expect(invalidateQueries).toHaveBeenCalledWith({
+        refetchDone();
+        await waitFor(() =>
+            expect(navigate).toHaveBeenCalledWith({
+                to: "/game",
+                replace: true,
+            })
+        );
+        expect(refetchQueries).toHaveBeenCalledWith({
             queryKey: ["game", "current"],
         });
         expect(screen.queryByText(/reward-/)).not.toBeInTheDocument();
