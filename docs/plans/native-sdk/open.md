@@ -4,7 +4,7 @@ Only open and partial items. Closed findings are not listed; git history has the
 the original audits (`A*`/`S*`/`T*`/`D*` round 1, `2.x`–`8.x` round 2, `9.x` round 3, `§n` from the
 2026-08-13 alpha audit) so older commit messages still resolve.
 
-**State as of 2026-10-13** (HEAD `5638ed04f`) for §0, §1, §3 (S11, §3.7, the install rungs), §4
+**State as of 2026-10-13** (HEAD `5638ed04f`) for §0, §1, §3 (S11, the install rungs), §4
 (§2.3, §2.4, §3.6), §5, §8 (FRA-307, the harness gaps, 9.13) and the `1.0.0` facts, each read against
 the tree. Every other row keeps its 2026-08-14 read. Any count or severity below without a date and
 a verification method is suspect — that was the failure mode of the register this replaces.
@@ -81,7 +81,6 @@ Open, tracked, knowingly not being worked.
 
 | Id | Item | Platform | Verified |
 |---|---|---|---|
-| §3.7 | **Clock skew, mostly fixed.** A device 61 s fast failed every proof, non-retryably. Both platforms now stamp from the backend `Date` header (`ServerClock`: Android `net/ServerClock.kt`, iOS `Net/ServerClock.swift`, iOS ported 2026-10-23), adopting only a `Date` between 2025-01-01 and 2100-01-01; the backend widened the merge window 2→10 min on the past side and `MAX_FUTURE_SKEW_SECONDS=60` is untouched. **What remains, on both platforms:** the offset is not persisted, so a cold start runs on the device clock until the first response. Measured on gcp-dev with the iOS SDK and a device clock 120 s fast: the first install proof before any response got 403 `PROOF_INVALID`, that 403's `Date` corrected the clock, and a proof signed after one response got 200. It has to change on both together | both open | iOS port verified 2026-10-23 |
 | S4 | iOS keeps the resolve cache in Preferences, not Caches, with no backup exclusion. A per-read xattr mitigation was tried and reverted — `cfprefsd` reallocates the inode on every flush. Now a decision, not a design problem: the config cache is the SDK's own copy of someone else's data, so leaving it backed up is defensible. **Decide and record, or move it** | iOS | read |
 | S5 / 3.7 | Unbounded peak memory reading a response body. Android streams in 8 KiB chunks and aborts past 1 MiB; iOS stays on a pre-check plus post-buffer cap, so a chunked or lying response is unbounded during the read. A streaming rewrite was tried and reverted (`session.bytes(for:)` is ~100k suspensions per response) | iOS | read |
 | S11 | The sharing WebView URL puts `clientId` in a query string, and nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent` — zero references in either module. It fails closed by design in the core: `buildSharingLink` checks consent first (`DefaultFrakClient.kt:213`, `DefaultFrakClient.swift:259`) and the failure reaches `SharingResult.Failed`. One guard, in the core; none in the UI modules | both | read 2026-10-13 |
