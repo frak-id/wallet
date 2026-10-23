@@ -57,8 +57,15 @@ message for the failure case.
 The port is `Net/ServerClock.swift`, fed by `HTTPClient` and read by
 `AnonymousIdStore.signProof`, with the same 2025-01-01 … 2100-01-01 bound as Android.
 
-Still open, on both platforms and to be changed together: the offset is not persisted, so a cold
-start runs on the device clock until the first response.
+The offset is deliberately not persisted. A cold start runs on the device clock until the first
+response, and a merge signed in that window is refused once: the 403 carries a `Date` that corrects
+the clock, the outbox keeps the row (`maxFailures = 3`) and re-signs on the next drain, and the
+backend checks the proof before it spends the merge token. A persisted offset would instead outlive
+a correction of the device clock and push proofs into the future. On gcp-dev, a device 120 s fast got
+403 `PROOF_INVALID` on its first proof and 200 once one response had been seen. Both platforms pin
+the retry with a test that fails if the 403 stops correcting the clock, the outbox drops a rejected
+merge, or the sender reuses a proof: `MergeClockSelfHealTest` (Android) and the "Server clock
+wiring" suite in `ServerClockTests.swift` (iOS).
 
 ## 4. The device tier
 
