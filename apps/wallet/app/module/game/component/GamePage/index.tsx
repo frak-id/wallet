@@ -5,14 +5,18 @@ import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CartIcon, ReferralIcon } from "@frak-labs/design-system/icons";
+import {
+    CartIcon,
+    LinkIcon,
+    ReferralIcon,
+} from "@frak-labs/design-system/icons";
 import { ExternalLink } from "@frak-labs/wallet-shared";
 import { Navigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
-import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
+import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 
@@ -101,14 +105,31 @@ function GameDetails({
                 </Stack>
             </Card>
             {!eligible && (
-                <Notice tone="warning">
-                    <Trans
-                        i18nKey="game.page.locked"
-                        components={{
-                            igLink: <ExternalLink href={FRAK_INSTAGRAM_URL} />,
-                        }}
-                    />
-                </Notice>
+                <Stack space="xs">
+                    <Notice tone="warning">
+                        <Trans
+                            i18nKey={
+                                frakGame.instagramLink
+                                    ? "game.page.lockedLink"
+                                    : "game.page.locked"
+                            }
+                            components={{
+                                igLink: (
+                                    <ExternalLink href={FRAK_INSTAGRAM_URL} />
+                                ),
+                            }}
+                        />
+                    </Notice>
+                    {frakGame.instagramLink && (
+                        <InfoCard>
+                            <InfoRow
+                                icon={LinkIcon}
+                                label={t("game.page.linkCta")}
+                                to="/game/instagram"
+                            />
+                        </InfoCard>
+                    )}
+                </Stack>
             )}
             <Stack space="xs">
                 <Text weight="semiBold">{t("game.page.more")}</Text>

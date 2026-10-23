@@ -1009,7 +1009,38 @@
                 "description": "Le prochain jeu sera annoncé sur Instagram."
             },
             "error": "Impossible de charger le jeu.",
-            "retry": "Réessayer"
+            "retry": "Réessayer",
+            "lockedLink": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram relié et <igLink>@frak_fr</igLink> suivi.",
+            "linkCta": "Relier mon Instagram"
+        },
+        "instagram": {
+            "title": "Relie ton Instagram",
+            "description": "Pour que tes tickets comptent au tirage, relie ton compte Instagram et suis @frak_fr.",
+            "mobileOnly": "Ouvre cette page sur ton téléphone : les messages Instagram ne s'ouvrent que dans l'app Instagram.",
+            "howTo": "Comment faire",
+            "follow": {
+                "title": "Abonne-toi à @frak_fr",
+                "description": "Sur Instagram, abonne-toi au compte <igLink>@frak_fr</igLink>."
+            },
+            "message": {
+                "title": "Envoie-nous ton code",
+                "description": "Le bouton copie ton code <code>{{code}}</code> et ouvre la conversation avec @frak_fr. Colle-le et envoie-le."
+            },
+            "check": {
+                "title": "Reviens ici",
+                "description": "Touche « J'ai envoyé le message » pour vérifier ton compte."
+            },
+            "open": "Copier le code et ouvrir Instagram",
+            "sent": "J'ai envoyé le message",
+            "notYet": "Nous n'avons pas encore reçu ton message. Attends quelques secondes et réessaie.",
+            "linked": {
+                "badge": "Relié",
+                "counting": "Tu suis @frak_fr : tes tickets comptent au tirage.",
+                "notFollowing": "Tu ne suis pas encore <igLink>@frak_fr</igLink>. Abonne-toi, puis vérifie à nouveau.",
+                "checkAgain": "Vérifier à nouveau",
+                "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
+                "back": "Retour au jeu"
+            }
         }
     },
     "reward": {

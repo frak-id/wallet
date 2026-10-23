@@ -517,6 +517,35 @@ export default interface Resources {
         "participating": "You're in",
         "title": "Frak game in progress"
       },
+      "instagram": {
+        "check": {
+          "description": "Tap “I sent the message” to check your account.",
+          "title": "Come back here"
+        },
+        "description": "To make your tickets count in the draw, link your Instagram account and follow @frak_fr.",
+        "follow": {
+          "description": "On Instagram, follow the <igLink>@frak_fr</igLink> account.",
+          "title": "Follow @frak_fr"
+        },
+        "howTo": "How it works",
+        "linked": {
+          "back": "Back to the game",
+          "badge": "Linked",
+          "checkAgain": "Check again",
+          "counting": "You follow @frak_fr: your tickets count in the draw.",
+          "notFollowing": "You don't follow <igLink>@frak_fr</igLink> yet. Follow it, then check again.",
+          "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again."
+        },
+        "message": {
+          "description": "The button copies your code <code>{{code}}</code> and opens the chat with @frak_fr. Paste it and send it.",
+          "title": "Send us your code"
+        },
+        "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
+        "notYet": "We haven't received your message yet. Wait a few seconds and try again.",
+        "open": "Copy the code and open Instagram",
+        "sent": "I sent the message",
+        "title": "Link your Instagram"
+      },
       "join": {
         "description": "Enter the game code, shared in our Instagram stories, to take part.",
         "findCode": "Find the code on Instagram",
@@ -529,7 +558,9 @@ export default interface Resources {
         "error": "Couldn't load the game.",
         "gain_one": "+{{count}} ticket",
         "gain_other": "+{{count}} tickets",
+        "linkCta": "Link my Instagram",
         "locked": "Your tickets are saved, but they only count in the draw if you follow <igLink>@frak_fr</igLink> on Instagram.",
+        "lockedLink": "Your tickets are saved, but they only count in the draw once your Instagram is linked and you follow <igLink>@frak_fr</igLink>.",
         "more": "Earn more tickets",
         "none": {
           "description": "The next game will be announced on Instagram.",

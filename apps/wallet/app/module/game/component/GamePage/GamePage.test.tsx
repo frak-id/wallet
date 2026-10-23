@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const { currentGame } = vi.hoisted(() => ({
+const { currentGame, gameConfig } = vi.hoisted(() => ({
+    gameConfig: { instagramLink: false },
     currentGame: {
         data: undefined as unknown,
         isError: false,
@@ -25,6 +26,10 @@ vi.mock("react-i18next", () => ({
     Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>,
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
+vi.mock("@/module/game/config", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    frakGame: gameConfig,
+}));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
 }));
@@ -70,6 +75,18 @@ describe("GamePage", () => {
 
         expect(screen.getByText("game.page.locked")).toBeInTheDocument();
         expect(screen.getByText("1")).toBeInTheDocument();
+    });
+
+    it("links a non-follower to the Instagram linking screen once linking is on", () => {
+        gameConfig.instagramLink = true;
+        currentGame.data = player(1, false);
+        render(<GamePage />);
+        gameConfig.instagramLink = false;
+
+        expect(screen.getByText("game.page.lockedLink")).toBeInTheDocument();
+        expect(
+            screen.getByRole("link", { name: /game.page.linkCta/ })
+        ).toHaveAttribute("href", "/game/instagram");
     });
 
     it("says when no game is open", () => {

@@ -1009,7 +1009,38 @@
                 "description": "The next game will be announced on Instagram."
             },
             "error": "Couldn't load the game.",
-            "retry": "Try again"
+            "retry": "Try again",
+            "lockedLink": "Your tickets are saved, but they only count in the draw once your Instagram is linked and you follow <igLink>@frak_fr</igLink>.",
+            "linkCta": "Link my Instagram"
+        },
+        "instagram": {
+            "title": "Link your Instagram",
+            "description": "To make your tickets count in the draw, link your Instagram account and follow @frak_fr.",
+            "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
+            "howTo": "How it works",
+            "follow": {
+                "title": "Follow @frak_fr",
+                "description": "On Instagram, follow the <igLink>@frak_fr</igLink> account."
+            },
+            "message": {
+                "title": "Send us your code",
+                "description": "The button copies your code <code>{{code}}</code> and opens the chat with @frak_fr. Paste it and send it."
+            },
+            "check": {
+                "title": "Come back here",
+                "description": "Tap “I sent the message” to check your account."
+            },
+            "open": "Copy the code and open Instagram",
+            "sent": "I sent the message",
+            "notYet": "We haven't received your message yet. Wait a few seconds and try again.",
+            "linked": {
+                "badge": "Linked",
+                "counting": "You follow @frak_fr: your tickets count in the draw.",
+                "notFollowing": "You don't follow <igLink>@frak_fr</igLink> yet. Follow it, then check again.",
+                "checkAgain": "Check again",
+                "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again.",
+                "back": "Back to the game"
+            }
         }
     },
     "reward": {
