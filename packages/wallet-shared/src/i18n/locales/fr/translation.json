@@ -963,7 +963,7 @@
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "1 ticket par partage, 3 par achat chez une marque partenaire, le tien ou celui d'un ami."
+                    "description": "3 tickets par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
                 },
                 "follow": {
                     "title": "Suis-nous pour le tirage",

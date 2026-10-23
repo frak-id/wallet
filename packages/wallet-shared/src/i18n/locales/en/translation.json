@@ -963,7 +963,7 @@
                     "title": "Share and earn tickets",
                     "reward": "You each earn {{reward}}.",
                     "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-                    "description": "1 ticket per share, 3 per purchase at a partner brand, yours or a friend's."
+                    "description": "3 tickets per purchase at a partner brand, yours or a referred friend's."
                 },
                 "follow": {
                     "title": "Follow us for the draw",

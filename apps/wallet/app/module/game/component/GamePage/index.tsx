@@ -117,11 +117,6 @@ function GameDetails({
                         icon={ReferralIcon}
                         label={t("game.page.share")}
                         to="/profile/referral/share"
-                        action={
-                            <Badge size="small" variant="success">
-                                {t("game.page.gain", { count: 1 })}
-                            </Badge>
-                        }
                     />
                     <InfoRow
                         icon={CartIcon}

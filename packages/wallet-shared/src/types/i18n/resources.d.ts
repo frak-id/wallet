@@ -791,7 +791,7 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "1 ticket per share, 3 per purchase at a partner brand, yours or a friend's.",
+            "description": "3 tickets per purchase at a partner brand, yours or a referred friend's.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
