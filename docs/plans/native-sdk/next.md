@@ -52,17 +52,13 @@ message for the failure case.
   `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. Still none at
   2026-10-13, after both harnesses were split into tabs; `example/native-android` has no `NavHost`.
 
-## 3. Port `ServerClock` to iOS, and bound it
+## 3. Port `ServerClock` to iOS, and bound it — done 2026-10-23
 
-**Precondition:** none.
+The port is `Net/ServerClock.swift`, fed by `HTTPClient` and read by
+`AnonymousIdStore.signProof`, with the same 2025-01-01 … 2100-01-01 bound as Android.
 
-The clock-skew fix shipped on Android only, which makes it the largest remaining parity gap: an iOS
-device 61 s fast fails every proof, non-retryably. Two things to fix together, since the port should
-not carry the flaw:
-
-- Android's `ServerClock` adopts only a `Date` between 2025-01-01 and 2100-01-01 (`net/ServerClock.kt`).
-  The port should carry that bound; iOS still stamps from `Date()` (`AnonymousIdStore.swift:71`).
-- It is not persisted, so a cold start runs on the device clock until the first response.
+Still open, on both platforms and to be changed together: the offset is not persisted, so a cold
+start runs on the device clock until the first response.
 
 ## 4. The device tier
 

@@ -62,6 +62,15 @@ struct HTTPClient: Sendable {
         return URLSession(configuration: configuration)
     }()
 
+    // IMF-fixdate, the only `Date` form HTTP/1.1 servers send. DateFormatter is thread-safe.
+    private nonisolated(unsafe) static let httpDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter
+    }()
+
     private let baseURL: String
     private let session: URLSession
     private let overallDeadlineSeconds: TimeInterval
@@ -73,19 +82,22 @@ struct HTTPClient: Sendable {
     // constructed before that init has a fully-built FrakLogger to hand it. Defaults to nil —
     // silent — until a caller passes one in.
     private let logger: FrakLogger?
+    private let serverClock: ServerClock?
 
     init(
         baseURL: String,
         session: URLSession = HTTPClient.defaultSession,
         overallDeadlineSeconds: TimeInterval = HTTPClient.overallDeadlineSeconds,
         retryBackoffSecondsOverride: TimeInterval? = nil,
-        logger: FrakLogger? = nil
+        logger: FrakLogger? = nil,
+        serverClock: ServerClock? = nil
     ) {
         self.baseURL = baseURL
         self.session = session
         self.overallDeadlineSeconds = overallDeadlineSeconds
         self.retryBackoffSecondsOverride = retryBackoffSecondsOverride
         self.logger = logger
+        self.serverClock = serverClock
     }
 
     /// Issues a GET and returns the raw response, successful or not. `path` includes
@@ -229,6 +241,7 @@ struct HTTPClient: Sendable {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw FrakError.network(underlying: URLError(.badServerResponse))
         }
+        serverClock?.observe(httpResponse.value(forHTTPHeaderField: "Date").flatMap(Self.httpDateFormatter.date))
         // `expectedContentLength` is -1 when the header is absent; not sufficient alone since a
         // chunked or lying response has no (or a false) Content-Length, so the post-buffer
         // check below is the real backstop against an oversized body.

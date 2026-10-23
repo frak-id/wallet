@@ -21,6 +21,7 @@ actor AnonymousIdStore {
     /// Read fresh at both gate sites below, never captured, so a withdrawal mid-session stops
     /// the next mint immediately.
     private let consent: TrackingConsent
+    private let serverClock: ServerClock
 
     private var generation: Task<Identity?, Never>?
 
@@ -33,13 +34,15 @@ actor AnonymousIdStore {
         store: KeyValueStore,
         logger: FrakLogger,
         merchantMarker: String,
-        consent: TrackingConsent
+        consent: TrackingConsent,
+        serverClock: ServerClock = ServerClock()
     ) {
         self.keyStore = keyStore
         self.store = store
         self.logger = logger
         self.merchantMarker = merchantMarker
         self.consent = consent
+        self.serverClock = serverClock
     }
 
     /// Starts the keystore mint now, so a later `anonymousId()` usually awaits a completed task.
@@ -63,14 +66,15 @@ actor AnonymousIdStore {
     }
 
     /// A base64url proof that this device holds the key behind `anonymousId`, or nil when
-    /// there is no identity or the platform refused to sign.
+    /// there is no identity or the platform refused to sign. `ts` defaults to the server's clock.
     func signProof(
         _ op: ProofOp,
         merchantId: String,
         binding: Data = Data(),
-        ts: Int64 = Int64(Date().timeIntervalSince1970)
+        ts: Int64? = nil
     ) async -> String? {
         guard let identity = await identity() else { return nil }
+        let ts = ts ?? serverClock.nowSeconds()
         do {
             let message = try ProofCodec.message(
                 op: op,
