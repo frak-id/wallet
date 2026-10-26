@@ -7634,6 +7634,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7653,6 +7656,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7672,6 +7678,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }

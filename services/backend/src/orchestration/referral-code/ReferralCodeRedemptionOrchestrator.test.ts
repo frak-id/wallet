@@ -121,6 +121,8 @@ function makeOrchestrator() {
     const referralLinkRepository = {
         wouldCreateCycle: vi.fn().mockResolvedValue(false),
         create: vi.fn().mockResolvedValue({ id: "link-id" }),
+        findByReferee: vi.fn().mockResolvedValue(null),
+        removeReferrer: vi.fn().mockResolvedValue({ id: "frak-link" }),
     };
     const identityRepository = {
         findGroupById: vi
@@ -162,11 +164,15 @@ function makeOrchestrator() {
     );
 
     return {
-        redeem: (context: RedeemContext | undefined) =>
+        redeem: (
+            context: RedeemContext | undefined,
+            replaceFrakReferrer?: boolean
+        ) =>
             orchestrator.redeem({
                 code: "CODE42",
                 refereeIdentityGroupId: REFEREE,
                 context,
+                replaceFrakReferrer,
             }),
         applyGate: (gate: (typeof GATE_CASES)[number]) => {
             identityRepository.findGroupById.mockResolvedValue(
@@ -517,5 +523,73 @@ describe("ReferralCodeRedemptionOrchestrator game join", () => {
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).toHaveBeenCalledWith(expect.objectContaining({ type: "game_join" }));
+    });
+});
+
+describe("ReferralCodeRedemptionOrchestrator friend's code over Frak", () => {
+    let ctx: ReturnType<typeof makeOrchestrator>;
+
+    beforeEach(() => {
+        ctx = makeOrchestrator();
+        ctx.referralCodeService.findByCode.mockResolvedValue(userCode);
+        ctx.referralLinkRepository.findByReferee.mockResolvedValue({
+            referrerIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+        });
+    });
+
+    it("asks to confirm with FRAK_REFERRER and writes nothing", async () => {
+        await expect(ctx.redeem(undefined)).rejects.toMatchObject({
+            status: 409,
+            code: "FRAK_REFERRER",
+        });
+        expect(
+            ctx.referralLinkRepository.removeReferrer
+        ).not.toHaveBeenCalled();
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it("replaces Frak with the friend once confirmed", async () => {
+        const result = await ctx.redeem(undefined, true);
+
+        expect(result.referrerIdentityGroupId).toBe("owner-group");
+        expect(ctx.referralLinkRepository.removeReferrer).toHaveBeenCalledWith({
+            merchantId: null,
+            refereeIdentityGroupId: REFEREE,
+            scope: "cross_merchant",
+            reason: "removed",
+        });
+        expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                scope: "cross_merchant",
+                referrerIdentityGroupId: "owner-group",
+                refereeIdentityGroupId: REFEREE,
+            })
+        );
+    });
+
+    it("keeps ALREADY_REDEEMED when a friend already holds the slot", async () => {
+        ctx.referralLinkRepository.findByReferee.mockResolvedValue({
+            referrerIdentityGroupId: "another-friend",
+        });
+        ctx.referralLinkRepository.create.mockResolvedValue(null);
+
+        await expect(ctx.redeem(undefined, true)).rejects.toMatchObject({
+            status: 409,
+            code: "ALREADY_REDEEMED",
+        });
+        expect(
+            ctx.referralLinkRepository.removeReferrer
+        ).not.toHaveBeenCalled();
+    });
+
+    it("checks the cycle before touching the Frak link", async () => {
+        ctx.referralLinkRepository.wouldCreateCycle.mockResolvedValue(true);
+
+        await expect(ctx.redeem(undefined, true)).rejects.toMatchObject({
+            code: "WOULD_CYCLE",
+        });
+        expect(
+            ctx.referralLinkRepository.removeReferrer
+        ).not.toHaveBeenCalled();
     });
 });

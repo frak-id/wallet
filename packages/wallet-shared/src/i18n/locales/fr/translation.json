@@ -395,6 +395,12 @@
                     "description": "Tu ne bénéficieras plus des avantages liés à ce code pour tes prochains achats. Tu pourras en ajouter un nouveau à tout moment.",
                     "confirmCta": "Supprimer le code",
                     "cancelCta": "Annuler"
+                },
+                "replaceFrak": {
+                    "title": "Remplacer ton\ncode Frak ?",
+                    "description": "En utilisant ce code de parrainage, tu perds ton cashback exclusif sur ton premier achat chez chaque marque.",
+                    "confirmCta": "Utiliser ce code",
+                    "cancelCta": "Garder mon cashback"
                 }
             }
         },

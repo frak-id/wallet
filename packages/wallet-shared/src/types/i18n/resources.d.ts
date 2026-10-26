@@ -1566,6 +1566,12 @@ export default interface Resources {
           "errorSelf": "You can't use your own code.",
           "label": "Referral code",
           "placeholder": "e.g. LOLA10",
+          "replaceFrak": {
+            "cancelCta": "Keep my cashback",
+            "confirmCta": "Use this code",
+            "description": "By using this referral code, you lose your exclusive cashback on your first purchase at every brand.",
+            "title": "Replace your\nFrak code?"
+          },
           "submitCta": "Apply the code",
           "title": "Got a referral code?"
         },

@@ -19,6 +19,8 @@ type RedeemInput = {
     code: string;
     /** Set only by the onboarding step; gates a `kind='frak'` code. */
     context?: RedeemContext;
+    /** Accepts losing the welcome bonus when Frak holds the referrer slot (409 `FRAK_REFERRER`). */
+    replaceFrakReferrer?: boolean;
 };
 
 export type RedeemResult = {
@@ -52,11 +54,16 @@ export function useRedeemReferralCode({
     return useMutation({
         ...mutations,
         mutationKey: referralKey.redeem,
-        mutationFn: async ({ code, context }: RedeemInput) => {
+        mutationFn: async ({
+            code,
+            context,
+            replaceFrakReferrer,
+        }: RedeemInput) => {
             const { data, error } =
                 await authenticatedWalletApi.referral.code.redeem.post({
                     code,
                     context,
+                    replaceFrakReferrer,
                 });
             if (error) throw error;
             return data;

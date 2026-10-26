@@ -395,6 +395,12 @@
                     "description": "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.",
                     "confirmCta": "Delete the code",
                     "cancelCta": "Cancel"
+                },
+                "replaceFrak": {
+                    "title": "Replace your\nFrak code?",
+                    "description": "By using this referral code, you lose your exclusive cashback on your first purchase at every brand.",
+                    "confirmCta": "Use this code",
+                    "cancelCta": "Keep my cashback"
                 }
             }
         },

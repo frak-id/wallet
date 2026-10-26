@@ -5,7 +5,10 @@ import type { GameSelect } from "../../domain/game/db/schema";
 import type { GameRepository } from "../../domain/game/repositories/GameRepository";
 import type { GameSummary } from "../../domain/game/schemas";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import { FRAK_CODE_ONBOARDING_WINDOW_MS } from "../../domain/referral-code/constants";
+import {
+    FRAK_CODE_ONBOARDING_WINDOW_MS,
+    FRAK_REFERRAL_IDENTITY_GROUP_ID,
+} from "../../domain/referral-code/constants";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
 import type {
     RedeemContext,
@@ -21,6 +24,8 @@ type RedeemParams = {
     code: string;
     refereeIdentityGroupId: string;
     context?: RedeemContext;
+    /** The user accepted to lose the welcome bonus by replacing Frak as referrer. */
+    replaceFrakReferrer?: boolean;
 };
 
 export type RedeemResult = {
@@ -49,7 +54,7 @@ export class ReferralCodeRedemptionOrchestrator {
      * cross-merchant referrer, a game code joins its game. A friend's signup
      * also joins the current open game. Errors are `HttpError`s: 404
      * `NOT_FOUND`, 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`, `ALREADY_REDEEMED`,
-     * `GAME_CLOSED`.
+     * `GAME_CLOSED`, `FRAK_REFERRER`.
      */
     async redeem(params: RedeemParams): Promise<RedeemResult> {
         const referralCode = await this.referralCodeService.findByCode(
@@ -78,7 +83,7 @@ export class ReferralCodeRedemptionOrchestrator {
             ? await this.frakGame.planSignup()
             : null;
 
-        await this.linkReferrer(referralCode, params.refereeIdentityGroupId);
+        await this.linkReferrer(referralCode, params);
 
         const signup =
             signupPlan &&
@@ -108,7 +113,7 @@ export class ReferralCodeRedemptionOrchestrator {
 
     private async linkReferrer(
         referralCode: ReferralCodeSelect,
-        refereeIdentityGroupId: string
+        { refereeIdentityGroupId, replaceFrakReferrer }: RedeemParams
     ): Promise<void> {
         if (referralCode.ownerIdentityGroupId === refereeIdentityGroupId) {
             throw HttpError.badRequest(
@@ -127,6 +132,12 @@ export class ReferralCodeRedemptionOrchestrator {
                 "Redemption would create a referral cycle"
             );
         }
+
+        await this.releaseFrakSlot(
+            referralCode,
+            refereeIdentityGroupId,
+            replaceFrakReferrer === true
+        );
 
         const created = await this.createCrossMerchantLink(
             referralCode,
@@ -149,6 +160,43 @@ export class ReferralCodeRedemptionOrchestrator {
             },
             "Referral code redeemed"
         );
+    }
+
+    /** 409 `FRAK_REFERRER` while Frak holds the slot, until the user accepts to lose the welcome bonus. */
+    private async releaseFrakSlot(
+        referralCode: ReferralCodeSelect,
+        refereeIdentityGroupId: string,
+        confirmed: boolean
+    ): Promise<void> {
+        if (
+            referralCode.ownerIdentityGroupId ===
+            FRAK_REFERRAL_IDENTITY_GROUP_ID
+        ) {
+            return;
+        }
+        const current = await this.referralLinkRepository.findByReferee({
+            merchantId: null,
+            refereeIdentityGroupId,
+            scope: "cross_merchant",
+        });
+        if (
+            current?.referrerIdentityGroupId !== FRAK_REFERRAL_IDENTITY_GROUP_ID
+        ) {
+            return;
+        }
+        if (!confirmed) {
+            throw HttpError.conflict(
+                "FRAK_REFERRER",
+                "Replacing Frak as referrer ends the welcome bonus"
+            );
+        }
+        await this.referralLinkRepository.removeReferrer({
+            merchantId: null,
+            refereeIdentityGroupId,
+            scope: "cross_merchant",
+            reason: "removed",
+        });
+        log.info({ refereeIdentityGroupId }, "Frak referrer replaced");
     }
 
     private createCrossMerchantLink(

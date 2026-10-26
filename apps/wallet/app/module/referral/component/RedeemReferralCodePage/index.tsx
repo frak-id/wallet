@@ -22,7 +22,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
+import { OrDivider } from "../OrDivider";
 import { ReferralPageShell } from "../ReferralPageShell";
+import { ReplaceFrakReferrerModal } from "../ReplaceFrakReferrerModal";
 import * as styles from "./index.css";
 
 // Unredeem rarely fails (404 means status is already stale; status
@@ -52,11 +54,22 @@ export function RedeemReferralCodePage({
             description={t("wallet.referral.redeem.description")}
         >
             {status === undefined ? null : referrer ? (
-                <ActiveRedemption
-                    code={referrer.code}
-                    since={referrer.since}
-                    onUnredeemed={invalidateStatus}
-                />
+                <Stack space="m">
+                    <ActiveRedemption
+                        code={referrer.code}
+                        since={referrer.since}
+                        onUnredeemed={invalidateStatus}
+                    />
+                    {referrer.isFrak ? (
+                        <>
+                            <OrDivider />
+                            <RedeemForm
+                                onRedeemed={invalidateStatus}
+                                initialCode={initialCode}
+                            />
+                        </>
+                    ) : null}
+                </Stack>
             ) : (
                 <RedeemForm
                     onRedeemed={invalidateStatus}
@@ -88,6 +101,9 @@ export function RedeemForm({
         handleChange,
         handleClear,
         handleSubmit,
+        confirmingFrakReplace,
+        confirmFrakReplace,
+        cancelFrakReplace,
     } = useRedeemReferralCodeForm({ onApplied: onRedeemed, initialCode });
 
     return (
@@ -150,6 +166,12 @@ export function RedeemForm({
                     </Text>
                 ) : null}
             </Stack>
+            <ReplaceFrakReferrerModal
+                open={confirmingFrakReplace}
+                onConfirm={confirmFrakReplace}
+                onCancel={cancelFrakReplace}
+                isPending={isPending}
+            />
         </form>
     );
 }
