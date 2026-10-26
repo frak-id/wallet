@@ -32,6 +32,7 @@ jobs:
       designSystem: ${{ steps.filter.outputs.designSystem }}
       backend: ${{ steps.filter.outputs.backend }}
       wallet: ${{ steps.filter.outputs.wallet }}
+      walletRust: ${{ steps.filter.outputs.walletRust }}
       business: ${{ steps.filter.outputs.business }}
       appsSmall: ${{ steps.filter.outputs.appsSmall }}
       packages: ${{ steps.filter.outputs.packages }}
@@ -102,6 +103,9 @@ jobs:
               - 'vitest.config.ts'
               - 'biome.json'
               - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            walletRust:
+              - 'apps/wallet/src-tauri/**'
               - '.github/workflows/apps.yaml'
             wallet:
               - 'apps/wallet/**'
@@ -258,6 +262,35 @@ jobs:
         run: bun run --cwd apps/wallet generate:routes
       - name: "🧪 Unit tests"
         run: bun run test --project wallet-unit
+
+  # Host-target unit tests of the Tauri crate and its in-repo plugins. The mobile
+  # release builds them for iOS and Android but never runs a test.
+  wallet-rust:
+    name: "🦀 Wallet · Rust tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.walletRust == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          # Same pin as RUST_TOOLCHAIN in tauri-mobile-release.yml.
+          toolchain: "1.98.1"
+      - name: "🔨 Install the Linux webview headers"
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            libwebkit2gtk-4.1-dev libsoup-3.0-dev librsvg2-dev
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: apps/wallet/src-tauri
+          prefix-key: "v1-rust-host"
+      # `generate_context!` embeds `frontendDist` at compile time; a stub is enough here.
+      - name: "🧪 Unit tests"
+        working-directory: apps/wallet/src-tauri
+        run: |
+          mkdir -p ../dist && echo "<!doctype html>" > ../dist/index.html
+          cargo test --locked --lib -p app -p tauri-plugin-frak-updater
 
   # ── Business ────────────────────────────────────────────
   business:
