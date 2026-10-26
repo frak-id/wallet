@@ -618,6 +618,34 @@ export class AssetLogRepository {
             .offset(options?.offset ?? 0);
     }
 
+    /** Per-token totals of the group's live rewards not on-chain yet: locked, pending, being pushed or waiting on funding. */
+    async sumUnpaidByIdentityGroup(
+        identityGroupId: string
+    ): Promise<Array<{ tokenAddress: Address; total: string }>> {
+        return db
+            .select({
+                tokenAddress: assetLogsTable.tokenAddress,
+                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                    String
+                ),
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "bank_depleted",
+                    ]),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .groupBy(assetLogsTable.tokenAddress) as Promise<
+            Array<{ tokenAddress: Address; total: string }>
+        >;
+    }
+
     async countByIdentityGroup(identityGroupId: string): Promise<number> {
         const [result] = await db
             .select({ count: sql<number>`count(*)::int` })

@@ -30,4 +30,19 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
                 200: RewardHistoryResponseSchema,
             },
         }
+    )
+    .get(
+        "/unpaid",
+        async ({ walletSession }) => {
+            return OrchestrationContext.orchestrators.rewardHistory.getUnpaidTotal(
+                walletSession.address
+            );
+        },
+        {
+            withWalletAuthent: true,
+            response: {
+                401: t.String(),
+                200: t.Object({ eurAmount: t.Number() }),
+            },
+        }
     );

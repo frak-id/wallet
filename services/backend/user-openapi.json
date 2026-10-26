@@ -7376,6 +7376,67 @@
         "operationId": "getUserWalletRewardsHistory"
       }
     },
+    "/user/wallet/rewards/unpaid": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "eurAmount"
+                  ],
+                  "properties": {
+                    "eurAmount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletRewardsUnpaid"
+      }
+    },
     "/user/wallet/referral/code/issue": {
       "post": {
         "requestBody": {
