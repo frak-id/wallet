@@ -957,7 +957,8 @@
                 "howItWorks": "How it works",
                 "unlock": {
                     "title": "Your {{reward}} bonus",
-                    "description": "It unlocks with your first reward from a partner brand, by buying or recommending."
+                    "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
+                    "descriptionFollow": "It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand."
                 },
                 "invite": {
                     "title": "Share and earn tickets",
@@ -973,6 +974,7 @@
             "reward": {
                 "title": "You're in the game!",
                 "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+                "descriptionFollow": "Your reward is pending. It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
                 "game": {
                     "label": "Game prize",
                     "endsAt": "Until {{date}}",
@@ -1090,7 +1092,9 @@
             "estimatedValidation": "Estimated validation",
             "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
             "lockedExplanation": "Unlocks with your first reward from a partner brand.",
-            "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand."
+            "lockedExplanationFollow": "Unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
+            "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand.",
+            "lockedOnFriendExplanationFollow": "Unlocks as soon as your friend follows @frak_fr on Instagram, or with their first reward from a partner brand."
         },
         "frakBonus": {
             "label": "Welcome bonus",

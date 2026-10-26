@@ -807,6 +807,7 @@ export default interface Resources {
       "game": {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+          "descriptionFollow": "Your reward is pending. It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
           "game": {
             "endsAt": "Until {{date}}",
             "label": "Game prize",
@@ -830,6 +831,7 @@ export default interface Resources {
           "title": "The Frak Game",
           "unlock": {
             "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
+            "descriptionFollow": "It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
             "title": "Your {{reward}} bonus"
           }
         }
@@ -903,7 +905,9 @@ export default interface Resources {
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
         "lockedExplanation": "Unlocks with your first reward from a partner brand.",
+        "lockedExplanationFollow": "Unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
         "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand.",
+        "lockedOnFriendExplanationFollow": "Unlocks as soon as your friend follows @frak_fr on Instagram, or with their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",

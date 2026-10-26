@@ -957,7 +957,8 @@
                 "howItWorks": "Comment ça marche",
                 "unlock": {
                     "title": "Ton bonus de {{reward}}",
-                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant."
+                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant.",
+                    "descriptionFollow": "Il se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire."
                 },
                 "invite": {
                     "title": "Partage et gagne des tickets",
@@ -973,6 +974,7 @@
             "reward": {
                 "title": "Tu es dans le jeu !",
                 "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
+                "descriptionFollow": "Ta récompense est en attente. Elle se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
                 "game": {
                     "label": "Lot du jeu",
                     "endsAt": "Jusqu'à {{date}}",
@@ -1090,7 +1092,9 @@
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
             "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire.",
-            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire."
+            "lockedExplanationFollow": "Se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire.",
+            "lockedOnFriendExplanationFollow": "Se débloque dès que ton ami suit @frak_fr sur Instagram, ou dès sa première récompense chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

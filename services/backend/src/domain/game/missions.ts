@@ -1,7 +1,7 @@
 import type { AssetLogRecipientType } from "../rewards/schemas";
 
-/** `brand_reward`: a live reward from a partner brand, as buyer or referrer. */
-export type Mission = { kind: "brand_reward" };
+/** `brand_reward`: a live reward from a partner brand, as buyer or referrer. `instagram_follow`: the subject follows @frak_fr. */
+export type Mission = { kind: "brand_reward" } | { kind: "instagram_follow" };
 
 export type MissionSet = {
     match: "all" | "any";
@@ -13,8 +13,8 @@ export type MissionSubject = "recipient" | "referee";
 
 /** What every held game reward waits on until missions are set per rule. */
 export const DEFAULT_MISSIONS: MissionSet = {
-    match: "all",
-    missions: [{ kind: "brand_reward" }],
+    match: "any",
+    missions: [{ kind: "brand_reward" }, { kind: "instagram_follow" }],
 };
 
 /** Roles whose held reward waits on the referee's missions. */

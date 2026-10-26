@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
+import { frakGame } from "@/module/game/config";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import * as styles from "./index.css";
 
@@ -282,11 +283,7 @@ function StatusRow({
         return (
             <Box paddingX="m" paddingY="s">
                 <Text variant="bodySmall" color="secondary">
-                    {t(
-                        item.waitsOnFriend
-                            ? "reward.detail.lockedOnFriendExplanation"
-                            : "reward.detail.lockedExplanation"
-                    )}
+                    {t(lockedExplanationKey(item.waitsOnFriend))}
                 </Text>
             </Box>
         );
@@ -322,6 +319,17 @@ function StatusRow({
             label={t("reward.detail.toCollect")}
         />
     );
+}
+
+function lockedExplanationKey(waitsOnFriend: boolean | undefined) {
+    if (frakGame.instagramLink) {
+        return waitsOnFriend
+            ? "reward.detail.lockedOnFriendExplanationFollow"
+            : "reward.detail.lockedExplanationFollow";
+    }
+    return waitsOnFriend
+        ? "reward.detail.lockedOnFriendExplanation"
+        : "reward.detail.lockedExplanation";
 }
 
 function formatDayMonth(timestamp: number, locale: string): string {
