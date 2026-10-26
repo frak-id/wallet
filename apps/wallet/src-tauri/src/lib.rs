@@ -1,5 +1,6 @@
 #[cfg(target_os = "ios")]
 mod ios;
+mod ota_cache;
 
 /// No-op off iOS, where WKWebView's back gesture does not exist.
 #[tauri::command]
@@ -23,6 +24,10 @@ fn set_swipe_back_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), St
 pub fn run() {
     let mut builder = tauri::Builder::default();
 
+    // `run` below must take this returned context, not a second `generate_context!()`:
+    // the OTA asset resolver is installed on it.
+    let (ota_plugin, context) = tauri_plugin_ota_updater::init(tauri::generate_context!());
+
     // IMPORTANT: tauri_plugin_frak_firebase MUST initialize FIRST on mobile so
     // Crashlytics' NSException + Mach signal handlers are armed before any
     // other plugin can crash during setup. The Rust panic hook also lives in
@@ -34,13 +39,17 @@ pub fn run() {
     }
 
     builder = builder
-        .plugin(tauri_plugin_safe_area_insets::init())
+        // Setups run in registration order: the guard must clear a stale bundle
+        // before the OTA plugin loads it.
+        .plugin(ota_cache::init())
+        .plugin(ota_plugin)
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init());
 
     #[cfg(mobile)]
     {
         builder = builder
+            .plugin(tauri_plugin_safe_area_insets::init())
             .plugin(tauri_plugin_biometric::init())
             // tauri_plugin_frak_firebase moved above — registered before any
             // other mobile plugin so it can capture their setup crashes.
@@ -82,6 +91,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![set_swipe_back_enabled])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running tauri application");
 }

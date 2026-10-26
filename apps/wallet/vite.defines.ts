@@ -54,8 +54,19 @@ export async function getDefineProps({
 
     const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
+    const stage = getSstResource("STAGE") ?? "dev";
+
+    // OTA channel for this exact binary: stage (BACKEND_URL), platform (__IS_IOS__)
+    // and version (the Rust command surface) are all baked in. `walletPackage.version`,
+    // not `appVersion`, which is COMMIT_HASH on web deploys. Must match the channel
+    // computed in wallet-ota-hotfix.yml. `null` disables OTA.
+    const otaPlatform = isTauriIos ? "ios" : isTauriAndroid ? "android" : null;
+    const otaChannel = otaPlatform
+        ? `${stage}-${otaPlatform}-${walletPackage.version}`
+        : null;
+
     return {
-        "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
+        "process.env.STAGE": JSON.stringify(stage),
         "process.env.BACKEND_URL": JSON.stringify(backendUrl),
         "process.env.ERPC_URL": JSON.stringify(
             getSstResource("ERPC_URL") ??
@@ -82,6 +93,7 @@ export async function getDefineProps({
         __IS_TAURI__: JSON.stringify(isTauri),
         __IS_IOS__: JSON.stringify(isTauriIos),
         __IS_ANDROID__: JSON.stringify(isTauriAndroid),
+        __OTA_CHANNEL__: JSON.stringify(otaChannel),
         "process.env.APP_VERSION": JSON.stringify(appVersion),
         "process.env.FRAK_WALLET_URL": JSON.stringify(
             sandboxEnv.walletUrl ??
