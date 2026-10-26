@@ -139,19 +139,19 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         ]);
     });
 
-    it("grants 3 tickets per own purchase and 3 per referred purchase", async () => {
+    it("grants the join ticket, 3 per own purchase and 3 per referred purchase", async () => {
         answer([[2]], [[1]]);
 
         await expect(
             player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"))
-        ).resolves.toBe(9);
+        ).resolves.toBe(10);
     });
 
-    it("returns 0 when nothing qualifies", async () => {
+    it("returns the join ticket alone when nothing else qualifies", async () => {
         answer([[0]], [[0]]);
 
         await expect(
             player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"))
-        ).resolves.toBe(0);
+        ).resolves.toBe(1);
     });
 });

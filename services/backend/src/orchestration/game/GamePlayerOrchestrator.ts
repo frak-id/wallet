@@ -92,7 +92,7 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
-    /** Tickets earned in `[max(joinedAt, startsAt), endsAt)`, counted from purchases. */
+    /** The join ticket plus those earned from purchases in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,
         identityGroupId: string,
@@ -140,6 +140,7 @@ export class GamePlayerOrchestrator {
                 ),
         ]);
         return (
+            TICKET_AMOUNTS.join +
             (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase +
             (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase
         );
