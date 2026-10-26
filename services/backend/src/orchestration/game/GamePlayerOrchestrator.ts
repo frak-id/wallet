@@ -162,6 +162,32 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
+    /** Every game the group joined, with its first join; merges move joins to the surviving group. */
+    async gamesJoinedBy(
+        identityGroupId: string
+    ): Promise<{ gameId: string; joinedAt: Date }[]> {
+        const gameId = sql<
+            string | null
+        >`${interactionLogsTable.payload}->>'gameId'`;
+        const rows = await db
+            .select({
+                gameId,
+                joinedAt: min(interactionLogsTable.createdAt),
+            })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.identityGroupId, identityGroupId),
+                    eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
+                    eq(interactionLogsTable.type, interactionTypes.gameJoin)
+                )
+            )
+            .groupBy(gameId);
+        return rows.flatMap(({ gameId, joinedAt }) =>
+            gameId && joinedAt ? [{ gameId, joinedAt }] : []
+        );
+    }
+
     /** Everyone who joined the game, with their first join. */
     async participantsOf(
         gameId: string

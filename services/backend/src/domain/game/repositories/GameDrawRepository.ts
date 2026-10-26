@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
     db,
     type PgRunner,
@@ -8,7 +8,7 @@ import {
     type GameDrawSelect,
     gameDrawsTable,
 } from "../db/schema";
-import type { DrawRejection, DrawStatus } from "../schemas";
+import type { DrawEntry, DrawRejection, DrawStatus } from "../schemas";
 
 /** The draw is still `drawn` and nobody reviewed it since `reviewed` rejections. */
 function underReview(id: string, reviewed: number) {
@@ -37,6 +37,27 @@ export class GameDrawRepository {
             .where(eq(gameDrawsTable.gameId, gameId))
             .limit(1);
         return draw ?? null;
+    }
+
+    /** Each draw's outcome and the line of any of `identityGroupIds`, without loading the other entries. */
+    async findOutcomes(gameIds: string[], identityGroupIds: string[]) {
+        if (gameIds.length === 0 || identityGroupIds.length === 0) return [];
+        const groups = sql.join(
+            identityGroupIds.map((id) => sql`${id}`),
+            sql`, `
+        );
+        return db
+            .select({
+                gameId: gameDrawsTable.gameId,
+                status: gameDrawsTable.status,
+                totalTickets: gameDrawsTable.totalTickets,
+                participants: sql<number>`jsonb_array_length(${gameDrawsTable.entries})`,
+                winnerIdentityGroupId: gameDrawsTable.winnerIdentityGroupId,
+                confirmedAt: gameDrawsTable.confirmedAt,
+                entry: sql<DrawEntry | null>`(select e.value from jsonb_array_elements(${gameDrawsTable.entries}) as e where e.value->>'identityGroupId' in (${groups}) limit 1)`,
+            })
+            .from(gameDrawsTable)
+            .where(inArray(gameDrawsTable.gameId, gameIds));
     }
 
     async findByStatus(status: DrawStatus): Promise<GameDrawSelect[]> {

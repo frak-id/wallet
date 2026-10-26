@@ -9,6 +9,7 @@ export {
 } from "./missions";
 export {
     CurrentGameResponseSchema,
+    GameHistoryResponseSchema,
     GameSummarySchema,
     InviteRewardsSchema,
     MyDrawEntrySchema,

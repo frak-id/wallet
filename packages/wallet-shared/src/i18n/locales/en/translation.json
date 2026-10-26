@@ -1001,7 +1001,8 @@
         "card": {
             "title": "Frak game in progress",
             "participating": "You're in",
-            "notParticipating": "Not joined yet"
+            "notParticipating": "Not joined yet",
+            "ended": "Frak Game over"
         },
         "page": {
             "tickets_one": "ticket",
@@ -1020,7 +1021,9 @@
             "error": "Couldn't load the game.",
             "retry": "Try again",
             "lockedLink": "Your tickets are saved, but they only count in the draw once your Instagram is linked and you follow <igLink>@frak_fr</igLink>.",
-            "linkCta": "Link my Instagram"
+            "linkCta": "Link my Instagram",
+            "title": "Frak Game",
+            "join": "Join the current game"
         },
         "instagram": {
             "title": "Link your Instagram",
@@ -1050,6 +1053,45 @@
                 "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again.",
                 "back": "Back to the game"
             }
+        },
+        "result": {
+            "badge": {
+                "drawing": "Drawing",
+                "won": "Won",
+                "lost": "Not won",
+                "noWinner": "No winner"
+            },
+            "drawing": {
+                "title": "Draw in progress",
+                "description": "The game is over. The winner will be announced very soon."
+            },
+            "won": {
+                "title": "You won {{prize}}!",
+                "description": "Your ticket was drawn. Your prize is on its way to your wallet.",
+                "cta": "See my prize"
+            },
+            "lost": {
+                "title": "Not this time",
+                "description": "Your ticket wasn't drawn. Try your luck in the next game!"
+            },
+            "noWinner": {
+                "title": "No winner",
+                "description": "No ticket could be drawn for this game."
+            },
+            "discarded": "Your tickets didn't count: you weren't following @frak_fr at draw time.",
+            "prize": "Prize",
+            "myTickets": "Your tickets",
+            "totalTickets": "Tickets in the draw",
+            "participants": "Players",
+            "endedAt": "Game ended"
+        },
+        "history": {
+            "title": "Past games",
+            "endedAt": "Ended on {{date}}",
+            "tickets_one": "{{count}} ticket",
+            "tickets_other": "{{count}} tickets",
+            "ticketsOf_one": "{{count}} ticket out of {{total}}",
+            "ticketsOf_other": "{{count}} tickets out of {{total}}"
         }
     },
     "reward": {

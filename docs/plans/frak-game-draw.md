@@ -53,12 +53,19 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 ## Verification
 
 - `GET /common/game/:gameId/draw`, no auth: algorithm, status, freeze time, root, total, the canonical list by pid, the drand round, its time, signature and randomness, the candidates, the rejections (reason and time, not the admin), the winner's pid and the payout transaction hash.
-- `GET /user/wallet/game/:gameId/draw/me`: the caller's pid and draw tickets, so they can find themselves in the list. Not shown in the wallet yet.
+- `GET /user/wallet/game/:gameId/draw/me`: the caller's pid and draw tickets, so they can find themselves in the list. The wallet doesn't show it yet.
 - `bun scripts/verifyGameDraw.ts <gameId> [--api <url>]` replays everything from the public record: the root, the total, that the round came after the freeze, the drand signature, the randomness, the ranking, the rejections and the winner. It shares `domain/game/draw.ts` with the backend and trusts nothing else.
+
+## In the wallet
+
+`GET /user/wallet/game/history` lists the player's ended games, latest first: prize, end date, their tickets (from the frozen list once there is one, counted live before), the draw's total tickets and participants, whether their tickets were discarded, and the outcome (`drawing` until the winner is confirmed, then `won` or `lost`, or `no_winner` for a void draw). A game past the auto-freeze window with no draw is left out.
+
+- **Home card**: with no open game, the last game played shows for 14 days after its end, with its outcome.
+- **Game page**: with no open game, the last result in full on top. Past games are listed below, under the open game when there is one.
 
 ## Analytics
 
-Server-side `productEvents`: `game_draw_frozen`, `game_draw_run`, `game_winner_rejected {rank, reason}`, `game_winner_confirmed {rank, prize_amount}` (the last on the winner's profile).
+Server-side `productEvents`: `game_draw_frozen`, `game_draw_run`, `game_winner_rejected {rank, reason}`, `game_winner_confirmed {rank, prize_amount}` (the last on the winner's profile). Wallet side: `game_result_viewed {outcome}`.
 
 ## Retention
 
@@ -67,5 +74,5 @@ Draw records are kept 5 years. The public record is pseudonymous, and the winner
 ## Not done
 
 - The `game_draws` migration (DB team).
-- A wallet screen for the result and for the player's pid.
+- Showing the player's pid in the wallet, so they can find themselves in the public list.
 - Anchoring the root on Arbitrum at freeze time, planned for later. Until then, only our own endpoint, logs and OpenPanel event show that the root came before the round.

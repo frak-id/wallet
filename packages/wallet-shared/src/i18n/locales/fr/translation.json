@@ -1001,7 +1001,8 @@
         "card": {
             "title": "Jeu Frak en cours",
             "participating": "Tu participes",
-            "notParticipating": "Pas encore inscrit"
+            "notParticipating": "Pas encore inscrit",
+            "ended": "Jeu Frak terminé"
         },
         "page": {
             "tickets_one": "ticket",
@@ -1020,7 +1021,9 @@
             "error": "Impossible de charger le jeu.",
             "retry": "Réessayer",
             "lockedLink": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram relié et <igLink>@frak_fr</igLink> suivi.",
-            "linkCta": "Relier mon Instagram"
+            "linkCta": "Relier mon Instagram",
+            "title": "Jeu Frak",
+            "join": "Participer au jeu en cours"
         },
         "instagram": {
             "title": "Relie ton Instagram",
@@ -1050,6 +1053,45 @@
                 "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
                 "back": "Retour au jeu"
             }
+        },
+        "result": {
+            "badge": {
+                "drawing": "Tirage en cours",
+                "won": "Gagné",
+                "lost": "Pas gagné",
+                "noWinner": "Sans gagnant"
+            },
+            "drawing": {
+                "title": "Tirage en cours",
+                "description": "Le jeu est terminé. Le gagnant sera annoncé très bientôt."
+            },
+            "won": {
+                "title": "Tu as gagné {{prize}} !",
+                "description": "Ton ticket a été tiré au sort. Ton gain arrive dans ton porte-monnaie.",
+                "cta": "Voir mon gain"
+            },
+            "lost": {
+                "title": "Pas cette fois",
+                "description": "Ton ticket n'a pas été tiré. Retente ta chance au prochain jeu !"
+            },
+            "noWinner": {
+                "title": "Pas de gagnant",
+                "description": "Aucun ticket n'a pu être tiré pour ce jeu."
+            },
+            "discarded": "Tes tickets n'ont pas compté : tu ne suivais pas @frak_fr au moment du tirage.",
+            "prize": "Lot",
+            "myTickets": "Tes tickets",
+            "totalTickets": "Tickets au tirage",
+            "participants": "Participants",
+            "endedAt": "Fin du jeu"
+        },
+        "history": {
+            "title": "Jeux précédents",
+            "endedAt": "Terminé le {{date}}",
+            "tickets_one": "{{count}} ticket",
+            "tickets_other": "{{count}} tickets",
+            "ticketsOf_one": "{{count}} ticket sur {{total}}",
+            "ticketsOf_other": "{{count}} tickets sur {{total}}"
         }
     },
     "reward": {

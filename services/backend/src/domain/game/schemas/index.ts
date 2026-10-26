@@ -120,6 +120,34 @@ export const PublicDrawSchema = t.Object({
 });
 export type PublicDraw = Static<typeof PublicDrawSchema>;
 
+/** A finished game as its player sees it: `drawing` until the winner is confirmed or the draw is void. */
+export const GameOutcomeSchema = t.Union([
+    t.Literal("drawing"),
+    t.Literal("won"),
+    t.Literal("lost"),
+    t.Literal("no_winner"),
+]);
+export type GameOutcome = Static<typeof GameOutcomeSchema>;
+
+/** Tickets come from the frozen draw once there is one, and are counted live before. */
+export const GameResultSchema = t.Object({
+    game: GameSummarySchema,
+    outcome: GameOutcomeSchema,
+    tickets: t.Number(),
+    ticketsBySource: TicketBreakdownSchema,
+    /** Set when the caller's tickets did not count in the draw. */
+    discarded: t.Union([t.Literal("not_following"), t.Null()]),
+    /** Every ticket in the draw; null until the freeze. */
+    totalTickets: t.Union([t.Number(), t.Null()]),
+    participants: t.Union([t.Number(), t.Null()]),
+    confirmedAt: t.Union([t.Date(), t.Null()]),
+});
+export type GameResult = Static<typeof GameResultSchema>;
+
+export const GameHistoryResponseSchema = t.Object({
+    games: t.Array(GameResultSchema),
+});
+
 /** The caller's line in a draw, so they can find themselves in the public list. */
 export const MyDrawEntrySchema = t.Object({
     pid: t.String(),

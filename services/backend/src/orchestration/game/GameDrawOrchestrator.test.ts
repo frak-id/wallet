@@ -74,6 +74,7 @@ const drawRow = (overrides: Partial<GameDrawSelect> = {}): GameDrawSelect => ({
 function setup() {
     const games = {
         findById: vi.fn().mockResolvedValue(game),
+        findByIds: vi.fn().mockResolvedValue([]),
         findEndedBetween: vi.fn().mockResolvedValue([]),
     };
     const draws = {
@@ -83,10 +84,12 @@ function setup() {
         recordBeacon: vi.fn(async (params) => drawRow(params)),
         addRejection: vi.fn(async () => drawRow()),
         confirm: vi.fn(async () => drawRow({ status: "confirmed" })),
+        findOutcomes: vi.fn().mockResolvedValue([]),
     };
     const players = {
         participantsOf: vi.fn().mockResolvedValue([]),
         ticketsOf: vi.fn().mockResolvedValue(NO_TICKETS),
+        gamesJoinedBy: vi.fn().mockResolvedValue([]),
     };
     const instagramLinks = {
         findByIdentityGroups: vi.fn().mockResolvedValue([]),
@@ -100,6 +103,7 @@ function setup() {
         getDefaultRewardToken: vi
             .fn()
             .mockResolvedValue(currentStablecoins.eure),
+        findById: vi.fn().mockResolvedValue(null),
     };
     const assetLogs = {
         createWinnerPayout: vi.fn().mockResolvedValue("asset-1"),
@@ -515,6 +519,150 @@ describe("GameDrawOrchestrator.myEntry", () => {
             pid: "bb",
             drawTickets: 1,
             discarded: null,
+        });
+    });
+});
+
+describe("GameDrawOrchestrator.results", () => {
+    const HOUR = 60 * 60 * 1000;
+    const gameEndingAt = (id: string, hoursAgo: number) =>
+        ({
+            ...game,
+            id,
+            prizeDescription: null,
+            sponsorMerchantId: null,
+            endsAt: new Date(NOW.getTime() - hoursAgo * HOUR),
+        }) as GameSelect;
+    const outcome = (
+        gameId: string,
+        overrides: Record<string, unknown> = {}
+    ) => ({
+        gameId,
+        status: "drawn",
+        totalTickets: 40,
+        participants: 12,
+        winnerIdentityGroupId: null,
+        confirmedAt: null,
+        entry: entry("me", 5, "me"),
+        ...overrides,
+    });
+
+    function playing(...played: GameSelect[]) {
+        const ctx = setup();
+        ctx.players.gamesJoinedBy.mockResolvedValue(
+            played.map((g) => ({ gameId: g.id, joinedAt: g.startsAt }))
+        );
+        ctx.games.findByIds.mockResolvedValue(played);
+        return ctx;
+    }
+
+    it("lists ended games latest first, with the frozen tickets, leaving the open one out", async () => {
+        const older = gameEndingAt("older", 24 * 30);
+        const newer = gameEndingAt("newer", 24);
+        const open = gameEndingAt("open", -24);
+        const { orchestrator, draws, players } = playing(older, open, newer);
+        draws.findOutcomes.mockResolvedValue([
+            outcome("older", {
+                status: "confirmed",
+                winnerIdentityGroupId: "me",
+                confirmedAt: NOW,
+            }),
+            outcome("newer"),
+        ]);
+
+        const results = await orchestrator.results("me", NOW);
+
+        expect(results.map((r) => [r.game.id, r.outcome])).toEqual([
+            ["newer", "drawing"],
+            ["older", "won"],
+        ]);
+        expect(results[0]).toMatchObject({
+            tickets: 5,
+            ticketsBySource: { join: 1, purchase: 4 },
+            discarded: null,
+            totalTickets: 40,
+            participants: 12,
+            confirmedAt: null,
+        });
+        expect(results[1]?.confirmedAt).toEqual(NOW);
+        expect(draws.findOutcomes).toHaveBeenCalledWith(
+            ["older", "newer"],
+            ["me"]
+        );
+        expect(players.ticketsOf).not.toHaveBeenCalled();
+    });
+
+    it("counts tickets live while the game waits for its freeze", async () => {
+        const justEnded = gameEndingAt("just-ended", 0.5);
+        const { orchestrator, players } = playing(justEnded);
+        players.ticketsOf.mockResolvedValue({ ...NO_TICKETS, join: 1 });
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(players.ticketsOf).toHaveBeenCalledWith(
+            justEnded,
+            "me",
+            justEnded.startsAt
+        );
+        expect(result).toMatchObject({
+            outcome: "drawing",
+            tickets: 1,
+            totalTickets: null,
+            participants: null,
+        });
+    });
+
+    it("leaves out a game past the auto-freeze window that was never drawn", async () => {
+        const { orchestrator } = playing(gameEndingAt("forgotten", 24 * 8));
+
+        await expect(orchestrator.results("me", NOW)).resolves.toEqual([]);
+    });
+
+    it.each([
+        { status: "confirmed", winner: "someone-else", expected: "lost" },
+        { status: "confirmed", winner: "absorbed", expected: "won" },
+        { status: "void", winner: null, expected: "no_winner" },
+        { status: "frozen", winner: null, expected: "drawing" },
+    ])(
+        "reads a $status draw won by $winner as $expected",
+        async ({ status, winner, expected }) => {
+            const { orchestrator, draws, identities } = playing(
+                gameEndingAt("g", 24)
+            );
+            identities.findGroupById.mockResolvedValue({
+                id: "me",
+                mergedGroups: [{ groupId: "absorbed", mergedAt: "t" }],
+            });
+            draws.findOutcomes.mockResolvedValue([
+                outcome("g", { status, winnerIdentityGroupId: winner }),
+            ]);
+
+            const [result] = await orchestrator.results("me", NOW);
+
+            expect(result?.outcome).toBe(expected);
+            expect(draws.findOutcomes).toHaveBeenCalledWith(
+                ["g"],
+                ["me", "absorbed"]
+            );
+        }
+    );
+
+    it("shows a non-follower their tickets and why they did not count", async () => {
+        const { orchestrator, draws } = playing(gameEndingAt("g", 24));
+        draws.findOutcomes.mockResolvedValue([
+            outcome("g", {
+                entry: {
+                    ...entry("me", 0, "me"),
+                    tickets: { ...NO_TICKETS, join: 1, purchase: 3 },
+                },
+            }),
+        ]);
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(result).toMatchObject({
+            tickets: 4,
+            discarded: "not_following",
         });
     });
 });

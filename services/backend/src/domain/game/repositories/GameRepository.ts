@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { type GameInsert, type GameSelect, gamesTable } from "../db/schema";
 import type { GameStatus } from "../schemas";
@@ -18,6 +18,11 @@ export class GameRepository {
             .where(eq(gamesTable.id, id))
             .limit(1);
         return game ?? null;
+    }
+
+    async findByIds(ids: string[]): Promise<GameSelect[]> {
+        if (ids.length === 0) return [];
+        return db.select().from(gamesTable).where(inArray(gamesTable.id, ids));
     }
 
     /** Games whose end falls in `(after, upTo]`, paused ones included. */

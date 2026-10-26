@@ -18,6 +18,10 @@ export type GameEventMap = {
         tickets_referred_signup: number;
         tickets_brand_share: number;
     };
+    game_result_viewed: {
+        game_id: string;
+        outcome: "drawing" | "won" | "lost" | "no_winner";
+    };
     frak_referrer_replace_prompted: undefined;
     frak_referrer_replace_resolved: { outcome: "confirmed" | "cancelled" };
 };

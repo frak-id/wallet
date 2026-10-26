@@ -34,6 +34,7 @@ import {
     type RecipientType,
 } from "../../domain/rewards/schemas";
 import type { GamePlayerOrchestrator } from "./GamePlayerOrchestrator";
+import { summarizeGame } from "./summarizeGame";
 
 type FrakInteraction = Pick<
     InteractionLogInsert,
@@ -240,22 +241,7 @@ export class FrakGameOrchestrator {
         return created !== null;
     }
 
-    private async summarize(game: GameSelect): Promise<GameSummary> {
-        const sponsor = game.sponsorMerchantId
-            ? await this.merchantRepository.findById(game.sponsorMerchantId)
-            : null;
-        return {
-            id: game.id,
-            prizeAmount: game.prizeAmount,
-            prizeDescription: game.prizeDescription,
-            startsAt: game.startsAt,
-            endsAt: game.endsAt,
-            sponsor: sponsor && {
-                id: sponsor.id,
-                name: sponsor.name,
-                domain: sponsor.domain,
-                logoUrl: sponsor.explorerConfig?.logoUrl,
-            },
-        };
+    private summarize(game: GameSelect): Promise<GameSummary> {
+        return summarizeGame(game, this.merchantRepository);
     }
 }

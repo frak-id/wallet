@@ -513,9 +513,18 @@ export default interface Resources {
     },
     "game": {
       "card": {
+        "ended": "Frak Game over",
         "notParticipating": "Not joined yet",
         "participating": "You're in",
         "title": "Frak game in progress"
+      },
+      "history": {
+        "endedAt": "Ended on {{date}}",
+        "ticketsOf_one": "{{count}} ticket out of {{total}}",
+        "ticketsOf_other": "{{count}} tickets out of {{total}}",
+        "tickets_one": "{{count}} ticket",
+        "tickets_other": "{{count}} tickets",
+        "title": "Past games"
       },
       "instagram": {
         "check": {
@@ -558,6 +567,7 @@ export default interface Resources {
         "error": "Couldn't load the game.",
         "gain_one": "+{{count}} ticket",
         "gain_other": "+{{count}} tickets",
+        "join": "Join the current game",
         "linkCta": "Link my Instagram",
         "locked": "Your tickets are saved, but they only count in the draw if you follow <igLink>@frak_fr</igLink> on Instagram.",
         "lockedLink": "Your tickets are saved, but they only count in the draw once your Instagram is linked and you follow <igLink>@frak_fr</igLink>.",
@@ -570,7 +580,39 @@ export default interface Resources {
         "share": "Share Frak with a friend",
         "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
         "tickets_one": "ticket",
-        "tickets_other": "tickets"
+        "tickets_other": "tickets",
+        "title": "Frak Game"
+      },
+      "result": {
+        "badge": {
+          "drawing": "Drawing",
+          "lost": "Not won",
+          "noWinner": "No winner",
+          "won": "Won"
+        },
+        "discarded": "Your tickets didn't count: you weren't following @frak_fr at draw time.",
+        "drawing": {
+          "description": "The game is over. The winner will be announced very soon.",
+          "title": "Draw in progress"
+        },
+        "endedAt": "Game ended",
+        "lost": {
+          "description": "Your ticket wasn't drawn. Try your luck in the next game!",
+          "title": "Not this time"
+        },
+        "myTickets": "Your tickets",
+        "noWinner": {
+          "description": "No ticket could be drawn for this game.",
+          "title": "No winner"
+        },
+        "participants": "Players",
+        "prize": "Prize",
+        "totalTickets": "Tickets in the draw",
+        "won": {
+          "cta": "See my prize",
+          "description": "Your ticket was drawn. Your prize is on its way to your wallet.",
+          "title": "You won {{prize}}!"
+        }
       }
     },
     "installCode": {

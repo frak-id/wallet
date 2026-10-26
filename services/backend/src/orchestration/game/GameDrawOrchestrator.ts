@@ -22,9 +22,11 @@ import type { GameRepository } from "../../domain/game/repositories/GameReposito
 import type {
     DrawEntry,
     DrawRejectionReason,
+    GameOutcome,
+    GameResult,
     PublicDraw,
 } from "../../domain/game/schemas";
-import { totalTickets } from "../../domain/game/tickets";
+import { NO_TICKETS, totalTickets } from "../../domain/game/tickets";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
 import { isInstagramEligible } from "../../domain/instagram/utils";
@@ -33,6 +35,7 @@ import type { MerchantRepository } from "../../domain/merchant/repositories/Merc
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import type { DrandClient } from "../../infrastructure/integrations/drand";
 import type { GamePlayerOrchestrator } from "./GamePlayerOrchestrator";
+import { summarizeGame } from "./summarizeGame";
 
 /** Lets refunds right after the end land before tickets are frozen. */
 export const DRAW_FREEZE_GRACE_MS = 60 * 60 * 1000;
@@ -41,6 +44,22 @@ export const DRAW_ROUND_DELAY_MS = 10 * 60 * 1000;
 /** Older games are only frozen by hand, so a deploy never draws a long-finished game. */
 export const DRAW_AUTO_FREEZE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const COUNT_CONCURRENCY = 10;
+const RESULTS_LIMIT = 20;
+
+type DrawOutcome = Awaited<
+    ReturnType<GameDrawRepository["findOutcomes"]>
+>[number];
+
+function outcomeOf(
+    draw: DrawOutcome | undefined,
+    mine: Set<string>
+): GameOutcome {
+    if (draw?.status === "void") return "no_winner";
+    if (draw?.status !== "confirmed") return "drawing";
+    return draw.winnerIdentityGroupId && mine.has(draw.winnerIdentityGroupId)
+        ? "won"
+        : "lost";
+}
 
 /** The candidate under review: `candidates[rejections.length]`. */
 function currentCandidate(draw: GameDrawSelect) {
@@ -63,7 +82,7 @@ export class GameDrawOrchestrator {
         private readonly draws: GameDrawRepository,
         private readonly players: Pick<
             GamePlayerOrchestrator,
-            "participantsOf" | "ticketsOf"
+            "participantsOf" | "ticketsOf" | "gamesJoinedBy"
         >,
         private readonly instagramLinks: InstagramLinkRepository,
         private readonly identities: IdentityRepository,
@@ -413,6 +432,66 @@ export class GameDrawOrchestrator {
                   discarded: entry.discarded,
               }
             : null;
+    }
+
+    /**
+     * The caller's ended games, latest first. A game with no draw past the
+     * auto-freeze window is left out: no draw will run for it unless frozen by hand.
+     */
+    async results(
+        identityGroupId: string,
+        now = new Date()
+    ): Promise<GameResult[]> {
+        const joined = await this.players.gamesJoinedBy(identityGroupId);
+        const ended = (
+            await this.games.findByIds(joined.map((j) => j.gameId))
+        ).filter((game) => game.endsAt <= now);
+        if (ended.length === 0) return [];
+
+        const group = await this.identities.findGroupById(identityGroupId);
+        const mine = new Set([
+            identityGroupId,
+            ...(group?.mergedGroups ?? []).map((m) => m.groupId),
+        ]);
+        const draws = new Map(
+            (
+                await this.draws.findOutcomes(
+                    ended.map((game) => game.id),
+                    [...mine]
+                )
+            ).map((draw) => [draw.gameId, draw])
+        );
+        const joinedAt = new Map(joined.map((j) => [j.gameId, j.joinedAt]));
+        const autoFreezeAfter = now.getTime() - DRAW_AUTO_FREEZE_WINDOW_MS;
+
+        const shown = ended
+            .filter(
+                (game) =>
+                    draws.has(game.id) ||
+                    game.endsAt.getTime() > autoFreezeAfter
+            )
+            .sort((a, b) => b.endsAt.getTime() - a.endsAt.getTime())
+            .slice(0, RESULTS_LIMIT);
+        return Promise.all(
+            shown.map(async (game) => {
+                const draw = draws.get(game.id);
+                const from = joinedAt.get(game.id) ?? game.startsAt;
+                const ticketsBySource = draw
+                    ? (draw.entry?.tickets ?? NO_TICKETS)
+                    : await this.players.ticketsOf(game, identityGroupId, from);
+                return {
+                    game: await summarizeGame(game, this.merchants),
+                    outcome: outcomeOf(draw, mine),
+                    tickets: totalTickets(ticketsBySource),
+                    ticketsBySource,
+                    discarded: draw?.entry?.discarded ?? null,
+                    totalTickets: draw?.totalTickets ?? null,
+                    participants: draw?.participants ?? null,
+                    confirmedAt:
+                        draw?.status === "confirmed" ? draw.confirmedAt : null,
+                };
+            })
+        );
     }
 
     private async requireDraw(gameId: string): Promise<GameDrawSelect> {

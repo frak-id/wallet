@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameConfig, trackEvent } = vi.hoisted(() => ({
+const { currentGame, gameConfig, gameHistory, trackEvent } = vi.hoisted(() => ({
     trackEvent: vi.fn(),
     gameConfig: { instagramLink: false },
     currentGame: {
@@ -10,6 +10,7 @@ const { currentGame, gameConfig, trackEvent } = vi.hoisted(() => ({
         isError: false,
         refetch: vi.fn(),
     },
+    gameHistory: { data: [] as unknown[], isLoading: false },
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -38,8 +39,40 @@ vi.mock("@/module/game/config", async (importOriginal) => ({
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
 }));
+vi.mock("@/module/game/hook/useGameHistory", () => ({
+    useGameHistory: () => gameHistory,
+}));
 
 import { GamePage } from "./index";
+
+const NO_GAME = {
+    game: null,
+    me: { participating: false, tickets: 0, eligible: false },
+};
+const result = (id: string, outcome: string, overrides: object = {}) => ({
+    game: {
+        id,
+        prizeAmount: 50,
+        prizeDescription: null,
+        startsAt: new Date("2026-10-01T10:00:00Z"),
+        endsAt: new Date("2026-10-10T18:00:00Z"),
+        sponsor: null,
+    },
+    outcome,
+    tickets: 7,
+    ticketsBySource: {
+        join: 1,
+        purchase: 6,
+        referredPurchase: 0,
+        referredSignup: 0,
+        brandShare: 0,
+    },
+    discarded: null,
+    totalTickets: 120,
+    participants: 30,
+    confirmedAt: null,
+    ...overrides,
+});
 
 const game = {
     id: "d1",
@@ -66,6 +99,11 @@ const player = (tickets: number, eligible: boolean) => ({
 });
 
 describe("GamePage", () => {
+    beforeEach(() => {
+        gameHistory.data = [];
+        gameHistory.isLoading = false;
+    });
+
     it("tracks the page view once with the tickets by source", () => {
         trackEvent.mockReset();
         currentGame.data = player(4, true);
@@ -133,14 +171,88 @@ describe("GamePage", () => {
         ).toHaveAttribute("href", "/game/instagram");
     });
 
-    it("says when no game is open", () => {
-        currentGame.data = {
-            game: null,
-            me: { participating: false, tickets: 0, eligible: false },
-        };
+    it("says when no game is open and none was played", () => {
+        currentGame.data = NO_GAME;
         render(<GamePage />);
 
         expect(screen.getByText("game.page.none.title")).toBeInTheDocument();
+    });
+
+    it("waits for the past games before choosing what to show", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.isLoading = true;
+        render(<GamePage />);
+
+        expect(screen.queryByText("game.page.none.title")).toBeNull();
+    });
+
+    it("shows the last result in full once no game is open, the earlier ones below", () => {
+        trackEvent.mockReset();
+        currentGame.data = NO_GAME;
+        gameHistory.data = [
+            result("latest", "lost"),
+            result("earlier", "won", { totalTickets: null, tickets: 2 }),
+        ];
+        render(<GamePage />);
+
+        expect(screen.getByText("game.result.lost.title")).toBeInTheDocument();
+        expect(screen.getByText("120")).toBeInTheDocument();
+        expect(screen.getByText("30")).toBeInTheDocument();
+        expect(screen.getByText("game.history.title")).toBeInTheDocument();
+        expect(screen.getByText("game.history.tickets:2")).toBeInTheDocument();
+        expect(screen.getByText("game.result.badge.won")).toBeInTheDocument();
+        expect(screen.queryByText("game.page.none.title")).toBeNull();
+        expect(trackEvent).toHaveBeenCalledWith("game_result_viewed", {
+            game_id: "latest",
+            outcome: "lost",
+        });
+    });
+
+    it("points a winner to the prize in their history", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [result("latest", "won")];
+        render(<GamePage />);
+
+        expect(screen.getByText("game.result.won.title")).toBeInTheDocument();
+        expect(
+            screen.getByRole("link", { name: /game.result.won.cta/ })
+        ).toHaveAttribute("href", "/history");
+    });
+
+    it("tells a non-follower why their tickets did not count", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [
+            result("latest", "lost", { discarded: "not_following" }),
+        ];
+        render(<GamePage />);
+
+        expect(screen.getByText("game.result.discarded")).toBeInTheDocument();
+    });
+
+    it("lists past games under the open one", () => {
+        currentGame.data = player(4, true);
+        gameHistory.data = [result("earlier", "lost")];
+        render(<GamePage />);
+
+        expect(screen.getByText("game.page.tickets:4")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.history.ticketsOf:7")
+        ).toBeInTheDocument();
+        expect(screen.queryByText("game.result.lost.title")).toBeNull();
+    });
+
+    it("keeps a past player who has not joined the open game on the page", () => {
+        currentGame.data = {
+            game,
+            me: { participating: false, tickets: 0, eligible: false },
+        };
+        gameHistory.data = [result("earlier", "lost")];
+        render(<GamePage />);
+
+        expect(screen.queryByText("navigate:/game/join")).toBeNull();
+        expect(
+            screen.getByRole("link", { name: /game.page.join/ })
+        ).toHaveAttribute("href", "/game/join");
     });
 
     it("sends a user who has not joined to the code screen", () => {

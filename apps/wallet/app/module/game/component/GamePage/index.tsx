@@ -17,17 +17,62 @@ import { Trans, useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
+import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
 import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
+import {
+    type GameResult,
+    useGameHistory,
+} from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+
+type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
+
+/** What tops the page: the open game, or the last result once none is open. */
+type Top =
+    | { kind: "error" | "loading" | "none" | "join" }
+    | { kind: "result"; result: GameResult }
+    | { kind: "playing"; game: NonNullable<CurrentGame["game"]> };
+
+function topOf(
+    current: ReturnType<typeof useCurrentGame>,
+    history: ReturnType<typeof useGameHistory>
+): Top {
+    if (current.isError) return { kind: "error" };
+    const data = current.data;
+    if (!data) return { kind: "loading" };
+    if (data.game && data.me.participating) {
+        return { kind: "playing", game: data.game };
+    }
+    if (history.isLoading) return { kind: "loading" };
+    if (data.game) return { kind: "join" };
+    const latest = history.data?.[0];
+    return latest ? { kind: "result", result: latest } : { kind: "none" };
+}
 
 export function GamePage() {
     const { t, i18n } = useTranslation();
     const current = useCurrentGame();
+    const history = useGameHistory();
     const game = current.data?.game;
     const me = current.data?.me;
     const viewedGameId = game && me?.participating ? game.id : null;
     const trackedGameId = useRef<string | null>(null);
+    const top = topOf(current, history);
+    const results = history.data ?? [];
+    const resultShown = top.kind === "result" ? top.result : null;
+    const trackedResultId = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!resultShown || trackedResultId.current === resultShown.game.id) {
+            return;
+        }
+        trackedResultId.current = resultShown.game.id;
+        trackEvent("game_result_viewed", {
+            game_id: resultShown.game.id,
+            outcome: resultShown.outcome,
+        });
+    }, [resultShown]);
 
     // Once per game shown: a refetch with new counts is not a new view.
     useEffect(() => {
@@ -46,15 +91,16 @@ export function GamePage() {
         });
     }, [viewedGameId, me]);
 
-    if (game && !me?.participating) {
+    // With past games to show, a user not in the open game still gets the page.
+    if (top.kind === "join" && results.length === 0) {
         return <Navigate to="/game/join" replace />;
     }
 
     return (
         <Stack space="m">
             <Back href="/wallet" />
-            <Title size="page">{t("game.card.title")}</Title>
-            {current.isError ? (
+            <Title size="page">{t("game.page.title")}</Title>
+            {top.kind === "error" && (
                 <EmptyState
                     title={t("game.page.error")}
                     action={{
@@ -62,22 +108,42 @@ export function GamePage() {
                         onClick: () => void current.refetch(),
                     }}
                 />
-            ) : game === null ? (
+            )}
+            {top.kind === "loading" && <Skeleton variant="rect" height={160} />}
+            {top.kind === "none" && (
                 <EmptyState
                     title={t("game.page.none.title")}
                     description={t("game.page.none.description")}
                 />
-            ) : !game || !me ? (
-                <Skeleton variant="rect" height={160} />
-            ) : (
+            )}
+            {top.kind === "join" && (
+                <InfoCard>
+                    <InfoRow
+                        label={t("game.page.join")}
+                        to="/game/join"
+                        action={
+                            <Badge size="small" variant="success">
+                                {t("game.page.gain", { count: 1 })}
+                            </Badge>
+                        }
+                    />
+                </InfoCard>
+            )}
+            {top.kind === "result" && <GameResultCard result={top.result} />}
+            {top.kind === "playing" && me && (
                 <GameDetails
                     prize={
-                        game.prizeDescription ??
-                        formatGameAmount(game.prizeAmount, i18n.language)
+                        top.game.prizeDescription ??
+                        formatGameAmount(top.game.prizeAmount, i18n.language)
                     }
-                    endsAt={game.endsAt}
+                    endsAt={top.game.endsAt}
                     tickets={me.tickets}
                     eligible={me.eligible}
+                />
+            )}
+            {top.kind !== "loading" && (
+                <PastGames
+                    results={top.kind === "result" ? results.slice(1) : results}
                 />
             )}
         </Stack>

@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, currentGame } = vi.hoisted(() => ({
+const { navigate, currentGame, gameHistory } = vi.hoisted(() => ({
     navigate: vi.fn(),
     currentGame: { data: undefined as unknown },
+    gameHistory: { data: undefined as unknown[] | undefined },
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
@@ -15,6 +16,9 @@ vi.mock("react-i18next", () => ({
 }));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
+}));
+vi.mock("@/module/game/hook/useGameHistory", () => ({
+    useGameHistory: () => gameHistory,
 }));
 
 import { GameCard } from "./index";
@@ -28,13 +32,53 @@ const game = {
     sponsor: null,
 };
 
-describe("GameCard", () => {
-    beforeEach(() => navigate.mockClear());
+const DAY = 24 * 60 * 60 * 1000;
+const endedDaysAgo = (days: number, outcome = "won") => ({
+    game: {
+        ...game,
+        prizeDescription: null,
+        endsAt: new Date(Date.now() - days * DAY),
+    },
+    outcome,
+});
 
-    it("renders nothing when no game is open", () => {
+describe("GameCard", () => {
+    beforeEach(() => {
+        navigate.mockClear();
+        gameHistory.data = [];
+    });
+
+    it("renders nothing when no game is open and none was played", () => {
         currentGame.data = { game: null, me: { participating: false } };
         const { container } = render(<GameCard />);
         expect(container.firstChild).toBeNull();
+    });
+
+    it("shows how the last game went when it ended recently", () => {
+        currentGame.data = { game: null, me: { participating: false } };
+        gameHistory.data = [endedDaysAgo(2), endedDaysAgo(40, "lost")];
+        render(<GameCard />);
+
+        expect(screen.getByText("game.card.ended")).toBeInTheDocument();
+        expect(screen.getByText("game.result.badge.won")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button"));
+        expect(navigate).toHaveBeenCalledWith({ to: "/game" });
+    });
+
+    it("drops the last result from home after two weeks", () => {
+        currentGame.data = { game: null, me: { participating: false } };
+        gameHistory.data = [endedDaysAgo(15)];
+        const { container } = render(<GameCard />);
+        expect(container.firstChild).toBeNull();
+    });
+
+    it("prefers the open game over the last result", () => {
+        currentGame.data = { game, me: { participating: true } };
+        gameHistory.data = [endedDaysAgo(2)];
+        render(<GameCard />);
+
+        expect(screen.getByText("game.card.title")).toBeInTheDocument();
+        expect(screen.queryByText("game.result.badge.won")).toBeNull();
     });
 
     it("sends a user who is not in the game to the code screen", () => {
