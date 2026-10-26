@@ -17,6 +17,15 @@ import walletPackage from "./package.json" with { type: "json" };
 
 const DEBUG = JSON.stringify(false);
 
+/** CrabNebula rejects dots in a channel name, so `1.1.8` becomes `1-1-8`. */
+export function otaChannelFor(
+    stage: string,
+    platform: "ios" | "android",
+    version: string
+) {
+    return `${stage}-${platform}-${version.replaceAll(".", "-")}`;
+}
+
 export type PlatformFlags = {
     isTauri: boolean;
     isTauriIos: boolean;
@@ -62,7 +71,7 @@ export async function getDefineProps({
     // computed in wallet-ota-hotfix.yml. `null` disables OTA.
     const otaPlatform = isTauriIos ? "ios" : isTauriAndroid ? "android" : null;
     const otaChannel = otaPlatform
-        ? `${stage}-${otaPlatform}-${walletPackage.version}`
+        ? otaChannelFor(stage, otaPlatform, walletPackage.version)
         : null;
 
     return {
