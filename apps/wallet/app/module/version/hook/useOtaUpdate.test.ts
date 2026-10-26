@@ -119,4 +119,20 @@ describe("useOtaUpdate", () => {
         expect(query?.options.retry).toBe(false);
         expect(result.current).toBe(false);
     });
+
+    test("is never persisted across launches", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        stageOtaUpdateMock.mockResolvedValue({ status: "up_to_date" });
+
+        renderHook(() => useOtaUpdate(), { wrapper: queryWrapper.wrapper });
+
+        await waitFor(() => {
+            expect(stageOtaUpdateMock).toHaveBeenCalledTimes(1);
+        });
+        const query = queryWrapper.client
+            .getQueryCache()
+            .find({ queryKey: versionKey.otaStatus });
+        expect(query?.meta?.storable).toBe(false);
+    });
 });

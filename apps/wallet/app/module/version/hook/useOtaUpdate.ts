@@ -19,6 +19,8 @@ export function useOtaUpdate(): boolean {
         refetchOnMount: false,
         refetchOnReconnect: false,
         retry: false,
+        // Persisted, `up_to_date` would skip every later launch of this binary.
+        meta: { storable: false },
     });
 
     return data?.status === "staged";
