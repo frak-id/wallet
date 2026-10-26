@@ -14,11 +14,18 @@ import * as styles from "./index.css";
 
 type GameRewardProps = {
     onContinue: () => void;
-    /** EURe the redemption earned, still locked. */
+    /** EURe the redemption earned, still locked; 0 shows the join alone. */
     reward: number;
     /** The game joined; absent for a friend's code with no open game. */
     game?: RedeemResult["game"];
 };
+
+function rewardDescriptionKey(reward: number) {
+    if (reward <= 0) return "onboarding.game.reward.descriptionJoinOnly";
+    return frakGame.instagramLink
+        ? "onboarding.game.reward.descriptionFollow"
+        : "onboarding.game.reward.description";
+}
 
 export function GameReward({ onContinue, reward, game }: GameRewardProps) {
     const { t, i18n } = useTranslation();
@@ -32,19 +39,17 @@ export function GameReward({ onContinue, reward, game }: GameRewardProps) {
             }
         >
             <div className={styles.body}>
-                <Text variant="display1" as="p" className={styles.amount}>
-                    {formatGameAmount(reward, i18n.language)}
-                </Text>
+                {reward > 0 && (
+                    <Text variant="display1" as="p" className={styles.amount}>
+                        {formatGameAmount(reward, i18n.language)}
+                    </Text>
+                )}
                 <Box display="flex" flexDirection="column" gap="s">
                     <Text variant="heading1" as="h2" align="center">
                         {t("onboarding.game.reward.title")}
                     </Text>
                     <Text color="secondary" align="center">
-                        {t(
-                            frakGame.instagramLink
-                                ? "onboarding.game.reward.descriptionFollow"
-                                : "onboarding.game.reward.description"
-                        )}
+                        {t(rewardDescriptionKey(reward))}
                     </Text>
                 </Box>
                 {game && <JoinedGameCard game={game} />}

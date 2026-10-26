@@ -67,6 +67,15 @@ describe("GameReward", () => {
         expect(onContinue).toHaveBeenCalled();
     });
 
+    it("shows the join without an amount when it earned nothing", () => {
+        render(<GameReward reward={0} onContinue={vi.fn()} />);
+
+        expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+        expect(
+            screen.getByText("onboarding.game.reward.descriptionJoinOnly")
+        ).toBeInTheDocument();
+    });
+
     it("shows the joined game's prize, end date and sponsor", () => {
         render(
             <GameReward

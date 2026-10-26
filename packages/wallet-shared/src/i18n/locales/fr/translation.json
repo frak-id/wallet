@@ -981,6 +981,7 @@
                 "title": "Tu es dans le jeu !",
                 "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
                 "descriptionFollow": "Ta récompense est en attente. Elle se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
+                "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",
                 "game": {
                     "label": "Lot du jeu",
                     "endsAt": "Jusqu'à {{date}}",

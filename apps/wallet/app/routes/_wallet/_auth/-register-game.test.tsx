@@ -261,7 +261,26 @@ describe("RegisterPage — Frak Game onboarding", () => {
         expect(screen.getByText("game-prize")).toBeInTheDocument();
     });
 
-    test("flag on: a code that earns no game reward keeps the applied toast", () => {
+    test.each([
+        { name: "a game code", kind: "frak" },
+        { name: "a friend's code", kind: "user" },
+    ] as const)(
+        "flag on: $name that joins a game without a reward still shows the game screens",
+        ({ kind }) => {
+            mockGame.enabled = true;
+            redeem.result = { kind, game: { prizeDescription: "game-prize" } };
+            reachReferralCode();
+
+            click("apply");
+            expect(screen.getByText("reward-0")).toBeInTheDocument();
+            expect(screen.getByText("game-prize")).toBeInTheDocument();
+
+            click("continue");
+            expect(screen.getByText("game-rules")).toBeInTheDocument();
+        }
+    );
+
+    test("flag on: a code that joins no game and earns nothing keeps the applied toast", () => {
         mockGame.enabled = true;
         redeem.result = { kind: "frak" };
         reachReferralCode();

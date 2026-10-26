@@ -808,6 +808,7 @@ export default interface Resources {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
           "descriptionFollow": "Your reward is pending. It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
+          "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
           "game": {
             "endsAt": "Until {{date}}",
             "label": "Game prize",
