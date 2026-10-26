@@ -509,6 +509,8 @@ jobs:
       # declares one browser, and the standalone bundle is built by the suite's
       # own `globalSetup`.
       - name: "🌐 Install Chromium"
+        # Usually ~25 s; a slow apt mirror otherwise stalls the job for 10+ min.
+        timeout-minutes: 5
         run: bun run --cwd apps/wallet test:light:install
       # Specs import `@frak-labs/core-sdk/identity`, and Playwright resolves it
       # through the `import` condition to `dist/`, not source.
@@ -551,6 +553,8 @@ jobs:
         run: bun install --frozen-lockfile
       # Through the workspace, not `bunx`: see `wallet-pages`.
       - name: "🌐 Install Chromium"
+        # Usually ~25 s; a slow apt mirror otherwise stalls the job for 10+ min.
+        timeout-minutes: 5
         run: bun run --cwd packages/design-system test:gallery:install
       # The config builds the gallery and serves it; `GALLERY_HOST` widens the
       # loopback-only bind for the same reason as `STANDALONE_HOST` above.
