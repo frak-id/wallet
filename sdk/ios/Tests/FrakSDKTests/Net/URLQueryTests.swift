@@ -75,6 +75,22 @@ struct URLQueryTests {
         #expect(query.string == "https://acme.example/p?a=1")
     }
 
+    @Test("fillIfAbsent does not count another casing as present")
+    func fillIfAbsentIsExactCase() throws {
+        var query = try #require(URLQuery.parse("https://acme.example/p?UTM_SOURCE=x"))
+        query.fillIfAbsent("utm_source", "frak")
+        #expect(query.string == "https://acme.example/p?UTM_SOURCE=x&utm_source=frak")
+    }
+
+    @Test("matches a percent-encoded key by its decoded name")
+    func matchesAnEncodedKey() throws {
+        var query = try #require(URLQuery.parse("https://acme.example/p?f%43tx=old&utm%5Fsource=nl"))
+        #expect(query.value(for: "fCtx") == "old")
+        query.set("fCtx", to: "new")
+        query.fillIfAbsent("utm_source", "frak")
+        #expect(query.string == "https://acme.example/p?utm%5Fsource=nl&fCtx=new")
+    }
+
     @Test("set removes every casing of a key before appending")
     func setReplacesEveryCasing() throws {
         var query = try #require(URLQuery.parse("https://acme.example/p?fctx=old&FCTX=older&a=1"))
