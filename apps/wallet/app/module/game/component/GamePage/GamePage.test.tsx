@@ -69,12 +69,22 @@ describe("GamePage", () => {
         expect(screen.queryByText("game.page.locked")).toBeNull();
     });
 
+    it("confirms to an eligible player that their tickets count", () => {
+        currentGame.data = player(4, true);
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.instagram.linked.counting")
+        ).toBeInTheDocument();
+    });
+
     it("warns a non-follower that stored tickets do not count yet", () => {
         currentGame.data = player(1, false);
         render(<GamePage />);
 
         expect(screen.getByText("game.page.locked")).toBeInTheDocument();
         expect(screen.getByText("1")).toBeInTheDocument();
+        expect(screen.queryByText("game.instagram.linked.counting")).toBeNull();
     });
 
     it("links a non-follower to the Instagram linking screen once linking is on", () => {

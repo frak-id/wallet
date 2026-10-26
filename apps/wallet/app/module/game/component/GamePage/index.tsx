@@ -104,7 +104,11 @@ function GameDetails({
                     </Text>
                 </Stack>
             </Card>
-            {!eligible && (
+            {eligible ? (
+                <Notice tone="success">
+                    {t("game.instagram.linked.counting")}
+                </Notice>
+            ) : (
                 <Stack space="xs">
                     <Notice tone="warning">
                         <Trans
