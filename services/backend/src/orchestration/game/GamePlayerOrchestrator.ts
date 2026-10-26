@@ -18,6 +18,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { GameSelect } from "../../domain/game/db/schema";
 import { TICKET_AMOUNTS } from "../../domain/game/tickets";
+import { instagramLinksTable } from "../../domain/instagram/db/schema";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { interactionLogsTable } from "../../domain/rewards/db/schema";
 import { interactionTypes } from "../../domain/rewards/schemas";
@@ -72,6 +73,39 @@ function attributedToLink(): SQL | undefined {
     );
 }
 
+/** Friends who signed up with the holder's code in the window and now follow @frak_fr; the referrer comes from the link, which merges keep current. */
+function followingSignups(holderGroupId: string, from: Date, endsAt: Date) {
+    return db
+        .select({ n: countDistinct(interactionLogsTable.identityGroupId) })
+        .from(interactionLogsTable)
+        .innerJoin(
+            referralLinksTable,
+            eq(
+                referralLinksTable.refereeIdentityGroupId,
+                interactionLogsTable.identityGroupId
+            )
+        )
+        .innerJoin(
+            instagramLinksTable,
+            eq(
+                instagramLinksTable.identityGroupId,
+                interactionLogsTable.identityGroupId
+            )
+        )
+        .where(
+            and(
+                eq(interactionLogsTable.type, interactionTypes.referralSignup),
+                eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
+                gte(interactionLogsTable.createdAt, from),
+                lt(interactionLogsTable.createdAt, endsAt),
+                eq(referralLinksTable.referrerIdentityGroupId, holderGroupId),
+                eq(referralLinksTable.scope, "cross_merchant"),
+                isNull(referralLinksTable.removedAt),
+                eq(instagramLinksTable.follows, true)
+            )
+        );
+}
+
 export class GamePlayerOrchestrator {
     /** Earliest `game_join` of the group for the game, null when it never joined. */
     async joinedAt(
@@ -92,7 +126,7 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
-    /** The join ticket plus those earned from purchases in `[max(joinedAt, startsAt), endsAt)`. */
+    /** The join ticket plus those earned from purchases and friends' signups in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,
         identityGroupId: string,
@@ -100,7 +134,7 @@ export class GamePlayerOrchestrator {
     ): Promise<number> {
         const from = joinedAt > game.startsAt ? joinedAt : game.startsAt;
         const purchases = countedPurchase(from, game.endsAt);
-        const [own, referred] = await Promise.all([
+        const [own, referred, signups] = await Promise.all([
             db
                 .select({ n: count() })
                 .from(interactionLogsTable)
@@ -138,11 +172,13 @@ export class GamePlayerOrchestrator {
                         attributedToLink()
                     )
                 ),
+            followingSignups(identityGroupId, from, game.endsAt),
         ]);
         return (
             TICKET_AMOUNTS.join +
             (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase +
-            (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase
+            (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase +
+            (signups[0]?.n ?? 0) * TICKET_AMOUNTS.referredSignup
         );
     }
 }

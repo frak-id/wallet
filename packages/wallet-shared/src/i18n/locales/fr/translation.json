@@ -963,7 +963,7 @@
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "3 tickets par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
+                    "description": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, et 3 tickets par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
                 },
                 "follow": {
                     "title": "Suis-nous pour le tirage",
@@ -1003,7 +1003,7 @@
             "buy": "Achète chez une marque partenaire",
             "gain_one": "+{{count}} ticket",
             "gain_other": "+{{count}} tickets",
-            "shareHint": "Un partage rapporte 3 tickets s'il mène à un achat.",
+            "shareHint": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, puis 3 à chacun de ses achats.",
             "none": {
                 "title": "Aucun jeu en cours",
                 "description": "Le prochain jeu sera annoncé sur Instagram."
