@@ -43,13 +43,13 @@ pub fn run() {
         // before the OTA plugin loads it.
         .plugin(ota_cache::init())
         .plugin(ota_plugin)
-        .plugin(tauri_plugin_safe_area_insets::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init());
 
     #[cfg(mobile)]
     {
         builder = builder
+            .plugin(tauri_plugin_safe_area_insets::init())
             .plugin(tauri_plugin_biometric::init())
             // tauri_plugin_frak_firebase moved above — registered before any
             // other mobile plugin so it can capture their setup crashes.
