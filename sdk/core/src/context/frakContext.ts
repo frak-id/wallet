@@ -30,6 +30,11 @@ function safeParseUrl(url: string): URL | null {
     }
 }
 
+/** A share link is handed to the OS, where a vendor scheme would resolve to another app. */
+function isHttpUrl(urlObj: URL): boolean {
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+}
+
 /**
  * Compress a Frak context into a URL-safe string.
  *
@@ -163,7 +168,7 @@ function applyAttributionParams(
  * @param args.url - The URL to update
  * @param args.context - The context to embed (V1 or V2)
  * @param args.attribution - Optional attribution overrides. Defaults are applied even when omitted.
- * @returns The updated URL string, or null on failure
+ * @returns The updated URL string, or null on failure or when the URL is not http(s)
  */
 function update({
     url,
@@ -174,13 +179,19 @@ function update({
     context: FrakContextV1 | FrakContextV2;
     attribution?: AttributionParams;
 }): string | null {
-    if (!url) return null;
+    const urlObj = url ? safeParseUrl(url) : null;
+    if (!urlObj || !isHttpUrl(urlObj)) return null;
+    return embedContext(urlObj, context, attribution);
+}
 
+/** {@link update} without the scheme check, for rewriting the page's own URL in place. */
+function embedContext(
+    urlObj: URL,
+    context: FrakContextV1 | FrakContextV2,
+    attribution?: AttributionParams
+): string | null {
     const compressedContext = compress(context);
     if (!compressedContext) return null;
-
-    const urlObj = safeParseUrl(url);
-    if (!urlObj) return null;
 
     deleteQueryParamCaseInsensitive(urlObj.searchParams, contextKey);
     urlObj.searchParams.set(contextKey, compressedContext);
@@ -205,7 +216,7 @@ function remove(url: string): string {
 /**
  * Replace the current browser URL with an updated Frak context.
  *
- * - If `context` is non-null, embeds it via {@link update}.
+ * - If `context` is non-null, embeds it like {@link update}, on any scheme (`capacitor://` included).
  * - If `context` is null, strips the context via {@link remove}.
  *
  * @param args
@@ -228,7 +239,8 @@ function replaceUrl({
 
     let newUrl: string | null;
     if (context !== null) {
-        newUrl = update({ url, context });
+        const urlObj = safeParseUrl(url);
+        newUrl = urlObj ? embedContext(urlObj, context) : null;
     } else {
         newUrl = remove(url);
     }

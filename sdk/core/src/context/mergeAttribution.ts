@@ -64,7 +64,7 @@ export function mergeAttribution({
     };
 
     // utm_content priority: productUtmContent > perCall.utmContent; never from defaults.
-    const utmContent = productUtmContent ?? perCall?.utmContent;
+    const utmContent = productUtmContent || perCall?.utmContent;
     if (utmContent !== undefined && utmContent !== "") {
         merged.utmContent = utmContent;
     } else {

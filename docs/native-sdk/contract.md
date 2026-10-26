@@ -186,7 +186,7 @@ is absent. Under native the SDK owns the whole install step; the page has no sig
 ## 4. Golden fixtures
 
 Committed language-agnostic JSON vectors that TypeScript, Kotlin and Swift must reproduce byte for
-byte. The vectors are the contract; the implementation is not. This exists because iOS and Android
+byte (the share-link corpus compares decoded links, see below). The vectors are the contract; the implementation is not. This exists because iOS and Android
 emit different output for identical locale/currency input (`"CHF 10.00"` vs `"CHF10.00"`) and ICU
 skew diverges even within one platform family, so "just use the platform formatter" is not
 available.
@@ -196,6 +196,14 @@ available.
 | Identity — signed byte layout | `identity/fixtures/golden-proofs.json` | `scripts/generate-golden-proofs.ts` | 6 |
 | FrakContext v2 codec | `context/fixtures/golden-context.json` | `scripts/generate-golden-context.ts` | 32 (11 encode, 21 reject) |
 | Reward selection + currency formatting | `rewards/fixtures/golden-rewards.json` | `scripts/generate-golden-rewards.ts` | 67 across 6 kinds |
+| Share links + inbound `fCtx` | `context/fixtures/golden-sharing-links.json` | `scripts/generate-golden-sharing-links.ts` | 48 (37 build, 11 parse) |
+
+The rewards corpus is web-only: the native SDKs never select or format a reward, they display
+`BestReward.formatted` as the backend computed it with the same `selectBestReward`.
+
+The share-link corpus compares a link decoded, not its bytes: the web reference serialises through
+WHATWG `URL` (`%20` becomes `+`, a bare origin gains `/`), the native ports keep the merchant's bytes,
+and every server decodes both the same way. The decoding rule is in the generator's header.
 
 Identity is `op ‖ merchantId(16) ‖ anonymousId(16) ‖ binding(32) ‖ ts(8)`, fixed width, UUIDs as raw
 16 bytes, from the crypto-free `identity/canonical.ts` so signer and verifier build on one artifact.
@@ -208,13 +216,14 @@ decode always emits lowercase canonical.
 { "formatVersion": 1, "fixtures": [ { "name": "…", "description": "…", "kind": "…" } ] }
 ```
 
-`formatVersion` is identical across all three files and bumps only when the envelope *shape*
+`formatVersion` is identical across every corpus file and bumps only when the envelope *shape*
 changes, never when a payload gains a field. Everything inside an entry is opaque to both loaders.
 
 ```bash
 bun run --cwd sdk/core fixtures:generate           # identity
 bun run --cwd sdk/core fixtures:generate:context   # codec
 bun run --cwd sdk/core fixtures:generate:rewards   # rewards
+bun run --cwd sdk/core fixtures:generate:links     # share links
 ```
 
 ### 4.2 Rules
@@ -271,12 +280,13 @@ reaches the published POM.
 
 | | State |
 |---|---|
-| Envelope | locked across all three files |
+| Envelope | locked across every corpus file |
 | Loaders | green both platforms, with a deliberate failure-path test |
 | Identity conformance | asserted both platforms |
 | Codec conformance | asserted both platforms |
-| **Rewards conformance** | **absent** — `GoldenFixtures.REWARDS`/`.rewards` is loaded by nobody; reward decoding is asserted against hand-written literals instead. 67 entries, the largest file, currently asserting nothing |
-| Has the corpus ever caught a divergence? | No. The deliberate-injection test has never been run |
+| Rewards conformance | web only, by design: the native SDKs do not format rewards |
+| Share-link conformance | asserted on all three platforms |
+| Has the corpus ever caught a divergence? | Yes. Building the share-link corpus found five (2026-10-23/26): upper-case `UTM_SOURCE` suppressed `utm_source` on native, native compared percent-encoded keys (`f%43tx`) raw where web decodes them, an empty product `utmContent` hid the caller's on web, web built links on non-http(s) URLs, and web accepted base64url padding that native refuses (left to the codec corpus). Changing one expected byte fails the share-link suite on iOS and Android |
 
 ## 5. Open on the contract itself
 

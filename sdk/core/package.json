@@ -108,6 +108,12 @@
       "import": "./src/context/fixtures/golden-context.json",
       "require": "./src/context/fixtures/golden-context.json"
     },
+    "./context/sharing-links-fixtures": {
+      "development": "./src/context/fixtures/golden-sharing-links.json",
+      "production": "./src/context/fixtures/golden-sharing-links.json",
+      "import": "./src/context/fixtures/golden-sharing-links.json",
+      "require": "./src/context/fixtures/golden-sharing-links.json"
+    },
     "./rewards/fixtures": {
       "development": "./src/rewards/fixtures/golden-rewards.json",
       "production": "./src/rewards/fixtures/golden-rewards.json",
@@ -127,6 +133,7 @@
     "test": "vitest",
     "fixtures:generate": "bun scripts/generate-golden-proofs.ts",
     "fixtures:generate:context": "bun scripts/generate-golden-context.ts",
+    "fixtures:generate:links": "bun scripts/generate-golden-sharing-links.ts",
     "fixtures:generate:rewards": "bun scripts/generate-golden-rewards.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"

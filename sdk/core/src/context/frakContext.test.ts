@@ -525,6 +525,24 @@ describe("FrakContextManager", () => {
                 expect(result).toBeNull();
             });
 
+            it.each([
+                ["custom scheme", "myapp://shop/product"],
+                ["ftp", "ftp://example.com/product"],
+                ["file", "file:///product"],
+                ["javascript", "javascript:alert(1)"],
+            ])(
+                "should return null for a non-http(s) URL: %s",
+                (_label, url) => {
+                    const context: FrakContextV1 = {
+                        r: "0x1234567890123456789012345678901234567890" as Address,
+                    };
+
+                    const result = FrakContextManager.update({ url, context });
+
+                    expect(result).toBeNull();
+                }
+            );
+
             it("should return null when context has no data", () => {
                 const url = "https://example.com";
                 // Runtime robustness: invalid object shape should return null.
@@ -738,6 +756,22 @@ describe("FrakContextManager", () => {
 
             expect(calledUrl).toContain("https://custom.com/path");
             expect(calledUrl).not.toContain("https://example.com/page");
+        });
+
+        it("should still rewrite a non-http(s) page URL", () => {
+            const context: FrakContextV1 = { r: mockAddress };
+
+            FrakContextManager.replaceUrl({
+                url: "capacitor://localhost/product",
+                context,
+            });
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            const calledUrl = historySpy.mock.calls[0]?.[2] as string;
+
+            expect(calledUrl).toMatch(
+                /^capacitor:\/\/localhost\/product\?fCtx=/
+            );
         });
 
         it("should remove fCtx when context is null", () => {

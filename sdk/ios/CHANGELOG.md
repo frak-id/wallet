@@ -17,6 +17,14 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **Share links always carry a lowercase `utm_source`.** A merchant URL that already had an
+  upper-case `UTM_SOURCE` was shared without `utm_source=frak`, so analytics reading the lowercase key
+  saw the link as unattributed. Attribution parameters are now added unless the exact lowercase key is
+  present; the merchant's own `UTM_SOURCE` is left untouched.
+- **A percent-encoded parameter name is read by what it means.** `?f%43tx=…` is `fCtx` and
+  `?utm%5Fsource=…` is `utm_source`, as browsers read them. An inbound referral in such a link was
+  missed, a stale one was kept next to the new `fCtx`, and a merchant's `utm_source` gained a second
+  `utm_source=frak`. The merchant's spelling is still written back unchanged.
 - **Identity proofs are stamped with the server's clock.** An iPhone whose clock ran more than
   60 s fast had every install and merge proof rejected; the SDK now corrects for the offset it sees
   in the backend's `Date` header. A device that is 30 s or more off logs one warning.
