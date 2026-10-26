@@ -38,7 +38,7 @@ tauri-plugin-frak-glass = { path = "plugins/tauri-plugin-frak-glass" }
 tauri-plugin-clipboard-manager = "2"
 # CrabNebula OTA: swaps the embedded web assets at boot. `rustls-tls` avoids
 # linking OpenSSL into the iOS/Android builds, which have no system OpenSSL.
-tauri-plugin-ota-updater = { version = "2.0.8", default-features = false, features = [
+tauri-plugin-ota-updater = { version = "2.1.0", default-features = false, features = [
     "rustls-tls",
 ] }
 
