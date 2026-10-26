@@ -143,17 +143,29 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     it("grants the join ticket, 3 per own purchase and 3 per referred purchase", async () => {
         answer([[2]], [[1]], [[0]], [[0]]);
 
-        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            10
-        );
+        await expect(
+            player.ticketsOf(game, HOLDER, JOINED_AT)
+        ).resolves.toEqual({
+            join: 1,
+            purchase: 6,
+            referredPurchase: 3,
+            referredSignup: 0,
+            brandShare: 0,
+        });
     });
 
     it("returns the join ticket alone when nothing else qualifies", async () => {
         answer([[0]], [[0]], [[0]], [[0]]);
 
-        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            1
-        );
+        await expect(
+            player.ticketsOf(game, HOLDER, JOINED_AT)
+        ).resolves.toEqual({
+            join: 1,
+            purchase: 0,
+            referredPurchase: 0,
+            referredSignup: 0,
+            brandShare: 0,
+        });
     });
 
     it("counts friends who signed up with the holder's code in the window and follow @frak_fr", async () => {
@@ -189,9 +201,15 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     it("grants 1 ticket per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
         answer([[0]], [[0]], [[2]], [[0]]);
 
-        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            3
-        );
+        await expect(
+            player.ticketsOf(game, HOLDER, JOINED_AT)
+        ).resolves.toEqual({
+            join: 1,
+            purchase: 0,
+            referredPurchase: 0,
+            referredSignup: 2,
+            brandShare: 0,
+        });
     });
 
     it("counts distinct friends with a wallet reached through the holder's brand links in the window", async () => {
@@ -220,16 +238,28 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     it("grants 1 ticket per distinct brand-share friend with a wallet", async () => {
         answer([[0]], [[0]], [[0]], [[3]]);
 
-        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            4
-        );
+        await expect(
+            player.ticketsOf(game, HOLDER, JOINED_AT)
+        ).resolves.toEqual({
+            join: 1,
+            purchase: 0,
+            referredPurchase: 0,
+            referredSignup: 0,
+            brandShare: 3,
+        });
     });
 
-    it("adds the join, purchase, signup and brand-share tickets", async () => {
+    it("reports every source on its own", async () => {
         answer([[1]], [[1]], [[1]], [[1]]);
 
-        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            9
-        );
+        await expect(
+            player.ticketsOf(game, HOLDER, JOINED_AT)
+        ).resolves.toEqual({
+            join: 1,
+            purchase: 3,
+            referredPurchase: 3,
+            referredSignup: 1,
+            brandShare: 1,
+        });
     });
 });

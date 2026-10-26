@@ -9,6 +9,10 @@ import {
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { useRedeemReferralCodeForm } from "./useRedeemReferralCodeForm";
 
+const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
+
+vi.mock("../../common/analytics", () => ({ trackEvent }));
+
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
         referral: {
@@ -281,6 +285,9 @@ describe("useRedeemReferralCodeForm", () => {
         );
         expect(result.current.errorMessageKey).toBeNull();
         expect(onError).not.toHaveBeenCalled();
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_prompted"
+        );
     });
 
     test("confirming resends the code with replaceFrakReferrer", async ({
@@ -320,6 +327,10 @@ describe("useRedeemReferralCodeForm", () => {
             replaceFrakReferrer: true,
         });
         expect(result.current.confirmingFrakReplace).toBe(false);
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_resolved",
+            { outcome: "confirmed" }
+        );
     });
 
     test("cancelling closes the confirmation and clears the error", async ({
@@ -350,6 +361,10 @@ describe("useRedeemReferralCodeForm", () => {
         expect(
             authenticatedWalletApi.referral.code.redeem.post
         ).toHaveBeenCalledTimes(1);
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_resolved",
+            { outcome: "cancelled" }
+        );
     });
 
     test("resetErrorOnChange clears mutation error on edit", async ({

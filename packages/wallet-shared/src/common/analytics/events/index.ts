@@ -3,6 +3,7 @@ import type { DeepLinkEventMap } from "./deepLink";
 import type { DiagnosticsEventMap } from "./diagnostics";
 import type { ExplorerEventMap } from "./explorer";
 import type { FavoritesEventMap } from "./favorites";
+import type { GameEventMap } from "./game";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
 import type { ModalEventMap, WalletModalEventMap } from "./modal";
@@ -26,6 +27,7 @@ export type {
     FlowOutcome,
     FlowStartExtras,
 } from "./flow";
+export type { GameEventMap } from "./game";
 export type {
     InstallEventMap,
     InstallPageView,
@@ -92,4 +94,5 @@ export type EventMap = AuthEventMap &
     DiagnosticsEventMap &
     WalletMergeEventMap &
     ExplorerEventMap &
-    FavoritesEventMap;
+    FavoritesEventMap &
+    GameEventMap;

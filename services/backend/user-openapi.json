@@ -8301,6 +8301,7 @@
                       "required": [
                         "participating",
                         "tickets",
+                        "ticketsBySource",
                         "eligible"
                       ],
                       "properties": {
@@ -8309,6 +8310,33 @@
                         },
                         "tickets": {
                           "type": "number"
+                        },
+                        "ticketsBySource": {
+                          "type": "object",
+                          "required": [
+                            "join",
+                            "purchase",
+                            "referredPurchase",
+                            "referredSignup",
+                            "brandShare"
+                          ],
+                          "properties": {
+                            "join": {
+                              "type": "number"
+                            },
+                            "purchase": {
+                              "type": "number"
+                            },
+                            "referredPurchase": {
+                              "type": "number"
+                            },
+                            "referredSignup": {
+                              "type": "number"
+                            },
+                            "brandShare": {
+                              "type": "number"
+                            }
+                          }
                         },
                         "eligible": {
                           "type": "boolean"

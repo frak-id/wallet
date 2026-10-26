@@ -82,11 +82,13 @@ export function RedeemReferralCodePage({
 
 export function RedeemForm({
     onRedeemed,
+    onError,
     initialCode,
     label,
     submitLabel,
 }: {
     onRedeemed: (result: RedeemResult) => void;
+    onError?: (errorKey: string) => void;
     initialCode?: string;
     label?: string;
     submitLabel?: string;
@@ -104,7 +106,11 @@ export function RedeemForm({
         confirmingFrakReplace,
         confirmFrakReplace,
         cancelFrakReplace,
-    } = useRedeemReferralCodeForm({ onApplied: onRedeemed, initialCode });
+    } = useRedeemReferralCodeForm({
+        onApplied: onRedeemed,
+        onError,
+        initialCode,
+    });
 
     return (
         <form onSubmit={handleSubmit}>

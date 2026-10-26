@@ -27,11 +27,21 @@ export const GameSummarySchema = t.Object({
 });
 export type GameSummary = Static<typeof GameSummarySchema>;
 
+/** Tickets per source, already multiplied by their amount; they add up to `tickets`. */
+export const TicketBreakdownSchema = t.Object({
+    join: t.Number(),
+    purchase: t.Number(),
+    referredPurchase: t.Number(),
+    referredSignup: t.Number(),
+    brandShare: t.Number(),
+});
+
 export const CurrentGameResponseSchema = t.Object({
     game: t.Union([GameSummarySchema, t.Null()]),
     me: t.Object({
         participating: t.Boolean(),
         tickets: t.Number(),
+        ticketsBySource: TicketBreakdownSchema,
         eligible: t.Boolean(),
     }),
 });

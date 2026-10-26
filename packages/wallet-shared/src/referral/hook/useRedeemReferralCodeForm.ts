@@ -1,5 +1,6 @@
 import type { RedeemContext } from "@frak-labs/backend-elysia/domain/referral-code/schemas";
 import { type ChangeEvent, type FormEvent, useState } from "react";
+import { trackEvent } from "../../common/analytics";
 import { getErrorCode, resolveApiErrorKey } from "../../common/api/errors";
 import { readClipboardText } from "../../common/utils/readClipboardText";
 import {
@@ -74,7 +75,10 @@ export function useRedeemReferralCodeForm({
             onError: (error) => {
                 const asksConfirm = getErrorCode(error) === FRAK_REFERRER_CODE;
                 setConfirmingFrakReplace(asksConfirm);
-                if (asksConfirm) return;
+                if (asksConfirm) {
+                    trackEvent("frak_referrer_replace_prompted");
+                    return;
+                }
                 const key = resolveApiErrorKey(error, REDEEM_ERROR_KEY_MAP);
                 if (key) onError?.(key);
             },
@@ -114,10 +118,13 @@ export function useRedeemReferralCodeForm({
         redeem.mutate({ code, context });
     };
 
-    const confirmFrakReplace = () =>
+    const confirmFrakReplace = () => {
+        trackEvent("frak_referrer_replace_resolved", { outcome: "confirmed" });
         redeem.mutate({ code, context, replaceFrakReferrer: true });
+    };
 
     const cancelFrakReplace = () => {
+        trackEvent("frak_referrer_replace_resolved", { outcome: "cancelled" });
         setConfirmingFrakReplace(false);
         redeem.reset();
     };

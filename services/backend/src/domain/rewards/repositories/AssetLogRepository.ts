@@ -289,8 +289,8 @@ export class AssetLogRepository {
     async releaseHeld(
         items: { id: string; availableAt: Date | null }[],
         graceMs: number
-    ): Promise<number> {
-        if (items.length === 0) return 0;
+    ): Promise<string[]> {
+        if (items.length === 0) return [];
 
         const now = new Date();
         const rows = JSON.stringify(
@@ -321,7 +321,7 @@ export class AssetLogRepository {
             )
             .returning({ id: assetLogsTable.id });
 
-        return results.length;
+        return results.map(({ id }) => id);
     }
 
     /** Hold released rewards again, as long as they are not being paid. */

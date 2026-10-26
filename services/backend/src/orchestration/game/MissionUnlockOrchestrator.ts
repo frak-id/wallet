@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { log, productEvents } from "@backend-infrastructure";
 import {
     and,
     eq,
@@ -129,10 +129,19 @@ export class MissionUnlockOrchestrator {
             this.findMet(now, DEFAULT_MISSIONS),
             this.findLapsed(DEFAULT_MISSIONS),
         ]);
-        const released = await this.assetLogRepository.releaseHeld(
-            toRelease,
-            RELEASE_GRACE_MS
+        const releasedIds = new Set(
+            await this.assetLogRepository.releaseHeld(
+                toRelease,
+                RELEASE_GRACE_MS
+            )
         );
+        for (const row of toRelease) {
+            if (!releasedIds.has(row.id)) continue;
+            productEvents.track("game_reward_unlocked", row.identityGroupId, {
+                recipient_type: row.recipientType,
+            });
+        }
+        const released = releasedIds.size;
         const reheld = await this.assetLogRepository.reholdReleased(
             toRehold.map((row) => row.id)
         );
@@ -146,6 +155,8 @@ export class MissionUnlockOrchestrator {
         return db
             .select({
                 id: assetLogsTable.id,
+                identityGroupId: assetLogsTable.identityGroupId,
+                recipientType: assetLogsTable.recipientType,
                 availableAt: sql<Date | null>`${setReadyAt(missions)}`.mapWith(
                     assetLogsTable.availableAt
                 ),

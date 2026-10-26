@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameConfig } = vi.hoisted(() => ({
+const { currentGame, gameConfig, trackEvent } = vi.hoisted(() => ({
+    trackEvent: vi.fn(),
     gameConfig: { instagramLink: false },
     currentGame: {
         data: undefined as unknown,
@@ -25,6 +26,10 @@ vi.mock("react-i18next", () => ({
     }),
     Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>,
 }));
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    trackEvent,
+}));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
 vi.mock("@/module/game/config", async (importOriginal) => ({
     ...(await importOriginal<object>()),
@@ -46,10 +51,39 @@ const game = {
 };
 const player = (tickets: number, eligible: boolean) => ({
     game,
-    me: { participating: true, tickets, eligible },
+    me: {
+        participating: true,
+        tickets,
+        ticketsBySource: {
+            join: 1,
+            purchase: tickets - 1,
+            referredPurchase: 0,
+            referredSignup: 0,
+            brandShare: 0,
+        },
+        eligible,
+    },
 });
 
 describe("GamePage", () => {
+    it("tracks the page view once with the tickets by source", () => {
+        trackEvent.mockReset();
+        currentGame.data = player(4, true);
+        const { rerender } = render(<GamePage />);
+        rerender(<GamePage />);
+
+        expect(trackEvent).toHaveBeenCalledTimes(1);
+        expect(trackEvent).toHaveBeenCalledWith("game_page_viewed", {
+            tickets: 4,
+            eligible: true,
+            tickets_join: 1,
+            tickets_purchase: 3,
+            tickets_referred_purchase: 0,
+            tickets_referred_signup: 0,
+            tickets_brand_share: 0,
+        });
+    });
+
     it("shows the tickets, prize and end date with the ways to earn more", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);

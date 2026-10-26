@@ -166,6 +166,13 @@ export const elysiaEnv = {
     OPEN_PANEL_BACKEND_CLIENT_SECRET: new sst.Secret(
         "OPEN_PANEL_BACKEND_CLIENT_SECRET"
     ).value,
+    // Write client of the wallet project for server-side product events; empty = events off.
+    OPEN_PANEL_TRACK_CLIENT_ID: new sst.Secret("OPEN_PANEL_TRACK_CLIENT_ID", "")
+        .value,
+    OPEN_PANEL_TRACK_CLIENT_SECRET: new sst.Secret(
+        "OPEN_PANEL_TRACK_CLIENT_SECRET",
+        ""
+    ).value,
 
     // Mobile app version floor (hard-update gate). `0.0.0` = disabled.
     // Bump when shipping a breaking change that requires a forced upgrade.

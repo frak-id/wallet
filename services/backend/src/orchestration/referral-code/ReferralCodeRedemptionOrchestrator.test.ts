@@ -17,6 +17,7 @@ vi.mock("@backend-infrastructure", () => ({
     log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     businessMetrics: { frakCodeRejected },
     eventEmitter: { emit },
+    productEvents: { track: vi.fn() },
 }));
 
 const REFEREE = "referee-group";

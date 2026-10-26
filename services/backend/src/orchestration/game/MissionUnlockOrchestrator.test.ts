@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MissionUnlockOrchestrator } from "./MissionUnlockOrchestrator";
 
-const { unsafe } = vi.hoisted(() => ({ unsafe: vi.fn() }));
+const { unsafe, track } = vi.hoisted(() => ({
+    unsafe: vi.fn(),
+    track: vi.fn(),
+}));
 
-vi.mock("@backend-infrastructure", () => ({ log: { info: vi.fn() } }));
+vi.mock("@backend-infrastructure", () => ({
+    log: { info: vi.fn() },
+    productEvents: { track },
+}));
 
 vi.mock("../../infrastructure/persistence/postgres", async () => {
     const { drizzle } = await import("drizzle-orm/postgres-js");
@@ -26,7 +32,7 @@ function whereOf(sql: string) {
 
 describe("MissionUnlockOrchestrator.run", () => {
     const assetLogRepository = {
-        releaseHeld: vi.fn().mockResolvedValue(0),
+        releaseHeld: vi.fn().mockResolvedValue([]),
         reholdReleased: vi.fn().mockResolvedValue(0),
     };
     const orchestrator = new MissionUnlockOrchestrator(
@@ -36,6 +42,25 @@ describe("MissionUnlockOrchestrator.run", () => {
     beforeEach(() => {
         unsafe.mockReset();
         unsafe.mockReturnValue({ values: async () => [] });
+        track.mockReset();
+        assetLogRepository.releaseHeld.mockResolvedValue([]);
+    });
+
+    it("tracks an unlock only for the rewards this run released", async () => {
+        unsafe.mockReturnValueOnce({
+            values: async () => [
+                ["reward-1", "group-1", "referee", null],
+                ["reward-2", "group-2", "referrer", null],
+            ],
+        });
+        assetLogRepository.releaseHeld.mockResolvedValue(["reward-2"]);
+
+        await orchestrator.run();
+
+        expect(track).toHaveBeenCalledTimes(1);
+        expect(track).toHaveBeenCalledWith("game_reward_unlocked", "group-2", {
+            recipient_type: "referrer",
+        });
     });
 
     it("releases a held reward on a brand reward or a follow of the subject", async () => {

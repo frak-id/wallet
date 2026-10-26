@@ -10,8 +10,9 @@ import {
     LinkIcon,
     ReferralIcon,
 } from "@frak-labs/design-system/icons";
-import { ExternalLink } from "@frak-labs/wallet-shared";
+import { ExternalLink, trackEvent } from "@frak-labs/wallet-shared";
 import { Navigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
@@ -25,6 +26,25 @@ export function GamePage() {
     const current = useCurrentGame();
     const game = current.data?.game;
     const me = current.data?.me;
+    const viewedGameId = game && me?.participating ? game.id : null;
+    const trackedGameId = useRef<string | null>(null);
+
+    // Once per game shown: a refetch with new counts is not a new view.
+    useEffect(() => {
+        if (!(viewedGameId && me) || trackedGameId.current === viewedGameId) {
+            return;
+        }
+        trackedGameId.current = viewedGameId;
+        trackEvent("game_page_viewed", {
+            tickets: me.tickets,
+            eligible: me.eligible,
+            tickets_join: me.ticketsBySource.join,
+            tickets_purchase: me.ticketsBySource.purchase,
+            tickets_referred_purchase: me.ticketsBySource.referredPurchase,
+            tickets_referred_signup: me.ticketsBySource.referredSignup,
+            tickets_brand_share: me.ticketsBySource.brandShare,
+        });
+    }, [viewedGameId, me]);
 
     if (game && !me?.participating) {
         return <Navigate to="/game/join" replace />;

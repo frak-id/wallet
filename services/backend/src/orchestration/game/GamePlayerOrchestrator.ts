@@ -18,7 +18,10 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { GameSelect } from "../../domain/game/db/schema";
-import { TICKET_AMOUNTS } from "../../domain/game/tickets";
+import {
+    TICKET_AMOUNTS,
+    type TicketBreakdown,
+} from "../../domain/game/tickets";
 import { identityNodesTable } from "../../domain/identity/db/schema";
 import { instagramLinksTable } from "../../domain/instagram/db/schema";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
@@ -159,12 +162,12 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
-    /** The join ticket plus those earned from purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
+    /** Tickets per source: the join, plus purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,
         identityGroupId: string,
         joinedAt: Date
-    ): Promise<number> {
+    ): Promise<TicketBreakdown> {
         const from = joinedAt > game.startsAt ? joinedAt : game.startsAt;
         const purchases = countedPurchase(from, game.endsAt);
         const [own, referred, signups, brandFriends] = await Promise.all([
@@ -208,12 +211,14 @@ export class GamePlayerOrchestrator {
             followingSignups(identityGroupId, from, game.endsAt),
             brandShareFriends(identityGroupId, from, game.endsAt),
         ]);
-        return (
-            TICKET_AMOUNTS.join +
-            (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase +
-            (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase +
-            (signups[0]?.n ?? 0) * TICKET_AMOUNTS.referredSignup +
-            (brandFriends[0]?.n ?? 0) * TICKET_AMOUNTS.brandShare
-        );
+        return {
+            join: TICKET_AMOUNTS.join,
+            purchase: (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase,
+            referredPurchase:
+                (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase,
+            referredSignup:
+                (signups[0]?.n ?? 0) * TICKET_AMOUNTS.referredSignup,
+            brandShare: (brandFriends[0]?.n ?? 0) * TICKET_AMOUNTS.brandShare,
+        };
     }
 }
