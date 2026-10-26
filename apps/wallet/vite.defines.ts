@@ -56,13 +56,10 @@ export async function getDefineProps({
 
     const stage = getSstResource("STAGE") ?? "dev";
 
-    // OTA channel for this exact artifact. Deliberately built from
-    // `walletPackage.version` rather than `appVersion`: the latter collapses to
-    // `COMMIT_HASH` on web deploys, and a channel keyed by commit would never
-    // match the installed binary. Platform is folded in because `__IS_IOS__` /
-    // `__IS_ANDROID__` are baked in, stage because `BACKEND_URL` is, and version
-    // because the JS↔Rust command surface is only valid for the binary it
-    // shipped with. `null` on web and on any non-mobile build disables OTA.
+    // OTA channel for this exact binary: stage (BACKEND_URL), platform (__IS_IOS__)
+    // and version (the Rust command surface) are all baked in. `walletPackage.version`,
+    // not `appVersion`, which is COMMIT_HASH on web deploys. Must match the channel
+    // computed in wallet-ota-hotfix.yml. `null` disables OTA.
     const otaPlatform = isTauriIos ? "ios" : isTauriAndroid ? "android" : null;
     const otaChannel = otaPlatform
         ? `${stage}-${otaPlatform}-${walletPackage.version}`

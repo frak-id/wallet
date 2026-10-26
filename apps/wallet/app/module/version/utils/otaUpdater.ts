@@ -8,7 +8,8 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 declare const __OTA_CHANNEL__: string | null;
 
 /**
- * `staged`: assets verified and cached; visible after the next cold start.
+ * `staged`: verified and cached. Later asset requests already get the new
+ * bundle; code loaded before stays until the next launch.
  */
 export type OtaUpdateResult =
     | { status: "unsupported" }
@@ -16,11 +17,8 @@ export type OtaUpdateResult =
     | { status: "staged" };
 
 /**
- * Stage a CrabNebula OTA update for the web assets.
- *
- * Dynamically imported so the browser build never pulls the Tauri runtime in.
- * The Rust plugin already runs its own check during app setup; that pass drops
- * its result, so this call is what actually persists an update.
+ * The only OTA check: the plugin's boot check is off (`updateOnStartup: false`).
+ * The plugin is imported dynamically so the browser build never pulls it in.
  */
 export async function stageOtaUpdate(): Promise<OtaUpdateResult> {
     if (!IS_TAURI) return { status: "unsupported" };

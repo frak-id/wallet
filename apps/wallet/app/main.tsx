@@ -23,6 +23,7 @@ import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
 import { initNativeGlass } from "@/module/native-glass/bridge";
+import { stageOtaUpdate } from "@/module/version/utils/otaUpdater";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
@@ -205,6 +206,11 @@ async function main() {
                 NativeSplash?: { dismiss(): void };
             }
         ).NativeSplash?.dismiss();
+
+        // Once per launch, after the first render: an OTA download must never delay it.
+        stageOtaUpdate().catch((error) =>
+            recordError(error, { source: "ota_update" })
+        );
     }
 }
 

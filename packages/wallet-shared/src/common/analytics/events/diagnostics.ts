@@ -16,6 +16,7 @@ export type AppErrorSource =
     | "deep_link"
     | "biometrics"
     | "service_worker"
+    | "ota_update"
     | "tokens_send"
     | "monerium_callback"
     | "monerium_api"
