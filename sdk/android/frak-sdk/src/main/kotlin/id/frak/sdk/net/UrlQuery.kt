@@ -22,8 +22,8 @@ internal class UrlQuery private constructor(
      */
     fun get(key: String): String? =
         (
-            parameters.firstOrNull { it.first == key }
-                ?: parameters.firstOrNull { it.first.equals(key, ignoreCase = true) }
+            parameters.firstOrNull { nameOf(it) == key }
+                ?: parameters.firstOrNull { nameOf(it).equals(key, ignoreCase = true) }
         )?.second
             ?.let(::percentDecode)
 
@@ -31,21 +31,24 @@ internal class UrlQuery private constructor(
      * Exact-key lookup, for parameters the web client reads through `URLSearchParams.get`. `fCtx`
      * tolerates mangled casing; `fmt` authorises an identity merge, so it matches web or not at all.
      */
-    fun getExact(key: String): String? = parameters.firstOrNull { it.first == key }?.second?.let(::percentDecode)
+    fun getExact(key: String): String? = parameters.firstOrNull { nameOf(it) == key }?.second?.let(::percentDecode)
 
     fun remove(key: String): UrlQuery =
         apply {
-            parameters.removeAll { it.first.equals(key, ignoreCase = true) }
+            parameters.removeAll { nameOf(it).equals(key, ignoreCase = true) }
         }
 
-    /** Gap-fill: a merchant's own value always wins. */
+    /** Keys compare decoded, as `URLSearchParams` reads them: `f%43tx` is `fCtx`. The raw key is what gets written back. */
+    private fun nameOf(parameter: Pair<String, String>): String = percentDecode(parameter.first)
+
+    /** Gap-fill: a merchant's own value always wins, matched by exact key so `UTM_SOURCE` doesn't hide `utm_source`. */
     fun fillIfAbsent(
         key: String,
         value: String?,
     ): UrlQuery =
         apply {
             if (value.isNullOrEmpty()) return@apply
-            if (get(key) != null) return@apply
+            if (getExact(key) != null) return@apply
             parameters += key to PercentEncoding.encode(value)
         }
 
