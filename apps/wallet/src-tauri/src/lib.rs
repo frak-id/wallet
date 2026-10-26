@@ -1,5 +1,6 @@
 #[cfg(target_os = "ios")]
 mod ios;
+mod ota_cache;
 
 /// No-op off iOS, where WKWebView's back gesture does not exist.
 #[tauri::command]
@@ -23,9 +24,8 @@ fn set_swipe_back_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), St
 pub fn run() {
     let mut builder = tauri::Builder::default();
 
-    // The OTA plugin swaps the context's asset resolver, so it must be built
-    // from the context before anything else consumes it. `run` below takes the
-    // returned context, not a second `generate_context!()`.
+    // `run` below must take this returned context, not a second `generate_context!()`:
+    // the OTA asset resolver is installed on it.
     let (ota_plugin, context) = tauri_plugin_ota_updater::init(tauri::generate_context!());
 
     // IMPORTANT: tauri_plugin_frak_firebase MUST initialize FIRST on mobile so
@@ -39,8 +39,9 @@ pub fn run() {
     }
 
     builder = builder
-        // Registered after Crashlytics so a panic in its setup is captured, and
-        // before the rest so the asset swap is live for the first webview load.
+        // Setups run in registration order: the guard must clear a stale bundle
+        // before the OTA plugin loads it.
+        .plugin(ota_cache::init())
         .plugin(ota_plugin)
         .plugin(tauri_plugin_safe_area_insets::init())
         .plugin(tauri_plugin_deep_link::init())
