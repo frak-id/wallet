@@ -1092,6 +1092,12 @@
             "tickets_other": "{{count}} tickets",
             "ticketsOf_one": "{{count}} ticket sur {{total}}",
             "ticketsOf_other": "{{count}} tickets sur {{total}}"
+        },
+        "win": {
+            "title": "Tu as gagné le Jeu Frak !",
+            "description": "Ton ticket a été tiré au sort. Tes {{prize}} arrivent dans ton porte-monnaie.",
+            "cta": "Voir mon gain",
+            "close": "Fermer"
         }
     },
     "reward": {

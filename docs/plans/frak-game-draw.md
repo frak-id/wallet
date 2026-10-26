@@ -62,10 +62,11 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 
 - **Home card**: with no open game, the last game played shows for 14 days after its end, with its outcome.
 - **Game page**: with no open game, the last result in full on top. Past games are listed below, under the open game when there is one.
+- **Win screen**: a confirmed win less than 30 days old gets a full-screen confetti screen on the next wallet open, once per device (`frak_game_win_store` in local storage).
 
 ## Analytics
 
-Server-side `productEvents`: `game_draw_frozen`, `game_draw_run`, `game_winner_rejected {rank, reason}`, `game_winner_confirmed {rank, prize_amount}` (the last on the winner's profile). Wallet side: `game_result_viewed {outcome}`.
+Server-side `productEvents`: `game_draw_frozen`, `game_draw_run`, `game_winner_rejected {rank, reason}`, `game_winner_confirmed {rank, prize_amount}` (the last on the winner's profile). Wallet side: `game_result_viewed {outcome}`, `game_win_screen_viewed` and `game_win_screen_closed {action}`.
 
 ## Retention
 

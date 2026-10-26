@@ -613,6 +613,12 @@ export default interface Resources {
           "description": "Your ticket was drawn. Your prize is on its way to your wallet.",
           "title": "You won {{prize}}!"
         }
+      },
+      "win": {
+        "close": "Close",
+        "cta": "See my prize",
+        "description": "Your ticket was drawn. Your {{prize}} is on its way to your wallet.",
+        "title": "You won the Frak Game!"
       }
     },
     "installCode": {

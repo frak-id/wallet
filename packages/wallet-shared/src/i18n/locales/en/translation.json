@@ -1092,6 +1092,12 @@
             "tickets_other": "{{count}} tickets",
             "ticketsOf_one": "{{count}} ticket out of {{total}}",
             "ticketsOf_other": "{{count}} tickets out of {{total}}"
+        },
+        "win": {
+            "title": "You won the Frak Game!",
+            "description": "Your ticket was drawn. Your {{prize}} is on its way to your wallet.",
+            "cta": "See my prize",
+            "close": "Close"
         }
     },
     "reward": {

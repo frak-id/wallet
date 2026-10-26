@@ -22,6 +22,8 @@ export type GameEventMap = {
         game_id: string;
         outcome: "drawing" | "won" | "lost" | "no_winner";
     };
+    game_win_screen_viewed: { game_id: string; prize_amount: number };
+    game_win_screen_closed: { game_id: string; action: "history" | "close" };
     frak_referrer_replace_prompted: undefined;
     frak_referrer_replace_resolved: { outcome: "confirmed" | "cancelled" };
 };
