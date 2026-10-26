@@ -3,6 +3,7 @@ import {
     count,
     countDistinct,
     eq,
+    exists,
     gte,
     isNull,
     lt,
@@ -18,6 +19,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { GameSelect } from "../../domain/game/db/schema";
 import { TICKET_AMOUNTS } from "../../domain/game/tickets";
+import { identityNodesTable } from "../../domain/identity/db/schema";
 import { instagramLinksTable } from "../../domain/instagram/db/schema";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { interactionLogsTable } from "../../domain/rewards/db/schema";
@@ -106,6 +108,37 @@ function followingSignups(holderGroupId: string, from: Date, endsAt: Date) {
         );
 }
 
+/** Distinct friends whose brand link to the holder was created in the window and who have a wallet, so an anonymous browser loop earns nothing. */
+function brandShareFriends(holderGroupId: string, from: Date, endsAt: Date) {
+    const hasWallet = db
+        .select({ one: sql`1` })
+        .from(identityNodesTable)
+        .where(
+            and(
+                eq(
+                    identityNodesTable.groupId,
+                    referralLinksTable.refereeIdentityGroupId
+                ),
+                eq(identityNodesTable.identityType, "wallet"),
+                isNull(identityNodesTable.unlinkedAt)
+            )
+        );
+    return db
+        .select({ n: countDistinct(referralLinksTable.refereeIdentityGroupId) })
+        .from(referralLinksTable)
+        .where(
+            and(
+                eq(referralLinksTable.referrerIdentityGroupId, holderGroupId),
+                eq(referralLinksTable.scope, "merchant"),
+                ne(referralLinksTable.merchantId, FRAK_MERCHANT_ID),
+                isNull(referralLinksTable.removedAt),
+                gte(referralLinksTable.createdAt, from),
+                lt(referralLinksTable.createdAt, endsAt),
+                exists(hasWallet)
+            )
+        );
+}
+
 export class GamePlayerOrchestrator {
     /** Earliest `game_join` of the group for the game, null when it never joined. */
     async joinedAt(
@@ -126,7 +159,7 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
-    /** The join ticket plus those earned from purchases and friends' signups in `[max(joinedAt, startsAt), endsAt)`. */
+    /** The join ticket plus those earned from purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,
         identityGroupId: string,
@@ -134,7 +167,7 @@ export class GamePlayerOrchestrator {
     ): Promise<number> {
         const from = joinedAt > game.startsAt ? joinedAt : game.startsAt;
         const purchases = countedPurchase(from, game.endsAt);
-        const [own, referred, signups] = await Promise.all([
+        const [own, referred, signups, brandFriends] = await Promise.all([
             db
                 .select({ n: count() })
                 .from(interactionLogsTable)
@@ -173,12 +206,14 @@ export class GamePlayerOrchestrator {
                     )
                 ),
             followingSignups(identityGroupId, from, game.endsAt),
+            brandShareFriends(identityGroupId, from, game.endsAt),
         ]);
         return (
             TICKET_AMOUNTS.join +
             (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase +
             (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase +
-            (signups[0]?.n ?? 0) * TICKET_AMOUNTS.referredSignup
+            (signups[0]?.n ?? 0) * TICKET_AMOUNTS.referredSignup +
+            (brandFriends[0]?.n ?? 0) * TICKET_AMOUNTS.brandShare
         );
     }
 }

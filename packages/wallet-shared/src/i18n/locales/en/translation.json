@@ -963,7 +963,7 @@
                     "title": "Share and earn tickets",
                     "reward": "You each earn {{reward}}.",
                     "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-                    "description": "1 ticket per friend who signs up with your code and follows @frak_fr, and 3 tickets per purchase at a partner brand, yours or a referred friend's."
+                    "description": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's."
                 },
                 "follow": {
                     "title": "Follow us for the draw",
@@ -1003,7 +1003,7 @@
             "buy": "Buy from a partner brand",
             "gain_one": "+{{count}} ticket",
             "gain_other": "+{{count}} tickets",
-            "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, then 3 for each of their purchases.",
+            "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
             "none": {
                 "title": "No game right now",
                 "description": "The next game will be announced on Instagram."

@@ -77,7 +77,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     beforeEach(() => unsafe.mockReset());
 
     it("counts the holder's own purchases at other merchants, not cancelled, in the window", async () => {
-        answer([[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]]);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"));
 
@@ -95,7 +95,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("starts the window at the game start when the join predates it", async () => {
-        answer([[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]]);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-09-20T00:00:00Z"));
 
@@ -103,7 +103,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("counts purchases of the holder's active referees, merchant link first", async () => {
-        answer([[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]]);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"));
 
@@ -141,7 +141,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("grants the join ticket, 3 per own purchase and 3 per referred purchase", async () => {
-        answer([[2]], [[1]], [[0]]);
+        answer([[2]], [[1]], [[0]], [[0]]);
 
         await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
             10
@@ -149,7 +149,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("returns the join ticket alone when nothing else qualifies", async () => {
-        answer([[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]]);
 
         await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
             1
@@ -157,7 +157,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("counts friends who signed up with the holder's code in the window and follow @frak_fr", async () => {
-        answer([[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]]);
 
         await player.ticketsOf(game, HOLDER, JOINED_AT);
 
@@ -187,18 +187,49 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("grants 1 ticket per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
-        answer([[0]], [[0]], [[2]]);
+        answer([[0]], [[0]], [[2]], [[0]]);
 
         await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
             3
         );
     });
 
-    it("adds the join, purchase and signup tickets", async () => {
-        answer([[1]], [[1]], [[1]]);
+    it("counts distinct friends with a wallet reached through the holder's brand links in the window", async () => {
+        answer([[0]], [[0]], [[0]], [[0]]);
+
+        await player.ticketsOf(game, HOLDER, JOINED_AT);
+
+        const { sql, params } = queryAt(3);
+        const text = flat(sql);
+        expect(text).toContain(
+            'select count(distinct "referee_identity_group_id") from "referral_links"'
+        );
+        expect(text).toContain(
+            'where ("referral_links"."referrer_identity_group_id" = $1 and "referral_links"."scope" = $2 and "referral_links"."merchant_id" <> $3 and "referral_links"."removed_at" is null and "referral_links"."created_at" >= $4 and "referral_links"."created_at" < $5 and exists (select 1 from "identity_nodes" where ("identity_nodes"."group_id" = "referral_links"."referee_identity_group_id" and "identity_nodes"."identity_type" = $6 and "identity_nodes"."unlinked_at" is null)))'
+        );
+        expect(params).toEqual([
+            HOLDER,
+            "merchant",
+            FRAK_MERCHANT_ID,
+            JOINED_AT.toISOString(),
+            ENDS_AT.toISOString(),
+            "wallet",
+        ]);
+    });
+
+    it("grants 1 ticket per distinct brand-share friend with a wallet", async () => {
+        answer([[0]], [[0]], [[0]], [[3]]);
 
         await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
-            8
+            4
+        );
+    });
+
+    it("adds the join, purchase, signup and brand-share tickets", async () => {
+        answer([[1]], [[1]], [[1]], [[1]]);
+
+        await expect(player.ticketsOf(game, HOLDER, JOINED_AT)).resolves.toBe(
+            9
         );
     });
 });

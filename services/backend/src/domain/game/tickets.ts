@@ -3,4 +3,5 @@ export const TICKET_AMOUNTS = {
     purchase: 3,
     referredPurchase: 3,
     referredSignup: 1,
+    brandShare: 1,
 } as const;

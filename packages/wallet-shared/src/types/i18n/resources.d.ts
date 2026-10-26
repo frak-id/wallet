@@ -568,7 +568,7 @@ export default interface Resources {
         },
         "retry": "Try again",
         "share": "Share Frak with a friend",
-        "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, then 3 for each of their purchases.",
+        "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
         "tickets_one": "ticket",
         "tickets_other": "tickets"
       }
@@ -822,7 +822,7 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "1 ticket per friend who signs up with your code and follows @frak_fr, and 3 tickets per purchase at a partner brand, yours or a referred friend's.",
+            "description": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
