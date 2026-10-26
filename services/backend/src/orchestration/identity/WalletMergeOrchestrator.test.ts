@@ -54,6 +54,8 @@ function makeMergeResult(
         migratedAssetLogs: 0,
         migratedAffiliateAttributions: 0,
         deletedConflictingAffiliateAttributions: 0,
+        migratedInstagramLinks: 0,
+        deletedConflictingInstagramLinks: 0,
         migratedReferralLinksReferrer: 0,
         migratedReferralLinksReferee: 0,
         softDeletedConflictingReferralLinks: 0,

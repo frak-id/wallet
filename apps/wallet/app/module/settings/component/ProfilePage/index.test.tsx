@@ -58,6 +58,11 @@ vi.mock("@/module/authentication/component/Logout", () => ({
     Logout: () => null,
 }));
 
+// Dev-only card; useInstagramLink → useQuery, which needs a provider.
+vi.mock("@/module/settings/component/InstagramDebug", () => ({
+    InstagramDebug: () => null,
+}));
+
 vi.mock("@/module/settings/component/SecurityProgressCard", () => ({
     SecurityProgressCard: () => <div>security-card</div>,
 }));

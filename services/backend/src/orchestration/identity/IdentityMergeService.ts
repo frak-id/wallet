@@ -10,6 +10,8 @@ import {
     type MergedGroup,
 } from "../../domain/identity/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import { instagramLinksTable } from "../../domain/instagram/db/schema";
+import { pickSurvivingLink } from "../../domain/instagram/utils";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
@@ -39,6 +41,10 @@ type MergeResult = {
     // (provider, merchant) — the anchor's token remains authoritative.
     migratedAffiliateAttributions: number;
     deletedConflictingAffiliateAttributions: number;
+    // Identity-keyed, one row per group: `deletedConflictingInstagramLinks`
+    // counts the rows that lost to the survivor (see `pickSurvivingLink`).
+    migratedInstagramLinks: number;
+    deletedConflictingInstagramLinks: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     softDeletedConflictingReferralLinks: number;
@@ -331,6 +337,11 @@ export class IdentityMergeService {
                 mergingGroupIds,
             });
 
+        const instagramLinkOps = await this.migrateInstagramLinksInTrx(trx, {
+            anchorGroupId,
+            mergingGroupIds,
+        });
+
         await this.updateAnchorMergedGroupsInTrx(
             trx,
             anchorGroupId,
@@ -369,6 +380,9 @@ export class IdentityMergeService {
                 affiliateAttributionOps.migratedAffiliateAttributions,
             deletedConflictingAffiliateAttributions:
                 affiliateAttributionOps.deletedConflictingAffiliateAttributions,
+            migratedInstagramLinks: instagramLinkOps.migratedInstagramLinks,
+            deletedConflictingInstagramLinks:
+                instagramLinkOps.deletedConflictingInstagramLinks,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -785,6 +799,63 @@ export class IdentityMergeService {
     }
 
     /**
+     * Re-point the one surviving `instagram_links` row onto the anchor and drop
+     * the rest, deleting first so the unique `identity_group_id` and `igsid`
+     * indexes never see two rows. Runs while the loser groups still exist.
+     */
+    private async migrateInstagramLinksInTrx(
+        trx: PgTx,
+        {
+            anchorGroupId,
+            mergingGroupIds,
+        }: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+        }
+    ): Promise<{
+        migratedInstagramLinks: number;
+        deletedConflictingInstagramLinks: number;
+    }> {
+        const links = await trx
+            .select()
+            .from(instagramLinksTable)
+            .where(
+                inArray(instagramLinksTable.identityGroupId, [
+                    anchorGroupId,
+                    ...mergingGroupIds,
+                ])
+            );
+        const survivor = pickSurvivingLink(links, anchorGroupId);
+        if (!survivor) {
+            return {
+                migratedInstagramLinks: 0,
+                deletedConflictingInstagramLinks: 0,
+            };
+        }
+
+        const beaten = links
+            .filter((link) => link.id !== survivor.id)
+            .map((link) => link.id);
+        if (beaten.length > 0) {
+            await trx
+                .delete(instagramLinksTable)
+                .where(inArray(instagramLinksTable.id, beaten));
+        }
+        const needsMove = survivor.identityGroupId !== anchorGroupId;
+        if (needsMove) {
+            await trx
+                .update(instagramLinksTable)
+                .set({ identityGroupId: anchorGroupId })
+                .where(eq(instagramLinksTable.id, survivor.id));
+        }
+
+        return {
+            migratedInstagramLinks: needsMove ? 1 : 0,
+            deletedConflictingInstagramLinks: beaten.length,
+        };
+    }
+
+    /**
      * Migrate `affiliate_attribution` rows from one-or-many loser groups
      * onto the anchor group. Identity-keyed (`identity_group_id`), so it
      * runs for every identity merge.
@@ -1029,6 +1100,8 @@ function emptyMergeResult(): MergeResult {
         migratedAssetLogs: 0,
         migratedAffiliateAttributions: 0,
         deletedConflictingAffiliateAttributions: 0,
+        migratedInstagramLinks: 0,
+        deletedConflictingInstagramLinks: 0,
         migratedReferralLinksReferrer: 0,
         migratedReferralLinksReferee: 0,
         softDeletedConflictingReferralLinks: 0,

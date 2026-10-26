@@ -26,6 +26,7 @@ import {
     installCodesTable,
     recoveryBlobsTable,
 } from "../../domain/identity/db/schema";
+import { instagramLinksTable } from "../../domain/instagram/db/schema";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
@@ -101,6 +102,7 @@ export const db = drizzle({
         interactionLogsTable,
         assetLogsTable,
         gamesTable,
+        instagramLinksTable,
         affiliateBrandTable,
         affiliateAttributionTable,
         affiliateSyncStateTable,

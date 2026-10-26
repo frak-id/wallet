@@ -8264,6 +8264,338 @@
         "operationId": "getUserWalletGameCurrent"
       }
     },
+    "/user/wallet/instagram/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletInstagram"
+      }
+    },
+    "/user/wallet/instagram/mock/": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "follows"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  },
+                  "follows": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "follows"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  },
+                  "follows": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "follows"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  },
+                  "follows": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response for status 404",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putUserWalletInstagramMock"
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response for status 404",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteUserWalletInstagramMock"
+      }
+    },
     "/user/wallet/merge/preview": {
       "get": {
         "parameters": [

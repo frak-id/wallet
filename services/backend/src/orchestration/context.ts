@@ -6,6 +6,7 @@ import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { GameContext } from "../domain/game/context";
 import { IdentityContext } from "../domain/identity/context";
+import { InstagramContext } from "../domain/instagram/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { MoneriumContext } from "../domain/monerium/context";
 import { NotificationContext } from "../domain/notifications/context";
@@ -218,7 +219,8 @@ const frakGameOrchestrator = new FrakGameOrchestrator(
     CampaignContext.repositories.campaignRule,
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.interactionLog,
-    gamePlayerOrchestrator
+    gamePlayerOrchestrator,
+    InstagramContext.repositories.instagramLink
 );
 
 const referralCodeRedemptionOrchestrator =

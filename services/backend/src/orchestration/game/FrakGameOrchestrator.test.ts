@@ -44,6 +44,7 @@ function makeOrchestrator(
         tickets?: number;
         created?: boolean;
         rule?: CampaignRuleSelect;
+        instagramLink?: { follows: boolean } | null;
     } = {}
 ) {
     const joinedAt = vi.fn().mockResolvedValue(opts.joinedAt ?? null);
@@ -52,6 +53,7 @@ function makeOrchestrator(
         .fn()
         .mockResolvedValue(opts.created === false ? null : { id: "i-1" });
     const findRule = vi.fn().mockResolvedValue(opts.rule ?? gameRule);
+    const findLink = vi.fn().mockResolvedValue(opts.instagramLink ?? null);
     const orchestrator = new FrakGameOrchestrator(
         {
             findCurrent: vi
@@ -64,12 +66,51 @@ function makeOrchestrator(
         } as never,
         { findById: vi.fn() } as never,
         { createIdempotent } as never,
-        { joinedAt, ticketsOf } as never
+        { joinedAt, ticketsOf } as never,
+        { findByIdentityGroup: findLink } as never
     );
-    return { orchestrator, joinedAt, ticketsOf, createIdempotent, findRule };
+    return {
+        orchestrator,
+        joinedAt,
+        ticketsOf,
+        createIdempotent,
+        findRule,
+        findLink,
+    };
 }
 
 describe("FrakGameOrchestrator.getCurrentGame", () => {
+    it.each([
+        { name: "no Instagram link", link: null, eligible: false },
+        {
+            name: "a linked account that does not follow",
+            link: { follows: false },
+            eligible: false,
+        },
+        {
+            name: "a linked account that follows",
+            link: { follows: true },
+            eligible: true,
+        },
+    ])("derives eligibility from $name", async ({ link, eligible }) => {
+        const { orchestrator, findLink } = makeOrchestrator({
+            instagramLink: link,
+        });
+
+        const result = await orchestrator.getCurrentGame(USER);
+
+        expect(findLink).toHaveBeenCalledWith(USER);
+        expect(result.me.eligible).toBe(eligible);
+    });
+
+    it("does not look the Instagram link up when no game is open", async () => {
+        const { orchestrator, findLink } = makeOrchestrator({ game: null });
+
+        await orchestrator.getCurrentGame(USER);
+
+        expect(findLink).not.toHaveBeenCalled();
+    });
+
     it("returns the ticket count of a participant", async () => {
         const { orchestrator, ticketsOf } = makeOrchestrator({
             joinedAt: JOINED_AT,

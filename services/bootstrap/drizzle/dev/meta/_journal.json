@@ -344,6 +344,13 @@
             "when": 1792688368122,
             "tag": "0048_clammy_black_panther",
             "breakpoints": true
+        },
+        {
+            "idx": 49,
+            "version": "7",
+            "when": 1793009192338,
+            "tag": "0049_rapid_drax",
+            "breakpoints": true
         }
     ]
 }

@@ -330,6 +330,13 @@
             "when": 1792688172013,
             "tag": "0046_omniscient_scalphunter",
             "breakpoints": true
+        },
+        {
+            "idx": 47,
+            "version": "7",
+            "when": 1793009172944,
+            "tag": "0047_wakeful_doctor_strange",
+            "breakpoints": true
         }
     ]
 }

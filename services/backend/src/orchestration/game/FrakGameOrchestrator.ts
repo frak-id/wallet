@@ -17,6 +17,8 @@ import {
     isGameOpen,
     signupExternalEventId,
 } from "../../domain/game/utils";
+import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
+import { isInstagramEligible } from "../../domain/instagram/utils";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
@@ -63,7 +65,8 @@ export class FrakGameOrchestrator {
         private readonly campaignRuleRepository: CampaignRuleRepository,
         private readonly merchantRepository: MerchantRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly gamePlayerOrchestrator: GamePlayerOrchestrator
+        private readonly gamePlayerOrchestrator: GamePlayerOrchestrator,
+        private readonly instagramLinkRepository: InstagramLinkRepository
     ) {}
 
     async getCurrentGame(
@@ -72,9 +75,10 @@ export class FrakGameOrchestrator {
         const game = await this.gameRepository.findCurrent(new Date());
         if (!game) return { game: null, me: NOT_PLAYING };
 
-        const [summary, joinedAt] = await Promise.all([
+        const [summary, joinedAt, instagramLink] = await Promise.all([
             this.summarize(game),
             this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
+            this.instagramLinkRepository.findByIdentityGroup(identityGroupId),
         ]);
         const tickets = joinedAt
             ? await this.gamePlayerOrchestrator.ticketsOf(
@@ -85,11 +89,10 @@ export class FrakGameOrchestrator {
             : 0;
         return {
             game: summary,
-            // Constant until the eligibility rules exist.
             me: {
                 participating: joinedAt !== null,
                 tickets,
-                eligible: false,
+                eligible: isInstagramEligible(instagramLink),
             },
         };
     }
