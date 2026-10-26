@@ -1,20 +1,23 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameConfig, gameHistory, trackEvent } = vi.hoisted(() => ({
-    trackEvent: vi.fn(),
-    gameConfig: { instagramLink: false },
-    currentGame: {
-        data: undefined as unknown,
-        isError: false,
-        refetch: vi.fn(),
-    },
-    gameHistory: { data: [] as unknown[], isLoading: false },
-}));
+const { currentGame, gameConfig, gameHistory, navigate, trackEvent } =
+    vi.hoisted(() => ({
+        navigate: vi.fn(),
+        trackEvent: vi.fn(),
+        gameConfig: { instagramLink: false },
+        currentGame: {
+            data: undefined as unknown,
+            isError: false,
+            refetch: vi.fn(),
+        },
+        gameHistory: { data: [] as unknown[], isLoading: false },
+    }));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
+    useNavigate: () => navigate,
     Link: ({ to, children }: { to: string; children: ReactElement }) => (
         <a href={to}>{children}</a>
     ),
@@ -43,6 +46,7 @@ vi.mock("@/module/game/hook/useGameHistory", () => ({
     useGameHistory: () => gameHistory,
 }));
 
+import { modalStore } from "@/module/stores/modalStore";
 import { GamePage } from "./index";
 
 const NO_GAME = {
@@ -102,6 +106,8 @@ describe("GamePage", () => {
     beforeEach(() => {
         gameHistory.data = [];
         gameHistory.isLoading = false;
+        navigate.mockClear();
+        modalStore.getState().dismissAll();
     });
 
     it("tracks the page view once with the tickets by source", () => {
@@ -229,6 +235,54 @@ describe("GamePage", () => {
         expect(screen.getByText("game.result.discarded")).toBeInTheDocument();
     });
 
+    it("breaks the user's tickets down by where they came from", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [result("latest", "lost")];
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.result.sources.title")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.sources.join")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.sources.purchase")
+        ).toBeInTheDocument();
+        expect(screen.queryByText("game.result.sources.brandShare")).toBeNull();
+    });
+
+    it("counts no tickets for a past game whose tickets were thrown out", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [
+            result("latest", "lost"),
+            result("earlier", "no_winner", {
+                discarded: "not_following",
+                totalTickets: 0,
+            }),
+        ];
+        render(<GamePage />);
+
+        expect(screen.getByText("game.history.notCounted")).toBeInTheDocument();
+        expect(screen.queryByText("game.history.ticketsOf:7")).toBeNull();
+    });
+
+    it("opens a past game's result from its row", () => {
+        currentGame.data = player(4, true);
+        const earlier = result("earlier", "lost");
+        gameHistory.data = [earlier];
+        render(<GamePage />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: /game.history.gameOf/ })
+        );
+
+        expect(modalStore.getState().modal).toEqual({
+            id: "gameResult",
+            result: earlier,
+        });
+    });
+
     it("lists past games under the open one", () => {
         currentGame.data = player(4, true);
         gameHistory.data = [result("earlier", "lost")];
@@ -251,8 +305,12 @@ describe("GamePage", () => {
 
         expect(screen.queryByText("navigate:/game/join")).toBeNull();
         expect(
-            screen.getByRole("link", { name: /game.page.join/ })
-        ).toHaveAttribute("href", "/game/join");
+            screen.getByText("game.card.notParticipating")
+        ).toBeInTheDocument();
+        fireEvent.click(
+            screen.getByRole("button", { name: /game.card.title/ })
+        );
+        expect(navigate).toHaveBeenCalledWith({ to: "/game/join" });
     });
 
     it("sends a user who has not joined to the code screen", () => {

@@ -786,6 +786,9 @@
             "rewardDetail": {
                 "ariaLabel": "Détails de la récompense"
             },
+            "gameResult": {
+                "ariaLabel": "Résultat du jeu"
+            },
             "moneriumOrderDetail": {
                 "ariaLabel": "Détails du transfert"
             },
@@ -1022,8 +1025,7 @@
             "retry": "Réessayer",
             "lockedLink": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram relié et <igLink>@frak_fr</igLink> suivi.",
             "linkCta": "Relier mon Instagram",
-            "title": "Jeu Frak",
-            "join": "Participer au jeu en cours"
+            "title": "Jeu Frak"
         },
         "instagram": {
             "title": "Relie ton Instagram",
@@ -1083,15 +1085,24 @@
             "myTickets": "Tes tickets",
             "totalTickets": "Tickets au tirage",
             "participants": "Participants",
-            "endedAt": "Fin du jeu"
+            "endedAt": "Fin du jeu",
+            "sources": {
+                "title": "D'où viennent tes tickets",
+                "join": "Inscription au jeu",
+                "purchase": "Tes achats",
+                "referredPurchase": "Achats de tes amis",
+                "referredSignup": "Amis inscrits avec ton code",
+                "brandShare": "Amis via tes partages de marques"
+            }
         },
         "history": {
             "title": "Jeux précédents",
-            "endedAt": "Terminé le {{date}}",
+            "gameOf": "Jeu du {{date}}",
             "tickets_one": "{{count}} ticket",
             "tickets_other": "{{count}} tickets",
             "ticketsOf_one": "{{count}} ticket sur {{total}}",
-            "ticketsOf_other": "{{count}} tickets sur {{total}}"
+            "ticketsOf_other": "{{count}} tickets sur {{total}}",
+            "notCounted": "0 ticket compté"
         },
         "win": {
             "title": "Tu as gagné le Jeu Frak !",

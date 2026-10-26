@@ -17,6 +17,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
+import { OpenGameCard } from "@/module/game/component/GameCard";
 import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
 import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
@@ -28,11 +29,13 @@ import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 
 type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
 
+type OpenGame = NonNullable<CurrentGame["game"]>;
+
 /** What tops the page: the open game, or the last result once none is open. */
 type Top =
-    | { kind: "error" | "loading" | "none" | "join" }
+    | { kind: "error" | "loading" | "none" }
     | { kind: "result"; result: GameResult }
-    | { kind: "playing"; game: NonNullable<CurrentGame["game"]> };
+    | { kind: "join" | "playing"; game: OpenGame };
 
 function topOf(
     current: ReturnType<typeof useCurrentGame>,
@@ -45,7 +48,7 @@ function topOf(
         return { kind: "playing", game: data.game };
     }
     if (history.isLoading) return { kind: "loading" };
-    if (data.game) return { kind: "join" };
+    if (data.game) return { kind: "join", game: data.game };
     const latest = history.data?.[0];
     return latest ? { kind: "result", result: latest } : { kind: "none" };
 }
@@ -117,17 +120,7 @@ export function GamePage() {
                 />
             )}
             {top.kind === "join" && (
-                <InfoCard>
-                    <InfoRow
-                        label={t("game.page.join")}
-                        to="/game/join"
-                        action={
-                            <Badge size="small" variant="success">
-                                {t("game.page.gain", { count: 1 })}
-                            </Badge>
-                        }
-                    />
-                </InfoCard>
+                <OpenGameCard game={top.game} participating={false} />
             )}
             {top.kind === "result" && <GameResultCard result={top.result} />}
             {top.kind === "playing" && me && (

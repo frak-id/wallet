@@ -519,7 +519,8 @@ export default interface Resources {
         "title": "Frak game in progress"
       },
       "history": {
-        "endedAt": "Ended on {{date}}",
+        "gameOf": "{{date}} game",
+        "notCounted": "0 tickets counted",
         "ticketsOf_one": "{{count}} ticket out of {{total}}",
         "ticketsOf_other": "{{count}} tickets out of {{total}}",
         "tickets_one": "{{count}} ticket",
@@ -567,7 +568,6 @@ export default interface Resources {
         "error": "Couldn't load the game.",
         "gain_one": "+{{count}} ticket",
         "gain_other": "+{{count}} tickets",
-        "join": "Join the current game",
         "linkCta": "Link my Instagram",
         "locked": "Your tickets are saved, but they only count in the draw if you follow <igLink>@frak_fr</igLink> on Instagram.",
         "lockedLink": "Your tickets are saved, but they only count in the draw once your Instagram is linked and you follow <igLink>@frak_fr</igLink>.",
@@ -607,6 +607,14 @@ export default interface Resources {
         },
         "participants": "Players",
         "prize": "Prize",
+        "sources": {
+          "brandShare": "Friends reached through your brand shares",
+          "join": "Joining the game",
+          "purchase": "Your purchases",
+          "referredPurchase": "Your friends' purchases",
+          "referredSignup": "Friends who signed up with your code",
+          "title": "Where your tickets came from"
+        },
         "totalTickets": "Tickets in the draw",
         "won": {
           "cta": "See my prize",
@@ -1254,6 +1262,9 @@ export default interface Resources {
         },
         "explorerDetail": {
           "ariaLabel": "Merchant details"
+        },
+        "gameResult": {
+          "ariaLabel": "Game result"
         },
         "moneriumBankFlow": {
           "ariaLabel": "Bank transfer"

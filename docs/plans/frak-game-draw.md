@@ -61,7 +61,7 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 `GET /user/wallet/game/history` lists the player's ended games, latest first: prize, end date, their tickets (from the frozen list once there is one, counted live before), the draw's total tickets and participants, whether their tickets were discarded, and the outcome (`drawing` until the winner is confirmed, then `won` or `lost`, or `no_winner` for a void draw). A game past the auto-freeze window with no draw is left out.
 
 - **Home card**: with no open game, the last game played shows for 14 days after its end, with its outcome.
-- **Game page**: with no open game, the last result in full on top. Past games are listed below, under the open game when there is one.
+- **Game page**: with no open game, the last result in full on top: an icon and title for the outcome, the stats, and the player's tickets by source. A past player who has not joined the open game sees the home card for it instead. Past games are listed below as rows (date, tickets counted against the total, outcome), and a row opens that game's full result in a bottom sheet. Tickets thrown out for not following count as 0. Dates show the year only when it is not the current one.
 - **Win screen**: a confirmed win less than 30 days old gets a full-screen confetti screen on the next wallet open, once per device (`frak_game_win_store` in local storage).
 
 ## Analytics

@@ -29,22 +29,10 @@ export function GameCard() {
     const history = useGameHistory();
 
     if (data?.game) {
-        const { game, me } = data;
         return (
-            <GameCardShell
-                to={me.participating ? "/game" : "/game/join"}
-                title={t("game.card.title")}
-                prize={game}
-                badge={
-                    <Badge
-                        size="small"
-                        variant={me.participating ? "success" : "neutral"}
-                    >
-                        {me.participating
-                            ? t("game.card.participating")
-                            : t("game.card.notParticipating")}
-                    </Badge>
-                }
+            <OpenGameCard
+                game={data.game}
+                participating={data.me.participating}
             />
         );
     }
@@ -57,6 +45,34 @@ export function GameCard() {
             title={t("game.card.ended")}
             prize={latest.game}
             badge={<OutcomeBadge outcome={latest.outcome} />}
+        />
+    );
+}
+
+/** The open game, leading to its page once joined and to the code screen before. */
+export function OpenGameCard({
+    game,
+    participating,
+}: {
+    game: { prizeAmount: number; prizeDescription: string | null };
+    participating: boolean;
+}) {
+    const { t } = useTranslation();
+    return (
+        <GameCardShell
+            to={participating ? "/game" : "/game/join"}
+            title={t("game.card.title")}
+            prize={game}
+            badge={
+                <Badge
+                    size="small"
+                    variant={participating ? "success" : "neutral"}
+                >
+                    {participating
+                        ? t("game.card.participating")
+                        : t("game.card.notParticipating")}
+                </Badge>
+            }
         />
     );
 }

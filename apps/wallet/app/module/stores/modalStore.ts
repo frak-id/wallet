@@ -14,6 +14,7 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
+import type { GameResult } from "@/module/game/hook/useGameHistory";
 
 /**
  * Discriminated union of every modal in the wallet app.
@@ -45,6 +46,7 @@ type ModalState =
     | { id: "moneriumBankFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrderDto }
     | { id: "rewardDetail"; item: RewardHistoryItem }
+    | { id: "gameResult"; result: GameResult }
     | { id: "editReferralCode"; onSaved: () => void }
     | { id: "emailNotFound"; email: string }
     | {
