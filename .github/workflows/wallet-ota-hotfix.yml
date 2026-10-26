@@ -202,7 +202,7 @@ jobs:
         working-directory: apps/wallet
         run: |
           set -euo pipefail
-          CHANNEL="$STAGE-$PLATFORM-$VERSION"
+          CHANNEL="$STAGE-$PLATFORM-${VERSION//./-}"
           echo "[ci] publishing to channel $CHANNEL"
           ARGS=(--channel "$CHANNEL")
           if [ -n "$NOTES" ]; then
