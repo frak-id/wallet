@@ -33,6 +33,7 @@ Rejected: Chainlink VRF (needs a consumer contract and a funded subscription, an
    - `game draw confirm <CODE>` pays the candidate. Both take `--actor`, kept on the draw.
    - Each review only applies if nobody reviewed the draw since it was read, so two admins cannot pay two people.
 4. **Payout.** In the same transaction as the confirmation, an `asset_logs` row with recipient type `winner`, the game's prize amount in EURe, on the Frak merchant (paid from the shared campaign bank like any game reward), payable at once. The winner is resolved through identity merges at that moment, since the frozen list keeps the groups as they were. If the bank is short, the row waits in `bank_depleted` until it is funded.
+   - Right after, the winner's wallet gets a `game_won` push ("Tu as gagné le Jeu Frak ! Tes 50 € arrivent dans ton porte-monnaie."), on top of the usual push when the payout settles.
 5. **Announce** on Instagram, and keep the public record online.
 
 ## Storage: one table

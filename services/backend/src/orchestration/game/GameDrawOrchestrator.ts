@@ -333,7 +333,27 @@ export class GameDrawOrchestrator {
             rank: candidate.rank + 1,
             prize_amount: game.prizeAmount,
         });
+        await this.notifyWinner(winner, game.prizeAmount);
         return confirmed;
+    }
+
+    /** The prize is paid by now, so a failed lookup only costs the push. */
+    private async notifyWinner(identityGroupId: string, prizeAmount: number) {
+        const wallet = await this.identities
+            .getWalletForGroup(identityGroupId)
+            .catch((error: unknown) => {
+                log.warn(
+                    { error, identityGroupId },
+                    "Game winner's wallet lookup failed, no push sent"
+                );
+                return null;
+            });
+        if (!wallet) return;
+        eventEmitter.emit("notification", {
+            type: "game_won",
+            wallet,
+            prizeAmount,
+        });
     }
 
     /** `null` until the game is frozen. */

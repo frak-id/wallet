@@ -6900,7 +6900,8 @@
               "enum": [
                 "promotional",
                 "reward_pending",
-                "reward_settled"
+                "reward_settled",
+                "game_won"
               ]
             }
           },

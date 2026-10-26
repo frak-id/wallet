@@ -409,6 +409,38 @@ describe("GameDrawOrchestrator.confirm", () => {
         );
     });
 
+    it("pushes the winner's current wallet", async () => {
+        const { orchestrator, draws, identities } = setup();
+        draws.findByGameId.mockResolvedValue(reviewedOnce());
+        identities.findSurvivingGroupId.mockResolvedValue("merged-into");
+        identities.getWalletForGroup.mockResolvedValue("0xwinner");
+
+        await orchestrator.confirm(game.id, "quentin");
+
+        expect(identities.getWalletForGroup).toHaveBeenCalledWith(
+            "merged-into"
+        );
+        expect(emit).toHaveBeenCalledWith("notification", {
+            type: "game_won",
+            wallet: "0xwinner",
+            prizeAmount: 50,
+        });
+    });
+
+    it("still confirms when the winner's wallet cannot be looked up", async () => {
+        const { orchestrator, draws, identities } = setup();
+        draws.findByGameId.mockResolvedValue(reviewedOnce());
+        identities.getWalletForGroup.mockRejectedValue(new Error("db down"));
+
+        await expect(
+            orchestrator.confirm(game.id, "quentin")
+        ).resolves.toMatchObject({ status: "confirmed" });
+        expect(emit).not.toHaveBeenCalledWith(
+            "notification",
+            expect.anything()
+        );
+    });
+
     it("fails the transaction when someone reviewed the draw meanwhile", async () => {
         const { orchestrator, draws } = setup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
