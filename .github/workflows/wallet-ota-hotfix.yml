@@ -115,11 +115,23 @@ jobs:
             exit 1
           fi
 
+          # The JS halves of native plugins are versioned with their Rust side.
+          GUEST_BUMPS=$(git diff "$TAG" HEAD -- bun.lock apps/wallet/package.json \
+            | grep -E '^[-+][^-+].*(@tauri-apps/|@crabnebula/|tauri-plugin-)' || true)
+          if [ -n "$GUEST_BUMPS" ]; then
+            echo "::error::Tauri plugin packages changed since $TAG — this needs a store release, not an OTA:"
+            echo "$GUEST_BUMPS"
+            exit 1
+          fi
+
           echo "[ci] $TAG → HEAD is web-assets-only, safe to ship over the air"
 
   upload:
     name: "📡 ${{ matrix.platform }} ${{ needs.guard.outputs.version }} → ${{ inputs.stage }}"
     needs: guard
+    # Required reviewers live on this environment, not on the branch name check:
+    # create it protected in GitHub settings before this file reaches main.
+    environment: ota-${{ inputs.stage }}
     runs-on: ubuntu-latest
     strategy:
       # Sequential: both legs run `ota-updater upload` against the same Cloud
