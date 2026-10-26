@@ -5,6 +5,7 @@ import "./emailVerificationCode";
 import "./businessAuthCleanup";
 import "./rewardCalculation";
 import "./settlement";
+import "./gameDraw";
 import "./requeueDepleted";
 import "./notifications";
 import "./affiliateIngestion";

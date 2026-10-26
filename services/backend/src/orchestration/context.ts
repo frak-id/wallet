@@ -17,6 +17,7 @@ import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
+import { DrandClient } from "../infrastructure/integrations/drand";
 import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { AffiliateReportingOrchestrator } from "./AffiliateReportingOrchestrator";
@@ -30,6 +31,7 @@ import {
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
     FrakGameOrchestrator,
+    GameDrawOrchestrator,
     GamePlayerOrchestrator,
     MissionUnlockOrchestrator,
 } from "./game";
@@ -223,6 +225,17 @@ const frakGameOrchestrator = new FrakGameOrchestrator(
     InstagramContext.repositories.instagramLink
 );
 
+const gameDrawOrchestrator = new GameDrawOrchestrator(
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    gamePlayerOrchestrator,
+    InstagramContext.repositories.instagramLink,
+    IdentityContext.repositories.identity,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    new DrandClient()
+);
+
 const referralCodeRedemptionOrchestrator =
     new ReferralCodeRedemptionOrchestrator(
         ReferralCodeContext.services.referralCode,
@@ -314,6 +327,7 @@ export namespace OrchestrationContext {
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         frakGame: frakGameOrchestrator,
+        gameDraw: gameDrawOrchestrator,
         missionUnlock: missionUnlockOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,

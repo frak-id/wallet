@@ -188,6 +188,19 @@ function DetailCard({
                     </Text>
                 </Notice>
             )}
+            {item.role === "winner" && (
+                <Notice
+                    tone="success"
+                    icon={<GiftIcon width={20} height={20} />}
+                >
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("reward.gamePrize.detailTitle")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("reward.gamePrize.detailDescription")}
+                    </Text>
+                </Notice>
+            )}
         </Stack>
     );
 }

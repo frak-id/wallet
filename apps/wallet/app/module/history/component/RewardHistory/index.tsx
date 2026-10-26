@@ -119,6 +119,11 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                                     {t("reward.frakBonus.label")}
                                 </Badge>
                             )}
+                            {item.role === "winner" && (
+                                <Badge variant="success" size="small">
+                                    {t("reward.gamePrize.label")}
+                                </Badge>
+                            )}
                         </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
@@ -225,8 +230,8 @@ function StatusBadge({
     status: RewardHistoryItemType["status"];
     role: RewardHistoryItemType["role"];
 }) {
-    // Welcome-bonus rows always carry the gift accent, regardless of status.
-    if (role === "welcome_bonus") {
+    // Welcome bonuses and game prizes always carry the gift accent, regardless of status.
+    if (role === "welcome_bonus" || role === "winner") {
         return (
             <div className={styles.badge}>
                 <div className={styles.badgeInner({ status: "bonus" })}>

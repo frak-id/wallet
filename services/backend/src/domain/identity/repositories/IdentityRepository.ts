@@ -60,6 +60,19 @@ export class IdentityRepository {
         return result ?? null;
     }
 
+    /** The group `groupId` lives in now: itself, or the anchor a merge folded it into. */
+    async findSurvivingGroupId(groupId: string): Promise<string | null> {
+        const [group] = await db
+            .select({ id: identityGroupsTable.id })
+            .from(identityGroupsTable)
+            .where(
+                sql`${identityGroupsTable.id} = ${groupId} OR ${identityGroupsTable.mergedGroups} @> ${JSON.stringify([{ groupId }])}::jsonb`
+            )
+            .orderBy(sql`${identityGroupsTable.id} = ${groupId} DESC`)
+            .limit(1);
+        return group?.id ?? null;
+    }
+
     async findGroupByIdentity(params: {
         type: IdentityType;
         value: string;

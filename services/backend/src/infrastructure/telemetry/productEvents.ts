@@ -12,6 +12,20 @@ export type ProductEventMap = {
     game_reward_unlocked: { recipient_type: string };
     instagram_linked: { follows: boolean };
     instagram_follow_verified: Record<string, never>;
+    game_draw_frozen: {
+        game_id: string;
+        participants: number;
+        eligible_participants: number;
+        total_tickets: number;
+        drand_round: number;
+    };
+    game_draw_run: { game_id: string; candidates: number };
+    game_winner_rejected: { game_id: string; rank: number; reason: string };
+    game_winner_confirmed: {
+        game_id: string;
+        rank: number;
+        prize_amount: number;
+    };
 };
 
 function createClient(): KyInstance | null {
@@ -33,24 +47,27 @@ function createClient(): KyInstance | null {
 let client: KyInstance | null | undefined;
 
 export const productEvents = {
-    /** Fire and forget: no-op without a write client, never throws into the caller. */
+    /** Fire and forget: no-op without a write client, never throws into the caller. `null` = no player behind it. */
     track<K extends keyof ProductEventMap>(
         name: K,
-        identityGroupId: string,
+        identityGroupId: string | null,
         properties: ProductEventMap[K]
     ): void {
         client ??= createClient();
         if (!client) return;
+        const profile = identityGroupId
+            ? { identity_group_id: identityGroupId }
+            : {};
         client
             .post("track", {
                 json: {
                     type: "track",
                     payload: {
                         name,
-                        profileId: identityGroupId,
+                        ...(identityGroupId && { profileId: identityGroupId }),
                         properties: {
                             ...properties,
-                            identity_group_id: identityGroupId,
+                            ...profile,
                             source_surface: "backend",
                         },
                     },

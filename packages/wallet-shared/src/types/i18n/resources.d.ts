@@ -923,6 +923,11 @@ export default interface Resources {
         "detailTitle": "Your welcome bonus",
         "label": "Welcome bonus"
       },
+      "gamePrize": {
+        "detailDescription": "Your ticket was drawn when the game ended. The prize is on its way to your wallet.",
+        "detailTitle": "You won the Frak Game",
+        "label": "Draw prize"
+      },
       "history": {
         "discover": "Discover offers",
         "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",

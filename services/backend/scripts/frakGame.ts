@@ -9,11 +9,17 @@ import type {
     RewardDefinition,
 } from "../src/domain/campaign/schemas";
 import { GameContext } from "../src/domain/game/context";
-import type { GameStatus } from "../src/domain/game/schemas";
+import { drandRoundTime } from "../src/domain/game/draw";
+import {
+    type DrawRejectionReason,
+    DrawRejectionReasonSchema,
+    type GameStatus,
+} from "../src/domain/game/schemas";
 import { FRAK_MERCHANT_ID } from "../src/domain/merchant/constants";
 import { MerchantContext } from "../src/domain/merchant/context";
 import { FRAK_SHARED_CAMPAIGN_BANK } from "../src/domain/merchant/services/MerchantRegistrationService";
 import { ReferralCodeContext } from "../src/domain/referral-code";
+import { OrchestrationContext } from "../src/orchestration/context";
 
 const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
   merchant --owner <0xWallet|accountId> --domain <domain>
@@ -24,6 +30,12 @@ const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
               [--prize <text>] [--sponsor <merchantId>] [--unlock-days 30]
       open a game on a Frak code issued with scripts/frakReferralCode.ts
   game list | game pause <CODE> | game resume <CODE>
+  game draw show <CODE>       the frozen list, the beacon and the candidate under review
+  game draw freeze <CODE>     freeze an ended game now (the cron does it up to 7 days after the end)
+  game draw run               freeze and draw whatever is due, like the cron
+  game draw reject <CODE> --reason not_following_at_review|fraud|unreachable|ineligible
+  game draw confirm <CODE>    pay the candidate under review the prize
+      --actor <name> on reject/confirm, defaults to $USER; it is kept on the draw
 Amounts are in EURe, except --prize-amount (EUR). --unlock-days: how long a reward waits for its mission.
 Every reward is held until a first brand reward: the referrer's signup reward
 waits for the referee's, every other reward for its own recipient's.`;
@@ -48,6 +60,8 @@ const { values: opts, positionals } = parseArgs({
         code: { type: "string" },
         sponsor: { type: "string" },
         "unlock-days": { type: "string", default: "30" },
+        reason: { type: "string" },
+        actor: { type: "string" },
     },
 });
 
@@ -218,9 +232,13 @@ async function listGames() {
                     game.campaignRuleId
                 ),
             ]);
+            const draw = await GameContext.repositories.gameDraw.findByGameId(
+                game.id
+            );
             return {
                 code: code?.code ?? "?",
                 status: game.status,
+                draw: draw?.status ?? "-",
                 startsAt: game.startsAt.toISOString(),
                 endsAt: game.endsAt.toISOString(),
                 ruleStatus: rule?.status ?? "?",
@@ -241,7 +259,105 @@ async function setGameStatus(raw: string | undefined, status: GameStatus) {
     console.log(`Game ${code.code} is now ${status}`);
 }
 
-const [command, action, arg] = positionals;
+async function findGameByCode(raw: string | undefined) {
+    if (!raw) fail(USAGE);
+    const code = await findFrakCode(raw);
+    const game = await GameContext.repositories.game.findByReferralCodeId(
+        code.id
+    );
+    if (!game) fail(`No game on code ${code.code}`);
+    return game;
+}
+
+const REJECTION_REASONS = DrawRejectionReasonSchema.anyOf.map(
+    (literal) => literal.const
+);
+
+function rejectionReason(): DrawRejectionReason {
+    const reason = required("reason");
+    const match = REJECTION_REASONS.find((known) => known === reason);
+    if (!match) fail(`--reason must be one of ${REJECTION_REASONS.join(", ")}`);
+    return match;
+}
+
+function actor(): string {
+    return opts.actor ?? process.env.USER ?? "cli";
+}
+
+async function showDraw(raw: string | undefined) {
+    const game = await findGameByCode(raw);
+    const { draw, candidate } =
+        await OrchestrationContext.orchestrators.gameDraw.review(game.id);
+    console.table({
+        status: draw.status,
+        frozenAt: draw.frozenAt.toISOString(),
+        snapshotRoot: draw.snapshotRoot,
+        totalTickets: draw.totalTickets,
+        participants: draw.entries.length,
+        discarded: draw.entries.filter((e) => e.discarded).length,
+        drandRound: draw.drandRound,
+        roundTime: drandRoundTime(draw.drandRound).toISOString(),
+        beacon: draw.drandSignature ? "recorded" : "waiting",
+        candidates: draw.candidates?.length ?? 0,
+        rejections: draw.rejections.length,
+    });
+    for (const rejection of draw.rejections) {
+        console.log(
+            `rejected ${rejection.pid}: ${rejection.reason} by ${rejection.actor} at ${rejection.at}`
+        );
+    }
+    if (!candidate) return;
+    console.log(`\nCandidate #${candidate.rank + 1} (${candidate.pid})`);
+    console.table({
+        identityGroupId: candidate.identityGroupId,
+        wallet: candidate.wallet ?? "none",
+        accountCreatedAt: candidate.accountCreatedAt?.toISOString() ?? "?",
+        instagram: candidate.instagram?.username ?? "not linked",
+        followsNow: candidate.instagram?.follows ?? false,
+        drawTickets: candidate.entry.drawTickets,
+        ...candidate.entry.tickets,
+    });
+}
+
+async function freezeDraw(raw: string | undefined) {
+    const game = await findGameByCode(raw);
+    const draw = await OrchestrationContext.orchestrators.gameDraw.freeze(game);
+    console.log(
+        `Draw ${draw.status}: root ${draw.snapshotRoot}, ${draw.totalTickets} tickets, drand round ${draw.drandRound} at ${drandRoundTime(draw.drandRound).toISOString()}`
+    );
+}
+
+async function runDraws() {
+    const result = await OrchestrationContext.orchestrators.gameDraw.runDue();
+    console.log(`Frozen ${result.frozen}, drawn ${result.drawn}`);
+}
+
+async function rejectCandidate(raw: string | undefined) {
+    const game = await findGameByCode(raw);
+    const draw = await OrchestrationContext.orchestrators.gameDraw.reject(
+        game.id,
+        rejectionReason(),
+        actor()
+    );
+    console.log(
+        draw.status === "void"
+            ? "Last candidate rejected: the draw has no winner"
+            : `Rejected; candidate #${draw.rejections.length + 1} is now under review`
+    );
+}
+
+async function confirmWinner(raw: string | undefined) {
+    const game = await findGameByCode(raw);
+    const draw = await OrchestrationContext.orchestrators.gameDraw.confirm(
+        game.id,
+        actor()
+    );
+    console.log(
+        `Confirmed ${draw.winnerIdentityGroupId}: prize queued as asset log ${draw.assetLogId}`
+    );
+}
+
+const [command, action, arg, drawArg] = positionals;
 if (command === "merchant") await seedMerchant();
 else if (command === "signup-rule") await createSignupRule();
 else if (command === "game" && action === "create") await createGame();
@@ -250,5 +366,15 @@ else if (command === "game" && action === "pause")
     await setGameStatus(arg, "paused");
 else if (command === "game" && action === "resume")
     await setGameStatus(arg, "active");
+else if (command === "game" && action === "draw") await drawCommand();
 else fail(USAGE);
+
+async function drawCommand() {
+    if (arg === "show") await showDraw(drawArg);
+    else if (arg === "freeze") await freezeDraw(drawArg);
+    else if (arg === "run") await runDraws();
+    else if (arg === "reject") await rejectCandidate(drawArg);
+    else if (arg === "confirm") await confirmWinner(drawArg);
+    else fail(USAGE);
+}
 process.exit(0);

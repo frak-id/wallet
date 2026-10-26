@@ -37,6 +37,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@libsql/client": "^0.18.0",
+    "@noble/curves": "catalog:",
     "@oslojs/encoding": "^1.1.0",
     "@prometheus-io/client": "^0.16.1",
     "@simplewebauthn/server": "^14.0.3",

@@ -15,7 +15,10 @@ import {
     sql,
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
-import { db } from "../../../infrastructure/persistence/postgres";
+import {
+    db,
+    type PgRunner,
+} from "../../../infrastructure/persistence/postgres";
 
 import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
@@ -115,6 +118,44 @@ export class AssetLogRepository {
                 heldAt: p.held ? new Date() : undefined,
             };
         });
+    }
+
+    /** A game prize: payable at once, tied to no campaign rule nor interaction. */
+    async createWinnerPayout(
+        params: {
+            identityGroupId: string;
+            merchantId: string;
+            amount: number;
+            tokenAddress: Address;
+        },
+        runner: PgRunner = db
+    ): Promise<string> {
+        const now = new Date();
+        const [created] = await runner
+            .insert(assetLogsTable)
+            .values({
+                identityGroupId: params.identityGroupId,
+                merchantId: params.merchantId,
+                assetType: "token",
+                amount: params.amount.toString(),
+                tokenAddress: params.tokenAddress,
+                recipientType: "winner",
+                status: "pending",
+                statusChangedAt: now,
+                expiresAt: this.calculateExpiresAt(null),
+            })
+            .returning({ id: assetLogsTable.id });
+        if (!created) throw new Error("Failed to create the winner payout");
+        return created.id;
+    }
+
+    async findOnchainTxHash(id: string): Promise<Hex | null> {
+        const [row] = await db
+            .select({ hash: assetLogsTable.onchainTxHash })
+            .from(assetLogsTable)
+            .where(eq(assetLogsTable.id, id))
+            .limit(1);
+        return row?.hash ?? null;
     }
 
     /**

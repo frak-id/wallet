@@ -1107,6 +1107,11 @@
             "label": "Bonus de bienvenue",
             "detailTitle": "Ton bonus de bienvenue",
             "detailDescription": "Comme tu as rejoint Frak avec une invitation, Frak t'a reversé sa récompense de parrain sur ton premier achat chez {{merchant}}."
+        },
+        "gamePrize": {
+            "label": "Gagné au tirage",
+            "detailTitle": "Tu as gagné le Jeu Frak",
+            "detailDescription": "Ton ticket a été tiré au sort à la fin du jeu. Le lot arrive dans ton porte-monnaie."
         }
     },
     "monerium": {

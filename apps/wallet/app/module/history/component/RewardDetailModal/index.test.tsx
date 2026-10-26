@@ -39,6 +39,18 @@ describe("RewardDetailModal", () => {
         expect(getByText("reward.frakBonus.detailTitle")).toBeInTheDocument();
     });
 
+    test("explains the prize for a game winner item", () => {
+        const { getByText, queryByText } = render(
+            <RewardDetailModal
+                item={makeItem({ role: "winner" })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(getByText("reward.gamePrize.detailTitle")).toBeInTheDocument();
+        expect(queryByText("reward.frakBonus.detailTitle")).toBeNull();
+    });
+
     test("omits the bonus explanation block for a regular referee item", () => {
         const { queryByText } = render(
             <RewardDetailModal

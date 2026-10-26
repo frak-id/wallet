@@ -162,6 +162,29 @@ export class GamePlayerOrchestrator {
         return row?.joinedAt ?? null;
     }
 
+    /** Everyone who joined the game, with their first join. */
+    async participantsOf(
+        gameId: string
+    ): Promise<{ identityGroupId: string; joinedAt: Date }[]> {
+        const rows = await db
+            .select({
+                identityGroupId: interactionLogsTable.identityGroupId,
+                joinedAt: min(interactionLogsTable.createdAt),
+            })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
+                    eq(interactionLogsTable.type, interactionTypes.gameJoin),
+                    sql`${interactionLogsTable.payload}->>'gameId' = ${gameId}`
+                )
+            )
+            .groupBy(interactionLogsTable.identityGroupId);
+        return rows.flatMap(({ identityGroupId, joinedAt }) =>
+            identityGroupId && joinedAt ? [{ identityGroupId, joinedAt }] : []
+        );
+    }
+
     /** Tickets per source: the join, plus purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,

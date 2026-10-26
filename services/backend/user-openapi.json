@@ -7258,7 +7258,8 @@
                             "enum": [
                               "referrer",
                               "referee",
-                              "welcome_bonus"
+                              "welcome_bonus",
+                              "winner"
                             ]
                           },
                           "trigger": {
@@ -8360,6 +8361,74 @@
           }
         },
         "operationId": "getUserWalletGameCurrent"
+      }
+    },
+    "/user/wallet/game/{gameId}/draw/me": {
+      "get": {
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "pid",
+                    "drawTickets",
+                    "discarded"
+                  ],
+                  "properties": {
+                    "pid": {
+                      "type": "string"
+                    },
+                    "drawTickets": {
+                      "type": "number"
+                    },
+                    "discarded": {
+                      "const": "not_following",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response for status 404",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletGameByGameIdDrawMe"
       }
     },
     "/user/wallet/instagram/": {

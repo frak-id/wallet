@@ -1,4 +1,4 @@
-import { asc, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { type GameInsert, type GameSelect, gamesTable } from "../db/schema";
 import type { GameStatus } from "../schemas";
@@ -9,6 +9,26 @@ export class GameRepository {
         const [created] = await db.insert(gamesTable).values(game).returning();
         if (!created) throw new Error("Failed to create game");
         return created;
+    }
+
+    async findById(id: string): Promise<GameSelect | null> {
+        const [game] = await db
+            .select()
+            .from(gamesTable)
+            .where(eq(gamesTable.id, id))
+            .limit(1);
+        return game ?? null;
+    }
+
+    /** Games whose end falls in `(after, upTo]`, paused ones included. */
+    async findEndedBetween(after: Date, upTo: Date): Promise<GameSelect[]> {
+        return db
+            .select()
+            .from(gamesTable)
+            .where(
+                and(gt(gamesTable.endsAt, after), lte(gamesTable.endsAt, upTo))
+            )
+            .orderBy(asc(gamesTable.endsAt));
     }
 
     async findByReferralCodeId(
