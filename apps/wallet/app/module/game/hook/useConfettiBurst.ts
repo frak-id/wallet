@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { brand, zIndex } from "@frak-labs/design-system/tokens";
 import { useEffect } from "react";
 
 const colors = [
@@ -8,6 +8,8 @@ const colors = [
     brand.colors.warning[400],
     brand.colors.error[400],
 ];
+// Over the win screen, which sits at modal level.
+const CONFETTI_Z_INDEX = zIndex.modal + 1;
 
 /** Fires one celebratory burst on mount; the library is lazy-loaded. */
 export function useConfettiBurst() {
@@ -29,6 +31,7 @@ export function useConfettiBurst() {
                     particleCount: 70,
                     spread: 70,
                     startVelocity: 55,
+                    zIndex: CONFETTI_Z_INDEX,
                     disableForReducedMotion: true,
                 };
                 fire({ ...cannon, angle: 60, origin: { x: 0, y: 0.75 } });

@@ -5,7 +5,7 @@ import { notifyWalletAuthExpired } from "../auth/authRecovery";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 import { getTokenExpMs } from "../utils/tokenExpiry";
 
-const backendUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
+export const backendUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
 
 /**
  * Treaty client with authentication tokens if present

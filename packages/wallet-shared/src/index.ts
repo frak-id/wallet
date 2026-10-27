@@ -41,6 +41,7 @@ export {
     authenticatedBackendApi,
     authenticatedWalletApi,
     authenticatorStorage,
+    backendUrl,
     balanceKey,
     CodeInput,
     crashlytics,

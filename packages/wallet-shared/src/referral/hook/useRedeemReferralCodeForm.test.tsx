@@ -9,6 +9,10 @@ import {
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { useRedeemReferralCodeForm } from "./useRedeemReferralCodeForm";
 
+const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
+
+vi.mock("../../common/analytics", () => ({ trackEvent }));
+
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
         referral: {
@@ -82,7 +86,7 @@ describe("useRedeemReferralCodeForm", () => {
     }) => {
         vi.mocked(
             authenticatedWalletApi.referral.code.redeem.post
-        ).mockResolvedValue({ error: null } as never);
+        ).mockResolvedValue({ data: { kind: "user" }, error: null } as never);
 
         const onApplied = vi.fn();
         const { result } = renderHook(
@@ -255,6 +259,111 @@ describe("useRedeemReferralCodeForm", () => {
             expect(result.current.errorMessageKey).toBe(
                 "wallet.referral.redeem.errorGameClosed"
             )
+        );
+    });
+
+    test("asks to confirm on FRAK_REFERRER without an inline error", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            error: { value: { code: "FRAK_REFERRER" }, status: 409 },
+        } as never);
+
+        const onError = vi.fn();
+        const { result } = renderHook(
+            () => useRedeemReferralCodeForm({ onError }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        act(() => result.current.handleChange(makeChange("lola10")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+
+        await waitFor(() =>
+            expect(result.current.confirmingFrakReplace).toBe(true)
+        );
+        expect(result.current.errorMessageKey).toBeNull();
+        expect(onError).not.toHaveBeenCalled();
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_prompted"
+        );
+    });
+
+    test("confirming resends the code with replaceFrakReferrer", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(authenticatedWalletApi.referral.code.redeem.post)
+            .mockResolvedValueOnce({
+                error: { value: { code: "FRAK_REFERRER" }, status: 409 },
+            } as never)
+            .mockResolvedValueOnce({
+                data: { kind: "user" },
+                error: null,
+            } as never);
+
+        const onApplied = vi.fn();
+        const { result } = renderHook(
+            () => useRedeemReferralCodeForm({ onApplied }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        act(() => result.current.handleChange(makeChange("lola10")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+        await waitFor(() =>
+            expect(result.current.confirmingFrakReplace).toBe(true)
+        );
+
+        act(() => result.current.confirmFrakReplace());
+
+        await waitFor(() =>
+            expect(onApplied).toHaveBeenCalledWith({ kind: "user" })
+        );
+        expect(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).toHaveBeenLastCalledWith({
+            code: "LOLA10",
+            context: undefined,
+            replaceFrakReferrer: true,
+        });
+        expect(result.current.confirmingFrakReplace).toBe(false);
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_resolved",
+            { outcome: "confirmed" }
+        );
+    });
+
+    test("cancelling closes the confirmation and clears the error", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            error: { value: { code: "FRAK_REFERRER" }, status: 409 },
+        } as never);
+
+        const { result } = renderHook(() => useRedeemReferralCodeForm(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        act(() => result.current.handleChange(makeChange("lola10")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+        await waitFor(() =>
+            expect(result.current.confirmingFrakReplace).toBe(true)
+        );
+
+        act(() => result.current.cancelFrakReplace());
+
+        await waitFor(() =>
+            expect(result.current.confirmingFrakReplace).toBe(false)
+        );
+        expect(result.current.errorMessageKey).toBeNull();
+        expect(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).toHaveBeenCalledTimes(1);
+        expect(trackEvent).toHaveBeenCalledWith(
+            "frak_referrer_replace_resolved",
+            { outcome: "cancelled" }
         );
     });
 

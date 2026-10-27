@@ -15,7 +15,10 @@ import {
     sql,
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
-import { db } from "../../../infrastructure/persistence/postgres";
+import {
+    db,
+    type PgRunner,
+} from "../../../infrastructure/persistence/postgres";
 
 import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
@@ -115,6 +118,44 @@ export class AssetLogRepository {
                 heldAt: p.held ? new Date() : undefined,
             };
         });
+    }
+
+    /** A game prize: payable at once, tied to no campaign rule nor interaction. */
+    async createWinnerPayout(
+        params: {
+            identityGroupId: string;
+            merchantId: string;
+            amount: number;
+            tokenAddress: Address;
+        },
+        runner: PgRunner = db
+    ): Promise<string> {
+        const now = new Date();
+        const [created] = await runner
+            .insert(assetLogsTable)
+            .values({
+                identityGroupId: params.identityGroupId,
+                merchantId: params.merchantId,
+                assetType: "token",
+                amount: params.amount.toString(),
+                tokenAddress: params.tokenAddress,
+                recipientType: "winner",
+                status: "pending",
+                statusChangedAt: now,
+                expiresAt: this.calculateExpiresAt(null),
+            })
+            .returning({ id: assetLogsTable.id });
+        if (!created) throw new Error("Failed to create the winner payout");
+        return created.id;
+    }
+
+    async findOnchainTxHash(id: string): Promise<Hex | null> {
+        const [row] = await db
+            .select({ hash: assetLogsTable.onchainTxHash })
+            .from(assetLogsTable)
+            .where(eq(assetLogsTable.id, id))
+            .limit(1);
+        return row?.hash ?? null;
     }
 
     /**
@@ -289,8 +330,8 @@ export class AssetLogRepository {
     async releaseHeld(
         items: { id: string; availableAt: Date | null }[],
         graceMs: number
-    ): Promise<number> {
-        if (items.length === 0) return 0;
+    ): Promise<string[]> {
+        if (items.length === 0) return [];
 
         const now = new Date();
         const rows = JSON.stringify(
@@ -321,7 +362,7 @@ export class AssetLogRepository {
             )
             .returning({ id: assetLogsTable.id });
 
-        return results.length;
+        return results.map(({ id }) => id);
     }
 
     /** Hold released rewards again, as long as they are not being paid. */
@@ -616,6 +657,34 @@ export class AssetLogRepository {
             .orderBy(desc(assetLogsTable.createdAt))
             .limit(options?.limit ?? 500)
             .offset(options?.offset ?? 0);
+    }
+
+    /** Per-token totals of the group's live rewards not on-chain yet: locked, pending, being pushed or waiting on funding. */
+    async sumUnpaidByIdentityGroup(
+        identityGroupId: string
+    ): Promise<Array<{ tokenAddress: Address; total: string }>> {
+        return db
+            .select({
+                tokenAddress: assetLogsTable.tokenAddress,
+                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                    String
+                ),
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "bank_depleted",
+                    ]),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .groupBy(assetLogsTable.tokenAddress) as Promise<
+            Array<{ tokenAddress: Address; total: string }>
+        >;
     }
 
     async countByIdentityGroup(identityGroupId: string): Promise<number> {

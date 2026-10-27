@@ -395,6 +395,12 @@
                     "description": "Tu ne bénéficieras plus des avantages liés à ce code pour tes prochains achats. Tu pourras en ajouter un nouveau à tout moment.",
                     "confirmCta": "Supprimer le code",
                     "cancelCta": "Annuler"
+                },
+                "replaceFrak": {
+                    "title": "Remplacer ton\ncode Frak ?",
+                    "description": "En utilisant ce code de parrainage, tu perds ton cashback exclusif sur ton premier achat chez chaque marque.",
+                    "confirmCta": "Utiliser ce code",
+                    "cancelCta": "Garder mon cashback"
                 }
             }
         },
@@ -407,9 +413,10 @@
         "pendingGains": {
             "subtitle": "Gains en attente",
             "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
-            "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
+            "description": "Tes gains sont arrivés. Collecte-les maintenant dans ton porte-monnaie.",
             "confirm": "Collecter mes gains",
-            "success": "Gains collectés !"
+            "success": "Gains collectés !",
+            "unpaid": "Plus {{amount}} à venir"
         },
         "pendingEmpty": {
             "title": "Tu n'as pas encore de gains",
@@ -780,6 +787,12 @@
             "rewardDetail": {
                 "ariaLabel": "Détails de la récompense"
             },
+            "gameResult": {
+                "ariaLabel": "Résultat du jeu"
+            },
+            "gameWin": {
+                "ariaLabel": "Tu as gagné le Jeu Frak"
+            },
             "moneriumOrderDetail": {
                 "ariaLabel": "Détails du transfert"
             },
@@ -957,13 +970,14 @@
                 "howItWorks": "Comment ça marche",
                 "unlock": {
                     "title": "Ton bonus de {{reward}}",
-                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant."
+                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant.",
+                    "descriptionFollow": "Il se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire."
                 },
                 "invite": {
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "3 tickets par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
+                    "description": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque, et 3 par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
                 },
                 "follow": {
                     "title": "Suis-nous pour le tirage",
@@ -973,6 +987,8 @@
             "reward": {
                 "title": "Tu es dans le jeu !",
                 "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
+                "descriptionFollow": "Ta récompense est en attente. Elle se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
+                "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",
                 "game": {
                     "label": "Lot du jeu",
                     "endsAt": "Jusqu'à {{date}}",
@@ -992,7 +1008,8 @@
         "card": {
             "title": "Jeu Frak en cours",
             "participating": "Tu participes",
-            "notParticipating": "Pas encore inscrit"
+            "notParticipating": "Pas encore inscrit",
+            "ended": "Jeu Frak terminé"
         },
         "page": {
             "tickets_one": "ticket",
@@ -1003,7 +1020,7 @@
             "buy": "Achète chez une marque partenaire",
             "gain_one": "+{{count}} ticket",
             "gain_other": "+{{count}} tickets",
-            "shareHint": "Un partage rapporte 3 tickets s'il mène à un achat.",
+            "shareHint": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, 1 par ami avec un porte-monnaie Frak venu par ton partage d'une marque, puis 3 à chacun de leurs achats.",
             "none": {
                 "title": "Aucun jeu en cours",
                 "description": "Le prochain jeu sera annoncé sur Instagram."
@@ -1011,7 +1028,8 @@
             "error": "Impossible de charger le jeu.",
             "retry": "Réessayer",
             "lockedLink": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram relié et <igLink>@frak_fr</igLink> suivi.",
-            "linkCta": "Relier mon Instagram"
+            "linkCta": "Relier mon Instagram",
+            "title": "Jeu Frak"
         },
         "instagram": {
             "title": "Relie ton Instagram",
@@ -1041,6 +1059,64 @@
                 "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
                 "back": "Retour au jeu"
             }
+        },
+        "result": {
+            "badge": {
+                "drawing": "Tirage en cours",
+                "won": "Gagné",
+                "lost": "Pas gagné",
+                "noWinner": "Sans gagnant"
+            },
+            "drawing": {
+                "title": "Tirage en cours",
+                "description": "Le jeu est terminé. Le gagnant sera annoncé très bientôt."
+            },
+            "won": {
+                "title": "Tu as gagné {{prize}} !",
+                "description": "Ton ticket a été tiré au sort. Ton gain arrive dans ton porte-monnaie.",
+                "cta": "Voir mon gain"
+            },
+            "lost": {
+                "title": "Pas cette fois",
+                "description": "Ton ticket n'a pas été tiré. Retente ta chance au prochain jeu !"
+            },
+            "noWinner": {
+                "title": "Pas de gagnant",
+                "description": "Aucun ticket n'a pu être tiré pour ce jeu."
+            },
+            "discarded": "Tes tickets n'ont pas compté : tu ne suivais pas @frak_fr au moment du tirage.",
+            "prize": "Lot",
+            "myTickets": "Tes tickets",
+            "totalTickets": "Tickets au tirage",
+            "participants": "Participants",
+            "endedAt": "Fin du jeu",
+            "sources": {
+                "title": "D'où viennent tes tickets",
+                "join": "Inscription au jeu",
+                "purchase": "Tes achats",
+                "referredPurchase": "Achats de tes amis",
+                "referredSignup": "Amis inscrits avec ton code",
+                "brandShare": "Amis via tes partages de marques"
+            },
+            "verify": {
+                "link": "Vérifier le tirage",
+                "pid": "Ton identifiant dans le tirage : {{pid}}"
+            }
+        },
+        "history": {
+            "title": "Jeux précédents",
+            "gameOf": "Jeu du {{date}}",
+            "tickets_one": "{{count}} ticket",
+            "tickets_other": "{{count}} tickets",
+            "ticketsOf_one": "{{count}} ticket sur {{total}}",
+            "ticketsOf_other": "{{count}} tickets sur {{total}}",
+            "notCounted": "0 ticket compté"
+        },
+        "win": {
+            "title": "Tu as gagné le Jeu Frak !",
+            "description": "Ton ticket a été tiré au sort. Tes {{prize}} arrivent dans ton porte-monnaie.",
+            "cta": "Voir mon gain",
+            "close": "Fermer"
         }
     },
     "reward": {
@@ -1053,6 +1129,13 @@
             "cancelled": "Annulé",
             "expired": "Expiré",
             "locked": "Verrouillé"
+        },
+        "pending": {
+            "onItsWay": "En cours d'envoi",
+            "onItsWayDisclaimer": "Ce gain est en route vers ton porte-monnaie. Tu pourras le collecter très bientôt.",
+            "availableOn": "Disponible le {{date}}",
+            "availableOnLabel": "Disponible le",
+            "availableOnDisclaimer": "Tu pourras collecter ce gain à partir de cette date."
         },
         "trigger": {
             "unknown": "Récompense",
@@ -1090,12 +1173,19 @@
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
             "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire.",
-            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire."
+            "lockedExplanationFollow": "Se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire.",
+            "lockedOnFriendExplanationFollow": "Se débloque dès que ton ami suit @frak_fr sur Instagram, ou dès sa première récompense chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",
             "detailTitle": "Ton bonus de bienvenue",
             "detailDescription": "Comme tu as rejoint Frak avec une invitation, Frak t'a reversé sa récompense de parrain sur ton premier achat chez {{merchant}}."
+        },
+        "gamePrize": {
+            "label": "Gagné au tirage",
+            "detailTitle": "Tu as gagné le Jeu Frak",
+            "detailDescription": "Ton ticket a été tiré au sort à la fin du jeu. Le lot arrive dans ton porte-monnaie."
         }
     },
     "monerium": {

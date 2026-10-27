@@ -6900,7 +6900,8 @@
               "enum": [
                 "promotional",
                 "reward_pending",
-                "reward_settled"
+                "reward_settled",
+                "game_won"
               ]
             }
           },
@@ -7168,6 +7169,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "id",
                           "merchant",
                           "token",
                           "amount",
@@ -7177,6 +7179,9 @@
                           "createdAt"
                         ],
                         "properties": {
+                          "id": {
+                            "type": "string"
+                          },
                           "merchant": {
                             "type": "object",
                             "required": [
@@ -7258,7 +7263,8 @@
                             "enum": [
                               "referrer",
                               "referee",
-                              "welcome_bonus"
+                              "welcome_bonus",
+                              "winner"
                             ]
                           },
                           "trigger": {
@@ -7374,6 +7380,67 @@
           }
         },
         "operationId": "getUserWalletRewardsHistory"
+      }
+    },
+    "/user/wallet/rewards/unpaid": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "eurAmount"
+                  ],
+                  "properties": {
+                    "eurAmount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletRewardsUnpaid"
       }
     },
     "/user/wallet/referral/code/issue": {
@@ -7573,6 +7640,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7592,6 +7662,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7611,6 +7684,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -8231,6 +8307,7 @@
                       "required": [
                         "participating",
                         "tickets",
+                        "ticketsBySource",
                         "eligible"
                       ],
                       "properties": {
@@ -8239,6 +8316,33 @@
                         },
                         "tickets": {
                           "type": "number"
+                        },
+                        "ticketsBySource": {
+                          "type": "object",
+                          "required": [
+                            "join",
+                            "purchase",
+                            "referredPurchase",
+                            "referredSignup",
+                            "brandShare"
+                          ],
+                          "properties": {
+                            "join": {
+                              "type": "number"
+                            },
+                            "purchase": {
+                              "type": "number"
+                            },
+                            "referredPurchase": {
+                              "type": "number"
+                            },
+                            "referredSignup": {
+                              "type": "number"
+                            },
+                            "brandShare": {
+                              "type": "number"
+                            }
+                          }
                         },
                         "eligible": {
                           "type": "boolean"
@@ -8262,6 +8366,227 @@
           }
         },
         "operationId": "getUserWalletGameCurrent"
+      }
+    },
+    "/user/wallet/game/history": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "games"
+                  ],
+                  "properties": {
+                    "games": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "game",
+                          "outcome",
+                          "tickets",
+                          "ticketsBySource",
+                          "drawTickets",
+                          "discarded",
+                          "pid",
+                          "totalTickets",
+                          "participants",
+                          "confirmedAt"
+                        ],
+                        "properties": {
+                          "game": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "prizeAmount",
+                              "prizeDescription",
+                              "startsAt",
+                              "endsAt",
+                              "sponsor"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "prizeAmount": {
+                                "type": "number"
+                              },
+                              "prizeDescription": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startsAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "endsAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "sponsor": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "domain"
+                                ],
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "domain": {
+                                    "type": "string"
+                                  },
+                                  "logoUrl": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "drawing",
+                              "won",
+                              "lost",
+                              "no_winner"
+                            ]
+                          },
+                          "tickets": {
+                            "type": "number"
+                          },
+                          "ticketsBySource": {
+                            "type": "object",
+                            "required": [
+                              "join",
+                              "purchase",
+                              "referredPurchase",
+                              "referredSignup",
+                              "brandShare"
+                            ],
+                            "properties": {
+                              "join": {
+                                "type": "number"
+                              },
+                              "purchase": {
+                                "type": "number"
+                              },
+                              "referredPurchase": {
+                                "type": "number"
+                              },
+                              "referredSignup": {
+                                "type": "number"
+                              },
+                              "brandShare": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "drawTickets": {
+                            "type": "number"
+                          },
+                          "discarded": {
+                            "const": "not_following",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "pid": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "totalTickets": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "participants": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "confirmedAt": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletGameHistory"
       }
     },
     "/user/wallet/instagram/": {

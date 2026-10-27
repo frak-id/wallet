@@ -58,6 +58,13 @@ describe("GameRules", () => {
         expect(screen.getByText(line)).toBeInTheDocument();
     });
 
+    it("drops the unlock row when the join earned nothing", () => {
+        render(<GameRules reward={0} onContinue={vi.fn()} />);
+
+        expect(screen.queryByText(/rules\.unlock/)).not.toBeInTheDocument();
+        expect(screen.getByText(/rules\.invite\.title/)).toBeInTheDocument();
+    });
+
     it("links the follow row to Frak's Instagram account", () => {
         render(<GameRules reward={1} onContinue={vi.fn()} />);
 

@@ -1,4 +1,3 @@
-import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -23,20 +22,8 @@ export const text = style({
     gap: alias.spacing.xs,
     width: "100%",
     textAlign: "center",
-});
-
-export const title = style({
-    margin: 0,
-    color: vars.text.primary,
-    // Honor explicit `\n` in the translated title so the line break
-    // doesn't depend on container width happening to wrap at the right
-    // word.
+    // An explicit `\n` in a translation breaks the line wherever the width falls.
     whiteSpace: "pre-line",
-});
-
-export const description = style({
-    margin: 0,
-    color: vars.text.secondary,
 });
 
 export const actions = style({

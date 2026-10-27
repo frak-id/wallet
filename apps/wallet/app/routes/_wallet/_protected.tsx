@@ -1,6 +1,7 @@
 import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
+import { GameWinScreen } from "@/module/game/component/GameWinScreen";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 export const Route = createFileRoute("/_wallet/_protected")({
@@ -31,8 +32,11 @@ export const Route = createFileRoute("/_wallet/_protected")({
 
 function ProtectedLayout() {
     return (
-        <AppShell navigation={true}>
-            <Outlet />
-        </AppShell>
+        <>
+            <AppShell navigation={true}>
+                <Outlet />
+            </AppShell>
+            <GameWinScreen />
+        </>
     );
 }

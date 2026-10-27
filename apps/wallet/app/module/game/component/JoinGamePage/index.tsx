@@ -1,9 +1,13 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ExternalLink, type RedeemResult } from "@frak-labs/wallet-shared";
+import {
+    ExternalLink,
+    type RedeemResult,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
@@ -19,7 +23,14 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
     const queryClient = useQueryClient();
     const [joined, setJoined] = useState<RedeemResult | null>(null);
 
+    useEffect(() => {
+        trackEvent("game_code_entry_viewed", { prefilled: !!initialCode });
+    }, [initialCode]);
+
     const handleRedeemed = async (result: RedeemResult) => {
+        trackEvent("game_code_submitted", {
+            outcome: result.game ? "joined" : "referrer_set",
+        });
         if (result.game) {
             // Refetch, not invalidate: nothing observes the query here, and /game bounces back on a stale non-participant.
             const refetched = queryClient.refetchQueries({
@@ -56,6 +67,12 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
             </Text>
             <RedeemForm
                 onRedeemed={handleRedeemed}
+                onError={(errorKey) =>
+                    trackEvent("game_code_submitted", {
+                        outcome: "error",
+                        error_key: errorKey,
+                    })
+                }
                 initialCode={initialCode}
                 label={t("game.join.label")}
                 submitLabel={t("game.join.submit")}

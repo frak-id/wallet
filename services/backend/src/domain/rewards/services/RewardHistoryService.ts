@@ -51,6 +51,7 @@ export class RewardHistoryService {
         const decimals = meta?.decimals ?? 18;
 
         return {
+            id: log.id,
             merchant: {
                 id: log.merchantId,
                 name: log.merchantName,

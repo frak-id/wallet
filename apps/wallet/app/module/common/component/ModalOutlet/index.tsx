@@ -42,6 +42,16 @@ const MoneriumOrderDetailModal = lazy(() =>
         default: m.MoneriumOrderDetailModal,
     }))
 );
+const GameResultSheet = lazy(() =>
+    import("@/module/game/component/GameResultSheet").then((m) => ({
+        default: m.GameResultSheet,
+    }))
+);
+const GameWinModal = lazy(() =>
+    import("@/module/game/component/GameWinModal").then((m) => ({
+        default: m.GameWinModal,
+    }))
+);
 const EditReferralCodeSheet = lazy(() =>
     import("@/module/referral/component/EditReferralCodeSheet").then((m) => ({
         default: m.EditReferralCodeSheet,
@@ -104,7 +114,7 @@ export function ModalOutlet() {
             }}
             errorComponent={renderNothing}
         >
-            {/* Six modals share `DetailOverlay` at this position; without a
+            {/* Seven modals share `DetailOverlay` at this position; without a
                 key, closing one over another reuses the instance and its
                 already-closing state, so the survivor cannot close. */}
             <Suspense fallback={null} key={modal.id}>
@@ -210,6 +220,36 @@ function renderModal(
                     {({ handleClose }) => (
                         <MoneriumOrderDetailModal
                             order={modal.order}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "gameResult":
+            return (
+                <DetailOverlay
+                    onClose={closeModal}
+                    swipeToClose={swipeToClose}
+                    variant="bottomSheet"
+                    labelKey="wallet.modal.gameResult.ariaLabel"
+                >
+                    {({ handleClose }) => (
+                        <GameResultSheet
+                            result={modal.result}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "gameWin":
+            return (
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.gameWin.ariaLabel"
+                >
+                    {({ handleClose }) => (
+                        <GameWinModal
+                            result={modal.result}
                             onClose={handleClose}
                         />
                     )}

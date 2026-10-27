@@ -3,6 +3,7 @@ import {
     type TokenMetadata,
     type TokenPrice,
 } from "@backend-infrastructure";
+import Decimal from "decimal.js";
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
@@ -69,6 +70,29 @@ export class RewardHistoryOrchestrator {
             );
 
         return { items, totalCount };
+    }
+
+    /** EUR value of the caller's live rewards that are not on-chain yet, locked ones included. */
+    async getUnpaidTotal(
+        walletAddress: Address
+    ): Promise<{ eurAmount: number }> {
+        const group = await this.identityRepository.findGroupByIdentity({
+            type: "wallet",
+            value: walletAddress,
+        });
+        if (!group) return { eurAmount: 0 };
+
+        const totals = await this.assetLogRepository.sumUnpaidByIdentityGroup(
+            group.id
+        );
+        const prices = await this.buildTokenPriceMap(
+            totals.map(({ tokenAddress }) => tokenAddress)
+        );
+        const eurAmount = totals.reduce((sum, { tokenAddress, total }) => {
+            const price = prices.get(tokenAddress);
+            return price ? sum.add(new Decimal(total).mul(price.eur)) : sum;
+        }, new Decimal(0));
+        return { eurAmount: eurAmount.toNumber() };
     }
 
     private async buildEnrichmentData(

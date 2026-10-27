@@ -44,7 +44,7 @@ export {
     createRateLimitStore,
     rateLimitMiddleware,
 } from "./rateLimit/rateLimiter";
-// Telemetry (Prometheus metrics)
+// Telemetry (Prometheus metrics, OpenPanel product events)
 export {
     businessMetrics,
     cronMetrics,
@@ -55,6 +55,8 @@ export {
     type InstallCredentialOutcome,
     infraMetrics,
     metricsContentType,
+    type ProductEventMap,
+    productEvents,
     registry,
     renderMetrics,
 } from "./telemetry";

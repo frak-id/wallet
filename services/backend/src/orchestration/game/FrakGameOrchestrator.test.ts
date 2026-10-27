@@ -1,11 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CampaignRuleSelect } from "../../domain/campaign/db/schema";
 import type { GameSelect } from "../../domain/game/db/schema";
+import { NO_TICKETS, type TicketBreakdown } from "../../domain/game/tickets";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { FrakGameOrchestrator } from "./FrakGameOrchestrator";
 
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+
 vi.mock("@backend-infrastructure", () => ({
     eventEmitter: { emit: vi.fn() },
+    productEvents: { track },
 }));
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -41,14 +45,14 @@ function makeOrchestrator(
     opts: {
         game?: GameSelect | null;
         joinedAt?: Date | null;
-        tickets?: number;
+        tickets?: TicketBreakdown;
         created?: boolean;
         rule?: CampaignRuleSelect;
         instagramLink?: { follows: boolean } | null;
     } = {}
 ) {
     const joinedAt = vi.fn().mockResolvedValue(opts.joinedAt ?? null);
-    const ticketsOf = vi.fn().mockResolvedValue(opts.tickets ?? 0);
+    const ticketsOf = vi.fn().mockResolvedValue(opts.tickets ?? NO_TICKETS);
     const createIdempotent = vi
         .fn()
         .mockResolvedValue(opts.created === false ? null : { id: "i-1" });
@@ -111,10 +115,17 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
         expect(findLink).not.toHaveBeenCalled();
     });
 
-    it("returns the ticket count of a participant", async () => {
+    it("returns the ticket count of a participant with its sources", async () => {
+        const ticketsBySource = {
+            join: 1,
+            purchase: 3,
+            referredPurchase: 0,
+            referredSignup: 2,
+            brandShare: 1,
+        };
         const { orchestrator, ticketsOf } = makeOrchestrator({
             joinedAt: JOINED_AT,
-            tickets: 7,
+            tickets: ticketsBySource,
         });
 
         const result = await orchestrator.getCurrentGame(USER);
@@ -123,6 +134,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
         expect(result.me).toEqual({
             participating: true,
             tickets: 7,
+            ticketsBySource,
             eligible: false,
         });
     });
@@ -144,12 +156,39 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
 
         expect(result).toEqual({
             game: null,
-            me: { participating: false, tickets: 0, eligible: false },
+            me: {
+                participating: false,
+                tickets: 0,
+                ticketsBySource: NO_TICKETS,
+                eligible: false,
+            },
         });
     });
 });
 
 describe("FrakGameOrchestrator.joinGame", () => {
+    beforeEach(() => track.mockReset());
+
+    it("tracks game_joined from the game code when the join is created", async () => {
+        const { orchestrator } = makeOrchestrator();
+
+        await orchestrator.joinGame(game, USER, false);
+
+        expect(track).toHaveBeenCalledWith("game_joined", USER, {
+            game_id: "game-1",
+            source: "game_code",
+            newcomer: false,
+        });
+    });
+
+    it("tracks nothing when a concurrent join created the interaction", async () => {
+        const { orchestrator } = makeOrchestrator({ created: false });
+
+        await orchestrator.joinGame(game, USER, true);
+
+        expect(track).not.toHaveBeenCalled();
+    });
+
     it.each([
         { name: "paused", over: { status: "paused" as const } },
         { name: "ended", over: { endsAt: new Date(Date.now() - 1000) } },
@@ -278,6 +317,28 @@ describe("FrakGameOrchestrator join without gameReward", () => {
 });
 
 describe("FrakGameOrchestrator.applySignup", () => {
+    beforeEach(() => track.mockReset());
+
+    it("tracks the referral signup and the friend_signup join", async () => {
+        const { orchestrator } = makeOrchestrator();
+        const plan = await orchestrator.planSignup();
+
+        await orchestrator.applySignup(
+            plan,
+            { id: "code-1", ownerIdentityGroupId: "owner" } as never,
+            USER
+        );
+
+        expect(track).toHaveBeenCalledWith("referral_signup_completed", USER, {
+            referrer_identity_group_id: "owner",
+        });
+        expect(track).toHaveBeenCalledWith("game_joined", USER, {
+            game_id: "game-1",
+            source: "friend_signup",
+            newcomer: false,
+        });
+    });
+
     it("writes the referee's game_join as non-newcomer and pays no gameReward", async () => {
         const { orchestrator, createIdempotent } = makeOrchestrator();
         const plan = await orchestrator.planSignup();

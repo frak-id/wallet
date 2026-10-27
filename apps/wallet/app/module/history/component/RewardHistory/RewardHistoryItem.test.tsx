@@ -39,6 +39,14 @@ describe("RewardHistoryItem", () => {
         expect(getByText("reward.frakBonus.label")).toBeInTheDocument();
     });
 
+    test("shows the draw-prize label for a game winner row", () => {
+        const { getByText } = render(
+            <RewardHistoryItem item={makeItem({ role: "winner" })} />
+        );
+
+        expect(getByText("reward.gamePrize.label")).toBeInTheDocument();
+    });
+
     test("omits the welcome-bonus label for a regular referee row", () => {
         const { queryByText } = render(
             <RewardHistoryItem item={makeItem({ role: "referee" })} />
@@ -55,5 +63,25 @@ describe("RewardHistoryItem", () => {
         expect(getByText("reward.status.locked")).toBeInTheDocument();
         // One padlock on the logo badge, one next to the amount.
         expect(container.querySelectorAll("svg")).toHaveLength(2);
+    });
+
+    test.each([
+        {
+            label: "reward.status.pending",
+            item: { purchase: { id: "p1", amount: 40, currency: "EUR" } },
+        },
+        { label: "reward.pending.onItsWay", item: { role: "winner" as const } },
+        {
+            label: "reward.pending.availableOn",
+            item: { availableAt: Date.now() + 86_400_000 },
+        },
+    ])("labels a pending row $label", ({ label, item }) => {
+        const { getByText } = render(
+            <RewardHistoryItem
+                item={makeItem({ status: "pending", ...item })}
+            />
+        );
+
+        expect(getByText(label)).toBeInTheDocument();
     });
 });

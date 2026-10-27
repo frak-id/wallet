@@ -5,6 +5,10 @@ import type { InstagramLinkSelect } from "../db/schema";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
 import { InstagramLinkService } from "./InstagramLinkService";
 
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+
+vi.mock("@backend-infrastructure", () => ({ productEvents: { track } }));
+
 const GROUP = "group-1";
 const CHECKED_AT = new Date("2026-10-26T10:00:00Z");
 
@@ -33,6 +37,7 @@ function setup() {
 describe("InstagramLinkService", () => {
     beforeEach(() => {
         vi.useRealTimers();
+        track.mockReset();
     });
 
     it("exposes a link without its igsid", async () => {
@@ -125,5 +130,53 @@ describe("InstagramLinkService", () => {
         await service.unlink(GROUP);
 
         expect(repository.deleteByIdentityGroup).toHaveBeenCalledWith(GROUP);
+    });
+    it.each([
+        {
+            name: "a first link that follows",
+            previous: null,
+            follows: true,
+            events: ["instagram_linked", "instagram_follow_verified"],
+        },
+        {
+            name: "a first link that does not follow",
+            previous: null,
+            follows: false,
+            events: ["instagram_linked"],
+        },
+        {
+            name: "a non-follower who now follows",
+            previous: { ...row, follows: false },
+            follows: true,
+            events: ["instagram_follow_verified"],
+        },
+        {
+            name: "a follower checked again",
+            previous: row,
+            follows: true,
+            events: [],
+        },
+        {
+            name: "an unfollow",
+            previous: row,
+            follows: false,
+            events: [],
+        },
+    ])("tracks $name", async ({ previous, follows, events }) => {
+        const { repository, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(previous);
+        repository.upsert.mockResolvedValue({ ...row, follows });
+
+        await service.link({
+            identityGroupId: GROUP,
+            igsid: row.igsid,
+            username: "frak_fr",
+            follows,
+        });
+
+        expect(track.mock.calls.map(([name]) => name)).toEqual(events);
+        for (const [, groupId] of track.mock.calls) {
+            expect(groupId).toBe(GROUP);
+        }
     });
 });

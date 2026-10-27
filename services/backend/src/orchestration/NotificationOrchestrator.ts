@@ -1,4 +1,5 @@
 import type {
+    LocalisedNotificationPayload,
     SendNotificationPayload,
     SendNotificationTargets,
 } from "@backend-domain/notifications";
@@ -54,6 +55,32 @@ const notificationMessages = {
         },
     }),
 } as const;
+
+function formatEuros(amount: number, locale: string) {
+    const digits = Number.isInteger(amount) ? 0 : 2;
+    return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(amount);
+}
+
+function gameWonMessage(prizeAmount: number) {
+    const data = { url: walletNotificationUrl };
+    return {
+        en: {
+            title: "You won the Frak Game!",
+            body: `Your ${formatEuros(prizeAmount, "en")} prize is on its way to your wallet.`,
+            data,
+        },
+        fr: {
+            title: "Tu as gagné le Jeu Frak !",
+            body: `Tes ${formatEuros(prizeAmount, "fr")} arrivent dans ton porte-monnaie.`,
+            data,
+        },
+    };
+}
 
 export class NotificationOrchestrator {
     constructor(
@@ -144,6 +171,15 @@ export class NotificationOrchestrator {
     }
 
     private async handleNotificationEvent(event: NotificationEvent) {
+        if (event.type === "game_won") {
+            await this.send(
+                [event.wallet],
+                gameWonMessage(event.prizeAmount),
+                event.type
+            );
+            return;
+        }
+
         const merchantNames = await this.resolveMerchantNames(
             event.notifications
         );
@@ -157,23 +193,26 @@ export class NotificationOrchestrator {
                 merchantName,
                 notification.rewardCount
             );
+            await this.send(notification.wallets, payload, event.type);
+        }
+    }
 
-            try {
-                await this.notificationsService.sendAndStore({
-                    wallets: notification.wallets,
-                    payload,
-                    type: event.type,
-                });
-            } catch (error) {
-                log.warn(
-                    {
-                        error,
-                        type: event.type,
-                        walletCount: notification.wallets.length,
-                    },
-                    "[NotificationOrchestrator] Failed to send notification"
-                );
-            }
+    private async send(
+        wallets: Address[],
+        payload: LocalisedNotificationPayload,
+        type: NotificationEvent["type"]
+    ) {
+        try {
+            await this.notificationsService.sendAndStore({
+                wallets,
+                payload,
+                type,
+            });
+        } catch (error) {
+            log.warn(
+                { error, type, walletCount: wallets.length },
+                "[NotificationOrchestrator] Failed to send notification"
+            );
         }
     }
 

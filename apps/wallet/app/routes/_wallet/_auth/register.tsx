@@ -328,7 +328,7 @@ function RegisterPage() {
                 code_kind: result.kind,
                 prefill_source: referralPrefillSource,
             });
-            if (frakGame.enabled && gameRewardOf(result) > 0) {
+            if (frakGame.enabled && (result.game || gameRewardOf(result) > 0)) {
                 setGameRedeem(result);
                 goToStep("gameReward");
                 return;

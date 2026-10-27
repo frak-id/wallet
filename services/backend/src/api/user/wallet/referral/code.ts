@@ -107,6 +107,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                         code: body.code,
                         refereeIdentityGroupId: identityGroupId,
                         context: body.context,
+                        replaceFrakReferrer: body.replaceFrakReferrer,
                     }
                 );
             const inviteRewards =
@@ -124,6 +125,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
             body: t.Object({
                 code: t.String({ minLength: 6, maxLength: 6 }),
                 context: t.Optional(RedeemContextSchema),
+                replaceFrakReferrer: t.Optional(t.Boolean()),
             }),
             response: {
                 200: t.Object({

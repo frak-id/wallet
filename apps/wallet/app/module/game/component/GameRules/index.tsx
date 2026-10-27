@@ -6,7 +6,7 @@ import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { Trans, useTranslation } from "react-i18next";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
+import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as stepStyles from "@/module/onboarding/component/step/index.css";
 import * as styles from "./index.css";
@@ -15,7 +15,7 @@ type InviteRewards = NonNullable<RedeemResult["inviteRewards"]>;
 
 type GameRulesProps = {
     onContinue: () => void;
-    /** EURe the redemption earned, still locked. */
+    /** EURe the redemption earned, still locked; 0 drops the unlock row. */
     reward: number;
     /** Absent when no signup reward is live. */
     invite?: InviteRewards;
@@ -42,6 +42,21 @@ function inviteDescription(
 
 export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
     const { t, i18n } = useTranslation();
+    const unlockStep =
+        reward > 0
+            ? [
+                  {
+                      title: t("onboarding.game.rules.unlock.title", {
+                          reward: formatGameAmount(reward, i18n.language),
+                      }),
+                      description: t(
+                          frakGame.instagramLink
+                              ? "onboarding.game.rules.unlock.descriptionFollow"
+                              : "onboarding.game.rules.unlock.description"
+                      ),
+                  },
+              ]
+            : [];
 
     return (
         <PageLayout
@@ -62,14 +77,7 @@ export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
                 <InstructionList
                     title={t("onboarding.game.rules.howItWorks")}
                     steps={[
-                        {
-                            title: t("onboarding.game.rules.unlock.title", {
-                                reward: formatGameAmount(reward, i18n.language),
-                            }),
-                            description: t(
-                                "onboarding.game.rules.unlock.description"
-                            ),
-                        },
+                        ...unlockStep,
                         {
                             title: t("onboarding.game.rules.invite.title"),
                             description: inviteDescription(

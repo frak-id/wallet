@@ -1,3 +1,4 @@
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -5,23 +6,93 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { ChevronRightIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { Ticket } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { OutcomeBadge } from "@/module/game/component/GameResult";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
+import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
 
-/** Wallet-home recap of the open game; hidden when there is none, while loading, or on error. */
+/** How long after its end a game's result stays on the wallet home. */
+const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * Wallet-home recap of the open game, or of the last game played when none is
+ * open and it ended recently; hidden otherwise, while loading, or on error.
+ */
 export function GameCard() {
-    const { t, i18n } = useTranslation();
-    const navigate = useNavigate();
+    const { t } = useTranslation();
     const { data } = useCurrentGame();
+    const history = useGameHistory();
 
-    if (!data?.game) return null;
-    const { game, me } = data;
+    if (data?.game) {
+        return (
+            <OpenGameCard
+                game={data.game}
+                participating={data.me.participating}
+            />
+        );
+    }
 
-    const open = () =>
-        navigate({ to: me.participating ? "/game" : "/game/join" });
+    const latest = data && history.data?.[0];
+    if (!(latest && isRecent(latest))) return null;
+    return (
+        <GameCardShell
+            to="/game"
+            title={t("game.card.ended")}
+            prize={latest.game}
+            badge={<OutcomeBadge outcome={latest.outcome} />}
+        />
+    );
+}
+
+/** The open game, leading to its page once joined and to the code screen before. */
+export function OpenGameCard({
+    game,
+    participating,
+}: {
+    game: { prizeAmount: number; prizeDescription: string | null };
+    participating: boolean;
+}) {
+    const { t } = useTranslation();
+    return (
+        <GameCardShell
+            to={participating ? "/game" : "/game/join"}
+            title={t("game.card.title")}
+            prize={game}
+            badge={
+                <Badge
+                    size="small"
+                    variant={participating ? "success" : "neutral"}
+                >
+                    {participating
+                        ? t("game.card.participating")
+                        : t("game.card.notParticipating")}
+                </Badge>
+            }
+        />
+    );
+}
+
+function isRecent(result: GameResult) {
+    return Date.now() - new Date(result.game.endsAt).getTime() < RESULT_CARD_MS;
+}
+
+function GameCardShell({
+    to,
+    title,
+    prize,
+    badge,
+}: {
+    to: "/game" | "/game/join";
+    title: string;
+    prize: { prizeAmount: number; prizeDescription: string | null };
+    badge: ReactNode;
+}) {
+    const { i18n } = useTranslation();
+    const navigate = useNavigate();
+    const open = () => navigate({ to });
     const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
@@ -43,22 +114,13 @@ export function GameCard() {
                 </Box>
                 <Box className={styles.textBlock}>
                     <Text variant="body" weight="semiBold">
-                        {t("game.card.title")}
+                        {title}
                     </Text>
                     <Text variant="caption" color="secondary">
-                        {game.prizeDescription ??
-                            formatGameAmount(game.prizeAmount, i18n.language)}
+                        {prize.prizeDescription ??
+                            formatGameAmount(prize.prizeAmount, i18n.language)}
                     </Text>
-                    <Box>
-                        <Badge
-                            size="small"
-                            variant={me.participating ? "success" : "neutral"}
-                        >
-                            {me.participating
-                                ? t("game.card.participating")
-                                : t("game.card.notParticipating")}
-                        </Badge>
-                    </Box>
+                    <Box>{badge}</Box>
                 </Box>
                 <Box className={styles.chevron}>
                     <ChevronRightIcon width={16} height={16} />

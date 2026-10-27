@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { log, productEvents } from "@backend-infrastructure";
 import {
     and,
     eq,
@@ -21,6 +21,7 @@ import {
     REFEREE_WAITING_ROLES,
     RELEASE_GRACE_MS,
 } from "../../domain/game";
+import { instagramLinksTable } from "../../domain/instagram/db/schema";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import {
     assetLogsTable,
@@ -37,43 +38,73 @@ const heldPayable = sql`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTabl
 
 const subjectId = sql`CASE WHEN ${inArray(assetLogsTable.recipientType, [...REFEREE_WAITING_ROLES])} THEN ${interactionLogsTable.identityGroupId} ELSE ${assetLogsTable.identityGroupId} END`;
 
-/** The subject's rewards that satisfy `mission`, correlated to the held row. */
-function missionRewardsFor(mission: Mission): SQL | undefined {
-    switch (mission.kind) {
-        case "brand_reward":
-            return and(
-                eq(missionReward.identityGroupId, subjectId),
-                ne(missionReward.merchantId, FRAK_MERCHANT_ID),
-                isNull(missionReward.heldAt),
-                inArray(missionReward.status, [...LIVE_ASSET_STATUSES])
-            );
-    }
-}
+/** The subject's partner-brand rewards, correlated to the held row. */
+const brandRewardsOfSubject = and(
+    eq(missionReward.identityGroupId, subjectId),
+    ne(missionReward.merchantId, FRAK_MERCHANT_ID),
+    isNull(missionReward.heldAt),
+    inArray(missionReward.status, [...LIVE_ASSET_STATUSES])
+);
 
-function missionMet(mission: Mission): SQL {
+function subjectInstagramLink(...filters: SQL[]) {
     return exists(
         db
             .select({ one: sql`1` })
-            .from(missionReward)
-            .where(missionRewardsFor(mission))
+            .from(instagramLinksTable)
+            .where(
+                and(
+                    eq(instagramLinksTable.identityGroupId, subjectId),
+                    ...filters
+                )
+            )
     );
 }
 
-/** NULL when unmet, `-infinity` when a matching reward has no lockup. */
-function missionReadyAt(mission: Mission): SQL {
-    const earliest = db
-        .select({
-            at: sql`MIN(COALESCE(${missionReward.availableAt}, '-infinity'::timestamp))`,
-        })
-        .from(missionReward)
-        .where(missionRewardsFor(mission));
-    return sql`(${earliest})`;
+function missionMet(mission: Mission): SQL {
+    switch (mission.kind) {
+        case "brand_reward":
+            return exists(
+                db
+                    .select({ one: sql`1` })
+                    .from(missionReward)
+                    .where(brandRewardsOfSubject)
+            );
+        case "instagram_follow":
+            return subjectInstagramLink(eq(instagramLinksTable.follows, true));
+    }
 }
 
-function setMet(set: MissionSet): SQL {
-    const met = set.missions.map(missionMet);
-    return (set.match === "all" ? and(...met) : or(...met)) ?? sql`false`;
+/** An unfollow keeps the link row, so a release earned by a follow is never taken back; only a brand refund is. */
+function missionKept(mission: Mission): SQL {
+    return mission.kind === "instagram_follow"
+        ? subjectInstagramLink()
+        : missionMet(mission);
 }
+
+/** NULL when unmet, `-infinity` when met with no lockup to wait for. */
+function missionReadyAt(mission: Mission): SQL {
+    switch (mission.kind) {
+        case "brand_reward": {
+            const earliest = db
+                .select({
+                    at: sql`MIN(COALESCE(${missionReward.availableAt}, '-infinity'::timestamp))`,
+                })
+                .from(missionReward)
+                .where(brandRewardsOfSubject);
+            return sql`(${earliest})`;
+        }
+        case "instagram_follow":
+            return sql`CASE WHEN ${missionMet(mission)} THEN '-infinity'::timestamp END`;
+    }
+}
+
+function combine(set: MissionSet, check: (mission: Mission) => SQL): SQL {
+    const checks = set.missions.map(check);
+    return (set.match === "all" ? and(...checks) : or(...checks)) ?? sql`false`;
+}
+
+const setMet = (set: MissionSet) => combine(set, missionMet);
+const setKept = (set: MissionSet) => combine(set, missionKept);
 
 /** The released reward waits for its mission rewards' own lockup to end. */
 function setReadyAt(set: MissionSet): SQL {
@@ -87,7 +118,7 @@ function setReadyAt(set: MissionSet): SQL {
 
 /**
  * Releases held game rewards once their missions are met and holds them again
- * when the missions disappear (refund). Run before settlement and expiry.
+ * when the missions disappear (a brand refund). Run before settlement and expiry.
  */
 export class MissionUnlockOrchestrator {
     constructor(private readonly assetLogRepository: AssetLogRepository) {}
@@ -98,10 +129,19 @@ export class MissionUnlockOrchestrator {
             this.findMet(now, DEFAULT_MISSIONS),
             this.findLapsed(DEFAULT_MISSIONS),
         ]);
-        const released = await this.assetLogRepository.releaseHeld(
-            toRelease,
-            RELEASE_GRACE_MS
+        const releasedIds = new Set(
+            await this.assetLogRepository.releaseHeld(
+                toRelease,
+                RELEASE_GRACE_MS
+            )
         );
+        for (const row of toRelease) {
+            if (!releasedIds.has(row.id)) continue;
+            productEvents.track("game_reward_unlocked", row.identityGroupId, {
+                recipient_type: row.recipientType,
+            });
+        }
+        const released = releasedIds.size;
         const reheld = await this.assetLogRepository.reholdReleased(
             toRehold.map((row) => row.id)
         );
@@ -115,6 +155,8 @@ export class MissionUnlockOrchestrator {
         return db
             .select({
                 id: assetLogsTable.id,
+                identityGroupId: assetLogsTable.identityGroupId,
+                recipientType: assetLogsTable.recipientType,
                 availableAt: sql<Date | null>`${setReadyAt(missions)}`.mapWith(
                     assetLogsTable.availableAt
                 ),
@@ -146,7 +188,7 @@ export class MissionUnlockOrchestrator {
                 and(
                     heldPayable,
                     isNotNull(assetLogsTable.releasedAt),
-                    not(setMet(missions))
+                    not(setKept(missions))
                 )
             );
     }

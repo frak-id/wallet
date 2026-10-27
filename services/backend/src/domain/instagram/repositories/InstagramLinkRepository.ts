@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type InstagramLinkInsert,
@@ -16,6 +16,18 @@ export class InstagramLinkRepository {
             .where(eq(instagramLinksTable.identityGroupId, identityGroupId))
             .limit(1);
         return link ?? null;
+    }
+
+    async findByIdentityGroups(
+        identityGroupIds: string[]
+    ): Promise<InstagramLinkSelect[]> {
+        if (identityGroupIds.length === 0) return [];
+        return db
+            .select()
+            .from(instagramLinksTable)
+            .where(
+                inArray(instagramLinksTable.identityGroupId, identityGroupIds)
+            );
     }
 
     /** Replaces the identity group's link; a unique violation means the `igsid` belongs to another group. */

@@ -513,9 +513,19 @@ export default interface Resources {
     },
     "game": {
       "card": {
+        "ended": "Frak Game over",
         "notParticipating": "Not joined yet",
         "participating": "You're in",
         "title": "Frak game in progress"
+      },
+      "history": {
+        "gameOf": "{{date}} game",
+        "notCounted": "0 tickets counted",
+        "ticketsOf_one": "{{count}} ticket out of {{total}}",
+        "ticketsOf_other": "{{count}} tickets out of {{total}}",
+        "tickets_one": "{{count}} ticket",
+        "tickets_other": "{{count}} tickets",
+        "title": "Past games"
       },
       "instagram": {
         "check": {
@@ -568,9 +578,59 @@ export default interface Resources {
         },
         "retry": "Try again",
         "share": "Share Frak with a friend",
-        "shareHint": "A share earns 3 tickets if it leads to a purchase.",
+        "shareHint": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
         "tickets_one": "ticket",
-        "tickets_other": "tickets"
+        "tickets_other": "tickets",
+        "title": "Frak Game"
+      },
+      "result": {
+        "badge": {
+          "drawing": "Drawing",
+          "lost": "Not won",
+          "noWinner": "No winner",
+          "won": "Won"
+        },
+        "discarded": "Your tickets didn't count: you weren't following @frak_fr at draw time.",
+        "drawing": {
+          "description": "The game is over. The winner will be announced very soon.",
+          "title": "Draw in progress"
+        },
+        "endedAt": "Game ended",
+        "lost": {
+          "description": "Your ticket wasn't drawn. Try your luck in the next game!",
+          "title": "Not this time"
+        },
+        "myTickets": "Your tickets",
+        "noWinner": {
+          "description": "No ticket could be drawn for this game.",
+          "title": "No winner"
+        },
+        "participants": "Players",
+        "prize": "Prize",
+        "sources": {
+          "brandShare": "Friends reached through your brand shares",
+          "join": "Joining the game",
+          "purchase": "Your purchases",
+          "referredPurchase": "Your friends' purchases",
+          "referredSignup": "Friends who signed up with your code",
+          "title": "Where your tickets came from"
+        },
+        "totalTickets": "Tickets in the draw",
+        "verify": {
+          "link": "Check the draw",
+          "pid": "Your id in the draw: {{pid}}"
+        },
+        "won": {
+          "cta": "See my prize",
+          "description": "Your ticket was drawn. Your prize is on its way to your wallet.",
+          "title": "You won {{prize}}!"
+        }
+      },
+      "win": {
+        "close": "Close",
+        "cta": "See my prize",
+        "description": "Your ticket was drawn. Your {{prize}} is on its way to your wallet.",
+        "title": "You won the Frak Game!"
       }
     },
     "installCode": {
@@ -807,6 +867,8 @@ export default interface Resources {
       "game": {
         "reward": {
           "description": "Your reward is pending. It unlocks with your first reward from a partner brand.",
+          "descriptionFollow": "Your reward is pending. It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
+          "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
           "game": {
             "endsAt": "Until {{date}}",
             "label": "Game prize",
@@ -822,7 +884,7 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "3 tickets per purchase at a partner brand, yours or a referred friend's.",
+            "description": "1 ticket per friend who signs up with your code and follows @frak_fr, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
@@ -830,6 +892,7 @@ export default interface Resources {
           "title": "The Frak Game",
           "unlock": {
             "description": "It unlocks with your first reward from a partner brand, by buying or recommending.",
+            "descriptionFollow": "It unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
             "title": "Your {{reward}} bonus"
           }
         }
@@ -903,7 +966,9 @@ export default interface Resources {
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
         "lockedExplanation": "Unlocks with your first reward from a partner brand.",
+        "lockedExplanationFollow": "Unlocks as soon as you follow @frak_fr on Instagram, or with your first reward from a partner brand.",
         "lockedOnFriendExplanation": "Unlocks when your friend earns their first reward from a partner brand.",
+        "lockedOnFriendExplanationFollow": "Unlocks as soon as your friend follows @frak_fr on Instagram, or with their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",
@@ -918,6 +983,11 @@ export default interface Resources {
         "detailTitle": "Your welcome bonus",
         "label": "Welcome bonus"
       },
+      "gamePrize": {
+        "detailDescription": "Your ticket was drawn when the game ended. The prize is on its way to your wallet.",
+        "detailTitle": "You won the Frak Game",
+        "label": "Draw prize"
+      },
       "history": {
         "discover": "Discover offers",
         "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
@@ -930,6 +1000,13 @@ export default interface Resources {
         },
         "title": "Earnings history",
         "viewAll": "View all"
+      },
+      "pending": {
+        "availableOn": "Available on {{date}}",
+        "availableOnDisclaimer": "You'll be able to collect this reward from that date.",
+        "availableOnLabel": "Available on",
+        "onItsWay": "On its way",
+        "onItsWayDisclaimer": "This reward is on its way to your wallet. You'll be able to collect it very soon."
       },
       "status": {
         "bank_depleted": "Awaiting funding by the brand",
@@ -1197,6 +1274,12 @@ export default interface Resources {
         "explorerDetail": {
           "ariaLabel": "Merchant details"
         },
+        "gameResult": {
+          "ariaLabel": "Game result"
+        },
+        "gameWin": {
+          "ariaLabel": "You won the Frak Game"
+        },
         "moneriumBankFlow": {
           "ariaLabel": "Bank transfer"
         },
@@ -1244,10 +1327,11 @@ export default interface Resources {
       },
       "pendingGains": {
         "confirm": "Collect my earnings",
-        "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+        "description": "Your earnings have arrived. Collect them now into your wallet.",
         "heading": "Great news!\nMoney is waiting for you.",
         "subtitle": "Pending earnings",
-        "success": "Earnings collected!"
+        "success": "Earnings collected!",
+        "unpaid": "Plus {{amount}} still to come"
       },
       "pendingReferral": {
         "success": "You have claimed your reward successfully!",
@@ -1562,6 +1646,12 @@ export default interface Resources {
           "errorSelf": "You can't use your own code.",
           "label": "Referral code",
           "placeholder": "e.g. LOLA10",
+          "replaceFrak": {
+            "cancelCta": "Keep my cashback",
+            "confirmCta": "Use this code",
+            "description": "By using this referral code, you lose your exclusive cashback on your first purchase at every brand.",
+            "title": "Replace your\nFrak code?"
+          },
           "submitCta": "Apply the code",
           "title": "Got a referral code?"
         },

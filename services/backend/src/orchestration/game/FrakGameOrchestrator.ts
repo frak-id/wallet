@@ -1,4 +1,8 @@
-import { eventEmitter } from "@backend-infrastructure";
+import {
+    eventEmitter,
+    type ProductEventMap,
+    productEvents,
+} from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { CampaignRuleSelect } from "../../domain/campaign/db/schema";
 import {
@@ -12,6 +16,7 @@ import type {
     GameSummary,
     InviteRewards,
 } from "../../domain/game/schemas";
+import { NO_TICKETS, totalTickets } from "../../domain/game/tickets";
 import {
     gameJoinExternalEventId,
     isGameOpen,
@@ -29,6 +34,7 @@ import {
     type RecipientType,
 } from "../../domain/rewards/schemas";
 import type { GamePlayerOrchestrator } from "./GamePlayerOrchestrator";
+import { summarizeGame } from "./summarizeGame";
 
 type FrakInteraction = Pick<
     InteractionLogInsert,
@@ -46,7 +52,12 @@ export type SignupPlan = {
 
 export type SignupOutcome = { reward?: number; game?: GameSummary };
 
-const NOT_PLAYING = { participating: false, tickets: 0, eligible: false };
+const NOT_PLAYING = {
+    participating: false,
+    tickets: 0,
+    ticketsBySource: NO_TICKETS,
+    eligible: false,
+};
 
 /** Sum of a rule's fixed rewards for `recipient`, in the rule's token. */
 function fixedPayout(rule: CampaignRuleSelect, recipient: RecipientType) {
@@ -80,18 +91,19 @@ export class FrakGameOrchestrator {
             this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
             this.instagramLinkRepository.findByIdentityGroup(identityGroupId),
         ]);
-        const tickets = joinedAt
+        const ticketsBySource = joinedAt
             ? await this.gamePlayerOrchestrator.ticketsOf(
                   game,
                   identityGroupId,
                   joinedAt
               )
-            : 0;
+            : NO_TICKETS;
         return {
             game: summary,
             me: {
                 participating: joinedAt !== null,
-                tickets,
+                tickets: totalTickets(ticketsBySource),
+                ticketsBySource,
                 eligible: isInstagramEligible(instagramLink),
             },
         };
@@ -128,7 +140,12 @@ export class FrakGameOrchestrator {
             this.summarize(game),
             newcomer ? this.joinReward(game) : undefined,
         ]);
-        const created = await this.writeJoin(game, identityGroupId, newcomer);
+        const created = await this.writeJoin(
+            game,
+            identityGroupId,
+            newcomer,
+            "game_code"
+        );
         return { game: summary, gameReward: created ? reward : undefined };
     }
 
@@ -149,7 +166,7 @@ export class FrakGameOrchestrator {
         referralCode: ReferralCodeSelect,
         refereeIdentityGroupId: string
     ): Promise<SignupOutcome> {
-        await this.logInteraction({
+        const signedUp = await this.logInteraction({
             type: interactionTypes.referralSignup,
             identityGroupId: refereeIdentityGroupId,
             externalEventId: signupExternalEventId(refereeIdentityGroupId),
@@ -158,9 +175,24 @@ export class FrakGameOrchestrator {
                 referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             },
         });
+        if (signedUp) {
+            productEvents.track(
+                "referral_signup_completed",
+                refereeIdentityGroupId,
+                {
+                    referrer_identity_group_id:
+                        referralCode.ownerIdentityGroupId,
+                }
+            );
+        }
         if (!plan.game) return { reward: plan.reward };
 
-        await this.writeJoin(plan.game.game, refereeIdentityGroupId, false);
+        await this.writeJoin(
+            plan.game.game,
+            refereeIdentityGroupId,
+            false,
+            "friend_signup"
+        );
         return { reward: plan.reward, game: plan.game.summary };
     }
 
@@ -179,14 +211,23 @@ export class FrakGameOrchestrator {
     private async writeJoin(
         game: GameSelect,
         identityGroupId: string,
-        newcomer: boolean
+        newcomer: boolean,
+        source: ProductEventMap["game_joined"]["source"]
     ): Promise<boolean> {
-        return this.logInteraction({
+        const created = await this.logInteraction({
             type: interactionTypes.gameJoin,
             identityGroupId,
             externalEventId: gameJoinExternalEventId(game.id, identityGroupId),
             payload: { gameId: game.id, newcomer },
         });
+        if (created) {
+            productEvents.track("game_joined", identityGroupId, {
+                game_id: game.id,
+                source,
+                newcomer,
+            });
+        }
+        return created;
     }
 
     private async logInteraction(
@@ -200,22 +241,7 @@ export class FrakGameOrchestrator {
         return created !== null;
     }
 
-    private async summarize(game: GameSelect): Promise<GameSummary> {
-        const sponsor = game.sponsorMerchantId
-            ? await this.merchantRepository.findById(game.sponsorMerchantId)
-            : null;
-        return {
-            id: game.id,
-            prizeAmount: game.prizeAmount,
-            prizeDescription: game.prizeDescription,
-            startsAt: game.startsAt,
-            endsAt: game.endsAt,
-            sponsor: sponsor && {
-                id: sponsor.id,
-                name: sponsor.name,
-                domain: sponsor.domain,
-                logoUrl: sponsor.explorerConfig?.logoUrl,
-            },
-        };
+    private summarize(game: GameSelect): Promise<GameSummary> {
+        return summarizeGame(game, this.merchantRepository);
     }
 }

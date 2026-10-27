@@ -24,7 +24,12 @@ import {
 import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
+import { frakGame } from "@/module/game/config";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
+import {
+    type PendingReason,
+    pendingReason,
+} from "@/module/history/utils/pendingReason";
 import * as styles from "./index.css";
 
 type RewardDetailModalProps = {
@@ -122,9 +127,12 @@ function DetailCard({
     locale: string;
 }) {
     const { t } = useTranslation();
-    const displayAmount = `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`;
+    const amount = formatCurrency(item.amount.eurAmount, "EUR", locale);
+    const lost = item.status === "cancelled" || item.status === "expired";
+    const displayAmount = lost ? amount : `+${amount}`;
 
     const isPending = item.status === "pending";
+    const reason = isPending ? pendingReason(item) : null;
 
     return (
         <Stack space="m">
@@ -163,12 +171,12 @@ function DetailCard({
                         />
                     }
                 />
-                <StatusRow item={item} locale={locale} />
+                <StatusRow item={item} reason={reason} locale={locale} />
             </InfoCard>
-            {isPending && (
+            {reason && (
                 <Card padding="default">
                     <Text variant="bodySmall" color="secondary" weight="medium">
-                        {t("reward.detail.pendingDisclaimer")}
+                        {t(pendingDisclaimerKeys[reason.kind])}
                     </Text>
                 </Card>
             )}
@@ -184,6 +192,19 @@ function DetailCard({
                         {t("reward.frakBonus.detailDescription", {
                             merchant: item.merchant.name,
                         })}
+                    </Text>
+                </Notice>
+            )}
+            {item.role === "winner" && (
+                <Notice
+                    tone="success"
+                    icon={<GiftIcon width={20} height={20} />}
+                >
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("reward.gamePrize.detailTitle")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("reward.gamePrize.detailDescription")}
                     </Text>
                 </Notice>
             )}
@@ -235,58 +256,103 @@ function RewardAmountDisplay({
     );
 }
 
-function StatusRow({
+const pendingDisclaimerKeys = {
+    purchase: "reward.detail.pendingDisclaimer",
+    date: "reward.pending.availableOnDisclaimer",
+    payout: "reward.pending.onItsWayDisclaimer",
+} as const satisfies Record<PendingReason["kind"], string>;
+
+function DateRow({
+    label,
+    timestamp,
+    locale,
+}: {
+    label: string;
+    timestamp: number;
+    locale: string;
+}) {
+    return (
+        <InfoRow
+            labelVariant="bodySmall"
+            labelColor="secondary"
+            label={label}
+            action={
+                <Inline space="xs" alignY="center" wrap={false}>
+                    <CalendarIcon
+                        color={vars.text.secondary}
+                        width={16}
+                        height={16}
+                    />
+                    <Text variant="bodySmall" weight="medium">
+                        {formatNumericDate(timestamp, locale)}
+                    </Text>
+                </Inline>
+            }
+        />
+    );
+}
+
+function PendingStatusRow({
     item,
+    reason,
     locale,
 }: {
     item: RewardHistoryItem;
+    reason: PendingReason;
     locale: string;
 }) {
     const { t } = useTranslation();
 
-    if (item.status === "pending") {
+    if (reason.kind === "date") {
         return (
-            <>
-                <Box paddingX="m" paddingY="s">
-                    <Text variant="bodySmall" color="warning">
-                        {t("reward.detail.pendingValidation")}
-                    </Text>
-                </Box>
-                {item.availableAt && (
-                    <InfoRow
-                        labelVariant="bodySmall"
-                        labelColor="secondary"
-                        label={t("reward.detail.estimatedValidation")}
-                        action={
-                            <Inline space="xs" alignY="center" wrap={false}>
-                                <CalendarIcon
-                                    color={vars.text.secondary}
-                                    width={16}
-                                    height={16}
-                                />
-                                <Text variant="bodySmall" weight="medium">
-                                    {formatNumericDate(
-                                        item.availableAt,
-                                        locale
-                                    )}
-                                </Text>
-                            </Inline>
-                        }
-                    />
-                )}
-            </>
+            <DateRow
+                label={t("reward.pending.availableOnLabel")}
+                timestamp={reason.availableAt}
+                locale={locale}
+            />
         );
+    }
+
+    return (
+        <>
+            <Box paddingX="m" paddingY="s">
+                <Text variant="bodySmall" color="warning">
+                    {reason.kind === "purchase"
+                        ? t("reward.detail.pendingValidation")
+                        : t("reward.pending.onItsWay")}
+                </Text>
+            </Box>
+            {reason.kind === "purchase" && item.availableAt && (
+                <DateRow
+                    label={t("reward.detail.estimatedValidation")}
+                    timestamp={item.availableAt}
+                    locale={locale}
+                />
+            )}
+        </>
+    );
+}
+
+function StatusRow({
+    item,
+    reason,
+    locale,
+}: {
+    item: RewardHistoryItem;
+    reason: PendingReason | null;
+    locale: string;
+}) {
+    const { t } = useTranslation();
+
+    if (reason) {
+        return <PendingStatusRow item={item} reason={reason} locale={locale} />;
     }
 
     if (item.status === "locked") {
         return (
             <Box paddingX="m" paddingY="s">
                 <Text variant="bodySmall" color="secondary">
-                    {t(
-                        item.waitsOnFriend
-                            ? "reward.detail.lockedOnFriendExplanation"
-                            : "reward.detail.lockedExplanation"
-                    )}
+                    {t(lockedExplanationKey(item.waitsOnFriend))}
                 </Text>
             </Box>
         );
@@ -294,22 +360,10 @@ function StatusRow({
 
     if (item.status === "consumed" && item.settledAt) {
         return (
-            <InfoRow
-                labelVariant="bodySmall"
-                labelColor="secondary"
+            <DateRow
                 label={t("reward.detail.creditedOn")}
-                action={
-                    <Inline space="xs" alignY="center" wrap={false}>
-                        <CalendarIcon
-                            color={vars.text.secondary}
-                            width={16}
-                            height={16}
-                        />
-                        <Text variant="bodySmall" weight="medium">
-                            {formatNumericDate(item.settledAt, locale)}
-                        </Text>
-                    </Inline>
-                }
+                timestamp={item.settledAt}
+                locale={locale}
             />
         );
     }
@@ -319,9 +373,33 @@ function StatusRow({
             labelVariant="bodySmall"
             labelColor="secondary"
             labelWeight="regular"
-            label={t("reward.detail.toCollect")}
+            label={t(statusLabelKey(item.status))}
         />
     );
+}
+
+/** Only a reward on-chain is to collect; the rest say where they stand. */
+function statusLabelKey(status: RewardHistoryItem["status"]) {
+    switch (status) {
+        case "processing":
+        case "bank_depleted":
+        case "cancelled":
+        case "expired":
+            return `reward.status.${status}` as const;
+        default:
+            return "reward.detail.toCollect";
+    }
+}
+
+function lockedExplanationKey(waitsOnFriend: boolean | undefined) {
+    if (frakGame.instagramLink) {
+        return waitsOnFriend
+            ? "reward.detail.lockedOnFriendExplanationFollow"
+            : "reward.detail.lockedExplanationFollow";
+    }
+    return waitsOnFriend
+        ? "reward.detail.lockedOnFriendExplanation"
+        : "reward.detail.lockedExplanation";
 }
 
 function formatDayMonth(timestamp: number, locale: string): string {

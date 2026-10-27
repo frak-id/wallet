@@ -84,11 +84,13 @@ export type RecipientType = Static<typeof RecipientTypeSchema>;
 
 /**
  * Recipient of a persisted reward. `welcome_bonus` is a Frak referrer share
- * redirected to the referee; campaign configs keep {@link RecipientTypeSchema}.
+ * redirected to the referee, `winner` a Frak Game prize; campaign configs
+ * keep {@link RecipientTypeSchema}.
  */
 export const AssetLogRecipientTypeSchema = t.Union([
     ...RecipientTypeSchema.anyOf,
     t.Literal("welcome_bonus"),
+    t.Literal("winner"),
 ]);
 export type AssetLogRecipientType = Static<typeof AssetLogRecipientTypeSchema>;
 
@@ -113,6 +115,8 @@ const PurchaseInfoSchema = t.Object({
 export type PurchaseInfo = Static<typeof PurchaseInfoSchema>;
 
 export const RewardHistoryItemSchema = t.Object({
+    /** The asset log's id: one settlement batch stamps the same `txHash` on many rewards. */
+    id: t.String(),
     merchant: MerchantInfoSchema,
     token: TokenInfoSchema,
     amount: t.TokenAmount,
