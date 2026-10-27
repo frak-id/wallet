@@ -15,6 +15,8 @@ export function useGetUnpaidRewards() {
             return data.eurAmount;
         },
         enabled: !!address,
+        // A stale euro amount must never flash from localStorage before the refetch.
+        meta: { storable: false },
     });
 
     return { totalUnpaid: data ?? 0 };

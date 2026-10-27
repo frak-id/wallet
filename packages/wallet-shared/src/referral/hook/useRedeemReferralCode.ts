@@ -12,6 +12,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { rewardsKey } from "../../common/queryKeys/rewards";
 import { referralKey } from "../queryKeys";
 
 type RedeemInput = {
@@ -43,9 +44,8 @@ type UseRedeemReferralCodeProps = {
  * Redeem a referral code for the authenticated wallet. Backend errors:
  * 400 (invalid format), 404 (code not found), 409 (already redeemed).
  *
- * Invalidates `referralKey.status` on success so any mounted status
- * consumer (settings page, onboarding gate) reflects the new redemption
- * without waiting for `useReferralStatus`'s 30s staleTime to expire.
+ * On success, refreshes the referral status (settings, onboarding gate) past
+ * its 30s staleTime, and the rewards when the redemption queued one.
  */
 export function useRedeemReferralCode({
     mutations,
@@ -69,7 +69,11 @@ export function useRedeemReferralCode({
             return data;
         },
         onSuccess: (...args) => {
+            const [result] = args;
             queryClient.invalidateQueries({ queryKey: referralKey.status() });
+            if (result.signupReward || result.gameReward) {
+                queryClient.invalidateQueries({ queryKey: rewardsKey.all });
+            }
             mutations?.onSuccess?.(...args);
         },
     });

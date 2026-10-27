@@ -86,7 +86,7 @@ describe("useRedeemReferralCodeForm", () => {
     }) => {
         vi.mocked(
             authenticatedWalletApi.referral.code.redeem.post
-        ).mockResolvedValue({ error: null } as never);
+        ).mockResolvedValue({ data: { kind: "user" }, error: null } as never);
 
         const onApplied = vi.fn();
         const { result } = renderHook(

@@ -7,6 +7,7 @@ import {
     balanceKey,
     claimableKey,
     currentViemClient,
+    formatCurrency,
     rewardsKey,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import { waitForTransactionReceipt } from "viem/actions";
 import { useConnection, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useGetPendingRewards } from "@/module/tokens/hook/useGetPendingRewards";
+import { useGetUnpaidRewards } from "@/module/tokens/hook/useGetUnpaidRewards";
 import { rewarderClaimBatchAbi } from "@/module/tokens/utils/abi";
 import * as styles from "./index.css";
 
@@ -24,10 +26,11 @@ type PendingGainsModalProps = {
 };
 
 export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { address } = useConnection();
     const { mutateAsync: sendTransactionAsync } = useSendTransaction();
     const { totalClaimable, pendingRewards } = useGetPendingRewards();
+    const { totalUnpaid } = useGetUnpaidRewards();
 
     // Claim mutation
     const { mutateAsync: sendClaimTxs, isPending } = useMutation({
@@ -72,7 +75,7 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
         },
     });
 
-    const formattedAmount = `+${totalClaimable.toFixed(2).replace(".", ",")}€`;
+    const formattedAmount = `+${formatCurrency(totalClaimable, "EUR", i18n.language)}`;
 
     return (
         <ResponsiveModal
@@ -100,6 +103,17 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
                         <Text as="p" className={styles.amount}>
                             {formattedAmount}
                         </Text>
+                        {totalUnpaid > 0 && (
+                            <Text as="p" variant="bodySmall" color="secondary">
+                                {t("wallet.pendingGains.unpaid", {
+                                    amount: formatCurrency(
+                                        totalUnpaid,
+                                        "EUR",
+                                        i18n.language
+                                    ),
+                                })}
+                            </Text>
+                        )}
                     </Box>
                     <Text as="h2" className={styles.heading}>
                         {t("wallet.pendingGains.heading")}

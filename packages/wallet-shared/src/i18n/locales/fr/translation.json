@@ -415,7 +415,8 @@
             "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
             "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
             "confirm": "Collecter mes gains",
-            "success": "Gains collectés !"
+            "success": "Gains collectés !",
+            "unpaid": "Plus {{amount}} en cours de validation"
         },
         "pendingEmpty": {
             "title": "Tu n'as pas encore de gains",

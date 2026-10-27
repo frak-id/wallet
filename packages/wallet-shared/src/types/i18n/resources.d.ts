@@ -1319,7 +1319,8 @@ export default interface Resources {
         "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
         "heading": "Great news!\nMoney is waiting for you.",
         "subtitle": "Pending earnings",
-        "success": "Earnings collected!"
+        "success": "Earnings collected!",
+        "unpaid": "Plus {{amount}} still being validated"
       },
       "pendingReferral": {
         "success": "You have claimed your reward successfully!",
