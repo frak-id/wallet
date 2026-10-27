@@ -351,6 +351,13 @@
             "when": 1793009192338,
             "tag": "0049_rapid_drax",
             "breakpoints": true
+        },
+        {
+            "idx": 50,
+            "version": "7",
+            "when": 1793095393758,
+            "tag": "0050_red_agent_brand",
+            "breakpoints": true
         }
     ]
 }
