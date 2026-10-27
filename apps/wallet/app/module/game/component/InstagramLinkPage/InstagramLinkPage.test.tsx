@@ -52,7 +52,7 @@ describe("InstagramLinkPage", () => {
 
         expect(copy).toHaveBeenCalledWith("K7Q2PX");
         expect(openExternalUrl).toHaveBeenCalledWith(
-            "https://ig.me/frak_fr?ref=K7Q2PX"
+            "https://ig.me/m/frak_fr?ref=K7Q2PX"
         );
         expect(screen.queryByText("game.instagram.mobileOnly")).toBeNull();
     });
