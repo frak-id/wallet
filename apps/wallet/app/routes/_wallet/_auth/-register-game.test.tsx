@@ -1,5 +1,11 @@
 /** @jsxImportSource react */
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+    act,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+} from "@testing-library/react";
 import { vi } from "vitest";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { modalStore } from "@/module/stores/modalStore";
@@ -18,12 +24,15 @@ const gameCodeRedeem: MockRedeem = {
     gameReward: 1,
 };
 
-const { mockGame, track, referralStatus, redeem } = vi.hoisted(() => ({
-    mockGame: { enabled: false },
-    track: vi.fn(),
-    referralStatus: { data: undefined as unknown },
-    redeem: { result: undefined as unknown },
-}));
+const { mockGame, track, navigate, referralStatus, redeem } = vi.hoisted(
+    () => ({
+        mockGame: { enabled: false },
+        track: vi.fn(),
+        navigate: vi.fn(),
+        referralStatus: { data: undefined as unknown },
+        redeem: { result: undefined as unknown },
+    })
+);
 
 vi.mock("@/module/game/config", () => ({ frakGame: mockGame }));
 
@@ -32,7 +41,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
         await importOriginal<typeof import("@tanstack/react-router")>();
     return {
         ...actual,
-        useNavigate: () => vi.fn(),
+        useNavigate: () => navigate,
         createFileRoute: () => (options: Record<string, unknown>) => ({
             options,
             useSearch: () => ({}),
@@ -44,7 +53,10 @@ vi.mock("@/module/onboarding/hook/useInstallReferrer", () => ({
     useInstallReferrer: () => ({ data: null }),
 }));
 vi.mock("@/module/onboarding/hook/usePushOptIn", () => ({
-    usePushOptIn: () => ({ onEnable: vi.fn(), onSkip: vi.fn() }),
+    usePushOptIn: ({ goToStep }: { goToStep: (step: string) => void }) => ({
+        onEnable: () => goToStep("welcome"),
+        onSkip: vi.fn(),
+    }),
 }));
 vi.mock("@/module/pending-actions/hook/useExecutePendingActions", () => ({
     useExecutePendingActions: () => ({
@@ -154,7 +166,14 @@ vi.mock("@/module/onboarding/component/ReferralCodeStep", () => ({
     ),
 }));
 vi.mock("@/module/onboarding/component/NotificationOptIn", () => ({
-    NotificationOptIn: () => <div>notification-step</div>,
+    NotificationOptIn: ({ onEnable }: { onEnable: () => void }) => (
+        <div>
+            <span>notification-step</span>
+            <button type="button" onClick={onEnable}>
+                enable
+            </button>
+        </div>
+    ),
 }));
 
 import { Route } from "./register";
@@ -172,6 +191,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         referralStatus.data = undefined;
         redeem.result = gameCodeRedeem;
         track.mockClear();
+        navigate.mockClear();
     });
 
     const finishKeypass = () => {
@@ -227,6 +247,34 @@ describe("RegisterPage — Frak Game onboarding", () => {
             ]
         );
     });
+
+    test.each([
+        { name: "joining a game", result: gameCodeRedeem, to: "/game" },
+        {
+            name: "a code with no game",
+            result: { kind: "frak" },
+            to: "/wallet",
+        },
+    ] as const)(
+        "flag on: welcome after $name opens $to",
+        async ({ result, to }) => {
+            mockGame.enabled = true;
+            redeem.result = result;
+            reachReferralCode();
+            click("apply");
+            if ("game" in result) {
+                click("continue");
+                click("continue");
+            }
+
+            click("enable");
+            click("onboarding.welcome.button");
+
+            await waitFor(() =>
+                expect(navigate).toHaveBeenCalledWith({ to, replace: true })
+            );
+        }
+    );
 
     test("flag on: the status refetch landing mid-transition does not skip the game screens", () => {
         mockGame.enabled = true;

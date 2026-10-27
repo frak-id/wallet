@@ -551,7 +551,11 @@ function RegisterPage() {
                         // Drain navigation actions now that onboarding is done
                         const navigated = await executePendingActions();
                         if (!navigated) {
-                            navigate({ to: "/wallet", replace: true });
+                            // A player who just joined a game sees what unlocks their tickets.
+                            navigate({
+                                to: gameRedeem?.game ? "/game" : "/wallet",
+                                replace: true,
+                            });
                         }
                     }}
                 />
