@@ -567,29 +567,6 @@ describe("GameDrawOrchestrator.publicDraw", () => {
     });
 });
 
-describe("GameDrawOrchestrator.myEntry", () => {
-    it("finds the caller through a group merged into theirs after the freeze", async () => {
-        const { orchestrator, draws, identities } = setup();
-        draws.findOutcomes.mockResolvedValue([
-            { gameId: game.id, entry: entry("bb", 1) },
-        ]);
-        identities.findGroupById.mockResolvedValue({
-            id: "now",
-            mergedGroups: [{ groupId: "group-bb", mergedAt: "t" }],
-        });
-
-        await expect(orchestrator.myEntry(game.id, "now")).resolves.toEqual({
-            pid: "bb",
-            drawTickets: 1,
-            discarded: null,
-        });
-        expect(draws.findOutcomes).toHaveBeenCalledWith(
-            [game.id],
-            ["now", "group-bb"]
-        );
-    });
-});
-
 describe("GameDrawOrchestrator.results", () => {
     const HOUR = 60 * 60 * 1000;
     const gameEndingAt = (id: string, hoursAgo: number) =>
@@ -648,6 +625,7 @@ describe("GameDrawOrchestrator.results", () => {
             drawTickets: 5,
             ticketsBySource: { join: 1, purchase: 4 },
             discarded: null,
+            pid: "me",
             totalTickets: 40,
             participants: 12,
             confirmedAt: null,
@@ -676,6 +654,7 @@ describe("GameDrawOrchestrator.results", () => {
             outcome: "drawing",
             tickets: 1,
             drawTickets: 1,
+            pid: null,
             totalTickets: null,
             participants: null,
         });
@@ -733,6 +712,7 @@ describe("GameDrawOrchestrator.results", () => {
             tickets: 4,
             drawTickets: 0,
             discarded: "not_following",
+            pid: null,
         });
     });
 });

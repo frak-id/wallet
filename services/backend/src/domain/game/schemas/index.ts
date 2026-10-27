@@ -141,6 +141,8 @@ export const GameResultSchema = t.Object({
     drawTickets: t.Number(),
     /** Set when the caller's tickets did not count in the draw. */
     discarded: t.Union([t.Literal("not_following"), t.Null()]),
+    /** The caller's id in the public draw list; null until the freeze, or when their tickets did not count. */
+    pid: t.Union([t.String(), t.Null()]),
     /** Every ticket in the draw; null until the freeze. */
     totalTickets: t.Union([t.Number(), t.Null()]),
     participants: t.Union([t.Number(), t.Null()]),
@@ -150,11 +152,4 @@ export type GameResult = Static<typeof GameResultSchema>;
 
 export const GameHistoryResponseSchema = t.Object({
     games: t.Array(GameResultSchema),
-});
-
-/** The caller's line in a draw, so they can find themselves in the public list. */
-export const MyDrawEntrySchema = t.Object({
-    pid: t.String(),
-    drawTickets: t.Number(),
-    discarded: t.Union([t.Literal("not_following"), t.Null()]),
 });

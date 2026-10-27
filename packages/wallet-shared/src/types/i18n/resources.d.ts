@@ -616,6 +616,10 @@ export default interface Resources {
           "title": "Where your tickets came from"
         },
         "totalTickets": "Tickets in the draw",
+        "verify": {
+          "link": "Check the draw",
+          "pid": "Your id in the draw: {{pid}}"
+        },
         "won": {
           "cta": "See my prize",
           "description": "Your ticket was drawn. Your prize is on its way to your wallet.",

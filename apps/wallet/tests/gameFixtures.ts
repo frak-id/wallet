@@ -34,6 +34,7 @@ export function gameResult(
             brandShare: 0,
         },
         discarded: null,
+        pid: null,
         totalTickets: 120,
         participants: 30,
         confirmedAt: null,

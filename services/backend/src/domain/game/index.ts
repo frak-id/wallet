@@ -13,6 +13,5 @@ export {
     GameHistoryResponseSchema,
     GameSummarySchema,
     InviteRewardsSchema,
-    MyDrawEntrySchema,
     PublicDrawSchema,
 } from "./schemas";

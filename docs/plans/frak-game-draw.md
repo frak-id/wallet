@@ -53,7 +53,7 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 ## Verification
 
 - `GET /common/game/:gameId/draw`, no auth: algorithm, status, freeze time, root, total, the canonical list by pid, the drand round, its time, signature and randomness, the candidates, the rejections (reason and time, not the admin), the winner's pid and the payout transaction hash.
-- `GET /user/wallet/game/:gameId/draw/me`: the caller's pid and draw tickets, so they can find themselves in the list. The wallet doesn't show it yet.
+- The player's own pid comes with their game history (`pid` on each result), so they can find themselves in the list. It is null before the freeze and when their tickets did not count, since the list only holds players with draw tickets.
 - `bun scripts/verifyGameDraw.ts <gameId> [--api <url>]` replays everything from the public record: the root, the total, that the round came after the freeze, the drand signature, the randomness, the ranking, the rejections and the winner. It shares `domain/game/draw.ts` with the backend and trusts nothing else.
 
 ## In the wallet
@@ -62,6 +62,7 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 
 - **Home card**: with no open game, the last game played shows for 14 days after its end, with its outcome.
 - **Game page**: with no open game, the last result in full on top: an icon and title for the outcome, the stats, and the player's tickets by source. A past player who has not joined the open game sees the home card for it instead. Past games are listed below as rows (date, tickets counted against the total, outcome), and a row opens that game's full result in a bottom sheet. Tickets thrown out for not following count as 0. Dates show the year only when it is not the current one.
+- **Checking the draw**: a frozen game's result ends with a ghost "Vérifier le tirage" link that opens the public record, and the player's pid in a caption under it. Kept low-key on purpose: it is for the curious, and must not compete with the outcome.
 - **Win screen**: a confirmed win less than 30 days old gets a full-screen confetti screen on the next wallet open, once per device (`frak_game_win_store` in local storage).
 
 ## Analytics
@@ -75,5 +76,5 @@ Draw records are kept 5 years. The public record is pseudonymous, and the winner
 ## Not done
 
 - The `game_draws` and `interaction_logs_game_join_idx` migration (DB team).
-- Showing the player's pid in the wallet, so they can find themselves in the public list.
+- A readable page for the public record: the wallet link opens the raw JSON.
 - Anchoring the root on Arbitrum at freeze time, planned for later. Until then, only our own endpoint, logs and OpenPanel event show that the root came before the round.

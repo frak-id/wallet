@@ -1097,6 +1097,10 @@
                 "referredPurchase": "Your friends' purchases",
                 "referredSignup": "Friends who signed up with your code",
                 "brandShare": "Friends reached through your brand shares"
+            },
+            "verify": {
+                "link": "Check the draw",
+                "pid": "Your id in the draw: {{pid}}"
             }
         },
         "history": {

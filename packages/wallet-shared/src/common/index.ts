@@ -79,6 +79,7 @@ export {
 export {
     authenticatedBackendApi,
     authenticatedWalletApi,
+    backendUrl,
 } from "./api/backendClient";
 export {
     type ApiError,

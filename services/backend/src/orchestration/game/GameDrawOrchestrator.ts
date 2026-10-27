@@ -429,20 +429,6 @@ export class GameDrawOrchestrator {
         };
     }
 
-    /** The caller's line, found through any group merged into theirs since the freeze. */
-    async myEntry(gameId: string, identityGroupId: string) {
-        const mine = await this.groupsOf(identityGroupId);
-        const [draw] = await this.draws.findOutcomes([gameId], [...mine]);
-        const entry = draw?.entry;
-        return entry
-            ? {
-                  pid: entry.pid,
-                  drawTickets: entry.drawTickets,
-                  discarded: entry.discarded,
-              }
-            : null;
-    }
-
     /**
      * The caller's ended games, latest first. A game with no draw past the
      * auto-freeze window is left out: no draw will run for it unless frozen by hand.
@@ -494,6 +480,7 @@ export class GameDrawOrchestrator {
                         ? (draw.entry?.drawTickets ?? 0)
                         : tickets,
                     discarded: draw?.entry?.discarded ?? null,
+                    pid: draw?.entry?.drawTickets ? draw.entry.pid : null,
                     totalTickets: draw?.totalTickets ?? null,
                     participants: draw?.participants ?? null,
                     confirmedAt:

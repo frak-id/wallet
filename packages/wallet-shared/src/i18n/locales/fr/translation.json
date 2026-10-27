@@ -1097,6 +1097,10 @@
                 "referredPurchase": "Achats de tes amis",
                 "referredSignup": "Amis inscrits avec ton code",
                 "brandShare": "Amis via tes partages de marques"
+            },
+            "verify": {
+                "link": "Vérifier le tirage",
+                "pid": "Ton identifiant dans le tirage : {{pid}}"
             }
         },
         "history": {
