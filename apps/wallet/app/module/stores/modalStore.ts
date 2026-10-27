@@ -7,6 +7,7 @@
  */
 
 import type { MoneriumOrderDto } from "@backend-domain/monerium/schemas";
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     type RewardHistoryItem,
@@ -14,7 +15,6 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
-import type { GameResult } from "@/module/game/hook/useGameHistory";
 
 /**
  * Discriminated union of every modal in the wallet app.
@@ -47,6 +47,7 @@ type ModalState =
     | { id: "moneriumOrderDetail"; order: MoneriumOrderDto }
     | { id: "rewardDetail"; item: RewardHistoryItem }
     | { id: "gameResult"; result: GameResult }
+    | { id: "gameWin"; result: GameResult }
     | { id: "editReferralCode"; onSaved: () => void }
     | { id: "emailNotFound"; email: string }
     | {

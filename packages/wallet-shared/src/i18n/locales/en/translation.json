@@ -789,6 +789,9 @@
             "gameResult": {
                 "ariaLabel": "Game result"
             },
+            "gameWin": {
+                "ariaLabel": "You won the Frak Game"
+            },
             "moneriumOrderDetail": {
                 "ariaLabel": "Transfer details"
             },

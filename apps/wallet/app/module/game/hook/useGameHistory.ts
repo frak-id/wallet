@@ -19,7 +19,3 @@ export function useGameHistory() {
         enabled: frakGame.enabled,
     });
 }
-
-export type GameResult = NonNullable<
-    ReturnType<typeof useGameHistory>["data"]
->[number];

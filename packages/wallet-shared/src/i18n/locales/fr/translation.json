@@ -789,6 +789,9 @@
             "gameResult": {
                 "ariaLabel": "Résultat du jeu"
             },
+            "gameWin": {
+                "ariaLabel": "Tu as gagné le Jeu Frak"
+            },
             "moneriumOrderDetail": {
                 "ariaLabel": "Détails du transfert"
             },

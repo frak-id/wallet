@@ -8,7 +8,9 @@ import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { frakGame } from "@/module/game/config";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
+import { celebrationAmount } from "@/module/game/styles/celebration.css";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { formatGameEnd } from "@/module/game/utils/formatGameDate";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import * as styles from "./index.css";
 
@@ -40,7 +42,11 @@ export function GameReward({ onContinue, reward, game }: GameRewardProps) {
         >
             <div className={styles.body}>
                 {reward > 0 && (
-                    <Text variant="display1" as="p" className={styles.amount}>
+                    <Text
+                        variant="display1"
+                        as="p"
+                        className={celebrationAmount}
+                    >
                         {formatGameAmount(reward, i18n.language)}
                     </Text>
                 )}
@@ -60,13 +66,7 @@ export function GameReward({ onContinue, reward, game }: GameRewardProps) {
 
 function JoinedGameCard({ game }: { game: NonNullable<RedeemResult["game"]> }) {
     const { t, i18n } = useTranslation();
-    const endsAt = new Date(game.endsAt).toLocaleString(i18n.language, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    const endsAt = formatGameEnd(game.endsAt, i18n.language);
 
     return (
         <Card variant="muted" className={styles.gameCard}>

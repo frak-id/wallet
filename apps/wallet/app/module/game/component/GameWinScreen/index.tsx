@@ -1,22 +1,12 @@
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
-import { Text } from "@frak-labs/design-system/components/Text";
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { trackEvent } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
-import {
-    type GameResult,
-    useGameHistory,
-} from "@/module/game/hook/useGameHistory";
+import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { gameWinStore } from "@/module/game/stores/gameWinStore";
-import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
-import { useCoverNativeChrome } from "@/module/native-glass/hook/useOverlayOpen";
-import * as styles from "./index.css";
+import { modalStore } from "@/module/stores/modalStore";
 
 /** A device that first opens the wallet later than this skips the celebration. */
-export const WIN_SCREEN_MS = 30 * 24 * 60 * 60 * 1000;
+const WIN_SCREEN_MS = 30 * 24 * 60 * 60 * 1000;
 
 function isFreshWin(result: GameResult, celebrated: Record<string, true>) {
     return (
@@ -27,63 +17,24 @@ function isFreshWin(result: GameResult, celebrated: Record<string, true>) {
     );
 }
 
-/** Celebrates a confirmed win once per device, over whatever screen the wallet opened on. */
+/** Opens the win celebration once per device, over whatever screen the wallet opened on. */
 export function GameWinScreen() {
     const { data } = useGameHistory();
     const celebrated = gameWinStore((s) => s.celebrated);
     const win = data?.find((result) => isFreshWin(result, celebrated));
-    return win ? <WinScreen result={win} /> : null;
-}
-
-function WinScreen({ result }: { result: GameResult }) {
-    const { t, i18n } = useTranslation();
-    const navigate = useNavigate();
-    const markCelebrated = gameWinStore((s) => s.markCelebrated);
-    const gameId = result.game.id;
-    const prizeAmount = result.game.prizeAmount;
-    const prize = formatGameAmount(prizeAmount, i18n.language);
-    useConfettiBurst();
-    useCoverNativeChrome("full");
 
     useEffect(() => {
+        if (!win) return;
+        const store = gameWinStore.getState();
+        // Read fresh, not from the render: a re-run must not open the same win twice.
+        if (store.celebrated[win.game.id]) return;
+        store.markCelebrated(win.game.id);
         trackEvent("game_win_screen_viewed", {
-            game_id: gameId,
-            prize_amount: prizeAmount,
+            game_id: win.game.id,
+            prize_amount: win.game.prizeAmount,
         });
-    }, [gameId, prizeAmount]);
+        modalStore.getState().openModal({ id: "gameWin", result: win });
+    }, [win]);
 
-    const close = (action: "history" | "close") => {
-        trackEvent("game_win_screen_closed", { game_id: gameId, action });
-        markCelebrated(gameId);
-        if (action === "history") navigate({ to: "/history" });
-    };
-
-    return (
-        <Box
-            className={styles.screen}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("game.win.title")}
-        >
-            <Box className={styles.body}>
-                <Text variant="display1" as="p" className={styles.amount}>
-                    {prize}
-                </Text>
-                <Text variant="heading1" as="h2">
-                    {t("game.win.title")}
-                </Text>
-                <Text color="secondary">
-                    {t("game.win.description", { prize })}
-                </Text>
-            </Box>
-            <Box className={styles.actions}>
-                <Button onClick={() => close("history")}>
-                    {t("game.win.cta")}
-                </Button>
-                <Button variant="secondary" onClick={() => close("close")}>
-                    {t("game.win.close")}
-                </Button>
-            </Box>
-        </Box>
-    );
+    return null;
 }

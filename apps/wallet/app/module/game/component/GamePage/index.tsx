@@ -1,3 +1,4 @@
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
@@ -21,11 +22,9 @@ import { OpenGameCard } from "@/module/game/component/GameCard";
 import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
 import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
-import {
-    type GameResult,
-    useGameHistory,
-} from "@/module/game/hook/useGameHistory";
+import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { formatGameEnd } from "@/module/game/utils/formatGameDate";
 
 type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
 
@@ -37,20 +36,21 @@ type Top =
     | { kind: "result"; result: GameResult }
     | { kind: "join" | "playing"; game: OpenGame };
 
+/** Cached data wins over a failed refetch: the error shows only when there is nothing to show. */
 function topOf(
     current: ReturnType<typeof useCurrentGame>,
     history: ReturnType<typeof useGameHistory>
 ): Top {
-    if (current.isError) return { kind: "error" };
     const data = current.data;
-    if (!data) return { kind: "loading" };
+    if (!data) return { kind: current.isError ? "error" : "loading" };
     if (data.game && data.me.participating) {
         return { kind: "playing", game: data.game };
     }
     if (history.isLoading) return { kind: "loading" };
     if (data.game) return { kind: "join", game: data.game };
     const latest = history.data?.[0];
-    return latest ? { kind: "result", result: latest } : { kind: "none" };
+    if (latest) return { kind: "result", result: latest };
+    return { kind: history.isError ? "error" : "none" };
 }
 
 export function GamePage() {
@@ -108,7 +108,10 @@ export function GamePage() {
                     title={t("game.page.error")}
                     action={{
                         label: t("game.page.retry"),
-                        onClick: () => void current.refetch(),
+                        onClick: () => {
+                            void current.refetch();
+                            void history.refetch();
+                        },
                     }}
                 />
             )}
@@ -155,13 +158,7 @@ function GameDetails({
     eligible: boolean;
 }) {
     const { t, i18n } = useTranslation();
-    const endDate = new Date(endsAt).toLocaleString(i18n.language, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    const endDate = formatGameEnd(endsAt, i18n.language);
 
     return (
         <>

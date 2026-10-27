@@ -1,3 +1,4 @@
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
@@ -6,7 +7,6 @@ import {
     GameResultDetail,
     OutcomeHero,
 } from "@/module/game/component/GameResult";
-import type { GameResult } from "@/module/game/hook/useGameHistory";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 

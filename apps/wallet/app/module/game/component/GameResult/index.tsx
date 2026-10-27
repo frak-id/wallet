@@ -1,3 +1,8 @@
+import type {
+    GameOutcome,
+    GameResult,
+    TicketSource,
+} from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -10,7 +15,6 @@ import { GiftIcon, HourglassIcon } from "@frak-labs/design-system/icons";
 import { Ticket, TicketX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
-import type { GameResult } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import { formatGameDate } from "@/module/game/utils/formatGameDate";
 import { modalStore } from "@/module/stores/modalStore";
@@ -49,22 +53,20 @@ const OUTCOME = {
         title: "game.result.noWinner.title",
         description: "game.result.noWinner.description",
     },
-} as const satisfies Record<GameResult["outcome"], unknown>;
+} as const satisfies Record<GameOutcome, unknown>;
 
-const SOURCES = [
-    "join",
-    "purchase",
-    "referredPurchase",
-    "referredSignup",
-    "brandShare",
-] as const satisfies readonly (keyof GameResult["ticketsBySource"])[];
+/** Every ticket source, in display order: a new one fails to compile until labelled. */
+const SOURCE_LABELS = {
+    join: "game.result.sources.join",
+    purchase: "game.result.sources.purchase",
+    referredPurchase: "game.result.sources.referredPurchase",
+    referredSignup: "game.result.sources.referredSignup",
+    brandShare: "game.result.sources.brandShare",
+} as const satisfies Record<TicketSource, string>;
 
-/** Tickets that went into the draw: none once they were thrown out. */
-function countedTickets(result: GameResult) {
-    return result.discarded ? 0 : result.tickets;
-}
+const SOURCES = Object.keys(SOURCE_LABELS) as TicketSource[];
 
-export function OutcomeBadge({ outcome }: { outcome: GameResult["outcome"] }) {
+export function OutcomeBadge({ outcome }: { outcome: GameOutcome }) {
     const { t } = useTranslation();
     return (
         <Badge size="small" variant={OUTCOME[outcome].badge}>
@@ -168,7 +170,7 @@ export function GameResultDetail({
                 )}
                 <Stat
                     label={t("game.result.myTickets")}
-                    value={countedTickets(result)}
+                    value={result.drawTickets}
                 />
             </InfoCard>
             {sources.length > 0 && (
@@ -180,7 +182,7 @@ export function GameResultDetail({
                         {sources.map((source) => (
                             <Stat
                                 key={source}
-                                label={t(`game.result.sources.${source}`)}
+                                label={t(SOURCE_LABELS[source])}
                                 value={result.ticketsBySource[source]}
                             />
                         ))}
@@ -225,9 +227,9 @@ function PastGameRow({ result }: { result: GameResult }) {
     const tickets = result.discarded
         ? t("game.history.notCounted")
         : result.totalTickets === null
-          ? t("game.history.tickets", { count: result.tickets })
+          ? t("game.history.tickets", { count: result.drawTickets })
           : t("game.history.ticketsOf", {
-                count: result.tickets,
+                count: result.drawTickets,
                 total: result.totalTickets,
             });
 

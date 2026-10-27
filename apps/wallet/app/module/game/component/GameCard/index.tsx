@@ -1,3 +1,4 @@
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -9,15 +10,12 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { OutcomeBadge } from "@/module/game/component/GameResult";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
-import {
-    type GameResult,
-    useGameHistory,
-} from "@/module/game/hook/useGameHistory";
+import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
 
 /** How long after its end a game's result stays on the wallet home. */
-export const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
+const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * Wallet-home recap of the open game, or of the last game played when none is

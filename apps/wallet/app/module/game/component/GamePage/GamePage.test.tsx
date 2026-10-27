@@ -1,3 +1,4 @@
+import type { GameOutcome } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,7 +13,12 @@ const { currentGame, gameConfig, gameHistory, navigate, trackEvent } =
             isError: false,
             refetch: vi.fn(),
         },
-        gameHistory: { data: [] as unknown[], isLoading: false },
+        gameHistory: {
+            data: [] as unknown[],
+            isLoading: false,
+            isError: false,
+            refetch: vi.fn(),
+        },
     }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -47,36 +53,18 @@ vi.mock("@/module/game/hook/useGameHistory", () => ({
 }));
 
 import { modalStore } from "@/module/stores/modalStore";
+import { gameResult } from "@/tests/gameFixtures";
 import { GamePage } from "./index";
 
 const NO_GAME = {
     game: null,
     me: { participating: false, tickets: 0, eligible: false },
 };
-const result = (id: string, outcome: string, overrides: object = {}) => ({
-    game: {
-        id,
-        prizeAmount: 50,
-        prizeDescription: null,
-        startsAt: new Date("2026-10-01T10:00:00Z"),
-        endsAt: new Date("2026-10-10T18:00:00Z"),
-        sponsor: null,
-    },
-    outcome,
-    tickets: 7,
-    ticketsBySource: {
-        join: 1,
-        purchase: 6,
-        referredPurchase: 0,
-        referredSignup: 0,
-        brandShare: 0,
-    },
-    discarded: null,
-    totalTickets: 120,
-    participants: 30,
-    confirmedAt: null,
-    ...overrides,
-});
+const result = (
+    id: string,
+    outcome: GameOutcome,
+    overrides: Parameters<typeof gameResult>[0] = {}
+) => gameResult({ game: { id }, outcome, ...overrides });
 
 const game = {
     id: "d1",
@@ -106,6 +94,8 @@ describe("GamePage", () => {
     beforeEach(() => {
         gameHistory.data = [];
         gameHistory.isLoading = false;
+        gameHistory.isError = false;
+        currentGame.isError = false;
         navigate.mockClear();
         modalStore.getState().dismissAll();
     });
@@ -197,7 +187,11 @@ describe("GamePage", () => {
         currentGame.data = NO_GAME;
         gameHistory.data = [
             result("latest", "lost"),
-            result("earlier", "won", { totalTickets: null, tickets: 2 }),
+            result("earlier", "won", {
+                totalTickets: null,
+                tickets: 2,
+                drawTickets: 2,
+            }),
         ];
         render(<GamePage />);
 
@@ -258,6 +252,7 @@ describe("GamePage", () => {
             result("latest", "lost"),
             result("earlier", "no_winner", {
                 discarded: "not_following",
+                drawTickets: 0,
                 totalTickets: 0,
             }),
         ];
@@ -329,6 +324,29 @@ describe("GamePage", () => {
         render(<GamePage />);
 
         expect(screen.getByText("game.page.error")).toBeInTheDocument();
-        currentGame.isError = false;
+    });
+
+    it("keeps showing the cached game when a refetch fails", () => {
+        currentGame.data = player(4, true);
+        currentGame.isError = true;
+        render(<GamePage />);
+
+        expect(screen.getByText("game.page.tickets:4")).toBeInTheDocument();
+        expect(screen.queryByText("game.page.error")).toBeNull();
+    });
+
+    it("offers a retry of both lists when past games fail to load", () => {
+        currentGame.refetch.mockClear();
+        gameHistory.refetch.mockClear();
+        currentGame.data = NO_GAME;
+        gameHistory.isError = true;
+        render(<GamePage />);
+
+        expect(screen.queryByText("game.page.none.title")).toBeNull();
+        fireEvent.click(
+            screen.getByRole("button", { name: "game.page.retry" })
+        );
+        expect(currentGame.refetch).toHaveBeenCalled();
+        expect(gameHistory.refetch).toHaveBeenCalled();
     });
 });

@@ -1266,6 +1266,9 @@ export default interface Resources {
         "gameResult": {
           "ariaLabel": "Game result"
         },
+        "gameWin": {
+          "ariaLabel": "You won the Frak Game"
+        },
         "moneriumBankFlow": {
           "ariaLabel": "Bank transfer"
         },

@@ -13,3 +13,14 @@ export function formatGameDate(
             : { year: "numeric" }),
     });
 }
+
+/** When an open game ends, to the minute (`vendredi 31 octobre à 18:00`). */
+export function formatGameEnd(date: Date | string, locale: string): string {
+    return new Date(date).toLocaleString(locale, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}

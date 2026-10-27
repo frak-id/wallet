@@ -47,6 +47,11 @@ const GameResultSheet = lazy(() =>
         default: m.GameResultSheet,
     }))
 );
+const GameWinModal = lazy(() =>
+    import("@/module/game/component/GameWinModal").then((m) => ({
+        default: m.GameWinModal,
+    }))
+);
 const EditReferralCodeSheet = lazy(() =>
     import("@/module/referral/component/EditReferralCodeSheet").then((m) => ({
         default: m.EditReferralCodeSheet,
@@ -230,6 +235,20 @@ function renderModal(
                 >
                     {({ handleClose }) => (
                         <GameResultSheet
+                            result={modal.result}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "gameWin":
+            return (
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.gameWin.ariaLabel"
+                >
+                    {({ handleClose }) => (
+                        <GameWinModal
                             result={modal.result}
                             onClose={handleClose}
                         />

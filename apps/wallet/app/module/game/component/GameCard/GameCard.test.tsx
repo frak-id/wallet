@@ -1,3 +1,4 @@
+import type { GameOutcome } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +22,7 @@ vi.mock("@/module/game/hook/useGameHistory", () => ({
     useGameHistory: () => gameHistory,
 }));
 
+import { gameResult } from "@/tests/gameFixtures";
 import { GameCard } from "./index";
 
 const game = {
@@ -33,14 +35,11 @@ const game = {
 };
 
 const DAY = 24 * 60 * 60 * 1000;
-const endedDaysAgo = (days: number, outcome = "won") => ({
-    game: {
-        ...game,
-        prizeDescription: null,
-        endsAt: new Date(Date.now() - days * DAY),
-    },
-    outcome,
-});
+const endedDaysAgo = (days: number, outcome: GameOutcome = "won") =>
+    gameResult({
+        game: { endsAt: new Date(Date.now() - days * DAY) },
+        outcome,
+    });
 
 describe("GameCard", () => {
     beforeEach(() => {

@@ -14,21 +14,14 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-import type { GameResult } from "@/module/game/hook/useGameHistory";
 import { modalStore } from "@/module/stores/modalStore";
+import { gameResult } from "@/tests/gameFixtures";
 import { GameResultSheet } from "./index";
 
-const won = {
-    game: {
-        id: "g1",
-        prizeAmount: 50,
-        prizeDescription: null,
-        startsAt: new Date("2026-10-01T10:00:00Z"),
-        endsAt: new Date("2026-10-10T18:00:00Z"),
-        sponsor: null,
-    },
+const won = gameResult({
     outcome: "won",
     tickets: 4,
+    drawTickets: 4,
     ticketsBySource: {
         join: 1,
         purchase: 0,
@@ -36,11 +29,10 @@ const won = {
         referredSignup: 0,
         brandShare: 0,
     },
-    discarded: null,
     totalTickets: 80,
     participants: 12,
     confirmedAt: new Date("2026-10-10T19:00:00Z"),
-} as unknown as GameResult;
+});
 
 describe("GameResultSheet", () => {
     beforeEach(() => {
