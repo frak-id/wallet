@@ -53,6 +53,9 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_sharing_timestamp_idx")
             .using("btree", sql`((payload->>'sharingTimestamp')::int)`)
             .where(sql`"type" = 'create_referral_link'`),
+        index("interaction_logs_game_join_idx")
+            .using("btree", sql`(payload->>'gameId')`, table.identityGroupId)
+            .where(sql`"type" = 'game_join'`),
         index("interaction_logs_unprocessed_idx")
             .on(table.createdAt)
             .where(

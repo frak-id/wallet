@@ -31,6 +31,19 @@ import { db } from "../../infrastructure/persistence/postgres";
 
 type GameWindow = Pick<GameSelect, "startsAt" | "endsAt">;
 
+const joinedGameId = sql<
+    string | null
+>`${interactionLogsTable.payload}->>'gameId'`;
+
+/** The Frak merchant's `game_join` interactions, of one game when `gameId` is set. */
+function gameJoins(gameId?: string): SQL[] {
+    return [
+        eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
+        eq(interactionLogsTable.type, interactionTypes.gameJoin),
+        ...(gameId ? [sql`${joinedGameId} = ${gameId}`] : []),
+    ];
+}
+
 function countedPurchase(from: Date, endsAt: Date): SQL[] {
     return [
         eq(interactionLogsTable.type, interactionTypes.purchase),
@@ -154,9 +167,7 @@ export class GamePlayerOrchestrator {
             .where(
                 and(
                     eq(interactionLogsTable.identityGroupId, identityGroupId),
-                    eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
-                    eq(interactionLogsTable.type, interactionTypes.gameJoin),
-                    sql`${interactionLogsTable.payload}->>'gameId' = ${gameId}`
+                    ...gameJoins(gameId)
                 )
             );
         return row?.joinedAt ?? null;
@@ -166,23 +177,19 @@ export class GamePlayerOrchestrator {
     async gamesJoinedBy(
         identityGroupId: string
     ): Promise<{ gameId: string; joinedAt: Date }[]> {
-        const gameId = sql<
-            string | null
-        >`${interactionLogsTable.payload}->>'gameId'`;
         const rows = await db
             .select({
-                gameId,
+                gameId: joinedGameId,
                 joinedAt: min(interactionLogsTable.createdAt),
             })
             .from(interactionLogsTable)
             .where(
                 and(
                     eq(interactionLogsTable.identityGroupId, identityGroupId),
-                    eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
-                    eq(interactionLogsTable.type, interactionTypes.gameJoin)
+                    ...gameJoins()
                 )
             )
-            .groupBy(gameId);
+            .groupBy(joinedGameId);
         return rows.flatMap(({ gameId, joinedAt }) =>
             gameId && joinedAt ? [{ gameId, joinedAt }] : []
         );
@@ -198,13 +205,7 @@ export class GamePlayerOrchestrator {
                 joinedAt: min(interactionLogsTable.createdAt),
             })
             .from(interactionLogsTable)
-            .where(
-                and(
-                    eq(interactionLogsTable.merchantId, FRAK_MERCHANT_ID),
-                    eq(interactionLogsTable.type, interactionTypes.gameJoin),
-                    sql`${interactionLogsTable.payload}->>'gameId' = ${gameId}`
-                )
-            )
+            .where(and(...gameJoins(gameId)))
             .groupBy(interactionLogsTable.identityGroupId);
         return rows.flatMap(({ identityGroupId, joinedAt }) =>
             identityGroupId && joinedAt ? [{ identityGroupId, joinedAt }] : []

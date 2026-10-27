@@ -1,4 +1,5 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { LRUCache } from "lru-cache";
 import {
     db,
     type PgRunner,
@@ -19,7 +20,32 @@ function underReview(id: string, reviewed: number) {
     );
 }
 
+type FrozenEntries = {
+    participants: number;
+    byGroup: ReadonlyMap<string, DrawEntry>;
+};
+
 export class GameDrawRepository {
+    /** Entries are written once at freeze, so every player's lookup shares one read per draw. */
+    private readonly frozenEntries = new LRUCache<string, FrozenEntries>({
+        max: 32,
+        maxSize: 200_000,
+        sizeCalculation: (frozen) => frozen.participants + 1,
+        fetchMethod: async (drawId) => {
+            const [row] = await db
+                .select({ entries: gameDrawsTable.entries })
+                .from(gameDrawsTable)
+                .where(eq(gameDrawsTable.id, drawId));
+            if (!row) return undefined;
+            return {
+                participants: row.entries.length,
+                byGroup: new Map(
+                    row.entries.map((entry) => [entry.identityGroupId, entry])
+                ),
+            };
+        },
+    });
+
     /** `null` when the game already has a draw: a freeze never runs twice. */
     async create(draw: GameDrawInsert): Promise<GameDrawSelect | null> {
         const [created] = await db
@@ -39,25 +65,33 @@ export class GameDrawRepository {
         return draw ?? null;
     }
 
-    /** Each draw's outcome and the line of any of `identityGroupIds`, without loading the other entries. */
+    /** Each draw's outcome and the line of the first of `identityGroupIds` found in it. */
     async findOutcomes(gameIds: string[], identityGroupIds: string[]) {
-        if (gameIds.length === 0 || identityGroupIds.length === 0) return [];
-        const groups = sql.join(
-            identityGroupIds.map((id) => sql`${id}`),
-            sql`, `
-        );
-        return db
+        if (gameIds.length === 0) return [];
+        const draws = await db
             .select({
+                id: gameDrawsTable.id,
                 gameId: gameDrawsTable.gameId,
                 status: gameDrawsTable.status,
                 totalTickets: gameDrawsTable.totalTickets,
-                participants: sql<number>`jsonb_array_length(${gameDrawsTable.entries})`,
                 winnerIdentityGroupId: gameDrawsTable.winnerIdentityGroupId,
                 confirmedAt: gameDrawsTable.confirmedAt,
-                entry: sql<DrawEntry | null>`(select e.value from jsonb_array_elements(${gameDrawsTable.entries}) as e where e.value->>'identityGroupId' in (${groups}) limit 1)`,
             })
             .from(gameDrawsTable)
             .where(inArray(gameDrawsTable.gameId, gameIds));
+        return Promise.all(
+            draws.map(async ({ id, ...draw }) => {
+                const frozen = await this.frozenEntries.fetch(id);
+                const entry = identityGroupIds
+                    .map((groupId) => frozen?.byGroup.get(groupId))
+                    .find((found) => found !== undefined);
+                return {
+                    ...draw,
+                    participants: frozen?.participants ?? 0,
+                    entry: entry ?? null,
+                };
+            })
+        );
     }
 
     async findByStatus(status: DrawStatus): Promise<GameDrawSelect[]> {

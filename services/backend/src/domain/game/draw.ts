@@ -1,11 +1,20 @@
 import { createHash, createHmac } from "node:crypto";
 import { bls12_381 } from "@noble/curves/bls12-381.js";
+import type { GameDrawSelect } from "./db/schema";
+import type { DrawEntry, GameOutcome, PublicDraw } from "./schemas";
 
 /** Bumped whenever anything below changes what a draw picks, so old records still replay. */
 export const DRAW_ALGORITHM = "frak-draw-v1";
 
 /** How many ranked candidates a draw yields: the winner, then who takes over on a rejection. */
 export const DRAW_CANDIDATES = 10;
+
+/** Lets refunds right after the end land before tickets are frozen. */
+export const DRAW_FREEZE_GRACE_MS = 60 * 60 * 1000;
+/** The beacon is emitted this long after the freeze is published. */
+export const DRAW_ROUND_DELAY_MS = 10 * 60 * 1000;
+/** Older games are only frozen by hand, so a deploy never draws a long-finished game. */
+export const DRAW_AUTO_FREEZE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** League of Entropy `quicknet`: a round every 3 s, unchained G1 signatures (RFC 9380). */
 export const DRAND_QUICKNET = {
@@ -18,6 +27,46 @@ export const DRAND_QUICKNET = {
 } as const;
 
 export type DrawTicketEntry = { pid: string; tickets: number };
+
+/** The draw's weights: each frozen entry's counted tickets. */
+export function drawTicketsOf(entries: DrawEntry[]): DrawTicketEntry[] {
+    return entries.map(({ pid, drawTickets }) => ({
+        pid,
+        tickets: drawTickets,
+    }));
+}
+
+/** The candidate under review: `candidates[rejections.length]`. */
+export function currentCandidate(
+    draw: Pick<GameDrawSelect, "candidates" | "entries" | "rejections">
+) {
+    const rank = draw.rejections.length;
+    const pid = draw.candidates?.[rank];
+    const entry = draw.entries.find((e) => e.pid === pid);
+    return pid && entry ? { rank, pid, entry } : null;
+}
+
+/** How the draw went for a player owning `mine`; `drawing` until a winner is confirmed. */
+export function outcomeOf(
+    draw: Pick<GameDrawSelect, "status" | "winnerIdentityGroupId"> | undefined,
+    mine: ReadonlySet<string>
+): GameOutcome {
+    if (draw?.status === "void") return "no_winner";
+    if (draw?.status !== "confirmed") return "drawing";
+    return draw.winnerIdentityGroupId && mine.has(draw.winnerIdentityGroupId)
+        ? "won"
+        : "lost";
+}
+
+/** Nothing left to change on the public record: void, or paid on-chain. */
+export function isDrawSettled(
+    draw: Pick<PublicDraw, "status" | "payoutTxHash">
+): boolean {
+    return (
+        draw.status === "void" ||
+        (draw.status === "confirmed" && draw.payoutTxHash !== null)
+    );
+}
 
 const TWO_POW_256 = 1n << 256n;
 

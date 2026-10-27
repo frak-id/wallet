@@ -8386,6 +8386,7 @@
                           "outcome",
                           "tickets",
                           "ticketsBySource",
+                          "drawTickets",
                           "discarded",
                           "totalTickets",
                           "participants",
@@ -8510,6 +8511,9 @@
                                 "type": "number"
                               }
                             }
+                          },
+                          "drawTickets": {
+                            "type": "number"
                           },
                           "discarded": {
                             "const": "not_following",

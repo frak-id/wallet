@@ -1,6 +1,6 @@
 # Frak Game draw
 
-Status: built on `feat/fra-368-join-and-referee-tickets`. The `game_draws` table still needs its migration (DB team). Tracks FRA-368 and the draw questions on FRA-363.
+Status: built on `feat/fra-368-join-and-referee-tickets`. The `game_draws` table and the `interaction_logs_game_join_idx` partial index (`interaction_logs`, on `payload->>'gameId'` and `identity_group_id` where `type = 'game_join'`) still need their migration (DB team). Tracks FRA-368 and the draw questions on FRA-363.
 Inputs: research briefs run on 2026-10-26 on randomness sources and on how the draw fits the backend.
 
 ## Decisions
@@ -74,6 +74,6 @@ Draw records are kept 5 years. The public record is pseudonymous, and the winner
 
 ## Not done
 
-- The `game_draws` migration (DB team).
+- The `game_draws` and `interaction_logs_game_join_idx` migration (DB team).
 - Showing the player's pid in the wallet, so they can find themselves in the public list.
 - Anchoring the root on Arbitrum at freeze time, planned for later. Until then, only our own endpoint, logs and OpenPanel event show that the root came before the round.

@@ -1,5 +1,5 @@
 import { currentStablecoins } from "@frak-labs/app-essentials/blockchain";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameDrawSelect, GameSelect } from "../../domain/game/db/schema";
 import {
     drandRandomness,
@@ -145,6 +145,12 @@ beforeEach(() => {
 });
 
 describe("GameDrawOrchestrator.freeze", () => {
+    beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(NOW);
+    });
+    afterEach(() => vi.useRealTimers());
+
     it("keeps only followers' tickets and commits a round 10 minutes out", async () => {
         const { orchestrator, draws, players, instagramLinks } = setup();
         const joinedAt = new Date("2026-10-21T00:00:00Z");
@@ -195,6 +201,29 @@ describe("GameDrawOrchestrator.freeze", () => {
                 participants: 2,
                 eligible_participants: 1,
                 total_tickets: 4,
+            })
+        );
+    });
+
+    it("commits the round from when the root is stored, however long counting took", async () => {
+        const { orchestrator, draws, players } = setup();
+        const stored = new Date(NOW.getTime() + 20 * 60_000);
+        players.participantsOf.mockResolvedValue([
+            { identityGroupId: "slow", joinedAt: game.startsAt },
+        ]);
+        players.ticketsOf.mockImplementation(async () => {
+            vi.setSystemTime(stored);
+            return NO_TICKETS;
+        });
+
+        await orchestrator.freeze(game, NOW);
+
+        expect(draws.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                frozenAt: stored,
+                drandRound: drandRoundAt(
+                    new Date(stored.getTime() + 10 * 60_000)
+                ),
             })
         );
     });
@@ -289,6 +318,28 @@ describe("GameDrawOrchestrator.runDue", () => {
 
         expect(drand.fetchBeacon).not.toHaveBeenCalled();
         expect(draws.recordBeacon).not.toHaveBeenCalled();
+    });
+
+    it("keeps going when one game fails, and still draws the frozen ones", async () => {
+        const { orchestrator, games, draws, players } = setup();
+        const broken = { ...game, id: "broken" } as GameSelect;
+        const healthy = { ...game, id: "healthy" } as GameSelect;
+        games.findEndedBetween.mockResolvedValue([broken, healthy]);
+        players.participantsOf.mockImplementation(async (gameId: string) => {
+            if (gameId === "broken") throw new Error("db blip");
+            return [];
+        });
+        draws.findByStatus.mockResolvedValue([
+            drawRow({ status: "frozen", drandSignature: null }),
+        ]);
+
+        const result = await orchestrator.runDue(NOW);
+
+        expect(draws.create).toHaveBeenCalledTimes(1);
+        expect(draws.create).toHaveBeenCalledWith(
+            expect.objectContaining({ gameId: "healthy" })
+        );
+        expect(result).toEqual({ frozen: 1, drawn: 1 });
     });
 
     it("leaves a draw frozen when no relay serves a valid beacon", async () => {
@@ -504,12 +555,24 @@ describe("GameDrawOrchestrator.publicDraw", () => {
         });
         expect(JSON.stringify(record)).not.toMatch(/group-|"q"|pidKey|key/);
     });
+
+    it("serves a settled record from memory", async () => {
+        const { orchestrator, draws } = setup();
+        draws.findByGameId.mockResolvedValue(drawRow({ status: "void" }));
+
+        await orchestrator.publicDraw(game.id);
+        await orchestrator.publicDraw(game.id);
+
+        expect(draws.findByGameId).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe("GameDrawOrchestrator.myEntry", () => {
     it("finds the caller through a group merged into theirs after the freeze", async () => {
         const { orchestrator, draws, identities } = setup();
-        draws.findByGameId.mockResolvedValue(drawRow());
+        draws.findOutcomes.mockResolvedValue([
+            { gameId: game.id, entry: entry("bb", 1) },
+        ]);
         identities.findGroupById.mockResolvedValue({
             id: "now",
             mergedGroups: [{ groupId: "group-bb", mergedAt: "t" }],
@@ -520,6 +583,10 @@ describe("GameDrawOrchestrator.myEntry", () => {
             drawTickets: 1,
             discarded: null,
         });
+        expect(draws.findOutcomes).toHaveBeenCalledWith(
+            [game.id],
+            ["now", "group-bb"]
+        );
     });
 });
 
@@ -578,6 +645,7 @@ describe("GameDrawOrchestrator.results", () => {
         ]);
         expect(results[0]).toMatchObject({
             tickets: 5,
+            drawTickets: 5,
             ticketsBySource: { join: 1, purchase: 4 },
             discarded: null,
             totalTickets: 40,
@@ -607,6 +675,7 @@ describe("GameDrawOrchestrator.results", () => {
         expect(result).toMatchObject({
             outcome: "drawing",
             tickets: 1,
+            drawTickets: 1,
             totalTickets: null,
             participants: null,
         });
@@ -662,6 +731,7 @@ describe("GameDrawOrchestrator.results", () => {
 
         expect(result).toMatchObject({
             tickets: 4,
+            drawTickets: 0,
             discarded: "not_following",
         });
     });

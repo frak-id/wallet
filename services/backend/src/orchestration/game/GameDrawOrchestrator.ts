@@ -2,16 +2,24 @@ import { randomBytes } from "node:crypto";
 import { db, eventEmitter, log, productEvents } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { currentStablecoins } from "@frak-labs/app-essentials/blockchain";
+import { LRUCache } from "lru-cache";
 import { isAddressEqual } from "viem";
 import type { GameDrawSelect, GameSelect } from "../../domain/game/db/schema";
 import {
     canonicalEntries,
+    currentCandidate,
     DRAND_QUICKNET,
     DRAW_ALGORITHM,
+    DRAW_AUTO_FREEZE_WINDOW_MS,
     DRAW_CANDIDATES,
+    DRAW_FREEZE_GRACE_MS,
+    DRAW_ROUND_DELAY_MS,
     drandRandomness,
     drandRoundAt,
     drandRoundTime,
+    drawTicketsOf,
+    isDrawSettled,
+    outcomeOf,
     pseudonymOf,
     rankCandidates,
     snapshotRoot,
@@ -22,7 +30,6 @@ import type { GameRepository } from "../../domain/game/repositories/GameReposito
 import type {
     DrawEntry,
     DrawRejectionReason,
-    GameOutcome,
     GameResult,
     PublicDraw,
 } from "../../domain/game/schemas";
@@ -37,46 +44,26 @@ import type { DrandClient } from "../../infrastructure/integrations/drand";
 import type { GamePlayerOrchestrator } from "./GamePlayerOrchestrator";
 import { summarizeGame } from "./summarizeGame";
 
-/** Lets refunds right after the end land before tickets are frozen. */
-export const DRAW_FREEZE_GRACE_MS = 60 * 60 * 1000;
-/** The beacon is emitted this long after the freeze is published. */
-export const DRAW_ROUND_DELAY_MS = 10 * 60 * 1000;
-/** Older games are only frozen by hand, so a deploy never draws a long-finished game. */
-export const DRAW_AUTO_FREEZE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const COUNT_CONCURRENCY = 10;
 const RESULTS_LIMIT = 20;
-
-type DrawOutcome = Awaited<
-    ReturnType<GameDrawRepository["findOutcomes"]>
->[number];
-
-function outcomeOf(
-    draw: DrawOutcome | undefined,
-    mine: Set<string>
-): GameOutcome {
-    if (draw?.status === "void") return "no_winner";
-    if (draw?.status !== "confirmed") return "drawing";
-    return draw.winnerIdentityGroupId && mine.has(draw.winnerIdentityGroupId)
-        ? "won"
-        : "lost";
-}
-
-/** The candidate under review: `candidates[rejections.length]`. */
-function currentCandidate(draw: GameDrawSelect) {
-    const rank = draw.rejections.length;
-    const pid = draw.candidates?.[rank];
-    const entry = draw.entries.find((e) => e.pid === pid);
-    return pid && entry ? { rank, pid, entry } : null;
-}
-
-function drawTicketsOf(entries: DrawEntry[]) {
-    return entries.map(({ pid, drawTickets }) => ({
-        pid,
-        tickets: drawTickets,
-    }));
-}
+/** How long a replica serves a public record that can still change; an admin review runs in another process. */
+const LIVE_DRAW_TTL_MS = 30 * 1000;
+const SETTLED_DRAW_TTL_MS = 60 * 60 * 1000;
 
 export class GameDrawOrchestrator {
+    private readonly publicDraws = new LRUCache<
+        string,
+        { draw: PublicDraw | null }
+    >({
+        max: 16,
+        ttl: LIVE_DRAW_TTL_MS,
+        fetchMethod: async (gameId, _stale, { options }) => {
+            const draw = await this.loadPublicDraw(gameId);
+            if (draw && isDrawSettled(draw)) options.ttl = SETTLED_DRAW_TTL_MS;
+            return { draw };
+        },
+    });
+
     constructor(
         private readonly games: GameRepository,
         private readonly draws: GameDrawRepository,
@@ -99,16 +86,36 @@ export class GameDrawOrchestrator {
         );
         let frozen = 0;
         for (const game of ended) {
-            if (await this.draws.findByGameId(game.id)) continue;
-            await this.freeze(game, now);
-            frozen++;
+            const done = await this.isolated(game.id, "freeze", async () => {
+                if (await this.draws.findByGameId(game.id)) return false;
+                await this.freeze(game, now);
+                return true;
+            });
+            if (done) frozen++;
         }
 
         let drawn = 0;
         for (const draw of await this.draws.findByStatus("frozen")) {
-            if (await this.drawFrozen(draw, now)) drawn++;
+            const done = await this.isolated(draw.gameId, "run", () =>
+                this.drawFrozen(draw, now)
+            );
+            if (done) drawn++;
         }
         return { frozen, drawn };
+    }
+
+    /** One game's failure is logged and skipped, so it never holds back the others. */
+    private async isolated(
+        gameId: string,
+        step: "freeze" | "run",
+        task: () => Promise<boolean>
+    ): Promise<boolean> {
+        try {
+            return await task();
+        } catch (error) {
+            log.error({ error, gameId }, `Game draw ${step} failed`);
+            return false;
+        }
     }
 
     /** Counts every participant's tickets once; only followers of @frak_fr keep them. */
@@ -121,14 +128,16 @@ export class GameDrawOrchestrator {
 
         const { pidKey, list } = await this.countEntries(game);
         const total = list.reduce((sum, e) => sum + e.drawTickets, 0);
+        // Counting takes time: the round must follow the moment the root is stored.
+        const frozenAt = new Date();
         const round = drandRoundAt(
-            new Date(now.getTime() + DRAW_ROUND_DELAY_MS)
+            new Date(frozenAt.getTime() + DRAW_ROUND_DELAY_MS)
         );
         const created = await this.draws.create({
             gameId: game.id,
             algorithm: DRAW_ALGORITHM,
             status: total > 0 ? "frozen" : "void",
-            frozenAt: now,
+            frozenAt,
             pidKey,
             snapshotRoot: snapshotRoot(drawTicketsOf(list)),
             totalTickets: total,
@@ -377,6 +386,11 @@ export class GameDrawOrchestrator {
 
     /** `null` until the game is frozen. */
     async publicDraw(gameId: string): Promise<PublicDraw | null> {
+        const cached = await this.publicDraws.fetch(gameId);
+        return cached?.draw ?? null;
+    }
+
+    private async loadPublicDraw(gameId: string): Promise<PublicDraw | null> {
         const draw = await this.draws.findByGameId(gameId);
         if (!draw) return null;
         const winner =
@@ -417,14 +431,9 @@ export class GameDrawOrchestrator {
 
     /** The caller's line, found through any group merged into theirs since the freeze. */
     async myEntry(gameId: string, identityGroupId: string) {
-        const draw = await this.draws.findByGameId(gameId);
-        if (!draw) return null;
-        const group = await this.identities.findGroupById(identityGroupId);
-        const mine = new Set([
-            identityGroupId,
-            ...(group?.mergedGroups ?? []).map((m) => m.groupId),
-        ]);
-        const entry = draw.entries.find((e) => mine.has(e.identityGroupId));
+        const mine = await this.groupsOf(identityGroupId);
+        const [draw] = await this.draws.findOutcomes([gameId], [...mine]);
+        const entry = draw?.entry;
         return entry
             ? {
                   pid: entry.pid,
@@ -448,11 +457,7 @@ export class GameDrawOrchestrator {
         ).filter((game) => game.endsAt <= now);
         if (ended.length === 0) return [];
 
-        const group = await this.identities.findGroupById(identityGroupId);
-        const mine = new Set([
-            identityGroupId,
-            ...(group?.mergedGroups ?? []).map((m) => m.groupId),
-        ]);
+        const mine = await this.groupsOf(identityGroupId);
         const draws = new Map(
             (
                 await this.draws.findOutcomes(
@@ -479,11 +484,15 @@ export class GameDrawOrchestrator {
                 const ticketsBySource = draw
                     ? (draw.entry?.tickets ?? NO_TICKETS)
                     : await this.players.ticketsOf(game, identityGroupId, from);
+                const tickets = totalTickets(ticketsBySource);
                 return {
                     game: await summarizeGame(game, this.merchants),
                     outcome: outcomeOf(draw, mine),
-                    tickets: totalTickets(ticketsBySource),
+                    tickets,
                     ticketsBySource,
+                    drawTickets: draw
+                        ? (draw.entry?.drawTickets ?? 0)
+                        : tickets,
                     discarded: draw?.entry?.discarded ?? null,
                     totalTickets: draw?.totalTickets ?? null,
                     participants: draw?.participants ?? null,
@@ -492,6 +501,15 @@ export class GameDrawOrchestrator {
                 };
             })
         );
+    }
+
+    /** The caller's group and every group merged into it. */
+    private async groupsOf(identityGroupId: string): Promise<Set<string>> {
+        const group = await this.identities.findGroupById(identityGroupId);
+        return new Set([
+            identityGroupId,
+            ...(group?.mergedGroups ?? []).map((m) => m.groupId),
+        ]);
     }
 
     private async requireDraw(gameId: string): Promise<GameDrawSelect> {
