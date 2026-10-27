@@ -2,7 +2,7 @@ import { t } from "@backend-utils";
 import type { Static } from "elysia";
 import type { TicketBreakdown } from "../tickets";
 
-export type { TicketBreakdown, TicketSource } from "../tickets";
+export type { TicketSource } from "../tickets";
 
 /** `paused` is the kill switch: the game stops accepting joins at once. */
 export const GameStatusSchema = t.Union([
@@ -135,9 +135,8 @@ export type GameOutcome = Static<typeof GameOutcomeSchema>;
 export const GameResultSchema = t.Object({
     game: GameSummarySchema,
     outcome: GameOutcomeSchema,
-    tickets: t.Number(),
     ticketsBySource: TicketBreakdownSchema,
-    /** The caller's tickets in the draw: 0 once discarded, `tickets` until the freeze. */
+    /** The caller's tickets in the draw: 0 once discarded, all of them until the freeze. */
     drawTickets: t.Number(),
     /** Set when the caller's tickets did not count in the draw. */
     discarded: t.Union([t.Literal("not_following"), t.Null()]),

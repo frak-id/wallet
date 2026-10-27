@@ -8388,7 +8388,6 @@
                         "required": [
                           "game",
                           "outcome",
-                          "tickets",
                           "ticketsBySource",
                           "drawTickets",
                           "discarded",
@@ -8486,9 +8485,6 @@
                               "lost",
                               "no_winner"
                             ]
-                          },
-                          "tickets": {
-                            "type": "number"
                           },
                           "ticketsBySource": {
                             "type": "object",

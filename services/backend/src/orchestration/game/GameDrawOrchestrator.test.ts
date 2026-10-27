@@ -621,7 +621,6 @@ describe("GameDrawOrchestrator.results", () => {
             ["older", "won"],
         ]);
         expect(results[0]).toMatchObject({
-            tickets: 5,
             drawTickets: 5,
             ticketsBySource: { join: 1, purchase: 4 },
             discarded: null,
@@ -652,7 +651,6 @@ describe("GameDrawOrchestrator.results", () => {
         );
         expect(result).toMatchObject({
             outcome: "drawing",
-            tickets: 1,
             drawTickets: 1,
             pid: null,
             totalTickets: null,
@@ -709,7 +707,7 @@ describe("GameDrawOrchestrator.results", () => {
         const [result] = await orchestrator.results("me", NOW);
 
         expect(result).toMatchObject({
-            tickets: 4,
+            ticketsBySource: { join: 1, purchase: 3 },
             drawTickets: 0,
             discarded: "not_following",
             pid: null,

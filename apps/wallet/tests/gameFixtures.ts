@@ -24,7 +24,6 @@ export function gameResult(
     return {
         game: gameSummary(game),
         outcome: "drawing",
-        tickets: 7,
         drawTickets: 7,
         ticketsBySource: {
             join: 1,

@@ -470,15 +470,13 @@ export class GameDrawOrchestrator {
                 const ticketsBySource = draw
                     ? (draw.entry?.tickets ?? NO_TICKETS)
                     : await this.players.ticketsOf(game, identityGroupId, from);
-                const tickets = totalTickets(ticketsBySource);
                 return {
                     game: await summarizeGame(game, this.merchants),
                     outcome: outcomeOf(draw, mine),
-                    tickets,
                     ticketsBySource,
                     drawTickets: draw
                         ? (draw.entry?.drawTickets ?? 0)
-                        : tickets,
+                        : totalTickets(ticketsBySource),
                     discarded: draw?.entry?.discarded ?? null,
                     pid: draw?.entry?.drawTickets ? draw.entry.pid : null,
                     totalTickets: draw?.totalTickets ?? null,

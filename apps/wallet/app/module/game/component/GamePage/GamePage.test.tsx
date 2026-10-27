@@ -189,7 +189,6 @@ describe("GamePage", () => {
             result("latest", "lost"),
             result("earlier", "won", {
                 totalTickets: null,
-                tickets: 2,
                 drawTickets: 2,
             }),
         ];

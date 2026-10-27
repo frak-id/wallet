@@ -27,7 +27,6 @@ import { GameResultSheet } from "./index";
 
 const won = gameResult({
     outcome: "won",
-    tickets: 4,
     drawTickets: 4,
     ticketsBySource: {
         join: 1,
