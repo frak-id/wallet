@@ -22,6 +22,8 @@ export type Flow<Name extends string = string> = {
     readonly ended: boolean;
     track<K extends keyof EventMap>(event: K, properties?: EventMap[K]): void;
     end(outcome: FlowOutcome, extras?: FlowEndExtras): void;
+    /** Resume an abandoned flow on the same `flow_id`; no-op after any other outcome. */
+    reopen(): void;
 };
 
 function generateFlowId(): string {
@@ -40,7 +42,7 @@ function generateFlowId(): string {
  * `flow.end("succeeded", { extras })` emits `auth_login_succeeded { flow_name, flow_id, duration_ms, ...extras }`.
  *
  * Two guards prevent real bugs cheaply:
- *  - `end()` is idempotent — retries / double-submits don't emit twice
+ *  - `end()` is idempotent until `reopen()` — retries / double-submits don't emit twice
  *  - `track()` after `end()` drops silently — late async callbacks can't leak
  *    events without flow context
  *
@@ -54,7 +56,7 @@ export function startFlow<Name extends FlowBaseName>(
 ): Flow<Name> {
     const flowId = generateFlowId();
     const startedAt = Date.now();
-    let ended = false;
+    let outcome: FlowOutcome | undefined;
 
     const startedKey = `${flowName}_started` as keyof EventMap;
     trackEvent(startedKey, {
@@ -67,25 +69,28 @@ export function startFlow<Name extends FlowBaseName>(
         flowId,
         flowName,
         get ended() {
-            return ended;
+            return outcome !== undefined;
         },
         track(event, properties) {
-            if (ended) return;
+            if (outcome) return;
             trackEvent(event, {
                 ...(properties as Record<string, unknown> | undefined),
                 flow_id: flowId,
             } as EventMap[typeof event]);
         },
-        end(outcome, extras) {
-            if (ended) return;
-            ended = true;
-            const endedKey = `${flowName}_${outcome}` as keyof EventMap;
+        end(endOutcome, extras) {
+            if (outcome) return;
+            outcome = endOutcome;
+            const endedKey = `${flowName}_${endOutcome}` as keyof EventMap;
             trackEvent(endedKey, {
                 flow_name: flowName,
                 flow_id: flowId,
                 duration_ms: Date.now() - startedAt,
                 ...extras,
             } as EventMap[typeof endedKey]);
+        },
+        reopen() {
+            if (outcome === "abandoned") outcome = undefined;
         },
     };
 }

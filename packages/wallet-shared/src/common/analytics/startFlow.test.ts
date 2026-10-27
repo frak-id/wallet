@@ -147,5 +147,35 @@ describe("startFlow", () => {
             });
             expect(mockTrack).not.toHaveBeenCalled();
         });
+
+        it("reopen() resumes an abandoned flow on the same flow_id", () => {
+            const flow = startFlow("onboarding");
+            flow.end("abandoned", { last_step: "emailInput" });
+            flow.reopen();
+            mockTrack.mockClear();
+
+            expect(flow.ended).toBe(false);
+            flow.track("email_input_viewed");
+            flow.end("succeeded");
+            expect(mockTrack).toHaveBeenCalledWith("email_input_viewed", {
+                flow_id: flow.flowId,
+            });
+            expect(mockTrack).toHaveBeenLastCalledWith(
+                "onboarding_succeeded",
+                expect.objectContaining({ flow_id: flow.flowId })
+            );
+        });
+
+        it("reopen() leaves a succeeded or failed flow ended", () => {
+            const succeeded = startFlow("onboarding");
+            succeeded.end("succeeded");
+            succeeded.reopen();
+            const failed = startFlow("auth_login");
+            failed.end("failed");
+            failed.reopen();
+
+            expect(succeeded.ended).toBe(true);
+            expect(failed.ended).toBe(true);
+        });
     });
 });

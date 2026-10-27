@@ -24,6 +24,23 @@ export type FlowStep =
     | "notification"
     | "welcome";
 
+// Module scope: leaving for `/reward-code` or `/login` and coming back remounts the page but continues the same onboarding.
+let onboardingFlow: Flow | null = null;
+// Live step while `/register` is mounted; only the mounted page may resume a flow the user hid.
+let pageStepRef: { readonly current: FlowStep } | null = null;
+let lastStep: FlowStep = "onboardingOne";
+
+// Closing the tab or killing the app never unmounts React: hiding is the last moment to report the step.
+function onVisibilityChange() {
+    if (document.visibilityState === "hidden") {
+        onboardingFlow?.end("abandoned", {
+            last_step: pageStepRef?.current ?? lastStep,
+        });
+    } else if (pageStepRef) {
+        onboardingFlow?.reopen();
+    }
+}
+
 export type GoToStep = (
     next: FlowStep,
     direction?: StepTransitionDirection
@@ -77,14 +94,18 @@ export function useRegisterFlow({
         withStepTransition(direction, () => setStep(next));
     }, []);
 
-    // Start the onboarding flow on mount, end as "abandoned" if never succeeded
     useEffect(() => {
-        const flow = startFlow("onboarding");
-        flowRef.current = flow;
+        onboardingFlow?.reopen();
+        if (!onboardingFlow || onboardingFlow.ended) {
+            onboardingFlow = startFlow("onboarding");
+        }
+        flowRef.current = onboardingFlow;
+        pageStepRef = stepRef;
+        // Never removed: a user who leaves `/register` for a login still ends the flow on the next hide.
+        document.addEventListener("visibilitychange", onVisibilityChange);
         return () => {
-            if (!flow.ended) {
-                flow.end("abandoned", { last_step: stepRef.current });
-            }
+            lastStep = stepRef.current;
+            pageStepRef = null;
         };
     }, []);
 

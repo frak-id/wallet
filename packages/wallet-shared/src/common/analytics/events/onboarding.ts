@@ -36,6 +36,7 @@ type EmailInputOutcome =
     | "login_existing"
     | "already_used";
 
+// Every page hide sends `onboarding_abandoned` and a return resumes the flow: a flow's outcome is its last end event.
 type OnboardingFlow = FlowEvents<"onboarding">;
 
 type OnboardingMidFlowEvents = {
