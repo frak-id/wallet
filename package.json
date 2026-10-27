@@ -55,7 +55,7 @@
     "format": "biome check --write .",
     "format:check": "biome check .",
     "knip": "knip",
-    "knip:backend": "knip -W services/backend --include classMembers",
+    "knip:backend": "knip -W services/backend",
     "lint": "biome lint . && bun run lint:comments && bun run check:i18n-types && bun run check:ios-floor && bun run check:ios-url-scheme && bun run check:android-manifest && bun run check:publishable && bun run check:safe-area && bun run check:shopify-stage && bun run check:shopify-api-version && bun run scripts/check-bun-version.ts ",
     "lint:comments": "bun scripts/check-comments.ts",
     "test": "nice -n 10 vitest run",
