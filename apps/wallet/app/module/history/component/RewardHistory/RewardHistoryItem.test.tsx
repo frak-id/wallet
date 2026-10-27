@@ -64,4 +64,24 @@ describe("RewardHistoryItem", () => {
         // One padlock on the logo badge, one next to the amount.
         expect(container.querySelectorAll("svg")).toHaveLength(2);
     });
+
+    test.each([
+        {
+            label: "reward.status.pending",
+            item: { purchase: { id: "p1", amount: 40, currency: "EUR" } },
+        },
+        { label: "reward.pending.onItsWay", item: { role: "winner" as const } },
+        {
+            label: "reward.pending.availableOn",
+            item: { availableAt: Date.now() + 86_400_000 },
+        },
+    ])("labels a pending row $label", ({ label, item }) => {
+        const { getByText } = render(
+            <RewardHistoryItem
+                item={makeItem({ status: "pending", ...item })}
+            />
+        );
+
+        expect(getByText(label)).toBeInTheDocument();
+    });
 });

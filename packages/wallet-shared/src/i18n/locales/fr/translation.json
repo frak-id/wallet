@@ -413,10 +413,10 @@
         "pendingGains": {
             "subtitle": "Gains en attente",
             "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
-            "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
+            "description": "Tes gains sont arrivés. Collecte-les maintenant dans ton porte-monnaie.",
             "confirm": "Collecter mes gains",
             "success": "Gains collectés !",
-            "unpaid": "Plus {{amount}} en cours de validation"
+            "unpaid": "Plus {{amount}} à venir"
         },
         "pendingEmpty": {
             "title": "Tu n'as pas encore de gains",
@@ -1129,6 +1129,13 @@
             "cancelled": "Annulé",
             "expired": "Expiré",
             "locked": "Verrouillé"
+        },
+        "pending": {
+            "onItsWay": "En cours d'envoi",
+            "onItsWayDisclaimer": "Ce gain est en route vers ton porte-monnaie. Tu pourras le collecter très bientôt.",
+            "availableOn": "Disponible le {{date}}",
+            "availableOnLabel": "Disponible le",
+            "availableOnDisclaimer": "Tu pourras collecter ce gain à partir de cette date."
         },
         "trigger": {
             "unknown": "Récompense",

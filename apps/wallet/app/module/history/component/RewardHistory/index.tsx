@@ -23,6 +23,7 @@ import { HistoryEntryRow } from "@/module/history/component/HistoryEntryRow";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useHistory } from "@/module/history/hook/useHistory";
 import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
+import { pendingReason } from "@/module/history/utils/pendingReason";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -143,7 +144,7 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                                     }
                                     className={styles.statusText}
                                 >
-                                    {t(`reward.status.${item.status}`)}
+                                    <StatusLabel item={item} />
                                 </Text>
                             )}
                         </Stack>
@@ -165,6 +166,21 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
             </Inline>
         </button>
     );
+}
+
+function StatusLabel({ item }: { item: RewardHistoryItemType }) {
+    const { t, i18n } = useTranslation();
+    if (item.status !== "pending") return t(`reward.status.${item.status}`);
+
+    const reason = pendingReason(item);
+    if (reason.kind === "purchase") return t("reward.status.pending");
+    if (reason.kind === "payout") return t("reward.pending.onItsWay");
+    return t("reward.pending.availableOn", {
+        date: new Date(reason.availableAt).toLocaleDateString(i18n.language, {
+            day: "numeric",
+            month: "long",
+        }),
+    });
 }
 
 function MerchantLogoWithBadge({

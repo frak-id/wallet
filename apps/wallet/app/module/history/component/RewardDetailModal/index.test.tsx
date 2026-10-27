@@ -163,4 +163,67 @@ describe("RewardDetailModal", () => {
             getByText("reward.detail.lockedOnFriendExplanation")
         ).toBeInTheDocument();
     });
+
+    test("keeps the brand validation copy for a pending purchase reward", () => {
+        const { getByText } = render(
+            <RewardDetailModal
+                item={makeItem({
+                    status: "pending",
+                    purchase: { id: "p1", amount: 40, currency: "EUR" },
+                })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(
+            getByText("reward.detail.pendingValidation")
+        ).toBeInTheDocument();
+        expect(
+            getByText("reward.detail.pendingDisclaimer")
+        ).toBeInTheDocument();
+    });
+
+    test("says a pending prize is on its way, not awaiting the brand", () => {
+        const { getByText, queryByText } = render(
+            <RewardDetailModal
+                item={makeItem({
+                    status: "pending",
+                    role: "winner",
+                    trigger: "custom",
+                })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(getByText("reward.pending.onItsWay")).toBeInTheDocument();
+        expect(
+            getByText("reward.pending.onItsWayDisclaimer")
+        ).toBeInTheDocument();
+        expect(
+            queryByText("reward.detail.pendingDisclaimer")
+        ).not.toBeInTheDocument();
+    });
+
+    test("dates a pending reward without a purchase from its lockup", () => {
+        const { getByText, queryByText } = render(
+            <RewardDetailModal
+                item={makeItem({
+                    status: "pending",
+                    trigger: "referral_signup",
+                    availableAt: Date.now() + 86_400_000,
+                })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(
+            getByText("reward.pending.availableOnLabel")
+        ).toBeInTheDocument();
+        expect(
+            getByText("reward.pending.availableOnDisclaimer")
+        ).toBeInTheDocument();
+        expect(
+            queryByText("reward.detail.pendingValidation")
+        ).not.toBeInTheDocument();
+    });
 });

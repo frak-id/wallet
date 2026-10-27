@@ -1001,6 +1001,13 @@ export default interface Resources {
         "title": "Earnings history",
         "viewAll": "View all"
       },
+      "pending": {
+        "availableOn": "Available on {{date}}",
+        "availableOnDisclaimer": "You'll be able to collect this reward from that date.",
+        "availableOnLabel": "Available on",
+        "onItsWay": "On its way",
+        "onItsWayDisclaimer": "This reward is on its way to your wallet. You'll be able to collect it very soon."
+      },
       "status": {
         "bank_depleted": "Awaiting funding by the brand",
         "cancelled": "Cancelled",
@@ -1320,11 +1327,11 @@ export default interface Resources {
       },
       "pendingGains": {
         "confirm": "Collect my earnings",
-        "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+        "description": "Your earnings have arrived. Collect them now into your wallet.",
         "heading": "Great news!\nMoney is waiting for you.",
         "subtitle": "Pending earnings",
         "success": "Earnings collected!",
-        "unpaid": "Plus {{amount}} still being validated"
+        "unpaid": "Plus {{amount}} still to come"
       },
       "pendingReferral": {
         "success": "You have claimed your reward successfully!",

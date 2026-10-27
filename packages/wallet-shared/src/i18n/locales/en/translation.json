@@ -413,10 +413,10 @@
         "pendingGains": {
             "subtitle": "Pending earnings",
             "heading": "Great news!\nMoney is waiting for you.",
-            "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+            "description": "Your earnings have arrived. Collect them now into your wallet.",
             "confirm": "Collect my earnings",
             "success": "Earnings collected!",
-            "unpaid": "Plus {{amount}} still being validated"
+            "unpaid": "Plus {{amount}} still to come"
         },
         "pendingEmpty": {
             "title": "You don't have any earnings yet",
@@ -1129,6 +1129,13 @@
             "cancelled": "Cancelled",
             "expired": "Expired",
             "locked": "Locked"
+        },
+        "pending": {
+            "onItsWay": "On its way",
+            "onItsWayDisclaimer": "This reward is on its way to your wallet. You'll be able to collect it very soon.",
+            "availableOn": "Available on {{date}}",
+            "availableOnLabel": "Available on",
+            "availableOnDisclaimer": "You'll be able to collect this reward from that date."
         },
         "trigger": {
             "unknown": "Reward",
