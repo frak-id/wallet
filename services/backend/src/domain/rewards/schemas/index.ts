@@ -115,6 +115,8 @@ const PurchaseInfoSchema = t.Object({
 export type PurchaseInfo = Static<typeof PurchaseInfoSchema>;
 
 export const RewardHistoryItemSchema = t.Object({
+    /** The asset log's id: one settlement batch stamps the same `txHash` on many rewards. */
+    id: t.String(),
     merchant: MerchantInfoSchema,
     token: TokenInfoSchema,
     amount: t.TokenAmount,

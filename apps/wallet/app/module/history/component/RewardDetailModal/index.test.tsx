@@ -16,6 +16,7 @@ function makeItem(
     overrides: Partial<RewardHistoryItem> = {}
 ): RewardHistoryItem {
     return {
+        id: "asset-1",
         merchant: { name: "Brand", domain: "brand.example" },
         token: { symbol: "USDC", decimals: 6 },
         amount: { amount: 5, eurAmount: 5, usdAmount: 5, gbpAmount: 5 },
@@ -104,6 +105,51 @@ describe("RewardDetailModal", () => {
         ).toBeInTheDocument();
         expect(queryByText("reward.detail.toCollect")).not.toBeInTheDocument();
     });
+
+    test("offers to collect a reward that is on-chain", () => {
+        const { getByText } = render(
+            <RewardDetailModal
+                item={makeItem({ status: "settled" })}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(getByText("reward.detail.toCollect")).toBeInTheDocument();
+    });
+
+    test.each(["processing", "bank_depleted", "cancelled", "expired"] as const)(
+        "says where a %s reward stands instead of offering to collect it",
+        (status) => {
+            const { getByText, queryByText } = render(
+                <RewardDetailModal
+                    item={makeItem({ status })}
+                    onClose={vi.fn()}
+                />
+            );
+
+            expect(getByText(`reward.status.${status}`)).toBeInTheDocument();
+            expect(
+                queryByText("reward.detail.toCollect")
+            ).not.toBeInTheDocument();
+        }
+    );
+
+    test.each([
+        { status: "cancelled", shown: "\u20ac5.00" },
+        { status: "bank_depleted", shown: "+\u20ac5.00" },
+    ] as const)(
+        "signs a $status reward's amount as $shown",
+        ({ status, shown }) => {
+            const { getByText } = render(
+                <RewardDetailModal
+                    item={makeItem({ status })}
+                    onClose={vi.fn()}
+                />
+            );
+
+            expect(getByText(shown)).toBeInTheDocument();
+        }
+    );
 
     test("tells a referrer the reward waits on their friend's first brand reward", () => {
         const { getByText } = render(

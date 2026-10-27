@@ -12,7 +12,7 @@ import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
 export type HistoryEntry =
     | {
           kind: "reward";
-          /** Stable React key — falls back to merchant + ts when no txHash. */
+          /** Stable React key: the reward's own id. */
           id: string;
           /** Seconds since epoch. */
           timestamp: number;
@@ -33,7 +33,7 @@ export type HistoryEntry =
 export function rewardToHistoryEntry(reward: RewardHistoryItem): HistoryEntry {
     return {
         kind: "reward",
-        id: reward.txHash ?? `${reward.createdAt}-${reward.merchant.domain}`,
+        id: reward.id,
         timestamp: Math.floor(reward.createdAt / 1000),
         reward,
     };

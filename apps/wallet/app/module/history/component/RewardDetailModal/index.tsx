@@ -123,7 +123,9 @@ function DetailCard({
     locale: string;
 }) {
     const { t } = useTranslation();
-    const displayAmount = `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`;
+    const amount = formatCurrency(item.amount.eurAmount, "EUR", locale);
+    const lost = item.status === "cancelled" || item.status === "expired";
+    const displayAmount = lost ? amount : `+${amount}`;
 
     const isPending = item.status === "pending";
 
@@ -329,9 +331,22 @@ function StatusRow({
             labelVariant="bodySmall"
             labelColor="secondary"
             labelWeight="regular"
-            label={t("reward.detail.toCollect")}
+            label={t(statusLabelKey(item.status))}
         />
     );
+}
+
+/** Only a reward on-chain is to collect; the rest say where they stand. */
+function statusLabelKey(status: RewardHistoryItem["status"]) {
+    switch (status) {
+        case "processing":
+        case "bank_depleted":
+        case "cancelled":
+        case "expired":
+            return `reward.status.${status}` as const;
+        default:
+            return "reward.detail.toCollect";
+    }
 }
 
 function lockedExplanationKey(waitsOnFriend: boolean | undefined) {

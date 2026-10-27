@@ -11,6 +11,7 @@ function makeReward(
     overrides: Partial<RewardHistoryItem> = {}
 ): RewardHistoryItem {
     return {
+        id: "asset-1",
         merchant: { name: "Frak", domain: "frak.id" },
         token: { symbol: "USDC", decimals: 6 },
         amount: { amount: 1, eurAmount: 1, usdAmount: 1, gbpAmount: 1 },
@@ -30,16 +31,12 @@ describe("historyEntry adapters", () => {
             expect(entry.timestamp).toBe(5);
         });
 
-        test("uses txHash as id when present", () => {
-            const entry = rewardToHistoryEntry(
-                makeReward({ txHash: "0xdead" })
+        test("keys two rewards settled in the same transaction apart", () => {
+            const [first, second] = ["asset-1", "asset-2"].map((id) =>
+                rewardToHistoryEntry(makeReward({ id, txHash: "0xbatch" }))
             );
-            expect(entry.id).toBe("0xdead");
-        });
-
-        test("falls back to createdAt+domain when no txHash", () => {
-            const entry = rewardToHistoryEntry(makeReward());
-            expect(entry.id).toContain("frak.id");
+            expect(first?.id).toBe("asset-1");
+            expect(second?.id).toBe("asset-2");
         });
     });
 
@@ -76,8 +73,8 @@ describe("historyEntry adapters", () => {
                 createdAt: Date.parse("2024-06-01T00:00:00Z"),
             });
             const newer = makeReward({
+                id: "asset-new",
                 createdAt: Date.parse("2024-07-01T00:00:00Z"),
-                txHash: "0xnew",
             });
             const olderOrder = moneriumOrder({
                 id: "ord-old",
@@ -86,7 +83,7 @@ describe("historyEntry adapters", () => {
 
             const merged = mergeHistoryEntries([older, newer], [olderOrder]);
 
-            expect(merged[0].id).toBe("0xnew");
+            expect(merged[0].id).toBe("asset-new");
             expect(merged[merged.length - 1].id).toBe("ord-old");
         });
 

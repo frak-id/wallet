@@ -7169,6 +7169,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "id",
                           "merchant",
                           "token",
                           "amount",
@@ -7178,6 +7179,9 @@
                           "createdAt"
                         ],
                         "properties": {
+                          "id": {
+                            "type": "string"
+                          },
                           "merchant": {
                             "type": "object",
                             "required": [
