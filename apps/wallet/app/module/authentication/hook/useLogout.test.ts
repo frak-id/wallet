@@ -3,6 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 // imports, so routing it through the fixtures module would reference an
 // uninitialized binding.
 import { vi } from "vitest";
+import { gameSeenStore } from "@/module/game/stores/gameSeenStore";
 import { ibanStore } from "@/module/monerium/store/ibanStore";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import {
@@ -184,5 +185,29 @@ describe("useLogout", () => {
         expect(moneriumStore.getState().hasSeenSetupSuccess).toBe(false);
         expect(window.localStorage.getItem("frak_iban_store")).toBeNull();
         expect(window.localStorage.getItem("frak_monerium_store")).toBeNull();
+    });
+
+    test("forgets the game snapshots, key included", async ({
+        queryWrapper,
+    }) => {
+        gameSeenStore.getState().markSeen("g1", {
+            ticketsBySource: {
+                join: 1,
+                instagramCertified: 0,
+                purchase: 0,
+                referredPurchase: 0,
+                referredSignup: 0,
+                brandShare: 0,
+            },
+            eligible: false,
+        });
+        expect(
+            window.localStorage.getItem("frak_game_seen_store")
+        ).not.toBeNull();
+
+        await runLogout(queryWrapper.wrapper);
+
+        expect(gameSeenStore.getState().seen).toEqual({});
+        expect(window.localStorage.getItem("frak_game_seen_store")).toBeNull();
     });
 });

@@ -9,21 +9,31 @@ const { currentGame, gameHistory, navigate, trackEvent } = vi.hoisted(() => ({
     currentGame: {
         data: undefined as unknown,
         isError: false,
-        refetch: vi.fn(),
+        refetch: vi.fn(() => Promise.resolve()),
     },
     gameHistory: {
         data: [] as unknown[],
         isLoading: false,
         isError: false,
-        refetch: vi.fn(),
+        refetch: vi.fn(() => Promise.resolve()),
     },
 }));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
     useNavigate: () => navigate,
-    Link: ({ to, children }: { to: string; children: ReactElement }) => (
-        <a href={to}>{children}</a>
+    Link: ({
+        to,
+        children,
+        onClick,
+    }: {
+        to: string;
+        children: ReactElement;
+        onClick?: () => void;
+    }) => (
+        <a href={to} onClick={onClick}>
+            {children}
+        </a>
     ),
 }));
 vi.mock("react-i18next", () => ({
@@ -49,6 +59,7 @@ vi.mock("@/module/game/hook/useGameHistory", () => ({
     useGameHistory: () => gameHistory,
 }));
 
+import { gameSeenStore } from "@/module/game/stores/gameSeenStore";
 import { modalStore } from "@/module/stores/modalStore";
 import { gameResult } from "@/tests/gameFixtures";
 import { GamePage } from "./index";
@@ -107,7 +118,56 @@ describe("GamePage", () => {
         gameHistory.isError = false;
         currentGame.isError = false;
         navigate.mockClear();
+        gameSeenStore.setState({ seen: {} });
         modalStore.getState().dismissAll();
+    });
+
+    it("reloads the history, then the game, a little after it ends", async () => {
+        vi.useFakeTimers();
+        try {
+            let historyLoaded = () => {};
+            currentGame.refetch.mockClear();
+            gameHistory.refetch.mockClear();
+            gameHistory.refetch.mockImplementationOnce(
+                () =>
+                    new Promise<void>((resolve) => {
+                        historyLoaded = resolve;
+                    })
+            );
+            currentGame.data = {
+                ...player(4, true),
+                game: { ...game, endsAt: new Date(Date.now() + 60_000) },
+            };
+            render(<GamePage />);
+            expect(
+                screen.getByText(/game.page.hero.countdown/)
+            ).toBeInTheDocument();
+
+            await vi.advanceTimersByTimeAsync(60_000);
+            expect(gameHistory.refetch).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(5_000);
+            expect(gameHistory.refetch).toHaveBeenCalledTimes(1);
+            expect(currentGame.refetch).not.toHaveBeenCalled();
+
+            historyLoaded();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(currentGame.refetch).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("hides the countdown once the game has ended", () => {
+        currentGame.data = {
+            ...player(4, true),
+            game: { ...game, endsAt: new Date(Date.now() - 1_000) },
+        };
+        render(<GamePage />);
+
+        expect(screen.queryByText(/game.page.hero.countdown/)).toBeNull();
+        expect(
+            screen.getByText("onboarding.game.reward.game.endsAt")
+        ).toBeInTheDocument();
     });
 
     it("tracks the page view once with the tickets by source", () => {
@@ -121,6 +181,7 @@ describe("GamePage", () => {
             tickets: 4,
             eligible: true,
             instagram: "certified",
+            missions_done: 3,
             tickets_join: 1,
             tickets_instagram_certified: 0,
             tickets_purchase: 3,
@@ -130,76 +191,169 @@ describe("GamePage", () => {
         });
     });
 
-    it("shows the tickets, prize and end date with the ways to earn more", () => {
+    it("shows the tickets, prize and end date in the hero", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
-        expect(screen.getByText("4")).toBeInTheDocument();
-        expect(screen.getByText("game.page.tickets:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
         expect(screen.getByText("50 € à gagner")).toBeInTheDocument();
         expect(
             screen.getByText("onboarding.game.reward.game.endsAt")
         ).toBeInTheDocument();
-        expect(
-            screen.getByRole("link", { name: /game.page.share/ })
-        ).toHaveAttribute("href", "/profile/referral/share");
-        expect(
-            screen.getByRole("link", { name: /game.page.buy/ })
-        ).toHaveAttribute("href", "/explorer");
-        expect(screen.queryByText("game.page.lockedNone")).toBeNull();
+        expect(screen.queryByText("game.page.hero.pending:4")).toBeNull();
     });
 
-    it("confirms to a certified follower that their tickets count, with no +2 to earn", () => {
+    it("lists the missions with how many are done, friend and purchase leading to where to earn", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.certified")).toBeInTheDocument();
         expect(
-            screen.queryByRole("link", { name: /game.page.certifyCta/ })
+            screen.getByText("game.page.missions.progress")
+        ).toBeInTheDocument();
+        expect(screen.getByRole("progressbar")).toHaveAttribute(
+            "aria-valuenow",
+            "75"
+        );
+        expect(
+            screen.getByRole("link", {
+                name: /game.page.missions.friend.title/,
+            })
+        ).toHaveAttribute("href", "/profile/referral/share");
+        expect(
+            screen.getByRole("link", {
+                name: /game.page.missions.purchase.title/,
+            })
+        ).toHaveAttribute("href", "/explorer");
+        expect(
+            screen.getByText("game.page.missions.earned:3")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("game.page.missions.rewardPerFriend:1")
+        ).toBeInTheDocument();
+    });
+
+    it("confirms to a certified follower that their Instagram is done, with nothing to open", () => {
+        currentGame.data = player(4, true);
+        const { container } = render(<GamePage />);
+
+        expect(
+            screen.getByText("game.page.missions.instagram.certified.title")
+        ).toBeInTheDocument();
+        expect(
+            container.querySelector('a[href="/profile/instagram"]')
         ).toBeNull();
     });
 
-    it("locks the tickets of a player with no Instagram, with what each level would count", () => {
+    it("locks the tickets of a player with no Instagram and gates the first mission", () => {
         currentGame.data = player(2, false);
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.lockedNone")).toBeInTheDocument();
-        expect(screen.getByText("2")).toBeInTheDocument();
-        expect(screen.queryByText("game.page.certified")).toBeNull();
-        const certify = screen.getByRole("link", {
-            name: /game.page.certifyCta/,
+        expect(
+            screen.getByText("game.page.hero.pending:2")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("game.page.hero.subtitleNone:2")
+        ).toBeInTheDocument();
+        expect(screen.queryByText("50 € à gagner")).toBeNull();
+        const gate = screen.getByRole("link", {
+            name: /game.page.missions.instagram.none.title/,
         });
-        expect(certify).toHaveAttribute("href", "/profile/instagram");
-        expect(certify).toHaveTextContent("game.page.counted:4");
-        const declare = screen.getByRole("link", {
-            name: /game.page.declareCta/,
-        });
-        expect(declare).toHaveAttribute("href", "/profile/instagram");
-        expect(declare).toHaveTextContent("game.page.counted:2");
-        expect(screen.queryByText("game.page.gain:2")).toBeNull();
+        expect(gate).toHaveAttribute("href", "/profile/instagram");
+        expect(gate).toHaveTextContent("game.page.missions.reward:2");
     });
 
-    it("tells a declared player their tickets count and offers +2 to certify", () => {
+    it("offers a declared player the +2 to certify, their tickets already counting", () => {
         currentGame.data = player(1, true, "declared");
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.declared")).toBeInTheDocument();
-        expect(
-            screen.getByRole("link", { name: /game.page.certifyCta/ })
-        ).toHaveAttribute("href", "/profile/instagram");
-        expect(screen.getByText("game.page.gain:2")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.drawn:1")).toBeInTheDocument();
+        const certify = screen.getByRole("link", {
+            name: /game.page.missions.instagram.declared.title/,
+        });
+        expect(certify).toHaveAttribute("href", "/profile/instagram");
+        expect(certify).toHaveTextContent("game.page.missions.reward:2");
     });
 
-    it("warns a certified non-follower that their tickets do not count", () => {
+    it("tells a certified non-follower to follow again", () => {
         currentGame.data = player(3, false, "certified");
         render(<GamePage />);
 
         expect(
-            screen.getByText("game.page.lockedNotFollowing")
+            screen.getByText("game.page.hero.subtitleNotFollowing:3")
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("link", { name: /game.page.activateCta/ })
+            screen.getByRole("link", {
+                name: /game.page.missions.instagram.notFollowing.title/,
+            })
         ).toHaveAttribute("href", "/profile/instagram");
+    });
+
+    it("tracks a tap on a mission with its status", () => {
+        trackEvent.mockReset();
+        currentGame.data = player(2, false);
+        render(<GamePage />);
+
+        fireEvent.click(
+            screen.getByRole("link", {
+                name: /game.page.missions.instagram.none.title/,
+            })
+        );
+        fireEvent.click(
+            screen.getByRole("link", {
+                name: /game.page.missions.friend.title/,
+            })
+        );
+
+        expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
+            mission: "instagram",
+            status: "gate",
+        });
+        expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
+            mission: "friend",
+            status: "todo",
+        });
+    });
+
+    it("shows nothing new on a first visit, then the tickets earned since on the next", () => {
+        trackEvent.mockReset();
+        currentGame.data = player(4, true);
+        const first = render(<GamePage />);
+        expect(screen.queryByText("+3")).toBeNull();
+        first.unmount();
+
+        currentGame.data = player(7, true);
+        render(<GamePage />);
+
+        expect(screen.getByText("+3")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.since")).toBeInTheDocument();
+        expect(
+            trackEvent.mock.calls.filter(
+                ([name]) => name === "game_progress_shown"
+            )
+        ).toEqual([
+            ["game_progress_shown", { tickets_gained: 3, unlocked: false }],
+        ]);
+    });
+
+    it("shows the gains once the refetch lands, and the unlock when the tickets start to count", () => {
+        trackEvent.mockReset();
+        currentGame.data = player(2, false);
+        render(<GamePage />).unmount();
+
+        currentGame.data = player(2, false);
+        const { rerender } = render(<GamePage />);
+        expect(screen.queryByText("game.page.hero.since")).toBeNull();
+
+        currentGame.data = player(4, true);
+        rerender(<GamePage />);
+
+        expect(
+            screen.getByText("game.page.hero.unlocked:4")
+        ).toBeInTheDocument();
+        expect(trackEvent).toHaveBeenCalledWith("game_progress_shown", {
+            tickets_gained: 2,
+            unlocked: true,
+        });
     });
 
     it("puts a draw waiting on the player above the open game", () => {
@@ -352,7 +506,7 @@ describe("GamePage", () => {
         gameHistory.data = [result("earlier", "lost")];
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.tickets:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
         expect(
             screen.getByText("game.history.ticketsOf:7")
         ).toBeInTheDocument();
@@ -410,7 +564,7 @@ describe("GamePage", () => {
         currentGame.isError = true;
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.tickets:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
         expect(screen.queryByText("game.page.error")).toBeNull();
     });
 

@@ -2,6 +2,10 @@ import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import {
+    GAME_SEEN_STORE_NAME,
+    gameSeenStore,
+} from "@/module/game/stores/gameSeenStore";
 import { IBAN_STORE_NAME, ibanStore } from "@/module/monerium/store/ibanStore";
 import {
     MONERIUM_STORE_NAME,
@@ -20,6 +24,7 @@ function cleanLocalStorage() {
         "frak_demoPrivateKey",
         MONERIUM_STORE_NAME,
         IBAN_STORE_NAME,
+        GAME_SEEN_STORE_NAME,
     ];
     for (const item of localStorageItems) {
         window.localStorage.removeItem(item);
@@ -50,6 +55,8 @@ export function useLogout() {
         // connection deliberately survives logout.
         moneriumStore.getState().reset();
         ibanStore.getState().reset();
+        // Per device, not per account: the next user must not inherit it.
+        gameSeenStore.setState({ seen: {} });
         queryClient.removeQueries();
         setTimeout(() => {
             cleanLocalStorage();

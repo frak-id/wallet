@@ -1,43 +1,32 @@
-import type {
-    CurrentGameResponse,
-    GameResult,
-} from "@frak-labs/backend-elysia/domain/game/schemas";
-import { Badge } from "@frak-labs/design-system/components/Badge";
-import { Card } from "@frak-labs/design-system/components/Card";
+import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
-import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    CartIcon,
-    InstagramIcon,
-    ReferralIcon,
-} from "@frak-labs/design-system/icons";
-import { ExternalLink, trackEvent } from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { Navigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
-import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 import { OpenGameCard } from "@/module/game/component/GameCard";
+import { GameHero } from "@/module/game/component/GameHero";
+import { GameMissions } from "@/module/game/component/GameMissions";
 import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
+import { useSinceLastVisit } from "@/module/game/hook/useSinceLastVisit";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
-import { formatGameEnd } from "@/module/game/utils/formatGameDate";
-import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
+import { missionsDone, missionsOf } from "@/module/game/utils/gameMissions";
 import { useRefreshInstagramFollow } from "@/module/instagram/hook/useInstagramLink";
+
+/** Past the end, the backend has closed the game: reload a little after. */
+const END_GRACE_MS = 5_000;
+/** setTimeout fires at once beyond 2^31 - 1 ms; a page open that long refetches on its own. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
 
-type InstagramLevel = CurrentGameResponse["me"]["instagram"];
-
 type OpenGame = NonNullable<CurrentGame["game"]>;
-
-/** The `instagramCertified` ticket source: granted while a certified account follows @frak_fr. */
-const CERTIFIED_TICKETS = 2;
 
 /** What tops the page: the open game, or the last result once none is open. */
 type Top =
@@ -68,6 +57,11 @@ export function GamePage() {
     useRefreshInstagramFollow();
     const current = useCurrentGame();
     const history = useGameHistory();
+    useReloadAtEnd(
+        current.data?.game?.endsAt,
+        current.refetch,
+        history.refetch
+    );
     const game = current.data?.game;
     const me = current.data?.me;
     const viewedGameId = game && me?.participating ? game.id : null;
@@ -79,6 +73,8 @@ export function GamePage() {
         (result) => result.outcome === "pending_verification"
     );
     const trackedResultIds = useRef(new Set<string>());
+    const gains = useSinceLastVisit(viewedGameId, me);
+    const progressTracked = useRef(false);
 
     useEffect(() => {
         for (const result of [pending, resultShown]) {
@@ -103,6 +99,7 @@ export function GamePage() {
             tickets: me.tickets,
             eligible: me.eligible,
             instagram: me.instagram,
+            missions_done: missionsDone(missionsOf(me)),
             tickets_join: me.ticketsBySource.join,
             tickets_instagram_certified: me.ticketsBySource.instagramCertified,
             tickets_purchase: me.ticketsBySource.purchase,
@@ -111,6 +108,17 @@ export function GamePage() {
             tickets_brand_share: me.ticketsBySource.brandShare,
         });
     }, [viewedGameId, me]);
+
+    useEffect(() => {
+        if (progressTracked.current || !(gains.total > 0 || gains.unlocked)) {
+            return;
+        }
+        progressTracked.current = true;
+        trackEvent("game_progress_shown", {
+            tickets_gained: gains.total,
+            unlocked: gains.unlocked,
+        });
+    }, [gains]);
 
     // With past games to show, a user not in the open game still gets the page.
     if (top.kind === "join" && results.length === 0) {
@@ -148,16 +156,21 @@ export function GamePage() {
             )}
             {top.kind === "result" && <GameResultCard result={top.result} />}
             {top.kind === "playing" && me && (
-                <GameDetails
-                    prize={
-                        top.game.prizeDescription ??
-                        formatGameAmount(top.game.prizeAmount, i18n.language)
-                    }
-                    endsAt={top.game.endsAt}
-                    tickets={me.tickets}
-                    eligible={me.eligible}
-                    instagram={me.instagram}
-                />
+                <>
+                    <GameHero
+                        me={me}
+                        prize={
+                            top.game.prizeDescription ??
+                            formatGameAmount(
+                                top.game.prizeAmount,
+                                i18n.language
+                            )
+                        }
+                        endsAt={top.game.endsAt}
+                        gains={gains}
+                    />
+                    <GameMissions missions={missionsOf(me)} />
+                </>
             )}
             {top.kind !== "loading" && (
                 <PastGames
@@ -170,158 +183,20 @@ export function GamePage() {
     );
 }
 
-function GameDetails({
-    prize,
-    endsAt,
-    tickets,
-    eligible,
-    instagram,
-}: {
-    prize: string;
-    endsAt: Date | string;
-    tickets: number;
-    eligible: boolean;
-    instagram: InstagramLevel;
-}) {
-    const { t, i18n } = useTranslation();
-    const endDate = formatGameEnd(endsAt, i18n.language);
-
-    return (
-        <>
-            <Card>
-                <Stack space="xs" align="center">
-                    <Text variant="display1" as="p">
-                        {tickets}
-                    </Text>
-                    <Text color="secondary">
-                        {t("game.page.tickets", { count: tickets })}
-                    </Text>
-                    <Text weight="semiBold" align="center">
-                        {prize}
-                    </Text>
-                    <Text variant="bodySmall" color="secondary">
-                        {t("onboarding.game.reward.game.endsAt", {
-                            date: endDate,
-                        })}
-                    </Text>
-                </Stack>
-            </Card>
-            <InstagramStanding
-                eligible={eligible}
-                instagram={instagram}
-                tickets={tickets}
-            />
-            <Stack space="xs">
-                <Text weight="semiBold">{t("game.page.more")}</Text>
-                <InfoCard>
-                    {instagram === "declared" && (
-                        <InfoRow
-                            icon={InstagramIcon}
-                            label={t("game.page.certifyCta")}
-                            to="/profile/instagram"
-                            action={
-                                <Badge size="small" variant="success">
-                                    {t("game.page.gain", {
-                                        count: CERTIFIED_TICKETS,
-                                    })}
-                                </Badge>
-                            }
-                        />
-                    )}
-                    <InfoRow
-                        icon={ReferralIcon}
-                        label={t("game.page.share")}
-                        to="/profile/referral/share"
-                        action={
-                            <Badge size="small" variant="success">
-                                {t("game.page.gain", { count: 1 })}
-                            </Badge>
-                        }
-                    />
-                    <InfoRow
-                        icon={CartIcon}
-                        label={t("game.page.buy")}
-                        to="/explorer"
-                        action={
-                            <Badge size="small" variant="success">
-                                {t("game.page.gain", { count: 3 })}
-                            </Badge>
-                        }
-                    />
-                </InfoCard>
-                <Text variant="bodySmall" color="secondary">
-                    {t("game.page.shareHint")}
-                </Text>
-            </Stack>
-        </>
-    );
-}
-
-const igLink = <ExternalLink href={FRAK_INSTAGRAM_URL} />;
-
-/** Whether the tickets count, and how to make them count, for each Instagram level. */
-function InstagramStanding({
-    eligible,
-    instagram,
-    tickets,
-}: {
-    eligible: boolean;
-    instagram: InstagramLevel;
-    tickets: number;
-}) {
-    const { t } = useTranslation();
-    if (instagram === "certified" && eligible) {
-        return <Notice tone="success">{t("game.page.certified")}</Notice>;
-    }
-    if (instagram === "declared") {
-        return <Notice tone="info">{t("game.page.declared")}</Notice>;
-    }
-    if (instagram === "certified") {
-        return (
-            <Stack space="xs">
-                <Notice tone="warning">
-                    <Trans
-                        i18nKey="game.page.lockedNotFollowing"
-                        components={{ igLink }}
-                    />
-                </Notice>
-                <InfoCard>
-                    <InfoRow
-                        icon={InstagramIcon}
-                        label={t("game.page.activateCta")}
-                        to="/profile/instagram"
-                    />
-                </InfoCard>
-            </Stack>
-        );
-    }
-    return (
-        <Stack space="xs">
-            <Notice tone="warning">{t("game.page.lockedNone")}</Notice>
-            <InfoCard>
-                <InfoRow
-                    icon={InstagramIcon}
-                    label={t("game.page.certifyCta")}
-                    to="/profile/instagram"
-                    action={
-                        <Badge size="small" variant="success">
-                            {t("game.page.counted", {
-                                count: tickets + CERTIFIED_TICKETS,
-                            })}
-                        </Badge>
-                    }
-                />
-                <InfoRow
-                    icon={InstagramIcon}
-                    label={t("game.page.declareCta")}
-                    to="/profile/instagram"
-                    action={
-                        <Badge size="small" variant="info">
-                            {t("game.page.counted", { count: tickets })}
-                        </Badge>
-                    }
-                />
-            </InfoCard>
-        </Stack>
-    );
+function useReloadAtEnd(
+    endsAt: Date | string | undefined,
+    refetchCurrent: () => Promise<unknown>,
+    refetchHistory: () => Promise<unknown>
+) {
+    const end = endsAt ? new Date(endsAt).getTime() : null;
+    useEffect(() => {
+        if (end === null) return;
+        const delay = Math.max(0, end - Date.now() + END_GRACE_MS);
+        if (delay > MAX_TIMEOUT_MS) return;
+        // History first: a closed game over a stale history would show the previous result.
+        const id = setTimeout(() => {
+            void refetchHistory().then(() => refetchCurrent());
+        }, delay);
+        return () => clearTimeout(id);
+    }, [end, refetchCurrent, refetchHistory]);
 }
