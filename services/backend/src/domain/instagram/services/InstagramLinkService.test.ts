@@ -28,7 +28,7 @@ const row: InstagramLinkSelect = {
 function setup() {
     const repository = {
         findByIdentityGroup: vi.fn(),
-        upsert: vi.fn(),
+        certify: vi.fn(),
         deleteByIdentityGroup: vi.fn(),
     };
     const declarations = {
@@ -84,7 +84,7 @@ describe("InstagramLinkService", () => {
         vi.useFakeTimers();
         vi.setSystemTime(CHECKED_AT);
         const { repository, service } = setup();
-        repository.upsert.mockResolvedValue(row);
+        repository.certify.mockResolvedValue(row);
 
         await service.link({
             identityGroupId: GROUP,
@@ -93,18 +93,21 @@ describe("InstagramLinkService", () => {
             follows: true,
         });
 
-        expect(repository.upsert).toHaveBeenCalledWith({
-            identityGroupId: GROUP,
-            igsid: row.igsid,
-            username: "frak_fr",
-            follows: true,
-            checkedAt: CHECKED_AT,
-        });
+        expect(repository.certify).toHaveBeenCalledWith(
+            {
+                identityGroupId: GROUP,
+                igsid: row.igsid,
+                username: "frak_fr",
+                follows: true,
+                checkedAt: CHECKED_AT,
+            },
+            undefined
+        );
     });
 
     it("answers 409 when another identity already holds the account", async () => {
         const { repository, service } = setup();
-        repository.upsert.mockRejectedValue(
+        repository.certify.mockRejectedValue(
             new DrizzleQueryError(
                 "insert into instagram_links",
                 [],
@@ -131,7 +134,7 @@ describe("InstagramLinkService", () => {
     it("lets any other failure through untranslated", async () => {
         const { repository, service } = setup();
         const failure = new Error("connection lost");
-        repository.upsert.mockRejectedValue(failure);
+        repository.certify.mockRejectedValue(failure);
 
         await expect(
             service.link({
@@ -184,7 +187,7 @@ describe("InstagramLinkService", () => {
     ])("tracks $name", async ({ previous, follows, events }) => {
         const { repository, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(previous);
-        repository.upsert.mockResolvedValue({ ...row, follows });
+        repository.certify.mockResolvedValue({ ...row, follows });
 
         await service.link({
             identityGroupId: GROUP,
@@ -203,41 +206,39 @@ describe("InstagramLinkService", () => {
 describe("InstagramLinkService certification and declaration", () => {
     beforeEach(() => track.mockReset());
 
-    it("drops the declaration once the account is certified", async () => {
-        const { repository, declarations, service } = setup();
+    it("claims the DM code in the same write as the link", async () => {
+        const { repository, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(null);
-        repository.upsert.mockResolvedValue(row);
+        repository.certify.mockResolvedValue(row);
 
-        await service.link({
+        const linked = await service.linkWithCode("code-1", {
             identityGroupId: GROUP,
             igsid: row.igsid,
             username: "frak_fr",
             follows: true,
         });
 
-        expect(declarations.deleteByIdentityGroup).toHaveBeenCalledWith(GROUP);
+        expect(linked).toMatchObject({ username: "frak_fr", follows: true });
+        expect(repository.certify).toHaveBeenCalledWith(
+            expect.objectContaining({ identityGroupId: GROUP }),
+            "code-1"
+        );
     });
 
-    it("keeps the declaration when the account belongs to another wallet", async () => {
-        const { repository, declarations, service } = setup();
-        repository.upsert.mockRejectedValue(
-            new DrizzleQueryError(
-                "insert into instagram_links",
-                [],
-                Object.assign(new Error("duplicate key"), { code: "23505" })
-            )
-        );
+    it("links nothing and tracks nothing once the code is gone", async () => {
+        const { repository, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        repository.certify.mockResolvedValue(null);
 
-        await service
-            .link({
-                identityGroupId: GROUP,
-                igsid: row.igsid,
-                username: "frak_fr",
-                follows: true,
-            })
-            .catch(() => undefined);
+        const linked = await service.linkWithCode("code-1", {
+            identityGroupId: GROUP,
+            igsid: row.igsid,
+            username: "frak_fr",
+            follows: true,
+        });
 
-        expect(declarations.deleteByIdentityGroup).not.toHaveBeenCalled();
+        expect(linked).toBeNull();
+        expect(track).not.toHaveBeenCalled();
     });
 
     it("declares a normalized handle and tracks the first declaration", async () => {

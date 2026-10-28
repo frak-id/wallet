@@ -347,6 +347,9 @@ export class IdentityMergeService {
                 mergingGroupIds,
             });
 
+        // Before the links: a webhook mid-certification holds its code row, so the two serialize.
+        const deletedInstagramLinkCodes =
+            await this.deleteInstagramLinkCodesInTrx(trx, mergingGroupIds);
         const instagramLinkOps = await this.migrateInstagramLinksInTrx(trx, {
             anchorGroupId,
             mergingGroupIds,
@@ -400,6 +403,7 @@ export class IdentityMergeService {
             deletedConflictingInstagramLinks:
                 instagramLinkOps.deletedConflictingInstagramLinks,
             ...instagramDeclarationOps,
+            deletedInstagramLinkCodes,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -875,10 +879,24 @@ export class IdentityMergeService {
         };
     }
 
-    /**
-     * Keeps one declaration on the anchor, none when a certified link survived.
-     * Loser groups' link codes go: a DM carrying one would link a deleted group.
-     */
+    /** Loser groups' link codes go: a DM carrying one would link a deleted group. */
+    private async deleteInstagramLinkCodesInTrx(
+        trx: PgTx,
+        mergingGroupIds: string[]
+    ): Promise<number> {
+        const deleted = await trx
+            .delete(instagramLinkCodesTable)
+            .where(
+                inArray(
+                    instagramLinkCodesTable.identityGroupId,
+                    mergingGroupIds
+                )
+            )
+            .returning({ id: instagramLinkCodesTable.id });
+        return deleted.length;
+    }
+
+    /** Keeps one declaration on the anchor, none when a certified link survived. */
     private async migrateInstagramDeclarationsInTrx(
         trx: PgTx,
         {
@@ -893,18 +911,7 @@ export class IdentityMergeService {
     ): Promise<{
         migratedInstagramDeclarations: number;
         deletedInstagramDeclarations: number;
-        deletedInstagramLinkCodes: number;
     }> {
-        const deletedCodes = await trx
-            .delete(instagramLinkCodesTable)
-            .where(
-                inArray(
-                    instagramLinkCodesTable.identityGroupId,
-                    mergingGroupIds
-                )
-            )
-            .returning({ id: instagramLinkCodesTable.id });
-
         const declarations = await trx
             .select()
             .from(instagramDeclarationsTable)
@@ -937,7 +944,6 @@ export class IdentityMergeService {
         return {
             migratedInstagramDeclarations: needsMove ? 1 : 0,
             deletedInstagramDeclarations: dropped.length,
-            deletedInstagramLinkCodes: deletedCodes.length,
         };
     }
 

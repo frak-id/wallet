@@ -88,7 +88,7 @@ function formatDeadline(at: Date, locale: string) {
         timeZone: "Europe/Paris",
         day: "numeric",
         month: "long",
-        hour: "2-digit",
+        hour: "numeric",
         minute: "2-digit",
     }).format(at);
 }

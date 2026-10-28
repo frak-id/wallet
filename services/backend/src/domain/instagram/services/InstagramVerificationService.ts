@@ -20,7 +20,7 @@ import type { InstagramTokenService } from "./InstagramTokenService";
 export const CHECK_COOLDOWN_MS = 30 * 1000;
 const RECHECK_CONCURRENCY = 5;
 
-/** Meta could not answer for reasons unrelated to the player: never read it as \"not following\". */
+/** Meta could not answer for reasons unrelated to the player: never read it as "not following". */
 export class InstagramUnavailableError extends Error {
     constructor(reason: string) {
         super(`Instagram lookup unavailable: ${reason}`);
@@ -44,7 +44,7 @@ export class InstagramVerificationService {
     ) {}
 
     /**
-     * Links the sender to the account whose code the DM carries, then burns the code.
+     * Links the sender to the account whose code the DM carries, burning the code with the link.
      * Throws `InstagramUnavailableError` so the webhook answers 500 and Meta redelivers.
      */
     async handleMessage({
@@ -59,12 +59,13 @@ export class InstagramVerificationService {
         const lookup = await this.lookup(igsid);
         if (lookup.kind === "gone") return "profile_gone";
         try {
-            await this.linkService.link({
+            const linked = await this.linkService.linkWithCode(code.id, {
                 identityGroupId: code.identityGroupId,
                 igsid,
                 username: lookup.username,
                 follows: lookup.follows,
             });
+            return linked ? "linked" : "no_code";
         } catch (error) {
             if (
                 error instanceof HttpError &&
@@ -78,8 +79,6 @@ export class InstagramVerificationService {
             }
             throw error;
         }
-        await this.codes.deleteById(code.id);
-        return "linked";
     }
 
     /** Re-reads the follow from Meta for the player; 502 `INSTAGRAM_UNAVAILABLE` when Meta cannot say. */
@@ -137,12 +136,12 @@ export class InstagramVerificationService {
                 "Instagram no longer answers for a certified account: counted as not following"
             );
         }
-        await this.links.refreshProfile(link.id, {
+        const saved = await this.links.refreshProfile(link, {
             username: lookup.kind === "found" ? lookup.username : link.username,
             follows,
             checkedAt: new Date(),
         });
-        this.linkService.trackChange(link.follows, follows, link);
+        if (saved) this.linkService.trackChange(link.follows, follows, link);
     }
 
     private async lookup(

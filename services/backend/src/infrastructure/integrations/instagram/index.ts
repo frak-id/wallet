@@ -8,14 +8,16 @@ const TIMEOUT_MS = 5_000;
 /** Meta error codes that say nothing about the player: auth, permissions, throttling, outage. */
 const SYSTEMIC_ERROR_CODES = new Set([1, 2, 4, 10, 17, 32, 190, 613]);
 
+/** 401/403 mean our token or app setup is wrong, whatever the code: never one player's fault. */
 function isSystemic(status: number, code: number | null): boolean {
     if (status >= 500 || status === 429 || code === null) return true;
+    if (status === 401 || status === 403) return true;
     return SYSTEMIC_ERROR_CODES.has(code) || (code >= 200 && code < 300);
 }
 
 export type InstagramProfileLookup =
     | { kind: "found"; username: string; follows: boolean }
-    /** Meta refuses this IGSID (deleted, blocked us, consent gone): no follow to prove. */
+    /** Meta refuses this IGSID (account deleted or blocking us): no follow to prove. */
     | { kind: "gone"; code: number | null }
     | { kind: "unavailable" };
 

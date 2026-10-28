@@ -829,6 +829,17 @@ describe("GameDrawOrchestrator.results", () => {
         });
     });
 
+    it("shows no deadline before the candidate's push went out", async () => {
+        const { orchestrator, draws } = playing(gameEndingAt("g", 24));
+        draws.findOutcomes.mockResolvedValue([
+            outcome("g", { candidates: ["me", "bb"] }),
+        ]);
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(result).toMatchObject({ outcome: "drawing", verifyBy: null });
+    });
+
     it("keeps a certified follower's turn as drawing", async () => {
         const { orchestrator, draws, instagramLinks } = playing(
             gameEndingAt("g", 24)
@@ -879,8 +890,10 @@ describe("GameDrawOrchestrator.results", () => {
 
 describe("GameDrawOrchestrator candidate window", () => {
     const HOUR = 60 * 60 * 1000;
+    const windowed = (overrides: Partial<GameDrawSelect> = {}) =>
+        drawRow({ algorithm: "frak-draw-v2", ...overrides });
     const told = (hoursAgo: number, overrides: Partial<GameDrawSelect> = {}) =>
-        drawRow({
+        windowed({
             notifiedRank: 0,
             candidateNotifiedAt: new Date(NOW.getTime() - hoursAgo * HOUR),
             ...overrides,
@@ -895,9 +908,20 @@ describe("GameDrawOrchestrator candidate window", () => {
         return ctx;
     }
 
+    it("leaves a v1 draw's candidate to the admin, without a push or a deadline", async () => {
+        const { orchestrator, draws, verification } = waiting(drawRow());
+
+        const result = await orchestrator.runDue(NOW);
+
+        expect(verification.recheck).not.toHaveBeenCalled();
+        expect(draws.markCandidateNotified).not.toHaveBeenCalled();
+        expect(draws.addRejection).not.toHaveBeenCalled();
+        expect(result.advanced).toBe(0);
+    });
+
     it("leaves a certified follower to the admin, re-read at most every 15 minutes", async () => {
         const { orchestrator, draws, instagramLinks, verification } = waiting(
-            drawRow()
+            windowed()
         );
         instagramLinks.findByIdentityGroup.mockResolvedValue({ follows: true });
 
@@ -912,7 +936,7 @@ describe("GameDrawOrchestrator candidate window", () => {
     });
 
     it("tells a declared candidate they were drawn, once, and opens their 24 h", async () => {
-        const { orchestrator, draws } = waiting(drawRow());
+        const { orchestrator, draws } = waiting(windowed());
 
         const result = await orchestrator.runDue(NOW);
 
@@ -937,7 +961,7 @@ describe("GameDrawOrchestrator candidate window", () => {
     });
 
     it("sends no push when another pass already told the candidate", async () => {
-        const { orchestrator, draws } = waiting(drawRow());
+        const { orchestrator, draws } = waiting(windowed());
         draws.markCandidateNotified.mockResolvedValue(false);
 
         await orchestrator.runDue(NOW);
@@ -973,7 +997,7 @@ describe("GameDrawOrchestrator candidate window", () => {
 
     it("passes the turn on once the 24 h are over, and tells the next candidate", async () => {
         const lapsed = told(25, { remindedRank: 0 });
-        const next = drawRow({
+        const next = windowed({
             rejections: [
                 {
                     pid: "aa",
@@ -1041,7 +1065,7 @@ describe("GameDrawOrchestrator candidate window", () => {
         draws.findByStatus.mockImplementation(async (status: string) =>
             status === "frozen"
                 ? [
-                      drawRow({
+                      windowed({
                           status: "frozen",
                           algorithm: "frak-draw-v2",
                           drandSignature: null,

@@ -33,14 +33,16 @@ function setup() {
     const links = {
         findByIdentityGroup: vi.fn().mockResolvedValue(null),
         findByIdentityGroups: vi.fn().mockResolvedValue([]),
-        refreshProfile: vi.fn().mockResolvedValue(null),
+        refreshProfile: vi.fn(
+            async (link: object, profile: object) =>
+                ({ ...link, ...profile }) as unknown
+        ),
     };
     const codes = {
         findByCodes: vi.fn().mockResolvedValue([]),
-        deleteById: vi.fn(),
     };
     const linkService = {
-        link: vi.fn().mockResolvedValue({}),
+        linkWithCode: vi.fn().mockResolvedValue({}),
         status: vi.fn().mockResolvedValue({ link: null, declaration: null }),
         trackChange: vi.fn(),
     };
@@ -76,10 +78,10 @@ describe("InstagramVerificationService.handleMessage", () => {
         expect(outcome).toBe("no_code");
         expect(codes.findByCodes).toHaveBeenCalledWith([]);
         expect(graph.lookupProfile).not.toHaveBeenCalled();
-        expect(linkService.link).not.toHaveBeenCalled();
+        expect(linkService.linkWithCode).not.toHaveBeenCalled();
     });
 
-    it("links the sender to the code's account with what Meta reports, then burns the code", async () => {
+    it("links the sender to the code's account with what Meta reports, burning the code", async () => {
         const { codes, graph, linkService, service } = setup();
         codes.findByCodes.mockResolvedValue([CODE]);
 
@@ -90,13 +92,12 @@ describe("InstagramVerificationService.handleMessage", () => {
 
         expect(codes.findByCodes).toHaveBeenCalledWith(["K7Q2PX"]);
         expect(graph.lookupProfile).toHaveBeenCalledWith(IGSID, "token");
-        expect(linkService.link).toHaveBeenCalledWith({
+        expect(linkService.linkWithCode).toHaveBeenCalledWith("code-1", {
             identityGroupId: GROUP,
             igsid: IGSID,
             username: "player",
             follows: true,
         });
-        expect(codes.deleteById).toHaveBeenCalledWith("code-1");
         expect(outcome).toBe("linked");
     });
 
@@ -111,14 +112,26 @@ describe("InstagramVerificationService.handleMessage", () => {
         const replay = await service.handleMessage(message);
 
         expect(replay).toBe("no_code");
-        expect(linkService.link).toHaveBeenCalledTimes(1);
-        expect(codes.deleteById).toHaveBeenCalledTimes(1);
+        expect(linkService.linkWithCode).toHaveBeenCalledTimes(1);
     });
 
-    it("keeps the code when the account already belongs to another wallet", async () => {
+    it("links nobody when a concurrent delivery or a merge claimed the code first", async () => {
         const { codes, linkService, service } = setup();
         codes.findByCodes.mockResolvedValue([CODE]);
-        linkService.link.mockRejectedValue(
+        linkService.linkWithCode.mockResolvedValue(null);
+
+        const outcome = await service.handleMessage({
+            igsid: IGSID,
+            text: "K7Q2PX",
+        });
+
+        expect(outcome).toBe("no_code");
+    });
+
+    it("answers already_linked when the account belongs to another wallet", async () => {
+        const { codes, linkService, service } = setup();
+        codes.findByCodes.mockResolvedValue([CODE]);
+        linkService.linkWithCode.mockRejectedValue(
             HttpError.conflict("INSTAGRAM_ALREADY_LINKED", "taken")
         );
 
@@ -128,7 +141,6 @@ describe("InstagramVerificationService.handleMessage", () => {
         });
 
         expect(outcome).toBe("already_linked");
-        expect(codes.deleteById).not.toHaveBeenCalled();
     });
 
     it("throws and keeps the code when Meta cannot answer, so the delivery is retried", async () => {
@@ -139,20 +151,18 @@ describe("InstagramVerificationService.handleMessage", () => {
         await expect(
             service.handleMessage({ igsid: IGSID, text: "K7Q2PX" })
         ).rejects.toBeInstanceOf(InstagramUnavailableError);
-        expect(linkService.link).not.toHaveBeenCalled();
-        expect(codes.deleteById).not.toHaveBeenCalled();
+        expect(linkService.linkWithCode).not.toHaveBeenCalled();
     });
 
-    it("keeps the code when the link write fails, so the delivery is retried", async () => {
+    it("throws when the link write fails, so the delivery is retried", async () => {
         const { codes, linkService, service } = setup();
         codes.findByCodes.mockResolvedValue([CODE]);
         const failure = new Error("db down");
-        linkService.link.mockRejectedValue(failure);
+        linkService.linkWithCode.mockRejectedValue(failure);
 
         await expect(
             service.handleMessage({ igsid: IGSID, text: "K7Q2PX" })
         ).rejects.toBe(failure);
-        expect(codes.deleteById).not.toHaveBeenCalled();
     });
 
     it("links nobody when Meta refuses the sender's profile", async () => {
@@ -166,7 +176,7 @@ describe("InstagramVerificationService.handleMessage", () => {
         });
 
         expect(outcome).toBe("profile_gone");
-        expect(linkService.link).not.toHaveBeenCalled();
+        expect(linkService.linkWithCode).not.toHaveBeenCalled();
     });
 });
 
@@ -184,13 +194,26 @@ describe("InstagramVerificationService.check", () => {
         await service.check(GROUP);
 
         expect(graph.lookupProfile).toHaveBeenCalledWith(IGSID, "token");
-        expect(links.refreshProfile).toHaveBeenCalledWith("link-1", {
-            username: "player",
-            follows: true,
-            checkedAt: NOW,
-        });
+        expect(links.refreshProfile).toHaveBeenCalledWith(
+            expect.objectContaining({ id: "link-1" }),
+            {
+                username: "player",
+                follows: true,
+                checkedAt: NOW,
+            }
+        );
         expect(linkService.trackChange).toHaveBeenCalledWith(false, true, link);
         expect(linkService.status).toHaveBeenCalledWith(GROUP);
+    });
+
+    it("tracks nothing for a link replaced by another account meanwhile", async () => {
+        const { links, linkService, service } = setup();
+        links.findByIdentityGroup.mockResolvedValue(linkRow());
+        links.refreshProfile.mockResolvedValue(null);
+
+        await service.check(GROUP);
+
+        expect(linkService.trackChange).not.toHaveBeenCalled();
     });
 
     it("asks Meta at most every 30 seconds", async () => {
@@ -276,11 +299,14 @@ describe("InstagramVerificationService.recheck", () => {
 
         await service.recheck([GROUP], { maxAgeMs: 0 });
 
-        expect(links.refreshProfile).toHaveBeenCalledWith("link-1", {
-            username: "player",
-            follows: false,
-            checkedAt: NOW,
-        });
+        expect(links.refreshProfile).toHaveBeenCalledWith(
+            expect.objectContaining({ id: "link-1" }),
+            {
+                username: "player",
+                follows: false,
+                checkedAt: NOW,
+            }
+        );
     });
 
     it.each([

@@ -6,16 +6,24 @@ import type { DrawEntry, GameOutcome, PublicDraw } from "./schemas";
 /** Bumped whenever anything below changes what a draw picks, so old records still replay. */
 export const DRAW_ALGORITHM = "frak-draw-v2";
 
-/** Ranked candidates per algorithm. `rankCandidates` keeps its prefix as the count grows. */
-const CANDIDATES_BY_ALGORITHM: Record<string, number> = {
-    "frak-draw-v1": 10,
+/** Per algorithm: ranked candidates (`rankCandidates` keeps its prefix as the count grows), and whether the 24 h window applies. */
+const ALGORITHMS: Record<
+    string,
+    { candidates: number; candidateWindow: boolean }
+> = {
+    "frak-draw-v1": { candidates: 10, candidateWindow: false },
     // Declared players who never certify each pass the turn on.
-    "frak-draw-v2": 30,
+    "frak-draw-v2": { candidates: 30, candidateWindow: true },
 };
 
 /** `null` for an algorithm this code cannot replay. */
 export function drawCandidatesFor(algorithm: string): number | null {
-    return CANDIDATES_BY_ALGORITHM[algorithm] ?? null;
+    return ALGORITHMS[algorithm]?.candidates ?? null;
+}
+
+/** v1 draws froze followers only, so their candidates stay with the admin. */
+export function hasCandidateWindow(algorithm: string): boolean {
+    return ALGORITHMS[algorithm]?.candidateWindow ?? false;
 }
 
 /** How long the current candidate has to be certified and following before the next one's turn. */
@@ -60,17 +68,13 @@ export function currentCandidate(
     return pid && entry ? { rank, pid, entry } : null;
 }
 
-/** The window opens when the candidate is told, so it never starts before they can know. */
+/** The window opens when the candidate is told: null until then, so no deadline is shown before it is real. */
 export function candidateVerifyBy(
     draw: Pick<GameDrawSelect, "notifiedRank" | "candidateNotifiedAt">,
-    rank: number,
-    now: Date
-): Date {
-    const opened =
-        draw.notifiedRank === rank && draw.candidateNotifiedAt
-            ? draw.candidateNotifiedAt
-            : now;
-    return new Date(opened.getTime() + CANDIDATE_WINDOW_MS);
+    rank: number
+): Date | null {
+    if (draw.notifiedRank !== rank || !draw.candidateNotifiedAt) return null;
+    return new Date(draw.candidateNotifiedAt.getTime() + CANDIDATE_WINDOW_MS);
 }
 
 /** How a participant's Instagram stood at freeze: who keeps their tickets, and why not. */

@@ -11,6 +11,7 @@ import {
     drandRoundTime,
     drawCandidatesFor,
     frozenStandingOf,
+    hasCandidateWindow,
     pseudonymOf,
     rankCandidates,
     snapshotRoot,
@@ -150,6 +151,8 @@ describe("drawCandidatesFor", () => {
         expect(drawCandidatesFor("frak-draw-v1")).toBe(10);
         expect(drawCandidatesFor(DRAW_ALGORITHM)).toBe(30);
         expect(drawCandidatesFor("frak-draw-v0")).toBeNull();
+        expect(hasCandidateWindow("frak-draw-v1")).toBe(false);
+        expect(hasCandidateWindow(DRAW_ALGORITHM)).toBe(true);
     });
 
     it("draws the same first candidates whatever the count", () => {
@@ -170,27 +173,18 @@ describe("drawCandidatesFor", () => {
 });
 
 describe("candidateVerifyBy", () => {
-    const NOW = new Date("2026-11-02T10:00:00Z");
     const TOLD = new Date("2026-11-01T18:00:00Z");
 
     it("ends 24 h after the candidate was told", () => {
         expect(
-            candidateVerifyBy(
-                { notifiedRank: 2, candidateNotifiedAt: TOLD },
-                2,
-                NOW
-            )
+            candidateVerifyBy({ notifiedRank: 2, candidateNotifiedAt: TOLD }, 2)
         ).toEqual(new Date(TOLD.getTime() + CANDIDATE_WINDOW_MS));
     });
 
-    it("has not started for a candidate not told yet", () => {
+    it("has no deadline for a candidate not told yet", () => {
         expect(
-            candidateVerifyBy(
-                { notifiedRank: 1, candidateNotifiedAt: TOLD },
-                2,
-                NOW
-            )
-        ).toEqual(new Date(NOW.getTime() + CANDIDATE_WINDOW_MS));
+            candidateVerifyBy({ notifiedRank: 1, candidateNotifiedAt: TOLD }, 2)
+        ).toBeNull();
     });
 });
 

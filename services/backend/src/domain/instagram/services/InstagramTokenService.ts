@@ -34,21 +34,35 @@ export class InstagramTokenService {
 
         const row = await this.repository.find(ACCOUNT);
         const seedHash = sha256Hex(seed);
-        let token: string;
-        if (row?.seedHash === seedHash) {
-            token = await this.cipher.decrypt(row.tokenEncrypted, ACCOUNT);
-        } else {
-            await this.repository.save({
-                account: ACCOUNT,
-                tokenEncrypted: await this.cipher.encrypt(seed, ACCOUNT),
-                seedHash,
-                refreshedAt: new Date(),
-                expiresAt: null,
-            });
-            token = seed;
-        }
+        const stored =
+            row?.seedHash === seedHash
+                ? await this.decryptStored(row.tokenEncrypted)
+                : null;
+        const token = stored ?? (await this.seed(seed, seedHash));
         this.cached = { token, until: Date.now() + CACHE_TTL_MS };
         return token;
+    }
+
+    /** Null when the row cannot be decrypted (master key rotated, corrupt row): the env seed takes over. */
+    private async decryptStored(encrypted: string): Promise<string | null> {
+        try {
+            return await this.cipher.decrypt(encrypted, ACCOUNT);
+        } catch (err) {
+            log.error({ err }, "Stored Instagram token unreadable: re-seeding");
+            return null;
+        }
+    }
+
+    private async seed(seed: string, seedHash: string): Promise<string> {
+        await this.repository.save({
+            account: ACCOUNT,
+            tokenEncrypted: await this.cipher.encrypt(seed, ACCOUNT),
+            seedHash,
+            // Due at the next cron: the seed's expiry is unknown until Meta renews it.
+            refreshedAt: new Date(0),
+            expiresAt: null,
+        });
+        return seed;
     }
 
     /** Renews the stored token once it is a week old; the cron's whole job. */

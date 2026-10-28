@@ -47,10 +47,4 @@ export class InstagramLinkCodeRepository {
             .from(instagramLinkCodesTable)
             .where(inArray(instagramLinkCodesTable.code, codes));
     }
-
-    async deleteById(id: string): Promise<void> {
-        await db
-            .delete(instagramLinkCodesTable)
-            .where(eq(instagramLinkCodesTable.id, id));
-    }
 }

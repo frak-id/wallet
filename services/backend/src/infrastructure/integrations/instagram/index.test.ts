@@ -47,6 +47,8 @@ describe("InstagramGraphClient.lookupProfile", () => {
         ["throttling", 429, { error: { code: 4 } }],
         ["an outage", 503, {}],
         ["an error without a code", 400, {}],
+        ["a 401 with any code", 401, { error: { code: 100 } }],
+        ["a 403 with any code", 403, { error: { code: 3 } }],
     ])("is unavailable on %s", async (_name, status, body) => {
         vi.stubGlobal("fetch", fetchMock);
         answer(status, body);

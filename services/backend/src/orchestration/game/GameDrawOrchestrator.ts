@@ -21,6 +21,7 @@ import {
     drawCandidatesFor,
     drawTicketsOf,
     frozenStandingOf,
+    hasCandidateWindow,
     isDrawSettled,
     outcomeOf,
     pseudonymOf,
@@ -146,10 +147,15 @@ export class GameDrawOrchestrator {
         private readonly drand: DrandClient
     ) {}
 
-    /** The cron's pass: freeze games that just ended, draw the frozen ones whose round is out, then move each candidate's window. */
+    /**
+     * The cron's pass: freeze games that just ended, draw the frozen ones whose round is out, then move each candidate's window.
+     * Without `at`, each step reads the clock afresh: a freeze can take minutes, and a push stamps its window.
+     */
     async runDue(
-        now = new Date()
+        at?: Date
     ): Promise<{ frozen: number; drawn: number; advanced: number }> {
+        const clock = () => at ?? new Date();
+        let now = clock();
         const ended = await this.games.findEndedBetween(
             new Date(now.getTime() - DRAW_AUTO_FREEZE_WINDOW_MS),
             new Date(now.getTime() - DRAW_FREEZE_GRACE_MS)
@@ -165,6 +171,7 @@ export class GameDrawOrchestrator {
         }
 
         let drawn = 0;
+        now = clock();
         for (const draw of await this.draws.findByStatus("frozen")) {
             const done = await this.isolated(draw.gameId, "run", () =>
                 this.drawFrozen(draw, now)
@@ -174,8 +181,9 @@ export class GameDrawOrchestrator {
 
         let advanced = 0;
         for (const draw of await this.draws.findByStatus("drawn")) {
+            if (!hasCandidateWindow(draw.algorithm)) continue;
             const done = await this.isolated(draw.gameId, "advance", () =>
-                this.advanceCandidate(draw, now)
+                this.advanceCandidate(draw, clock())
             );
             if (done) advanced++;
         }
@@ -191,7 +199,10 @@ export class GameDrawOrchestrator {
         try {
             return await task();
         } catch (error) {
-            log.error({ error, gameId }, `Game draw ${step} failed`);
+            // A Meta outage only delays the step: it is retried every pass.
+            const level =
+                error instanceof InstagramUnavailableError ? "warn" : "error";
+            log[level]({ error, gameId }, `Game draw ${step} failed`);
             return false;
         }
     }
@@ -389,9 +400,8 @@ export class GameDrawOrchestrator {
                 )
             );
         }
-        if (now < candidateVerifyBy(draw, candidate.rank, now)) {
-            return stop(false);
-        }
+        const verifyBy = candidateVerifyBy(draw, candidate.rank);
+        if (!verifyBy || now < verifyBy) return stop(false);
         // One fresh read, so a follow made minutes before the deadline still counts.
         if (await this.isVerifiedFollower(groupId, 0)) return stop(false);
         const rejected = await this.recordRejection(
@@ -410,8 +420,8 @@ export class GameDrawOrchestrator {
         rank: number,
         now: Date
     ): CandidateNotice | null {
-        if (draw.notifiedRank !== rank) return "drawn";
-        const verifyBy = candidateVerifyBy(draw, rank, now);
+        const verifyBy = candidateVerifyBy(draw, rank);
+        if (!verifyBy) return "drawn";
         const remindFrom = verifyBy.getTime() - CANDIDATE_REMINDER_MS;
         if (draw.remindedRank < rank && now.getTime() >= remindFrom) {
             return now < verifyBy ? "reminder" : null;
@@ -450,9 +460,9 @@ export class GameDrawOrchestrator {
                 notice === "drawn"
                     ? { notifiedRank: rank, candidateNotifiedAt: now }
                     : draw,
-                rank,
-                now
+                rank
             );
+            if (!verifyBy) return true;
             eventEmitter.emit("notification", {
                 type:
                     notice === "drawn"
@@ -485,7 +495,7 @@ export class GameDrawOrchestrator {
     }
 
     /** What an admin needs to judge the current candidate, re-read now. */
-    async review(gameId: string, now = new Date()) {
+    async review(gameId: string) {
         const draw = await this.requireDraw(gameId);
         const candidate = currentCandidate(draw);
         if (!candidate) return { draw, candidate: null };
@@ -524,7 +534,7 @@ export class GameDrawOrchestrator {
                 awaiting: verified ? ("admin" as const) : ("player" as const),
                 verifyBy: verified
                     ? null
-                    : candidateVerifyBy(draw, candidate.rank, now),
+                    : candidateVerifyBy(draw, candidate.rank),
             },
         };
     }
@@ -774,7 +784,7 @@ export class GameDrawOrchestrator {
                     : await this.players.ticketsOf(game, identityGroupId, from);
                 const verifyBy =
                     draw && isCallerTurn(draw) && !verified
-                        ? candidateVerifyBy(draw, draw.rejections.length, now)
+                        ? candidateVerifyBy(draw, draw.rejections.length)
                         : null;
                 return toGameResult({
                     summary: await summarizeGame(game, this.merchants),

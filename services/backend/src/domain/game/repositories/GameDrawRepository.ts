@@ -86,9 +86,16 @@ export class GameDrawRepository {
         return Promise.all(
             draws.map(async ({ id, ...draw }) => {
                 const frozen = await this.frozenEntries.fetch(id);
-                const entry = identityGroupIds
-                    .map((groupId) => frozen?.byGroup.get(groupId))
-                    .find((found) => found !== undefined);
+                const mine = identityGroupIds.flatMap(
+                    (groupId) => frozen?.byGroup.get(groupId) ?? []
+                );
+                // With merged groups that each played, the one holding the turn speaks for the caller.
+                const turn =
+                    draw.status === "drawn"
+                        ? draw.candidates?.[draw.rejections.length]
+                        : undefined;
+                const entry =
+                    mine.find((found) => found.pid === turn) ?? mine[0];
                 return {
                     ...draw,
                     participants: frozen?.participants ?? 0,
@@ -170,8 +177,7 @@ export class GameDrawRepository {
             )
             .where(
                 and(
-                    eq(gameDrawsTable.id, params.id),
-                    eq(gameDrawsTable.status, "drawn"),
+                    underReview(params.id, params.rank),
                     lt(column, params.rank)
                 )
             )

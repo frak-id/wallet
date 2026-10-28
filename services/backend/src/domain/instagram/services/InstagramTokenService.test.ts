@@ -83,6 +83,29 @@ describe("InstagramTokenService", () => {
         ).resolves.toBe(SEED);
     });
 
+    it("renews a fresh seed at the next cron, to learn when it expires", async () => {
+        const { service, graph } = setup();
+        await service.current();
+        graph.refreshToken.mockResolvedValue({
+            token: "renewed",
+            expiresInSeconds: (60 * DAY) / 1000,
+        });
+
+        await expect(service.refreshIfDue(NOW)).resolves.toBe("refreshed");
+        expect(graph.refreshToken).toHaveBeenCalledWith(SEED);
+    });
+
+    it("re-seeds from the env when the stored token no longer decrypts", async () => {
+        const { service, stored } = setup(
+            await storedRow("renewed", { tokenEncrypted: "AAAA" })
+        );
+
+        await expect(service.current()).resolves.toBe(SEED);
+        await expect(
+            cipher.decrypt(stored()?.tokenEncrypted ?? "", "frak")
+        ).resolves.toBe(SEED);
+    });
+
     it("serves the renewed token while the env still holds the first one", async () => {
         const { service, repository } = setup(await storedRow("renewed"));
 
