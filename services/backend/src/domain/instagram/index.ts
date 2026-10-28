@@ -4,12 +4,12 @@ export {
     type InstagramDeclarationSelect,
     type InstagramLinkInsert,
     type InstagramLinkSelect,
-    instagramDeclarationsTable,
-    instagramLinkCodesTable,
+    type InstagramPendingLinkSelect,
     instagramLinksTable,
+    instagramPendingLinksTable,
 } from "./db/schema";
-export { InstagramDeclarationRepository } from "./repositories/InstagramDeclarationRepository";
 export { InstagramLinkRepository } from "./repositories/InstagramLinkRepository";
+export { InstagramPendingLinkRepository } from "./repositories/InstagramPendingLinkRepository";
 export {
     DeclareInstagramBodySchema,
     type InstagramLevel,

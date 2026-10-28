@@ -74,7 +74,7 @@ function makeOrchestrator(
         { createIdempotent } as never,
         { joinedAt, ticketsOf } as never,
         { findByIdentityGroup: findLink } as never,
-        { findByIdentityGroup: findDeclaration } as never
+        { findDeclaration } as never
     );
     return {
         orchestrator,

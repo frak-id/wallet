@@ -5,8 +5,8 @@ import type {
     InstagramProfileLookup,
 } from "../../../infrastructure/integrations/instagram";
 import type { InstagramLinkSelect } from "../db/schema";
-import type { InstagramLinkCodeRepository } from "../repositories/InstagramLinkCodeRepository";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../repositories/InstagramPendingLinkRepository";
 import type { InstagramStatus } from "../schemas";
 import {
     extractCodeCandidates,
@@ -37,7 +37,10 @@ export type MessageOutcome =
 export class InstagramVerificationService {
     constructor(
         private readonly links: InstagramLinkRepository,
-        private readonly codes: InstagramLinkCodeRepository,
+        private readonly pending: Pick<
+            InstagramPendingLinkRepository,
+            "findByCodes"
+        >,
         private readonly linkService: InstagramLinkService,
         private readonly tokens: Pick<InstagramTokenService, "current">,
         private readonly graph: Pick<InstagramGraphClient, "lookupProfile">
@@ -51,16 +54,16 @@ export class InstagramVerificationService {
         igsid,
         text,
     }: IncomingInstagramMessage): Promise<MessageOutcome> {
-        const [code] = await this.codes.findByCodes(
+        const [match] = await this.pending.findByCodes(
             extractCodeCandidates(text)
         );
-        if (!code) return "no_code";
+        if (!match) return "no_code";
 
         const lookup = await this.lookup(igsid);
         if (lookup.kind === "gone") return "profile_gone";
         try {
-            const linked = await this.linkService.linkWithCode(code.id, {
-                identityGroupId: code.identityGroupId,
+            const linked = await this.linkService.linkWithCode(match.code, {
+                identityGroupId: match.identityGroupId,
                 igsid,
                 username: lookup.username,
                 follows: lookup.follows,
@@ -72,7 +75,7 @@ export class InstagramVerificationService {
                 error.code === "INSTAGRAM_ALREADY_LINKED"
             ) {
                 log.info(
-                    { identityGroupId: code.identityGroupId },
+                    { identityGroupId: match.identityGroupId },
                     "Instagram code sent from an account linked to another wallet"
                 );
                 return "already_linked";

@@ -28,9 +28,8 @@ import {
 } from "../../domain/identity/db/schema";
 import {
     instagramAccessTokensTable,
-    instagramDeclarationsTable,
-    instagramLinkCodesTable,
     instagramLinksTable,
+    instagramPendingLinksTable,
 } from "../../domain/instagram/db/schema";
 import {
     merchantAdminsTable,
@@ -109,8 +108,7 @@ export const db = drizzle({
         gamesTable,
         gameDrawsTable,
         instagramLinksTable,
-        instagramDeclarationsTable,
-        instagramLinkCodesTable,
+        instagramPendingLinksTable,
         instagramAccessTokensTable,
         affiliateBrandTable,
         affiliateAttributionTable,

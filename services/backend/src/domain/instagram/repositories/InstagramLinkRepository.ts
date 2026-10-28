@@ -3,9 +3,8 @@ import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type InstagramLinkInsert,
     type InstagramLinkSelect,
-    instagramDeclarationsTable,
-    instagramLinkCodesTable,
     instagramLinksTable,
+    instagramPendingLinksTable,
 } from "../db/schema";
 
 export class InstagramLinkRepository {
@@ -33,22 +32,27 @@ export class InstagramLinkRepository {
     }
 
     /**
-     * Replaces the group's link and drops its declaration in one transaction,
-     * first claiming `codeId` when given: null when that code is already gone.
-     * A unique violation means the `igsid` belongs to another group.
+     * Replaces the group's link and drops its pending row (declaration and code)
+     * in one transaction. With `code`, only if that row still holds it: null
+     * when the code is already used. A unique violation means the `igsid`
+     * belongs to another group.
      */
     async certify(
         link: InstagramLinkInsert,
-        codeId?: string
+        code?: string
     ): Promise<InstagramLinkSelect | null> {
+        const pending = instagramPendingLinksTable;
         return db.transaction(async (tx) => {
-            if (codeId) {
-                const [claimed] = await tx
-                    .delete(instagramLinkCodesTable)
-                    .where(eq(instagramLinkCodesTable.id, codeId))
-                    .returning({ id: instagramLinkCodesTable.id });
-                if (!claimed) return null;
-            }
+            const dropped = await tx
+                .delete(pending)
+                .where(
+                    and(
+                        eq(pending.identityGroupId, link.identityGroupId),
+                        code === undefined ? undefined : eq(pending.code, code)
+                    )
+                )
+                .returning({ id: pending.id });
+            if (code !== undefined && dropped.length === 0) return null;
             const [saved] = await tx
                 .insert(instagramLinksTable)
                 .values(link)
@@ -67,14 +71,6 @@ export class InstagramLinkRepository {
                     `Failed to save the Instagram link of ${link.identityGroupId}`
                 );
             }
-            await tx
-                .delete(instagramDeclarationsTable)
-                .where(
-                    eq(
-                        instagramDeclarationsTable.identityGroupId,
-                        link.identityGroupId
-                    )
-                );
             return saved;
         });
     }

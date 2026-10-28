@@ -22,8 +22,8 @@ import {
     isGameOpen,
     signupExternalEventId,
 } from "../../domain/game/utils";
-import type { InstagramDeclarationRepository } from "../../domain/instagram/repositories/InstagramDeclarationRepository";
 import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../../domain/instagram/repositories/InstagramPendingLinkRepository";
 import { instagramLevelOf, isDrawEligible } from "../../domain/instagram/utils";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
@@ -80,7 +80,10 @@ export class FrakGameOrchestrator {
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly gamePlayerOrchestrator: GamePlayerOrchestrator,
         private readonly instagramLinkRepository: InstagramLinkRepository,
-        private readonly instagramDeclarationRepository: InstagramDeclarationRepository
+        private readonly instagramPendingLinks: Pick<
+            InstagramPendingLinkRepository,
+            "findDeclaration"
+        >
     ) {}
 
     async getCurrentGame(
@@ -96,9 +99,7 @@ export class FrakGameOrchestrator {
                 this.instagramLinkRepository.findByIdentityGroup(
                     identityGroupId
                 ),
-                this.instagramDeclarationRepository.findByIdentityGroup(
-                    identityGroupId
-                ),
+                this.instagramPendingLinks.findDeclaration(identityGroupId),
             ]);
         const ticketsBySource = joinedAt
             ? await this.gamePlayerOrchestrator.ticketsOf(

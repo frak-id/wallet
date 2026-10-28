@@ -39,8 +39,8 @@ import type {
 } from "../../domain/game/schemas";
 import { NO_TICKETS, totalTickets } from "../../domain/game/tickets";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import type { InstagramDeclarationRepository } from "../../domain/instagram/repositories/InstagramDeclarationRepository";
 import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../../domain/instagram/repositories/InstagramPendingLinkRepository";
 import {
     InstagramUnavailableError,
     type InstagramVerificationService,
@@ -136,7 +136,10 @@ export class GameDrawOrchestrator {
             "participantsOf" | "ticketsOf" | "gamesJoinedBy"
         >,
         private readonly instagramLinks: InstagramLinkRepository,
-        private readonly instagramDeclarations: InstagramDeclarationRepository,
+        private readonly instagramPendingLinks: Pick<
+            InstagramPendingLinkRepository,
+            "findDeclaration" | "findDeclarations"
+        >,
         private readonly instagramVerification: Pick<
             InstagramVerificationService,
             "recheck"
@@ -265,7 +268,7 @@ export class GameDrawOrchestrator {
         });
         const [links, declarations] = await Promise.all([
             this.instagramLinks.findByIdentityGroups(groupIds),
-            this.instagramDeclarations.findByIdentityGroups(groupIds),
+            this.instagramPendingLinks.findDeclarations(groupIds),
         ]);
         const linkOf = new Map(links.map((l) => [l.identityGroupId, l]));
         const declared = new Set(declarations.map((d) => d.identityGroupId));
@@ -514,7 +517,7 @@ export class GameDrawOrchestrator {
             this.identities.findGroupById(groupId),
             this.identities.getWalletForGroup(groupId),
             this.instagramLinks.findByIdentityGroup(groupId),
-            this.instagramDeclarations.findByIdentityGroup(groupId),
+            this.instagramPendingLinks.findDeclaration(groupId),
         ]);
         const verified = isVerifiedFollower(link);
         return {

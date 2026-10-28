@@ -2,9 +2,8 @@ import { HttpError } from "@backend-utils";
 import { DrizzleQueryError } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InstagramLinkSelect } from "../db/schema";
-import type { InstagramDeclarationRepository } from "../repositories/InstagramDeclarationRepository";
-import type { InstagramLinkCodeRepository } from "../repositories/InstagramLinkCodeRepository";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../repositories/InstagramPendingLinkRepository";
 import { InstagramLinkService } from "./InstagramLinkService";
 
 const { track } = vi.hoisted(() => ({ track: vi.fn() }));
@@ -31,26 +30,23 @@ function setup() {
         certify: vi.fn(),
         deleteByIdentityGroup: vi.fn(),
     };
-    const declarations = {
-        findByIdentityGroup: vi.fn().mockResolvedValue(null),
-        upsert: vi.fn(
+    const pending = {
+        findDeclaration: vi.fn().mockResolvedValue(null),
+        declare: vi.fn(
             async (params: { identityGroupId: string; username: string }) => ({
-                id: "declaration-1",
+                id: "pending-1",
                 ...params,
                 declaredAt: DECLARED_AT,
             })
         ),
-        deleteByIdentityGroup: vi.fn(),
-    };
-    const codes = {
-        getOrCreate: vi.fn().mockResolvedValue({ code: "K7Q2PX" }),
+        undeclare: vi.fn(),
+        getOrCreateCode: vi.fn().mockResolvedValue("K7Q2PX"),
     };
     const service = new InstagramLinkService(
         repository as unknown as InstagramLinkRepository,
-        declarations as unknown as InstagramDeclarationRepository,
-        codes as unknown as InstagramLinkCodeRepository
+        pending as unknown as InstagramPendingLinkRepository
     );
-    return { repository, declarations, codes, service };
+    return { repository, pending, service };
 }
 
 describe("InstagramLinkService", () => {
@@ -242,12 +238,12 @@ describe("InstagramLinkService certification and declaration", () => {
     });
 
     it("declares a normalized handle and tracks the first declaration", async () => {
-        const { repository, declarations, service } = setup();
+        const { repository, pending, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(null);
 
         const status = await service.declare(GROUP, "  @Some.One ");
 
-        expect(declarations.upsert).toHaveBeenCalledWith({
+        expect(pending.declare).toHaveBeenCalledWith({
             identityGroupId: GROUP,
             username: "some.one",
         });
@@ -259,9 +255,9 @@ describe("InstagramLinkService certification and declaration", () => {
     });
 
     it("does not track a changed handle again", async () => {
-        const { repository, declarations, service } = setup();
+        const { repository, pending, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(null);
-        declarations.findByIdentityGroup.mockResolvedValue({
+        pending.findDeclaration.mockResolvedValue({
             username: "old",
         });
 
@@ -271,7 +267,7 @@ describe("InstagramLinkService certification and declaration", () => {
     });
 
     it("answers 400 for something that cannot be a handle", async () => {
-        const { declarations, service } = setup();
+        const { pending, service } = setup();
 
         await expect(
             service.declare(GROUP, "not a handle")
@@ -279,24 +275,24 @@ describe("InstagramLinkService certification and declaration", () => {
             status: 400,
             code: "INVALID_INSTAGRAM_HANDLE",
         });
-        expect(declarations.upsert).not.toHaveBeenCalled();
+        expect(pending.declare).not.toHaveBeenCalled();
     });
 
     it("answers 409 once the wallet is certified", async () => {
-        const { repository, declarations, service } = setup();
+        const { repository, pending, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(row);
 
         await expect(service.declare(GROUP, "someone")).rejects.toMatchObject({
             status: 409,
             code: "INSTAGRAM_ALREADY_CERTIFIED",
         });
-        expect(declarations.upsert).not.toHaveBeenCalled();
+        expect(pending.declare).not.toHaveBeenCalled();
     });
 
     it("reports a certified link alone, never a leftover declaration", async () => {
-        const { repository, declarations, service } = setup();
+        const { repository, pending, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(row);
-        declarations.findByIdentityGroup.mockResolvedValue({
+        pending.findDeclaration.mockResolvedValue({
             username: "old",
             declaredAt: DECLARED_AT,
         });
@@ -308,9 +304,9 @@ describe("InstagramLinkService certification and declaration", () => {
     });
 
     it("hands out the group's code", async () => {
-        const { codes, service } = setup();
+        const { pending, service } = setup();
 
         await expect(service.issueCode(GROUP)).resolves.toBe("K7Q2PX");
-        expect(codes.getOrCreate).toHaveBeenCalledWith(GROUP);
+        expect(pending.getOrCreateCode).toHaveBeenCalledWith(GROUP);
     });
 });

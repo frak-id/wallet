@@ -1,23 +1,20 @@
 import { adminWalletsRepository } from "@backend-infrastructure";
 import { InstagramGraphClient } from "../../infrastructure/integrations/instagram";
 import { InstagramAccessTokenRepository } from "./repositories/InstagramAccessTokenRepository";
-import { InstagramDeclarationRepository } from "./repositories/InstagramDeclarationRepository";
-import { InstagramLinkCodeRepository } from "./repositories/InstagramLinkCodeRepository";
 import { InstagramLinkRepository } from "./repositories/InstagramLinkRepository";
+import { InstagramPendingLinkRepository } from "./repositories/InstagramPendingLinkRepository";
 import { InstagramLinkService } from "./services/InstagramLinkService";
 import { InstagramTokenCipher } from "./services/InstagramTokenCipher";
 import { InstagramTokenService } from "./services/InstagramTokenService";
 import { InstagramVerificationService } from "./services/InstagramVerificationService";
 
 const instagramLinkRepository = new InstagramLinkRepository();
-const instagramDeclarationRepository = new InstagramDeclarationRepository();
-const instagramLinkCodeRepository = new InstagramLinkCodeRepository();
+const instagramPendingLinkRepository = new InstagramPendingLinkRepository();
 const graphClient = new InstagramGraphClient();
 
 const instagramLinkService = new InstagramLinkService(
     instagramLinkRepository,
-    instagramDeclarationRepository,
-    instagramLinkCodeRepository
+    instagramPendingLinkRepository
 );
 const instagramTokenService = new InstagramTokenService(
     new InstagramAccessTokenRepository(),
@@ -26,7 +23,7 @@ const instagramTokenService = new InstagramTokenService(
 );
 const instagramVerificationService = new InstagramVerificationService(
     instagramLinkRepository,
-    instagramLinkCodeRepository,
+    instagramPendingLinkRepository,
     instagramLinkService,
     instagramTokenService,
     graphClient
@@ -35,7 +32,7 @@ const instagramVerificationService = new InstagramVerificationService(
 export namespace InstagramContext {
     export const repositories = {
         instagramLink: instagramLinkRepository,
-        instagramDeclaration: instagramDeclarationRepository,
+        instagramPendingLink: instagramPendingLinkRepository,
     };
     export const services = {
         instagramLink: instagramLinkService,

@@ -1,8 +1,7 @@
 import { productEvents } from "@backend-infrastructure";
 import { HttpError, isUniqueViolation } from "@backend-utils";
-import type { InstagramDeclarationRepository } from "../repositories/InstagramDeclarationRepository";
-import type { InstagramLinkCodeRepository } from "../repositories/InstagramLinkCodeRepository";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../repositories/InstagramPendingLinkRepository";
 import type { InstagramLink, InstagramStatus } from "../schemas";
 import {
     normalizeInstagramHandle,
@@ -20,8 +19,7 @@ export type LinkInstagramInput = {
 export class InstagramLinkService {
     constructor(
         private readonly repository: InstagramLinkRepository,
-        private readonly declarations: InstagramDeclarationRepository,
-        private readonly codes: InstagramLinkCodeRepository
+        private readonly pending: InstagramPendingLinkRepository
     ) {}
 
     async find(identityGroupId: string): Promise<InstagramLink | null> {
@@ -32,7 +30,7 @@ export class InstagramLinkService {
     async status(identityGroupId: string): Promise<InstagramStatus> {
         const [link, declaration] = await Promise.all([
             this.repository.findByIdentityGroup(identityGroupId),
-            this.declarations.findByIdentityGroup(identityGroupId),
+            this.pending.findDeclaration(identityGroupId),
         ]);
         return {
             link: link && toInstagramLink(link),
@@ -51,15 +49,15 @@ export class InstagramLinkService {
 
     /** {@link link}, consuming the DM code in the same transaction; null when the code was already used or dropped by a merge. */
     linkWithCode(
-        codeId: string,
+        code: string,
         input: LinkInstagramInput
     ): Promise<InstagramLink | null> {
-        return this.certify(input, codeId);
+        return this.certify(input, code);
     }
 
     private async certify(
         input: LinkInstagramInput,
-        codeId?: string
+        code?: string
     ): Promise<InstagramLink | null> {
         const previous = await this.repository.findByIdentityGroup(
             input.identityGroupId
@@ -68,7 +66,7 @@ export class InstagramLinkService {
         try {
             saved = await this.repository.certify(
                 { ...input, checkedAt: new Date() },
-                codeId
+                code
             );
         } catch (error) {
             if (!isUniqueViolation(error)) throw error;
@@ -100,9 +98,8 @@ export class InstagramLinkService {
                 "This wallet already certified an Instagram account"
             );
         }
-        const previous =
-            await this.declarations.findByIdentityGroup(identityGroupId);
-        const saved = await this.declarations.upsert({
+        const previous = await this.pending.findDeclaration(identityGroupId);
+        const saved = await this.pending.declare({
             identityGroupId,
             username,
         });
@@ -113,14 +110,13 @@ export class InstagramLinkService {
     }
 
     async undeclare(identityGroupId: string): Promise<InstagramStatus> {
-        await this.declarations.deleteByIdentityGroup(identityGroupId);
+        await this.pending.undeclare(identityGroupId);
         return this.status(identityGroupId);
     }
 
     /** The same code until it is used, so one already copied keeps working. */
-    async issueCode(identityGroupId: string): Promise<string> {
-        const row = await this.codes.getOrCreate(identityGroupId);
-        return row.code;
+    issueCode(identityGroupId: string): Promise<string> {
+        return this.pending.getOrCreateCode(identityGroupId);
     }
 
     /** `previousFollows` is null when the identity had no link before. */

@@ -87,6 +87,6 @@ Draw records are kept 5 years. The public record is pseudonymous, and the winner
 
 ## Not done
 
-- The migrations (DB team): `game_draws` with its candidate-window columns, `interaction_logs_game_join_idx`, and `instagram_declarations`, `instagram_link_codes`, `instagram_access_tokens`.
+- The migrations (DB team): `game_draws` with its candidate-window columns, `interaction_logs_game_join_idx`, and `instagram_pending_links` (typed handle and DM code, one row per uncertified identity group), `instagram_access_tokens`.
 - A readable page for the public record: the wallet link opens the raw JSON.
 - Anchoring the root on Arbitrum at freeze time, planned for later. Until then, only our own endpoint, logs and OpenPanel event show that the root came before the round.

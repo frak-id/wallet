@@ -14,7 +14,7 @@ vi.mock("@backend-infrastructure", () => ({
 const GROUP = "group-1";
 const IGSID = "17841400000000000";
 const NOW = new Date("2026-10-28T10:00:00Z");
-const CODE = { id: "code-1", identityGroupId: GROUP, code: "K7Q2PX" };
+const CODE = { identityGroupId: GROUP, code: "K7Q2PX" };
 
 const linkRow = (
     overrides: Partial<InstagramLinkSelect> = {}
@@ -38,7 +38,7 @@ function setup() {
                 ({ ...link, ...profile }) as unknown
         ),
     };
-    const codes = {
+    const pending = {
         findByCodes: vi.fn().mockResolvedValue([]),
     };
     const linkService = {
@@ -56,19 +56,19 @@ function setup() {
     };
     const service = new InstagramVerificationService(
         links as never,
-        codes as never,
+        pending as never,
         linkService as never,
         tokens,
         graph
     );
-    return { links, codes, linkService, tokens, graph, service };
+    return { links, pending, linkService, tokens, graph, service };
 }
 
 describe("InstagramVerificationService.handleMessage", () => {
     beforeEach(() => vi.useRealTimers());
 
     it("ignores a DM with no known code, without asking Meta", async () => {
-        const { codes, graph, linkService, service } = setup();
+        const { pending, graph, linkService, service } = setup();
 
         const outcome = await service.handleMessage({
             igsid: IGSID,
@@ -76,23 +76,23 @@ describe("InstagramVerificationService.handleMessage", () => {
         });
 
         expect(outcome).toBe("no_code");
-        expect(codes.findByCodes).toHaveBeenCalledWith([]);
+        expect(pending.findByCodes).toHaveBeenCalledWith([]);
         expect(graph.lookupProfile).not.toHaveBeenCalled();
         expect(linkService.linkWithCode).not.toHaveBeenCalled();
     });
 
     it("links the sender to the code's account with what Meta reports, burning the code", async () => {
-        const { codes, graph, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, graph, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
 
         const outcome = await service.handleMessage({
             igsid: IGSID,
             text: "voici mon code k7q2px !",
         });
 
-        expect(codes.findByCodes).toHaveBeenCalledWith(["K7Q2PX"]);
+        expect(pending.findByCodes).toHaveBeenCalledWith(["K7Q2PX"]);
         expect(graph.lookupProfile).toHaveBeenCalledWith(IGSID, "token");
-        expect(linkService.linkWithCode).toHaveBeenCalledWith("code-1", {
+        expect(linkService.linkWithCode).toHaveBeenCalledWith("K7Q2PX", {
             identityGroupId: GROUP,
             igsid: IGSID,
             username: "player",
@@ -102,8 +102,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("changes nothing when Meta redelivers a handled DM", async () => {
-        const { codes, linkService, service } = setup();
-        codes.findByCodes
+        const { pending, linkService, service } = setup();
+        pending.findByCodes
             .mockResolvedValueOnce([CODE])
             .mockResolvedValueOnce([]);
         const message = { igsid: IGSID, text: "K7Q2PX" };
@@ -116,8 +116,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("links nobody when a concurrent delivery or a merge claimed the code first", async () => {
-        const { codes, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
         linkService.linkWithCode.mockResolvedValue(null);
 
         const outcome = await service.handleMessage({
@@ -129,8 +129,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("answers already_linked when the account belongs to another wallet", async () => {
-        const { codes, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
         linkService.linkWithCode.mockRejectedValue(
             HttpError.conflict("INSTAGRAM_ALREADY_LINKED", "taken")
         );
@@ -144,8 +144,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("throws and keeps the code when Meta cannot answer, so the delivery is retried", async () => {
-        const { codes, graph, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, graph, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
         graph.lookupProfile.mockResolvedValue({ kind: "unavailable" });
 
         await expect(
@@ -155,8 +155,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("throws when the link write fails, so the delivery is retried", async () => {
-        const { codes, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
         const failure = new Error("db down");
         linkService.linkWithCode.mockRejectedValue(failure);
 
@@ -166,8 +166,8 @@ describe("InstagramVerificationService.handleMessage", () => {
     });
 
     it("links nobody when Meta refuses the sender's profile", async () => {
-        const { codes, graph, linkService, service } = setup();
-        codes.findByCodes.mockResolvedValue([CODE]);
+        const { pending, graph, linkService, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
         graph.lookupProfile.mockResolvedValue({ kind: "gone", code: 100 });
 
         const outcome = await service.handleMessage({

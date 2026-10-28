@@ -101,8 +101,8 @@ function setup() {
         findByIdentityGroup: vi.fn().mockResolvedValue(null),
     };
     const instagramDeclarations = {
-        findByIdentityGroups: vi.fn().mockResolvedValue([]),
-        findByIdentityGroup: vi.fn().mockResolvedValue(null),
+        findDeclarations: vi.fn().mockResolvedValue([]),
+        findDeclaration: vi.fn().mockResolvedValue(null),
     };
     const verification = { recheck: vi.fn().mockResolvedValue(0) };
     const identities = {
@@ -191,7 +191,7 @@ describe("GameDrawOrchestrator.freeze", () => {
             { identityGroupId: "follower", follows: true },
             { identityGroupId: "unfollower", follows: false },
         ]);
-        instagramDeclarations.findByIdentityGroups.mockResolvedValue([
+        instagramDeclarations.findDeclarations.mockResolvedValue([
             { identityGroupId: "declarer", username: "someone" },
         ]);
 

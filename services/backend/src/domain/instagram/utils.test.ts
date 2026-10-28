@@ -12,6 +12,7 @@ import {
     normalizeInstagramHandle,
     pickSurvivingDeclaration,
     pickSurvivingLink,
+    toDeclarationRow,
 } from "./utils";
 
 describe("normalizeInstagramHandle", () => {
@@ -104,6 +105,33 @@ describe("pickSurvivingLink", () => {
 
         expect(pickSurvivingLink([b, a], ANCHOR)).toBe(a);
         expect(pickSurvivingLink([a, b], ANCHOR)).toBe(a);
+    });
+});
+
+describe("toDeclarationRow", () => {
+    const row = {
+        id: "pending-1",
+        identityGroupId: "group-1",
+        username: null,
+        declaredAt: null,
+        code: "K7Q2PX",
+        createdAt: new Date("2026-10-27T10:00:00Z"),
+    };
+
+    it("finds no declaration on a row that only holds a code", () => {
+        expect(toDeclarationRow(row)).toBeNull();
+    });
+
+    it("reads the typed handle and when it was declared", () => {
+        const declaredAt = new Date("2026-10-28T10:00:00Z");
+        expect(
+            toDeclarationRow({ ...row, username: "lea", declaredAt })
+        ).toEqual({
+            id: "pending-1",
+            identityGroupId: "group-1",
+            username: "lea",
+            declaredAt,
+        });
     });
 });
 

@@ -7,6 +7,7 @@ import {
 import type {
     InstagramDeclarationSelect,
     InstagramLinkSelect,
+    InstagramPendingLinkSelect,
 } from "./db/schema";
 import type {
     InstagramDeclaration,
@@ -15,6 +16,19 @@ import type {
 } from "./schemas";
 
 const HANDLE_PATTERN = /^[a-z0-9._]{1,30}$/;
+
+/** The declaration a pending row carries; `null` when it only holds a code. */
+export function toDeclarationRow(
+    row: InstagramPendingLinkSelect
+): InstagramDeclarationSelect | null {
+    if (row.username === null || row.declaredAt === null) return null;
+    return {
+        id: row.id,
+        identityGroupId: row.identityGroupId,
+        username: row.username,
+        declaredAt: row.declaredAt,
+    };
+}
 
 /** Instagram handles are case-insensitive; `null` when `raw` cannot be one. */
 export function normalizeInstagramHandle(raw: string): string | null {
