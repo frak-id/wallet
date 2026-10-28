@@ -53,6 +53,19 @@ export class InstagramLinkRepository {
         return saved;
     }
 
+    /** Stores what Meta reports now; `null` when the link was removed meanwhile. */
+    async refreshProfile(
+        id: string,
+        profile: Pick<InstagramLinkSelect, "username" | "follows" | "checkedAt">
+    ): Promise<InstagramLinkSelect | null> {
+        const [saved] = await db
+            .update(instagramLinksTable)
+            .set(profile)
+            .where(eq(instagramLinksTable.id, id))
+            .returning();
+        return saved ?? null;
+    }
+
     async deleteByIdentityGroup(identityGroupId: string): Promise<void> {
         await db
             .delete(instagramLinksTable)

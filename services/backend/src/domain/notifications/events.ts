@@ -9,4 +9,12 @@ export type NotificationEventItem = {
 export type NotificationEvent =
     | { type: "reward_pending"; notifications: NotificationEventItem[] }
     | { type: "reward_settled"; notifications: NotificationEventItem[] }
-    | { type: "game_won"; wallet: Address; prizeAmount: number };
+    | { type: "game_won"; wallet: Address; prizeAmount: number }
+    | ({ type: "game_candidate_drawn" } & GameCandidateNotice)
+    | ({ type: "game_candidate_reminder" } & GameCandidateNotice);
+
+type GameCandidateNotice = {
+    wallet: Address;
+    prizeAmount: number;
+    verifyBy: Date;
+};

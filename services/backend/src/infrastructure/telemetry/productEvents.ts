@@ -10,6 +10,7 @@ export type ProductEventMap = {
     };
     referral_signup_completed: { referrer_identity_group_id: string };
     game_reward_unlocked: { recipient_type: string };
+    instagram_declared: Record<string, never>;
     instagram_linked: { follows: boolean };
     instagram_follow_verified: Record<string, never>;
     game_draw_frozen: {
@@ -20,6 +21,7 @@ export type ProductEventMap = {
         drand_round: number;
     };
     game_draw_run: { game_id: string; candidates: number };
+    game_candidate_window_started: { game_id: string; rank: number };
     game_winner_rejected: { game_id: string; rank: number; reason: string };
     game_winner_confirmed: {
         game_id: string;

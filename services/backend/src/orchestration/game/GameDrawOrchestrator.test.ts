@@ -10,6 +10,7 @@ import {
 } from "../../domain/game/draw";
 import type { DrawEntry } from "../../domain/game/schemas";
 import { NO_TICKETS } from "../../domain/game/tickets";
+import { InstagramUnavailableError } from "../../domain/instagram/services/InstagramVerificationService";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import { GameDrawOrchestrator } from "./GameDrawOrchestrator";
 
@@ -62,6 +63,9 @@ const drawRow = (overrides: Partial<GameDrawSelect> = {}): GameDrawSelect => ({
     drandSignature: SIGNATURE,
     candidates: ["aa", "bb"],
     rejections: [],
+    notifiedRank: -1,
+    candidateNotifiedAt: null,
+    remindedRank: -1,
     winnerIdentityGroupId: null,
     confirmedBy: null,
     confirmedAt: null,
@@ -85,6 +89,7 @@ function setup() {
         addRejection: vi.fn(async () => drawRow()),
         confirm: vi.fn(async () => drawRow({ status: "confirmed" })),
         findOutcomes: vi.fn().mockResolvedValue([]),
+        markCandidateNotified: vi.fn().mockResolvedValue(true),
     };
     const players = {
         participantsOf: vi.fn().mockResolvedValue([]),
@@ -93,7 +98,13 @@ function setup() {
     };
     const instagramLinks = {
         findByIdentityGroups: vi.fn().mockResolvedValue([]),
+        findByIdentityGroup: vi.fn().mockResolvedValue(null),
     };
+    const instagramDeclarations = {
+        findByIdentityGroups: vi.fn().mockResolvedValue([]),
+        findByIdentityGroup: vi.fn().mockResolvedValue(null),
+    };
+    const verification = { recheck: vi.fn().mockResolvedValue(0) };
     const identities = {
         findSurvivingGroupId: vi.fn(async (id: string) => id),
         findGroupById: vi.fn().mockResolvedValue(null),
@@ -121,6 +132,8 @@ function setup() {
         draws as never,
         players as never,
         instagramLinks as never,
+        instagramDeclarations as never,
+        verification as never,
         identities as never,
         merchants as never,
         assetLogs as never,
@@ -132,6 +145,8 @@ function setup() {
         draws,
         players,
         instagramLinks,
+        instagramDeclarations,
+        verification,
         identities,
         merchants,
         assetLogs,
@@ -151,44 +166,73 @@ describe("GameDrawOrchestrator.freeze", () => {
     });
     afterEach(() => vi.useRealTimers());
 
-    it("keeps only followers' tickets and commits a round 10 minutes out", async () => {
-        const { orchestrator, draws, players, instagramLinks } = setup();
+    it("keeps certified followers' and declared players' tickets and commits a round 10 minutes out", async () => {
+        const {
+            orchestrator,
+            draws,
+            players,
+            instagramLinks,
+            instagramDeclarations,
+            verification,
+        } = setup();
         const joinedAt = new Date("2026-10-21T00:00:00Z");
         players.participantsOf.mockResolvedValue([
             { identityGroupId: "follower", joinedAt },
+            { identityGroupId: "declarer", joinedAt },
+            { identityGroupId: "unfollower", joinedAt },
             { identityGroupId: "lurker", joinedAt },
         ]);
         players.ticketsOf.mockImplementation(async (_game, groupId) =>
             groupId === "follower"
-                ? { ...NO_TICKETS, join: 1, purchase: 3 }
-                : { ...NO_TICKETS, join: 1, brandShare: 9 }
+                ? { ...NO_TICKETS, join: 1, instagramCertified: 2, purchase: 3 }
+                : { ...NO_TICKETS, join: 1, brandShare: 1 }
         );
         instagramLinks.findByIdentityGroups.mockResolvedValue([
             { identityGroupId: "follower", follows: true },
-            { identityGroupId: "lurker", follows: false },
+            { identityGroupId: "unfollower", follows: false },
+        ]);
+        instagramDeclarations.findByIdentityGroups.mockResolvedValue([
+            { identityGroupId: "declarer", username: "someone" },
         ]);
 
         await orchestrator.freeze(game, NOW);
 
+        expect(verification.recheck).toHaveBeenCalledWith(
+            ["follower", "declarer", "unfollower", "lurker"],
+            { maxAgeMs: 60 * 60 * 1000 }
+        );
         const insert = draws.create.mock.calls[0]?.[0];
         const byGroup = new Map<string, DrawEntry>(
             insert.entries.map((e: DrawEntry) => [e.identityGroupId, e])
         );
         expect(byGroup.get("follower")).toMatchObject({
-            drawTickets: 4,
+            drawTickets: 6,
             discarded: null,
+            instagram: "certified",
+        });
+        expect(byGroup.get("declarer")).toMatchObject({
+            drawTickets: 2,
+            discarded: null,
+            instagram: "declared",
+        });
+        expect(byGroup.get("unfollower")).toMatchObject({
+            drawTickets: 0,
+            discarded: "not_following",
+            instagram: "certified",
         });
         expect(byGroup.get("lurker")).toMatchObject({
             drawTickets: 0,
-            discarded: "not_following",
-            tickets: { join: 1, brandShare: 9 },
+            discarded: "not_linked",
+            tickets: { join: 1, brandShare: 1 },
         });
         expect(insert).toMatchObject({
             status: "frozen",
-            totalTickets: 4,
+            algorithm: "frak-draw-v2",
+            totalTickets: 8,
             drandRound: drandRoundAt(new Date(NOW.getTime() + 10 * 60_000)),
             snapshotRoot: snapshotRoot([
-                { pid: byGroup.get("follower")?.pid ?? "", tickets: 4 },
+                { pid: byGroup.get("follower")?.pid ?? "", tickets: 6 },
+                { pid: byGroup.get("declarer")?.pid ?? "", tickets: 2 },
             ]),
         });
         expect(insert.entries.map((e: DrawEntry) => e.pid)).toEqual(
@@ -198,11 +242,26 @@ describe("GameDrawOrchestrator.freeze", () => {
             "game_draw_frozen",
             null,
             expect.objectContaining({
-                participants: 2,
-                eligible_participants: 1,
-                total_tickets: 4,
+                participants: 4,
+                eligible_participants: 2,
+                total_tickets: 8,
             })
         );
+    });
+
+    it("freezes nothing while Meta cannot re-read the follows", async () => {
+        const { orchestrator, draws, players, verification } = setup();
+        players.participantsOf.mockResolvedValue([
+            { identityGroupId: "follower", joinedAt: game.startsAt },
+        ]);
+        verification.recheck.mockRejectedValue(
+            new InstagramUnavailableError("no access token")
+        );
+
+        await expect(orchestrator.freeze(game, NOW)).rejects.toBeInstanceOf(
+            InstagramUnavailableError
+        );
+        expect(draws.create).not.toHaveBeenCalled();
     });
 
     it("commits the round from when the root is stored, however long counting took", async () => {
@@ -339,7 +398,7 @@ describe("GameDrawOrchestrator.runDue", () => {
         expect(draws.create).toHaveBeenCalledWith(
             expect.objectContaining({ gameId: "healthy" })
         );
-        expect(result).toEqual({ frozen: 1, drawn: 1 });
+        expect(result).toEqual({ frozen: 1, drawn: 1, advanced: 0 });
     });
 
     it("leaves a draw frozen when no relay serves a valid beacon", async () => {
@@ -426,9 +485,16 @@ describe("GameDrawOrchestrator.confirm", () => {
         drawRow({
             rejections: [{ pid: "aa", reason: "fraud", actor: "q", at: "t" }],
         });
+    const verifiedSetup = () => {
+        const ctx = setup();
+        ctx.instagramLinks.findByIdentityGroup.mockResolvedValue({
+            follows: true,
+        });
+        return ctx;
+    };
 
     it("pays the candidate's current identity the prize in EURe and closes the draw", async () => {
-        const { orchestrator, draws, identities, assetLogs } = setup();
+        const { orchestrator, draws, identities, assetLogs } = verifiedSetup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
         identities.findSurvivingGroupId.mockResolvedValue("merged-into");
 
@@ -465,7 +531,7 @@ describe("GameDrawOrchestrator.confirm", () => {
     });
 
     it("pushes the winner's current wallet", async () => {
-        const { orchestrator, draws, identities } = setup();
+        const { orchestrator, draws, identities } = verifiedSetup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
         identities.findSurvivingGroupId.mockResolvedValue("merged-into");
         identities.getWalletForGroup.mockResolvedValue("0xwinner");
@@ -483,7 +549,7 @@ describe("GameDrawOrchestrator.confirm", () => {
     });
 
     it("still confirms when the winner's wallet cannot be looked up", async () => {
-        const { orchestrator, draws, identities } = setup();
+        const { orchestrator, draws, identities } = verifiedSetup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
         identities.getWalletForGroup.mockRejectedValue(new Error("db down"));
 
@@ -497,7 +563,7 @@ describe("GameDrawOrchestrator.confirm", () => {
     });
 
     it("fails the transaction when someone reviewed the draw meanwhile", async () => {
-        const { orchestrator, draws } = setup();
+        const { orchestrator, draws } = verifiedSetup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
         draws.confirm.mockResolvedValue(null as never);
 
@@ -508,7 +574,7 @@ describe("GameDrawOrchestrator.confirm", () => {
     });
 
     it("refuses to pay a EUR prize in another token", async () => {
-        const { orchestrator, draws, merchants, assetLogs } = setup();
+        const { orchestrator, draws, merchants, assetLogs } = verifiedSetup();
         draws.findByGameId.mockResolvedValue(reviewedOnce());
         merchants.getDefaultRewardToken.mockResolvedValue(
             "0x0000000000000000000000000000000000000001"
@@ -517,6 +583,47 @@ describe("GameDrawOrchestrator.confirm", () => {
         await expect(
             orchestrator.confirm(game.id, "quentin")
         ).rejects.toMatchObject({ code: "PRIZE_TOKEN_NOT_EURE" });
+        expect(assetLogs.createWinnerPayout).not.toHaveBeenCalled();
+    });
+
+    it("re-reads the winner's follow from Meta before paying", async () => {
+        const { orchestrator, draws, identities, verification } =
+            verifiedSetup();
+        draws.findByGameId.mockResolvedValue(reviewedOnce());
+        identities.findSurvivingGroupId.mockResolvedValue("merged-into");
+
+        await orchestrator.confirm(game.id, "quentin");
+
+        expect(verification.recheck).toHaveBeenCalledWith(["merged-into"], {
+            maxAgeMs: 0,
+        });
+    });
+
+    it.each([
+        { name: "only declared", link: null },
+        { name: "certified but not following", link: { follows: false } },
+    ])("refuses a candidate $name", async ({ link }) => {
+        const { orchestrator, draws, instagramLinks, assetLogs } = setup();
+        draws.findByGameId.mockResolvedValue(reviewedOnce());
+        instagramLinks.findByIdentityGroup.mockResolvedValue(link);
+
+        await expect(
+            orchestrator.confirm(game.id, "quentin")
+        ).rejects.toMatchObject({ code: "CANDIDATE_NOT_VERIFIED" });
+        expect(assetLogs.createWinnerPayout).not.toHaveBeenCalled();
+    });
+
+    it("answers 502 when Meta cannot confirm the follow", async () => {
+        const { orchestrator, draws, verification, assetLogs } =
+            verifiedSetup();
+        draws.findByGameId.mockResolvedValue(reviewedOnce());
+        verification.recheck.mockRejectedValue(
+            new InstagramUnavailableError("Meta did not answer")
+        );
+
+        await expect(
+            orchestrator.confirm(game.id, "quentin")
+        ).rejects.toMatchObject({ status: 502, code: "INSTAGRAM_UNAVAILABLE" });
         expect(assetLogs.createWinnerPayout).not.toHaveBeenCalled();
     });
 });
@@ -587,6 +694,10 @@ describe("GameDrawOrchestrator.results", () => {
         participants: 12,
         winnerIdentityGroupId: null,
         confirmedAt: null,
+        candidates: ["aa", "bb"],
+        rejections: [],
+        notifiedRank: -1,
+        candidateNotifiedAt: null,
         entry: entry("me", 5, "me"),
         ...overrides,
     });
@@ -693,6 +804,57 @@ describe("GameDrawOrchestrator.results", () => {
         }
     );
 
+    it("tells the current candidate who is not certified how long they have", async () => {
+        const told = new Date(NOW.getTime() - 2 * HOUR);
+        const { orchestrator, draws, instagramLinks } = playing(
+            gameEndingAt("g", 24)
+        );
+        draws.findOutcomes.mockResolvedValue([
+            outcome("g", {
+                candidates: ["aa", "me"],
+                rejections: [
+                    { pid: "aa", reason: "fraud", actor: "q", at: "t" },
+                ],
+                notifiedRank: 1,
+                candidateNotifiedAt: told,
+            }),
+        ]);
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(instagramLinks.findByIdentityGroup).toHaveBeenCalledWith("me");
+        expect(result).toMatchObject({
+            outcome: "pending_verification",
+            verifyBy: new Date(told.getTime() + 24 * HOUR),
+        });
+    });
+
+    it("keeps a certified follower's turn as drawing", async () => {
+        const { orchestrator, draws, instagramLinks } = playing(
+            gameEndingAt("g", 24)
+        );
+        instagramLinks.findByIdentityGroup.mockResolvedValue({ follows: true });
+        draws.findOutcomes.mockResolvedValue([
+            outcome("g", { candidates: ["me", "bb"] }),
+        ]);
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(result).toMatchObject({ outcome: "drawing", verifyBy: null });
+    });
+
+    it("never shows a deadline to a player whose turn it is not", async () => {
+        const { orchestrator, draws, instagramLinks } = playing(
+            gameEndingAt("g", 24)
+        );
+        draws.findOutcomes.mockResolvedValue([outcome("g")]);
+
+        const [result] = await orchestrator.results("me", NOW);
+
+        expect(result).toMatchObject({ outcome: "drawing", verifyBy: null });
+        expect(instagramLinks.findByIdentityGroup).not.toHaveBeenCalled();
+    });
+
     it("shows a non-follower their tickets and why they did not count", async () => {
         const { orchestrator, draws } = playing(gameEndingAt("g", 24));
         draws.findOutcomes.mockResolvedValue([
@@ -712,5 +874,197 @@ describe("GameDrawOrchestrator.results", () => {
             discarded: "not_following",
             pid: null,
         });
+    });
+});
+
+describe("GameDrawOrchestrator candidate window", () => {
+    const HOUR = 60 * 60 * 1000;
+    const told = (hoursAgo: number, overrides: Partial<GameDrawSelect> = {}) =>
+        drawRow({
+            notifiedRank: 0,
+            candidateNotifiedAt: new Date(NOW.getTime() - hoursAgo * HOUR),
+            ...overrides,
+        });
+
+    function waiting(draw: GameDrawSelect) {
+        const ctx = setup();
+        ctx.draws.findByStatus.mockImplementation(async (status: string) =>
+            status === "drawn" ? [draw] : []
+        );
+        ctx.identities.getWalletForGroup.mockResolvedValue("0xplayer");
+        return ctx;
+    }
+
+    it("leaves a certified follower to the admin, re-read at most every 15 minutes", async () => {
+        const { orchestrator, draws, instagramLinks, verification } = waiting(
+            drawRow()
+        );
+        instagramLinks.findByIdentityGroup.mockResolvedValue({ follows: true });
+
+        const result = await orchestrator.runDue(NOW);
+
+        expect(verification.recheck).toHaveBeenCalledWith(["group-aa"], {
+            maxAgeMs: 15 * 60 * 1000,
+        });
+        expect(draws.markCandidateNotified).not.toHaveBeenCalled();
+        expect(draws.addRejection).not.toHaveBeenCalled();
+        expect(result.advanced).toBe(0);
+    });
+
+    it("tells a declared candidate they were drawn, once, and opens their 24 h", async () => {
+        const { orchestrator, draws } = waiting(drawRow());
+
+        const result = await orchestrator.runDue(NOW);
+
+        expect(draws.markCandidateNotified).toHaveBeenCalledWith({
+            id: "draw-1",
+            rank: 0,
+            kind: "drawn",
+            at: NOW,
+        });
+        expect(emit).toHaveBeenCalledWith("notification", {
+            type: "game_candidate_drawn",
+            wallet: "0xplayer",
+            prizeAmount: 50,
+            verifyBy: new Date(NOW.getTime() + 24 * HOUR),
+        });
+        expect(track).toHaveBeenCalledWith(
+            "game_candidate_window_started",
+            "group-aa",
+            { game_id: game.id, rank: 1 }
+        );
+        expect(result.advanced).toBe(1);
+    });
+
+    it("sends no push when another pass already told the candidate", async () => {
+        const { orchestrator, draws } = waiting(drawRow());
+        draws.markCandidateNotified.mockResolvedValue(false);
+
+        await orchestrator.runDue(NOW);
+
+        expect(emit).not.toHaveBeenCalled();
+    });
+
+    it("waits quietly in the middle of the window", async () => {
+        const { orchestrator, draws } = waiting(told(10));
+
+        await orchestrator.runDue(NOW);
+
+        expect(draws.markCandidateNotified).not.toHaveBeenCalled();
+        expect(draws.addRejection).not.toHaveBeenCalled();
+    });
+
+    it("reminds the candidate once in the last 4 hours", async () => {
+        const { orchestrator, draws } = waiting(told(21));
+
+        await orchestrator.runDue(NOW);
+
+        expect(draws.markCandidateNotified).toHaveBeenCalledWith(
+            expect.objectContaining({ rank: 0, kind: "reminder" })
+        );
+        expect(emit).toHaveBeenCalledWith(
+            "notification",
+            expect.objectContaining({
+                type: "game_candidate_reminder",
+                verifyBy: new Date(NOW.getTime() + 3 * HOUR),
+            })
+        );
+    });
+
+    it("passes the turn on once the 24 h are over, and tells the next candidate", async () => {
+        const lapsed = told(25, { remindedRank: 0 });
+        const next = drawRow({
+            rejections: [
+                {
+                    pid: "aa",
+                    reason: "not_verified_in_time",
+                    actor: "system",
+                    at: NOW.toISOString(),
+                },
+            ],
+            notifiedRank: 0,
+            candidateNotifiedAt: lapsed.candidateNotifiedAt,
+            remindedRank: 0,
+        });
+        const { orchestrator, draws, verification } = waiting(lapsed);
+        draws.addRejection.mockResolvedValue(next);
+
+        await orchestrator.runDue(NOW);
+
+        expect(verification.recheck).toHaveBeenCalledWith(["group-aa"], {
+            maxAgeMs: 0,
+        });
+        expect(draws.addRejection).toHaveBeenCalledWith({
+            id: "draw-1",
+            reviewed: 0,
+            rejection: {
+                pid: "aa",
+                reason: "not_verified_in_time",
+                actor: "system",
+                at: NOW.toISOString(),
+            },
+            exhausted: false,
+        });
+        expect(draws.markCandidateNotified).toHaveBeenCalledWith(
+            expect.objectContaining({ rank: 1, kind: "drawn" })
+        );
+    });
+
+    it("keeps a candidate who certified in the last minutes", async () => {
+        const { orchestrator, draws, instagramLinks } = waiting(
+            told(25, { remindedRank: 0 })
+        );
+        instagramLinks.findByIdentityGroup
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ follows: true });
+
+        await orchestrator.runDue(NOW);
+
+        expect(draws.addRejection).not.toHaveBeenCalled();
+    });
+
+    it("passes nobody over while Meta cannot answer", async () => {
+        const { orchestrator, draws, verification } = waiting(
+            told(25, { remindedRank: 0 })
+        );
+        verification.recheck.mockRejectedValue(
+            new InstagramUnavailableError("Meta did not answer")
+        );
+
+        await orchestrator.runDue(NOW);
+
+        expect(draws.addRejection).not.toHaveBeenCalled();
+    });
+
+    it("draws 30 candidates under the v2 algorithm", async () => {
+        const { orchestrator, draws } = setup();
+        draws.findByStatus.mockImplementation(async (status: string) =>
+            status === "frozen"
+                ? [
+                      drawRow({
+                          status: "frozen",
+                          algorithm: "frak-draw-v2",
+                          drandSignature: null,
+                          candidates: null,
+                      }),
+                  ]
+                : []
+        );
+
+        await orchestrator.runDue(drandRoundTime(ROUND));
+
+        expect(draws.recordBeacon).toHaveBeenCalledWith(
+            expect.objectContaining({
+                candidates: rankCandidates({
+                    randomness: drandRandomness(SIGNATURE),
+                    gameId: game.id,
+                    entries: [
+                        { pid: "aa", tickets: 4 },
+                        { pid: "bb", tickets: 1 },
+                    ],
+                    count: 30,
+                }),
+            })
+        );
     });
 });

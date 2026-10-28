@@ -6,6 +6,8 @@ export const NotificationTypeSchema = t.Union([
     t.Literal("reward_pending"),
     t.Literal("reward_settled"),
     t.Literal("game_won"),
+    t.Literal("game_candidate_drawn"),
+    t.Literal("game_candidate_reminder"),
 ]);
 export type NotificationType = Static<typeof NotificationTypeSchema>;
 

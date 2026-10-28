@@ -212,7 +212,7 @@ export class GamePlayerOrchestrator {
         );
     }
 
-    /** Tickets per source: the join, plus purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
+    /** Tickets per source: the join and a certified follow, plus purchases, friends' signups and brand shares in `[max(joinedAt, startsAt), endsAt)`. */
     async ticketsOf(
         game: GameWindow,
         identityGroupId: string,
@@ -220,49 +220,61 @@ export class GamePlayerOrchestrator {
     ): Promise<TicketBreakdown> {
         const from = joinedAt > game.startsAt ? joinedAt : game.startsAt;
         const purchases = countedPurchase(from, game.endsAt);
-        const [own, referred, signups, brandFriends] = await Promise.all([
-            db
-                .select({ n: count() })
-                .from(interactionLogsTable)
-                .where(
-                    and(
+        const [own, referred, signups, brandFriends, certified] =
+            await Promise.all([
+                db
+                    .select({ n: count() })
+                    .from(interactionLogsTable)
+                    .where(
+                        and(
+                            eq(
+                                interactionLogsTable.identityGroupId,
+                                identityGroupId
+                            ),
+                            ...purchases
+                        )
+                    ),
+                db
+                    .select({ n: countDistinct(interactionLogsTable.id) })
+                    .from(referralLinksTable)
+                    .innerJoin(
+                        interactionLogsTable,
                         eq(
                             interactionLogsTable.identityGroupId,
-                            identityGroupId
-                        ),
-                        ...purchases
+                            referralLinksTable.refereeIdentityGroupId
+                        )
                     )
-                ),
-            db
-                .select({ n: countDistinct(interactionLogsTable.id) })
-                .from(referralLinksTable)
-                .innerJoin(
-                    interactionLogsTable,
-                    eq(
-                        interactionLogsTable.identityGroupId,
-                        referralLinksTable.refereeIdentityGroupId
+                    .where(
+                        and(
+                            eq(
+                                referralLinksTable.referrerIdentityGroupId,
+                                identityGroupId
+                            ),
+                            isNull(referralLinksTable.removedAt),
+                            lte(
+                                referralLinksTable.createdAt,
+                                interactionLogsTable.createdAt
+                            ),
+                            ...purchases,
+                            attributedToLink()
+                        )
+                    ),
+                followingSignups(identityGroupId, from, game.endsAt),
+                brandShareFriends(identityGroupId, from, game.endsAt),
+                db
+                    .select({ follows: instagramLinksTable.follows })
+                    .from(instagramLinksTable)
+                    .where(
+                        eq(instagramLinksTable.identityGroupId, identityGroupId)
                     )
-                )
-                .where(
-                    and(
-                        eq(
-                            referralLinksTable.referrerIdentityGroupId,
-                            identityGroupId
-                        ),
-                        isNull(referralLinksTable.removedAt),
-                        lte(
-                            referralLinksTable.createdAt,
-                            interactionLogsTable.createdAt
-                        ),
-                        ...purchases,
-                        attributedToLink()
-                    )
-                ),
-            followingSignups(identityGroupId, from, game.endsAt),
-            brandShareFriends(identityGroupId, from, game.endsAt),
-        ]);
+                    .limit(1),
+            ]);
         return {
             join: TICKET_AMOUNTS.join,
+            // Read at count time like the friend tickets: an unfollow takes them back.
+            instagramCertified: certified[0]?.follows
+                ? TICKET_AMOUNTS.instagramCertified
+                : 0,
             purchase: (own[0]?.n ?? 0) * TICKET_AMOUNTS.purchase,
             referredPurchase:
                 (referred[0]?.n ?? 0) * TICKET_AMOUNTS.referredPurchase,

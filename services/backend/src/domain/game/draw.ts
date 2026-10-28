@@ -4,10 +4,24 @@ import type { GameDrawSelect } from "./db/schema";
 import type { DrawEntry, GameOutcome, PublicDraw } from "./schemas";
 
 /** Bumped whenever anything below changes what a draw picks, so old records still replay. */
-export const DRAW_ALGORITHM = "frak-draw-v1";
+export const DRAW_ALGORITHM = "frak-draw-v2";
 
-/** How many ranked candidates a draw yields: the winner, then who takes over on a rejection. */
-export const DRAW_CANDIDATES = 10;
+/** Ranked candidates per algorithm. `rankCandidates` keeps its prefix as the count grows. */
+const CANDIDATES_BY_ALGORITHM: Record<string, number> = {
+    "frak-draw-v1": 10,
+    // Declared players who never certify each pass the turn on.
+    "frak-draw-v2": 30,
+};
+
+/** `null` for an algorithm this code cannot replay. */
+export function drawCandidatesFor(algorithm: string): number | null {
+    return CANDIDATES_BY_ALGORITHM[algorithm] ?? null;
+}
+
+/** How long the current candidate has to be certified and following before the next one's turn. */
+export const CANDIDATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** The reminder push goes out this long before the window closes. */
+export const CANDIDATE_REMINDER_MS = 4 * 60 * 60 * 1000;
 
 /** Lets refunds right after the end land before tickets are frozen. */
 export const DRAW_FREEZE_GRACE_MS = 60 * 60 * 1000;
@@ -44,6 +58,34 @@ export function currentCandidate(
     const pid = draw.candidates?.[rank];
     const entry = draw.entries.find((e) => e.pid === pid);
     return pid && entry ? { rank, pid, entry } : null;
+}
+
+/** The window opens when the candidate is told, so it never starts before they can know. */
+export function candidateVerifyBy(
+    draw: Pick<GameDrawSelect, "notifiedRank" | "candidateNotifiedAt">,
+    rank: number,
+    now: Date
+): Date {
+    const opened =
+        draw.notifiedRank === rank && draw.candidateNotifiedAt
+            ? draw.candidateNotifiedAt
+            : now;
+    return new Date(opened.getTime() + CANDIDATE_WINDOW_MS);
+}
+
+/** How a participant's Instagram stood at freeze: who keeps their tickets, and why not. */
+export function frozenStandingOf(
+    link: { follows: boolean } | null,
+    declared: boolean
+): Pick<DrawEntry, "discarded" | "instagram"> {
+    if (link) {
+        return {
+            discarded: link.follows ? null : "not_following",
+            instagram: "certified",
+        };
+    }
+    if (declared) return { discarded: null, instagram: "declared" };
+    return { discarded: "not_linked" };
 }
 
 /** How the draw went for a player owning `mine`; `drawing` until a winner is confirmed. */

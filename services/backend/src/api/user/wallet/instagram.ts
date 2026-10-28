@@ -2,18 +2,21 @@ import { HttpError, t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import {
+    DeclareInstagramBodySchema,
     InstagramContext,
-    InstagramLinkResponseSchema,
+    InstagramLinkCodeResponseSchema,
+    InstagramStatusSchema,
     MockInstagramLinkBodySchema,
     mockIgsidOf,
     normalizeInstagramHandle,
+    readInstagramConfig,
 } from "../../../domain/instagram";
 import { identityContext } from "../../middleware/identity";
 
 /**
- * Stands in for Meta's webhook until it ships: the caller declares the handle
- * and the follow state, and the same `instagram_links` row gets written. The
- * guard runs before the auth macro, so production answers 404 to anyone.
+ * Non-prod stand-in for a certification: the caller declares the handle and
+ * the follow state, and the same `instagram_links` row gets written. The guard
+ * runs before the auth macro, so production answers 404 to anyone.
  */
 const mockRoutes = new Elysia({ prefix: "/mock" })
     .use(identityContext)
@@ -31,19 +34,20 @@ const mockRoutes = new Elysia({ prefix: "/mock" })
                     "Not a valid Instagram handle"
                 );
             }
-            const link = await InstagramContext.services.instagramLink.link({
+            const service = InstagramContext.services.instagramLink;
+            await service.link({
                 identityGroupId,
                 igsid: mockIgsidOf(username),
                 username,
                 follows: body.follows,
             });
-            return { link };
+            return service.status(identityGroupId);
         },
         {
             withAuthedIdentity: true,
             body: MockInstagramLinkBodySchema,
             response: {
-                200: InstagramLinkResponseSchema,
+                200: InstagramStatusSchema,
                 400: t.ErrorResponse,
                 401: t.String(),
                 404: t.String(),
@@ -55,15 +59,14 @@ const mockRoutes = new Elysia({ prefix: "/mock" })
         "/",
         async ({ identityGroupId }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            await InstagramContext.services.instagramLink.unlink(
-                identityGroupId
-            );
-            return { link: null };
+            const service = InstagramContext.services.instagramLink;
+            await service.unlink(identityGroupId);
+            return service.status(identityGroupId);
         },
         {
             withAuthedIdentity: true,
             response: {
-                200: InstagramLinkResponseSchema,
+                200: InstagramStatusSchema,
                 401: t.String(),
                 404: t.String(),
             },
@@ -76,17 +79,94 @@ export const instagramRoutes = new Elysia({ prefix: "/instagram" })
         "/",
         async ({ identityGroupId }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            const link =
-                await InstagramContext.services.instagramLink.find(
-                    identityGroupId
-                );
-            return { link };
+            return InstagramContext.services.instagramLink.status(
+                identityGroupId
+            );
         },
         {
             withAuthedIdentity: true,
             response: {
-                200: InstagramLinkResponseSchema,
+                200: InstagramStatusSchema,
                 401: t.String(),
+            },
+        }
+    )
+    .put(
+        "/declaration",
+        async ({ identityGroupId, body }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
+            return InstagramContext.services.instagramLink.declare(
+                identityGroupId,
+                body.username
+            );
+        },
+        {
+            withAuthedIdentity: true,
+            body: DeclareInstagramBodySchema,
+            response: {
+                200: InstagramStatusSchema,
+                400: t.ErrorResponse,
+                401: t.String(),
+                409: t.ErrorResponse,
+            },
+        }
+    )
+    .delete(
+        "/declaration",
+        async ({ identityGroupId }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
+            return InstagramContext.services.instagramLink.undeclare(
+                identityGroupId
+            );
+        },
+        {
+            withAuthedIdentity: true,
+            response: {
+                200: InstagramStatusSchema,
+                401: t.String(),
+            },
+        }
+    )
+    .post(
+        "/code",
+        async ({ identityGroupId }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
+            // A code nobody can receive would only send players to a dead DM.
+            if (!readInstagramConfig()) {
+                throw HttpError.badGateway(
+                    "INSTAGRAM_UNAVAILABLE",
+                    "Instagram certification is not available"
+                );
+            }
+            const code =
+                await InstagramContext.services.instagramLink.issueCode(
+                    identityGroupId
+                );
+            return { code };
+        },
+        {
+            withAuthedIdentity: true,
+            response: {
+                200: InstagramLinkCodeResponseSchema,
+                401: t.String(),
+                502: t.ErrorResponse,
+            },
+        }
+    )
+    .post(
+        "/check",
+        async ({ identityGroupId }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
+            return InstagramContext.services.instagramVerification.check(
+                identityGroupId
+            );
+        },
+        {
+            withAuthedIdentity: true,
+            response: {
+                200: InstagramStatusSchema,
+                401: t.String(),
+                502: t.ErrorResponse,
             },
         }
     )

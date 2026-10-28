@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import {
     db,
@@ -76,6 +76,10 @@ export class GameDrawRepository {
                 totalTickets: gameDrawsTable.totalTickets,
                 winnerIdentityGroupId: gameDrawsTable.winnerIdentityGroupId,
                 confirmedAt: gameDrawsTable.confirmedAt,
+                candidates: gameDrawsTable.candidates,
+                rejections: gameDrawsTable.rejections,
+                notifiedRank: gameDrawsTable.notifiedRank,
+                candidateNotifiedAt: gameDrawsTable.candidateNotifiedAt,
             })
             .from(gameDrawsTable)
             .where(inArray(gameDrawsTable.gameId, gameIds));
@@ -141,6 +145,38 @@ export class GameDrawRepository {
             .where(underReview(params.id, params.reviewed))
             .returning();
         return updated ?? null;
+    }
+
+    /** `false` when that rank was already told: a push goes out once per candidate. */
+    async markCandidateNotified(params: {
+        id: string;
+        rank: number;
+        kind: "drawn" | "reminder";
+        at: Date;
+    }): Promise<boolean> {
+        const column =
+            params.kind === "drawn"
+                ? gameDrawsTable.notifiedRank
+                : gameDrawsTable.remindedRank;
+        const updated = await db
+            .update(gameDrawsTable)
+            .set(
+                params.kind === "drawn"
+                    ? {
+                          notifiedRank: params.rank,
+                          candidateNotifiedAt: params.at,
+                      }
+                    : { remindedRank: params.rank }
+            )
+            .where(
+                and(
+                    eq(gameDrawsTable.id, params.id),
+                    eq(gameDrawsTable.status, "drawn"),
+                    lt(column, params.rank)
+                )
+            )
+            .returning({ id: gameDrawsTable.id });
+        return updated.length > 0;
     }
 
     async confirm(

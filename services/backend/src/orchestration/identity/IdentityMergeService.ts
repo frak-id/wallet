@@ -10,8 +10,15 @@ import {
     type MergedGroup,
 } from "../../domain/identity/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import { instagramLinksTable } from "../../domain/instagram/db/schema";
-import { pickSurvivingLink } from "../../domain/instagram/utils";
+import {
+    instagramDeclarationsTable,
+    instagramLinkCodesTable,
+    instagramLinksTable,
+} from "../../domain/instagram/db/schema";
+import {
+    pickSurvivingDeclaration,
+    pickSurvivingLink,
+} from "../../domain/instagram/utils";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
@@ -45,6 +52,9 @@ type MergeResult = {
     // counts the rows that lost to the survivor (see `pickSurvivingLink`).
     migratedInstagramLinks: number;
     deletedConflictingInstagramLinks: number;
+    migratedInstagramDeclarations: number;
+    deletedInstagramDeclarations: number;
+    deletedInstagramLinkCodes: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     softDeletedConflictingReferralLinks: number;
@@ -341,6 +351,12 @@ export class IdentityMergeService {
             anchorGroupId,
             mergingGroupIds,
         });
+        const instagramDeclarationOps =
+            await this.migrateInstagramDeclarationsInTrx(trx, {
+                anchorGroupId,
+                mergingGroupIds,
+                certified: instagramLinkOps.survived,
+            });
 
         await this.updateAnchorMergedGroupsInTrx(
             trx,
@@ -383,6 +399,7 @@ export class IdentityMergeService {
             migratedInstagramLinks: instagramLinkOps.migratedInstagramLinks,
             deletedConflictingInstagramLinks:
                 instagramLinkOps.deletedConflictingInstagramLinks,
+            ...instagramDeclarationOps,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -815,6 +832,7 @@ export class IdentityMergeService {
     ): Promise<{
         migratedInstagramLinks: number;
         deletedConflictingInstagramLinks: number;
+        survived: boolean;
     }> {
         const links = await trx
             .select()
@@ -830,6 +848,7 @@ export class IdentityMergeService {
             return {
                 migratedInstagramLinks: 0,
                 deletedConflictingInstagramLinks: 0,
+                survived: false,
             };
         }
 
@@ -852,6 +871,73 @@ export class IdentityMergeService {
         return {
             migratedInstagramLinks: needsMove ? 1 : 0,
             deletedConflictingInstagramLinks: beaten.length,
+            survived: true,
+        };
+    }
+
+    /**
+     * Keeps one declaration on the anchor, none when a certified link survived.
+     * Loser groups' link codes go: a DM carrying one would link a deleted group.
+     */
+    private async migrateInstagramDeclarationsInTrx(
+        trx: PgTx,
+        {
+            anchorGroupId,
+            mergingGroupIds,
+            certified,
+        }: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+            certified: boolean;
+        }
+    ): Promise<{
+        migratedInstagramDeclarations: number;
+        deletedInstagramDeclarations: number;
+        deletedInstagramLinkCodes: number;
+    }> {
+        const deletedCodes = await trx
+            .delete(instagramLinkCodesTable)
+            .where(
+                inArray(
+                    instagramLinkCodesTable.identityGroupId,
+                    mergingGroupIds
+                )
+            )
+            .returning({ id: instagramLinkCodesTable.id });
+
+        const declarations = await trx
+            .select()
+            .from(instagramDeclarationsTable)
+            .where(
+                inArray(instagramDeclarationsTable.identityGroupId, [
+                    anchorGroupId,
+                    ...mergingGroupIds,
+                ])
+            );
+        const survivor = certified
+            ? null
+            : pickSurvivingDeclaration(declarations, anchorGroupId);
+        const dropped = declarations
+            .filter((declaration) => declaration.id !== survivor?.id)
+            .map((declaration) => declaration.id);
+        if (dropped.length > 0) {
+            await trx
+                .delete(instagramDeclarationsTable)
+                .where(inArray(instagramDeclarationsTable.id, dropped));
+        }
+        const needsMove =
+            survivor !== null && survivor.identityGroupId !== anchorGroupId;
+        if (needsMove) {
+            await trx
+                .update(instagramDeclarationsTable)
+                .set({ identityGroupId: anchorGroupId })
+                .where(eq(instagramDeclarationsTable.id, survivor.id));
+        }
+
+        return {
+            migratedInstagramDeclarations: needsMove ? 1 : 0,
+            deletedInstagramDeclarations: dropped.length,
+            deletedInstagramLinkCodes: deletedCodes.length,
         };
     }
 
@@ -1102,6 +1188,9 @@ function emptyMergeResult(): MergeResult {
         deletedConflictingAffiliateAttributions: 0,
         migratedInstagramLinks: 0,
         deletedConflictingInstagramLinks: 0,
+        migratedInstagramDeclarations: 0,
+        deletedInstagramDeclarations: 0,
+        deletedInstagramLinkCodes: 0,
         migratedReferralLinksReferrer: 0,
         migratedReferralLinksReferee: 0,
         softDeletedConflictingReferralLinks: 0,

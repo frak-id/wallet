@@ -82,6 +82,59 @@ function gameWonMessage(prizeAmount: number) {
     };
 }
 
+/** Players are in France: the deadline reads in Paris time whatever the server's zone. */
+function formatDeadline(at: Date, locale: string) {
+    return new Intl.DateTimeFormat(locale, {
+        timeZone: "Europe/Paris",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(at);
+}
+
+function gameCandidateMessage(
+    kind: "game_candidate_drawn" | "game_candidate_reminder",
+    prizeAmount: number,
+    verifyBy: Date
+) {
+    const data = { url: walletNotificationUrl };
+    const en = {
+        prize: formatEuros(prizeAmount, "en"),
+        by: formatDeadline(verifyBy, "en"),
+    };
+    const fr = {
+        prize: formatEuros(prizeAmount, "fr"),
+        by: formatDeadline(verifyBy, "fr"),
+    };
+    if (kind === "game_candidate_drawn") {
+        return {
+            en: {
+                title: "You were drawn in the Frak Game!",
+                body: `Certify your Instagram before ${en.by} to receive your ${en.prize}.`,
+                data,
+            },
+            fr: {
+                title: "Tu as été tiré au sort au Jeu Frak !",
+                body: `Certifie ton Instagram avant le ${fr.by} pour recevoir tes ${fr.prize}.`,
+                data,
+            },
+        };
+    }
+    return {
+        en: {
+            title: "A few hours left to claim your prize",
+            body: `Certify your Instagram before ${en.by}, or another winner is drawn.`,
+            data,
+        },
+        fr: {
+            title: "Plus que quelques heures pour ton gain",
+            body: `Certifie ton Instagram avant le ${fr.by}, sinon un autre gagnant est tiré au sort.`,
+            data,
+        },
+    };
+}
+
 export class NotificationOrchestrator {
     constructor(
         private readonly notificationsService: NotificationsService,
@@ -175,6 +228,21 @@ export class NotificationOrchestrator {
             await this.send(
                 [event.wallet],
                 gameWonMessage(event.prizeAmount),
+                event.type
+            );
+            return;
+        }
+        if (
+            event.type === "game_candidate_drawn" ||
+            event.type === "game_candidate_reminder"
+        ) {
+            await this.send(
+                [event.wallet],
+                gameCandidateMessage(
+                    event.type,
+                    event.prizeAmount,
+                    event.verifyBy
+                ),
                 event.type
             );
             return;

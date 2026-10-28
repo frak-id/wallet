@@ -2,6 +2,8 @@ import { HttpError } from "@backend-utils";
 import { DrizzleQueryError } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InstagramLinkSelect } from "../db/schema";
+import type { InstagramDeclarationRepository } from "../repositories/InstagramDeclarationRepository";
+import type { InstagramLinkCodeRepository } from "../repositories/InstagramLinkCodeRepository";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
 import { InstagramLinkService } from "./InstagramLinkService";
 
@@ -11,6 +13,7 @@ vi.mock("@backend-infrastructure", () => ({ productEvents: { track } }));
 
 const GROUP = "group-1";
 const CHECKED_AT = new Date("2026-10-26T10:00:00Z");
+const DECLARED_AT = new Date("2026-10-27T10:00:00Z");
 
 const row: InstagramLinkSelect = {
     id: "link-1",
@@ -28,10 +31,26 @@ function setup() {
         upsert: vi.fn(),
         deleteByIdentityGroup: vi.fn(),
     };
+    const declarations = {
+        findByIdentityGroup: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn(
+            async (params: { identityGroupId: string; username: string }) => ({
+                id: "declaration-1",
+                ...params,
+                declaredAt: DECLARED_AT,
+            })
+        ),
+        deleteByIdentityGroup: vi.fn(),
+    };
+    const codes = {
+        getOrCreate: vi.fn().mockResolvedValue({ code: "K7Q2PX" }),
+    };
     const service = new InstagramLinkService(
-        repository as unknown as InstagramLinkRepository
+        repository as unknown as InstagramLinkRepository,
+        declarations as unknown as InstagramDeclarationRepository,
+        codes as unknown as InstagramLinkCodeRepository
     );
-    return { repository, service };
+    return { repository, declarations, codes, service };
 }
 
 describe("InstagramLinkService", () => {
@@ -178,5 +197,119 @@ describe("InstagramLinkService", () => {
         for (const [, groupId] of track.mock.calls) {
             expect(groupId).toBe(GROUP);
         }
+    });
+});
+
+describe("InstagramLinkService certification and declaration", () => {
+    beforeEach(() => track.mockReset());
+
+    it("drops the declaration once the account is certified", async () => {
+        const { repository, declarations, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        repository.upsert.mockResolvedValue(row);
+
+        await service.link({
+            identityGroupId: GROUP,
+            igsid: row.igsid,
+            username: "frak_fr",
+            follows: true,
+        });
+
+        expect(declarations.deleteByIdentityGroup).toHaveBeenCalledWith(GROUP);
+    });
+
+    it("keeps the declaration when the account belongs to another wallet", async () => {
+        const { repository, declarations, service } = setup();
+        repository.upsert.mockRejectedValue(
+            new DrizzleQueryError(
+                "insert into instagram_links",
+                [],
+                Object.assign(new Error("duplicate key"), { code: "23505" })
+            )
+        );
+
+        await service
+            .link({
+                identityGroupId: GROUP,
+                igsid: row.igsid,
+                username: "frak_fr",
+                follows: true,
+            })
+            .catch(() => undefined);
+
+        expect(declarations.deleteByIdentityGroup).not.toHaveBeenCalled();
+    });
+
+    it("declares a normalized handle and tracks the first declaration", async () => {
+        const { repository, declarations, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+
+        const status = await service.declare(GROUP, "  @Some.One ");
+
+        expect(declarations.upsert).toHaveBeenCalledWith({
+            identityGroupId: GROUP,
+            username: "some.one",
+        });
+        expect(status).toEqual({
+            link: null,
+            declaration: { username: "some.one", declaredAt: DECLARED_AT },
+        });
+        expect(track).toHaveBeenCalledWith("instagram_declared", GROUP, {});
+    });
+
+    it("does not track a changed handle again", async () => {
+        const { repository, declarations, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        declarations.findByIdentityGroup.mockResolvedValue({
+            username: "old",
+        });
+
+        await service.declare(GROUP, "new_handle");
+
+        expect(track).not.toHaveBeenCalled();
+    });
+
+    it("answers 400 for something that cannot be a handle", async () => {
+        const { declarations, service } = setup();
+
+        await expect(
+            service.declare(GROUP, "not a handle")
+        ).rejects.toMatchObject({
+            status: 400,
+            code: "INVALID_INSTAGRAM_HANDLE",
+        });
+        expect(declarations.upsert).not.toHaveBeenCalled();
+    });
+
+    it("answers 409 once the wallet is certified", async () => {
+        const { repository, declarations, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(row);
+
+        await expect(service.declare(GROUP, "someone")).rejects.toMatchObject({
+            status: 409,
+            code: "INSTAGRAM_ALREADY_CERTIFIED",
+        });
+        expect(declarations.upsert).not.toHaveBeenCalled();
+    });
+
+    it("reports a certified link alone, never a leftover declaration", async () => {
+        const { repository, declarations, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(row);
+        declarations.findByIdentityGroup.mockResolvedValue({
+            username: "old",
+            declaredAt: DECLARED_AT,
+        });
+
+        await expect(service.status(GROUP)).resolves.toEqual({
+            link: { username: "frak_fr", follows: true, checkedAt: CHECKED_AT },
+            declaration: null,
+        });
+    });
+
+    it("hands out the group's code", async () => {
+        const { codes, service } = setup();
+
+        await expect(service.issueCode(GROUP)).resolves.toBe("K7Q2PX");
+        expect(codes.getOrCreate).toHaveBeenCalledWith(GROUP);
     });
 });

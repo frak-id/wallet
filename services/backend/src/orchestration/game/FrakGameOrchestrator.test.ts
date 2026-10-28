@@ -49,6 +49,7 @@ function makeOrchestrator(
         created?: boolean;
         rule?: CampaignRuleSelect;
         instagramLink?: { follows: boolean } | null;
+        declaration?: { username: string } | null;
     } = {}
 ) {
     const joinedAt = vi.fn().mockResolvedValue(opts.joinedAt ?? null);
@@ -58,6 +59,7 @@ function makeOrchestrator(
         .mockResolvedValue(opts.created === false ? null : { id: "i-1" });
     const findRule = vi.fn().mockResolvedValue(opts.rule ?? gameRule);
     const findLink = vi.fn().mockResolvedValue(opts.instagramLink ?? null);
+    const findDeclaration = vi.fn().mockResolvedValue(opts.declaration ?? null);
     const orchestrator = new FrakGameOrchestrator(
         {
             findCurrent: vi
@@ -71,7 +73,8 @@ function makeOrchestrator(
         { findById: vi.fn() } as never,
         { createIdempotent } as never,
         { joinedAt, ticketsOf } as never,
-        { findByIdentityGroup: findLink } as never
+        { findByIdentityGroup: findLink } as never,
+        { findByIdentityGroup: findDeclaration } as never
     );
     return {
         orchestrator,
@@ -80,32 +83,57 @@ function makeOrchestrator(
         createIdempotent,
         findRule,
         findLink,
+        findDeclaration,
     };
 }
 
 describe("FrakGameOrchestrator.getCurrentGame", () => {
     it.each([
-        { name: "no Instagram link", link: null, eligible: false },
         {
-            name: "a linked account that does not follow",
-            link: { follows: false },
+            name: "no Instagram at all",
+            link: null,
+            declaration: null,
             eligible: false,
+            instagram: "none",
         },
         {
-            name: "a linked account that follows",
-            link: { follows: true },
+            name: "a declared handle",
+            link: null,
+            declaration: { username: "someone" },
             eligible: true,
+            instagram: "declared",
         },
-    ])("derives eligibility from $name", async ({ link, eligible }) => {
-        const { orchestrator, findLink } = makeOrchestrator({
-            instagramLink: link,
-        });
+        {
+            name: "a certified account that does not follow",
+            link: { follows: false },
+            declaration: null,
+            eligible: false,
+            instagram: "certified",
+        },
+        {
+            name: "a certified account that follows",
+            link: { follows: true },
+            declaration: null,
+            eligible: true,
+            instagram: "certified",
+        },
+    ])(
+        "derives eligibility from $name",
+        async ({ link, declaration, eligible, instagram }) => {
+            const { orchestrator, findLink, findDeclaration } =
+                makeOrchestrator({
+                    instagramLink: link,
+                    declaration,
+                });
 
-        const result = await orchestrator.getCurrentGame(USER);
+            const result = await orchestrator.getCurrentGame(USER);
 
-        expect(findLink).toHaveBeenCalledWith(USER);
-        expect(result.me.eligible).toBe(eligible);
-    });
+            expect(findLink).toHaveBeenCalledWith(USER);
+            expect(findDeclaration).toHaveBeenCalledWith(USER);
+            expect(result.me.eligible).toBe(eligible);
+            expect(result.me.instagram).toBe(instagram);
+        }
+    );
 
     it("does not look the Instagram link up when no game is open", async () => {
         const { orchestrator, findLink } = makeOrchestrator({ game: null });
@@ -118,6 +146,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
     it("returns the ticket count of a participant with its sources", async () => {
         const ticketsBySource = {
             join: 1,
+            instagramCertified: 0,
             purchase: 3,
             referredPurchase: 0,
             referredSignup: 2,
@@ -136,6 +165,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
             tickets: 7,
             ticketsBySource,
             eligible: false,
+            instagram: "none",
         });
     });
 
@@ -161,6 +191,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
                 tickets: 0,
                 ticketsBySource: NO_TICKETS,
                 eligible: false,
+                instagram: "none",
             },
         });
     });
