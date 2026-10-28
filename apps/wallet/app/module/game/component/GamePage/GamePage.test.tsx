@@ -682,6 +682,15 @@ describe("GamePage result at the top", () => {
         ).toBeInTheDocument();
     });
 
+    it("drops the countdown once the deadline has passed", () => {
+        top("pending_verification", {
+            verifyBy: new Date(Date.now() - 60_000),
+        });
+
+        expect(screen.queryByText(/game.result.hero.timeLeft/)).toBeNull();
+        expect(screen.getByText("game.history.gameOf")).toBeInTheDocument();
+    });
+
     it("gives a winner one button to the prize", () => {
         top("won");
 

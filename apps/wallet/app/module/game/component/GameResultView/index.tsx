@@ -125,6 +125,14 @@ function RecordChip({ record }: { record: GameRecord }) {
     );
 }
 
+/** A drawn player's certify-by date, until it passes. */
+function openDeadline(result: GameResult, now: number) {
+    if (result.outcome !== "pending_verification" || !result.verifyBy) {
+        return null;
+    }
+    return new Date(result.verifyBy).getTime() > now ? result.verifyBy : null;
+}
+
 /** The result as the page's lead: a hero in `GameHero`'s family, the way on, then the numbers behind it. */
 export function GameResultView({
     result,
@@ -144,8 +152,7 @@ export function GameResultView({
         tickets: earned.toLocaleString(i18n.language),
         total: result.totalTickets?.toLocaleString(i18n.language) ?? null,
     };
-    const deadline =
-        result.outcome === "pending_verification" ? result.verifyBy : null;
+    const deadline = openDeadline(result, now);
     const left = deadline ? countdownOf(deadline, now) : null;
     const hoursLeft = left ? left.days * 24 + left.hours : 0;
 
