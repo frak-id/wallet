@@ -19,23 +19,13 @@ import {
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 import { backendUpstreamTraffic, gatewayRoute } from "./gateway";
-import {
-    baseDomainName,
-    cachedImage,
-    getRegistryPath,
-    walletNamespace,
-} from "./utils";
+import { cachedImage, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
 const backendServiceName = $dev
     ? ""
     : ((await import("./backend")).backendInstance.service?.metadata?.name ??
       "");
-
-// Stage-scoped wallet hostname: `wallet.frak.id` (prod) vs `wallet-dev.frak.id` (dev).
-// Each ingress feeds a stage-scoped backend whose `.well-known/{aasa,assetlinks}`
-// only advertises the matching wallet bundle (id.frak.wallet[.dev]).
-const subDomain = isProd ? "wallet" : "wallet-dev";
 
 export const walletEnv = {
     STAGE: normalizedStageName,
@@ -129,7 +119,7 @@ if (!$dev) {
     };
 }
 
-// Listener service (backend only, no ingress - accessed via wallet ingress)
+// Listener service (no route of its own - served under the wallet route)
 export const listenerService = new KubernetesService(
     "wallet-listener",
     {
@@ -194,21 +184,19 @@ export const listenerService = new KubernetesService(
             ],
         },
 
-        // Service config (ClusterIP, no ingress)
+        // Service config (ClusterIP, no route - see the wallet's `listener` rule)
         service: {
             ports: [
                 { port: 80, targetPort: 80, protocol: "TCP", name: "http" },
             ],
         },
-
-        // No ingress - accessed via wallet's ingress path routing
     },
     {
         dependsOn: dependency,
     }
 );
 
-// Wallet service (owns the ingress and routes paths)
+// Wallet service (owns the route and its path rules)
 export const walletService = new KubernetesService(
     "wallet",
     {
@@ -280,60 +268,17 @@ export const walletService = new KubernetesService(
             ],
         },
 
-        // Ingress config with path-based routing
-        ingress: {
-            host: `${subDomain}.frak.id`,
-            tlsSecretName: "wallet-tls",
-            additionalHosts: [`wallet.${baseDomainName}`],
-            // Route /listener to the listener service and /.well-known to backend
-            pathRoutes: [
-                {
-                    path: "/.well-known",
-                    pathType: "Prefix",
-                    serviceName: backendServiceName,
-                    servicePort: 80,
-                },
-                {
-                    path: "/listener",
-                    pathType: "Prefix",
-                    serviceName: listenerService.service?.metadata?.name ?? "",
-                    servicePort: 80,
-                },
-            ],
-            // No rewrite needed - listener nginx handles /listener prefix internally
-            customAnnotations: {
-                "nginx.ingress.kubernetes.io/proxy-body-size": "10m",
-                // Disable buffering to prevent ingress from caching responses
-                "nginx.ingress.kubernetes.io/proxy-buffering": "off",
-                // Force ingress to always revalidate with backend
-                "nginx.ingress.kubernetes.io/force-ssl-redirect": "false",
-                // Connection pooling and keepalive for ingress -> pod connections
-                "nginx.ingress.kubernetes.io/upstream-keepalive-connections":
-                    "64",
-                "nginx.ingress.kubernetes.io/upstream-keepalive-requests":
-                    "1000",
-                "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "60",
-                // HTTP/2 optimizations for better multiplexing
-                "nginx.ingress.kubernetes.io/http2-max-field-size": "8k",
-                "nginx.ingress.kubernetes.io/http2-max-header-size": "32k",
-                "nginx.ingress.kubernetes.io/http2-max-concurrent-streams":
-                    "128",
-                // Connection timeouts optimized for static assets
-                "nginx.ingress.kubernetes.io/proxy-connect-timeout": "5",
-                "nginx.ingress.kubernetes.io/proxy-send-timeout": "60",
-                "nginx.ingress.kubernetes.io/proxy-read-timeout": "60",
-            },
-        },
-
         httpRoute: {
             ...gatewayRoute("wallet", "wallet"),
             rules: [
+                // Stage-scoped backend: its AASA/assetlinks only list id.frak.wallet[.dev]
                 {
                     name: "well-known",
                     path: "/.well-known",
                     backend: { name: backendServiceName, port: 80 },
                     traffic: backendUpstreamTraffic,
                 },
+                // No rewrite: the listener's own nginx serves under /listener
                 {
                     name: "listener",
                     path: "/listener",

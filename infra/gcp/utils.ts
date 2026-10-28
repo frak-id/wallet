@@ -3,8 +3,6 @@ import { isProd, normalizedStageName } from "../utils";
 
 export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
 
-export const domainName = `backend.${baseDomainName}`;
-
 // Local port the GCP DB tunnel (infra/gcp/dev.ts `db-tunnel`) forwards to the
 // shared master Postgres. Shared so dev DB consumers (backend, shopify) agree.
 export const dbTunnelLocalPort = "8888";
