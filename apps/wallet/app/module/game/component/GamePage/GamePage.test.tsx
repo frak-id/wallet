@@ -60,6 +60,7 @@ vi.mock("@/module/game/hook/useGameHistory", () => ({
 }));
 
 import { gameSeenStore } from "@/module/game/stores/gameSeenStore";
+import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
 import { modalStore } from "@/module/stores/modalStore";
 import { gameResult } from "@/tests/gameFixtures";
 import { GamePage } from "./index";
@@ -369,11 +370,12 @@ describe("GamePage", () => {
         expect(
             screen.getByText("game.result.pendingVerification.title")
         ).toBeInTheDocument();
-        expect(
-            screen.getByRole("link", {
+        fireEvent.click(
+            screen.getByRole("button", {
                 name: /game.result.pendingVerification.cta/,
             })
-        ).toHaveAttribute("href", "/profile/instagram");
+        );
+        expect(navigate).toHaveBeenCalledWith({ to: "/profile/instagram" });
         expect(
             screen.getAllByRole("button", { name: /game.history.gameOf/ })
         ).toHaveLength(1);
@@ -416,6 +418,7 @@ describe("GamePage", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_result_viewed", {
             game_id: "latest",
             outcome: "lost",
+            record: "held",
         });
     });
 
@@ -425,9 +428,10 @@ describe("GamePage", () => {
         render(<GamePage />);
 
         expect(screen.getByText("game.result.won.title")).toBeInTheDocument();
-        expect(
-            screen.getByRole("link", { name: /game.result.won.cta/ })
-        ).toHaveAttribute("href", "/history");
+        fireEvent.click(
+            screen.getByRole("button", { name: /game.result.won.cta/ })
+        );
+        expect(navigate).toHaveBeenCalledWith({ to: "/history" });
     });
 
     it("tells a player with no Instagram why their tickets did not count", () => {
@@ -582,4 +586,146 @@ describe("GamePage", () => {
         expect(currentGame.refetch).toHaveBeenCalled();
         expect(gameHistory.refetch).toHaveBeenCalled();
     });
+});
+
+describe("GamePage result at the top", () => {
+    const sources = (purchase: number) => ({
+        ticketsBySource: {
+            join: 1,
+            instagramCertified: 0,
+            purchase,
+            referredPurchase: 0,
+            referredSignup: 0,
+            brandShare: 0,
+        },
+    });
+    const top = (
+        outcome: GameOutcome,
+        overrides: Parameters<typeof gameResult>[0] = {}
+    ) => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [result("latest", outcome, overrides)];
+        trackEvent.mockReset();
+        navigate.mockClear();
+        return render(<GamePage />);
+    };
+
+    beforeEach(() => {
+        gameHistory.isLoading = false;
+        gameHistory.isError = false;
+    });
+
+    it.each([
+        ["drawing", "game.result.drawing.title"],
+        ["lost", "game.result.lost.title"],
+        ["no_winner", "game.result.noWinner.title"],
+    ] as const)("shows the record chip on %s", (outcome, title) => {
+        top(outcome);
+
+        expect(screen.getByText(title)).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.hero.record.first:7")
+        ).toBeInTheDocument();
+    });
+
+    it.each([
+        ["won", "game.result.won.title"],
+        ["pending_verification", "game.result.pendingVerification.title"],
+    ] as const)("leaves the record out of %s", (outcome, title) => {
+        top(outcome, { verifyBy: new Date(Date.now() + 3_600_000) });
+
+        expect(screen.getByText(title)).toBeInTheDocument();
+        expect(screen.queryByText(/game.result.hero.record/)).toBeNull();
+    });
+
+    it("states the draw to a player in a draw still running", () => {
+        top("drawing");
+
+        expect(
+            screen.getByText("game.result.hero.drawingOf:7")
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /cta/ })).toBeNull();
+    });
+
+    it("drops the out-of when the draw size is not known yet", () => {
+        top("drawing", { totalTickets: null });
+
+        expect(
+            screen.getByText("game.result.hero.drawing:7")
+        ).toBeInTheDocument();
+    });
+
+    it("sends a drawn player to certify with one button, the countdown and the deadline", () => {
+        top("pending_verification", {
+            verifyBy: new Date(Date.now() + 21 * 3_600_000 + 60_000),
+        });
+
+        expect(
+            screen.getAllByText(/game.result.pendingVerification.cta/)
+        ).toHaveLength(1);
+        expect(
+            screen.getByText("game.result.hero.timeLeftHours")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.hero.deadline")
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("link", { name: /cta/ })).toBeNull();
+    });
+
+    it("counts the last minutes of the deadline in minutes", () => {
+        top("pending_verification", {
+            verifyBy: new Date(Date.now() + 20 * 60_000),
+        });
+
+        expect(
+            screen.getByText("game.result.hero.timeLeftMinutes")
+        ).toBeInTheDocument();
+    });
+
+    it("gives a winner one button to the prize", () => {
+        top("won");
+
+        expect(screen.getAllByText(/game.result.won.cta/)).toHaveLength(1);
+    });
+
+    it("points a loser to the next game on Instagram", () => {
+        top("lost");
+
+        expect(
+            screen.getByRole("link", { name: /game.result.hero.next/ })
+        ).toHaveAttribute("href", FRAK_INSTAGRAM_URL);
+    });
+
+    it("says the tickets were not in the draw when they were discarded", () => {
+        top("lost", { discarded: "not_following", drawTickets: 0 });
+
+        expect(
+            screen.getByText("game.result.hero.discarded")
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/game.result.hero.lost/)).toBeNull();
+        expect(screen.getByText("game.result.discarded")).toBeInTheDocument();
+    });
+
+    it.each([
+        ["first", []],
+        ["new", [result("old", "lost", sources(2))]],
+        ["held", [result("old", "lost", sources(30))]],
+    ] as const)(
+        "tracks the %s record with the result viewed",
+        (record, older) => {
+            currentGame.data = NO_GAME;
+            trackEvent.mockReset();
+            gameHistory.data = [
+                result("latest", "lost", sources(10)),
+                ...older,
+            ];
+            render(<GamePage />);
+
+            expect(trackEvent).toHaveBeenCalledWith("game_result_viewed", {
+                game_id: "latest",
+                outcome: "lost",
+                record,
+            });
+        }
+    );
 });

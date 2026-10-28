@@ -1103,6 +1103,30 @@
                 "noWinner": "No winner",
                 "pendingVerification": "To confirm"
             },
+            "hero": {
+                "drawing_one": "Your ticket is in the draw. The winner will be announced very soon.",
+                "drawing_other": "Your {{tickets}} tickets are in the draw. The winner will be announced very soon.",
+                "drawingOf_one": "Your ticket out of {{total}} is in the draw. The winner will be announced very soon.",
+                "drawingOf_other": "Your {{tickets}} tickets out of {{total}} are in the draw. The winner will be announced very soon.",
+                "lost_one": "Your ticket wasn't drawn.",
+                "lost_other": "Your {{tickets}} tickets weren't drawn.",
+                "lostOf_one": "Your ticket out of {{total}} wasn't drawn.",
+                "lostOf_other": "Your {{tickets}} tickets out of {{total}} weren't drawn.",
+                "discarded": "Your tickets weren't in the draw.",
+                "pendingVerification": "Connect your Instagram and follow @frak_fr to receive your {{prize}}. Otherwise, another winner is drawn.",
+                "timeLeftHours": "Only {{hours}} h {{minutes}} min left",
+                "timeLeftMinutes": "Only {{minutes}} min left",
+                "deadline": "Before {{date}}",
+                "next": "The next game will be announced on Instagram",
+                "record": {
+                    "first_one": "First game: {{tickets}} ticket, your record to beat",
+                    "first_other": "First game: {{tickets}} tickets, your record to beat",
+                    "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
+                    "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+                    "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
+                    "held_other": "Your record: {{tickets}} tickets, in the {{date}} game"
+                }
+            },
             "drawing": {
                 "title": "Draw in progress",
                 "description": "The game is over. The winner will be announced very soon."

@@ -139,20 +139,23 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 /**
  * The numbers behind a result, where the user's tickets came from, and the
  * way to the prize for a winner: a link, or `onSeePrize` from inside a modal.
+ * `withCta` off leaves the way on to a hero that carries its own button.
  */
 export function GameResultDetail({
     result,
     onSeePrize,
+    withCta = true,
 }: {
     result: GameResult;
     onSeePrize?: () => void;
+    withCta?: boolean;
 }) {
     const { t, i18n } = useTranslation();
     const sources = SOURCES.filter((source) => result.ticketsBySource[source]);
 
     return (
         <>
-            {result.outcome === "won" && (
+            {withCta && result.outcome === "won" && (
                 <InfoCard>
                     <InfoRow
                         icon={GiftIcon}
@@ -163,7 +166,7 @@ export function GameResultDetail({
                     />
                 </InfoCard>
             )}
-            {result.outcome === "pending_verification" && (
+            {withCta && result.outcome === "pending_verification" && (
                 <InfoCard>
                     <InfoRow
                         icon={InstagramIcon}
@@ -255,18 +258,6 @@ function VerifyDraw({ gameId, pid }: { gameId: string; pid: string }) {
                 {t("game.result.verify.pid", { pid })}
             </Text>
         </Stack>
-    );
-}
-
-/** The latest ended game in full, at the top of the game page. */
-export function GameResultCard({ result }: { result: GameResult }) {
-    return (
-        <>
-            <Card>
-                <OutcomeHero result={result} />
-            </Card>
-            <GameResultDetail result={result} />
-        </>
     );
 }
 

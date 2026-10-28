@@ -1103,6 +1103,30 @@
                 "noWinner": "Sans gagnant",
                 "pendingVerification": "À confirmer"
             },
+            "hero": {
+                "drawing_one": "Ton ticket est dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawing_other": "Tes {{tickets}} tickets sont dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawingOf_one": "Ton ticket sur {{total}} est dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawingOf_other": "Tes {{tickets}} tickets sur {{total}} sont dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "lost_one": "Ton ticket n'a pas été tiré.",
+                "lost_other": "Tes {{tickets}} tickets n'ont pas été tirés.",
+                "lostOf_one": "Ton ticket sur {{total}} n'a pas été tiré.",
+                "lostOf_other": "Tes {{tickets}} tickets sur {{total}} n'ont pas été tirés.",
+                "discarded": "Tes tickets n'étaient pas au tirage.",
+                "pendingVerification": "Connecte ton Instagram et suis @frak_fr pour recevoir tes {{prize}}. Sinon, un autre gagnant est tiré au sort.",
+                "timeLeftHours": "Plus que {{hours}} h {{minutes}} min",
+                "timeLeftMinutes": "Plus que {{minutes}} min",
+                "deadline": "Avant le {{date}}",
+                "next": "Le prochain jeu sera annoncé sur Instagram",
+                "record": {
+                    "first_one": "Premier jeu : {{tickets}} ticket, ton record à battre",
+                    "first_other": "Premier jeu : {{tickets}} tickets, ton record à battre",
+                    "new_one": "Nouveau record : {{tickets}} ticket (avant : {{previous}})",
+                    "new_other": "Nouveau record : {{tickets}} tickets (avant : {{previous}})",
+                    "held_one": "Ton record : {{tickets}} ticket, au jeu du {{date}}",
+                    "held_other": "Ton record : {{tickets}} tickets, au jeu du {{date}}"
+                }
+            },
             "drawing": {
                 "title": "Tirage en cours",
                 "description": "Le jeu est terminé. Le gagnant sera annoncé très bientôt."

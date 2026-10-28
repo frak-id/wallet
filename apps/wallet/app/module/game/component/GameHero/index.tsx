@@ -131,7 +131,7 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                 {title}
             </Text>
             {gains.total > 0 && (
-                <span className={styles.gains}>
+                <span className={styles.chip({ tone: "success" })}>
                     {t("game.page.hero.since", {
                         gains: gains.gains
                             .map((gain) =>

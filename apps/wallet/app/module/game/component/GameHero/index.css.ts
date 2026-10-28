@@ -109,6 +109,23 @@ export const card = recipe({
                 color: brand.colors.neutral.grey700,
             },
         },
+        // A prize reads longer than a ticket count: the card widens and keeps its text clear of the notches.
+        prize: {
+            true: {
+                fontSize: 24,
+                width: "auto",
+                minWidth: 100,
+                paddingInline: 18,
+                whiteSpace: "nowrap",
+                left: "50%",
+                translate: "-50% 0",
+            },
+        },
+        muted: {
+            true: {
+                background: `linear-gradient(135deg, ${white}, ${brand.colors.primary[50]})`,
+            },
+        },
         pop: {
             true: {
                 animation: `${pop} 0.5s cubic-bezier(0.23, 1, 0.32, 1) both`,
@@ -165,16 +182,31 @@ export const gainBadge = style({
     ...still(),
 });
 
-export const gains = style({
-    padding: "6px 12px",
-    borderRadius: alias.cornerRadius.m,
-    background: brand.colors.success[100],
-    color: brand.colors.success[800],
-    fontSize: 13,
-    fontWeight: 600,
-    lineHeight: 1.4,
-    animation: `${slideIn} 0.35s 0.35s ease-out both`,
-    ...still(),
+export const chip = recipe({
+    base: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "6px 12px",
+        borderRadius: alias.cornerRadius.m,
+        fontSize: 13,
+        fontWeight: 600,
+        lineHeight: 1.4,
+        animation: `${slideIn} 0.35s 0.35s ease-out both`,
+        ...still(),
+    },
+    variants: {
+        tone: {
+            success: {
+                background: brand.colors.success[100],
+                color: brand.colors.success[800],
+            },
+            info: {
+                background: brand.colors.primary[50],
+                color: brand.colors.primary[800],
+            },
+        },
+    },
 });
 
 export const countdown = recipe({

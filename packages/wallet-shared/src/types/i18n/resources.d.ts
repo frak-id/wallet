@@ -635,6 +635,30 @@ export default interface Resources {
           "title": "Draw in progress"
         },
         "endedAt": "Game ended",
+        "hero": {
+          "deadline": "Before {{date}}",
+          "discarded": "Your tickets weren't in the draw.",
+          "drawingOf_one": "Your ticket out of {{total}} is in the draw. The winner will be announced very soon.",
+          "drawingOf_other": "Your {{tickets}} tickets out of {{total}} are in the draw. The winner will be announced very soon.",
+          "drawing_one": "Your ticket is in the draw. The winner will be announced very soon.",
+          "drawing_other": "Your {{tickets}} tickets are in the draw. The winner will be announced very soon.",
+          "lostOf_one": "Your ticket out of {{total}} wasn't drawn.",
+          "lostOf_other": "Your {{tickets}} tickets out of {{total}} weren't drawn.",
+          "lost_one": "Your ticket wasn't drawn.",
+          "lost_other": "Your {{tickets}} tickets weren't drawn.",
+          "next": "The next game will be announced on Instagram",
+          "pendingVerification": "Connect your Instagram and follow @frak_fr to receive your {{prize}}. Otherwise, another winner is drawn.",
+          "record": {
+            "first_one": "First game: {{tickets}} ticket, your record to beat",
+            "first_other": "First game: {{tickets}} tickets, your record to beat",
+            "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
+            "held_other": "Your record: {{tickets}} tickets, in the {{date}} game",
+            "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
+            "new_other": "New record: {{tickets}} tickets (before: {{previous}})"
+          },
+          "timeLeftHours": "Only {{hours}} h {{minutes}} min left",
+          "timeLeftMinutes": "Only {{minutes}} min left"
+        },
         "lost": {
           "description": "Your ticket wasn't drawn. Try your luck in the next game!",
           "title": "Not this time"

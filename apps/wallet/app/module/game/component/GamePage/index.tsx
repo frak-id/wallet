@@ -11,12 +11,14 @@ import { Title } from "@/module/common/component/Title";
 import { OpenGameCard } from "@/module/game/component/GameCard";
 import { GameHero } from "@/module/game/component/GameHero";
 import { GameMissions } from "@/module/game/component/GameMissions";
-import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
+import { PastGames } from "@/module/game/component/GameResult";
+import { GameResultView } from "@/module/game/component/GameResultView";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useSinceLastVisit } from "@/module/game/hook/useSinceLastVisit";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import { missionsDone, missionsOf } from "@/module/game/utils/gameMissions";
+import { recordOf } from "@/module/game/utils/gameRecord";
 import { useRefreshInstagramFollow } from "@/module/instagram/hook/useInstagramLink";
 
 /** Past the end, the backend has closed the game: reload a little after. */
@@ -85,9 +87,10 @@ export function GamePage() {
             trackEvent("game_result_viewed", {
                 game_id: result.game.id,
                 outcome: result.outcome,
+                record: recordOf(result, history.data ?? []).kind,
             });
         }
-    }, [pending, resultShown]);
+    }, [pending, resultShown, history.data]);
 
     // Once per game shown: a refetch with new counts is not a new view.
     useEffect(() => {
@@ -143,7 +146,7 @@ export function GamePage() {
             )}
             {top.kind === "loading" && <Skeleton variant="rect" height={160} />}
             {pending && pending !== resultShown && (
-                <GameResultCard result={pending} />
+                <GameResultView result={pending} history={results} />
             )}
             {top.kind === "none" && (
                 <EmptyState
@@ -154,7 +157,9 @@ export function GamePage() {
             {top.kind === "join" && (
                 <OpenGameCard game={top.game} participating={false} />
             )}
-            {top.kind === "result" && <GameResultCard result={top.result} />}
+            {top.kind === "result" && (
+                <GameResultView result={top.result} history={results} />
+            )}
             {top.kind === "playing" && me && (
                 <>
                     <GameHero

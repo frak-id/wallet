@@ -34,6 +34,7 @@ export type GameEventMap = {
             | "won"
             | "lost"
             | "no_winner";
+        record: "first" | "new" | "held";
     };
     game_win_screen_viewed: { game_id: string; prize_amount: number };
     game_win_screen_closed: { game_id: string; action: "history" | "close" };
