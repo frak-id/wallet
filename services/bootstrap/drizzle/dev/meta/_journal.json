@@ -358,6 +358,13 @@
             "when": 1793095393758,
             "tag": "0050_red_agent_brand",
             "breakpoints": true
+        },
+        {
+            "idx": 51,
+            "version": "7",
+            "when": 1793179809337,
+            "tag": "0051_productive_vindicator",
+            "breakpoints": true
         }
     ]
 }
