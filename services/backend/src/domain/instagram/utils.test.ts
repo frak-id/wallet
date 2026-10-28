@@ -5,10 +5,8 @@ import {
     extractTextMessages,
     instagramLevelOf,
     isDrawEligible,
-    isMockIgsid,
     isValidMetaSignature,
     isVerifiedFollower,
-    mockIgsidOf,
     normalizeInstagramHandle,
     pickSurvivingDeclaration,
     pickSurvivingLink,
@@ -35,14 +33,6 @@ describe("normalizeInstagramHandle", () => {
         ["over 30 characters", "a".repeat(31)],
     ])("rejects %s", (_name, raw) => {
         expect(normalizeInstagramHandle(raw)).toBeNull();
-    });
-});
-
-describe("mockIgsidOf", () => {
-    it("is stable per handle and never looks like a Meta id", () => {
-        expect(mockIgsidOf("frak_fr")).toBe(mockIgsidOf("frak_fr"));
-        expect(mockIgsidOf("frak_fr")).not.toBe(mockIgsidOf("other"));
-        expect(mockIgsidOf("frak_fr")).toMatch(/^mock_/);
     });
 });
 
@@ -195,11 +185,6 @@ describe("Instagram levels", () => {
         ["a link that follows", { follows: true }, true],
     ])("pays only a certified follower: %s", (_name, link, expected) => {
         expect(isVerifiedFollower(link)).toBe(expected);
-    });
-
-    it("tells mock links apart", () => {
-        expect(isMockIgsid(mockIgsidOf("frak_fr"))).toBe(true);
-        expect(isMockIgsid("17841400000000000")).toBe(false);
     });
 });
 

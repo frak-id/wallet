@@ -19,7 +19,6 @@ export {
     InstagramLinkSchema,
     type InstagramStatus,
     InstagramStatusSchema,
-    MockInstagramLinkBodySchema,
 } from "./schemas";
 export { InstagramLinkService } from "./services/InstagramLinkService";
 export {
@@ -32,6 +31,4 @@ export {
     isDrawEligible,
     isValidMetaSignature,
     isVerifiedFollower,
-    mockIgsidOf,
-    normalizeInstagramHandle,
 } from "./utils";

@@ -8,11 +8,7 @@ import type { InstagramLinkSelect } from "../db/schema";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
 import type { InstagramPendingLinkRepository } from "../repositories/InstagramPendingLinkRepository";
 import type { InstagramStatus } from "../schemas";
-import {
-    extractCodeCandidates,
-    type IncomingInstagramMessage,
-    isMockIgsid,
-} from "../utils";
+import { extractCodeCandidates, type IncomingInstagramMessage } from "../utils";
 import type { InstagramLinkService } from "./InstagramLinkService";
 import type { InstagramTokenService } from "./InstagramTokenService";
 
@@ -116,9 +112,7 @@ export class InstagramVerificationService {
     ): Promise<number> {
         const now = Date.now();
         const stale = links.filter(
-            (link) =>
-                !isMockIgsid(link.igsid) &&
-                now - link.checkedAt.getTime() >= maxAgeMs
+            (link) => now - link.checkedAt.getTime() >= maxAgeMs
         );
         for (let i = 0; i < stale.length; i += RECHECK_CONCURRENCY) {
             await Promise.all(

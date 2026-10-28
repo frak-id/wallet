@@ -6901,7 +6901,9 @@
                 "promotional",
                 "reward_pending",
                 "reward_settled",
-                "game_won"
+                "game_won",
+                "game_candidate_drawn",
+                "game_candidate_reminder"
               ]
             }
           },
@@ -8308,7 +8310,8 @@
                         "participating",
                         "tickets",
                         "ticketsBySource",
-                        "eligible"
+                        "eligible",
+                        "instagram"
                       ],
                       "properties": {
                         "participating": {
@@ -8321,6 +8324,7 @@
                           "type": "object",
                           "required": [
                             "join",
+                            "instagramCertified",
                             "purchase",
                             "referredPurchase",
                             "referredSignup",
@@ -8328,6 +8332,9 @@
                           ],
                           "properties": {
                             "join": {
+                              "type": "number"
+                            },
+                            "instagramCertified": {
                               "type": "number"
                             },
                             "purchase": {
@@ -8346,6 +8353,14 @@
                         },
                         "eligible": {
                           "type": "boolean"
+                        },
+                        "instagram": {
+                          "type": "string",
+                          "enum": [
+                            "certified",
+                            "declared",
+                            "none"
+                          ]
                         }
                       }
                     }
@@ -8391,6 +8406,7 @@
                           "ticketsBySource",
                           "drawTickets",
                           "discarded",
+                          "verifyBy",
                           "pid",
                           "totalTickets",
                           "participants",
@@ -8481,6 +8497,7 @@
                             "type": "string",
                             "enum": [
                               "drawing",
+                              "pending_verification",
                               "won",
                               "lost",
                               "no_winner"
@@ -8490,6 +8507,7 @@
                             "type": "object",
                             "required": [
                               "join",
+                              "instagramCertified",
                               "purchase",
                               "referredPurchase",
                               "referredSignup",
@@ -8497,6 +8515,9 @@
                             ],
                             "properties": {
                               "join": {
+                                "type": "number"
+                              },
+                              "instagramCertified": {
                                 "type": "number"
                               },
                               "purchase": {
@@ -8517,10 +8538,35 @@
                             "type": "number"
                           },
                           "discarded": {
-                            "const": "not_following",
                             "type": [
                               "string",
                               "null"
+                            ],
+                            "enum": [
+                              "not_following",
+                              "not_linked"
+                            ]
+                          },
+                          "verifyBy": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
                             ]
                           },
                           "pid": {
@@ -8595,7 +8641,8 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "link"
+                    "link",
+                    "declaration"
                   ],
                   "properties": {
                     "link": {
@@ -8631,6 +8678,36 @@
                           ]
                         }
                       }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
                     }
                   }
                 }
@@ -8651,7 +8728,7 @@
         "operationId": "getUserWalletInstagram"
       }
     },
-    "/user/wallet/instagram/mock/": {
+    "/user/wallet/instagram/declaration": {
       "put": {
         "requestBody": {
           "required": true,
@@ -8660,17 +8737,13 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "username",
-                  "follows"
+                  "username"
                 ],
                 "properties": {
                   "username": {
                     "minLength": 1,
                     "maxLength": 32,
                     "type": "string"
-                  },
-                  "follows": {
-                    "type": "boolean"
                   }
                 }
               }
@@ -8679,17 +8752,13 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "username",
-                  "follows"
+                  "username"
                 ],
                 "properties": {
                   "username": {
                     "minLength": 1,
                     "maxLength": 32,
                     "type": "string"
-                  },
-                  "follows": {
-                    "type": "boolean"
                   }
                 }
               }
@@ -8698,17 +8767,13 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "username",
-                  "follows"
+                  "username"
                 ],
                 "properties": {
                   "username": {
                     "minLength": 1,
                     "maxLength": 32,
                     "type": "string"
-                  },
-                  "follows": {
-                    "type": "boolean"
                   }
                 }
               }
@@ -8723,7 +8788,8 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "link"
+                    "link",
+                    "declaration"
                   ],
                   "properties": {
                     "link": {
@@ -8744,6 +8810,36 @@
                           "type": "boolean"
                         },
                         "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
                           "anyOf": [
                             {
                               "type": "string",
@@ -8802,16 +8898,6 @@
               }
             }
           },
-          "404": {
-            "description": "Response for status 404",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
           "409": {
             "description": "Response for status 409",
             "content": {
@@ -8840,7 +8926,7 @@
             }
           }
         },
-        "operationId": "putUserWalletInstagramMock"
+        "operationId": "putUserWalletInstagramDeclaration"
       },
       "delete": {
         "responses": {
@@ -8851,7 +8937,8 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "link"
+                    "link",
+                    "declaration"
                   ],
                   "properties": {
                     "link": {
@@ -8887,6 +8974,71 @@
                           ]
                         }
                       }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteUserWalletInstagramDeclaration"
+      }
+    },
+    "/user/wallet/instagram/code": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
                     }
                   }
                 }
@@ -8903,8 +9055,122 @@
               }
             }
           },
-          "404": {
-            "description": "Response for status 404",
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletInstagramCode"
+      }
+    },
+    "/user/wallet/instagram/check": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link",
+                    "declaration"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
             "content": {
               "text/plain": {
                 "schema": {
@@ -8912,9 +9178,36 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "operationId": "deleteUserWalletInstagramMock"
+        "operationId": "postUserWalletInstagramCheck"
       }
     },
     "/user/wallet/merge/preview": {

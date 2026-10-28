@@ -40,24 +40,13 @@ export class InstagramLinkService {
         };
     }
 
-    /** Certifies: stamps the follow state with now and replaces any declaration. 409 `INSTAGRAM_ALREADY_LINKED` when another identity holds the account. */
-    async link(input: LinkInstagramInput): Promise<InstagramLink> {
-        const saved = await this.certify(input);
-        if (!saved) throw new Error("Certifying without a code claims nothing");
-        return saved;
-    }
-
-    /** {@link link}, consuming the DM code in the same transaction; null when the code was already used or dropped by a merge. */
-    linkWithCode(
+    /**
+     * Certifies and consumes the DM code in one transaction: stamps the follow state with now and replaces any declaration.
+     * `null` when the code was already used or dropped by a merge; 409 `INSTAGRAM_ALREADY_LINKED` when another identity holds the account.
+     */
+    async linkWithCode(
         code: string,
         input: LinkInstagramInput
-    ): Promise<InstagramLink | null> {
-        return this.certify(input, code);
-    }
-
-    private async certify(
-        input: LinkInstagramInput,
-        code?: string
     ): Promise<InstagramLink | null> {
         const previous = await this.repository.findByIdentityGroup(
             input.identityGroupId
@@ -137,9 +126,5 @@ export class InstagramLinkService {
                 {}
             );
         }
-    }
-
-    async unlink(identityGroupId: string): Promise<void> {
-        await this.repository.deleteByIdentityGroup(identityGroupId);
     }
 }

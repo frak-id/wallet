@@ -33,13 +33,13 @@ export class InstagramLinkRepository {
 
     /**
      * Replaces the group's link and drops its pending row (declaration and code)
-     * in one transaction. With `code`, only if that row still holds it: null
-     * when the code is already used. A unique violation means the `igsid`
-     * belongs to another group.
+     * in one transaction, only if that row still holds `code`: null when the
+     * code is already used. A unique violation means the `igsid` belongs to
+     * another group.
      */
     async certify(
         link: InstagramLinkInsert,
-        code?: string
+        code: string
     ): Promise<InstagramLinkSelect | null> {
         const pending = instagramPendingLinksTable;
         return db.transaction(async (tx) => {
@@ -48,11 +48,11 @@ export class InstagramLinkRepository {
                 .where(
                     and(
                         eq(pending.identityGroupId, link.identityGroupId),
-                        code === undefined ? undefined : eq(pending.code, code)
+                        eq(pending.code, code)
                     )
                 )
                 .returning({ id: pending.id });
-            if (code !== undefined && dropped.length === 0) return null;
+            if (dropped.length === 0) return null;
             const [saved] = await tx
                 .insert(instagramLinksTable)
                 .values(link)
@@ -91,11 +91,5 @@ export class InstagramLinkRepository {
             )
             .returning();
         return saved ?? null;
-    }
-
-    async deleteByIdentityGroup(identityGroupId: string): Promise<void> {
-        await db
-            .delete(instagramLinksTable)
-            .where(eq(instagramLinksTable.identityGroupId, identityGroupId));
     }
 }

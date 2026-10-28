@@ -37,10 +37,3 @@ export const DeclareInstagramBodySchema = t.Object({
 export const InstagramLinkCodeResponseSchema = t.Object({
     code: t.String(),
 });
-
-/** Non-prod only: stands in for what Meta's webhook reports. */
-export const MockInstagramLinkBodySchema = t.Object({
-    username: t.String({ minLength: 1, maxLength: 32 }),
-    follows: t.Boolean(),
-});
-export type MockInstagramLinkBody = Static<typeof MockInstagramLinkBodySchema>;

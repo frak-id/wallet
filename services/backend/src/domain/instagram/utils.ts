@@ -36,13 +36,6 @@ export function normalizeInstagramHandle(raw: string): string | null {
     return HANDLE_PATTERN.test(handle) ? handle : null;
 }
 
-/** Prefix of every IGSID the mock mints, so those rows are told apart from Meta's and purged. */
-export const MOCK_IGSID_PREFIX = "mock_";
-
-export function mockIgsidOf(handle: string): string {
-    return `${MOCK_IGSID_PREFIX}${handle}`;
-}
-
 export function toInstagramLink(row: InstagramLinkSelect): InstagramLink {
     return {
         username: row.username,
@@ -94,10 +87,6 @@ export function toInstagramDeclaration(
     row: InstagramDeclarationSelect
 ): InstagramDeclaration {
     return { username: row.username, declaredAt: row.declaredAt };
-}
-
-export function isMockIgsid(igsid: string): boolean {
-    return igsid.startsWith(MOCK_IGSID_PREFIX);
 }
 
 /** A certified link wins over a declaration; certifying deletes the declaration anyway. */

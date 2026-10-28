@@ -22,7 +22,7 @@ async function fetchStatus() {
 }
 
 /** Both levels as the backend reports them; the IGSID never reaches the wallet. */
-export type InstagramStatus = Awaited<ReturnType<typeof fetchStatus>>;
+type InstagramStatus = Awaited<ReturnType<typeof fetchStatus>>;
 export type InstagramLink = NonNullable<InstagramStatus["link"]>;
 export type InstagramDeclaration = NonNullable<InstagramStatus["declaration"]>;
 
@@ -61,7 +61,7 @@ const DEPENDENT_KEYS = [
 ];
 
 /** Caches a status the backend just returned, then re-reads what depends on it. */
-export function useSyncInstagramStatus() {
+function useSyncInstagramStatus() {
     const queryClient = useQueryClient();
     return (status: InstagramStatus) => {
         queryClient.setQueryData(instagramKeys.status, status);

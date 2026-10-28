@@ -28,7 +28,6 @@ function setup() {
     const repository = {
         findByIdentityGroup: vi.fn(),
         certify: vi.fn(),
-        deleteByIdentityGroup: vi.fn(),
     };
     const pending = {
         findDeclaration: vi.fn().mockResolvedValue(null),
@@ -82,7 +81,7 @@ describe("InstagramLinkService", () => {
         const { repository, service } = setup();
         repository.certify.mockResolvedValue(row);
 
-        await service.link({
+        await service.linkWithCode("code-1", {
             identityGroupId: GROUP,
             igsid: row.igsid,
             username: "frak_fr",
@@ -97,7 +96,7 @@ describe("InstagramLinkService", () => {
                 follows: true,
                 checkedAt: CHECKED_AT,
             },
-            undefined
+            "code-1"
         );
     });
 
@@ -112,7 +111,7 @@ describe("InstagramLinkService", () => {
         );
 
         const error = await service
-            .link({
+            .linkWithCode("code-1", {
                 identityGroupId: GROUP,
                 igsid: row.igsid,
                 username: "frak_fr",
@@ -133,7 +132,7 @@ describe("InstagramLinkService", () => {
         repository.certify.mockRejectedValue(failure);
 
         await expect(
-            service.link({
+            service.linkWithCode("code-1", {
                 identityGroupId: GROUP,
                 igsid: row.igsid,
                 username: "frak_fr",
@@ -142,13 +141,6 @@ describe("InstagramLinkService", () => {
         ).rejects.toBe(failure);
     });
 
-    it("deletes the link on unlink", async () => {
-        const { repository, service } = setup();
-
-        await service.unlink(GROUP);
-
-        expect(repository.deleteByIdentityGroup).toHaveBeenCalledWith(GROUP);
-    });
     it.each([
         {
             name: "a first link that follows",
@@ -185,7 +177,7 @@ describe("InstagramLinkService", () => {
         repository.findByIdentityGroup.mockResolvedValue(previous);
         repository.certify.mockResolvedValue({ ...row, follows });
 
-        await service.link({
+        await service.linkWithCode("code-1", {
             identityGroupId: GROUP,
             igsid: row.igsid,
             username: "frak_fr",

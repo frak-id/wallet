@@ -9,13 +9,10 @@ const DECLARED_AT = new Date("2026-10-27T10:00:00Z");
 const DECLARATION = { username: "someone", declaredAt: DECLARED_AT };
 const NOTHING = { link: null, declaration: null };
 
-const { env, service, verification, resolveIdentity, verifyWallet } =
-    vi.hoisted(() => ({
-        env: { prod: false },
+const { service, verification, resolveIdentity, verifyWallet } = vi.hoisted(
+    () => ({
         service: {
             status: vi.fn(),
-            link: vi.fn(),
-            unlink: vi.fn(),
             declare: vi.fn(),
             undeclare: vi.fn(),
             issueCode: vi.fn(),
@@ -23,14 +20,9 @@ const { env, service, verification, resolveIdentity, verifyWallet } =
         verification: { check: vi.fn() },
         resolveIdentity: vi.fn(),
         verifyWallet: vi.fn(),
-    }));
+    })
+);
 
-vi.mock("@frak-labs/app-essentials", async (importOriginal) => ({
-    ...(await importOriginal<typeof import("@frak-labs/app-essentials")>()),
-    get isRunningInProd() {
-        return env.prod;
-    },
-}));
 vi.mock("../../../../src/infrastructure/external/jwt", () => ({
     JwtContext: { wallet: { verify: verifyWallet } },
 }));
@@ -69,7 +61,6 @@ function call(
 
 describe("Instagram wallet routes", () => {
     beforeEach(() => {
-        env.prod = false;
         verifyWallet.mockResolvedValue({
             address: "0x0000000000000000000000000000000000000001",
         });
@@ -110,17 +101,10 @@ describe("Instagram wallet routes", () => {
 
             expect(await response.json()).toEqual(NOTHING);
         });
-
-        it("keeps answering in production", async () => {
-            env.prod = true;
-
-            expect((await call("")).status).toBe(200);
-        });
     });
 
     describe("PUT /instagram/declaration", () => {
-        it("declares the handle for the caller's identity group, in production too", async () => {
-            env.prod = true;
+        it("declares the handle for the caller's identity group", async () => {
             service.declare.mockResolvedValue({
                 link: null,
                 declaration: DECLARATION,
@@ -217,104 +201,6 @@ describe("Instagram wallet routes", () => {
                 declaration: null,
             });
             expect(verification.check).toHaveBeenCalledWith(GROUP);
-        });
-    });
-
-    describe("PUT /instagram/mock", () => {
-        it("links a normalized handle under a mock igsid", async () => {
-            service.link.mockResolvedValue(LINK);
-            service.status.mockResolvedValue({ link: LINK, declaration: null });
-
-            const response = await call("/mock", {
-                method: "PUT",
-                body: { username: "@Frak_FR", follows: true },
-            });
-
-            expect(response.status).toBe(200);
-            expect(service.link).toHaveBeenCalledWith({
-                identityGroupId: GROUP,
-                igsid: "mock_frak_fr",
-                username: "frak_fr",
-                follows: true,
-            });
-        });
-
-        it("answers 400 for a malformed handle", async () => {
-            const response = await call("/mock", {
-                method: "PUT",
-                body: { username: "not a handle", follows: true },
-            });
-
-            expect(response.status).toBe(400);
-            expect(await response.json()).toMatchObject({
-                code: "INVALID_INSTAGRAM_HANDLE",
-            });
-            expect(service.link).not.toHaveBeenCalled();
-        });
-
-        it("answers 422 when the follow state is missing", async () => {
-            const response = await call("/mock", {
-                method: "PUT",
-                body: { username: "frak_fr" },
-            });
-
-            expect(response.status).toBe(422);
-            expect(service.link).not.toHaveBeenCalled();
-        });
-
-        it("passes the 409 of an account held by another wallet through", async () => {
-            service.link.mockRejectedValue(
-                HttpError.conflict("INSTAGRAM_ALREADY_LINKED", "taken")
-            );
-
-            const response = await call("/mock", {
-                method: "PUT",
-                body: { username: "frak_fr", follows: false },
-            });
-
-            expect(response.status).toBe(409);
-            expect(await response.json()).toMatchObject({
-                code: "INSTAGRAM_ALREADY_LINKED",
-            });
-        });
-    });
-
-    describe("DELETE /instagram/mock", () => {
-        it("revokes the link of the caller's identity group", async () => {
-            const response = await call("/mock", { method: "DELETE" });
-
-            expect(response.status).toBe(200);
-            expect(await response.json()).toEqual(NOTHING);
-            expect(service.unlink).toHaveBeenCalledWith(GROUP);
-        });
-    });
-
-    describe("in production", () => {
-        beforeEach(() => {
-            env.prod = true;
-        });
-
-        it.each([
-            ["PUT", { username: "frak_fr", follows: true }],
-            ["DELETE", undefined],
-        ])(
-            "answers 404 to %s without touching the link",
-            async (method, body) => {
-                const response = await call("/mock", { method, body });
-
-                expect(response.status).toBe(404);
-                expect(service.link).not.toHaveBeenCalled();
-                expect(service.unlink).not.toHaveBeenCalled();
-            }
-        );
-
-        it("answers 404 rather than 401 to an unauthenticated caller", async () => {
-            const response = await call("/mock", {
-                method: "DELETE",
-                auth: false,
-            });
-
-            expect(response.status).toBe(404);
         });
     });
 });

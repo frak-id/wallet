@@ -227,17 +227,6 @@ describe("InstagramVerificationService.check", () => {
         expect(graph.lookupProfile).not.toHaveBeenCalled();
     });
 
-    it("never calls Meta for a mock link", async () => {
-        const { links, graph, service } = setup();
-        links.findByIdentityGroup.mockResolvedValue(
-            linkRow({ igsid: "mock_player" })
-        );
-
-        await service.check(GROUP);
-
-        expect(graph.lookupProfile).not.toHaveBeenCalled();
-    });
-
     it("answers 502 when Meta cannot say, and stores nothing", async () => {
         const { links, graph, service } = setup();
         links.findByIdentityGroup.mockResolvedValue(linkRow());
@@ -266,7 +255,7 @@ describe("InstagramVerificationService.recheck", () => {
         vi.setSystemTime(NOW);
     });
 
-    it("re-reads only real links older than the limit", async () => {
+    it("re-reads only links older than the limit", async () => {
         const { links, graph, service } = setup();
         links.findByIdentityGroups.mockResolvedValue([
             linkRow({ id: "stale", igsid: "stale-igsid" }),
@@ -275,10 +264,9 @@ describe("InstagramVerificationService.recheck", () => {
                 igsid: "fresh-igsid",
                 checkedAt: new Date(NOW.getTime() - 60_000),
             }),
-            linkRow({ id: "mock", igsid: "mock_someone" }),
         ]);
 
-        const count = await service.recheck(["a", "b", "c"], {
+        const count = await service.recheck(["a", "b"], {
             maxAgeMs: 5 * 60_000,
         });
 
