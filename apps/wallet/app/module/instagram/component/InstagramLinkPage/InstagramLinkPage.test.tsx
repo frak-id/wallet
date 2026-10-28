@@ -11,6 +11,8 @@ const {
     openExternalUrl,
     ua,
     navigate,
+    router,
+    sent,
 } = vi.hoisted(() => ({
     status: { data: undefined as unknown, isError: false, refetch: vi.fn() },
     code: {
@@ -21,6 +23,13 @@ const {
         refetch: vi.fn(),
     },
     check: {
+        mutate: vi.fn(),
+        isPending: false,
+        isSuccess: false,
+        isError: false,
+        data: undefined as unknown,
+    },
+    sent: {
         mutate: vi.fn(),
         isPending: false,
         isSuccess: false,
@@ -38,9 +47,14 @@ const {
     openExternalUrl: vi.fn(),
     ua: { isMobile: true },
     navigate: vi.fn(),
+    router: { canGoBack: true, history: { back: vi.fn() } },
 }));
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => navigate,
+    useRouter: () => router,
+    useCanGoBack: () => router.canGoBack,
+}));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
     Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>,
@@ -54,14 +68,15 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     useCopyToClipboardWithState: () => ({ copy }),
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
-vi.mock("@/module/game/hook/useInstagramLink", () => ({
+vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
     useInstagramStatus: () => status,
     useInstagramLinkCode: () => code,
+    useAwaitInstagramDm: () => sent,
     useCheckInstagram: () => check,
     useDeclareInstagram: () => ({ declare, remove }),
 }));
 
-import { FRAK_INSTAGRAM_DM_URL } from "@/module/game/config";
+import { FRAK_INSTAGRAM_DM_URL } from "@/module/instagram/config";
 import { InstagramLinkPage } from "./index";
 
 const NOTHING = { link: null, declaration: null };
@@ -79,11 +94,15 @@ describe("InstagramLinkPage", () => {
         vi.clearAllMocks();
         Object.assign(status, { data: NOTHING, isError: false });
         Object.assign(code, { data: "K7Q2PX", isError: false, error: null });
-        Object.assign(check, {
-            isSuccess: false,
-            isError: false,
-            data: undefined,
-        });
+        for (const mutation of [check, sent]) {
+            Object.assign(mutation, {
+                isPending: false,
+                isSuccess: false,
+                isError: false,
+                data: undefined,
+            });
+        }
+        router.canGoBack = true;
         Object.assign(declare, { isError: false, error: null });
         remove.isError = false;
         ua.isMobile = true;
@@ -93,21 +112,19 @@ describe("InstagramLinkPage", () => {
         it("offers to certify first, then to declare", () => {
             render(<InstagramLinkPage />);
 
-            const certify = screen.getByText("game.instagram.certify.title");
-            const declareTitle = screen.getByText(
-                "game.instagram.declare.title"
-            );
+            const certify = screen.getByText("instagram.certify.title");
+            const declareTitle = screen.getByText("instagram.declare.title");
             expect(
                 certify.compareDocumentPosition(declareTitle) &
                     Node.DOCUMENT_POSITION_FOLLOWING
             ).toBeTruthy();
             expect(
-                screen.getByText("game.instagram.certify.perks.unlock", {
+                screen.getByText("instagram.certify.perks.unlock", {
                     exact: false,
                 })
             ).toBeInTheDocument();
             expect(
-                screen.getByText("game.instagram.declare.description")
+                screen.getByText("instagram.declare.description")
             ).toBeInTheDocument();
         });
 
@@ -115,14 +132,14 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             fireEvent.click(
-                screen.getByRole("button", { name: "game.instagram.open" })
+                screen.getByRole("button", { name: "instagram.open" })
             );
 
             expect(copy).toHaveBeenCalledWith("K7Q2PX");
             expect(openExternalUrl).toHaveBeenCalledWith(
                 `${FRAK_INSTAGRAM_DM_URL}?ref=K7Q2PX`
             );
-            expect(screen.queryByText("game.instagram.mobileOnly")).toBeNull();
+            expect(screen.queryByText("instagram.mobileOnly")).toBeNull();
         });
 
         it("asks a desktop user to switch to their phone", () => {
@@ -130,22 +147,29 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.mobileOnly")
+                screen.getByText("instagram.mobileOnly")
             ).toBeInTheDocument();
         });
 
-        it("checks again and says when the message has not arrived", () => {
-            Object.assign(check, { isSuccess: true, data: NOTHING });
-            render(<InstagramLinkPage />);
+        it("waits for the message once the player says it is sent", () => {
+            const { rerender } = render(<InstagramLinkPage />);
 
             fireEvent.click(
-                screen.getByRole("button", { name: "game.instagram.sent" })
+                screen.getByRole("button", { name: "instagram.sent" })
             );
+            expect(sent.mutate).toHaveBeenCalled();
 
-            expect(check.mutate).toHaveBeenCalled();
-            expect(
-                screen.getByText("game.instagram.notYet")
-            ).toBeInTheDocument();
+            sent.isPending = true;
+            rerender(<InstagramLinkPage />);
+            expect(screen.getByText("instagram.waiting")).toBeInTheDocument();
+        });
+
+        it("says when the message never arrived", () => {
+            Object.assign(sent, { isSuccess: true, data: NOTHING });
+            render(<InstagramLinkPage />);
+
+            expect(screen.getByText("instagram.notYet")).toBeInTheDocument();
+            expect(screen.queryByText("instagram.waiting")).toBeNull();
         });
 
         it("points to the declaration while certification is off", () => {
@@ -157,14 +181,14 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.certify.unavailable")
+                screen.getByText("instagram.certify.unavailable")
             ).toBeInTheDocument();
             expect(
-                screen.queryByRole("button", { name: "game.instagram.open" })
+                screen.queryByRole("button", { name: "instagram.open" })
             ).toBeNull();
             expect(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.submit",
+                    name: "instagram.declare.submit",
                 })
             ).toBeInTheDocument();
         });
@@ -178,10 +202,10 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.certify.error")
+                screen.getByText("instagram.certify.error")
             ).toBeInTheDocument();
             fireEvent.click(
-                screen.getByRole("button", { name: "game.page.retry" })
+                screen.getByRole("button", { name: "instagram.retry" })
             );
             expect(code.refetch).toHaveBeenCalled();
         });
@@ -189,13 +213,12 @@ describe("InstagramLinkPage", () => {
         it("declares the typed handle", () => {
             render(<InstagramLinkPage />);
 
-            fireEvent.change(
-                screen.getByLabelText("game.instagram.declare.label"),
-                { target: { value: "@Lea" } }
-            );
+            fireEvent.change(screen.getByLabelText("instagram.declare.label"), {
+                target: { value: "@Lea" },
+            });
             fireEvent.click(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.submit",
+                    name: "instagram.declare.submit",
                 })
             );
 
@@ -213,7 +236,7 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.declare.invalid")
+                screen.getByText("instagram.declare.invalid")
             ).toBeInTheDocument();
         });
     });
@@ -225,17 +248,17 @@ describe("InstagramLinkPage", () => {
 
             expect(screen.getByText("@lea")).toBeInTheDocument();
             expect(
-                screen.getByText("game.instagram.declare.badge")
+                screen.getByText("instagram.declare.badge")
             ).toBeInTheDocument();
             expect(
-                screen.getByText("game.instagram.declare.upsell")
+                screen.getByText("instagram.declare.upsell")
             ).toBeInTheDocument();
             expect(
-                screen.getByText("game.instagram.certify.title")
+                screen.getByText("instagram.certify.title")
             ).toBeInTheDocument();
             expect(
                 screen.queryByRole("button", {
-                    name: "game.instagram.declare.submit",
+                    name: "instagram.declare.submit",
                 })
             ).toBeNull();
         });
@@ -246,7 +269,7 @@ describe("InstagramLinkPage", () => {
 
             fireEvent.click(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.remove",
+                    name: "instagram.declare.remove",
                 })
             );
 
@@ -259,7 +282,7 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.declare.removeError")
+                screen.getByText("instagram.declare.removeError")
             ).toBeInTheDocument();
         });
 
@@ -269,49 +292,57 @@ describe("InstagramLinkPage", () => {
 
             fireEvent.click(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.change",
+                    name: "instagram.declare.change",
                 })
             );
 
             expect(
-                screen.getByText("game.instagram.declare.editTitle")
+                screen.getByText("instagram.declare.editTitle")
             ).toBeInTheDocument();
             expect(
-                screen.getByLabelText("game.instagram.declare.label")
+                screen.getByLabelText("instagram.declare.label")
             ).toHaveValue("lea");
             expect(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.save",
+                    name: "instagram.declare.save",
                 })
             ).toBeInTheDocument();
 
             fireEvent.click(
                 screen.getByRole("button", {
-                    name: "game.instagram.declare.cancel",
+                    name: "instagram.declare.cancel",
                 })
             );
             expect(screen.getByText("@lea")).toBeInTheDocument();
             expect(
-                screen.queryByLabelText("game.instagram.declare.label")
+                screen.queryByLabelText("instagram.declare.label")
             ).toBeNull();
         });
     });
 
     describe("certified", () => {
-        it("confirms a follower and goes back to the game", () => {
+        it("confirms a follower and returns to the opener", () => {
             status.data = certified(true);
             render(<InstagramLinkPage />);
 
             expect(screen.getByText("@lea")).toBeInTheDocument();
-            expect(
-                screen.queryByText("game.instagram.declare.title")
-            ).toBeNull();
+            expect(screen.queryByText("instagram.declare.title")).toBeNull();
             fireEvent.click(
-                screen.getByRole("button", {
-                    name: "game.instagram.linked.back",
-                })
+                screen.getByRole("button", { name: "instagram.linked.done" })
             );
-            expect(navigate).toHaveBeenCalledWith({ to: "/game" });
+            expect(router.history.back).toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
+        });
+
+        it("lands on the profile when opened from a deep link", () => {
+            status.data = certified(true);
+            router.canGoBack = false;
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "instagram.linked.done" })
+            );
+            expect(navigate).toHaveBeenCalledWith({ to: "/profile" });
         });
 
         it("asks a non-follower to follow, then check again", () => {
@@ -319,11 +350,11 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.linked.notFollowing")
+                screen.getByText("instagram.linked.notFollowing")
             ).toBeInTheDocument();
             fireEvent.click(
                 screen.getByRole("button", {
-                    name: "game.instagram.linked.checkAgain",
+                    name: "instagram.linked.checkAgain",
                 })
             );
             expect(check.mutate).toHaveBeenCalled();
@@ -335,7 +366,7 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.linked.stillNotFollowing")
+                screen.getByText("instagram.linked.stillNotFollowing")
             ).toBeInTheDocument();
         });
 
@@ -345,7 +376,7 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(
-                screen.getByText("game.instagram.certify.checkError")
+                screen.getByText("instagram.certify.checkError")
             ).toBeInTheDocument();
         });
     });
@@ -354,6 +385,6 @@ describe("InstagramLinkPage", () => {
         Object.assign(status, { data: undefined, isError: true });
         render(<InstagramLinkPage />);
 
-        expect(screen.getByText("game.page.error")).toBeInTheDocument();
+        expect(screen.getByText("instagram.error")).toBeInTheDocument();
     });
 });

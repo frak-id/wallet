@@ -6,17 +6,23 @@ import {
     rewardsKey,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { frakGame } from "@/module/game/config";
 import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameHistoryKeys } from "@/module/game/hook/useGameHistory";
+import { instagramLink } from "@/module/instagram/config";
 
 export const instagramKeys = {
-    status: ["game", "instagram", "status"] as const,
-    code: ["game", "instagram", "code"] as const,
+    status: ["instagram", "status"] as const,
+    code: ["instagram", "code"] as const,
 };
 
 async function fetchStatus() {
     const { data, error } = await authenticatedWalletApi.instagram.get();
+    if (error) throw error;
+    return data;
+}
+
+async function postCheck() {
+    const { data, error } = await authenticatedWalletApi.instagram.check.post();
     if (error) throw error;
     return data;
 }
@@ -31,7 +37,7 @@ export function useInstagramStatus() {
     return useQuery({
         queryKey: instagramKeys.status,
         queryFn: fetchStatus,
-        enabled: frakGame.enabled,
+        enabled: instagramLink.enabled,
     });
 }
 
@@ -45,7 +51,7 @@ export function useInstagramLinkCode() {
             if (error) throw error;
             return data.code;
         },
-        enabled: frakGame.enabled,
+        enabled: instagramLink.enabled,
         staleTime: Number.POSITIVE_INFINITY,
         retry: false,
     });
@@ -74,12 +80,27 @@ function useSyncInstagramStatus() {
 /** Re-reads the certified follow from Instagram, or picks up a link the webhook just made. */
 export function useCheckInstagram() {
     const sync = useSyncInstagramStatus();
+    return useMutation({ mutationFn: postCheck, onSuccess: sync });
+}
+
+export const DM_POLL_INTERVAL_MS = 3_000;
+export const DM_POLL_TIMEOUT_MS = 60_000;
+
+const wait = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Meta can deliver the DM seconds after the player is back, so "sent" keeps re-reading the status until the link lands. */
+export function useAwaitInstagramDm() {
+    const sync = useSyncInstagramStatus();
     return useMutation({
         mutationFn: async () => {
-            const { data, error } =
-                await authenticatedWalletApi.instagram.check.post();
-            if (error) throw error;
-            return data;
+            const deadline = Date.now() + DM_POLL_TIMEOUT_MS;
+            let status = await postCheck();
+            while (!status.link && Date.now() < deadline) {
+                await wait(DM_POLL_INTERVAL_MS);
+                status = await fetchStatus();
+            }
+            return status;
         },
         onSuccess: sync,
     });

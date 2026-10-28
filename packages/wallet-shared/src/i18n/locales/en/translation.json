@@ -1031,65 +1031,11 @@
             "lockedNotFollowing": "Your Instagram is certified, but you don't follow <igLink>@frak_fr</igLink>: your tickets don't count in the draw.",
             "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
             "activateCta": "Activate my tickets",
-            "certifyCta": "Certify my Instagram"
-        },
-        "instagram": {
-            "title": "Your Instagram",
-            "description": "To make your tickets count in the draw, declare or certify your Instagram account, and follow @frak_fr.",
-            "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
-            "howTo": "How it works",
-            "follow": {
-                "title": "Follow @frak_fr",
-                "description": "On Instagram, follow the <igLink>@frak_fr</igLink> account."
-            },
-            "message": {
-                "title": "Send us your code",
-                "description": "The button copies your code <code>{{code}}</code> and opens the chat with @frak_fr. Paste it and send it."
-            },
-            "check": {
-                "title": "Come back here",
-                "description": "Tap “I sent the message” to check your account."
-            },
-            "open": "Copy the code and open Instagram",
-            "sent": "I sent the message",
-            "notYet": "We haven't received your message yet. Wait a few seconds and try again.",
-            "linked": {
-                "badge": "Certified",
-                "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets.",
-                "notFollowing": "You don't follow <igLink>@frak_fr</igLink> yet. Follow it, then check again.",
-                "checkAgain": "Check again",
-                "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again.",
-                "back": "Back to the game"
-            },
-            "certify": {
-                "title": "Certify my Instagram",
-                "badge": "Recommended",
-                "perks": {
-                    "tickets": "+2 tickets in every game",
-                    "unlock": "Your welcome reward unlocked right away",
-                    "auto": "We check that you follow @frak_fr automatically: nothing to do if you win"
-                },
-                "unavailable": "Certification isn't available yet. Declare your Instagram for now.",
-                "error": "Couldn't get your code. Try again in a moment.",
-                "checkError": "Couldn't check your Instagram account right now. Try again in a moment."
-            },
-            "declare": {
-                "title": "Declare my Instagram",
-                "description": "Your tickets count in the draw, and we only check your account if you're drawn. In that case you have 24 h from the notification to certify it and follow @frak_fr, otherwise another winner is drawn.",
-                "label": "Your Instagram account",
-                "placeholder": "@your_account",
-                "submit": "Declare",
-                "editTitle": "Change account",
-                "save": "Save",
-                "cancel": "Cancel",
-                "badge": "Declared",
-                "remove": "Remove",
-                "change": "Change",
-                "invalid": "That isn't a valid Instagram account.",
-                "error": "Couldn't save your account. Try again.",
-                "removeError": "Couldn't remove your account. Try again.",
-                "upsell": "Certify it to earn 2 more tickets and unlock your welcome reward."
-            }
+            "certifyCta": "Certify my Instagram",
+            "certified": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets.",
+            "declareCta": "Declare my Instagram",
+            "counted_one": "{{count}} ticket in the draw",
+            "counted_other": "{{count}} tickets in the draw"
         },
         "result": {
             "badge": {
@@ -1156,6 +1102,73 @@
             "description": "Your ticket was drawn. Your {{prize}} is on its way to your wallet.",
             "cta": "See my prize",
             "close": "Close"
+        }
+    },
+    "instagram": {
+        "title": "Your Instagram",
+        "description": "Link your Instagram account to Frak and follow @frak_fr: that's what makes your tickets count in the Frak Game.",
+        "error": "Couldn't load your Instagram account.",
+        "retry": "Try again",
+        "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
+        "howTo": "How it works",
+        "follow": {
+            "title": "Follow @frak_fr",
+            "description": "On Instagram, follow the <igLink>@frak_fr</igLink> account."
+        },
+        "message": {
+            "title": "Send us your code",
+            "description": "The button copies your code <code>{{code}}</code> and opens the chat with @frak_fr. Paste it and send it."
+        },
+        "check": {
+            "title": "Come back here",
+            "description": "Tap “I sent the message”: your account is checked as soon as your message reaches us."
+        },
+        "open": "Copy the code and open Instagram",
+        "sent": "I sent the message",
+        "waiting": "Waiting for your message… This can take a few seconds.",
+        "notYet": "Your message hasn't reached us. Check that you sent your code to @frak_fr, then try again.",
+        "linked": {
+            "badge": "Certified",
+            "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets in every game.",
+            "notFollowing": "You don't follow <igLink>@frak_fr</igLink> yet. Follow it, then check again.",
+            "checkAgain": "Check again",
+            "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again.",
+            "done": "Done"
+        },
+        "certify": {
+            "title": "Certify my Instagram",
+            "badge": "Recommended",
+            "perks": {
+                "tickets": "+2 tickets in every Frak Game",
+                "unlock": "Your welcome reward unlocked right away",
+                "auto": "We check that you follow @frak_fr automatically: nothing to do if you win"
+            },
+            "unavailable": "Certification isn't available yet. Declare your Instagram for now.",
+            "error": "Couldn't get your code. Try again in a moment.",
+            "checkError": "Couldn't check your Instagram account right now. Try again in a moment."
+        },
+        "declare": {
+            "title": "Declare my Instagram",
+            "description": "Your tickets count in the draw, and we only check your account if you're drawn. In that case you have 24 h from the notification to certify it and follow @frak_fr, otherwise another winner is drawn.",
+            "label": "Your Instagram account",
+            "placeholder": "@your_account",
+            "submit": "Declare",
+            "editTitle": "Change account",
+            "save": "Save",
+            "cancel": "Cancel",
+            "badge": "Declared",
+            "counting": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
+            "remove": "Remove",
+            "change": "Change",
+            "invalid": "That isn't a valid Instagram account.",
+            "error": "Couldn't save your account. Try again.",
+            "removeError": "Couldn't remove your account. Try again.",
+            "upsell": "Certify it to earn 2 more tickets and unlock your welcome reward."
+        },
+        "profile": {
+            "label": "Instagram",
+            "notLinked": "Not linked",
+            "notFollowing": "Not following"
         }
     },
     "reward": {

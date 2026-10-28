@@ -15,7 +15,7 @@ import {
     ua,
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
+import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
@@ -24,38 +24,49 @@ import { Title } from "@/module/common/component/Title";
 import {
     FRAK_INSTAGRAM_DM_URL,
     FRAK_INSTAGRAM_URL,
-} from "@/module/game/config";
+} from "@/module/instagram/config";
 import {
     type InstagramDeclaration,
     type InstagramLink,
+    useAwaitInstagramDm,
     useCheckInstagram,
     useDeclareInstagram,
     useInstagramLinkCode,
     useInstagramStatus,
-} from "@/module/game/hook/useInstagramLink";
+} from "@/module/instagram/hook/useInstagramLink";
 
 const igLink = <ExternalLink href={FRAK_INSTAGRAM_URL} />;
+
+/** Back to whichever page opened this one (profile, game…), or the profile on a deep link. */
+function useLeave() {
+    const router = useRouter();
+    const navigate = useNavigate();
+    const canGoBack = useCanGoBack();
+    return () =>
+        canGoBack ? router.history.back() : navigate({ to: "/profile" });
+}
 
 export function InstagramLinkPage() {
     const { t } = useTranslation();
     const status = useInstagramStatus();
+    const leave = useLeave();
 
     return (
         <Stack space="m">
-            <Back href="/game" />
-            <Title size="page">{t("game.instagram.title")}</Title>
+            <Back onClick={leave} />
+            <Title size="page">{t("instagram.title")}</Title>
             {status.isError ? (
                 <EmptyState
-                    title={t("game.page.error")}
+                    title={t("instagram.error")}
                     action={{
-                        label: t("game.page.retry"),
+                        label: t("instagram.retry"),
                         onClick: () => void status.refetch(),
                     }}
                 />
             ) : status.data === undefined ? (
                 <Skeleton variant="rect" height={160} />
             ) : status.data.link ? (
-                <CertifiedAccount link={status.data.link} />
+                <CertifiedAccount link={status.data.link} onDone={leave} />
             ) : (
                 <Uncertified declaration={status.data.declaration} />
             )}
@@ -72,7 +83,7 @@ function Uncertified({
     const { t } = useTranslation();
     return (
         <>
-            <Text color="secondary">{t("game.instagram.description")}</Text>
+            <Text color="secondary">{t("instagram.description")}</Text>
             {declaration && <DeclaredAccount declaration={declaration} />}
             <CertifyCard />
             {!declaration && <DeclareCard />}
@@ -83,7 +94,7 @@ function Uncertified({
 function CertifyCard() {
     const { t } = useTranslation();
     const code = useInstagramLinkCode();
-    const check = useCheckInstagram();
+    const sent = useAwaitInstagramDm();
     const { copy } = useCopyToClipboardWithState();
     const unavailable = getErrorCode(code.error) === "INSTAGRAM_UNAVAILABLE";
 
@@ -98,10 +109,10 @@ function CertifyCard() {
             <Stack space="s">
                 <Inline space="s" alignY="center">
                     <Text weight="semiBold">
-                        {t("game.instagram.certify.title")}
+                        {t("instagram.certify.title")}
                     </Text>
                     <Badge size="small" variant="success">
-                        {t("game.instagram.certify.badge")}
+                        {t("instagram.certify.badge")}
                     </Badge>
                 </Inline>
                 <Stack as="ul" space="xxs">
@@ -109,48 +120,48 @@ function CertifyCard() {
                         <li key={perk}>
                             <Text variant="bodySmall" color="secondary">
                                 <span aria-hidden="true">• </span>
-                                {t(`game.instagram.certify.perks.${perk}`)}
+                                {t(`instagram.certify.perks.${perk}`)}
                             </Text>
                         </li>
                     ))}
                 </Stack>
                 {unavailable ? (
                     <Notice tone="info">
-                        {t("game.instagram.certify.unavailable")}
+                        {t("instagram.certify.unavailable")}
                     </Notice>
                 ) : (
                     <>
                         {!ua.isMobile && (
                             <Notice tone="info">
-                                {t("game.instagram.mobileOnly")}
+                                {t("instagram.mobileOnly")}
                             </Notice>
                         )}
                         <InstructionList
-                            title={t("game.instagram.howTo")}
+                            title={t("instagram.howTo")}
                             steps={[
                                 {
-                                    title: t("game.instagram.follow.title"),
+                                    title: t("instagram.follow.title"),
                                     description: (
                                         <Trans
-                                            i18nKey="game.instagram.follow.description"
+                                            i18nKey="instagram.follow.description"
                                             components={{ igLink }}
                                         />
                                     ),
                                 },
                                 {
-                                    title: t("game.instagram.message.title"),
+                                    title: t("instagram.message.title"),
                                     description: (
                                         <Trans
-                                            i18nKey="game.instagram.message.description"
+                                            i18nKey="instagram.message.description"
                                             values={{ code: code.data ?? "…" }}
                                             components={{ code: <strong /> }}
                                         />
                                     ),
                                 },
                                 {
-                                    title: t("game.instagram.check.title"),
+                                    title: t("instagram.check.title"),
                                     description: t(
-                                        "game.instagram.check.description"
+                                        "instagram.check.description"
                                     ),
                                 },
                             ]}
@@ -160,20 +171,25 @@ function CertifyCard() {
                             onClick={openInstagram}
                             disabled={!code.data}
                         >
-                            {t("game.instagram.open")}
+                            {t("instagram.open")}
                         </Button>
                         <Button
                             variant="secondary"
                             width="full"
-                            onClick={() => check.mutate()}
-                            loading={check.isPending}
+                            onClick={() => sent.mutate()}
+                            loading={sent.isPending}
                         >
-                            {t("game.instagram.sent")}
+                            {t("instagram.sent")}
                         </Button>
+                        {sent.isPending && (
+                            <Notice tone="info">
+                                {t("instagram.waiting")}
+                            </Notice>
+                        )}
                         {code.isError && (
                             <>
                                 <Notice tone="error">
-                                    {t("game.instagram.certify.error")}
+                                    {t("instagram.certify.error")}
                                 </Notice>
                                 <Button
                                     variant="ghost"
@@ -181,19 +197,17 @@ function CertifyCard() {
                                     loading={code.isFetching}
                                     onClick={() => void code.refetch()}
                                 >
-                                    {t("game.page.retry")}
+                                    {t("instagram.retry")}
                                 </Button>
                             </>
                         )}
-                        {check.isError && (
+                        {sent.isError && (
                             <Notice tone="error">
-                                {t("game.instagram.certify.checkError")}
+                                {t("instagram.certify.checkError")}
                             </Notice>
                         )}
-                        {check.isSuccess && check.data.link === null && (
-                            <Notice tone="info">
-                                {t("game.instagram.notYet")}
-                            </Notice>
+                        {sent.isSuccess && sent.data.link === null && (
+                            <Notice tone="info">{t("instagram.notYet")}</Notice>
                         )}
                     </>
                 )}
@@ -227,16 +241,16 @@ function DeclareCard({
                     <Text weight="semiBold">
                         {t(
                             editing
-                                ? "game.instagram.declare.editTitle"
-                                : "game.instagram.declare.title"
+                                ? "instagram.declare.editTitle"
+                                : "instagram.declare.title"
                         )}
                     </Text>
                     <Text variant="bodySmall" color="secondary">
-                        {t("game.instagram.declare.description")}
+                        {t("instagram.declare.description")}
                     </Text>
                     <Input
-                        label={t("game.instagram.declare.label")}
-                        placeholder={t("game.instagram.declare.placeholder")}
+                        label={t("instagram.declare.label")}
+                        placeholder={t("instagram.declare.placeholder")}
                         value={username}
                         autoCapitalize="none"
                         autoCorrect="off"
@@ -247,8 +261,8 @@ function DeclareCard({
                         <Notice tone="error">
                             {t(
                                 invalid
-                                    ? "game.instagram.declare.invalid"
-                                    : "game.instagram.declare.error"
+                                    ? "instagram.declare.invalid"
+                                    : "instagram.declare.error"
                             )}
                         </Notice>
                     )}
@@ -261,8 +275,8 @@ function DeclareCard({
                     >
                         {t(
                             editing
-                                ? "game.instagram.declare.save"
-                                : "game.instagram.declare.submit"
+                                ? "instagram.declare.save"
+                                : "instagram.declare.submit"
                         )}
                     </Button>
                     {editing && (
@@ -272,7 +286,7 @@ function DeclareCard({
                             width="full"
                             onClick={editing.onClose}
                         >
-                            {t("game.instagram.declare.cancel")}
+                            {t("instagram.declare.cancel")}
                         </Button>
                     )}
                 </Stack>
@@ -306,15 +320,13 @@ function DeclaredAccount({
                 <Inline space="s" alignY="center">
                     <Text weight="semiBold">@{declaration.username}</Text>
                     <Badge size="small" variant="info">
-                        {t("game.instagram.declare.badge")}
+                        {t("instagram.declare.badge")}
                     </Badge>
                 </Inline>
                 <Text variant="bodySmall" color="secondary">
-                    {t("game.page.declared")}
+                    {t("instagram.declare.counting")}
                 </Text>
-                <Notice tone="info">
-                    {t("game.instagram.declare.upsell")}
-                </Notice>
+                <Notice tone="info">{t("instagram.declare.upsell")}</Notice>
                 <Inline space="s">
                     <Button
                         width="auto"
@@ -322,7 +334,7 @@ function DeclaredAccount({
                         variant="secondary"
                         onClick={() => setEditing(true)}
                     >
-                        {t("game.instagram.declare.change")}
+                        {t("instagram.declare.change")}
                     </Button>
                     <Button
                         width="auto"
@@ -331,12 +343,12 @@ function DeclaredAccount({
                         loading={remove.isPending}
                         onClick={() => remove.mutate()}
                     >
-                        {t("game.instagram.declare.remove")}
+                        {t("instagram.declare.remove")}
                     </Button>
                 </Inline>
                 {remove.isError && (
                     <Notice tone="error">
-                        {t("game.instagram.declare.removeError")}
+                        {t("instagram.declare.removeError")}
                     </Notice>
                 )}
             </Stack>
@@ -344,9 +356,14 @@ function DeclaredAccount({
     );
 }
 
-function CertifiedAccount({ link }: { link: InstagramLink }) {
+function CertifiedAccount({
+    link,
+    onDone,
+}: {
+    link: InstagramLink;
+    onDone: () => void;
+}) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const check = useCheckInstagram();
 
     return (
@@ -355,27 +372,24 @@ function CertifiedAccount({ link }: { link: InstagramLink }) {
                 <Inline space="s" alignY="center">
                     <Text weight="semiBold">@{link.username}</Text>
                     <Badge size="small" variant="success">
-                        {t("game.instagram.linked.badge")}
+                        {t("instagram.linked.badge")}
                     </Badge>
                 </Inline>
             </Card>
             {link.follows ? (
                 <>
                     <Notice tone="success">
-                        {t("game.instagram.linked.counting")}
+                        {t("instagram.linked.counting")}
                     </Notice>
-                    <Button
-                        width="full"
-                        onClick={() => navigate({ to: "/game" })}
-                    >
-                        {t("game.instagram.linked.back")}
+                    <Button width="full" onClick={onDone}>
+                        {t("instagram.linked.done")}
                     </Button>
                 </>
             ) : (
                 <>
                     <Notice tone="warning">
                         <Trans
-                            i18nKey="game.instagram.linked.notFollowing"
+                            i18nKey="instagram.linked.notFollowing"
                             components={{ igLink }}
                         />
                     </Notice>
@@ -385,16 +399,16 @@ function CertifiedAccount({ link }: { link: InstagramLink }) {
                         onClick={() => check.mutate()}
                         loading={check.isPending}
                     >
-                        {t("game.instagram.linked.checkAgain")}
+                        {t("instagram.linked.checkAgain")}
                     </Button>
                     {check.isError && (
                         <Notice tone="error">
-                            {t("game.instagram.certify.checkError")}
+                            {t("instagram.certify.checkError")}
                         </Notice>
                     )}
                     {check.isSuccess && !check.data.link?.follows && (
                         <Notice tone="info">
-                            {t("game.instagram.linked.stillNotFollowing")}
+                            {t("instagram.linked.stillNotFollowing")}
                         </Notice>
                     )}
                 </>

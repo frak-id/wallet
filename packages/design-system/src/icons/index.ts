@@ -52,6 +52,7 @@ export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
 export { ImageIcon } from "./ImageIcon";
 export { InfoIcon } from "./InfoIcon";
+export { InstagramIcon } from "./InstagramIcon";
 export { LaptopIcon } from "./LaptopIcon";
 export { LightbulbIcon } from "./LightbulbIcon";
 export { LinkIcon } from "./LinkIcon";

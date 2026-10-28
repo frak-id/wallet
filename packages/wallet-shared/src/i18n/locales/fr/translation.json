@@ -1031,65 +1031,11 @@
             "lockedNotFollowing": "Ton Instagram est certifié, mais tu ne suis pas <igLink>@frak_fr</igLink> : tes tickets ne comptent pas au tirage.",
             "declared": "Instagram déclaré : tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour le certifier et suivre @frak_fr.",
             "activateCta": "Activer mes tickets",
-            "certifyCta": "Certifier mon Instagram"
-        },
-        "instagram": {
-            "title": "Ton Instagram",
-            "description": "Pour que tes tickets comptent au tirage, déclare ou certifie ton compte Instagram, et suis @frak_fr.",
-            "mobileOnly": "Ouvre cette page sur ton téléphone : les messages Instagram ne s'ouvrent que dans l'app Instagram.",
-            "howTo": "Comment faire",
-            "follow": {
-                "title": "Abonne-toi à @frak_fr",
-                "description": "Sur Instagram, abonne-toi au compte <igLink>@frak_fr</igLink>."
-            },
-            "message": {
-                "title": "Envoie-nous ton code",
-                "description": "Le bouton copie ton code <code>{{code}}</code> et ouvre la conversation avec @frak_fr. Colle-le et envoie-le."
-            },
-            "check": {
-                "title": "Reviens ici",
-                "description": "Touche « J'ai envoyé le message » pour vérifier ton compte."
-            },
-            "open": "Copier le code et ouvrir Instagram",
-            "sent": "J'ai envoyé le message",
-            "notYet": "Nous n'avons pas encore reçu ton message. Attends quelques secondes et réessaie.",
-            "linked": {
-                "badge": "Certifié",
-                "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus.",
-                "notFollowing": "Tu ne suis pas encore <igLink>@frak_fr</igLink>. Abonne-toi, puis vérifie à nouveau.",
-                "checkAgain": "Vérifier à nouveau",
-                "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
-                "back": "Retour au jeu"
-            },
-            "certify": {
-                "title": "Certifier mon Instagram",
-                "badge": "Recommandé",
-                "perks": {
-                    "tickets": "+2 tickets à chaque jeu",
-                    "unlock": "Ton gain de bienvenue débloqué tout de suite",
-                    "auto": "On vérifie automatiquement que tu suis @frak_fr : rien à faire si tu gagnes"
-                },
-                "unavailable": "La certification n'est pas encore disponible. Déclare ton Instagram en attendant.",
-                "error": "Impossible de récupérer ton code. Réessaie dans un instant.",
-                "checkError": "Impossible de vérifier ton compte Instagram pour l'instant. Réessaie dans un instant."
-            },
-            "declare": {
-                "title": "Déclarer mon Instagram",
-                "description": "Tes tickets comptent au tirage, et on ne vérifie ton compte que si tu es tiré au sort. Dans ce cas, tu as 24 h à partir de la notification pour le certifier et suivre @frak_fr, sinon un autre gagnant est tiré au sort.",
-                "label": "Ton compte Instagram",
-                "placeholder": "@ton_compte",
-                "submit": "Déclarer",
-                "editTitle": "Changer de compte",
-                "save": "Enregistrer",
-                "cancel": "Annuler",
-                "badge": "Déclaré",
-                "remove": "Retirer",
-                "change": "Modifier",
-                "invalid": "Ce n'est pas un compte Instagram valide.",
-                "error": "Impossible d'enregistrer ton compte. Réessaie.",
-                "removeError": "Impossible de retirer ton compte. Réessaie.",
-                "upsell": "Certifie-le pour gagner 2 tickets de plus et débloquer ton gain de bienvenue."
-            }
+            "certifyCta": "Certifier mon Instagram",
+            "certified": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus.",
+            "declareCta": "Déclarer mon Instagram",
+            "counted_one": "{{count}} ticket au tirage",
+            "counted_other": "{{count}} tickets au tirage"
         },
         "result": {
             "badge": {
@@ -1156,6 +1102,73 @@
             "description": "Ton ticket a été tiré au sort. Tes {{prize}} arrivent dans ton porte-monnaie.",
             "cta": "Voir mon gain",
             "close": "Fermer"
+        }
+    },
+    "instagram": {
+        "title": "Ton Instagram",
+        "description": "Relie ton compte Instagram à Frak et suis @frak_fr : c'est ce qui fait compter tes tickets au Jeu Frak.",
+        "error": "Impossible de charger ton compte Instagram.",
+        "retry": "Réessayer",
+        "mobileOnly": "Ouvre cette page sur ton téléphone : les messages Instagram ne s'ouvrent que dans l'app Instagram.",
+        "howTo": "Comment faire",
+        "follow": {
+            "title": "Abonne-toi à @frak_fr",
+            "description": "Sur Instagram, abonne-toi au compte <igLink>@frak_fr</igLink>."
+        },
+        "message": {
+            "title": "Envoie-nous ton code",
+            "description": "Le bouton copie ton code <code>{{code}}</code> et ouvre la conversation avec @frak_fr. Colle-le et envoie-le."
+        },
+        "check": {
+            "title": "Reviens ici",
+            "description": "Touche « J'ai envoyé le message » : ton compte est vérifié dès que ton message nous arrive."
+        },
+        "open": "Copier le code et ouvrir Instagram",
+        "sent": "J'ai envoyé le message",
+        "waiting": "On attend ton message… Ça peut prendre quelques secondes.",
+        "notYet": "Ton message ne nous est pas arrivé. Vérifie que tu as bien envoyé ton code à @frak_fr, puis réessaie.",
+        "linked": {
+            "badge": "Certifié",
+            "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus à chaque jeu.",
+            "notFollowing": "Tu ne suis pas encore <igLink>@frak_fr</igLink>. Abonne-toi, puis vérifie à nouveau.",
+            "checkAgain": "Vérifier à nouveau",
+            "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
+            "done": "Terminé"
+        },
+        "certify": {
+            "title": "Certifier mon Instagram",
+            "badge": "Recommandé",
+            "perks": {
+                "tickets": "+2 tickets à chaque Jeu Frak",
+                "unlock": "Ton gain de bienvenue débloqué tout de suite",
+                "auto": "On vérifie automatiquement que tu suis @frak_fr : rien à faire si tu gagnes"
+            },
+            "unavailable": "La certification n'est pas encore disponible. Déclare ton Instagram en attendant.",
+            "error": "Impossible de récupérer ton code. Réessaie dans un instant.",
+            "checkError": "Impossible de vérifier ton compte Instagram pour l'instant. Réessaie dans un instant."
+        },
+        "declare": {
+            "title": "Déclarer mon Instagram",
+            "description": "Tes tickets comptent au tirage, et on ne vérifie ton compte que si tu es tiré au sort. Dans ce cas, tu as 24 h à partir de la notification pour le certifier et suivre @frak_fr, sinon un autre gagnant est tiré au sort.",
+            "label": "Ton compte Instagram",
+            "placeholder": "@ton_compte",
+            "submit": "Déclarer",
+            "editTitle": "Changer de compte",
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "badge": "Déclaré",
+            "counting": "Instagram déclaré : tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour le certifier et suivre @frak_fr.",
+            "remove": "Retirer",
+            "change": "Modifier",
+            "invalid": "Ce n'est pas un compte Instagram valide.",
+            "error": "Impossible d'enregistrer ton compte. Réessaie.",
+            "removeError": "Impossible de retirer ton compte. Réessaie.",
+            "upsell": "Certifie-le pour gagner 2 tickets de plus et débloquer ton gain de bienvenue."
+        },
+        "profile": {
+            "label": "Instagram",
+            "notLinked": "Non relié",
+            "notFollowing": "Non abonné"
         }
     },
     "reward": {

@@ -49,6 +49,10 @@ vi.mock("@/module/settings/component/ProfileLinksCard", () => ({
     ProfileLinksCard: () => <div>links-card</div>,
 }));
 
+vi.mock("@/module/instagram/component/InstagramProfileCard", () => ({
+    InstagramProfileCard: () => <div>instagram-card</div>,
+}));
+
 vi.mock("@/module/settings/component/PrivateKey", () => ({
     PrivateKey: () => null,
 }));
@@ -107,6 +111,7 @@ describe("ProfilePage", () => {
             view.getByText("Gérer les appareils connectés")
         ).toBeInTheDocument();
         expect(view.getByText("links-card")).toBeInTheDocument();
+        expect(view.getByText("instagram-card")).toBeInTheDocument();
         expect(view.getByText("Version 1.0.1")).toBeInTheDocument();
         expect(view.getByText("FRAK Labs")).toBeInTheDocument();
         expect(

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
+import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
 import { GameRules } from "./index";
 
 vi.mock("react-i18next", () => ({

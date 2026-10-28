@@ -150,24 +150,30 @@ describe("GamePage", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
-        expect(
-            screen.getByText("game.instagram.linked.counting")
-        ).toBeInTheDocument();
+        expect(screen.getByText("game.page.certified")).toBeInTheDocument();
         expect(
             screen.queryByRole("link", { name: /game.page.certifyCta/ })
         ).toBeNull();
     });
 
-    it("locks the tickets of a player with no Instagram, and sends them to activate it", () => {
-        currentGame.data = player(1, false);
+    it("locks the tickets of a player with no Instagram, with what each level would count", () => {
+        currentGame.data = player(2, false);
         render(<GamePage />);
 
         expect(screen.getByText("game.page.lockedNone")).toBeInTheDocument();
-        expect(screen.getByText("1")).toBeInTheDocument();
-        expect(screen.queryByText("game.instagram.linked.counting")).toBeNull();
-        expect(
-            screen.getByRole("link", { name: /game.page.activateCta/ })
-        ).toHaveAttribute("href", "/game/instagram");
+        expect(screen.getByText("2")).toBeInTheDocument();
+        expect(screen.queryByText("game.page.certified")).toBeNull();
+        const certify = screen.getByRole("link", {
+            name: /game.page.certifyCta/,
+        });
+        expect(certify).toHaveAttribute("href", "/profile/instagram");
+        expect(certify).toHaveTextContent("game.page.counted:4");
+        const declare = screen.getByRole("link", {
+            name: /game.page.declareCta/,
+        });
+        expect(declare).toHaveAttribute("href", "/profile/instagram");
+        expect(declare).toHaveTextContent("game.page.counted:2");
+        expect(screen.queryByText("game.page.gain:2")).toBeNull();
     });
 
     it("tells a declared player their tickets count and offers +2 to certify", () => {
@@ -177,7 +183,7 @@ describe("GamePage", () => {
         expect(screen.getByText("game.page.declared")).toBeInTheDocument();
         expect(
             screen.getByRole("link", { name: /game.page.certifyCta/ })
-        ).toHaveAttribute("href", "/game/instagram");
+        ).toHaveAttribute("href", "/profile/instagram");
         expect(screen.getByText("game.page.gain:2")).toBeInTheDocument();
     });
 
@@ -190,7 +196,7 @@ describe("GamePage", () => {
         ).toBeInTheDocument();
         expect(
             screen.getByRole("link", { name: /game.page.activateCta/ })
-        ).toHaveAttribute("href", "/game/instagram");
+        ).toHaveAttribute("href", "/profile/instagram");
     });
 
     it("puts a draw waiting on the player above the open game", () => {
@@ -210,7 +216,7 @@ describe("GamePage", () => {
             screen.getByRole("link", {
                 name: /game.result.pendingVerification.cta/,
             })
-        ).toHaveAttribute("href", "/game/instagram");
+        ).toHaveAttribute("href", "/profile/instagram");
         expect(
             screen.getAllByRole("button", { name: /game.history.gameOf/ })
         ).toHaveLength(1);

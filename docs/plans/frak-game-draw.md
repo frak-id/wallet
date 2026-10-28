@@ -75,7 +75,7 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 - **Home card**: with no open game, the last game played shows for 14 days after its end, with its outcome.
 - **Game page**: with no open game, the last result in full on top: an icon and title for the outcome, the stats, and the player's tickets by source. A past player who has not joined the open game sees the home card for it instead. Past games are listed below as rows (date, tickets counted against the total, outcome), and a row opens that game's full result in a bottom sheet. Tickets thrown out for not following count as 0. Dates show the year only when it is not the current one.
 - **Checking the draw**: a frozen game's result ends with a ghost "Vérifier le tirage" link that opens the public record, and the player's pid in a caption under it. Kept low-key on purpose: it is for the curious, and must not compete with the outcome.
-- **Drawn, to certify**: a `pending_verification` result tops the game page and the home card, with the deadline and a button to `/game/instagram`.
+- **Drawn, to certify**: a `pending_verification` result tops the game page and the home card, with the deadline and a button to `/profile/instagram`, the account-wide Instagram page (also linked from the profile).
 - **Win screen**: a confirmed win less than 30 days old gets a full-screen confetti screen on the next wallet open, once per device (`frak_game_win_store` in local storage).
 
 ## Analytics

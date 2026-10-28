@@ -87,7 +87,7 @@ describe("GameCard", () => {
             screen.getByText("game.result.badge.pendingVerification")
         ).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button"));
-        expect(navigate).toHaveBeenCalledWith({ to: "/game/instagram" });
+        expect(navigate).toHaveBeenCalledWith({ to: "/profile/instagram" });
     });
 
     it("prefers the open game over the last result", () => {

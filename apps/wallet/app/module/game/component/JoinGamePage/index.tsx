@@ -12,9 +12,9 @@ import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { GameReward } from "@/module/game/component/GameReward";
-import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
 import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
+import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
 import { RedeemForm } from "@/module/referral/component/RedeemReferralCodePage";
 
 export function JoinGamePage({ initialCode }: { initialCode?: string }) {

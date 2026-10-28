@@ -16,7 +16,7 @@ import {
     ExternalLinkIcon,
     GiftIcon,
     HourglassIcon,
-    LinkIcon,
+    InstagramIcon,
 } from "@frak-labs/design-system/icons";
 import { backendUrl, openExternalUrl } from "@frak-labs/wallet-shared";
 import { Ticket, TicketX } from "lucide-react";
@@ -166,9 +166,9 @@ export function GameResultDetail({
             {result.outcome === "pending_verification" && (
                 <InfoCard>
                     <InfoRow
-                        icon={LinkIcon}
+                        icon={InstagramIcon}
                         label={t("game.result.pendingVerification.cta")}
-                        to="/game/instagram"
+                        to="/profile/instagram"
                     />
                 </InfoCard>
             )}

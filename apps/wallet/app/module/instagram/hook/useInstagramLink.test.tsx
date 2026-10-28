@@ -4,9 +4,16 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameHistoryKeys } from "@/module/game/hook/useGameHistory";
-import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "@/tests/vitest-fixtures";
 
 const mocks = vi.hoisted(() => ({
+    get: vi.fn(),
     put: vi.fn(),
     remove: vi.fn(),
     check: vi.fn(),
@@ -18,6 +25,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         ...actual,
         authenticatedWalletApi: {
             instagram: {
+                get: mocks.get,
                 declaration: { put: mocks.put, delete: mocks.remove },
                 check: { post: mocks.check },
             },
@@ -27,7 +35,10 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
 
 import { balanceKey, claimableKey, rewardsKey } from "@frak-labs/wallet-shared";
 import {
+    DM_POLL_INTERVAL_MS,
+    DM_POLL_TIMEOUT_MS,
     instagramKeys,
+    useAwaitInstagramDm,
     useCheckInstagram,
     useDeclareInstagram,
 } from "./useInstagramLink";
@@ -40,6 +51,7 @@ const CERTIFIED = {
     link: { username: "lea", follows: true, checkedAt: new Date() },
     declaration: null,
 };
+const NOTHING = { link: null, declaration: null };
 
 describe("useInstagramLink", () => {
     beforeEach(() => {
@@ -109,6 +121,73 @@ describe("useInstagramLink", () => {
         await waitFor(() => expect(result.current.declare.isError).toBe(true));
         expect(invalidate).toHaveBeenCalledWith({
             queryKey: instagramKeys.status,
+        });
+    });
+
+    describe("waiting for the DM", () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        test("re-reads the status until the webhook links the account", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: NOTHING, error: null });
+            mocks.get
+                .mockResolvedValueOnce({ data: NOTHING, error: null })
+                .mockResolvedValueOnce({ data: CERTIFIED, error: null });
+            const setData = vi.spyOn(queryWrapper.client, "setQueryData");
+            const { result } = renderHook(() => useAwaitInstagramDm(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            const done = result.current.mutateAsync();
+            await vi.advanceTimersByTimeAsync(2 * DM_POLL_INTERVAL_MS);
+
+            await expect(done).resolves.toEqual(CERTIFIED);
+            expect(mocks.get).toHaveBeenCalledTimes(2);
+            expect(setData).toHaveBeenCalledWith(
+                instagramKeys.status,
+                CERTIFIED
+            );
+        });
+
+        test("gives up after a minute without the message", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: NOTHING, error: null });
+            mocks.get.mockResolvedValue({ data: NOTHING, error: null });
+            const { result } = renderHook(() => useAwaitInstagramDm(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            const done = result.current.mutateAsync();
+            await vi.advanceTimersByTimeAsync(
+                DM_POLL_TIMEOUT_MS + DM_POLL_INTERVAL_MS
+            );
+
+            await expect(done).resolves.toEqual(NOTHING);
+            const polls = mocks.get.mock.calls.length;
+            expect(polls).toBe(DM_POLL_TIMEOUT_MS / DM_POLL_INTERVAL_MS);
+            await vi.advanceTimersByTimeAsync(DM_POLL_INTERVAL_MS * 3);
+            expect(mocks.get).toHaveBeenCalledTimes(polls);
+        });
+
+        test("stops at once when the DM arrived before the tap", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: CERTIFIED, error: null });
+            const { result } = renderHook(() => useAwaitInstagramDm(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            await expect(result.current.mutateAsync()).resolves.toEqual(
+                CERTIFIED
+            );
+            expect(mocks.get).not.toHaveBeenCalled();
         });
     });
 });

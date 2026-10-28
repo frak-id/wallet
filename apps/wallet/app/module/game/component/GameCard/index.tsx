@@ -33,7 +33,7 @@ export function GameCard() {
     if (pending) {
         return (
             <GameCardShell
-                to="/game/instagram"
+                to="/profile/instagram"
                 title={t("game.card.drawn")}
                 prize={pending.game}
                 detail={
@@ -111,7 +111,7 @@ function GameCardShell({
     detail,
     badge,
 }: {
-    to: "/game" | "/game/join" | "/game/instagram";
+    to: "/game" | "/game/join" | "/profile/instagram";
     title: string;
     prize: { prizeAmount: number; prizeDescription: string | null };
     /** Replaces the prize line. */
