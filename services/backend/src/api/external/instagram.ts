@@ -56,6 +56,9 @@ export const instagramWebhookRoutes = new Elysia({ prefix: "/instagram" })
                     config.appSecret
                 )
             ) {
+                log.warn(
+                    "Instagram webhook signature mismatch: INSTAGRAM_APP_SECRET must be the Instagram app secret"
+                );
                 return status(401, "Unauthorized");
             }
 
