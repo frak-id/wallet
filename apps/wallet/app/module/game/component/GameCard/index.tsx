@@ -18,13 +18,27 @@ import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
 const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
- * Wallet-home recap of the open game, or of the last game played when none is
- * open and it ended recently; hidden otherwise, while loading, or on error.
+ * Wallet-home recap: a draw waiting on the user first, then the open game, or
+ * the last game played when it ended recently; hidden otherwise.
  */
 export function GameCard() {
     const { t } = useTranslation();
     const { data } = useCurrentGame();
     const history = useGameHistory();
+    const pending = history.data?.find(
+        (result) => result.outcome === "pending_verification"
+    );
+
+    if (pending) {
+        return (
+            <GameCardShell
+                to="/game"
+                title={t("game.card.drawn")}
+                prize={pending.game}
+                badge={<OutcomeBadge outcome={pending.outcome} />}
+            />
+        );
+    }
 
     if (data?.game) {
         return (

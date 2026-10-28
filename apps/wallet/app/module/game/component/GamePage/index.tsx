@@ -1,4 +1,7 @@
-import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
+import type {
+    CurrentGameResponse,
+    GameResult,
+} from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
@@ -20,13 +23,15 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 import { OpenGameCard } from "@/module/game/component/GameCard";
 import { GameResultCard, PastGames } from "@/module/game/component/GameResult";
-import { FRAK_INSTAGRAM_URL, frakGame } from "@/module/game/config";
+import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import { formatGameEnd } from "@/module/game/utils/formatGameDate";
 
 type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
+
+type InstagramLevel = CurrentGameResponse["me"]["instagram"];
 
 type OpenGame = NonNullable<CurrentGame["game"]>;
 
@@ -64,6 +69,9 @@ export function GamePage() {
     const top = topOf(current, history);
     const results = history.data ?? [];
     const resultShown = top.kind === "result" ? top.result : null;
+    const pending = results.find(
+        (result) => result.outcome === "pending_verification"
+    );
     const trackedResultId = useRef<string | null>(null);
 
     useEffect(() => {
@@ -86,7 +94,9 @@ export function GamePage() {
         trackEvent("game_page_viewed", {
             tickets: me.tickets,
             eligible: me.eligible,
+            instagram: me.instagram,
             tickets_join: me.ticketsBySource.join,
+            tickets_instagram_certified: me.ticketsBySource.instagramCertified,
             tickets_purchase: me.ticketsBySource.purchase,
             tickets_referred_purchase: me.ticketsBySource.referredPurchase,
             tickets_referred_signup: me.ticketsBySource.referredSignup,
@@ -116,6 +126,9 @@ export function GamePage() {
                 />
             )}
             {top.kind === "loading" && <Skeleton variant="rect" height={160} />}
+            {pending && pending !== resultShown && (
+                <GameResultCard result={pending} />
+            )}
             {top.kind === "none" && (
                 <EmptyState
                     title={t("game.page.none.title")}
@@ -135,11 +148,14 @@ export function GamePage() {
                     endsAt={top.game.endsAt}
                     tickets={me.tickets}
                     eligible={me.eligible}
+                    instagram={me.instagram}
                 />
             )}
             {top.kind !== "loading" && (
                 <PastGames
-                    results={top.kind === "result" ? results.slice(1) : results}
+                    results={results.filter(
+                        (result) => result !== resultShown && result !== pending
+                    )}
                 />
             )}
         </Stack>
@@ -151,11 +167,13 @@ function GameDetails({
     endsAt,
     tickets,
     eligible,
+    instagram,
 }: {
     prize: string;
     endsAt: Date | string;
     tickets: number;
     eligible: boolean;
+    instagram: InstagramLevel;
 }) {
     const { t, i18n } = useTranslation();
     const endDate = formatGameEnd(endsAt, i18n.language);
@@ -180,40 +198,22 @@ function GameDetails({
                     </Text>
                 </Stack>
             </Card>
-            {eligible ? (
-                <Notice tone="success">
-                    {t("game.instagram.linked.counting")}
-                </Notice>
-            ) : (
-                <Stack space="xs">
-                    <Notice tone="warning">
-                        <Trans
-                            i18nKey={
-                                frakGame.instagramLink
-                                    ? "game.page.lockedLink"
-                                    : "game.page.locked"
-                            }
-                            components={{
-                                igLink: (
-                                    <ExternalLink href={FRAK_INSTAGRAM_URL} />
-                                ),
-                            }}
-                        />
-                    </Notice>
-                    {frakGame.instagramLink && (
-                        <InfoCard>
-                            <InfoRow
-                                icon={LinkIcon}
-                                label={t("game.page.linkCta")}
-                                to="/game/instagram"
-                            />
-                        </InfoCard>
-                    )}
-                </Stack>
-            )}
+            <InstagramStanding eligible={eligible} instagram={instagram} />
             <Stack space="xs">
                 <Text weight="semiBold">{t("game.page.more")}</Text>
                 <InfoCard>
+                    {instagram !== "certified" && (
+                        <InfoRow
+                            icon={LinkIcon}
+                            label={t("game.page.certifyCta")}
+                            to="/game/instagram"
+                            action={
+                                <Badge size="small" variant="success">
+                                    {t("game.page.gain", { count: 2 })}
+                                </Badge>
+                            }
+                        />
+                    )}
                     <InfoRow
                         icon={ReferralIcon}
                         label={t("game.page.share")}
@@ -240,5 +240,49 @@ function GameDetails({
                 </Text>
             </Stack>
         </>
+    );
+}
+
+const igLink = <ExternalLink href={FRAK_INSTAGRAM_URL} />;
+
+/** Whether the tickets count, and the way to make them count, for each Instagram level. */
+function InstagramStanding({
+    eligible,
+    instagram,
+}: {
+    eligible: boolean;
+    instagram: InstagramLevel;
+}) {
+    const { t } = useTranslation();
+    if (instagram === "certified" && eligible) {
+        return (
+            <Notice tone="success">
+                {t("game.instagram.linked.counting")}
+            </Notice>
+        );
+    }
+    if (instagram === "declared") {
+        return <Notice tone="info">{t("game.page.declared")}</Notice>;
+    }
+    return (
+        <Stack space="xs">
+            <Notice tone="warning">
+                {instagram === "certified" ? (
+                    <Trans
+                        i18nKey="game.page.lockedNotFollowing"
+                        components={{ igLink }}
+                    />
+                ) : (
+                    t("game.page.lockedNone")
+                )}
+            </Notice>
+            <InfoCard>
+                <InfoRow
+                    icon={LinkIcon}
+                    label={t("game.page.activateCta")}
+                    to="/game/instagram"
+                />
+            </InfoCard>
+        </Stack>
     );
 }

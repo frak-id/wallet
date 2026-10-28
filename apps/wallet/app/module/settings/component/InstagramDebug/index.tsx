@@ -12,7 +12,8 @@ import { useState } from "react";
 import { frakGame } from "@/module/game/config";
 import {
     type InstagramLink,
-    useInstagramLink,
+    type InstagramStatus,
+    useInstagramStatus,
 } from "@/module/game/hook/useInstagramLink";
 import { useMockInstagramLink } from "@/module/game/hook/useMockInstagramLink";
 
@@ -21,33 +22,37 @@ const ERROR_LABELS: Record<string, string> = {
     INSTAGRAM_ALREADY_LINKED: "Another wallet already linked that account.",
 };
 
-function describeLink(link: InstagramLink | null | undefined, failed: boolean) {
-    if (failed) return "Could not load the Instagram link.";
-    if (link === undefined) return "Loading…";
-    if (link === null) return "No Instagram account linked.";
-    const follow = link.follows ? "follows" : "does not follow";
-    return `@${link.username} ${follow} @frak_fr (eligible: ${link.follows ? "yes" : "no"}).`;
+function describeStatus(status: InstagramStatus | undefined, failed: boolean) {
+    if (failed) return "Could not load the Instagram status.";
+    if (status === undefined) return "Loading…";
+    const { link, declaration } = status;
+    if (link) {
+        const follow = link.follows ? "follows" : "does not follow";
+        return `Certified @${link.username}, ${follow} @frak_fr (eligible: ${link.follows ? "yes" : "no"}).`;
+    }
+    if (declaration) {
+        return `Declared @${declaration.username} (eligible, checked only if drawn).`;
+    }
+    return "No Instagram account declared or certified.";
 }
 
-/**
- * Dev-only stand-in for Instagram validation: writes the link the Meta
- * webhook will write later, so the game's locked/eligible states can be tested.
- */
+/** Dev-only stand-in for a certification: writes the link Meta's webhook writes, so every game state can be tested. */
 export function InstagramDebug() {
     if (isRunningInProd || !frakGame.enabled) return null;
     return <InstagramDebugCard />;
 }
 
 function InstagramDebugCard() {
-    const { data: link, isError } = useInstagramLink();
+    const { data: status, isError } = useInstagramStatus();
+    const link = status?.link ?? null;
     return (
         <Card variant="muted">
             <Stack space="s">
-                <Text weight="semiBold">Instagram validation (mock)</Text>
+                <Text weight="semiBold">Instagram certification (mock)</Text>
                 <Text variant="bodySmall" color="secondary">
-                    {describeLink(link, isError)}
+                    {describeStatus(status, isError)}
                 </Text>
-                <MockForm key={link?.username ?? "none"} link={link ?? null} />
+                <MockForm key={link?.username ?? "none"} link={link} />
             </Stack>
         </Card>
     );

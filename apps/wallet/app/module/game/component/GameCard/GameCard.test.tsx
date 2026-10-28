@@ -71,6 +71,19 @@ describe("GameCard", () => {
         expect(container.firstChild).toBeNull();
     });
 
+    it("puts a draw waiting on the user before the open game", () => {
+        currentGame.data = { game, me: { participating: true } };
+        gameHistory.data = [endedDaysAgo(1, "pending_verification")];
+        render(<GameCard />);
+
+        expect(screen.getByText("game.card.drawn")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.badge.pendingVerification")
+        ).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button"));
+        expect(navigate).toHaveBeenCalledWith({ to: "/game" });
+    });
+
     it("prefers the open game over the last result", () => {
         currentGame.data = { game, me: { participating: true } };
         gameHistory.data = [endedDaysAgo(2)];

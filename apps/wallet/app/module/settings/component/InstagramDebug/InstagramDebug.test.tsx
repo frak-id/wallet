@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { env, game, link, save, revoke } = vi.hoisted(() => ({
+const { env, game, status, save, revoke } = vi.hoisted(() => ({
     env: { prod: false },
     game: { enabled: true },
-    link: { data: undefined as unknown, isError: false },
+    status: { data: undefined as unknown, isError: false },
     save: { mutate: vi.fn(), isPending: false, error: null as unknown },
     revoke: { mutate: vi.fn(), isPending: false, error: null as unknown },
 }));
@@ -17,7 +17,7 @@ vi.mock("@frak-labs/app-essentials", async (importOriginal) => ({
 }));
 vi.mock("@/module/game/config", () => ({ frakGame: game }));
 vi.mock("@/module/game/hook/useInstagramLink", () => ({
-    useInstagramLink: () => link,
+    useInstagramStatus: () => status,
 }));
 vi.mock("@/module/game/hook/useMockInstagramLink", () => ({
     useMockInstagramLink: () => ({ link: save, revoke }),
@@ -30,13 +30,17 @@ const FOLLOWER = {
     follows: true,
     checkedAt: new Date("2026-10-26T10:00:00Z"),
 };
+const certified = (link: typeof FOLLOWER) => ({ link, declaration: null });
 
 describe("InstagramDebug", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         env.prod = false;
         game.enabled = true;
-        Object.assign(link, { data: null, isError: false });
+        Object.assign(status, {
+            data: { link: null, declaration: null },
+            isError: false,
+        });
         Object.assign(save, { isPending: false, error: null });
         Object.assign(revoke, { isPending: false, error: null });
     });
@@ -55,19 +59,33 @@ describe("InstagramDebug", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it("says when the link failed to load instead of waiting forever", () => {
-        Object.assign(link, { data: undefined, isError: true });
+    it("says when the status failed to load instead of waiting forever", () => {
+        Object.assign(status, { data: undefined, isError: true });
         render(<InstagramDebug />);
 
         expect(
-            screen.getByText("Could not load the Instagram link.")
+            screen.getByText("Could not load the Instagram status.")
+        ).toBeVisible();
+    });
+
+    it("tells a declared handle apart from a certified one", () => {
+        status.data = {
+            link: null,
+            declaration: { username: "lea", declaredAt: "" },
+        };
+        render(<InstagramDebug />);
+
+        expect(
+            screen.getByText("Declared @lea (eligible, checked only if drawn).")
         ).toBeVisible();
     });
 
     it("links the typed handle as a follower by default", () => {
         render(<InstagramDebug />);
 
-        expect(screen.getByText("No Instagram account linked.")).toBeVisible();
+        expect(
+            screen.getByText("No Instagram account declared or certified.")
+        ).toBeVisible();
         fireEvent.change(screen.getByLabelText("Handle"), {
             target: { value: "@Lea" },
         });
@@ -104,11 +122,13 @@ describe("InstagramDebug", () => {
     });
 
     it("shows the linked account and revokes it", () => {
-        link.data = FOLLOWER;
+        status.data = certified(FOLLOWER);
         render(<InstagramDebug />);
 
         expect(
-            screen.getByText("@lea follows @frak_fr (eligible: yes).")
+            screen.getByText(
+                "Certified @lea, follows @frak_fr (eligible: yes)."
+            )
         ).toBeVisible();
         expect(screen.getByLabelText("Handle")).toHaveValue("lea");
         expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
@@ -118,11 +138,13 @@ describe("InstagramDebug", () => {
     });
 
     it("says a linked non-follower is not eligible", () => {
-        link.data = { ...FOLLOWER, follows: false };
+        status.data = certified({ ...FOLLOWER, follows: false });
         render(<InstagramDebug />);
 
         expect(
-            screen.getByText("@lea does not follow @frak_fr (eligible: no).")
+            screen.getByText(
+                "Certified @lea, does not follow @frak_fr (eligible: no)."
+            )
         ).toBeVisible();
     });
 

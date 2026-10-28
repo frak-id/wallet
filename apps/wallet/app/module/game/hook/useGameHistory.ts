@@ -2,7 +2,7 @@ import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { frakGame } from "@/module/game/config";
 
-const gameHistoryKeys = {
+export const gameHistoryKeys = {
     all: ["game", "history"] as const,
 };
 

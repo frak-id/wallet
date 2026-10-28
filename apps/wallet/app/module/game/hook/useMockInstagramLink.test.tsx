@@ -25,15 +25,17 @@ const LINK = {
     follows: true,
     checkedAt: new Date("2026-10-26T10:00:00Z"),
 };
+const CERTIFIED = { link: LINK, declaration: null };
+const NOTHING = { link: null, declaration: null };
 
 describe("useMockInstagramLink", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mocks.put.mockResolvedValue({ data: { link: LINK }, error: null });
-        mocks.remove.mockResolvedValue({ data: { link: null }, error: null });
+        mocks.put.mockResolvedValue({ data: CERTIFIED, error: null });
+        mocks.remove.mockResolvedValue({ data: NOTHING, error: null });
     });
 
-    test("sends the handle and follow state, then caches the link and refreshes the game", async ({
+    test("sends the handle and follow state, then caches the status and refreshes the game", async ({
         queryWrapper,
     }) => {
         const setData = vi.spyOn(queryWrapper.client, "setQueryData");
@@ -51,13 +53,13 @@ describe("useMockInstagramLink", () => {
             username: "@Lea",
             follows: true,
         });
-        expect(setData).toHaveBeenCalledWith(instagramKeys.link, LINK);
+        expect(setData).toHaveBeenCalledWith(instagramKeys.status, CERTIFIED);
         expect(invalidate).toHaveBeenCalledWith({
             queryKey: currentGameKeys.all,
         });
     });
 
-    test("revoking empties the cached link and refreshes the game", async ({
+    test("revoking empties the cached status and refreshes the game", async ({
         queryWrapper,
     }) => {
         const setData = vi.spyOn(queryWrapper.client, "setQueryData");
@@ -69,7 +71,7 @@ describe("useMockInstagramLink", () => {
         act(() => result.current.revoke.mutate());
 
         await waitFor(() => expect(result.current.revoke.isSuccess).toBe(true));
-        expect(setData).toHaveBeenCalledWith(instagramKeys.link, null);
+        expect(setData).toHaveBeenCalledWith(instagramKeys.status, NOTHING);
         expect(invalidate).toHaveBeenCalledWith({
             queryKey: currentGameKeys.all,
         });
