@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import {
     db,
@@ -76,15 +76,26 @@ export class GameDrawRepository {
                 totalTickets: gameDrawsTable.totalTickets,
                 winnerIdentityGroupId: gameDrawsTable.winnerIdentityGroupId,
                 confirmedAt: gameDrawsTable.confirmedAt,
+                candidates: gameDrawsTable.candidates,
+                rejections: gameDrawsTable.rejections,
+                notifiedRank: gameDrawsTable.notifiedRank,
+                candidateNotifiedAt: gameDrawsTable.candidateNotifiedAt,
             })
             .from(gameDrawsTable)
             .where(inArray(gameDrawsTable.gameId, gameIds));
         return Promise.all(
             draws.map(async ({ id, ...draw }) => {
                 const frozen = await this.frozenEntries.fetch(id);
-                const entry = identityGroupIds
-                    .map((groupId) => frozen?.byGroup.get(groupId))
-                    .find((found) => found !== undefined);
+                const mine = identityGroupIds.flatMap(
+                    (groupId) => frozen?.byGroup.get(groupId) ?? []
+                );
+                // With merged groups that each played, the one holding the turn speaks for the caller.
+                const turn =
+                    draw.status === "drawn"
+                        ? draw.candidates?.[draw.rejections.length]
+                        : undefined;
+                const entry =
+                    mine.find((found) => found.pid === turn) ?? mine[0];
                 return {
                     ...draw,
                     participants: frozen?.participants ?? 0,
@@ -141,6 +152,37 @@ export class GameDrawRepository {
             .where(underReview(params.id, params.reviewed))
             .returning();
         return updated ?? null;
+    }
+
+    /** `false` when that rank was already told: a push goes out once per candidate. */
+    async markCandidateNotified(params: {
+        id: string;
+        rank: number;
+        kind: "drawn" | "reminder";
+        at: Date;
+    }): Promise<boolean> {
+        const column =
+            params.kind === "drawn"
+                ? gameDrawsTable.notifiedRank
+                : gameDrawsTable.remindedRank;
+        const updated = await db
+            .update(gameDrawsTable)
+            .set(
+                params.kind === "drawn"
+                    ? {
+                          notifiedRank: params.rank,
+                          candidateNotifiedAt: params.at,
+                      }
+                    : { remindedRank: params.rank }
+            )
+            .where(
+                and(
+                    underReview(params.id, params.rank),
+                    lt(column, params.rank)
+                )
+            )
+            .returning({ id: gameDrawsTable.id });
+        return updated.length > 0;
     }
 
     async confirm(

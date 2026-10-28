@@ -6,18 +6,22 @@ import { LRUCache } from "lru-cache";
 import { isAddressEqual } from "viem";
 import type { GameDrawSelect, GameSelect } from "../../domain/game/db/schema";
 import {
+    CANDIDATE_REMINDER_MS,
+    candidateVerifyBy,
     canonicalEntries,
     currentCandidate,
     DRAND_QUICKNET,
     DRAW_ALGORITHM,
     DRAW_AUTO_FREEZE_WINDOW_MS,
-    DRAW_CANDIDATES,
     DRAW_FREEZE_GRACE_MS,
     DRAW_ROUND_DELAY_MS,
     drandRandomness,
     drandRoundAt,
     drandRoundTime,
+    drawCandidatesFor,
     drawTicketsOf,
+    frozenStandingOf,
+    hasCandidateWindow,
     isDrawSettled,
     outcomeOf,
     pseudonymOf,
@@ -36,7 +40,15 @@ import type {
 import { NO_TICKETS, totalTickets } from "../../domain/game/tickets";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
-import { isInstagramEligible } from "../../domain/instagram/utils";
+import type { InstagramPendingLinkRepository } from "../../domain/instagram/repositories/InstagramPendingLinkRepository";
+import {
+    InstagramUnavailableError,
+    type InstagramVerificationService,
+} from "../../domain/instagram/services/InstagramVerificationService";
+import {
+    instagramLevelOf,
+    isVerifiedFollower,
+} from "../../domain/instagram/utils";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
@@ -49,6 +61,58 @@ const RESULTS_LIMIT = 20;
 /** How long a replica serves a public record that can still change; an admin review runs in another process. */
 const LIVE_DRAW_TTL_MS = 30 * 1000;
 const SETTLED_DRAW_TTL_MS = 60 * 60 * 1000;
+/** A follow read this recently is trusted at freeze; older ones are re-read from Meta. */
+const FREEZE_FOLLOW_MAX_AGE_MS = 60 * 60 * 1000;
+/** How stale a waiting candidate's follow may get between two cron passes. */
+const CANDIDATE_RECHECK_MS = 15 * 60 * 1000;
+
+type CandidateNotice = "drawn" | "reminder";
+
+type OutcomeDraw = Awaited<
+    ReturnType<GameDrawRepository["findOutcomes"]>
+>[number];
+
+function toGameResult({
+    summary,
+    draw,
+    ticketsBySource,
+    verifyBy,
+    mine,
+}: {
+    summary: GameResult["game"];
+    draw: OutcomeDraw | undefined;
+    ticketsBySource: GameResult["ticketsBySource"];
+    verifyBy: Date | null;
+    mine: ReadonlySet<string>;
+}): GameResult {
+    return {
+        game: summary,
+        outcome: verifyBy ? "pending_verification" : outcomeOf(draw, mine),
+        verifyBy,
+        ticketsBySource,
+        drawTickets: draw
+            ? (draw.entry?.drawTickets ?? 0)
+            : totalTickets(ticketsBySource),
+        discarded: draw?.entry?.discarded ?? null,
+        pid: draw?.entry?.drawTickets ? draw.entry.pid : null,
+        totalTickets: draw?.totalTickets ?? null,
+        participants: draw?.participants ?? null,
+        confirmedAt: draw?.status === "confirmed" ? draw.confirmedAt : null,
+    };
+}
+
+/** The caller holds the candidate whose turn it is. */
+function isCallerTurn(
+    draw: Pick<GameDrawSelect, "status" | "candidates" | "rejections"> & {
+        entry: Pick<DrawEntry, "pid"> | null;
+    }
+): boolean {
+    return (
+        draw.status === "drawn" &&
+        draw.entry !== null &&
+        draw.candidates?.[draw.rejections.length] === draw.entry.pid
+    );
+}
 
 export class GameDrawOrchestrator {
     private readonly publicDraws = new LRUCache<
@@ -72,14 +136,29 @@ export class GameDrawOrchestrator {
             "participantsOf" | "ticketsOf" | "gamesJoinedBy"
         >,
         private readonly instagramLinks: InstagramLinkRepository,
+        private readonly instagramPendingLinks: Pick<
+            InstagramPendingLinkRepository,
+            "findDeclaration" | "findDeclarations"
+        >,
+        private readonly instagramVerification: Pick<
+            InstagramVerificationService,
+            "recheck"
+        >,
         private readonly identities: IdentityRepository,
         private readonly merchants: MerchantRepository,
         private readonly assetLogs: AssetLogRepository,
         private readonly drand: DrandClient
     ) {}
 
-    /** The cron's pass: freeze games that just ended, then draw the frozen ones whose round is out. */
-    async runDue(now = new Date()): Promise<{ frozen: number; drawn: number }> {
+    /**
+     * The cron's pass: freeze games that just ended, draw the frozen ones whose round is out, then move each candidate's window.
+     * Without `at`, each step reads the clock afresh: a freeze can take minutes, and a push stamps its window.
+     */
+    async runDue(
+        at?: Date
+    ): Promise<{ frozen: number; drawn: number; advanced: number }> {
+        const clock = () => at ?? new Date();
+        let now = clock();
         const ended = await this.games.findEndedBetween(
             new Date(now.getTime() - DRAW_AUTO_FREEZE_WINDOW_MS),
             new Date(now.getTime() - DRAW_FREEZE_GRACE_MS)
@@ -95,30 +174,43 @@ export class GameDrawOrchestrator {
         }
 
         let drawn = 0;
+        now = clock();
         for (const draw of await this.draws.findByStatus("frozen")) {
             const done = await this.isolated(draw.gameId, "run", () =>
                 this.drawFrozen(draw, now)
             );
             if (done) drawn++;
         }
-        return { frozen, drawn };
+
+        let advanced = 0;
+        for (const draw of await this.draws.findByStatus("drawn")) {
+            if (!hasCandidateWindow(draw.algorithm)) continue;
+            const done = await this.isolated(draw.gameId, "advance", () =>
+                this.advanceCandidate(draw, clock())
+            );
+            if (done) advanced++;
+        }
+        return { frozen, drawn, advanced };
     }
 
     /** One game's failure is logged and skipped, so it never holds back the others. */
     private async isolated(
         gameId: string,
-        step: "freeze" | "run",
+        step: "freeze" | "run" | "advance",
         task: () => Promise<boolean>
     ): Promise<boolean> {
         try {
             return await task();
         } catch (error) {
-            log.error({ error, gameId }, `Game draw ${step} failed`);
+            // A Meta outage only delays the step: it is retried every pass.
+            const level =
+                error instanceof InstagramUnavailableError ? "warn" : "error";
+            log[level]({ error, gameId }, `Game draw ${step} failed`);
             return false;
         }
     }
 
-    /** Counts every participant's tickets once; only followers of @frak_fr keep them. */
+    /** Counts every participant's tickets once; certified followers and declared players keep them. */
     async freeze(game: GameSelect, now = new Date()): Promise<GameDrawSelect> {
         if (game.endsAt > now) {
             throw HttpError.conflict("GAME_NOT_ENDED", "The game is still on");
@@ -169,14 +261,17 @@ export class GameDrawOrchestrator {
         game: GameSelect
     ): Promise<{ pidKey: string; list: DrawEntry[] }> {
         const participants = await this.players.participantsOf(game.id);
-        const links = await this.instagramLinks.findByIdentityGroups(
-            participants.map((p) => p.identityGroupId)
-        );
-        const following = new Set(
-            links
-                .filter((link) => isInstagramEligible(link))
-                .map((link) => link.identityGroupId)
-        );
+        const groupIds = participants.map((p) => p.identityGroupId);
+        // Throws when Meta cannot answer: the freeze retries rather than discard followers.
+        await this.instagramVerification.recheck(groupIds, {
+            maxAgeMs: FREEZE_FOLLOW_MAX_AGE_MS,
+        });
+        const [links, declarations] = await Promise.all([
+            this.instagramLinks.findByIdentityGroups(groupIds),
+            this.instagramPendingLinks.findDeclarations(groupIds),
+        ]);
+        const linkOf = new Map(links.map((l) => [l.identityGroupId, l]));
+        const declared = new Set(declarations.map((d) => d.identityGroupId));
         const pidKey = randomBytes(32).toString("hex");
 
         const list: DrawEntry[] = [];
@@ -189,14 +284,19 @@ export class GameDrawOrchestrator {
                         identityGroupId,
                         joinedAt
                     );
-                    const follows = following.has(identityGroupId);
+                    const standing = frozenStandingOf(
+                        linkOf.get(identityGroupId) ?? null,
+                        declared.has(identityGroupId)
+                    );
                     return {
                         pid: pseudonymOf(pidKey, identityGroupId),
                         identityGroupId,
                         tickets,
-                        drawTickets: follows ? totalTickets(tickets) : 0,
-                        discarded: follows ? null : ("not_following" as const),
-                    };
+                        drawTickets: standing.discarded
+                            ? 0
+                            : totalTickets(tickets),
+                        ...standing,
+                    } satisfies DrawEntry;
                 })
             );
             list.push(...counted);
@@ -224,11 +324,15 @@ export class GameDrawOrchestrator {
             return false;
         }
 
+        const count = drawCandidatesFor(draw.algorithm);
+        if (count === null) {
+            throw new Error(`Unknown draw algorithm ${draw.algorithm}`);
+        }
         const candidates = rankCandidates({
             randomness: drandRandomness(beacon.signature),
             gameId: draw.gameId,
             entries: drawTicketsOf(draw.entries),
-            count: DRAW_CANDIDATES,
+            count,
         });
         const drawn = await this.draws.recordBeacon({
             id: draw.id,
@@ -248,21 +352,174 @@ export class GameDrawOrchestrator {
         return true;
     }
 
+    /**
+     * Moves the current candidate's turn on: a certified follower waits for the
+     * admin; anyone else is told once, reminded once, and passed over when their
+     * 24 h run out. Loops so the next candidate is told in the same pass.
+     */
+    private async advanceCandidate(
+        draw: GameDrawSelect,
+        now: Date
+    ): Promise<boolean> {
+        let current = draw;
+        let changed = false;
+        for (let step = 0; step <= (draw.candidates?.length ?? 0); step++) {
+            const outcome = await this.stepCandidate(current, now);
+            if (outcome.kind === "stop") return changed || outcome.changed;
+            current = outcome.draw;
+            changed = true;
+        }
+        return changed;
+    }
+
+    /** One candidate's turn: `passed` hands the updated draw to the next one. */
+    private async stepCandidate(
+        draw: GameDrawSelect,
+        now: Date
+    ): Promise<
+        | { kind: "stop"; changed: boolean }
+        | { kind: "passed"; draw: GameDrawSelect }
+    > {
+        const stop = (changed: boolean) => ({ kind: "stop" as const, changed });
+        const candidate =
+            draw.status === "drawn" ? currentCandidate(draw) : null;
+        if (!candidate) return stop(false);
+        const groupId = await this.survivingGroupOf(
+            candidate.entry.identityGroupId
+        );
+        if (await this.isVerifiedFollower(groupId, CANDIDATE_RECHECK_MS)) {
+            return stop(false);
+        }
+
+        const notice = this.dueNotice(draw, candidate.rank, now);
+        if (notice) {
+            return stop(
+                await this.noticeCandidate(
+                    draw,
+                    candidate.rank,
+                    groupId,
+                    notice,
+                    now
+                )
+            );
+        }
+        const verifyBy = candidateVerifyBy(draw, candidate.rank);
+        if (!verifyBy || now < verifyBy) return stop(false);
+        // One fresh read, so a follow made minutes before the deadline still counts.
+        if (await this.isVerifiedFollower(groupId, 0)) return stop(false);
+        const rejected = await this.recordRejection(
+            draw,
+            candidate,
+            "not_verified_in_time",
+            "system",
+            now
+        );
+        return rejected ? { kind: "passed", draw: rejected } : stop(false);
+    }
+
+    /** `drawn` until the candidate is told; `reminder` once, near the end of their window. */
+    private dueNotice(
+        draw: GameDrawSelect,
+        rank: number,
+        now: Date
+    ): CandidateNotice | null {
+        const verifyBy = candidateVerifyBy(draw, rank);
+        if (!verifyBy) return "drawn";
+        const remindFrom = verifyBy.getTime() - CANDIDATE_REMINDER_MS;
+        if (draw.remindedRank < rank && now.getTime() >= remindFrom) {
+            return now < verifyBy ? "reminder" : null;
+        }
+        return null;
+    }
+
+    /** Marks before sending, so a crash can lose a push but never send it twice. */
+    private async noticeCandidate(
+        draw: GameDrawSelect,
+        rank: number,
+        groupId: string,
+        notice: CandidateNotice,
+        now: Date
+    ): Promise<boolean> {
+        const marked = await this.draws.markCandidateNotified({
+            id: draw.id,
+            rank,
+            kind: notice,
+            at: now,
+        });
+        if (!marked) return false;
+        if (notice === "drawn") {
+            productEvents.track("game_candidate_window_started", groupId, {
+                game_id: draw.gameId,
+                rank: rank + 1,
+            });
+        }
+
+        const [game, wallet] = await Promise.all([
+            this.games.findById(draw.gameId),
+            this.walletOf(groupId),
+        ]);
+        if (game && wallet) {
+            const verifyBy = candidateVerifyBy(
+                notice === "drawn"
+                    ? { notifiedRank: rank, candidateNotifiedAt: now }
+                    : draw,
+                rank
+            );
+            if (!verifyBy) return true;
+            eventEmitter.emit("notification", {
+                type:
+                    notice === "drawn"
+                        ? "game_candidate_drawn"
+                        : "game_candidate_reminder",
+                wallet,
+                prizeAmount: game.prizeAmount,
+                verifyBy,
+            });
+        }
+        return true;
+    }
+
+    private async survivingGroupOf(identityGroupId: string): Promise<string> {
+        return (
+            (await this.identities.findSurvivingGroupId(identityGroupId)) ??
+            identityGroupId
+        );
+    }
+
+    /** Certified and following now, re-read from Meta when older than `maxAgeMs`. Throws when Meta cannot say. */
+    private async isVerifiedFollower(
+        groupId: string,
+        maxAgeMs: number
+    ): Promise<boolean> {
+        await this.instagramVerification.recheck([groupId], { maxAgeMs });
+        return isVerifiedFollower(
+            await this.instagramLinks.findByIdentityGroup(groupId)
+        );
+    }
+
     /** What an admin needs to judge the current candidate, re-read now. */
     async review(gameId: string) {
         const draw = await this.requireDraw(gameId);
         const candidate = currentCandidate(draw);
         if (!candidate) return { draw, candidate: null };
 
-        const groupId =
-            (await this.identities.findSurvivingGroupId(
-                candidate.entry.identityGroupId
-            )) ?? candidate.entry.identityGroupId;
-        const [group, wallet, [link]] = await Promise.all([
+        const groupId = await this.survivingGroupOf(
+            candidate.entry.identityGroupId
+        );
+        const followFresh = await this.instagramVerification
+            .recheck([groupId], { maxAgeMs: 0 })
+            .then(() => true)
+            .catch((error: unknown) => {
+                if (error instanceof InstagramUnavailableError) return false;
+                throw error;
+            });
+        const [group, wallet, link, declaration] = await Promise.all([
             this.identities.findGroupById(groupId),
             this.identities.getWalletForGroup(groupId),
-            this.instagramLinks.findByIdentityGroups([groupId]),
+            this.instagramLinks.findByIdentityGroup(groupId),
+            this.instagramPendingLinks.findDeclaration(groupId),
         ]);
+        const verified = isVerifiedFollower(link);
         return {
             draw,
             candidate: {
@@ -270,9 +527,17 @@ export class GameDrawOrchestrator {
                 identityGroupId: groupId,
                 wallet,
                 accountCreatedAt: group?.createdAt ?? null,
-                instagram: link
-                    ? { username: link.username, follows: link.follows }
-                    : null,
+                instagram: {
+                    level: instagramLevelOf(link, declaration),
+                    username: link?.username ?? declaration?.username ?? null,
+                    follows: link?.follows ?? null,
+                    checkedAt: link?.checkedAt ?? null,
+                    followFresh,
+                },
+                awaiting: verified ? ("admin" as const) : ("player" as const),
+                verifyBy: verified
+                    ? null
+                    : candidateVerifyBy(draw, candidate.rank),
             },
         };
     }
@@ -284,6 +549,25 @@ export class GameDrawOrchestrator {
     ): Promise<GameDrawSelect> {
         const draw = await this.requireDraw(gameId);
         const candidate = this.requireCandidate(draw);
+        const updated = await this.recordRejection(
+            draw,
+            candidate,
+            reason,
+            actor,
+            new Date()
+        );
+        if (!updated) throw this.reviewedMeanwhile();
+        return updated;
+    }
+
+    /** `null` when someone reviewed the draw meanwhile; the last candidate's rejection voids it. */
+    private async recordRejection(
+        draw: GameDrawSelect,
+        candidate: { rank: number; pid: string },
+        reason: DrawRejectionReason,
+        actor: string,
+        at: Date
+    ): Promise<GameDrawSelect | null> {
         const updated = await this.draws.addRejection({
             id: draw.id,
             reviewed: candidate.rank,
@@ -291,14 +575,13 @@ export class GameDrawOrchestrator {
                 pid: candidate.pid,
                 reason,
                 actor,
-                at: new Date().toISOString(),
+                at: at.toISOString(),
             },
             exhausted: candidate.rank + 1 >= (draw.candidates?.length ?? 0),
         });
-        if (!updated) throw this.reviewedMeanwhile();
-
+        if (!updated) return null;
         productEvents.track("game_winner_rejected", null, {
-            game_id: gameId,
+            game_id: draw.gameId,
             rank: candidate.rank + 1,
             reason,
         });
@@ -321,6 +604,7 @@ export class GameDrawOrchestrator {
                 "The candidate's identity no longer exists; reject them"
             );
         }
+        await this.requireVerifiedWinner(winner);
         const token =
             await this.merchants.getDefaultRewardToken(FRAK_MERCHANT_ID);
         if (!(token && isAddressEqual(token, currentStablecoins.eure))) {
@@ -365,17 +649,42 @@ export class GameDrawOrchestrator {
         return confirmed;
     }
 
-    /** The prize is paid by now, so a failed lookup only costs the push. */
-    private async notifyWinner(identityGroupId: string, prizeAmount: number) {
-        const wallet = await this.identities
+    /** 409 `CANDIDATE_NOT_VERIFIED` unless certified and following now; 502 when Meta cannot say. */
+    private async requireVerifiedWinner(groupId: string): Promise<void> {
+        let verified: boolean;
+        try {
+            verified = await this.isVerifiedFollower(groupId, 0);
+        } catch (error) {
+            if (!(error instanceof InstagramUnavailableError)) throw error;
+            throw HttpError.badGateway(
+                "INSTAGRAM_UNAVAILABLE",
+                "Instagram cannot confirm the candidate's follow right now"
+            );
+        }
+        if (!verified) {
+            throw HttpError.conflict(
+                "CANDIDATE_NOT_VERIFIED",
+                "The candidate must certify their Instagram and follow @frak_fr first; wait for their window or reject them"
+            );
+        }
+    }
+
+    /** A failed lookup only costs a push. */
+    private async walletOf(identityGroupId: string) {
+        return this.identities
             .getWalletForGroup(identityGroupId)
             .catch((error: unknown) => {
                 log.warn(
                     { error, identityGroupId },
-                    "Game winner's wallet lookup failed, no push sent"
+                    "Game player's wallet lookup failed, no push sent"
                 );
                 return null;
             });
+    }
+
+    /** The prize is paid by now, so a failed lookup only costs the push. */
+    private async notifyWinner(identityGroupId: string, prizeAmount: number) {
+        const wallet = await this.walletOf(identityGroupId);
         if (!wallet) return;
         eventEmitter.emit("notification", {
             type: "game_won",
@@ -463,6 +772,12 @@ export class GameDrawOrchestrator {
             )
             .sort((a, b) => b.endsAt.getTime() - a.endsAt.getTime())
             .slice(0, RESULTS_LIMIT);
+        const awaitingMe = [...draws.values()].some(isCallerTurn);
+        const verified =
+            awaitingMe &&
+            isVerifiedFollower(
+                await this.instagramLinks.findByIdentityGroup(identityGroupId)
+            );
         return Promise.all(
             shown.map(async (game) => {
                 const draw = draws.get(game.id);
@@ -470,20 +785,17 @@ export class GameDrawOrchestrator {
                 const ticketsBySource = draw
                     ? (draw.entry?.tickets ?? NO_TICKETS)
                     : await this.players.ticketsOf(game, identityGroupId, from);
-                return {
-                    game: await summarizeGame(game, this.merchants),
-                    outcome: outcomeOf(draw, mine),
+                const verifyBy =
+                    draw && isCallerTurn(draw) && !verified
+                        ? candidateVerifyBy(draw, draw.rejections.length)
+                        : null;
+                return toGameResult({
+                    summary: await summarizeGame(game, this.merchants),
+                    draw,
                     ticketsBySource,
-                    drawTickets: draw
-                        ? (draw.entry?.drawTickets ?? 0)
-                        : totalTickets(ticketsBySource),
-                    discarded: draw?.entry?.discarded ?? null,
-                    pid: draw?.entry?.drawTickets ? draw.entry.pid : null,
-                    totalTickets: draw?.totalTickets ?? null,
-                    participants: draw?.participants ?? null,
-                    confirmedAt:
-                        draw?.status === "confirmed" ? draw.confirmedAt : null,
-                };
+                    verifyBy,
+                    mine,
+                });
             })
         );
     }

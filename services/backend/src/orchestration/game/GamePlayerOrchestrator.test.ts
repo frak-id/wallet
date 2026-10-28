@@ -77,7 +77,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     beforeEach(() => unsafe.mockReset());
 
     it("counts the holder's own purchases at other merchants, not cancelled, in the window", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"));
 
@@ -95,7 +95,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("starts the window at the game start when the join predates it", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-09-20T00:00:00Z"));
 
@@ -103,7 +103,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("counts purchases of the holder's active referees, merchant link first", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, new Date("2026-10-05T00:00:00Z"));
 
@@ -141,12 +141,13 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("grants the join ticket, 3 per own purchase and 3 per referred purchase", async () => {
-        answer([[2]], [[1]], [[0]], [[0]]);
+        answer([[2]], [[1]], [[0]], [[0]], []);
 
         await expect(
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
+            instagramCertified: 0,
             purchase: 6,
             referredPurchase: 3,
             referredSignup: 0,
@@ -155,12 +156,13 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("returns the join ticket alone when nothing else qualifies", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await expect(
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
+            instagramCertified: 0,
             purchase: 0,
             referredPurchase: 0,
             referredSignup: 0,
@@ -169,7 +171,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("counts friends who signed up with the holder's code in the window and follow @frak_fr", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, JOINED_AT);
 
@@ -199,12 +201,13 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("grants 1 ticket per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
-        answer([[0]], [[0]], [[2]], [[0]]);
+        answer([[0]], [[0]], [[2]], [[0]], []);
 
         await expect(
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
+            instagramCertified: 0,
             purchase: 0,
             referredPurchase: 0,
             referredSignup: 2,
@@ -213,7 +216,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("counts distinct friends with a wallet reached through the holder's brand links in the window", async () => {
-        answer([[0]], [[0]], [[0]], [[0]]);
+        answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, JOINED_AT);
 
@@ -236,12 +239,13 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it("grants 1 ticket per distinct brand-share friend with a wallet", async () => {
-        answer([[0]], [[0]], [[0]], [[3]]);
+        answer([[0]], [[0]], [[0]], [[3]], []);
 
         await expect(
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
+            instagramCertified: 0,
             purchase: 0,
             referredPurchase: 0,
             referredSignup: 0,
@@ -249,13 +253,38 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         });
     });
 
+    it("reads the holder's certified follow of @frak_fr", async () => {
+        answer([[0]], [[0]], [[0]], [[0]], []);
+
+        await player.ticketsOf(game, HOLDER, JOINED_AT);
+
+        const { sql, params } = queryAt(4);
+        expect(flat(sql)).toContain(
+            'select "follows" from "instagram_links" where "instagram_links"."identity_group_id" = $1 limit $2'
+        );
+        expect(params).toEqual([HOLDER, 1]);
+    });
+
+    it.each([
+        ["a certified follower", [[true]], 2],
+        ["a certified non-follower", [[false]], 0],
+        ["an uncertified holder", [], 0],
+    ])("grants %s %i Instagram tickets", async (_name, rows, expected) => {
+        answer([[0]], [[0]], [[0]], [[0]], rows);
+
+        const tickets = await player.ticketsOf(game, HOLDER, JOINED_AT);
+
+        expect(tickets.instagramCertified).toBe(expected);
+    });
+
     it("reports every source on its own", async () => {
-        answer([[1]], [[1]], [[1]], [[1]]);
+        answer([[1]], [[1]], [[1]], [[1]], [[true]]);
 
         await expect(
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
+            instagramCertified: 2,
             purchase: 3,
             referredPurchase: 3,
             referredSignup: 1,

@@ -3,6 +3,7 @@ import { DrizzleQueryError } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InstagramLinkSelect } from "../db/schema";
 import type { InstagramLinkRepository } from "../repositories/InstagramLinkRepository";
+import type { InstagramPendingLinkRepository } from "../repositories/InstagramPendingLinkRepository";
 import { InstagramLinkService } from "./InstagramLinkService";
 
 const { track } = vi.hoisted(() => ({ track: vi.fn() }));
@@ -11,6 +12,7 @@ vi.mock("@backend-infrastructure", () => ({ productEvents: { track } }));
 
 const GROUP = "group-1";
 const CHECKED_AT = new Date("2026-10-26T10:00:00Z");
+const DECLARED_AT = new Date("2026-10-27T10:00:00Z");
 
 const row: InstagramLinkSelect = {
     id: "link-1",
@@ -25,13 +27,26 @@ const row: InstagramLinkSelect = {
 function setup() {
     const repository = {
         findByIdentityGroup: vi.fn(),
-        upsert: vi.fn(),
+        certify: vi.fn(),
         deleteByIdentityGroup: vi.fn(),
     };
+    const pending = {
+        findDeclaration: vi.fn().mockResolvedValue(null),
+        declare: vi.fn(
+            async (params: { identityGroupId: string; username: string }) => ({
+                id: "pending-1",
+                ...params,
+                declaredAt: DECLARED_AT,
+            })
+        ),
+        undeclare: vi.fn(),
+        getOrCreateCode: vi.fn().mockResolvedValue("K7Q2PX"),
+    };
     const service = new InstagramLinkService(
-        repository as unknown as InstagramLinkRepository
+        repository as unknown as InstagramLinkRepository,
+        pending as unknown as InstagramPendingLinkRepository
     );
-    return { repository, service };
+    return { repository, pending, service };
 }
 
 describe("InstagramLinkService", () => {
@@ -65,7 +80,7 @@ describe("InstagramLinkService", () => {
         vi.useFakeTimers();
         vi.setSystemTime(CHECKED_AT);
         const { repository, service } = setup();
-        repository.upsert.mockResolvedValue(row);
+        repository.certify.mockResolvedValue(row);
 
         await service.link({
             identityGroupId: GROUP,
@@ -74,18 +89,21 @@ describe("InstagramLinkService", () => {
             follows: true,
         });
 
-        expect(repository.upsert).toHaveBeenCalledWith({
-            identityGroupId: GROUP,
-            igsid: row.igsid,
-            username: "frak_fr",
-            follows: true,
-            checkedAt: CHECKED_AT,
-        });
+        expect(repository.certify).toHaveBeenCalledWith(
+            {
+                identityGroupId: GROUP,
+                igsid: row.igsid,
+                username: "frak_fr",
+                follows: true,
+                checkedAt: CHECKED_AT,
+            },
+            undefined
+        );
     });
 
     it("answers 409 when another identity already holds the account", async () => {
         const { repository, service } = setup();
-        repository.upsert.mockRejectedValue(
+        repository.certify.mockRejectedValue(
             new DrizzleQueryError(
                 "insert into instagram_links",
                 [],
@@ -112,7 +130,7 @@ describe("InstagramLinkService", () => {
     it("lets any other failure through untranslated", async () => {
         const { repository, service } = setup();
         const failure = new Error("connection lost");
-        repository.upsert.mockRejectedValue(failure);
+        repository.certify.mockRejectedValue(failure);
 
         await expect(
             service.link({
@@ -165,7 +183,7 @@ describe("InstagramLinkService", () => {
     ])("tracks $name", async ({ previous, follows, events }) => {
         const { repository, service } = setup();
         repository.findByIdentityGroup.mockResolvedValue(previous);
-        repository.upsert.mockResolvedValue({ ...row, follows });
+        repository.certify.mockResolvedValue({ ...row, follows });
 
         await service.link({
             identityGroupId: GROUP,
@@ -178,5 +196,117 @@ describe("InstagramLinkService", () => {
         for (const [, groupId] of track.mock.calls) {
             expect(groupId).toBe(GROUP);
         }
+    });
+});
+
+describe("InstagramLinkService certification and declaration", () => {
+    beforeEach(() => track.mockReset());
+
+    it("claims the DM code in the same write as the link", async () => {
+        const { repository, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        repository.certify.mockResolvedValue(row);
+
+        const linked = await service.linkWithCode("code-1", {
+            identityGroupId: GROUP,
+            igsid: row.igsid,
+            username: "frak_fr",
+            follows: true,
+        });
+
+        expect(linked).toMatchObject({ username: "frak_fr", follows: true });
+        expect(repository.certify).toHaveBeenCalledWith(
+            expect.objectContaining({ identityGroupId: GROUP }),
+            "code-1"
+        );
+    });
+
+    it("links nothing and tracks nothing once the code is gone", async () => {
+        const { repository, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        repository.certify.mockResolvedValue(null);
+
+        const linked = await service.linkWithCode("code-1", {
+            identityGroupId: GROUP,
+            igsid: row.igsid,
+            username: "frak_fr",
+            follows: true,
+        });
+
+        expect(linked).toBeNull();
+        expect(track).not.toHaveBeenCalled();
+    });
+
+    it("declares a normalized handle and tracks the first declaration", async () => {
+        const { repository, pending, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+
+        const status = await service.declare(GROUP, "  @Some.One ");
+
+        expect(pending.declare).toHaveBeenCalledWith({
+            identityGroupId: GROUP,
+            username: "some.one",
+        });
+        expect(status).toEqual({
+            link: null,
+            declaration: { username: "some.one", declaredAt: DECLARED_AT },
+        });
+        expect(track).toHaveBeenCalledWith("instagram_declared", GROUP, {});
+    });
+
+    it("does not track a changed handle again", async () => {
+        const { repository, pending, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(null);
+        pending.findDeclaration.mockResolvedValue({
+            username: "old",
+        });
+
+        await service.declare(GROUP, "new_handle");
+
+        expect(track).not.toHaveBeenCalled();
+    });
+
+    it("answers 400 for something that cannot be a handle", async () => {
+        const { pending, service } = setup();
+
+        await expect(
+            service.declare(GROUP, "not a handle")
+        ).rejects.toMatchObject({
+            status: 400,
+            code: "INVALID_INSTAGRAM_HANDLE",
+        });
+        expect(pending.declare).not.toHaveBeenCalled();
+    });
+
+    it("answers 409 once the wallet is certified", async () => {
+        const { repository, pending, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(row);
+
+        await expect(service.declare(GROUP, "someone")).rejects.toMatchObject({
+            status: 409,
+            code: "INSTAGRAM_ALREADY_CERTIFIED",
+        });
+        expect(pending.declare).not.toHaveBeenCalled();
+    });
+
+    it("reports a certified link alone, never a leftover declaration", async () => {
+        const { repository, pending, service } = setup();
+        repository.findByIdentityGroup.mockResolvedValue(row);
+        pending.findDeclaration.mockResolvedValue({
+            username: "old",
+            declaredAt: DECLARED_AT,
+        });
+
+        await expect(service.status(GROUP)).resolves.toEqual({
+            link: { username: "frak_fr", follows: true, checkedAt: CHECKED_AT },
+            declaration: null,
+        });
+    });
+
+    it("hands out the group's code", async () => {
+        const { pending, service } = setup();
+
+        await expect(service.issueCode(GROUP)).resolves.toBe("K7Q2PX");
+        expect(pending.getOrCreateCode).toHaveBeenCalledWith(GROUP);
     });
 });

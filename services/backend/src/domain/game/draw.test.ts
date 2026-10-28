@@ -1,11 +1,17 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
+    CANDIDATE_WINDOW_MS,
+    candidateVerifyBy,
     canonicalList,
     DRAND_QUICKNET,
+    DRAW_ALGORITHM,
     drandRandomness,
     drandRoundAt,
     drandRoundTime,
+    drawCandidatesFor,
+    frozenStandingOf,
+    hasCandidateWindow,
     pseudonymOf,
     rankCandidates,
     snapshotRoot,
@@ -137,5 +143,73 @@ describe("rankCandidates", () => {
         expect(wins.get("a1")).toBeLessThan(150);
         expect(wins.get("d4")).toBeGreaterThan(1300);
         expect(wins.get("d4")).toBeLessThan(1500);
+    });
+});
+
+describe("drawCandidatesFor", () => {
+    it("keeps replaying v1 draws with their 10 candidates", () => {
+        expect(drawCandidatesFor("frak-draw-v1")).toBe(10);
+        expect(drawCandidatesFor(DRAW_ALGORITHM)).toBe(30);
+        expect(drawCandidatesFor("frak-draw-v0")).toBeNull();
+        expect(hasCandidateWindow("frak-draw-v1")).toBe(false);
+        expect(hasCandidateWindow(DRAW_ALGORITHM)).toBe(true);
+    });
+
+    it("draws the same first candidates whatever the count", () => {
+        const entries = Array.from({ length: 40 }, (_, i) => ({
+            pid: `pid-${String(i).padStart(2, "0")}`,
+            tickets: (i % 5) + 1,
+        }));
+        const rank = (count: number) =>
+            rankCandidates({
+                randomness: RANDOMNESS,
+                gameId: "game",
+                entries,
+                count,
+            });
+
+        expect(rank(30).slice(0, 10)).toEqual(rank(10));
+    });
+});
+
+describe("candidateVerifyBy", () => {
+    const TOLD = new Date("2026-11-01T18:00:00Z");
+
+    it("ends 24 h after the candidate was told", () => {
+        expect(
+            candidateVerifyBy({ notifiedRank: 2, candidateNotifiedAt: TOLD }, 2)
+        ).toEqual(new Date(TOLD.getTime() + CANDIDATE_WINDOW_MS));
+    });
+
+    it("has no deadline for a candidate not told yet", () => {
+        expect(
+            candidateVerifyBy({ notifiedRank: 1, candidateNotifiedAt: TOLD }, 2)
+        ).toBeNull();
+    });
+});
+
+describe("frozenStandingOf", () => {
+    it.each([
+        [
+            "a certified follower",
+            { follows: true },
+            false,
+            { discarded: null, instagram: "certified" },
+        ],
+        [
+            "a certified non-follower",
+            { follows: false },
+            false,
+            { discarded: "not_following", instagram: "certified" },
+        ],
+        [
+            "a declared player",
+            null,
+            true,
+            { discarded: null, instagram: "declared" },
+        ],
+        ["a player with neither", null, false, { discarded: "not_linked" }],
+    ] as const)("freezes %s", (_name, link, declared, expected) => {
+        expect(frozenStandingOf(link, declared)).toEqual(expected);
     });
 });

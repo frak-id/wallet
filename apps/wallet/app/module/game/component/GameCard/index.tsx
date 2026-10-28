@@ -12,19 +12,44 @@ import { OutcomeBadge } from "@/module/game/component/GameResult";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { formatGameEnd } from "@/module/game/utils/formatGameDate";
 import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
 
 /** How long after its end a game's result stays on the wallet home. */
 const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
- * Wallet-home recap of the open game, or of the last game played when none is
- * open and it ended recently; hidden otherwise, while loading, or on error.
+ * Wallet-home recap: a draw waiting on the user first (straight to certifying),
+ * then the open game, or the last game played when it ended recently; hidden otherwise.
  */
 export function GameCard() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { data } = useCurrentGame();
     const history = useGameHistory();
+    const pending = history.data?.find(
+        (result) => result.outcome === "pending_verification"
+    );
+
+    if (pending) {
+        return (
+            <GameCardShell
+                to="/game/instagram"
+                title={t("game.card.drawn")}
+                prize={pending.game}
+                detail={
+                    pending.verifyBy
+                        ? t("game.card.verifyBy", {
+                              date: formatGameEnd(
+                                  pending.verifyBy,
+                                  i18n.language
+                              ),
+                          })
+                        : undefined
+                }
+                badge={<OutcomeBadge outcome={pending.outcome} />}
+            />
+        );
+    }
 
     if (data?.game) {
         return (
@@ -83,11 +108,14 @@ function GameCardShell({
     to,
     title,
     prize,
+    detail,
     badge,
 }: {
-    to: "/game" | "/game/join";
+    to: "/game" | "/game/join" | "/game/instagram";
     title: string;
     prize: { prizeAmount: number; prizeDescription: string | null };
+    /** Replaces the prize line. */
+    detail?: string;
     badge: ReactNode;
 }) {
     const { i18n } = useTranslation();
@@ -117,7 +145,8 @@ function GameCardShell({
                         {title}
                     </Text>
                     <Text variant="caption" color="secondary">
-                        {prize.prizeDescription ??
+                        {detail ??
+                            prize.prizeDescription ??
                             formatGameAmount(prize.prizeAmount, i18n.language)}
                     </Text>
                     <Box>{badge}</Box>

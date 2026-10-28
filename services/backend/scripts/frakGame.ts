@@ -32,13 +32,15 @@ const USAGE = `Usage: bun scripts/frakGame.ts <command> [options]
   game list | game pause <CODE> | game resume <CODE>
   game draw show <CODE>       the frozen list, the beacon and the candidate under review
   game draw freeze <CODE>     freeze an ended game now (the cron does it up to 7 days after the end)
-  game draw run               freeze and draw whatever is due, like the cron
-  game draw reject <CODE> --reason not_following_at_review|fraud|unreachable|ineligible
-  game draw confirm <CODE>    pay the candidate under review the prize
+  game draw run               freeze, draw and move candidate windows on, like the cron
+  game draw reject <CODE> --reason not_verified_in_time|not_following_at_review|fraud|unreachable|ineligible
+  game draw confirm <CODE>    pay the candidate under review (only once certified and following)
       --actor <name> on reject/confirm, defaults to $USER; it is kept on the draw
 Amounts are in EURe, except --prize-amount (EUR). --unlock-days: how long a reward waits for its mission.
-Every reward is held until a first brand reward: the referrer's signup reward
-waits for the referee's, every other reward for its own recipient's.`;
+Every reward is held until a first brand reward or a certified follow: the referrer's
+signup reward waits for the referee's, every other reward for its own recipient's.
+A candidate who is not certified and following has 24 h from their push; the cron
+then passes the turn on (not_verified_in_time).`;
 
 // The game rule outlives the game so joins processed after the close still pay.
 const GAME_RULE_GRACE_MS = 24 * 60 * 60 * 1000;
@@ -308,12 +310,18 @@ async function showDraw(raw: string | undefined) {
     }
     if (!candidate) return;
     console.log(`\nCandidate #${candidate.rank + 1} (${candidate.pid})`);
+    const { instagram } = candidate;
     console.table({
         identityGroupId: candidate.identityGroupId,
         wallet: candidate.wallet ?? "none",
         accountCreatedAt: candidate.accountCreatedAt?.toISOString() ?? "?",
-        instagram: candidate.instagram?.username ?? "not linked",
-        followsNow: candidate.instagram?.follows ?? false,
+        instagram: instagram.username ?? "none",
+        instagramLevel: instagram.level,
+        followsNow: instagram.follows ?? "unknown",
+        followCheckedAt: instagram.checkedAt?.toISOString() ?? "-",
+        followFresh: instagram.followFresh,
+        awaiting: candidate.awaiting,
+        verifyBy: candidate.verifyBy?.toISOString() ?? "-",
         drawTickets: candidate.entry.drawTickets,
         ...candidate.entry.tickets,
     });
@@ -329,7 +337,9 @@ async function freezeDraw(raw: string | undefined) {
 
 async function runDraws() {
     const result = await OrchestrationContext.orchestrators.gameDraw.runDue();
-    console.log(`Frozen ${result.frozen}, drawn ${result.drawn}`);
+    console.log(
+        `Frozen ${result.frozen}, drawn ${result.drawn}, candidate windows moved ${result.advanced}`
+    );
 }
 
 async function rejectCandidate(raw: string | undefined) {

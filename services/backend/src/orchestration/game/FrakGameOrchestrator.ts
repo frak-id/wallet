@@ -23,7 +23,8 @@ import {
     signupExternalEventId,
 } from "../../domain/game/utils";
 import type { InstagramLinkRepository } from "../../domain/instagram/repositories/InstagramLinkRepository";
-import { isInstagramEligible } from "../../domain/instagram/utils";
+import type { InstagramPendingLinkRepository } from "../../domain/instagram/repositories/InstagramPendingLinkRepository";
+import { instagramLevelOf, isDrawEligible } from "../../domain/instagram/utils";
 import { FRAK_MERCHANT_ID } from "../../domain/merchant/constants";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
@@ -52,11 +53,12 @@ export type SignupPlan = {
 
 export type SignupOutcome = { reward?: number; game?: GameSummary };
 
-const NOT_PLAYING = {
+const NOT_PLAYING: CurrentGameResponse["me"] = {
     participating: false,
     tickets: 0,
     ticketsBySource: NO_TICKETS,
     eligible: false,
+    instagram: "none",
 };
 
 /** Sum of a rule's fixed rewards for `recipient`, in the rule's token. */
@@ -77,7 +79,11 @@ export class FrakGameOrchestrator {
         private readonly merchantRepository: MerchantRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly gamePlayerOrchestrator: GamePlayerOrchestrator,
-        private readonly instagramLinkRepository: InstagramLinkRepository
+        private readonly instagramLinkRepository: InstagramLinkRepository,
+        private readonly instagramPendingLinks: Pick<
+            InstagramPendingLinkRepository,
+            "findDeclaration"
+        >
     ) {}
 
     async getCurrentGame(
@@ -86,11 +92,15 @@ export class FrakGameOrchestrator {
         const game = await this.gameRepository.findCurrent(new Date());
         if (!game) return { game: null, me: NOT_PLAYING };
 
-        const [summary, joinedAt, instagramLink] = await Promise.all([
-            this.summarize(game),
-            this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
-            this.instagramLinkRepository.findByIdentityGroup(identityGroupId),
-        ]);
+        const [summary, joinedAt, instagramLink, declaration] =
+            await Promise.all([
+                this.summarize(game),
+                this.gamePlayerOrchestrator.joinedAt(game.id, identityGroupId),
+                this.instagramLinkRepository.findByIdentityGroup(
+                    identityGroupId
+                ),
+                this.instagramPendingLinks.findDeclaration(identityGroupId),
+            ]);
         const ticketsBySource = joinedAt
             ? await this.gamePlayerOrchestrator.ticketsOf(
                   game,
@@ -104,7 +114,8 @@ export class FrakGameOrchestrator {
                 participating: joinedAt !== null,
                 tickets: totalTickets(ticketsBySource),
                 ticketsBySource,
-                eligible: isInstagramEligible(instagramLink),
+                eligible: isDrawEligible(instagramLink, declaration),
+                instagram: instagramLevelOf(instagramLink, declaration),
             },
         };
     }

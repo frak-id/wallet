@@ -970,24 +970,22 @@
                 "howItWorks": "Comment ça marche",
                 "unlock": {
                     "title": "Ton bonus de {{reward}}",
-                    "description": "Il se débloque dès ta première récompense chez une marque partenaire, en achetant ou en recommandant.",
-                    "descriptionFollow": "Il se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire."
+                    "description": "Il se débloque dès que tu certifies ton Instagram, ou dès ta première récompense chez une marque partenaire."
                 },
                 "invite": {
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque, et 3 par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
+                    "description": "1 ticket par ami inscrit avec ton code qui a certifié son Instagram, 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque, et 3 par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
                 },
                 "follow": {
-                    "title": "Suis-nous pour le tirage",
-                    "description": "Tes tickets comptent au tirage si tu suis <igLink>@frak_fr</igLink> sur Instagram. Le gagnant y est annoncé en story."
+                    "title": "Active tes tickets avec Instagram",
+                    "description": "Suis <igLink>@frak_fr</igLink>, puis déclare ton compte : tes tickets comptent au tirage. Certifie-le pour 2 tickets de plus. Tiré au sort sans être certifié ? Tu as 24 h pour le faire, sinon un autre gagnant est tiré."
                 }
             },
             "reward": {
                 "title": "Tu es dans le jeu !",
-                "description": "Ta récompense est en attente. Elle se débloque dès ta première récompense chez une marque partenaire.",
-                "descriptionFollow": "Ta récompense est en attente. Elle se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
+                "description": "Ta récompense est en attente. Elle se débloque dès que tu certifies ton Instagram, ou dès ta première récompense chez une marque partenaire.",
                 "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",
                 "game": {
                     "label": "Lot du jeu",
@@ -1009,31 +1007,35 @@
             "title": "Jeu Frak en cours",
             "participating": "Tu participes",
             "notParticipating": "Pas encore inscrit",
-            "ended": "Jeu Frak terminé"
+            "ended": "Jeu Frak terminé",
+            "drawn": "Tu as été tiré au sort !",
+            "verifyBy": "Certifie ton Instagram avant le {{date}}"
         },
         "page": {
             "tickets_one": "ticket",
             "tickets_other": "tickets",
-            "locked": "Tes tickets sont gardés, mais ils ne comptent au tirage que si tu suis <igLink>@frak_fr</igLink> sur Instagram.",
             "more": "Gagne plus de tickets",
             "share": "Partage Frak à un ami",
             "buy": "Achète chez une marque partenaire",
             "gain_one": "+{{count}} ticket",
             "gain_other": "+{{count}} tickets",
-            "shareHint": "1 ticket par ami inscrit avec ton code qui suit @frak_fr, 1 par ami avec un porte-monnaie Frak venu par ton partage d'une marque, puis 3 à chacun de leurs achats.",
+            "shareHint": "1 ticket par ami inscrit avec ton code qui a certifié son Instagram et suit @frak_fr, 1 par ami avec un porte-monnaie Frak venu par ton partage d'une marque, puis 3 à chacun de leurs achats.",
             "none": {
                 "title": "Aucun jeu en cours",
                 "description": "Le prochain jeu sera annoncé sur Instagram."
             },
             "error": "Impossible de charger le jeu.",
             "retry": "Réessayer",
-            "lockedLink": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram relié et <igLink>@frak_fr</igLink> suivi.",
-            "linkCta": "Relier mon Instagram",
-            "title": "Jeu Frak"
+            "title": "Jeu Frak",
+            "lockedNone": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram déclaré ou certifié.",
+            "lockedNotFollowing": "Ton Instagram est certifié, mais tu ne suis pas <igLink>@frak_fr</igLink> : tes tickets ne comptent pas au tirage.",
+            "declared": "Instagram déclaré : tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour le certifier et suivre @frak_fr.",
+            "activateCta": "Activer mes tickets",
+            "certifyCta": "Certifier mon Instagram"
         },
         "instagram": {
-            "title": "Relie ton Instagram",
-            "description": "Pour que tes tickets comptent au tirage, relie ton compte Instagram et suis @frak_fr.",
+            "title": "Ton Instagram",
+            "description": "Pour que tes tickets comptent au tirage, déclare ou certifie ton compte Instagram, et suis @frak_fr.",
             "mobileOnly": "Ouvre cette page sur ton téléphone : les messages Instagram ne s'ouvrent que dans l'app Instagram.",
             "howTo": "Comment faire",
             "follow": {
@@ -1052,12 +1054,41 @@
             "sent": "J'ai envoyé le message",
             "notYet": "Nous n'avons pas encore reçu ton message. Attends quelques secondes et réessaie.",
             "linked": {
-                "badge": "Relié",
-                "counting": "Tu suis @frak_fr : tes tickets comptent au tirage.",
+                "badge": "Certifié",
+                "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus.",
                 "notFollowing": "Tu ne suis pas encore <igLink>@frak_fr</igLink>. Abonne-toi, puis vérifie à nouveau.",
                 "checkAgain": "Vérifier à nouveau",
                 "stillNotFollowing": "On ne voit toujours pas ton abonnement à @frak_fr. Si tu viens de t'abonner, attends quelques secondes et réessaie.",
                 "back": "Retour au jeu"
+            },
+            "certify": {
+                "title": "Certifier mon Instagram",
+                "badge": "Recommandé",
+                "perks": {
+                    "tickets": "+2 tickets à chaque jeu",
+                    "unlock": "Ton gain de bienvenue débloqué tout de suite",
+                    "auto": "On vérifie automatiquement que tu suis @frak_fr : rien à faire si tu gagnes"
+                },
+                "unavailable": "La certification n'est pas encore disponible. Déclare ton Instagram en attendant.",
+                "error": "Impossible de récupérer ton code. Réessaie dans un instant.",
+                "checkError": "Impossible de vérifier ton compte Instagram pour l'instant. Réessaie dans un instant."
+            },
+            "declare": {
+                "title": "Déclarer mon Instagram",
+                "description": "Tes tickets comptent au tirage, et on ne vérifie ton compte que si tu es tiré au sort. Dans ce cas, tu as 24 h à partir de la notification pour le certifier et suivre @frak_fr, sinon un autre gagnant est tiré au sort.",
+                "label": "Ton compte Instagram",
+                "placeholder": "@ton_compte",
+                "submit": "Déclarer",
+                "editTitle": "Changer de compte",
+                "save": "Enregistrer",
+                "cancel": "Annuler",
+                "badge": "Déclaré",
+                "remove": "Retirer",
+                "change": "Modifier",
+                "invalid": "Ce n'est pas un compte Instagram valide.",
+                "error": "Impossible d'enregistrer ton compte. Réessaie.",
+                "removeError": "Impossible de retirer ton compte. Réessaie.",
+                "upsell": "Certifie-le pour gagner 2 tickets de plus et débloquer ton gain de bienvenue."
             }
         },
         "result": {
@@ -1065,7 +1096,8 @@
                 "drawing": "Tirage en cours",
                 "won": "Gagné",
                 "lost": "Pas gagné",
-                "noWinner": "Sans gagnant"
+                "noWinner": "Sans gagnant",
+                "pendingVerification": "À certifier"
             },
             "drawing": {
                 "title": "Tirage en cours",
@@ -1096,12 +1128,19 @@
                 "purchase": "Tes achats",
                 "referredPurchase": "Achats de tes amis",
                 "referredSignup": "Amis inscrits avec ton code",
-                "brandShare": "Amis via tes partages de marques"
+                "brandShare": "Amis via tes partages de marques",
+                "instagramCertified": "Instagram certifié"
             },
             "verify": {
                 "link": "Vérifier le tirage",
                 "pid": "Ton identifiant dans le tirage : {{pid}}"
-            }
+            },
+            "pendingVerification": {
+                "title": "Tu as été tiré au sort !",
+                "description": "Certifie ton Instagram et suis @frak_fr avant le {{date}} pour recevoir ton gain. Sinon, un autre gagnant est tiré au sort.",
+                "cta": "Certifier mon Instagram"
+            },
+            "discardedNotLinked": "Tes tickets n'ont pas compté : ton Instagram n'était ni déclaré ni certifié au moment du tirage."
         },
         "history": {
             "title": "Jeux précédents",
@@ -1172,10 +1211,8 @@
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
-            "lockedExplanation": "Se débloque dès ta première récompense chez une marque partenaire.",
-            "lockedExplanationFollow": "Se débloque dès que tu suis @frak_fr sur Instagram, ou dès ta première récompense chez une marque partenaire.",
-            "lockedOnFriendExplanation": "Se débloque dès la première récompense de ton ami chez une marque partenaire.",
-            "lockedOnFriendExplanationFollow": "Se débloque dès que ton ami suit @frak_fr sur Instagram, ou dès sa première récompense chez une marque partenaire."
+            "lockedExplanation": "Se débloque dès que tu certifies ton Instagram et suis @frak_fr, ou dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès que ton ami certifie son Instagram et suit @frak_fr, ou dès sa première récompense chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

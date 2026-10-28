@@ -71,6 +71,25 @@ describe("GameCard", () => {
         expect(container.firstChild).toBeNull();
     });
 
+    it("puts a draw waiting on the user before the open game, with its deadline", () => {
+        currentGame.data = { game, me: { participating: true } };
+        gameHistory.data = [
+            {
+                ...endedDaysAgo(1, "pending_verification"),
+                verifyBy: new Date(Date.now() + DAY),
+            },
+        ];
+        render(<GameCard />);
+
+        expect(screen.getByText("game.card.drawn")).toBeInTheDocument();
+        expect(screen.getByText("game.card.verifyBy")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.result.badge.pendingVerification")
+        ).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button"));
+        expect(navigate).toHaveBeenCalledWith({ to: "/game/instagram" });
+    });
+
     it("prefers the open game over the last result", () => {
         currentGame.data = { game, me: { participating: true } };
         gameHistory.data = [endedDaysAgo(2)];

@@ -78,6 +78,10 @@ export const gameDrawsTable = pgTable(
             .$type<DrawRejection[]>()
             .notNull()
             .default(sql`'[]'::jsonb`),
+        /** Rank last told they were drawn (-1: none), and when: their 24 h start there. */
+        notifiedRank: integer("notified_rank").notNull().default(-1),
+        candidateNotifiedAt: timestamp("candidate_notified_at"),
+        remindedRank: integer("reminded_rank").notNull().default(-1),
         winnerIdentityGroupId: uuid("winner_identity_group_id"),
         confirmedBy: text("confirmed_by"),
         confirmedAt: timestamp("confirmed_at"),

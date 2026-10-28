@@ -16,13 +16,17 @@ import {
     ExternalLinkIcon,
     GiftIcon,
     HourglassIcon,
+    LinkIcon,
 } from "@frak-labs/design-system/icons";
 import { backendUrl, openExternalUrl } from "@frak-labs/wallet-shared";
 import { Ticket, TicketX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
-import { formatGameDate } from "@/module/game/utils/formatGameDate";
+import {
+    formatGameDate,
+    formatGameEnd,
+} from "@/module/game/utils/formatGameDate";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -34,6 +38,14 @@ const OUTCOME = {
         label: "game.result.badge.drawing",
         title: "game.result.drawing.title",
         description: "game.result.drawing.description",
+    },
+    pending_verification: {
+        icon: GiftIcon,
+        tone: "action",
+        badge: "warning",
+        label: "game.result.badge.pendingVerification",
+        title: "game.result.pendingVerification.title",
+        description: "game.result.pendingVerification.description",
     },
     won: {
         icon: GiftIcon,
@@ -64,6 +76,7 @@ const OUTCOME = {
 /** Every ticket source, in display order: a new one fails to compile until labelled. */
 const SOURCE_LABELS = {
     join: "game.result.sources.join",
+    instagramCertified: "game.result.sources.instagramCertified",
     purchase: "game.result.sources.purchase",
     referredPurchase: "game.result.sources.referredPurchase",
     referredSignup: "game.result.sources.referredSignup",
@@ -87,6 +100,9 @@ export function OutcomeHero({ result }: { result: GameResult }) {
     const copy = OUTCOME[result.outcome];
     const Icon = copy.icon;
     const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
+    const date = result.verifyBy
+        ? formatGameEnd(result.verifyBy, i18n.language)
+        : "";
 
     return (
         <Stack space="m" align="center">
@@ -98,7 +114,7 @@ export function OutcomeHero({ result }: { result: GameResult }) {
                     {t(copy.title, { prize })}
                 </Text>
                 <Text color="secondary" align="center">
-                    {t(copy.description)}
+                    {t(copy.description, { date })}
                 </Text>
             </Stack>
         </Stack>
@@ -147,8 +163,23 @@ export function GameResultDetail({
                     />
                 </InfoCard>
             )}
+            {result.outcome === "pending_verification" && (
+                <InfoCard>
+                    <InfoRow
+                        icon={LinkIcon}
+                        label={t("game.result.pendingVerification.cta")}
+                        to="/game/instagram"
+                    />
+                </InfoCard>
+            )}
             {result.discarded && result.outcome !== "won" && (
-                <Notice tone="warning">{t("game.result.discarded")}</Notice>
+                <Notice tone="warning">
+                    {t(
+                        result.discarded === "not_linked"
+                            ? "game.result.discardedNotLinked"
+                            : "game.result.discarded"
+                    )}
+                </Notice>
             )}
             <InfoCard>
                 <Stat

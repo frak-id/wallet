@@ -146,6 +146,15 @@ export const elysiaEnv = {
     // Must equal the app name registered at Monerium for MONERIUM_CLIENT_ID.
     MONERIUM_APP_NAME: isProd ? "Frak" : "Frak Legacy",
 
+    // Instagram certification for the Frak Game (Meta app per stage); any empty = off.
+    INSTAGRAM_APP_SECRET: new sst.Secret("INSTAGRAM_APP_SECRET", "").value,
+    INSTAGRAM_WEBHOOK_VERIFY_TOKEN: new sst.Secret(
+        "INSTAGRAM_WEBHOOK_VERIFY_TOKEN",
+        ""
+    ).value,
+    // Seed only: the backend stores and renews the token itself afterwards.
+    INSTAGRAM_ACCESS_TOKEN: new sst.Secret("INSTAGRAM_ACCESS_TOKEN", "").value,
+
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 

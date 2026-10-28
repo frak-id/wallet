@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { FRAK_INSTAGRAM_URL } from "@/module/game/config";
 import { GameRules } from "./index";
 
 vi.mock("react-i18next", () => ({
@@ -70,7 +71,7 @@ describe("GameRules", () => {
 
         expect(screen.getByRole("link", { name: "@frak_fr" })).toHaveAttribute(
             "href",
-            "https://www.instagram.com/frak_fr/"
+            FRAK_INSTAGRAM_URL
         );
     });
 

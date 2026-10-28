@@ -222,7 +222,8 @@ const frakGameOrchestrator = new FrakGameOrchestrator(
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.interactionLog,
     gamePlayerOrchestrator,
-    InstagramContext.repositories.instagramLink
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink
 );
 
 const gameDrawOrchestrator = new GameDrawOrchestrator(
@@ -230,6 +231,8 @@ const gameDrawOrchestrator = new GameDrawOrchestrator(
     GameContext.repositories.gameDraw,
     gamePlayerOrchestrator,
     InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink,
+    InstagramContext.services.instagramVerification,
     IdentityContext.repositories.identity,
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.assetLog,

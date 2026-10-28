@@ -1,10 +1,9 @@
 import { parseArgs } from "node:util";
 import {
     DRAND_QUICKNET,
-    DRAW_ALGORITHM,
-    DRAW_CANDIDATES,
     drandRandomness,
     drandRoundTime,
+    drawCandidatesFor,
     rankCandidates,
     snapshotRoot,
     verifyDrandBeacon,
@@ -33,8 +32,9 @@ if (!response.ok) {
 }
 const draw = (await response.json()) as PublicDraw;
 
+const candidateCount = drawCandidatesFor(draw.algorithm);
 const checks: [string, boolean][] = [
-    [`algorithm is ${DRAW_ALGORITHM}`, draw.algorithm === DRAW_ALGORITHM],
+    [`algorithm ${draw.algorithm} is known`, candidateCount !== null],
     [
         "the snapshot root hashes the published list",
         snapshotRoot(draw.entries) === draw.snapshotRoot,
@@ -70,7 +70,7 @@ if (signature) {
         randomness: drandRandomness(signature),
         gameId: draw.gameId,
         entries: draw.entries,
-        count: DRAW_CANDIDATES,
+        count: candidateCount ?? 0,
     });
     checks.push([
         "the candidates replay in the same order",

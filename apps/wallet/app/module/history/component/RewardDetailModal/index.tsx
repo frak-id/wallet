@@ -24,7 +24,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
-import { frakGame } from "@/module/game/config";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import {
     type PendingReason,
@@ -392,11 +391,6 @@ function statusLabelKey(status: RewardHistoryItem["status"]) {
 }
 
 function lockedExplanationKey(waitsOnFriend: boolean | undefined) {
-    if (frakGame.instagramLink) {
-        return waitsOnFriend
-            ? "reward.detail.lockedOnFriendExplanationFollow"
-            : "reward.detail.lockedExplanationFollow";
-    }
     return waitsOnFriend
         ? "reward.detail.lockedOnFriendExplanation"
         : "reward.detail.lockedExplanation";

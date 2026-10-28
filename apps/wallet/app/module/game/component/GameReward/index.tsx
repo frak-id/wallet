@@ -6,7 +6,6 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { frakGame } from "@/module/game/config";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { celebrationAmount } from "@/module/game/styles/celebration.css";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
@@ -23,10 +22,9 @@ type GameRewardProps = {
 };
 
 function rewardDescriptionKey(reward: number) {
-    if (reward <= 0) return "onboarding.game.reward.descriptionJoinOnly";
-    return frakGame.instagramLink
-        ? "onboarding.game.reward.descriptionFollow"
-        : "onboarding.game.reward.description";
+    return reward > 0
+        ? "onboarding.game.reward.description"
+        : "onboarding.game.reward.descriptionJoinOnly";
 }
 
 export function GameReward({ onContinue, reward, game }: GameRewardProps) {

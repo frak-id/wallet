@@ -3,23 +3,21 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameConfig, gameHistory, navigate, trackEvent } =
-    vi.hoisted(() => ({
-        navigate: vi.fn(),
-        trackEvent: vi.fn(),
-        gameConfig: { instagramLink: false },
-        currentGame: {
-            data: undefined as unknown,
-            isError: false,
-            refetch: vi.fn(),
-        },
-        gameHistory: {
-            data: [] as unknown[],
-            isLoading: false,
-            isError: false,
-            refetch: vi.fn(),
-        },
-    }));
+const { currentGame, gameHistory, navigate, trackEvent } = vi.hoisted(() => ({
+    navigate: vi.fn(),
+    trackEvent: vi.fn(),
+    currentGame: {
+        data: undefined as unknown,
+        isError: false,
+        refetch: vi.fn(),
+    },
+    gameHistory: {
+        data: [] as unknown[],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+    },
+}));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
@@ -41,10 +39,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     trackEvent,
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
-vi.mock("@/module/game/config", async (importOriginal) => ({
-    ...(await importOriginal<object>()),
-    frakGame: gameConfig,
-}));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
 }));
@@ -58,7 +52,12 @@ import { GamePage } from "./index";
 
 const NO_GAME = {
     game: null,
-    me: { participating: false, tickets: 0, eligible: false },
+    me: {
+        participating: false,
+        tickets: 0,
+        eligible: false,
+        instagram: "none",
+    },
 };
 const result = (
     id: string,
@@ -74,19 +73,27 @@ const game = {
     endsAt: new Date("2026-10-30T18:00:00Z"),
     sponsor: null,
 };
-const player = (tickets: number, eligible: boolean) => ({
+const player = (
+    tickets: number,
+    eligible: boolean,
+    instagram: "certified" | "declared" | "none" = eligible
+        ? "certified"
+        : "none"
+) => ({
     game,
     me: {
         participating: true,
         tickets,
         ticketsBySource: {
             join: 1,
+            instagramCertified: 0,
             purchase: tickets - 1,
             referredPurchase: 0,
             referredSignup: 0,
             brandShare: 0,
         },
         eligible,
+        instagram,
     },
 });
 
@@ -110,7 +117,9 @@ describe("GamePage", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_page_viewed", {
             tickets: 4,
             eligible: true,
+            instagram: "certified",
             tickets_join: 1,
+            tickets_instagram_certified: 0,
             tickets_purchase: 3,
             tickets_referred_purchase: 0,
             tickets_referred_signup: 0,
@@ -134,37 +143,77 @@ describe("GamePage", () => {
         expect(
             screen.getByRole("link", { name: /game.page.buy/ })
         ).toHaveAttribute("href", "/explorer");
-        expect(screen.queryByText("game.page.locked")).toBeNull();
+        expect(screen.queryByText("game.page.lockedNone")).toBeNull();
     });
 
-    it("confirms to an eligible player that their tickets count", () => {
+    it("confirms to a certified follower that their tickets count, with no +2 to earn", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
         expect(
             screen.getByText("game.instagram.linked.counting")
         ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("link", { name: /game.page.certifyCta/ })
+        ).toBeNull();
     });
 
-    it("warns a non-follower that stored tickets do not count yet", () => {
+    it("locks the tickets of a player with no Instagram, and sends them to activate it", () => {
         currentGame.data = player(1, false);
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.locked")).toBeInTheDocument();
+        expect(screen.getByText("game.page.lockedNone")).toBeInTheDocument();
         expect(screen.getByText("1")).toBeInTheDocument();
         expect(screen.queryByText("game.instagram.linked.counting")).toBeNull();
+        expect(
+            screen.getByRole("link", { name: /game.page.activateCta/ })
+        ).toHaveAttribute("href", "/game/instagram");
     });
 
-    it("links a non-follower to the Instagram linking screen once linking is on", () => {
-        gameConfig.instagramLink = true;
-        currentGame.data = player(1, false);
+    it("tells a declared player their tickets count and offers +2 to certify", () => {
+        currentGame.data = player(1, true, "declared");
         render(<GamePage />);
-        gameConfig.instagramLink = false;
 
-        expect(screen.getByText("game.page.lockedLink")).toBeInTheDocument();
+        expect(screen.getByText("game.page.declared")).toBeInTheDocument();
         expect(
-            screen.getByRole("link", { name: /game.page.linkCta/ })
+            screen.getByRole("link", { name: /game.page.certifyCta/ })
         ).toHaveAttribute("href", "/game/instagram");
+        expect(screen.getByText("game.page.gain:2")).toBeInTheDocument();
+    });
+
+    it("warns a certified non-follower that their tickets do not count", () => {
+        currentGame.data = player(3, false, "certified");
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.page.lockedNotFollowing")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("link", { name: /game.page.activateCta/ })
+        ).toHaveAttribute("href", "/game/instagram");
+    });
+
+    it("puts a draw waiting on the player above the open game", () => {
+        currentGame.data = player(4, true);
+        gameHistory.data = [
+            result("drawn", "pending_verification", {
+                verifyBy: new Date("2026-11-02T10:00:00Z"),
+            }),
+            result("earlier", "lost"),
+        ];
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.result.pendingVerification.title")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("link", {
+                name: /game.result.pendingVerification.cta/,
+            })
+        ).toHaveAttribute("href", "/game/instagram");
+        expect(
+            screen.getAllByRole("button", { name: /game.history.gameOf/ })
+        ).toHaveLength(1);
     });
 
     it("says when no game is open and none was played", () => {
@@ -216,6 +265,18 @@ describe("GamePage", () => {
         expect(
             screen.getByRole("link", { name: /game.result.won.cta/ })
         ).toHaveAttribute("href", "/history");
+    });
+
+    it("tells a player with no Instagram why their tickets did not count", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [
+            result("latest", "lost", { discarded: "not_linked" }),
+        ];
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.result.discardedNotLinked")
+        ).toBeInTheDocument();
     });
 
     it("tells a non-follower why their tickets did not count", () => {
@@ -292,7 +353,12 @@ describe("GamePage", () => {
     it("keeps a past player who has not joined the open game on the page", () => {
         currentGame.data = {
             game,
-            me: { participating: false, tickets: 0, eligible: false },
+            me: {
+                participating: false,
+                tickets: 0,
+                eligible: false,
+                instagram: "none",
+            },
         };
         gameHistory.data = [result("earlier", "lost")];
         render(<GamePage />);
@@ -310,7 +376,12 @@ describe("GamePage", () => {
     it("sends a user who has not joined to the code screen", () => {
         currentGame.data = {
             game,
-            me: { participating: false, tickets: 0, eligible: false },
+            me: {
+                participating: false,
+                tickets: 0,
+                eligible: false,
+                instagram: "none",
+            },
         };
         render(<GamePage />);
 

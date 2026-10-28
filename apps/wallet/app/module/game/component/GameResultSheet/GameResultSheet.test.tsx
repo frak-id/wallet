@@ -30,6 +30,7 @@ const won = gameResult({
     drawTickets: 4,
     ticketsBySource: {
         join: 1,
+        instagramCertified: 0,
         purchase: 0,
         referredPurchase: 3,
         referredSignup: 0,

@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
+import { InstagramLevelSchema } from "../../instagram/schemas";
 import type { TicketBreakdown } from "../tickets";
 
 export type { TicketSource } from "../tickets";
@@ -33,6 +34,7 @@ export type GameSummary = Static<typeof GameSummarySchema>;
 /** Tickets per source, already multiplied by their amount; they add up to `tickets`. */
 export const TicketBreakdownSchema = t.Object({
     join: t.Number(),
+    instagramCertified: t.Number(),
     purchase: t.Number(),
     referredPurchase: t.Number(),
     referredSignup: t.Number(),
@@ -45,7 +47,9 @@ export const CurrentGameResponseSchema = t.Object({
         participating: t.Boolean(),
         tickets: t.Number(),
         ticketsBySource: TicketBreakdownSchema,
+        /** Counts in the draw: certified and following, or declared. */
         eligible: t.Boolean(),
+        instagram: InstagramLevelSchema,
     }),
 });
 export type CurrentGameResponse = Static<typeof CurrentGameResponseSchema>;
@@ -68,6 +72,7 @@ export type DrawStatus = Static<typeof DrawStatusSchema>;
 
 /** The only grounds the rules allow for passing over a drawn candidate. */
 export const DrawRejectionReasonSchema = t.Union([
+    t.Literal("not_verified_in_time"),
     t.Literal("not_following_at_review"),
     t.Literal("fraud"),
     t.Literal("unreachable"),
@@ -75,13 +80,21 @@ export const DrawRejectionReasonSchema = t.Union([
 ]);
 export type DrawRejectionReason = Static<typeof DrawRejectionReasonSchema>;
 
-/** One participant as frozen: `drawTickets` is 0 when `discarded` is set. */
+/** `not_following`: certified but not following at freeze. `not_linked`: neither certified nor declared. */
+export const DrawDiscardSchema = t.Union([
+    t.Literal("not_following"),
+    t.Literal("not_linked"),
+]);
+export type DrawDiscard = Static<typeof DrawDiscardSchema>;
+
+/** One participant as frozen: `drawTickets` is 0 when `discarded` is set; `instagram` is absent on v1 draws. */
 export type DrawEntry = {
     pid: string;
     identityGroupId: string;
     tickets: TicketBreakdown;
     drawTickets: number;
-    discarded: "not_following" | null;
+    discarded: DrawDiscard | null;
+    instagram?: "certified" | "declared";
 };
 
 export type DrawRejection = {
@@ -122,9 +135,10 @@ export const PublicDrawSchema = t.Object({
 });
 export type PublicDraw = Static<typeof PublicDrawSchema>;
 
-/** A finished game as its player sees it: `drawing` until the winner is confirmed or the draw is void. */
+/** A finished game as its player sees it: `pending_verification` only for the current candidate who still has to certify. */
 export const GameOutcomeSchema = t.Union([
     t.Literal("drawing"),
+    t.Literal("pending_verification"),
     t.Literal("won"),
     t.Literal("lost"),
     t.Literal("no_winner"),
@@ -139,7 +153,9 @@ export const GameResultSchema = t.Object({
     /** The caller's tickets in the draw: 0 once discarded, all of them until the freeze. */
     drawTickets: t.Number(),
     /** Set when the caller's tickets did not count in the draw. */
-    discarded: t.Union([t.Literal("not_following"), t.Null()]),
+    discarded: t.Union([DrawDiscardSchema, t.Null()]),
+    /** Deadline to certify and follow, set with `pending_verification` only. */
+    verifyBy: t.Union([t.Date(), t.Null()]),
     /** The caller's id in the public draw list; null until the freeze, or when their tickets did not count. */
     pid: t.Union([t.String(), t.Null()]),
     /** Every ticket in the draw; null until the freeze. */
