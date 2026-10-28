@@ -65,6 +65,20 @@ export class GameDrawRepository {
         return draw ?? null;
     }
 
+    /** Each game's draw status and totals, without the frozen list. */
+    async findSummaries(gameIds: string[]) {
+        if (gameIds.length === 0) return [];
+        return db
+            .select({
+                gameId: gameDrawsTable.gameId,
+                status: gameDrawsTable.status,
+                totalTickets: gameDrawsTable.totalTickets,
+                frozenAt: gameDrawsTable.frozenAt,
+            })
+            .from(gameDrawsTable)
+            .where(inArray(gameDrawsTable.gameId, gameIds));
+    }
+
     /** Each draw's outcome and the line of the first of `identityGroupIds` found in it. */
     async findOutcomes(gameIds: string[], identityGroupIds: string[]) {
         if (gameIds.length === 0) return [];

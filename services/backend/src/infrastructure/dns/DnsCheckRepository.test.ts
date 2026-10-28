@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DnsCheckRepository } from "./DnsCheckRepository";
+import { DnsCheckRepository, setupCodeFor } from "./DnsCheckRepository";
 
 // Mock the dns module using vi.hoisted to ensure proper hoisting
 const { mockResolveTxt, mockIsRunningInProd } = vi.hoisted(() => ({
@@ -176,6 +176,50 @@ describe("DnsCheckRepository", () => {
             expect(byAccountA).toMatch(/^frak-business; hash=0x[a-f0-9]{64}$/);
             expect(byAccountA).not.toBe(byAccountB);
             expect(byAccountA).not.toBe(byWallet);
+        });
+    });
+
+    describe("setupCodeFor", () => {
+        it.each([
+            {
+                name: "a wallet",
+                owner: { wallet: mockOwner },
+                subject: mockOwner,
+            },
+            {
+                name: "an email, in any case",
+                owner: { accountId: "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa" },
+                subject: "Client@Shop.com",
+                email: "client@shop.com",
+            },
+        ])(
+            "issues a code the registration accepts for $name",
+            async ({ owner, subject, email }) => {
+                process.env.PRODUCT_SETUP_CODE_SALT = "test-salt";
+                const setupCode = setupCodeFor("example.com", subject);
+
+                const result = await dnsCheckRepository.isValidDomain({
+                    domain: "example.com",
+                    owner,
+                    email,
+                    setupCode,
+                });
+
+                expect(result).toBe(true);
+                expect(mockResolveTxt).not.toHaveBeenCalled();
+            }
+        );
+
+        it("refuses to issue an unsalted code", () => {
+            const salt = process.env.PRODUCT_SETUP_CODE_SALT;
+            process.env.PRODUCT_SETUP_CODE_SALT = "";
+            try {
+                expect(() => setupCodeFor("example.com", mockOwner)).toThrow(
+                    "PRODUCT_SETUP_CODE_SALT is not set"
+                );
+            } finally {
+                process.env.PRODUCT_SETUP_CODE_SALT = salt;
+            }
         });
     });
 

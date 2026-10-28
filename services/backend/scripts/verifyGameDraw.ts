@@ -1,18 +1,24 @@
 import { parseArgs } from "node:util";
-import {
-    DRAND_QUICKNET,
-    drandRandomness,
-    drandRoundTime,
-    drawCandidatesFor,
-    rankCandidates,
-    snapshotRoot,
-    verifyDrandBeacon,
-} from "../src/domain/game/draw";
 import type { PublicDraw } from "../src/domain/game/schemas";
+import { type DrawCheckId, verifyPublicDraw } from "../src/domain/game/verify";
 
 const USAGE = `Usage: bun scripts/verifyGameDraw.ts <gameId> [--api https://backend.frak.id]
 Replays a Frak Game draw from its public record, without trusting Frak:
 the frozen list's hash, the drand beacon's signature, the ranking and the winner.`;
+
+const LABELS: Record<DrawCheckId, string> = {
+    algorithm_known: "the algorithm is known",
+    root_matches: "the snapshot root hashes the published list",
+    total_matches: "the ticket total adds up",
+    quicknet_beacon: "the beacon is quicknet's",
+    round_after_freeze: "the round came out after the freeze",
+    beacon_signed: "drand signed this round",
+    randomness_matches: "the randomness comes from the signature",
+    candidates_replay: "the candidates replay in the same order",
+    rejections_in_order:
+        "each rejection passed over the next candidate in order",
+    winner_first_unrejected: "the winner is the first candidate not rejected",
+};
 
 const { values, positionals } = parseArgs({
     args: process.argv.slice(2),
@@ -32,66 +38,14 @@ if (!response.ok) {
 }
 const draw = (await response.json()) as PublicDraw;
 
-const candidateCount = drawCandidatesFor(draw.algorithm);
-const checks: [string, boolean][] = [
-    [`algorithm ${draw.algorithm} is known`, candidateCount !== null],
-    [
-        "the snapshot root hashes the published list",
-        snapshotRoot(draw.entries) === draw.snapshotRoot,
-    ],
-    [
-        "the ticket total adds up",
-        draw.entries.reduce((sum, e) => sum + e.tickets, 0) ===
-            draw.totalTickets,
-    ],
-    [
-        "the beacon is quicknet's",
-        draw.drand.chainHash === DRAND_QUICKNET.chainHash,
-    ],
-    [
-        "the round came out after the freeze",
-        drandRoundTime(draw.drand.round) > new Date(draw.frozenAt),
-    ],
-];
-
-const signature = draw.drand.signature;
-if (signature) {
-    checks.push(
-        [
-            "drand signed this round",
-            verifyDrandBeacon(draw.drand.round, signature),
-        ],
-        [
-            "the randomness comes from the signature",
-            drandRandomness(signature) === draw.drand.randomness,
-        ]
-    );
-    const replayed = rankCandidates({
-        randomness: drandRandomness(signature),
-        gameId: draw.gameId,
-        entries: draw.entries,
-        count: candidateCount ?? 0,
-    });
-    checks.push([
-        "the candidates replay in the same order",
-        JSON.stringify(replayed) === JSON.stringify(draw.candidates),
-    ]);
-    checks.push([
-        "each rejection passed over the next candidate in order",
-        draw.rejections.every((r, i) => r.pid === draw.candidates[i]),
-    ]);
-    if (draw.winnerPid) {
-        checks.push([
-            "the winner is the first candidate not rejected",
-            draw.winnerPid === draw.candidates[draw.rejections.length],
-        ]);
-    }
-} else {
+if (!draw.drand.signature) {
     console.log(`Beacon pending: round ${draw.drand.round}`);
 }
-
-for (const [name, ok] of checks) console.log(`${ok ? "ok  " : "FAIL"} ${name}`);
+const checks = verifyPublicDraw(draw);
+for (const { id, ok } of checks) {
+    console.log(`${ok ? "ok  " : "FAIL"} ${LABELS[id]}`);
+}
 console.log(
     `${draw.status}: ${draw.entries.length} eligible players, ${draw.totalTickets} tickets, winner ${draw.winnerPid ?? "none yet"}`
 );
-process.exit(checks.every(([, ok]) => ok) ? 0 : 1);
+process.exit(checks.every(({ ok }) => ok) ? 0 : 1);

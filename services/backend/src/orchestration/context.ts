@@ -47,6 +47,11 @@ import {
     WalletSessionOrchestrator,
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
+import {
+    FrakCodeAdminOrchestrator,
+    FrakGameAdminOrchestrator,
+    IdentityLookupOrchestrator,
+} from "./internal";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
 import { MoneriumSyncOrchestrator } from "./monerium";
 import { NotificationOrchestrator } from "./NotificationOrchestrator";
@@ -239,6 +244,34 @@ const gameDrawOrchestrator = new GameDrawOrchestrator(
     new DrandClient()
 );
 
+const frakCodeAdminOrchestrator = new FrakCodeAdminOrchestrator(
+    ReferralCodeContext.repositories.referralCode,
+    AttributionContext.repositories.referralLink,
+    GameContext.repositories.game,
+    IdentityContext.repositories.identity
+);
+
+const frakGameAdminOrchestrator = new FrakGameAdminOrchestrator(
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    ReferralCodeContext.repositories.referralCode,
+    CampaignContext.repositories.campaignRule,
+    CampaignContext.services.management,
+    MerchantContext.repositories.merchant,
+    MerchantContext.repositories.dnsCheck,
+    gamePlayerOrchestrator,
+    gameDrawOrchestrator,
+    IdentityContext.repositories.identity,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink
+);
+
+const identityLookupOrchestrator = new IdentityLookupOrchestrator(
+    IdentityContext.repositories.identity,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink
+);
+
 const referralCodeRedemptionOrchestrator =
     new ReferralCodeRedemptionOrchestrator(
         ReferralCodeContext.services.referralCode,
@@ -331,6 +364,9 @@ export namespace OrchestrationContext {
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         frakGame: frakGameOrchestrator,
         gameDraw: gameDrawOrchestrator,
+        frakCodeAdmin: frakCodeAdminOrchestrator,
+        frakGameAdmin: frakGameAdminOrchestrator,
+        identityLookup: identityLookupOrchestrator,
         missionUnlock: missionUnlockOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,

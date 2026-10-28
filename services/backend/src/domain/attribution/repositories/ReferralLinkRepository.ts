@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
@@ -78,6 +78,33 @@ export class ReferralLinkRepository {
             .select()
             .from(referralLinksTable)
             .where(inArray(referralLinksTable.id, ids));
+    }
+
+    /** Redemptions per referral code: every link it created, and the ones still active. */
+    async countByCodeIds(
+        codeIds: string[]
+    ): Promise<Map<string, { total: number; active: number }>> {
+        if (codeIds.length === 0) return new Map();
+        const codeId = sql<string>`${referralLinksTable.sourceData}->>'codeId'`;
+        const rows = await db
+            .select({
+                codeId,
+                total: count(),
+                active: sql<number>`count(*) filter (where ${isActive})`.mapWith(
+                    Number
+                ),
+            })
+            .from(referralLinksTable)
+            .where(
+                and(
+                    eq(referralLinksTable.source, "code"),
+                    inArray(codeId, codeIds)
+                )
+            )
+            .groupBy(codeId);
+        return new Map(
+            rows.map(({ codeId, total, active }) => [codeId, { total, active }])
+        );
     }
 
     /**

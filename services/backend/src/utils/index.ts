@@ -26,6 +26,7 @@ export {
 } from "./stepUpRequired";
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";
 export { describeUserAgent } from "./userAgent";
+export { isUuid } from "./uuid";
 export {
     type DateRange,
     endOfIsoDay,

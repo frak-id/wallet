@@ -1,6 +1,6 @@
 import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
 import { SERVER_MINTED_ID_PREFIX } from "@frak-labs/app-essentials/constants/serverMintedId";
-import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import { identityGroupsTable, identityNodesTable } from "../db/schema";
@@ -206,6 +206,32 @@ export class IdentityRepository {
         const wallet = (walletNode?.identityValue as Address) ?? null;
         this.walletByGroupCache.set(groupId, { value: wallet });
         return wallet;
+    }
+
+    /** `getWalletForGroup` for many groups in one query; groups without a wallet are absent. */
+    async getWalletsForGroups(
+        groupIds: string[]
+    ): Promise<Map<string, Address>> {
+        if (groupIds.length === 0) return new Map();
+        const nodes = await db
+            .select({
+                groupId: identityNodesTable.groupId,
+                wallet: identityNodesTable.identityValue,
+            })
+            .from(identityNodesTable)
+            .where(
+                and(
+                    inArray(identityNodesTable.groupId, groupIds),
+                    eq(identityNodesTable.identityType, "wallet"),
+                    isNull(identityNodesTable.unlinkedAt)
+                )
+            )
+            .orderBy(asc(identityNodesTable.createdAt));
+        const wallets = new Map<string, Address>();
+        for (const { groupId, wallet } of nodes) {
+            if (!wallets.has(groupId)) wallets.set(groupId, wallet as Address);
+        }
+        return wallets;
     }
 
     async findAnonymousFingerprint(

@@ -42,6 +42,7 @@ Rejected: Chainlink VRF (needs a consumer contract and a funded subscription, an
    - `game draw reject <CODE> --reason <reason>` with `not_verified_in_time`, `not_following_at_review`, `fraud`, `unreachable` or `ineligible` (under 18…). The next candidate is up; rejecting the last one makes the draw `void`.
    - `game draw confirm <CODE>` pays the candidate, only once they are certified and following (re-read from Meta; 409 `CANDIDATE_NOT_VERIFIED` otherwise, 502 if Meta cannot say). Both take `--actor`, kept on the draw.
    - Each review only applies if nobody reviewed the draw since it was read, so two admins cannot pay two people.
+   - The same review runs from the business dashboard, under Internal > Frak Game > a game (platform admins only): the candidate card, Reject with a reason, Confirm and pay (asks a fresh 2FA), the rejections with their admin, and Replay the draw. The dashboard records the admin's email as the actor. CLI and dashboard share `orchestration/internal/FrakGameAdminOrchestrator`.
 5. **Payout.** In the same transaction as the confirmation, an `asset_logs` row with recipient type `winner`, the game's prize amount in EURe, on the Frak merchant (paid from the shared campaign bank like any game reward), payable at once. The winner is resolved through identity merges at that moment, since the frozen list keeps the groups as they were. If the bank is short, the row waits in `bank_depleted` until it is funded.
    - Right after, the winner's wallet gets a `game_won` push ("Tu as gagné le Jeu Frak ! Tes 50 € arrivent dans ton porte-monnaie."), on top of the usual push when the payout settles.
 6. **Announce** on Instagram, and keep the public record online.
@@ -65,7 +66,7 @@ Why not zero: columns on `games` would work, but `games` is config and every gam
 
 - `GET /common/game/:gameId/draw`, no auth: algorithm, status, freeze time, root, total, the canonical list by pid, the drand round, its time, signature and randomness, the candidates, the rejections (reason and time, not the admin), the winner's pid and the payout transaction hash.
 - The player's own pid comes with their game history (`pid` on each result), so they can find themselves in the list. It is null before the freeze and when their tickets did not count, since the list only holds players with draw tickets.
-- `bun scripts/verifyGameDraw.ts <gameId> [--api <url>]` replays everything from the public record: the root, the total, that the round came after the freeze, the drand signature, the randomness, the ranking, the rejections and the winner. It shares `domain/game/draw.ts` with the backend and trusts nothing else.
+- `bun scripts/verifyGameDraw.ts <gameId> [--api <url>]` replays everything from the public record: the root, the total, that the round came after the freeze, the drand signature, the randomness, the ranking, the rejections and the winner. It shares `domain/game/draw.ts` with the backend and trusts nothing else. The checks live in `domain/game/verify.ts`, which the dashboard's Replay the draw also runs (server-side, so it shows our record is consistent, not that we can be trusted).
 
 ## In the wallet
 

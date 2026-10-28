@@ -5,6 +5,7 @@ import {
     eq,
     exists,
     gte,
+    inArray,
     isNull,
     lt,
     lte,
@@ -209,6 +210,22 @@ export class GamePlayerOrchestrator {
             .groupBy(interactionLogsTable.identityGroupId);
         return rows.flatMap(({ identityGroupId, joinedAt }) =>
             identityGroupId && joinedAt ? [{ identityGroupId, joinedAt }] : []
+        );
+    }
+
+    /** Distinct players per game; games nobody joined are absent. */
+    async participantCounts(gameIds: string[]): Promise<Map<string, number>> {
+        if (gameIds.length === 0) return new Map();
+        const rows = await db
+            .select({
+                gameId: joinedGameId,
+                n: countDistinct(interactionLogsTable.identityGroupId),
+            })
+            .from(interactionLogsTable)
+            .where(and(...gameJoins(), inArray(joinedGameId, gameIds)))
+            .groupBy(joinedGameId);
+        return new Map(
+            rows.flatMap(({ gameId, n }) => (gameId ? [[gameId, n]] : []))
         );
     }
 
