@@ -1,6 +1,8 @@
 /** @jsxImportSource react */
 import type * as WalletShared from "@frak-labs/wallet-shared";
+import type { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import type { ComponentType, ReactNode } from "react";
 import { vi } from "vitest";
 import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameHistoryKeys } from "@/module/game/hook/useGameHistory";
@@ -41,6 +43,7 @@ import {
     useAwaitInstagramDm,
     useCheckInstagram,
     useDeclareInstagram,
+    useRefreshInstagramFollow,
 } from "./useInstagramLink";
 
 const DECLARED = {
@@ -52,6 +55,24 @@ const CERTIFIED = {
     declaration: null,
 };
 const NOTHING = { link: null, declaration: null };
+const UNFOLLOWED = {
+    link: { username: "lea", follows: false, checkedAt: new Date() },
+    declaration: null,
+};
+
+function mountRefresh(
+    queryWrapper: {
+        client: QueryClient;
+        wrapper: ComponentType<{ children: ReactNode }>;
+    },
+    cached: unknown
+) {
+    queryWrapper.client.setQueryData(instagramKeys.status, cached);
+    mocks.get.mockReturnValue(new Promise(() => undefined));
+    renderHook(() => useRefreshInstagramFollow(), {
+        wrapper: queryWrapper.wrapper,
+    });
+}
 
 describe("useInstagramLink", () => {
     beforeEach(() => {
@@ -81,6 +102,130 @@ describe("useInstagramLink", () => {
         ]) {
             expect(invalidate).toHaveBeenCalledWith({ queryKey });
         }
+    });
+
+    describe("re-checking the follow when a page opens", () => {
+        test("a certified link is checked once on mount", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: CERTIFIED, error: null });
+
+            mountRefresh(queryWrapper, CERTIFIED);
+
+            await waitFor(() => expect(mocks.check).toHaveBeenCalledTimes(1));
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            expect(mocks.check).toHaveBeenCalledTimes(1);
+        });
+
+        test("a status read in flight before the check does not bring back the old follow", async ({
+            queryWrapper,
+        }) => {
+            let finishRead: (value: unknown) => void = () => undefined;
+            mocks.get.mockReturnValue(
+                new Promise((resolve) => {
+                    finishRead = resolve;
+                })
+            );
+            mocks.check.mockResolvedValue({ data: UNFOLLOWED, error: null });
+            queryWrapper.client.setQueryData(instagramKeys.status, CERTIFIED);
+
+            renderHook(() => useRefreshInstagramFollow(), {
+                wrapper: queryWrapper.wrapper,
+            });
+            await waitFor(() =>
+                expect(
+                    queryWrapper.client.getQueryData(instagramKeys.status)
+                ).toEqual(UNFOLLOWED)
+            );
+            await act(async () => {
+                finishRead({ data: CERTIFIED, error: null });
+                await new Promise((resolve) => setTimeout(resolve, 20));
+            });
+
+            expect(
+                queryWrapper.client.getQueryData(instagramKeys.status)
+            ).toEqual(UNFOLLOWED);
+        });
+
+        test("an unfollow updates the status and re-reads the game", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: UNFOLLOWED, error: null });
+            const invalidate = vi.spyOn(
+                queryWrapper.client,
+                "invalidateQueries"
+            );
+
+            mountRefresh(queryWrapper, CERTIFIED);
+
+            await waitFor(() =>
+                expect(
+                    queryWrapper.client.getQueryData(instagramKeys.status)
+                ).toEqual(UNFOLLOWED)
+            );
+            expect(invalidate).toHaveBeenCalledWith({
+                queryKey: currentGameKeys.all,
+            });
+        });
+
+        test("an unchanged follow leaves the game alone", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({ data: CERTIFIED, error: null });
+            const invalidate = vi.spyOn(
+                queryWrapper.client,
+                "invalidateQueries"
+            );
+
+            mountRefresh(queryWrapper, CERTIFIED);
+
+            await waitFor(() => expect(mocks.check).toHaveBeenCalledTimes(1));
+            await waitFor(() =>
+                expect(
+                    queryWrapper.client.getQueryState(instagramKeys.recheck)
+                        ?.status
+                ).toBe("success")
+            );
+            expect(invalidate).not.toHaveBeenCalled();
+        });
+
+        for (const [who, cached] of [
+            ["declared only", DECLARED],
+            ["unlinked", NOTHING],
+        ] as const) {
+            test(`a player who is ${who} is never checked`, async ({
+                queryWrapper,
+            }) => {
+                mountRefresh(queryWrapper, cached);
+
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                expect(mocks.check).not.toHaveBeenCalled();
+            });
+        }
+
+        test("a refused check keeps the stored status", async ({
+            queryWrapper,
+        }) => {
+            mocks.check.mockResolvedValue({
+                data: null,
+                error: {
+                    status: 502,
+                    value: { code: "INSTAGRAM_UNAVAILABLE" },
+                },
+            });
+
+            mountRefresh(queryWrapper, CERTIFIED);
+
+            await waitFor(() =>
+                expect(
+                    queryWrapper.client.getQueryState(instagramKeys.recheck)
+                        ?.status
+                ).toBe("error")
+            );
+            expect(
+                queryWrapper.client.getQueryData(instagramKeys.status)
+            ).toEqual(CERTIFIED);
+        });
     });
 
     test("a declaration caches the returned status", async ({

@@ -28,6 +28,7 @@ import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import { formatGameEnd } from "@/module/game/utils/formatGameDate";
 import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
+import { useRefreshInstagramFollow } from "@/module/instagram/hook/useInstagramLink";
 
 type CurrentGame = NonNullable<ReturnType<typeof useCurrentGame>["data"]>;
 
@@ -64,6 +65,7 @@ function topOf(
 
 export function GamePage() {
     const { t, i18n } = useTranslation();
+    useRefreshInstagramFollow();
     const current = useCurrentGame();
     const history = useGameHistory();
     const game = current.data?.game;

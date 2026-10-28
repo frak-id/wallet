@@ -13,6 +13,7 @@ import { instagramLink } from "@/module/instagram/config";
 export const instagramKeys = {
     status: ["instagram", "status"] as const,
     code: ["instagram", "code"] as const,
+    recheck: ["instagram", "recheck"] as const,
 };
 
 async function fetchStatus() {
@@ -81,6 +82,37 @@ function useSyncInstagramStatus() {
 export function useCheckInstagram() {
     const sync = useSyncInstagramStatus();
     return useMutation({ mutationFn: postCheck, onSuccess: sync });
+}
+
+/** Matches the backend's cooldown: a check inside it would only return the stored status. */
+const RECHECK_STALE_MS = 30_000;
+
+/** An unfollow happens in Instagram, so a certified player's follow is re-read when a page showing it opens or regains focus. */
+export function useRefreshInstagramFollow() {
+    const queryClient = useQueryClient();
+    const sync = useSyncInstagramStatus();
+    const { data: status } = useInstagramStatus();
+    useQuery({
+        queryKey: instagramKeys.recheck,
+        queryFn: async () => {
+            // A status read already in flight predates the check and would overwrite its answer.
+            await queryClient.cancelQueries({ queryKey: instagramKeys.status });
+            const before = queryClient.getQueryData<InstagramStatus>(
+                instagramKeys.status
+            );
+            const next = await postCheck();
+            // `follows` is a boolean whenever a link exists, so this also catches a link appearing or vanishing.
+            if (before?.link?.follows === next.link?.follows) {
+                queryClient.setQueryData(instagramKeys.status, next);
+            } else {
+                sync(next);
+            }
+            return next;
+        },
+        enabled: instagramLink.enabled && Boolean(status?.link),
+        staleTime: RECHECK_STALE_MS,
+        retry: false,
+    });
 }
 
 export const DM_POLL_INTERVAL_MS = 3_000;

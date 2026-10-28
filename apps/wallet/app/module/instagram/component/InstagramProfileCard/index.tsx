@@ -3,7 +3,10 @@ import { InstagramIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { instagramLink } from "@/module/instagram/config";
-import { useInstagramStatus } from "@/module/instagram/hook/useInstagramLink";
+import {
+    useInstagramStatus,
+    useRefreshInstagramFollow,
+} from "@/module/instagram/hook/useInstagramLink";
 
 type InstagramStatus = NonNullable<
     ReturnType<typeof useInstagramStatus>["data"]
@@ -13,6 +16,7 @@ type InstagramStatus = NonNullable<
 export function InstagramProfileCard() {
     const { t } = useTranslation();
     const { data } = useInstagramStatus();
+    useRefreshInstagramFollow();
     if (!instagramLink.enabled) return null;
 
     const account = data?.link ?? data?.declaration;

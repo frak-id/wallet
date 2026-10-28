@@ -33,6 +33,7 @@ import {
     useDeclareInstagram,
     useInstagramLinkCode,
     useInstagramStatus,
+    useRefreshInstagramFollow,
 } from "@/module/instagram/hook/useInstagramLink";
 
 const igLink = <ExternalLink href={FRAK_INSTAGRAM_URL} />;
@@ -49,6 +50,7 @@ function useLeave() {
 export function InstagramLinkPage() {
     const { t } = useTranslation();
     const status = useInstagramStatus();
+    useRefreshInstagramFollow();
     const leave = useLeave();
 
     return (

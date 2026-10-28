@@ -18,6 +18,7 @@ vi.mock("react-i18next", () => ({
 vi.mock("@/module/instagram/config", () => ({ instagramLink: config }));
 vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
     useInstagramStatus: () => status,
+    useRefreshInstagramFollow: () => undefined,
 }));
 
 import { InstagramProfileCard } from "./index";

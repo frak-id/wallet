@@ -74,6 +74,7 @@ vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
     useAwaitInstagramDm: () => sent,
     useCheckInstagram: () => check,
     useDeclareInstagram: () => ({ declare, remove }),
+    useRefreshInstagramFollow: () => undefined,
 }));
 
 import { FRAK_INSTAGRAM_DM_URL } from "@/module/instagram/config";

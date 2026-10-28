@@ -39,6 +39,9 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     trackEvent,
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
+vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
+    useRefreshInstagramFollow: () => undefined,
+}));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => currentGame,
 }));
