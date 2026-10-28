@@ -16,7 +16,9 @@ const {
     code: {
         data: "K7Q2PX" as string | undefined,
         isError: false,
+        isFetching: false,
         error: null as unknown,
+        refetch: vi.fn(),
     },
     check: {
         mutate: vi.fn(),
@@ -31,7 +33,7 @@ const {
         isError: false,
         error: null as unknown,
     },
-    remove: { mutate: vi.fn(), isPending: false },
+    remove: { mutate: vi.fn(), isPending: false, isError: false },
     copy: vi.fn(),
     openExternalUrl: vi.fn(),
     ua: { isMobile: true },
@@ -83,6 +85,7 @@ describe("InstagramLinkPage", () => {
             data: undefined,
         });
         Object.assign(declare, { isError: false, error: null });
+        remove.isError = false;
         ua.isMobile = true;
     });
 
@@ -166,6 +169,23 @@ describe("InstagramLinkPage", () => {
             ).toBeInTheDocument();
         });
 
+        it("retries a code that failed to load", () => {
+            Object.assign(code, {
+                data: undefined,
+                isError: true,
+                error: new Error("network"),
+            });
+            render(<InstagramLinkPage />);
+
+            expect(
+                screen.getByText("game.instagram.certify.error")
+            ).toBeInTheDocument();
+            fireEvent.click(
+                screen.getByRole("button", { name: "game.page.retry" })
+            );
+            expect(code.refetch).toHaveBeenCalled();
+        });
+
         it("declares the typed handle", () => {
             render(<InstagramLinkPage />);
 
@@ -233,7 +253,17 @@ describe("InstagramLinkPage", () => {
             expect(remove.mutate).toHaveBeenCalled();
         });
 
-        it("edits the handle in place", () => {
+        it("says when the declaration could not be removed", () => {
+            status.data = DECLARED;
+            remove.isError = true;
+            render(<InstagramLinkPage />);
+
+            expect(
+                screen.getByText("game.instagram.declare.removeError")
+            ).toBeInTheDocument();
+        });
+
+        it("edits the handle in place, and can cancel", () => {
             status.data = DECLARED;
             render(<InstagramLinkPage />);
 
@@ -244,8 +274,26 @@ describe("InstagramLinkPage", () => {
             );
 
             expect(
+                screen.getByText("game.instagram.declare.editTitle")
+            ).toBeInTheDocument();
+            expect(
                 screen.getByLabelText("game.instagram.declare.label")
             ).toHaveValue("lea");
+            expect(
+                screen.getByRole("button", {
+                    name: "game.instagram.declare.save",
+                })
+            ).toBeInTheDocument();
+
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: "game.instagram.declare.cancel",
+                })
+            );
+            expect(screen.getByText("@lea")).toBeInTheDocument();
+            expect(
+                screen.queryByLabelText("game.instagram.declare.label")
+            ).toBeNull();
         });
     });
 

@@ -517,7 +517,8 @@ export default interface Resources {
         "ended": "Frak Game over",
         "notParticipating": "Not joined yet",
         "participating": "You're in",
-        "title": "Frak game in progress"
+        "title": "Frak game in progress",
+        "verifyBy": "Certify your Instagram by {{date}}"
       },
       "history": {
         "gameOf": "{{date}} game",
@@ -547,13 +548,17 @@ export default interface Resources {
         },
         "declare": {
           "badge": "Declared",
+          "cancel": "Cancel",
           "change": "Change",
-          "description": "Your tickets count in the draw. If you're drawn, you have 24 h to certify your account, otherwise another winner is drawn.",
+          "description": "Your tickets count in the draw, and we only check your account if you're drawn. In that case you have 24 h from the notification to certify it and follow @frak_fr, otherwise another winner is drawn.",
+          "editTitle": "Change account",
           "error": "Couldn't save your account. Try again.",
           "invalid": "That isn't a valid Instagram account.",
           "label": "Your Instagram account",
           "placeholder": "@your_account",
           "remove": "Remove",
+          "removeError": "Couldn't remove your account. Try again.",
+          "save": "Save",
           "submit": "Declare",
           "title": "Declare my Instagram",
           "upsell": "Certify it to earn 2 more tickets and unlock your welcome reward."
@@ -593,7 +598,7 @@ export default interface Resources {
         "activateCta": "Activate my tickets",
         "buy": "Buy from a partner brand",
         "certifyCta": "Certify my Instagram",
-        "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it.",
+        "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
         "error": "Couldn't load the game.",
         "gain_one": "+{{count}} ticket",
         "gain_other": "+{{count}} tickets",
@@ -606,7 +611,7 @@ export default interface Resources {
         },
         "retry": "Try again",
         "share": "Share Frak with a friend",
-        "shareHint": "1 ticket per friend who signs up with your code and certifies an Instagram that follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
+        "shareHint": "1 ticket per friend who signs up with your code and certifies their Instagram and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
         "tickets_one": "ticket",
         "tickets_other": "tickets",
         "title": "Frak Game"
@@ -999,8 +1004,8 @@ export default interface Resources {
         "estimatedValidation": "Estimated validation",
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
-        "lockedExplanation": "Unlocks as soon as you certify your Instagram by following @frak_fr, or with your first reward from a partner brand.",
-        "lockedOnFriendExplanation": "Unlocks as soon as your friend certifies their Instagram by following @frak_fr, or with their first reward from a partner brand.",
+        "lockedExplanation": "Unlocks as soon as you certify your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
+        "lockedOnFriendExplanation": "Unlocks as soon as your friend certifies their Instagram and follows @frak_fr, or with their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",

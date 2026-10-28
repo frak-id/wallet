@@ -1008,7 +1008,8 @@
             "participating": "Tu participes",
             "notParticipating": "Pas encore inscrit",
             "ended": "Jeu Frak terminé",
-            "drawn": "Tu as été tiré au sort !"
+            "drawn": "Tu as été tiré au sort !",
+            "verifyBy": "Certifie ton Instagram avant le {{date}}"
         },
         "page": {
             "tickets_one": "ticket",
@@ -1028,7 +1029,7 @@
             "title": "Jeu Frak",
             "lockedNone": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram déclaré ou certifié.",
             "lockedNotFollowing": "Ton Instagram est certifié, mais tu ne suis pas <igLink>@frak_fr</igLink> : tes tickets ne comptent pas au tirage.",
-            "declared": "Instagram déclaré : tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour le certifier.",
+            "declared": "Instagram déclaré : tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour le certifier et suivre @frak_fr.",
             "activateCta": "Activer mes tickets",
             "certifyCta": "Certifier mon Instagram"
         },
@@ -1074,15 +1075,19 @@
             },
             "declare": {
                 "title": "Déclarer mon Instagram",
-                "description": "Tes tickets comptent au tirage. Si tu es tiré au sort, tu as 24 h pour certifier ton compte, sinon un autre gagnant est tiré au sort.",
+                "description": "Tes tickets comptent au tirage, et on ne vérifie ton compte que si tu es tiré au sort. Dans ce cas, tu as 24 h à partir de la notification pour le certifier et suivre @frak_fr, sinon un autre gagnant est tiré au sort.",
                 "label": "Ton compte Instagram",
                 "placeholder": "@ton_compte",
                 "submit": "Déclarer",
+                "editTitle": "Changer de compte",
+                "save": "Enregistrer",
+                "cancel": "Annuler",
                 "badge": "Déclaré",
                 "remove": "Retirer",
                 "change": "Modifier",
                 "invalid": "Ce n'est pas un compte Instagram valide.",
                 "error": "Impossible d'enregistrer ton compte. Réessaie.",
+                "removeError": "Impossible de retirer ton compte. Réessaie.",
                 "upsell": "Certifie-le pour gagner 2 tickets de plus et débloquer ton gain de bienvenue."
             }
         },
@@ -1206,8 +1211,8 @@
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque.",
-            "lockedExplanation": "Se débloque dès que tu certifies ton Instagram en suivant @frak_fr, ou dès ta première récompense chez une marque partenaire.",
-            "lockedOnFriendExplanation": "Se débloque dès que ton ami certifie son Instagram en suivant @frak_fr, ou dès sa première récompense chez une marque partenaire."
+            "lockedExplanation": "Se débloque dès que tu certifies ton Instagram et suis @frak_fr, ou dès ta première récompense chez une marque partenaire.",
+            "lockedOnFriendExplanation": "Se débloque dès que ton ami certifie son Instagram et suit @frak_fr, ou dès sa première récompense chez une marque partenaire."
         },
         "frakBonus": {
             "label": "Bonus de bienvenue",

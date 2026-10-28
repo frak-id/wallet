@@ -1008,7 +1008,8 @@
             "participating": "You're in",
             "notParticipating": "Not joined yet",
             "ended": "Frak Game over",
-            "drawn": "You were drawn!"
+            "drawn": "You were drawn!",
+            "verifyBy": "Certify your Instagram by {{date}}"
         },
         "page": {
             "tickets_one": "ticket",
@@ -1018,7 +1019,7 @@
             "buy": "Buy from a partner brand",
             "gain_one": "+{{count}} ticket",
             "gain_other": "+{{count}} tickets",
-            "shareHint": "1 ticket per friend who signs up with your code and certifies an Instagram that follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
+            "shareHint": "1 ticket per friend who signs up with your code and certifies their Instagram and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
             "none": {
                 "title": "No game right now",
                 "description": "The next game will be announced on Instagram."
@@ -1028,7 +1029,7 @@
             "title": "Frak Game",
             "lockedNone": "Your tickets are saved, but they only count in the draw once your Instagram is declared or certified.",
             "lockedNotFollowing": "Your Instagram is certified, but you don't follow <igLink>@frak_fr</igLink>: your tickets don't count in the draw.",
-            "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it.",
+            "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
             "activateCta": "Activate my tickets",
             "certifyCta": "Certify my Instagram"
         },
@@ -1074,15 +1075,19 @@
             },
             "declare": {
                 "title": "Declare my Instagram",
-                "description": "Your tickets count in the draw. If you're drawn, you have 24 h to certify your account, otherwise another winner is drawn.",
+                "description": "Your tickets count in the draw, and we only check your account if you're drawn. In that case you have 24 h from the notification to certify it and follow @frak_fr, otherwise another winner is drawn.",
                 "label": "Your Instagram account",
                 "placeholder": "@your_account",
                 "submit": "Declare",
+                "editTitle": "Change account",
+                "save": "Save",
+                "cancel": "Cancel",
                 "badge": "Declared",
                 "remove": "Remove",
                 "change": "Change",
                 "invalid": "That isn't a valid Instagram account.",
                 "error": "Couldn't save your account. Try again.",
+                "removeError": "Couldn't remove your account. Try again.",
                 "upsell": "Certify it to earn 2 more tickets and unlock your welcome reward."
             }
         },
@@ -1206,8 +1211,8 @@
             "pendingValidation": "Pending brand validation",
             "estimatedValidation": "Estimated validation",
             "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
-            "lockedExplanation": "Unlocks as soon as you certify your Instagram by following @frak_fr, or with your first reward from a partner brand.",
-            "lockedOnFriendExplanation": "Unlocks as soon as your friend certifies their Instagram by following @frak_fr, or with their first reward from a partner brand."
+            "lockedExplanation": "Unlocks as soon as you certify your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
+            "lockedOnFriendExplanation": "Unlocks as soon as your friend certifies their Instagram and follows @frak_fr, or with their first reward from a partner brand."
         },
         "frakBonus": {
             "label": "Welcome bonus",

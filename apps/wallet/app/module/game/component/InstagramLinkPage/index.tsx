@@ -82,7 +82,7 @@ function Uncertified({
 
 function CertifyCard() {
     const { t } = useTranslation();
-    const code = useInstagramLinkCode({ enabled: true });
+    const code = useInstagramLinkCode();
     const check = useCheckInstagram();
     const { copy } = useCopyToClipboardWithState();
     const unavailable = getErrorCode(code.error) === "INSTAGRAM_UNAVAILABLE";
@@ -104,11 +104,14 @@ function CertifyCard() {
                         {t("game.instagram.certify.badge")}
                     </Badge>
                 </Inline>
-                <Stack space="xxs">
+                <Stack as="ul" space="xxs">
                     {(["tickets", "unlock", "auto"] as const).map((perk) => (
-                        <Text key={perk} variant="bodySmall" color="secondary">
-                            {`• ${t(`game.instagram.certify.perks.${perk}`)}`}
-                        </Text>
+                        <li key={perk}>
+                            <Text variant="bodySmall" color="secondary">
+                                <span aria-hidden="true">• </span>
+                                {t(`game.instagram.certify.perks.${perk}`)}
+                            </Text>
+                        </li>
                     ))}
                 </Stack>
                 {unavailable ? (
@@ -168,9 +171,19 @@ function CertifyCard() {
                             {t("game.instagram.sent")}
                         </Button>
                         {code.isError && (
-                            <Notice tone="error">
-                                {t("game.instagram.certify.error")}
-                            </Notice>
+                            <>
+                                <Notice tone="error">
+                                    {t("game.instagram.certify.error")}
+                                </Notice>
+                                <Button
+                                    variant="ghost"
+                                    width="full"
+                                    loading={code.isFetching}
+                                    onClick={() => void code.refetch()}
+                                >
+                                    {t("game.page.retry")}
+                                </Button>
+                            </>
                         )}
                         {check.isError && (
                             <Notice tone="error">
@@ -189,22 +202,21 @@ function CertifyCard() {
     );
 }
 
+/** With `editing`, changes the declared handle and can be cancelled. */
 function DeclareCard({
-    initial = "",
-    onDone,
+    editing,
 }: {
-    initial?: string;
-    onDone?: () => void;
+    editing?: { initial: string; onClose: () => void };
 }) {
     const { t } = useTranslation();
-    const [username, setUsername] = useState(initial);
+    const [username, setUsername] = useState(editing?.initial ?? "");
     const { declare } = useDeclareInstagram();
     const invalid = getErrorCode(declare.error) === "INVALID_INSTAGRAM_HANDLE";
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
         if (username.trim()) {
-            declare.mutate(username, { onSuccess: onDone });
+            declare.mutate(username, { onSuccess: editing?.onClose });
         }
     };
 
@@ -213,7 +225,11 @@ function DeclareCard({
             <form onSubmit={submit}>
                 <Stack space="s">
                     <Text weight="semiBold">
-                        {t("game.instagram.declare.title")}
+                        {t(
+                            editing
+                                ? "game.instagram.declare.editTitle"
+                                : "game.instagram.declare.title"
+                        )}
                     </Text>
                     <Text variant="bodySmall" color="secondary">
                         {t("game.instagram.declare.description")}
@@ -243,8 +259,22 @@ function DeclareCard({
                         disabled={!username.trim()}
                         loading={declare.isPending}
                     >
-                        {t("game.instagram.declare.submit")}
+                        {t(
+                            editing
+                                ? "game.instagram.declare.save"
+                                : "game.instagram.declare.submit"
+                        )}
                     </Button>
+                    {editing && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            width="full"
+                            onClick={editing.onClose}
+                        >
+                            {t("game.instagram.declare.cancel")}
+                        </Button>
+                    )}
                 </Stack>
             </form>
         </Card>
@@ -263,8 +293,10 @@ function DeclaredAccount({
     if (editing) {
         return (
             <DeclareCard
-                initial={declaration.username}
-                onDone={() => setEditing(false)}
+                editing={{
+                    initial: declaration.username,
+                    onClose: () => setEditing(false),
+                }}
             />
         );
     }
@@ -302,6 +334,11 @@ function DeclaredAccount({
                         {t("game.instagram.declare.remove")}
                     </Button>
                 </Inline>
+                {remove.isError && (
+                    <Notice tone="error">
+                        {t("game.instagram.declare.removeError")}
+                    </Notice>
+                )}
             </Stack>
         </Card>
     );

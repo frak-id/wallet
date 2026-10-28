@@ -48,10 +48,11 @@ function topOf(
 ): Top {
     const data = current.data;
     if (!data) return { kind: current.isError ? "error" : "loading" };
+    // History first even when playing: a draw waiting on the user tops the page.
+    if (history.isLoading) return { kind: "loading" };
     if (data.game && data.me.participating) {
         return { kind: "playing", game: data.game };
     }
-    if (history.isLoading) return { kind: "loading" };
     if (data.game) return { kind: "join", game: data.game };
     const latest = history.data?.[0];
     if (latest) return { kind: "result", result: latest };
@@ -72,18 +73,20 @@ export function GamePage() {
     const pending = results.find(
         (result) => result.outcome === "pending_verification"
     );
-    const trackedResultId = useRef<string | null>(null);
+    const trackedResultIds = useRef(new Set<string>());
 
     useEffect(() => {
-        if (!resultShown || trackedResultId.current === resultShown.game.id) {
-            return;
+        for (const result of [pending, resultShown]) {
+            if (!result || trackedResultIds.current.has(result.game.id)) {
+                continue;
+            }
+            trackedResultIds.current.add(result.game.id);
+            trackEvent("game_result_viewed", {
+                game_id: result.game.id,
+                outcome: result.outcome,
+            });
         }
-        trackedResultId.current = resultShown.game.id;
-        trackEvent("game_result_viewed", {
-            game_id: resultShown.game.id,
-            outcome: resultShown.outcome,
-        });
-    }, [resultShown]);
+    }, [pending, resultShown]);
 
     // Once per game shown: a refetch with new counts is not a new view.
     useEffect(() => {
