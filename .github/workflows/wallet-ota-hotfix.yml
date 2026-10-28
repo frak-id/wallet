@@ -1,22 +1,15 @@
 name: "📡 Ship Wallet OTA"
 
-# Frontend-only hotfix for an ALREADY-RELEASED wallet version, shipped through
-# CrabNebula Cloud without a store review.
+# Frontend-only update for the PRODUCTION wallet, shipped through CrabNebula
+# Cloud without a store review.
 #
-# Run this workflow FROM A BRANCH CUT OFF THE RELEASE TAG:
+# Run it by hand on `main`, after a dev → main merge: Actions → "Ship Wallet OTA".
+# It patches the latest production store release on GitHub (`app-*`, not a
+# prerelease), not the version `main` carries (dev's). That release is created
+# at upload, before store review.
 #
-#   git checkout -b hotfix/ota-1.0.94 app-1.0.94
-#   <fix the web assets, push the branch>
-#   Actions → "Ship Wallet OTA" → run on hotfix/ota-1.0.94
-#   then merge the fix forward into dev separately
-#
-# Ship from the hotfix branch itself, BEFORE merging forward: once the fix is
-# merged into dev it carries every unreleased change with it, and the guard
-# below will (correctly) refuse to publish.
-#
-# Branching off the tag is what keeps this safe: it makes it impossible to pick
-# up unreleased work from `dev` that needs a newer binary. The guard step below
-# enforces that mechanically, and refuses any branch not named `hotfix/ota-*`.
+# The guard pins the version-only native files to that release, then refuses
+# anything that still differs under `src-tauri/` or bumps a Tauri plugin package.
 #
 # The store release workflow (`tauri-mobile-release.yml`) deliberately does NOT
 # publish an OTA baseline: assets identical to the embedded ones would make
@@ -25,14 +18,6 @@ name: "📡 Ship Wallet OTA"
 on:
   workflow_dispatch:
     inputs:
-      stage:
-        description: "SST stage (dev = TestFlight/internal, prod = production)"
-        required: true
-        type: choice
-        options:
-          - dev
-          - prod
-        default: dev
       platform:
         description: "Which installed binaries to patch"
         required: true
@@ -48,7 +33,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.stage }}
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:
@@ -77,41 +62,47 @@ jobs:
           persist-credentials: false
 
       # An OTA bundle can only ever replace web assets. Anything under
-      # `src-tauri/` — Rust, `capabilities/`, `tauri.conf.json` — is compiled
-      # into the installed binary and CANNOT be shipped this way. A device that
+      # `src-tauri/` — Rust, `capabilities/`, native config — is compiled into
+      # the installed binary and CANNOT be shipped this way. A device that
       # pulled assets calling a command, or relying on a capability, that its
       # binary lacks is broken until the user takes a store update.
       #
-      # Diffing against the release tag rather than the release PR is what makes
-      # this exact instead of heuristic: relative to the bytes actually shipped,
-      # any `src-tauri/` diff is unambiguously a violation.
+      # Dev releases bump the version in native files, so a raw diff against the
+      # production tag is never empty after a dev → main merge. Pinning those
+      # version sites to the tag first leaves only real native changes.
       - name: "🛡️ Check the tree is OTA-safe"
         id: check
         run: |
           set -euo pipefail
-          # `dev` would pass every check below whenever its version still equals the
-          # last tag, shipping unreleased work to installed phones.
-          if [[ "$GITHUB_REF_NAME" != hotfix/ota-* ]]; then
-            echo "::error::Run this from a hotfix/ota-<version> branch cut from the release tag, not $GITHUB_REF_NAME."
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Run this from main, not $GITHUB_REF_NAME."
             exit 1
           fi
-          VERSION=$(jq -r '.version' apps/wallet/package.json)
-          TAG="app-$VERSION"
+
+          TAG=$(gh release list --exclude-pre-releases --exclude-drafts --limit 100 \
+            --json tagName --jq '[.[].tagName | select(startswith("app-"))][0] // empty')
+          if [ -z "$TAG" ]; then
+            echo "::error::No published production release tagged app-* found."
+            exit 1
+          fi
+          VERSION=${TAG#app-}
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
           if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::Tag $TAG does not exist. OTA can only patch a version that actually shipped — cut this branch from a release tag."
+            echo "::error::Tag $TAG does not exist in this repository."
             exit 1
           fi
 
           if ! git merge-base --is-ancestor "$TAG" HEAD; then
-            echo "::error::HEAD does not descend from $TAG. Re-cut this branch with: git checkout -b <branch> $TAG"
+            echo "::error::HEAD does not descend from $TAG."
             exit 1
           fi
 
-          if ! git diff --quiet "$TAG" HEAD -- apps/wallet/src-tauri; then
+          apps/wallet/scripts/pin-native-version.sh "$VERSION"
+
+          if ! git diff --quiet "$TAG" -- apps/wallet/src-tauri; then
             echo "::error::Native changes since $TAG — this needs a store release, not an OTA:"
-            git diff --name-only "$TAG" HEAD -- apps/wallet/src-tauri | sed 's/^/  /'
+            git diff --name-only "$TAG" -- apps/wallet/src-tauri | sed 's/^/  /'
             exit 1
           fi
 
@@ -124,14 +115,21 @@ jobs:
             exit 1
           fi
 
+          if git diff --quiet "$TAG" -- apps/wallet packages sdk package.json bun.lock; then
+            echo "::error::Nothing to ship: the web assets are identical to $TAG."
+            exit 1
+          fi
+
           echo "[ci] $TAG → HEAD is web-assets-only, safe to ship over the air"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
 
   upload:
-    name: "📡 ${{ matrix.platform }} ${{ needs.guard.outputs.version }} → ${{ inputs.stage }}"
+    name: "📡 ${{ matrix.platform }} ${{ needs.guard.outputs.version }} → prod"
     needs: guard
-    # Required reviewers live on this environment, not on the branch name check:
-    # create it protected in GitHub settings before this file reaches main.
-    environment: ota-${{ inputs.stage }}
+    # Waits for one approval from any of this environment's required reviewers.
+    environment: ota-prod
     runs-on: ubuntu-latest
     strategy:
       # Sequential: both legs run `ota-updater upload` against the same Cloud
@@ -166,6 +164,12 @@ jobs:
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
 
+      # The build and the CLI must see the production version, not the one main carries.
+      - name: "📌 Pin the production version"
+        run: apps/wallet/scripts/pin-native-version.sh "$VERSION"
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+
       - name: "🔗 Add node_modules binaries to PATH"
         run: |
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
@@ -192,8 +196,8 @@ jobs:
           sst shell --stage "$STAGE" --print-logs -- bash -c \
             "cd apps/wallet && NODE_ENV=production TAURI_CLI_RUNNING=1 TAURI_ENV_PLATFORM=$PLATFORM vite build"
         env:
-          STAGE: ${{ inputs.stage }}
-          FRAK_VARIANT: ${{ inputs.stage }}
+          STAGE: prod
+          FRAK_VARIANT: prod
           PLATFORM: ${{ matrix.platform }}
 
       # Channel must match __OTA_CHANNEL__ from vite.defines.ts, or the bundle
@@ -210,7 +214,7 @@ jobs:
           fi
           bunx ota-updater upload "${ARGS[@]}"
         env:
-          STAGE: ${{ inputs.stage }}
+          STAGE: prod
           PLATFORM: ${{ matrix.platform }}
           VERSION: ${{ needs.guard.outputs.version }}
           NOTES: ${{ inputs.notes }}
