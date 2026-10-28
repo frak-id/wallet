@@ -4,6 +4,7 @@ import {
     LogoFrakBadge,
     LogoFrakWithName,
     PeopleFilledIcon,
+    ShieldIcon,
     TabGridIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
@@ -32,7 +33,7 @@ export function Navigation() {
     // Merchant-scoped sections (campaigns, members) bounce back to /dashboard
     // until a merchant exists — disable them and explain why instead of letting
     // the click silently no-op.
-    const { isEmpty } = useMyMerchants();
+    const { isEmpty, isPlatformAdmin } = useMyMerchants();
     const noMerchantHint = isEmpty ? t("shell.nav.noMerchantHint") : undefined;
     const dashboardUrl = merchantId
         ? `/m/${merchantId}/dashboard`
@@ -96,6 +97,25 @@ export function Navigation() {
                         {pageNav(t, "wallet")}
                     </NavigationItem>
                 </ul>
+
+                {isPlatformAdmin && (
+                    <>
+                        <hr className={divider} />
+                        <ul className={itemList}>
+                            <li className={sectionLabelClass}>
+                                <Text variant="bodySmall" color="tertiary">
+                                    {sectionLabel(t, "internal")}
+                                </Text>
+                            </li>
+                            <NavigationItem
+                                url="/internal"
+                                icon={<ShieldIcon width={20} height={20} />}
+                            >
+                                {pageNav(t, "internal")}
+                            </NavigationItem>
+                        </ul>
+                    </>
+                )}
             </Stack>
         </Stack>
     );

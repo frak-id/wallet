@@ -1333,6 +1333,329 @@ export default interface Resources {
         "description": "Set up your reward budget to start distributing rewards to your users."
       }
     },
+    "internal": {
+      "codes": {
+        "downloadQr": "Download the QR (SVG)",
+        "issue": {
+          "description": "New users who enter it at signup get Frak as referrer. Open a game on it to make it a game code.",
+          "issued": "Link behind the QR",
+          "submitRandom": "Issue a random code",
+          "submitVanity": "Issue this code",
+          "title": "Issue a Frak code",
+          "vanityLabel": "Vanity code (optional)",
+          "vanityPlaceholder": "6 characters, random if empty"
+        },
+        "revoke": {
+          "confirm": "Revoke",
+          "description": "Nobody can redeem it anymore. Users who already did keep Frak as referrer.",
+          "descriptionGame": "Nobody can redeem it or join its game anymore. Users who already did keep Frak as referrer.",
+          "title": "Revoke {{code}}?",
+          "trigger": "Revoke"
+        },
+        "showQr": "QR",
+        "status": {
+          "active": "Active",
+          "revoked": "Revoked"
+        },
+        "table": {
+          "code": "Code",
+          "createdAt": "Issued",
+          "empty": "No Frak code yet",
+          "game": "Game",
+          "redemptions": "Referees",
+          "redemptionsValue": "{{active}} / {{total}}",
+          "status": "Status",
+          "title_one": "{{count}} code",
+          "title_other": "{{count}} codes",
+          "viewGame": "View game"
+        }
+      },
+      "draw": {
+        "algorithm": "Algorithm",
+        "beacon": "Beacon",
+        "beaconSigned": "Recorded",
+        "beaconWaiting": "Waiting",
+        "candidate": {
+          "accountCreated": "Account created",
+          "adminOnlyHint": "This draw predates the 24 h window: only you can pass the turn on.",
+          "awaitingAdmin": "Ready for review",
+          "awaitingPlayer": "Waiting for the player",
+          "checkedAt": "Follow checked",
+          "follows": "Follows @frak_fr",
+          "metaDown": "Meta did not answer: the follow shown is the last one we read.",
+          "notToldYet": "Not told yet",
+          "pid": "Public id",
+          "player": "Player",
+          "tickets": "Tickets in the draw",
+          "title": "Candidate #{{rank}}",
+          "verifyBy": "Deadline",
+          "windowHint": "A candidate who is not certified and following has 24 h from their push; then the turn passes to the next one."
+        },
+        "candidates": "Candidates",
+        "candidatesValue": "{{rejected}} rejected of {{total}}",
+        "check": {
+          "algorithm_known": "The algorithm is known",
+          "beacon_signed": "drand signed this round",
+          "candidates_replay": "The candidates replay in the same order",
+          "quicknet_beacon": "The beacon is drand quicknet's",
+          "randomness_matches": "The randomness comes from the signature",
+          "rejections_in_order": "Each rejection passed over the next candidate in order",
+          "root_matches": "The snapshot root hashes the published list",
+          "round_after_freeze": "The round came out after the freeze",
+          "total_matches": "The ticket total adds up",
+          "winner_first_unrejected": "The winner is the first candidate not rejected"
+        },
+        "confirm": {
+          "confirm": "Pay the prize",
+          "description": "Their follow is re-read from Meta, then the prize is paid from the shared bank. This cannot be undone.",
+          "title": "Pay this winner?",
+          "trigger": "Confirm and pay"
+        },
+        "discarded": {
+          "not_following": "Not following",
+          "not_linked": "No Instagram"
+        },
+        "freeze": {
+          "confirm": "Freeze",
+          "description": "Every player's tickets are counted once and published with a future drand round. This cannot be undone.",
+          "title": "Freeze this game's tickets?",
+          "trigger": "Freeze now"
+        },
+        "frozenAt": "Frozen",
+        "notFrozen": "Not frozen yet. The cron freezes a game about an hour after it ends, and gives up 7 days later.",
+        "participants": "Players",
+        "participantsValue": "{{eligible}} eligible of {{total}}",
+        "reason": {
+          "fraud": "Fraud",
+          "ineligible": "Ineligible",
+          "not_following_at_review": "Not following at review",
+          "not_verified_in_time": "Not verified in time",
+          "unreachable": "Unreachable"
+        },
+        "reject": {
+          "confirm": "Reject",
+          "description": "Reason: {{reason}}. The next candidate is up; rejecting the last one leaves the draw without a winner.",
+          "reason": "Rejection reason",
+          "title": "Reject this candidate?",
+          "trigger": "Reject"
+        },
+        "rejection": "#{{rank}}: {{reason}}, by {{actor}} on {{date}}",
+        "rejections": "Rejections",
+        "reload": "Reload",
+        "root": "Snapshot root",
+        "round": "drand round",
+        "status": {
+          "confirmed": "Winner paid",
+          "drawn": "Under review",
+          "frozen": "Frozen",
+          "void": "No winner"
+        },
+        "tickets": "Tickets in the draw",
+        "title": "Draw",
+        "verify": {
+          "allGood": "The draw replays from its public record.",
+          "failed": "The public record does not replay: look at the failing checks.",
+          "publicRecord": "Public record",
+          "run": "Replay the draw",
+          "title": "Verification"
+        },
+        "winner": {
+          "confirmedBy": "confirmed by {{actor}} on {{date}}",
+          "title": "Winner"
+        }
+      },
+      "errors": {
+        "generic": "Something went wrong, try again."
+      },
+      "form": {
+        "budget": "Budget (EURe)",
+        "stepUpHint": "You will be asked to confirm with your second factor.",
+        "unlockDays": "Days to unlock a reward"
+      },
+      "game": {
+        "back": "All games",
+        "create": {
+          "code": "Frak code",
+          "codePlaceholder": "Pick a code",
+          "endsAt": "Ends",
+          "noFreeCode": "Every active Frak code already has a game: issue one in Referral codes first.",
+          "noSponsor": "No sponsor",
+          "prizeAmount": "Prize (EUR)",
+          "prizeDescription": "Prize description",
+          "reward": "Join reward (EURe)",
+          "rewardHint": "Paid once to each new user who joins.",
+          "sponsor": "Sponsor",
+          "startsAt": "Starts",
+          "submit": "Open the game",
+          "title": "Open a game"
+        },
+        "detail": {
+          "days_one": "{{count}} day",
+          "days_other": "{{count}} days",
+          "ended": "Ended",
+          "endsIn": "Ends in {{time}}",
+          "hours_one": "{{count}} hour",
+          "hours_other": "{{count}} hours",
+          "prize": "Prize {{amount}}",
+          "sponsor": "sponsored by {{name}}",
+          "startsIn": "Starts in {{time}}",
+          "window": "{{start}} → {{end}}"
+        },
+        "list": {
+          "budget": "Join rewards",
+          "code": "Code",
+          "create": "New game",
+          "draw": "Draw",
+          "empty": "No game yet",
+          "phase": "Status",
+          "players": "Players",
+          "prize": "Prize",
+          "runDraws": "Run the draw pass",
+          "runDrawsResult": "Frozen {{frozen}}, drawn {{drawn}}, candidate windows moved {{advanced}}.",
+          "title": "Games",
+          "window": "Window"
+        },
+        "notFound": "This game does not exist.",
+        "pause": "Pause",
+        "phase": {
+          "ended": "Ended",
+          "live": "Live",
+          "paused": "Paused",
+          "upcoming": "Upcoming"
+        },
+        "players": {
+          "counts": "Counts",
+          "draw": "Draw",
+          "empty": "Nobody joined yet",
+          "frozen": "As frozen for the draw",
+          "instagram": "Instagram",
+          "joinedAt": "Joined",
+          "live": "Live, counted at {{time}}, refreshed every {{seconds}} s",
+          "player": "Player",
+          "refresh": "Recount now",
+          "search": "Wallet, Instagram or id",
+          "tickets": "Tickets",
+          "title_one": "{{count}} player",
+          "title_other": "{{count}} players",
+          "wouldNotCount": "Would not count"
+        },
+        "resume": "Resume",
+        "stats": {
+          "budget": "Join rewards paid",
+          "budgetOf": "of {{total}}",
+          "bySource": "Tickets by source",
+          "declared_one": "{{count}} declared handle",
+          "declared_other": "{{count}} declared handles",
+          "eligibleFrozen_one": "{{count}} counted in the draw",
+          "eligibleFrozen_other": "{{count}} counted in the draw",
+          "eligibleLive_one": "{{count}} would count in the draw now",
+          "eligibleLive_other": "{{count}} would count in the draw now",
+          "instagram": "Certified followers",
+          "players": "Players",
+          "tickets": "Tickets",
+          "ticketsInDraw_one": "{{count}} in the draw",
+          "ticketsInDraw_other": "{{count}} in the draw"
+        }
+      },
+      "instagram": {
+        "certified": "Certified",
+        "declared": "Declared",
+        "follows": "Follows",
+        "none": "No Instagram",
+        "notFollowing": "Not following",
+        "unknown": "Unknown"
+      },
+      "lookup": {
+        "assets": {
+          "amount": "Amount",
+          "recipient": "As",
+          "status": "Status",
+          "title": "Rewards",
+          "tx": "Transaction"
+        },
+        "cancelled": "Cancelled",
+        "date": "Date",
+        "description": "Everything we know about one person: identity, referrals, interactions and rewards.",
+        "groupCreated": "Created {{date}}",
+        "identity": "Identity",
+        "interactions": "Interactions",
+        "latest": "latest {{shown}} of {{total}}",
+        "links": {
+          "active": "Active",
+          "crossMerchant": "Every merchant",
+          "referee": "Referee",
+          "referrer": "Referrer",
+          "removed": "Removed",
+          "source": "Source",
+          "state": "State"
+        },
+        "merchant": "Merchant",
+        "merged_one": "{{count}} merged group",
+        "merged_other": "{{count}} merged groups",
+        "none": "Nothing",
+        "payload": "Payload",
+        "placeholder": "Wallet address, email or identity group id",
+        "referees": "Referred",
+        "referrers": "Referred by",
+        "submit": "Search",
+        "type": "Type"
+      },
+      "rule": {
+        "budget": "Budget used",
+        "budgetValue": "{{used}} used of {{total}}",
+        "recipient": {
+          "referee": "Friend",
+          "referrer": "Referrer"
+        },
+        "reward": "{{recipient}} {{amount}}",
+        "status": {
+          "active": "Live",
+          "archived": "Archived",
+          "draft": "Draft",
+          "paused": "Paused"
+        },
+        "unlimited": "no limit"
+      },
+      "setup": {
+        "merchant": {
+          "bank": "Bank",
+          "description": "Pays the game rewards and prizes from the shared campaign bank. Seed it once per environment.",
+          "domain": "Domain",
+          "owner": "Owner",
+          "ownerHint": "Wallet address or business account id. Defaults to you.",
+          "submit": "Seed the Frak merchant",
+          "title": "Frak merchant"
+        },
+        "missing": "Missing",
+        "ready": "Ready",
+        "signupRule": {
+          "description": "Paid to both sides when a friend signs up with a user's code.",
+          "needsMerchant": "Seed the Frak merchant first.",
+          "pauseHint": "Pause it from the Frak merchant's campaigns to publish a new one.",
+          "referee": "Friend (EURe)",
+          "referrer": "Referrer (EURe)",
+          "submit": "Publish the signup reward",
+          "title": "Signup reward"
+        }
+      },
+      "setupCode": {
+        "description": "Lets a merchant register a domain without the DNS record. It only works for this domain and this owner.",
+        "domain": "Merchant domain",
+        "owner": "Owner",
+        "ownerHint": "Their wallet address, or their email when they log in without a wallet.",
+        "result": "Setup code for {{domain}}",
+        "submit": "Generate",
+        "title": "Merchant setup code"
+      },
+      "tickets": {
+        "brandShare": "brand share",
+        "instagramCertified": "Instagram",
+        "join": "join",
+        "purchase": "purchase",
+        "referredPurchase": "friend's purchase",
+        "referredSignup": "friend's signup"
+      }
+    },
     "members": {
       "audience": {
         "minMember": "You need at least 1 member to continue",
@@ -2111,6 +2434,21 @@ export default interface Resources {
         "funding": {
           "nav": "Funding"
         },
+        "internal": {
+          "nav": "Internal"
+        },
+        "internalCodes": {
+          "nav": "Referral codes"
+        },
+        "internalGame": {
+          "nav": "Frak Game"
+        },
+        "internalLookup": {
+          "nav": "Lookup"
+        },
+        "internalSetupCode": {
+          "nav": "Setup code"
+        },
         "members": {
           "nav": "Members",
           "title": "Members List"
@@ -2136,6 +2474,7 @@ export default interface Resources {
       },
       "sections": {
         "acquisition": "Acquisition",
+        "internal": "Frak",
         "preview": "Preview"
       }
     },

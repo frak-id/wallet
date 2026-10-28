@@ -42,6 +42,16 @@ function labelFor(segment: string, t: TFunction): string {
             return pageNav(t, "setupStatus");
         case "affiliate-report":
             return pageNav(t, "campaignsAffiliateReport");
+        case "internal":
+            return pageNav(t, "internal");
+        case "game":
+            return pageNav(t, "internalGame");
+        case "codes":
+            return pageNav(t, "internalCodes");
+        case "lookup":
+            return pageNav(t, "internalLookup");
+        case "setup-code":
+            return pageNav(t, "internalSetupCode");
         default:
             return segment.charAt(0).toUpperCase() + segment.slice(1);
     }

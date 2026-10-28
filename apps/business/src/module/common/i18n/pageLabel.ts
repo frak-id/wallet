@@ -14,9 +14,14 @@ export type PageKey =
     | "funding"
     | "setupStatus"
     | "push"
-    | "pushCreate";
+    | "pushCreate"
+    | "internal"
+    | "internalGame"
+    | "internalCodes"
+    | "internalLookup"
+    | "internalSetupCode";
 
-export type SectionKey = "acquisition" | "preview";
+export type SectionKey = "acquisition" | "preview" | "internal";
 
 // Pages that ship a dedicated standalone title (h1) different from their
 // sidebar/header nav label. Anything not in this set falls back to `nav`.

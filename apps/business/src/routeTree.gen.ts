@@ -16,6 +16,7 @@ import { Route as InviteRouteImport } from './routes/invite'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
+import { Route as RestrictedInternalRouteImport } from './routes/_restricted/internal'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
@@ -24,12 +25,18 @@ import { Route as LoginShopifyRouteImport } from './routes/login/shopify'
 import { Route as RestrictedCampaignsIndexRouteImport } from './routes/_restricted/campaigns/index'
 import { Route as RestrictedCampaignsCampaignIdRouteImport } from './routes/_restricted/campaigns/$campaignId'
 import { Route as RestrictedCampaignsListRouteImport } from './routes/_restricted/campaigns/list'
+import { Route as RestrictedInternalIndexRouteImport } from './routes/_restricted/internal/index'
+import { Route as RestrictedInternalCodesRouteImport } from './routes/_restricted/internal/codes'
+import { Route as RestrictedInternalLookupRouteImport } from './routes/_restricted/internal/lookup'
+import { Route as RestrictedInternalSetupCodeRouteImport } from './routes/_restricted/internal/setup-code'
 import { Route as RestrictedMMerchantIdRouteImport } from './routes/_restricted/m/$merchantId'
 import { Route as RestrictedMerchantNewRouteImport } from './routes/_restricted/merchant/new'
 import { Route as RestrictedPushCreateRouteImport } from './routes/_restricted/push/create'
 import { Route as RestrictedSettingsIndexRouteImport } from './routes/_restricted/settings/index'
 import { Route as RestrictedSettingsBillingRouteImport } from './routes/_restricted/settings/billing'
 import { Route as RestrictedCampaignsDraftNewRouteImport } from './routes/_restricted/campaigns/draft/new'
+import { Route as RestrictedInternalGameIndexRouteImport } from './routes/_restricted/internal/game/index'
+import { Route as RestrictedInternalGameGameIdRouteImport } from './routes/_restricted/internal/game/$gameId'
 import { Route as RestrictedMMerchantIdDashboardRouteImport } from './routes/_restricted/m/$merchantId/dashboard'
 import { Route as RestrictedMMerchantIdMembersRouteImport } from './routes/_restricted/m/$merchantId/members'
 import { Route as RestrictedMerchantIdIndexRouteImport } from './routes/_restricted/merchant/$id/index'
@@ -96,6 +103,11 @@ const RestrictedDashboardRoute = RestrictedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => RestrictedRoute,
 } as any)
+const RestrictedInternalRoute = RestrictedInternalRouteImport.update({
+  id: '/internal',
+  path: '/internal',
+  getParentRoute: () => RestrictedRoute,
+} as any)
 const RestrictedMembersRoute = RestrictedMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -138,6 +150,28 @@ const RestrictedCampaignsListRoute = RestrictedCampaignsListRouteImport.update({
   path: '/campaigns/list',
   getParentRoute: () => RestrictedRoute,
 } as any)
+const RestrictedInternalIndexRoute = RestrictedInternalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RestrictedInternalRoute,
+} as any)
+const RestrictedInternalCodesRoute = RestrictedInternalCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => RestrictedInternalRoute,
+} as any)
+const RestrictedInternalLookupRoute =
+  RestrictedInternalLookupRouteImport.update({
+    id: '/lookup',
+    path: '/lookup',
+    getParentRoute: () => RestrictedInternalRoute,
+  } as any)
+const RestrictedInternalSetupCodeRoute =
+  RestrictedInternalSetupCodeRouteImport.update({
+    id: '/setup-code',
+    path: '/setup-code',
+    getParentRoute: () => RestrictedInternalRoute,
+  } as any)
 const RestrictedMMerchantIdRoute = RestrictedMMerchantIdRouteImport.update({
   id: '/m/$merchantId',
   path: '/m/$merchantId',
@@ -169,6 +203,18 @@ const RestrictedCampaignsDraftNewRoute =
     id: '/campaigns/draft/new',
     path: '/campaigns/draft/new',
     getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedInternalGameIndexRoute =
+  RestrictedInternalGameIndexRouteImport.update({
+    id: '/game/',
+    path: '/game/',
+    getParentRoute: () => RestrictedInternalRoute,
+  } as any)
+const RestrictedInternalGameGameIdRoute =
+  RestrictedInternalGameGameIdRouteImport.update({
+    id: '/game/$gameId',
+    path: '/game/$gameId',
+    getParentRoute: () => RestrictedInternalRoute,
   } as any)
 const RestrictedMMerchantIdDashboardRoute =
   RestrictedMMerchantIdDashboardRouteImport.update({
@@ -364,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
+  '/internal': typeof RestrictedInternalRouteWithChildren
   '/members': typeof RestrictedMembersRoute
   '/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
@@ -371,19 +418,25 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/internal/codes': typeof RestrictedInternalCodesRoute
+  '/internal/lookup': typeof RestrictedInternalLookupRoute
+  '/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/merchant/new': typeof RestrictedMerchantNewRoute
   '/push/create': typeof RestrictedPushCreateRoute
   '/settings/billing': typeof RestrictedSettingsBillingRoute
   '/campaigns/': typeof RestrictedCampaignsIndexRoute
+  '/internal/': typeof RestrictedInternalIndexRoute
   '/settings/': typeof RestrictedSettingsIndexRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
+  '/internal/game/$gameId': typeof RestrictedInternalGameGameIdRoute
   '/m/$merchantId/dashboard': typeof RestrictedMMerchantIdDashboardRoute
   '/m/$merchantId/members': typeof RestrictedMMerchantIdMembersRoute
   '/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
+  '/internal/game/': typeof RestrictedInternalGameIndexRoute
   '/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/affiliate-report': typeof RestrictedMMerchantIdCampaignsAffiliateReportRoute
@@ -422,19 +475,25 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/internal/codes': typeof RestrictedInternalCodesRoute
+  '/internal/lookup': typeof RestrictedInternalLookupRoute
+  '/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/merchant/new': typeof RestrictedMerchantNewRoute
   '/push/create': typeof RestrictedPushCreateRoute
   '/settings/billing': typeof RestrictedSettingsBillingRoute
   '/campaigns': typeof RestrictedCampaignsIndexRoute
+  '/internal': typeof RestrictedInternalIndexRoute
   '/settings': typeof RestrictedSettingsIndexRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
+  '/internal/game/$gameId': typeof RestrictedInternalGameGameIdRoute
   '/m/$merchantId/dashboard': typeof RestrictedMMerchantIdDashboardRoute
   '/m/$merchantId/members': typeof RestrictedMMerchantIdMembersRoute
   '/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
+  '/internal/game': typeof RestrictedInternalGameIndexRoute
   '/merchant/$id': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/affiliate-report': typeof RestrictedMMerchantIdCampaignsAffiliateReportRoute
@@ -469,6 +528,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
+  '/_restricted/internal': typeof RestrictedInternalRouteWithChildren
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
@@ -476,19 +536,25 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/_restricted/internal/codes': typeof RestrictedInternalCodesRoute
+  '/_restricted/internal/lookup': typeof RestrictedInternalLookupRoute
+  '/_restricted/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
   '/_restricted/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/_restricted/merchant/new': typeof RestrictedMerchantNewRoute
   '/_restricted/push/create': typeof RestrictedPushCreateRoute
   '/_restricted/settings/billing': typeof RestrictedSettingsBillingRoute
   '/_restricted/campaigns/': typeof RestrictedCampaignsIndexRoute
+  '/_restricted/internal/': typeof RestrictedInternalIndexRoute
   '/_restricted/settings/': typeof RestrictedSettingsIndexRoute
   '/_restricted/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
+  '/_restricted/internal/game/$gameId': typeof RestrictedInternalGameGameIdRoute
   '/_restricted/m/$merchantId/dashboard': typeof RestrictedMMerchantIdDashboardRoute
   '/_restricted/m/$merchantId/members': typeof RestrictedMMerchantIdMembersRoute
   '/_restricted/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/_restricted/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/_restricted/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/_restricted/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
+  '/_restricted/internal/game/': typeof RestrictedInternalGameIndexRoute
   '/_restricted/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/_restricted/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/_restricted/m/$merchantId/campaigns/affiliate-report': typeof RestrictedMMerchantIdCampaignsAffiliateReportRoute
@@ -524,6 +590,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/verify-email'
     | '/dashboard'
+    | '/internal'
     | '/members'
     | '/settings'
     | '/login/2fa'
@@ -531,19 +598,25 @@ export interface FileRouteTypes {
     | '/login/'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
+    | '/internal/codes'
+    | '/internal/lookup'
+    | '/internal/setup-code'
     | '/m/$merchantId'
     | '/merchant/new'
     | '/push/create'
     | '/settings/billing'
     | '/campaigns/'
+    | '/internal/'
     | '/settings/'
     | '/campaigns/draft/new'
+    | '/internal/game/$gameId'
     | '/m/$merchantId/dashboard'
     | '/m/$merchantId/members'
     | '/merchant/$id/customize'
     | '/merchant/$id/funding'
     | '/merchant/$id/setup-status'
     | '/merchant/$id/team'
+    | '/internal/game/'
     | '/merchant/$id/'
     | '/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/affiliate-report'
@@ -582,19 +655,25 @@ export interface FileRouteTypes {
     | '/login'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
+    | '/internal/codes'
+    | '/internal/lookup'
+    | '/internal/setup-code'
     | '/m/$merchantId'
     | '/merchant/new'
     | '/push/create'
     | '/settings/billing'
     | '/campaigns'
+    | '/internal'
     | '/settings'
     | '/campaigns/draft/new'
+    | '/internal/game/$gameId'
     | '/m/$merchantId/dashboard'
     | '/m/$merchantId/members'
     | '/merchant/$id/customize'
     | '/merchant/$id/funding'
     | '/merchant/$id/setup-status'
     | '/merchant/$id/team'
+    | '/internal/game'
     | '/merchant/$id'
     | '/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/affiliate-report'
@@ -628,6 +707,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/verify-email'
     | '/_restricted/dashboard'
+    | '/_restricted/internal'
     | '/_restricted/members'
     | '/_restricted/settings'
     | '/login/2fa'
@@ -635,19 +715,25 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
+    | '/_restricted/internal/codes'
+    | '/_restricted/internal/lookup'
+    | '/_restricted/internal/setup-code'
     | '/_restricted/m/$merchantId'
     | '/_restricted/merchant/new'
     | '/_restricted/push/create'
     | '/_restricted/settings/billing'
     | '/_restricted/campaigns/'
+    | '/_restricted/internal/'
     | '/_restricted/settings/'
     | '/_restricted/campaigns/draft/new'
+    | '/_restricted/internal/game/$gameId'
     | '/_restricted/m/$merchantId/dashboard'
     | '/_restricted/m/$merchantId/members'
     | '/_restricted/merchant/$id/customize'
     | '/_restricted/merchant/$id/funding'
     | '/_restricted/merchant/$id/setup-status'
     | '/_restricted/merchant/$id/team'
+    | '/_restricted/internal/game/'
     | '/_restricted/merchant/$id/'
     | '/_restricted/campaigns/draft/$campaignId/validation'
     | '/_restricted/m/$merchantId/campaigns/affiliate-report'
@@ -735,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedDashboardRouteImport
       parentRoute: typeof RestrictedRoute
     }
+    '/_restricted/internal': {
+      id: '/_restricted/internal'
+      path: '/internal'
+      fullPath: '/internal'
+      preLoaderRoute: typeof RestrictedInternalRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
     '/_restricted/members': {
       id: '/_restricted/members'
       path: '/members'
@@ -791,6 +884,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedCampaignsListRouteImport
       parentRoute: typeof RestrictedRoute
     }
+    '/_restricted/internal/': {
+      id: '/_restricted/internal/'
+      path: '/'
+      fullPath: '/internal/'
+      preLoaderRoute: typeof RestrictedInternalIndexRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
+    '/_restricted/internal/codes': {
+      id: '/_restricted/internal/codes'
+      path: '/codes'
+      fullPath: '/internal/codes'
+      preLoaderRoute: typeof RestrictedInternalCodesRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
+    '/_restricted/internal/lookup': {
+      id: '/_restricted/internal/lookup'
+      path: '/lookup'
+      fullPath: '/internal/lookup'
+      preLoaderRoute: typeof RestrictedInternalLookupRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
+    '/_restricted/internal/setup-code': {
+      id: '/_restricted/internal/setup-code'
+      path: '/setup-code'
+      fullPath: '/internal/setup-code'
+      preLoaderRoute: typeof RestrictedInternalSetupCodeRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
     '/_restricted/m/$merchantId': {
       id: '/_restricted/m/$merchantId'
       path: '/m/$merchantId'
@@ -832,6 +953,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/campaigns/draft/new'
       preLoaderRoute: typeof RestrictedCampaignsDraftNewRouteImport
       parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/internal/game/': {
+      id: '/_restricted/internal/game/'
+      path: '/game'
+      fullPath: '/internal/game/'
+      preLoaderRoute: typeof RestrictedInternalGameIndexRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
+    '/_restricted/internal/game/$gameId': {
+      id: '/_restricted/internal/game/$gameId'
+      path: '/game/$gameId'
+      fullPath: '/internal/game/$gameId'
+      preLoaderRoute: typeof RestrictedInternalGameGameIdRouteImport
+      parentRoute: typeof RestrictedInternalRoute
     }
     '/_restricted/m/$merchantId/dashboard': {
       id: '/_restricted/m/$merchantId/dashboard'
@@ -1053,6 +1188,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface RestrictedInternalRouteChildren {
+  RestrictedInternalCodesRoute: typeof RestrictedInternalCodesRoute
+  RestrictedInternalLookupRoute: typeof RestrictedInternalLookupRoute
+  RestrictedInternalSetupCodeRoute: typeof RestrictedInternalSetupCodeRoute
+  RestrictedInternalIndexRoute: typeof RestrictedInternalIndexRoute
+  RestrictedInternalGameGameIdRoute: typeof RestrictedInternalGameGameIdRoute
+  RestrictedInternalGameIndexRoute: typeof RestrictedInternalGameIndexRoute
+}
+
+const RestrictedInternalRouteChildren: RestrictedInternalRouteChildren = {
+  RestrictedInternalCodesRoute: RestrictedInternalCodesRoute,
+  RestrictedInternalLookupRoute: RestrictedInternalLookupRoute,
+  RestrictedInternalSetupCodeRoute: RestrictedInternalSetupCodeRoute,
+  RestrictedInternalIndexRoute: RestrictedInternalIndexRoute,
+  RestrictedInternalGameGameIdRoute: RestrictedInternalGameGameIdRoute,
+  RestrictedInternalGameIndexRoute: RestrictedInternalGameIndexRoute,
+}
+
+const RestrictedInternalRouteWithChildren =
+  RestrictedInternalRoute._addFileChildren(RestrictedInternalRouteChildren)
+
 interface RestrictedSettingsRouteChildren {
   RestrictedSettingsBillingRoute: typeof RestrictedSettingsBillingRoute
   RestrictedSettingsIndexRoute: typeof RestrictedSettingsIndexRoute
@@ -1159,6 +1315,7 @@ const RestrictedMMerchantIdRouteWithChildren =
 
 interface RestrictedRouteChildren {
   RestrictedDashboardRoute: typeof RestrictedDashboardRoute
+  RestrictedInternalRoute: typeof RestrictedInternalRouteWithChildren
   RestrictedMembersRoute: typeof RestrictedMembersRoute
   RestrictedSettingsRoute: typeof RestrictedSettingsRouteWithChildren
   RestrictedCampaignsCampaignIdRoute: typeof RestrictedCampaignsCampaignIdRoute
@@ -1179,6 +1336,7 @@ interface RestrictedRouteChildren {
 
 const RestrictedRouteChildren: RestrictedRouteChildren = {
   RestrictedDashboardRoute: RestrictedDashboardRoute,
+  RestrictedInternalRoute: RestrictedInternalRouteWithChildren,
   RestrictedMembersRoute: RestrictedMembersRoute,
   RestrictedSettingsRoute: RestrictedSettingsRouteWithChildren,
   RestrictedCampaignsCampaignIdRoute: RestrictedCampaignsCampaignIdRoute,

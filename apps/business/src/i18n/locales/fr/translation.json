@@ -185,7 +185,8 @@
         },
         "sections": {
             "acquisition": "Acquisition",
-            "preview": "Aperçu"
+            "preview": "Aperçu",
+            "internal": "Frak"
         },
         "pages": {
             "dashboard": {
@@ -231,6 +232,21 @@
             },
             "pushCreate": {
                 "nav": "Créer"
+            },
+            "internal": {
+                "nav": "Interne"
+            },
+            "internalGame": {
+                "nav": "Jeu Frak"
+            },
+            "internalCodes": {
+                "nav": "Codes de parrainage"
+            },
+            "internalLookup": {
+                "nav": "Recherche"
+            },
+            "internalSetupCode": {
+                "nav": "Code d'installation"
             }
         },
         "header": {
@@ -2142,5 +2158,328 @@
         "title": "🚀 Votre nouveau dashboard Frak est arrivé",
         "description": "Nous avons repensé le dashboard Frak pour simplifier plus que jamais la gestion de vos campagnes et le suivi de vos performances.",
         "cta": "Découvrir le nouveau dashboard"
+    },
+    "internal": {
+        "errors": {
+            "generic": "Une erreur est survenue, réessaie."
+        },
+        "form": {
+            "budget": "Budget (EURe)",
+            "unlockDays": "Jours pour débloquer une récompense",
+            "stepUpHint": "Ton second facteur te sera demandé pour confirmer."
+        },
+        "setup": {
+            "ready": "Prêt",
+            "missing": "Manquant",
+            "merchant": {
+                "title": "Marchand Frak",
+                "description": "Paie les récompenses et les lots du jeu depuis la banque de campagne partagée. À créer une fois par environnement.",
+                "domain": "Domaine",
+                "bank": "Banque",
+                "owner": "Propriétaire",
+                "ownerHint": "Adresse de wallet ou id de compte business. Toi par défaut.",
+                "submit": "Créer le marchand Frak"
+            },
+            "signupRule": {
+                "title": "Récompense d'inscription",
+                "description": "Versée aux deux côtés quand un ami s'inscrit avec le code d'un utilisateur.",
+                "needsMerchant": "Crée d'abord le marchand Frak.",
+                "referrer": "Parrain (EURe)",
+                "referee": "Ami (EURe)",
+                "submit": "Publier la récompense d'inscription",
+                "pauseHint": "Mets-la en pause depuis les campagnes du marchand Frak pour en publier une nouvelle."
+            }
+        },
+        "rule": {
+            "reward": "{{recipient}} {{amount}}",
+            "recipient": {
+                "referrer": "Parrain",
+                "referee": "Ami"
+            },
+            "status": {
+                "draft": "Brouillon",
+                "active": "En ligne",
+                "paused": "En pause",
+                "archived": "Archivée"
+            },
+            "budget": "Budget utilisé",
+            "budgetValue": "{{used}} utilisés sur {{total}}",
+            "unlimited": "sans limite"
+        },
+        "tickets": {
+            "join": "participation",
+            "instagramCertified": "Instagram",
+            "purchase": "achat",
+            "referredPurchase": "achat d'un ami",
+            "referredSignup": "inscription d'un ami",
+            "brandShare": "partage de marque"
+        },
+        "instagram": {
+            "none": "Pas d'Instagram",
+            "certified": "Certifié",
+            "declared": "Déclaré",
+            "follows": "Abonné",
+            "notFollowing": "Pas abonné",
+            "unknown": "Inconnu"
+        },
+        "game": {
+            "phase": {
+                "upcoming": "À venir",
+                "live": "En cours",
+                "paused": "En pause",
+                "ended": "Terminé"
+            },
+            "pause": "Mettre en pause",
+            "resume": "Reprendre",
+            "back": "Tous les jeux",
+            "notFound": "Ce jeu n'existe pas.",
+            "list": {
+                "title": "Jeux",
+                "create": "Nouveau jeu",
+                "runDraws": "Lancer le passage du tirage",
+                "runDrawsResult": "{{frozen}} gelé(s), {{drawn}} tiré(s), {{advanced}} fenêtre(s) de candidat avancée(s).",
+                "code": "Code",
+                "phase": "Statut",
+                "window": "Période",
+                "prize": "Lot",
+                "players": "Joueurs",
+                "budget": "Récompenses de participation",
+                "draw": "Tirage",
+                "empty": "Aucun jeu pour l'instant"
+            },
+            "create": {
+                "title": "Ouvrir un jeu",
+                "noFreeCode": "Tous les codes Frak actifs ont déjà un jeu : crée-en un dans Codes de parrainage d'abord.",
+                "code": "Code Frak",
+                "codePlaceholder": "Choisis un code",
+                "startsAt": "Début",
+                "endsAt": "Fin",
+                "reward": "Récompense de participation (EURe)",
+                "rewardHint": "Versée une fois à chaque nouvel utilisateur qui participe.",
+                "prizeAmount": "Lot (EUR)",
+                "prizeDescription": "Description du lot",
+                "sponsor": "Sponsor",
+                "noSponsor": "Sans sponsor",
+                "submit": "Ouvrir le jeu"
+            },
+            "detail": {
+                "window": "{{start}} → {{end}}",
+                "prize": "Lot {{amount}}",
+                "sponsor": "sponsorisé par {{name}}",
+                "ended": "Terminé",
+                "startsIn": "Commence dans {{time}}",
+                "endsIn": "Se termine dans {{time}}",
+                "hours_one": "{{count}} heure",
+                "hours_other": "{{count}} heures",
+                "days_one": "{{count}} jour",
+                "days_other": "{{count}} jours"
+            },
+            "stats": {
+                "players": "Joueurs",
+                "eligibleLive_one": "{{count}} compterait dans le tirage maintenant",
+                "eligibleLive_other": "{{count}} compteraient dans le tirage maintenant",
+                "eligibleFrozen_one": "{{count}} compté dans le tirage",
+                "eligibleFrozen_other": "{{count}} comptés dans le tirage",
+                "tickets": "Tickets",
+                "ticketsInDraw_one": "{{count}} dans le tirage",
+                "ticketsInDraw_other": "{{count}} dans le tirage",
+                "instagram": "Abonnés certifiés",
+                "declared_one": "{{count}} compte déclaré",
+                "declared_other": "{{count}} comptes déclarés",
+                "budget": "Récompenses versées",
+                "budgetOf": "sur {{total}}",
+                "bySource": "Tickets par source"
+            },
+            "players": {
+                "title_one": "{{count}} joueur",
+                "title_other": "{{count}} joueurs",
+                "live": "En direct, compté à {{time}}, rafraîchi toutes les {{seconds}} s",
+                "frozen": "Tels que gelés pour le tirage",
+                "search": "Wallet, Instagram ou id",
+                "refresh": "Recompter",
+                "player": "Joueur",
+                "instagram": "Instagram",
+                "joinedAt": "Arrivé",
+                "tickets": "Tickets",
+                "draw": "Tirage",
+                "counts": "Compte",
+                "wouldNotCount": "Ne compterait pas",
+                "empty": "Personne n'a encore participé"
+            }
+        },
+        "draw": {
+            "title": "Tirage",
+            "reload": "Recharger",
+            "status": {
+                "frozen": "Gelé",
+                "drawn": "En revue",
+                "confirmed": "Gagnant payé",
+                "void": "Pas de gagnant"
+            },
+            "discarded": {
+                "not_following": "Pas abonné",
+                "not_linked": "Pas d'Instagram"
+            },
+            "notFrozen": "Pas encore gelé. Le cron gèle un jeu environ une heure après sa fin, et abandonne 7 jours plus tard.",
+            "freeze": {
+                "trigger": "Geler maintenant",
+                "title": "Geler les tickets de ce jeu ?",
+                "description": "Les tickets de chaque joueur sont comptés une fois et publiés avec un futur round drand. C'est irréversible.",
+                "confirm": "Geler"
+            },
+            "frozenAt": "Gelé",
+            "participants": "Joueurs",
+            "participantsValue": "{{eligible}} éligibles sur {{total}}",
+            "tickets": "Tickets dans le tirage",
+            "candidates": "Candidats",
+            "candidatesValue": "{{rejected}} rejetés sur {{total}}",
+            "round": "Round drand",
+            "beacon": "Balise",
+            "beaconSigned": "Enregistrée",
+            "beaconWaiting": "En attente",
+            "root": "Racine du snapshot",
+            "algorithm": "Algorithme",
+            "candidate": {
+                "title": "Candidat n°{{rank}}",
+                "awaitingAdmin": "Prêt pour la revue",
+                "awaitingPlayer": "En attente du joueur",
+                "metaDown": "Meta n'a pas répondu : l'abonnement affiché est le dernier lu.",
+                "player": "Joueur",
+                "accountCreated": "Compte créé",
+                "tickets": "Tickets dans le tirage",
+                "pid": "Id public",
+                "follows": "Abonné à @frak_fr",
+                "checkedAt": "Abonnement vérifié",
+                "verifyBy": "Échéance",
+                "notToldYet": "Pas encore prévenu",
+                "windowHint": "Un candidat qui n'est pas certifié et abonné a 24 h après sa notification ; ensuite le tour passe au suivant.",
+                "adminOnlyHint": "Ce tirage précède la fenêtre de 24 h : toi seul peux passer au candidat suivant."
+            },
+            "reason": {
+                "not_verified_in_time": "Pas vérifié à temps",
+                "not_following_at_review": "Pas abonné à la revue",
+                "fraud": "Fraude",
+                "unreachable": "Injoignable",
+                "ineligible": "Inéligible"
+            },
+            "reject": {
+                "trigger": "Rejeter",
+                "reason": "Motif du rejet",
+                "title": "Rejeter ce candidat ?",
+                "description": "Motif : {{reason}}. Le candidat suivant prend la main ; rejeter le dernier laisse le tirage sans gagnant.",
+                "confirm": "Rejeter"
+            },
+            "confirm": {
+                "trigger": "Confirmer et payer",
+                "title": "Payer ce gagnant ?",
+                "description": "Son abonnement est relu chez Meta, puis le lot est payé depuis la banque partagée. C'est irréversible.",
+                "confirm": "Payer le lot"
+            },
+            "winner": {
+                "title": "Gagnant",
+                "confirmedBy": "confirmé par {{actor}} le {{date}}"
+            },
+            "rejections": "Rejets",
+            "rejection": "n°{{rank}} : {{reason}}, par {{actor}} le {{date}}",
+            "verify": {
+                "title": "Vérification",
+                "publicRecord": "Registre public",
+                "run": "Rejouer le tirage",
+                "allGood": "Le tirage se rejoue depuis son registre public.",
+                "failed": "Le registre public ne se rejoue pas : regarde les vérifications en échec."
+            },
+            "check": {
+                "algorithm_known": "L'algorithme est connu",
+                "root_matches": "La racine du snapshot hache la liste publiée",
+                "total_matches": "Le total des tickets est juste",
+                "quicknet_beacon": "La balise est celle de drand quicknet",
+                "round_after_freeze": "Le round est sorti après le gel",
+                "beacon_signed": "drand a signé ce round",
+                "randomness_matches": "L'aléa vient de la signature",
+                "candidates_replay": "Les candidats se rejouent dans le même ordre",
+                "rejections_in_order": "Chaque rejet est passé au candidat suivant dans l'ordre",
+                "winner_first_unrejected": "Le gagnant est le premier candidat non rejeté"
+            }
+        },
+        "codes": {
+            "showQr": "QR",
+            "downloadQr": "Télécharger le QR (SVG)",
+            "issue": {
+                "title": "Créer un code Frak",
+                "description": "Les nouveaux utilisateurs qui le saisissent à l'inscription ont Frak comme parrain. Ouvre un jeu dessus pour en faire un code de jeu.",
+                "vanityLabel": "Code personnalisé (optionnel)",
+                "vanityPlaceholder": "6 caractères, aléatoire si vide",
+                "submitRandom": "Créer un code aléatoire",
+                "submitVanity": "Créer ce code",
+                "issued": "Lien derrière le QR"
+            },
+            "status": {
+                "active": "Actif",
+                "revoked": "Révoqué"
+            },
+            "table": {
+                "title_one": "{{count}} code",
+                "title_other": "{{count}} codes",
+                "code": "Code",
+                "status": "Statut",
+                "redemptions": "Filleuls",
+                "redemptionsValue": "{{active}} / {{total}}",
+                "game": "Jeu",
+                "viewGame": "Voir le jeu",
+                "createdAt": "Créé",
+                "empty": "Aucun code Frak pour l'instant"
+            },
+            "revoke": {
+                "trigger": "Révoquer",
+                "title": "Révoquer {{code}} ?",
+                "description": "Plus personne ne pourra l'utiliser. Ceux qui l'ont déjà fait gardent Frak comme parrain.",
+                "descriptionGame": "Plus personne ne pourra l'utiliser ni rejoindre son jeu. Ceux qui l'ont déjà fait gardent Frak comme parrain.",
+                "confirm": "Révoquer"
+            }
+        },
+        "lookup": {
+            "description": "Tout ce qu'on sait sur une personne : identité, parrainages, interactions et récompenses.",
+            "placeholder": "Adresse de wallet, email ou id de groupe d'identité",
+            "submit": "Rechercher",
+            "latest": "les {{shown}} derniers sur {{total}}",
+            "identity": "Identité",
+            "groupCreated": "Créé le {{date}}",
+            "merged_one": "{{count}} groupe fusionné",
+            "merged_other": "{{count}} groupes fusionnés",
+            "referrers": "Parrainé par",
+            "referees": "A parrainé",
+            "interactions": "Interactions",
+            "merchant": "Marchand",
+            "date": "Date",
+            "type": "Type",
+            "payload": "Contenu",
+            "cancelled": "Annulée",
+            "none": "Rien",
+            "links": {
+                "referrer": "Parrain",
+                "referee": "Filleul",
+                "crossMerchant": "Tous les marchands",
+                "source": "Source",
+                "state": "État",
+                "active": "Actif",
+                "removed": "Retiré"
+            },
+            "assets": {
+                "title": "Récompenses",
+                "amount": "Montant",
+                "status": "Statut",
+                "recipient": "En tant que",
+                "tx": "Transaction"
+            }
+        },
+        "setupCode": {
+            "title": "Code d'installation marchand",
+            "description": "Permet à un marchand d'enregistrer un domaine sans l'enregistrement DNS. Il ne marche que pour ce domaine et ce propriétaire.",
+            "domain": "Domaine du marchand",
+            "owner": "Propriétaire",
+            "ownerHint": "Son adresse de wallet, ou son email s'il se connecte sans wallet.",
+            "submit": "Générer",
+            "result": "Code d'installation pour {{domain}}"
+        }
     }
 }

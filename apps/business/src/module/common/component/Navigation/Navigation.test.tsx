@@ -94,6 +94,28 @@ describe("Navigation", () => {
         });
         expect(members).toHaveAttribute("aria-disabled", "true");
     });
+
+    it.each([
+        { isPlatformAdmin: false, shown: false },
+        { isPlatformAdmin: true, shown: true },
+    ])(
+        "shows the internal page to platform admins only ($isPlatformAdmin)",
+        ({ isPlatformAdmin, shown }) => {
+            mockUseMyMerchants.mockReturnValue({
+                isEmpty: false,
+                isPlatformAdmin,
+                merchants: [{ id: "m1" }],
+            });
+            const { container } = render(<Navigation />);
+
+            expect(
+                container.querySelector('a[href="/internal"]') !== null
+            ).toBe(shown);
+            expect(screen.queryByText("shell.sections.internal") !== null).toBe(
+                shown
+            );
+        }
+    );
 });
 
 describe("NavigationItem", () => {
