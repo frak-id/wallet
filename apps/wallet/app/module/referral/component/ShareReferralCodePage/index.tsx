@@ -10,6 +10,7 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    trackEvent,
     useCopyToClipboardWithState,
     useReferralStatus,
 } from "@frak-labs/wallet-shared";
@@ -94,6 +95,7 @@ export function ShareReferralCodePage() {
     const handleCopy = () => {
         if (!ownedCode) return;
         copy(ownedCode.code);
+        trackEvent("sharing_link_copied", { source: "referral_code" });
     };
 
     const handleShare = async () => {
@@ -108,10 +110,18 @@ export function ShareReferralCodePage() {
             // Swallow rejections (the user dismissing the share sheet
             // throws AbortError); falling through to `copy()` here would
             // re-fire the "copied" toast they didn't ask for.
-            await navigator.share({ text: shareText }).catch(() => {});
+            trackEvent("sharing_link_started", { source: "referral_code" });
+            await navigator.share({ text: shareText }).then(
+                () =>
+                    trackEvent("sharing_link_shared", {
+                        source: "referral_code",
+                    }),
+                () => {}
+            );
             return;
         }
         copy(shareText);
+        trackEvent("sharing_link_copied", { source: "referral_code" });
     };
 
     return (
