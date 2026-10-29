@@ -18,11 +18,12 @@ import {
 import {
     getErrorCode,
     openExternalUrl,
+    trackEvent,
     ua,
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared";
 import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
@@ -56,6 +57,17 @@ export function InstagramLinkPage() {
     const status = useInstagramStatus();
     useRefreshInstagramFollow();
     const leave = useLeave();
+    const viewed = useRef(false);
+
+    useEffect(() => {
+        if (viewed.current || !status.data) return;
+        viewed.current = true;
+        const { link, declaration } = status.data;
+        trackEvent("instagram_page_viewed", {
+            level: link ? "certified" : declaration ? "declared" : "none",
+            follows: link ? link.follows : null,
+        });
+    }, [status.data]);
 
     return (
         <Stack space="m">
@@ -133,8 +145,21 @@ function SendCode() {
     const code = useInstagramLinkCode();
     const sent = useAwaitInstagramDm();
     const { copy, copied } = useCopyToClipboardWithState();
+    const check = (retry: boolean) =>
+        sent.mutate(undefined, {
+            onSuccess: (data) =>
+                trackEvent("instagram_dm_checked", {
+                    outcome: data.link ? "linked" : "not_received",
+                    retry,
+                }),
+            onError: () =>
+                trackEvent("instagram_dm_checked", {
+                    outcome: "error",
+                    retry,
+                }),
+        });
     const armReturn = useOnReturn(() => {
-        if (!sent.isPending) sent.mutate();
+        if (!sent.isPending) check(false);
     });
 
     if (code.isError) {
@@ -157,6 +182,7 @@ function SendCode() {
         if (!code.data) return;
         copy(code.data);
         armReturn();
+        trackEvent("instagram_dm_opened");
         void openExternalUrl(`${FRAK_INSTAGRAM_DM_URL}?ref=${code.data}`);
     };
     const notReceived =
@@ -219,7 +245,7 @@ function SendCode() {
                     <Button
                         variant="ghost"
                         width="full"
-                        onClick={() => sent.mutate()}
+                        onClick={() => check(true)}
                     >
                         {t("instagram.certify.checkAgain")}
                     </Button>
@@ -237,7 +263,14 @@ function DeclareEntry({ unavailable }: { unavailable: boolean }) {
     if (unavailable) return <DeclareCard />;
     if (open) return <DeclareCard onClose={() => setOpen(false)} />;
     return (
-        <Button variant="ghost" width="full" onClick={() => setOpen(true)}>
+        <Button
+            variant="ghost"
+            width="full"
+            onClick={() => {
+                trackEvent("instagram_declare_opened");
+                setOpen(true);
+            }}
+        >
             {t("instagram.declare.open")}
         </Button>
     );
