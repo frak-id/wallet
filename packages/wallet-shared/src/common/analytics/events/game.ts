@@ -25,15 +25,15 @@ export type GameEventMap = {
     game_mission_clicked: {
         mission: "instagram" | "friend" | "purchase";
         status: "done" | "todo" | "gate";
-        surface: "game_page" | "home_card";
+        surface: "game_page";
         game_id: string;
     };
-    /** The home ticket card's main button, or the drawn card's Instagram line; the open card's status line fires `game_mission_clicked`. */
+    /** A tap anywhere on the wallet-home game ticket. */
     game_card_clicked: {
         game_id: string;
         participating: boolean;
         state: "open" | "drawn" | "ended";
-        target: "game" | "join" | "instagram";
+        target: "game" | "join";
     };
     game_progress_shown: { tickets_gained: number; unlocked: boolean };
     game_result_viewed: {

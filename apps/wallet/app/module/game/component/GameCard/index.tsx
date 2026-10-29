@@ -33,7 +33,6 @@ import { countdownOf } from "@/module/game/utils/gameCountdown";
 import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { gainsSince } from "@/module/game/utils/gameGains";
 import { homeCardOf } from "@/module/game/utils/gameHomeCard";
-import type { Mission } from "@/module/game/utils/gameMissions";
 import {
     type TicketCardStatus,
     ticketCardOf,
@@ -221,13 +220,7 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
                     )}
                 </>
             }
-            status={
-                <StatusLine
-                    status={status}
-                    gameId={game.id}
-                    onGo={(to) => navigate({ to })}
-                />
-            }
+            status={<StatusLine status={status} />}
         />
     );
 }
@@ -239,13 +232,6 @@ function DrawnGameCard({ result }: { result: GameResult }) {
     const now = useNow(30_000);
     const deadline = openDeadline(result, now);
     const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
-    const track = (target: "game" | "instagram") =>
-        trackEvent("game_card_clicked", {
-            game_id: result.game.id,
-            participating: true,
-            state: "drawn",
-            target,
-        });
 
     return (
         <TicketShell
@@ -253,7 +239,12 @@ function DrawnGameCard({ result }: { result: GameResult }) {
             stub={<PrizeFace prize={prize} Badge={GiftIcon} />}
             ariaLabel={t("game.card.drawnAriaLabel", { prize })}
             onOpen={() => {
-                track("game");
+                trackEvent("game_card_clicked", {
+                    game_id: result.game.id,
+                    participating: true,
+                    state: "drawn",
+                    target: "game",
+                });
                 navigate({ to: "/game" });
             }}
             pill={
@@ -279,10 +270,6 @@ function DrawnGameCard({ result }: { result: GameResult }) {
                               })
                             : null
                     }
-                    onClick={() => {
-                        track("instagram");
-                        navigate({ to: "/profile/instagram" });
-                    }}
                 />
             }
         />
@@ -418,57 +405,31 @@ function iconOf(status: TicketCardStatus) {
     return CheckIcon;
 }
 
-function StatusLine({
-    status,
-    gameId,
-    onGo,
-}: {
-    status: TicketCardStatus;
-    gameId: string;
-    onGo: (to: "/game" | "/game/join" | NonNullable<Mission["route"]>) => void;
-}) {
+function StatusLine({ status }: { status: TicketCardStatus }) {
     const { t } = useTranslation();
-    const mission = "mission" in status ? status.mission : null;
-    const go = () => {
-        if (mission && mission.id !== "join") {
-            trackEvent("game_mission_clicked", {
-                mission: mission.id,
-                status: mission.status,
-                surface: "home_card",
-                game_id: gameId,
-            });
-        }
-        onGo(
-            mission?.route ?? (status.kind === "join" ? "/game/join" : "/game")
-        );
-    };
-
     return (
         <StatusRow
             tone={STATUS_TONE[status.kind]}
             Icon={iconOf(status)}
             {...statusText(status, t)}
-            onClick={go}
         />
     );
 }
 
-/** The card's last row: a button above the stretched area, or a plain row the main button covers. */
+/** The card's last row; the main button's stretched area covers it, so a tap anywhere opens the game. */
 function StatusRow({
     tone,
     Icon,
     title,
     detail,
-    onClick,
 }: {
     tone: (typeof STATUS_TONE)[TicketCardStatus["kind"]];
     Icon?: Icon;
     title: string;
     detail: string | null;
-    onClick?: () => void;
 }) {
-    const content = (
-        <>
+    return (
+        <div className={ticket.status({ tone })}>
             {Icon && <Icon width={16} height={16} className={ticket.icon} />}
             <span className={ticket.statusText}>
                 {title}
@@ -482,18 +443,6 @@ function StatusRow({
                 )}
             </span>
             <ChevronRightIcon width={16} height={16} className={ticket.icon} />
-        </>
-    );
-
-    return onClick ? (
-        <button
-            type="button"
-            className={ticket.status({ tone })}
-            onClick={onClick}
-        >
-            {content}
-        </button>
-    ) : (
-        <div className={ticket.status({ tone, passive: true })}>{content}</div>
+        </div>
     );
 }

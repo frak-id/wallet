@@ -173,23 +173,16 @@ export const headline = recipe({
     },
 });
 
-/** Above the stretched area so it takes its own taps. */
 export const status = recipe({
     base: {
-        position: "relative",
-        zIndex: 1,
         display: "flex",
         alignItems: "center",
         gap: 6,
         minHeight: 40,
-        padding: 0,
-        background: "transparent",
-        border: "none",
         textAlign: "left",
         fontSize: 13,
         fontWeight: 600,
         lineHeight: 1.3,
-        cursor: "pointer",
     },
     variants: {
         tone: {
@@ -197,7 +190,6 @@ export const status = recipe({
             locked: { color: grey700 },
             done: { color: success[800] },
         },
-        passive: { true: { position: "static", zIndex: "auto" } },
     },
 });
 
