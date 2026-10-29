@@ -44,10 +44,20 @@ export const heroStyle = recipe({
         height: "var(--detail-sheet-hero-height, 350px)",
     },
     variants: {
-        /** `overlay` tints a hero that carries no image. */
+        /** `overlay` tints a hero that carries no image, up under the status bar. */
         surface: {
             none: {},
-            overlay: { backgroundColor: vars.surface.overlay },
+            overlay: {
+                backgroundColor: vars.surface.overlay,
+                marginTop: `calc(-1 * ${safeArea.top})`,
+                height: `calc(var(--detail-sheet-hero-height, 350px) + ${safeArea.top})`,
+                "@media": {
+                    "screen and (min-width: 1024px)": {
+                        marginTop: 0,
+                        height: "var(--detail-sheet-hero-height, 350px)",
+                    },
+                },
+            },
         },
     },
     defaultVariants: {
