@@ -19,7 +19,6 @@ import { useNavigate } from "@tanstack/react-router";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { ICONS, REWARDS } from "@/module/game/component/GameMissions";
-import { OUTCOME } from "@/module/game/component/GameResultView";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useNow } from "@/module/game/hook/useNow";
@@ -33,6 +32,7 @@ import { countdownOf } from "@/module/game/utils/gameCountdown";
 import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { gainsSince } from "@/module/game/utils/gameGains";
 import { homeCardOf } from "@/module/game/utils/gameHomeCard";
+import { OUTCOME } from "@/module/game/utils/gameOutcome";
 import {
     type TicketCardStatus,
     ticketCardOf,
