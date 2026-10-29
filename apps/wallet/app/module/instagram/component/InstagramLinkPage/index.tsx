@@ -2,14 +2,20 @@ import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    ExternalLink,
+    CheckIcon,
+    CopyIcon,
+    InstagramIcon,
+} from "@frak-labs/design-system/icons";
+import {
     getErrorCode,
     openExternalUrl,
     ua,
@@ -17,10 +23,10 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
-import { InstructionList } from "@/module/common/component/InstructionList";
 import { Title } from "@/module/common/component/Title";
+import { useOnReturn } from "@/module/common/hook/useOnReturn";
 import {
     FRAK_INSTAGRAM_DM_URL,
     FRAK_INSTAGRAM_URL,
@@ -35,8 +41,6 @@ import {
     useInstagramStatus,
     useRefreshInstagramFollow,
 } from "@/module/instagram/hook/useInstagramLink";
-
-const igLink = <ExternalLink href={FRAK_INSTAGRAM_URL} />;
 
 /** Back to whichever page opened this one (profile, game…), or the profile on a deep link. */
 function useLeave() {
@@ -76,163 +80,187 @@ export function InstagramLinkPage() {
     );
 }
 
-/** Certifying is offered first, since it is the only level that unlocks money. */
+/** Connecting by DM is the only level that unlocks money, so it leads; the typed handle stays a fallback. */
 function Uncertified({
     declaration,
 }: {
     declaration: InstagramDeclaration | null;
 }) {
-    const { t } = useTranslation();
+    const code = useInstagramLinkCode();
+    const unavailable = getErrorCode(code.error) === "INSTAGRAM_UNAVAILABLE";
     return (
         <>
-            <Text color="secondary">{t("instagram.description")}</Text>
             {declaration && <DeclaredAccount declaration={declaration} />}
-            <CertifyCard />
-            {!declaration && <DeclareCard />}
+            <CertifyCard unavailable={unavailable} />
+            {!declaration && <DeclareEntry unavailable={unavailable} />}
         </>
     );
 }
 
-function CertifyCard() {
+function CertifyCard({ unavailable }: { unavailable: boolean }) {
     const { t } = useTranslation();
-    const code = useInstagramLinkCode();
-    const sent = useAwaitInstagramDm();
-    const { copy } = useCopyToClipboardWithState();
-    const unavailable = getErrorCode(code.error) === "INSTAGRAM_UNAVAILABLE";
-
-    const openInstagram = () => {
-        if (!code.data) return;
-        copy(code.data);
-        void openExternalUrl(`${FRAK_INSTAGRAM_DM_URL}?ref=${code.data}`);
-    };
-
     return (
         <Card>
-            <Stack space="s">
-                <Inline space="s" alignY="center">
-                    <Text weight="semiBold">
-                        {t("instagram.certify.title")}
-                    </Text>
-                    <Badge size="small" variant="success">
-                        {t("instagram.certify.badge")}
-                    </Badge>
+            <Stack space="m">
+                <Inline space="s" alignY="center" wrap={false}>
+                    <IconCircle size="sm">
+                        <InstagramIcon width={18} height={18} />
+                    </IconCircle>
+                    <Stack space="none">
+                        <Text weight="semiBold">
+                            {t("instagram.certify.title")}
+                        </Text>
+                        <Text variant="bodySmall" color="secondary">
+                            {t("instagram.certify.perks")}
+                        </Text>
+                    </Stack>
                 </Inline>
-                <Stack as="ul" space="xxs">
-                    {(["tickets", "unlock", "auto"] as const).map((perk) => (
-                        <li key={perk}>
-                            <Text variant="bodySmall" color="secondary">
-                                <span aria-hidden="true">• </span>
-                                {t(`instagram.certify.perks.${perk}`)}
-                            </Text>
-                        </li>
-                    ))}
-                </Stack>
                 {unavailable ? (
                     <Notice tone="info">
                         {t("instagram.certify.unavailable")}
                     </Notice>
                 ) : (
-                    <>
-                        {!ua.isMobile && (
-                            <Notice tone="info">
-                                {t("instagram.mobileOnly")}
-                            </Notice>
-                        )}
-                        <InstructionList
-                            title={t("instagram.howTo")}
-                            steps={[
-                                {
-                                    title: t("instagram.follow.title"),
-                                    description: (
-                                        <Trans
-                                            i18nKey="instagram.follow.description"
-                                            components={{ igLink }}
-                                        />
-                                    ),
-                                },
-                                {
-                                    title: t("instagram.message.title"),
-                                    description: (
-                                        <Trans
-                                            i18nKey="instagram.message.description"
-                                            values={{ code: code.data ?? "…" }}
-                                            components={{ code: <strong /> }}
-                                        />
-                                    ),
-                                },
-                                {
-                                    title: t("instagram.check.title"),
-                                    description: t(
-                                        "instagram.check.description"
-                                    ),
-                                },
-                            ]}
-                        />
-                        <Button
-                            width="full"
-                            onClick={openInstagram}
-                            disabled={!code.data}
-                        >
-                            {t("instagram.open")}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            width="full"
-                            onClick={() => sent.mutate()}
-                            loading={sent.isPending}
-                        >
-                            {t("instagram.sent")}
-                        </Button>
-                        {sent.isPending && (
-                            <Notice tone="info">
-                                {t("instagram.waiting")}
-                            </Notice>
-                        )}
-                        {code.isError && (
-                            <>
-                                <Notice tone="error">
-                                    {t("instagram.certify.error")}
-                                </Notice>
-                                <Button
-                                    variant="ghost"
-                                    width="full"
-                                    loading={code.isFetching}
-                                    onClick={() => void code.refetch()}
-                                >
-                                    {t("instagram.retry")}
-                                </Button>
-                            </>
-                        )}
-                        {sent.isError && (
-                            <Notice tone="error">
-                                {t("instagram.certify.checkError")}
-                            </Notice>
-                        )}
-                        {sent.isSuccess && sent.data.link === null && (
-                            <Notice tone="info">{t("instagram.notYet")}</Notice>
-                        )}
-                    </>
+                    <SendCode />
                 )}
             </Stack>
         </Card>
     );
 }
 
-/** With `editing`, changes the declared handle and can be cancelled. */
+/** No "I sent it" button: the DM is looked for as soon as the player is back from Instagram. */
+function SendCode() {
+    const { t } = useTranslation();
+    const code = useInstagramLinkCode();
+    const sent = useAwaitInstagramDm();
+    const { copy, copied } = useCopyToClipboardWithState();
+    const armReturn = useOnReturn(() => {
+        if (!sent.isPending) sent.mutate();
+    });
+
+    if (code.isError) {
+        return (
+            <>
+                <Notice tone="error">{t("instagram.certify.error")}</Notice>
+                <Button
+                    variant="ghost"
+                    width="full"
+                    loading={code.isFetching}
+                    onClick={() => void code.refetch()}
+                >
+                    {t("instagram.retry")}
+                </Button>
+            </>
+        );
+    }
+
+    const openInstagram = () => {
+        if (!code.data) return;
+        copy(code.data);
+        armReturn();
+        void openExternalUrl(`${FRAK_INSTAGRAM_DM_URL}?ref=${code.data}`);
+    };
+    const notReceived =
+        !sent.isPending &&
+        (sent.isError || (sent.isSuccess && sent.data.link === null));
+
+    return (
+        <>
+            <Card variant="muted" padding="compact">
+                <Spread space="s">
+                    <Stack space="none">
+                        <Text variant="caption" color="secondary">
+                            {t("instagram.certify.codeLabel")}
+                        </Text>
+                        <Text variant="heading3" weight="semiBold">
+                            {code.data ?? "…"}
+                        </Text>
+                    </Stack>
+                    <Button
+                        variant="ghost"
+                        size="small"
+                        width="auto"
+                        disabled={!code.data}
+                        onClick={() => code.data && copy(code.data)}
+                    >
+                        {copied ? (
+                            <CheckIcon width={16} height={16} />
+                        ) : (
+                            <CopyIcon width={16} height={16} />
+                        )}
+                        {t(
+                            copied
+                                ? "instagram.certify.copied"
+                                : "instagram.certify.copy"
+                        )}
+                    </Button>
+                </Spread>
+            </Card>
+            <Text variant="bodySmall" color="secondary">
+                {t("instagram.certify.hint")}
+            </Text>
+            {!ua.isMobile && (
+                <Notice tone="info">{t("instagram.mobileOnly")}</Notice>
+            )}
+            <Button width="full" onClick={openInstagram} disabled={!code.data}>
+                {t("instagram.certify.open")}
+            </Button>
+            {sent.isPending && (
+                <Notice tone="info">{t("instagram.certify.waiting")}</Notice>
+            )}
+            {notReceived && (
+                <>
+                    <Notice tone={sent.isError ? "error" : "info"}>
+                        {sent.isError
+                            ? t("instagram.certify.checkError")
+                            : t("instagram.certify.notYet", {
+                                  code: code.data ?? "…",
+                              })}
+                    </Notice>
+                    <Button
+                        variant="ghost"
+                        width="full"
+                        onClick={() => sent.mutate()}
+                    >
+                        {t("instagram.certify.checkAgain")}
+                    </Button>
+                </>
+            )}
+        </>
+    );
+}
+
+/** The typed handle: a link until asked for, already open when connecting is unavailable. */
+function DeclareEntry({ unavailable }: { unavailable: boolean }) {
+    const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
+
+    if (unavailable) return <DeclareCard />;
+    if (open) return <DeclareCard onClose={() => setOpen(false)} />;
+    return (
+        <Button variant="ghost" width="full" onClick={() => setOpen(true)}>
+            {t("instagram.declare.open")}
+        </Button>
+    );
+}
+
+/** With `initial`, changes the declared handle; with `onClose`, can be cancelled. */
 function DeclareCard({
-    editing,
+    initial,
+    onClose,
 }: {
-    editing?: { initial: string; onClose: () => void };
+    initial?: string;
+    onClose?: () => void;
 }) {
     const { t } = useTranslation();
-    const [username, setUsername] = useState(editing?.initial ?? "");
+    const [username, setUsername] = useState(initial ?? "");
     const { declare } = useDeclareInstagram();
     const invalid = getErrorCode(declare.error) === "INVALID_INSTAGRAM_HANDLE";
+    const editing = initial !== undefined;
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
         if (username.trim()) {
-            declare.mutate(username, { onSuccess: editing?.onClose });
+            declare.mutate(username, { onSuccess: onClose });
         }
     };
 
@@ -247,9 +275,11 @@ function DeclareCard({
                                 : "instagram.declare.title"
                         )}
                     </Text>
-                    <Text variant="bodySmall" color="secondary">
-                        {t("instagram.declare.description")}
-                    </Text>
+                    {!editing && (
+                        <Text variant="bodySmall" color="secondary">
+                            {t("instagram.declare.description")}
+                        </Text>
+                    )}
                     <Input
                         label={t("instagram.declare.label")}
                         placeholder={t("instagram.declare.placeholder")}
@@ -275,18 +305,14 @@ function DeclareCard({
                         disabled={!username.trim()}
                         loading={declare.isPending}
                     >
-                        {t(
-                            editing
-                                ? "instagram.declare.save"
-                                : "instagram.declare.submit"
-                        )}
+                        {t("instagram.declare.submit")}
                     </Button>
-                    {editing && (
+                    {onClose && (
                         <Button
                             type="button"
                             variant="ghost"
                             width="full"
-                            onClick={editing.onClose}
+                            onClick={onClose}
                         >
                             {t("instagram.declare.cancel")}
                         </Button>
@@ -309,10 +335,8 @@ function DeclaredAccount({
     if (editing) {
         return (
             <DeclareCard
-                editing={{
-                    initial: declaration.username,
-                    onClose: () => setEditing(false),
-                }}
+                initial={declaration.username}
+                onClose={() => setEditing(false)}
             />
         );
     }
@@ -328,7 +352,6 @@ function DeclaredAccount({
                 <Text variant="bodySmall" color="secondary">
                     {t("instagram.declare.counting")}
                 </Text>
-                <Notice tone="info">{t("instagram.declare.upsell")}</Notice>
                 <Inline space="s">
                     <Button
                         width="auto"
@@ -366,8 +389,6 @@ function CertifiedAccount({
     onDone: () => void;
 }) {
     const { t } = useTranslation();
-    const check = useCheckInstagram();
-
     return (
         <>
             <Card>
@@ -388,32 +409,42 @@ function CertifiedAccount({
                     </Button>
                 </>
             ) : (
-                <>
-                    <Notice tone="warning">
-                        <Trans
-                            i18nKey="instagram.linked.notFollowing"
-                            components={{ igLink }}
-                        />
-                    </Notice>
-                    <Button
-                        variant="secondary"
-                        width="full"
-                        onClick={() => check.mutate()}
-                        loading={check.isPending}
-                    >
-                        {t("instagram.linked.checkAgain")}
-                    </Button>
-                    {check.isError && (
-                        <Notice tone="error">
-                            {t("instagram.certify.checkError")}
-                        </Notice>
-                    )}
-                    {check.isSuccess && !check.data.link?.follows && (
-                        <Notice tone="info">
-                            {t("instagram.linked.stillNotFollowing")}
-                        </Notice>
-                    )}
-                </>
+                <NotFollowing />
+            )}
+        </>
+    );
+}
+
+/** The follow is re-read when the player is back (`useRefreshInstagramFollow`); the button covers the backend's 30 s cooldown. */
+function NotFollowing() {
+    const { t } = useTranslation();
+    const check = useCheckInstagram();
+    return (
+        <>
+            <Notice tone="warning">{t("instagram.linked.notFollowing")}</Notice>
+            <Button
+                width="full"
+                onClick={() => void openExternalUrl(FRAK_INSTAGRAM_URL)}
+            >
+                {t("instagram.linked.follow")}
+            </Button>
+            <Button
+                variant="secondary"
+                width="full"
+                onClick={() => check.mutate()}
+                loading={check.isPending}
+            >
+                {t("instagram.linked.checkAgain")}
+            </Button>
+            {check.isError && (
+                <Notice tone="error">
+                    {t("instagram.certify.checkError")}
+                </Notice>
+            )}
+            {check.isSuccess && !check.data.link?.follows && (
+                <Notice tone="info">
+                    {t("instagram.linked.stillNotFollowing")}
+                </Notice>
             )}
         </>
     );

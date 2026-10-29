@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
     status,
@@ -7,7 +7,7 @@ const {
     check,
     declare,
     remove,
-    copy,
+    clipboard,
     openExternalUrl,
     ua,
     navigate,
@@ -43,7 +43,7 @@ const {
         error: null as unknown,
     },
     remove: { mutate: vi.fn(), isPending: false, isError: false },
-    copy: vi.fn(),
+    clipboard: { copy: vi.fn(), copied: false },
     openExternalUrl: vi.fn(),
     ua: { isMobile: true },
     navigate: vi.fn(),
@@ -57,15 +57,13 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
-    Trans: ({ i18nKey }: { i18nKey: string }) => <>{i18nKey}</>,
 }));
 vi.mock("@frak-labs/wallet-shared", () => ({
-    ExternalLink: () => null,
     getErrorCode: (error: { value?: { code?: string } } | null) =>
         error?.value?.code,
     openExternalUrl,
     ua,
-    useCopyToClipboardWithState: () => ({ copy }),
+    useCopyToClipboardWithState: () => clipboard,
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
 vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
@@ -77,7 +75,10 @@ vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
     useRefreshInstagramFollow: () => undefined,
 }));
 
-import { FRAK_INSTAGRAM_DM_URL } from "@/module/instagram/config";
+import {
+    FRAK_INSTAGRAM_DM_URL,
+    FRAK_INSTAGRAM_URL,
+} from "@/module/instagram/config";
 import { InstagramLinkPage } from "./index";
 
 const NOTHING = { link: null, declaration: null };
@@ -89,6 +90,16 @@ const certified = (follows: boolean) => ({
     link: { username: "lea", follows, checkedAt: "" },
     declaration: null,
 });
+
+function setVisibility(state: DocumentVisibilityState) {
+    Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => state,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+}
+
+const button = (name: string) => screen.getByRole("button", { name });
 
 describe("InstagramLinkPage", () => {
     beforeEach(() => {
@@ -106,41 +117,107 @@ describe("InstagramLinkPage", () => {
         router.canGoBack = true;
         Object.assign(declare, { isError: false, error: null });
         remove.isError = false;
+        clipboard.copied = false;
         ua.isMobile = true;
     });
 
+    afterEach(() => setVisibility("visible"));
+
     describe("before any level", () => {
-        it("offers to certify first, then to declare", () => {
+        it("leads with connecting, and keeps the handle behind a link", () => {
             render(<InstagramLinkPage />);
 
-            const certify = screen.getByText("instagram.certify.title");
-            const declareTitle = screen.getByText("instagram.declare.title");
             expect(
-                certify.compareDocumentPosition(declareTitle) &
-                    Node.DOCUMENT_POSITION_FOLLOWING
-            ).toBeTruthy();
-            expect(
-                screen.getByText("instagram.certify.perks.unlock", {
-                    exact: false,
-                })
+                screen.getByText("instagram.certify.title")
             ).toBeInTheDocument();
+            expect(screen.getByText("K7Q2PX")).toBeInTheDocument();
             expect(
-                screen.getByText("instagram.declare.description")
-            ).toBeInTheDocument();
+                screen.queryByLabelText("instagram.declare.label")
+            ).toBeNull();
+            expect(button("instagram.declare.open")).toBeInTheDocument();
+        });
+
+        it("copies the code from the chip", () => {
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(button("instagram.certify.copy"));
+
+            expect(clipboard.copy).toHaveBeenCalledWith("K7Q2PX");
+            expect(openExternalUrl).not.toHaveBeenCalled();
+        });
+
+        it("says the code is copied", () => {
+            clipboard.copied = true;
+            render(<InstagramLinkPage />);
+
+            expect(button("instagram.certify.copied")).toBeInTheDocument();
         });
 
         it("copies the code and opens the DM thread with it as ref", () => {
             render(<InstagramLinkPage />);
 
-            fireEvent.click(
-                screen.getByRole("button", { name: "instagram.open" })
-            );
+            fireEvent.click(button("instagram.certify.open"));
 
-            expect(copy).toHaveBeenCalledWith("K7Q2PX");
+            expect(clipboard.copy).toHaveBeenCalledWith("K7Q2PX");
             expect(openExternalUrl).toHaveBeenCalledWith(
                 `${FRAK_INSTAGRAM_DM_URL}?ref=K7Q2PX`
             );
             expect(screen.queryByText("instagram.mobileOnly")).toBeNull();
+        });
+
+        it("looks for the message once the player is back from Instagram", () => {
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(button("instagram.certify.open"));
+            setVisibility("hidden");
+            expect(sent.mutate).not.toHaveBeenCalled();
+
+            setVisibility("visible");
+            expect(sent.mutate).toHaveBeenCalledTimes(1);
+        });
+
+        it("does not look for a message without Instagram being opened", () => {
+            render(<InstagramLinkPage />);
+
+            setVisibility("hidden");
+            setVisibility("visible");
+
+            expect(sent.mutate).not.toHaveBeenCalled();
+        });
+
+        it("shows the wait while the message is looked for", () => {
+            sent.isPending = true;
+            render(<InstagramLinkPage />);
+
+            expect(
+                screen.getByText("instagram.certify.waiting")
+            ).toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", {
+                    name: "instagram.certify.checkAgain",
+                })
+            ).toBeNull();
+        });
+
+        it("says when the message never arrived, and looks again", () => {
+            Object.assign(sent, { isSuccess: true, data: NOTHING });
+            render(<InstagramLinkPage />);
+
+            expect(
+                screen.getByText("instagram.certify.notYet")
+            ).toBeInTheDocument();
+            fireEvent.click(button("instagram.certify.checkAgain"));
+            expect(sent.mutate).toHaveBeenCalled();
+        });
+
+        it("says when Instagram could not be checked", () => {
+            sent.isError = true;
+            render(<InstagramLinkPage />);
+
+            expect(
+                screen.getByText("instagram.certify.checkError")
+            ).toBeInTheDocument();
+            expect(button("instagram.certify.checkAgain")).toBeInTheDocument();
         });
 
         it("asks a desktop user to switch to their phone", () => {
@@ -152,28 +229,7 @@ describe("InstagramLinkPage", () => {
             ).toBeInTheDocument();
         });
 
-        it("waits for the message once the player says it is sent", () => {
-            const { rerender } = render(<InstagramLinkPage />);
-
-            fireEvent.click(
-                screen.getByRole("button", { name: "instagram.sent" })
-            );
-            expect(sent.mutate).toHaveBeenCalled();
-
-            sent.isPending = true;
-            rerender(<InstagramLinkPage />);
-            expect(screen.getByText("instagram.waiting")).toBeInTheDocument();
-        });
-
-        it("says when the message never arrived", () => {
-            Object.assign(sent, { isSuccess: true, data: NOTHING });
-            render(<InstagramLinkPage />);
-
-            expect(screen.getByText("instagram.notYet")).toBeInTheDocument();
-            expect(screen.queryByText("instagram.waiting")).toBeNull();
-        });
-
-        it("points to the declaration while certification is off", () => {
+        it("opens the handle form while connecting is off", () => {
             Object.assign(code, {
                 data: undefined,
                 isError: true,
@@ -185,13 +241,16 @@ describe("InstagramLinkPage", () => {
                 screen.getByText("instagram.certify.unavailable")
             ).toBeInTheDocument();
             expect(
-                screen.queryByRole("button", { name: "instagram.open" })
-            ).toBeNull();
-            expect(
-                screen.getByRole("button", {
-                    name: "instagram.declare.submit",
+                screen.queryByRole("button", {
+                    name: "instagram.certify.open",
                 })
-            ).toBeInTheDocument();
+            ).toBeNull();
+            expect(button("instagram.declare.submit")).toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", {
+                    name: "instagram.declare.cancel",
+                })
+            ).toBeNull();
         });
 
         it("retries a code that failed to load", () => {
@@ -205,28 +264,35 @@ describe("InstagramLinkPage", () => {
             expect(
                 screen.getByText("instagram.certify.error")
             ).toBeInTheDocument();
-            fireEvent.click(
-                screen.getByRole("button", { name: "instagram.retry" })
-            );
+            fireEvent.click(button("instagram.retry"));
             expect(code.refetch).toHaveBeenCalled();
         });
 
-        it("declares the typed handle", () => {
+        it("declares the typed handle from the link", () => {
             render(<InstagramLinkPage />);
 
+            fireEvent.click(button("instagram.declare.open"));
             fireEvent.change(screen.getByLabelText("instagram.declare.label"), {
                 target: { value: "@Lea" },
             });
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: "instagram.declare.submit",
-                })
-            );
+            fireEvent.click(button("instagram.declare.submit"));
 
             expect(declare.mutate).toHaveBeenCalledWith(
                 "@Lea",
                 expect.anything()
             );
+        });
+
+        it("folds the handle form back", () => {
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(button("instagram.declare.open"));
+            fireEvent.click(button("instagram.declare.cancel"));
+
+            expect(
+                screen.queryByLabelText("instagram.declare.label")
+            ).toBeNull();
+            expect(button("instagram.declare.open")).toBeInTheDocument();
         });
 
         it("explains a handle the backend refused", () => {
@@ -236,6 +302,8 @@ describe("InstagramLinkPage", () => {
             });
             render(<InstagramLinkPage />);
 
+            fireEvent.click(button("instagram.declare.open"));
+
             expect(
                 screen.getByText("instagram.declare.invalid")
             ).toBeInTheDocument();
@@ -243,23 +311,22 @@ describe("InstagramLinkPage", () => {
     });
 
     describe("declared", () => {
-        it("shows the handle and pushes to certify it", () => {
+        it("shows the handle to confirm above the way to connect it", () => {
             status.data = DECLARED;
             render(<InstagramLinkPage />);
 
-            expect(screen.getByText("@lea")).toBeInTheDocument();
+            const handle = screen.getByText("@lea");
+            const connect = screen.getByText("instagram.certify.title");
+            expect(
+                handle.compareDocumentPosition(connect) &
+                    Node.DOCUMENT_POSITION_FOLLOWING
+            ).toBeTruthy();
             expect(
                 screen.getByText("instagram.declare.badge")
             ).toBeInTheDocument();
             expect(
-                screen.getByText("instagram.declare.upsell")
-            ).toBeInTheDocument();
-            expect(
-                screen.getByText("instagram.certify.title")
-            ).toBeInTheDocument();
-            expect(
                 screen.queryByRole("button", {
-                    name: "instagram.declare.submit",
+                    name: "instagram.declare.open",
                 })
             ).toBeNull();
         });
@@ -268,11 +335,7 @@ describe("InstagramLinkPage", () => {
             status.data = DECLARED;
             render(<InstagramLinkPage />);
 
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: "instagram.declare.remove",
-                })
-            );
+            fireEvent.click(button("instagram.declare.remove"));
 
             expect(remove.mutate).toHaveBeenCalled();
         });
@@ -291,11 +354,7 @@ describe("InstagramLinkPage", () => {
             status.data = DECLARED;
             render(<InstagramLinkPage />);
 
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: "instagram.declare.change",
-                })
-            );
+            fireEvent.click(button("instagram.declare.change"));
 
             expect(
                 screen.getByText("instagram.declare.editTitle")
@@ -303,17 +362,8 @@ describe("InstagramLinkPage", () => {
             expect(
                 screen.getByLabelText("instagram.declare.label")
             ).toHaveValue("lea");
-            expect(
-                screen.getByRole("button", {
-                    name: "instagram.declare.save",
-                })
-            ).toBeInTheDocument();
 
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: "instagram.declare.cancel",
-                })
-            );
+            fireEvent.click(button("instagram.declare.cancel"));
             expect(screen.getByText("@lea")).toBeInTheDocument();
             expect(
                 screen.queryByLabelText("instagram.declare.label")
@@ -327,10 +377,10 @@ describe("InstagramLinkPage", () => {
             render(<InstagramLinkPage />);
 
             expect(screen.getByText("@lea")).toBeInTheDocument();
-            expect(screen.queryByText("instagram.declare.title")).toBeNull();
-            fireEvent.click(
-                screen.getByRole("button", { name: "instagram.linked.done" })
-            );
+            expect(
+                screen.getByText("instagram.linked.badge")
+            ).toBeInTheDocument();
+            fireEvent.click(button("instagram.linked.done"));
             expect(router.history.back).toHaveBeenCalled();
             expect(navigate).not.toHaveBeenCalled();
         });
@@ -340,24 +390,21 @@ describe("InstagramLinkPage", () => {
             router.canGoBack = false;
             render(<InstagramLinkPage />);
 
-            fireEvent.click(
-                screen.getByRole("button", { name: "instagram.linked.done" })
-            );
+            fireEvent.click(button("instagram.linked.done"));
             expect(navigate).toHaveBeenCalledWith({ to: "/profile" });
         });
 
-        it("asks a non-follower to follow, then check again", () => {
+        it("sends a non-follower to @frak_fr, then checks again", () => {
             status.data = certified(false);
             render(<InstagramLinkPage />);
 
             expect(
                 screen.getByText("instagram.linked.notFollowing")
             ).toBeInTheDocument();
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: "instagram.linked.checkAgain",
-                })
-            );
+            fireEvent.click(button("instagram.linked.follow"));
+            expect(openExternalUrl).toHaveBeenCalledWith(FRAK_INSTAGRAM_URL);
+
+            fireEvent.click(button("instagram.linked.checkAgain"));
             expect(check.mutate).toHaveBeenCalled();
         });
 

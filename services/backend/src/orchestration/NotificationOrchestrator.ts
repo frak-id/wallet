@@ -111,12 +111,12 @@ function gameCandidateMessage(
         return {
             en: {
                 title: "You were drawn in the Frak Game!",
-                body: `Certify your Instagram before ${en.by} to receive your ${en.prize}.`,
+                body: `Connect your Instagram before ${en.by} to receive your ${en.prize}.`,
                 data,
             },
             fr: {
                 title: "Tu as été tiré au sort au Jeu Frak !",
-                body: `Certifie ton Instagram avant le ${fr.by} pour recevoir tes ${fr.prize}.`,
+                body: `Connecte ton Instagram avant le ${fr.by} pour recevoir tes ${fr.prize}.`,
                 data,
             },
         };
@@ -124,12 +124,12 @@ function gameCandidateMessage(
     return {
         en: {
             title: "A few hours left to claim your prize",
-            body: `Certify your Instagram before ${en.by}, or another winner is drawn.`,
+            body: `Connect your Instagram before ${en.by}, or another winner is drawn.`,
             data,
         },
         fr: {
             title: "Plus que quelques heures pour ton gain",
-            body: `Certifie ton Instagram avant le ${fr.by}, sinon un autre gagnant est tiré au sort.`,
+            body: `Connecte ton Instagram avant le ${fr.by}, sinon un autre gagnant est tiré au sort.`,
             data,
         },
     };

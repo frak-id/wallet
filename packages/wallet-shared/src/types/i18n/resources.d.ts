@@ -518,7 +518,7 @@ export default interface Resources {
         "notParticipating": "Not joined yet",
         "participating": "You're in",
         "title": "Frak game in progress",
-        "verifyBy": "Certify your Instagram by {{date}}"
+        "verifyBy": "Connect your Instagram by {{date}}"
       },
       "history": {
         "gameOf": "{{date}} game",
@@ -540,16 +540,16 @@ export default interface Resources {
         "activateCta": "Activate my tickets",
         "buy": "Buy from a partner brand",
         "certified": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets.",
-        "certifyCta": "Certify my Instagram",
+        "certifyCta": "Connect my Instagram",
         "counted_one": "{{count}} ticket in the draw",
         "counted_other": "{{count}} tickets in the draw",
-        "declareCta": "Declare my Instagram",
-        "declared": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
+        "declareCta": "Just add my @",
+        "declared": "Your tickets count. If you're drawn, you'll have 24 h to connect your Instagram and follow @frak_fr.",
         "error": "Couldn't load the game.",
         "gain_one": "+{{count}} ticket",
         "gain_other": "+{{count}} tickets",
-        "lockedNone": "Your tickets are saved, but they only count in the draw once your Instagram is declared or certified.",
-        "lockedNotFollowing": "Your Instagram is certified, but you don't follow <igLink>@frak_fr</igLink>: your tickets don't count in the draw.",
+        "lockedNone": "Your tickets are saved, but they only count in the draw once your Instagram is connected or your @ is added.",
+        "lockedNotFollowing": "Your Instagram is connected, but you don't follow <igLink>@frak_fr</igLink>: your tickets don't count in the draw.",
         "more": "Earn more tickets",
         "none": {
           "description": "The next game will be announced on Instagram.",
@@ -557,7 +557,7 @@ export default interface Resources {
         },
         "retry": "Try again",
         "share": "Share Frak with a friend",
-        "shareHint": "1 ticket per friend who signs up with your code and certifies their Instagram and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
+        "shareHint": "1 ticket per friend who signs up with your code, connects their Instagram and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
         "tickets_one": "ticket",
         "tickets_other": "tickets",
         "title": "Frak Game"
@@ -567,11 +567,11 @@ export default interface Resources {
           "drawing": "Drawing",
           "lost": "Not won",
           "noWinner": "No winner",
-          "pendingVerification": "To certify",
+          "pendingVerification": "To confirm",
           "won": "Won"
         },
         "discarded": "Your tickets didn't count: you weren't following @frak_fr at draw time.",
-        "discardedNotLinked": "Your tickets didn't count: your Instagram was neither declared nor certified at draw time.",
+        "discardedNotLinked": "Your tickets didn't count: you hadn't added your Instagram at draw time.",
         "drawing": {
           "description": "The game is over. The winner will be announced very soon.",
           "title": "Draw in progress"
@@ -588,14 +588,14 @@ export default interface Resources {
         },
         "participants": "Players",
         "pendingVerification": {
-          "cta": "Certify my Instagram",
-          "description": "Certify your Instagram and follow @frak_fr before {{date}} to receive your prize. Otherwise, another winner is drawn.",
+          "cta": "Connect my Instagram",
+          "description": "Connect your Instagram and follow @frak_fr before {{date}} to receive your prize. Otherwise, another winner is drawn.",
           "title": "You were drawn!"
         },
         "prize": "Prize",
         "sources": {
           "brandShare": "Friends reached through your brand shares",
-          "instagramCertified": "Certified Instagram",
+          "instagramCertified": "Connected Instagram",
           "join": "Joining the game",
           "purchase": "Your purchases",
           "referredPurchase": "Your friends' purchases",
@@ -622,70 +622,55 @@ export default interface Resources {
     },
     "instagram": {
       "certify": {
-        "badge": "Recommended",
+        "checkAgain": "Check again",
         "checkError": "Couldn't check your Instagram account right now. Try again in a moment.",
+        "codeLabel": "Your code",
+        "copied": "Copied",
+        "copy": "Copy the code",
         "error": "Couldn't get your code. Try again in a moment.",
-        "perks": {
-          "auto": "We check that you follow @frak_fr automatically: nothing to do if you win",
-          "tickets": "+2 tickets in every Frak Game",
-          "unlock": "Your welcome reward unlocked right away"
-        },
-        "title": "Certify my Instagram",
-        "unavailable": "Certification isn't available yet. Declare your Instagram for now."
-      },
-      "check": {
-        "description": "Tap “I sent the message”: your account is checked as soon as your message reaches us.",
-        "title": "Come back here"
+        "hint": "The button copies your code and opens the chat with @frak_fr: paste it and send it.",
+        "notYet": "Nothing yet. Check that you sent {{code}} to @frak_fr.",
+        "open": "Send my code on Instagram",
+        "perks": "+2 tickets in every game, and your welcome reward unlocked.",
+        "title": "Connect your Instagram",
+        "unavailable": "Connecting isn't available yet. Add your @ for now.",
+        "waiting": "Checking for your message…"
       },
       "declare": {
-        "badge": "Declared",
+        "badge": "Unconfirmed",
         "cancel": "Cancel",
         "change": "Change",
-        "counting": "Instagram declared: your tickets count. If you're drawn, you'll have 24 h to certify it and follow @frak_fr.",
-        "description": "Your tickets count in the draw, and we only check your account if you're drawn. In that case you have 24 h from the notification to certify it and follow @frak_fr, otherwise another winner is drawn.",
+        "counting": "Your tickets count. If you're drawn, you'll have 24 h to connect this account.",
+        "description": "Your tickets count right away. If you're drawn, you'll have 24 h to connect this account.",
         "editTitle": "Change account",
         "error": "Couldn't save your account. Try again.",
         "invalid": "That isn't a valid Instagram account.",
         "label": "Your Instagram account",
+        "open": "Not now? Just add your @",
         "placeholder": "@your_account",
         "remove": "Remove",
         "removeError": "Couldn't remove your account. Try again.",
-        "save": "Save",
-        "submit": "Declare",
-        "title": "Declare my Instagram",
-        "upsell": "Certify it to earn 2 more tickets and unlock your welcome reward."
+        "submit": "Save",
+        "title": "Add your Instagram @"
       },
-      "description": "Link your Instagram account to Frak and follow @frak_fr: that's what makes your tickets count in the Frak Game.",
       "error": "Couldn't load your Instagram account.",
-      "follow": {
-        "description": "On Instagram, follow the <igLink>@frak_fr</igLink> account.",
-        "title": "Follow @frak_fr"
-      },
-      "howTo": "How it works",
       "linked": {
-        "badge": "Certified",
+        "badge": "Connected",
         "checkAgain": "Check again",
         "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets in every game.",
         "done": "Done",
-        "notFollowing": "You don't follow <igLink>@frak_fr</igLink> yet. Follow it, then check again.",
+        "follow": "Follow @frak_fr",
+        "notFollowing": "Last step: follow @frak_fr so your tickets count.",
         "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again."
       },
-      "message": {
-        "description": "The button copies your code <code>{{code}}</code> and opens the chat with @frak_fr. Paste it and send it.",
-        "title": "Send us your code"
-      },
       "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
-      "notYet": "Your message hasn't reached us. Check that you sent your code to @frak_fr, then try again.",
-      "open": "Copy the code and open Instagram",
       "profile": {
         "label": "Instagram",
         "notFollowing": "Not following",
-        "notLinked": "Not linked"
+        "notLinked": "Not connected"
       },
       "retry": "Try again",
-      "sent": "I sent the message",
-      "title": "Your Instagram",
-      "waiting": "Waiting for your message… This can take a few seconds."
+      "title": "Your Instagram"
     },
     "installCode": {
       "codeCopied": "Reward code copied!",
@@ -920,7 +905,7 @@ export default interface Resources {
       },
       "game": {
         "reward": {
-          "description": "Your reward is pending. It unlocks as soon as you certify your Instagram, or with your first reward from a partner brand.",
+          "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
           "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
           "game": {
             "endsAt": "Until {{date}}",
@@ -932,19 +917,19 @@ export default interface Resources {
         "rules": {
           "description": "Collect tickets: a random draw picks the winner when the game ends.",
           "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink>, then declare your account: your tickets count in the draw. Certify it for 2 more tickets. Drawn without being certified? You have 24 h to do it, otherwise another winner is drawn.",
+            "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 2 more tickets. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn.",
             "title": "Activate your tickets with Instagram"
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "1 ticket per friend who signs up with your code and certifies their Instagram, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's.",
+            "description": "1 ticket per friend who signs up with your code and connects their Instagram, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
           },
           "title": "The Frak Game",
           "unlock": {
-            "description": "It unlocks as soon as you certify your Instagram, or with your first reward from a partner brand.",
+            "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
             "title": "Your {{reward}} bonus"
           }
         }
@@ -1017,8 +1002,8 @@ export default interface Resources {
         "estimatedValidation": "Estimated validation",
         "generatedDate": "Purchase generated on",
         "generatedOn": "Generated on {{date}} · {{time}}",
-        "lockedExplanation": "Unlocks as soon as you certify your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
-        "lockedOnFriendExplanation": "Unlocks as soon as your friend certifies their Instagram and follows @frak_fr, or with their first reward from a partner brand.",
+        "lockedExplanation": "Unlocks as soon as you connect your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
+        "lockedOnFriendExplanation": "Unlocks as soon as your friend connects their Instagram and follows @frak_fr, or with their first reward from a partner brand.",
         "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
         "pendingValidation": "Pending brand validation",
         "purchaseDate": "Purchase date",
