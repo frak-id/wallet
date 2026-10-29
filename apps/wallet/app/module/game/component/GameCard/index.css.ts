@@ -173,31 +173,16 @@ export const headline = recipe({
     },
 });
 
-/** Above the stretched area so it takes its own taps. */
-export const status = recipe({
-    base: {
-        position: "relative",
-        zIndex: 1,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        minHeight: 40,
-        padding: 0,
-        background: "transparent",
-        border: "none",
-        textAlign: "left",
-        fontSize: 13,
-        fontWeight: 600,
-        lineHeight: 1.3,
-        cursor: "pointer",
-    },
+export const status = style({ minHeight: 40 });
+
+/** success800 rather than the design system's success text, which fails contrast on white. */
+export const tone = recipe({
     variants: {
         tone: {
             action: { color: primary[700] },
             locked: { color: grey700 },
             done: { color: success[800] },
         },
-        passive: { true: { position: "static", zIndex: "auto" } },
     },
 });
 
@@ -206,6 +191,10 @@ export const statusText = style({
     minWidth: 0,
     display: "flex",
     flexDirection: "column",
+    textAlign: "left",
+    fontSize: 13,
+    fontWeight: 600,
+    lineHeight: 1.3,
 });
 
 export const icon = style({ flex: "0 0 auto" });

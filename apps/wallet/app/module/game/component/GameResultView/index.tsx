@@ -5,11 +5,7 @@ import type {
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    GiftIcon,
-    HourglassIcon,
-    InstagramIcon,
-} from "@frak-labs/design-system/icons";
+import { InstagramIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { Trophy } from "lucide-react";
@@ -26,37 +22,10 @@ import {
 } from "@/module/game/utils/formatGameDate";
 import { countdownOf } from "@/module/game/utils/gameCountdown";
 import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
+import { OUTCOME } from "@/module/game/utils/gameOutcome";
 import { type GameRecord, recordOf } from "@/module/game/utils/gameRecord";
 import { totalTickets } from "@/module/game/utils/ticketAmounts";
 import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
-
-export const OUTCOME = {
-    drawing: {
-        badge: HourglassIcon,
-        face: "tickets",
-        title: "game.result.drawing.title",
-    },
-    pending_verification: {
-        badge: GiftIcon,
-        face: "prize",
-        title: "game.result.pendingVerification.title",
-    },
-    won: {
-        badge: GiftIcon,
-        face: "prize",
-        title: "game.result.won.title",
-    },
-    lost: {
-        badge: null,
-        face: "tickets",
-        title: "game.result.lost.title",
-    },
-    no_winner: {
-        badge: null,
-        face: "tickets",
-        title: "game.result.noWinner.title",
-    },
-} as const satisfies Record<GameOutcome, unknown>;
 
 /** Where the win is not the point: what is left to say is how the player did against their own best. */
 const SHOWS_RECORD: GameOutcome[] = ["drawing", "lost", "no_winner"];

@@ -1787,7 +1787,7 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
-          "gameHint": "Frak Game: your friend connects their Instagram and follows @frak_fr, or creates their Frak wallet through a brand. You get a ticket per friend.",
+          "gameHint": "Frak Game: 1 ticket per friend who signs up with your code, once they connect their Instagram and follow @frak_fr.",
           "modifyCta": "Modify my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",

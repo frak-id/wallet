@@ -169,45 +169,28 @@ describe("GameCard", () => {
             expect(screen.getByText(/^50\s€$/)).toBeInTheDocument();
             expect(screen.queryByText("game.card.label:")).toBeNull();
             expect(container.querySelectorAll("[role=button]")).toHaveLength(0);
-            expect(container.querySelectorAll("button button")).toHaveLength(0);
-            expect(screen.getAllByRole("button")).toHaveLength(2);
+            expect(screen.getAllByRole("button")).toHaveLength(1);
         });
 
-        it("sends the main button to the game and the status line to Instagram", () => {
+        it("opens the game page, the Instagram line included", () => {
             drawn(new Date(Date.now() + DAY));
 
+            expect(
+                screen.getByText("game.result.pendingVerification.cta")
+            ).toBeInTheDocument();
             fireEvent.click(
                 screen.getByRole("button", { name: "game.card.drawnAriaLabel" })
             );
-            expect(navigate).toHaveBeenLastCalledWith({ to: "/game" });
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: /game.result.pendingVerification.cta/,
-                })
+            expect(navigate).toHaveBeenCalledExactlyOnceWith({ to: "/game" });
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "game_card_clicked",
+                {
+                    game_id: "g1",
+                    participating: true,
+                    state: "drawn",
+                    target: "game",
+                }
             );
-            expect(navigate).toHaveBeenLastCalledWith({
-                to: "/profile/instagram",
-            });
-            expect(trackEvent.mock.calls).toEqual([
-                [
-                    "game_card_clicked",
-                    {
-                        game_id: "g1",
-                        participating: true,
-                        state: "drawn",
-                        target: "game",
-                    },
-                ],
-                [
-                    "game_card_clicked",
-                    {
-                        game_id: "g1",
-                        participating: true,
-                        state: "drawn",
-                        target: "instagram",
-                    },
-                ],
-            ]);
         });
 
         it("counts the time left and gives the deadline while it is open", () => {
@@ -236,9 +219,7 @@ describe("GameCard", () => {
                     screen.queryByText("game.result.hero.deadline")
                 ).toBeNull();
                 expect(
-                    screen.getByRole("button", {
-                        name: /game.result.pendingVerification.cta/,
-                    })
+                    screen.getByText("game.result.pendingVerification.cta")
                 ).toBeInTheDocument();
             }
         );
@@ -268,13 +249,8 @@ describe("GameCard", () => {
         fireEvent.click(
             screen.getByRole("button", { name: /game.card.ariaLabel/ })
         );
-        expect(navigate).toHaveBeenLastCalledWith({ to: "/game/join" });
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: "game.card.statusJoin game.card.statusJoinReward",
-            })
-        );
-        expect(navigate).toHaveBeenLastCalledWith({ to: "/game/join" });
+        expect(navigate).toHaveBeenCalledExactlyOnceWith({ to: "/game/join" });
+        expect(screen.getByText("game.card.statusJoin")).toBeInTheDocument();
         expect(trackEvent.mock.calls).toEqual([
             [
                 "game_card_clicked",
@@ -307,7 +283,7 @@ describe("GameCard", () => {
         expect(screen.getByText("game.card.toWin")).toBeInTheDocument();
     });
 
-    it("sends a participant to the game page from anywhere but the status line", () => {
+    it("sends a participant to the game page", () => {
         currentGame.data = { game: openGame, me: player("certified", true) };
         render(<GameCard />);
 
@@ -327,68 +303,42 @@ describe("GameCard", () => {
         );
     });
 
-    it("leads a locked player to Instagram and tracks the tap", () => {
-        currentGame.data = { game: openGame, me: player("none", false) };
-        render(<GameCard />);
-
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: /game.page.missions.instagram.none.title/,
-            })
-        );
-        expect(navigate).toHaveBeenCalledWith({ to: "/profile/instagram" });
-        expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
-            mission: "instagram",
-            status: "gate",
-            surface: "home_card",
-            game_id: "d1",
-        });
-        expect(trackEvent).not.toHaveBeenCalledWith(
-            "game_card_clicked",
-            expect.anything()
-        );
-    });
-
-    it("leads an eligible player to the next mission", () => {
-        currentGame.data = {
-            game: openGame,
-            me: player("certified", true, { instagramCertified: 2 }),
-        };
-        render(<GameCard />);
-
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: /game.page.missions.friend.title/,
-            })
-        );
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/share",
-        });
-        expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
-            mission: "friend",
-            status: "todo",
-            surface: "home_card",
-            game_id: "d1",
-        });
-    });
-
-    it("sends a player with every mission done to the game page", () => {
-        currentGame.data = {
-            game: openGame,
-            me: player("certified", true, {
+    it.each([
+        [
+            "a locked player",
+            player("none", false),
+            /game.page.missions.instagram.none.title/,
+        ],
+        [
+            "an eligible player",
+            player("certified", true, { instagramCertified: 2 }),
+            /game.page.missions.friend.title/,
+        ],
+        [
+            "a player with every mission done",
+            player("certified", true, {
                 instagramCertified: 2,
                 purchase: 3,
                 referredSignup: 1,
             }),
-        };
-        render(<GameCard />);
+            /game.card.statusAllDone/,
+        ],
+    ])(
+        "names the next step for %s without leaving the card's single tap",
+        (_, me, status) => {
+            currentGame.data = { game: openGame, me };
+            render(<GameCard />);
 
-        fireEvent.click(
-            screen.getByRole("button", { name: "game.card.statusAllDone" })
-        );
-        expect(navigate).toHaveBeenCalledWith({ to: "/game" });
-        expect(trackEvent).not.toHaveBeenCalled();
-    });
+            expect(screen.getByText(status)).toBeInTheDocument();
+            expect(screen.getAllByRole("button")).toHaveLength(1);
+            fireEvent.click(screen.getByText(status));
+            expect(navigate).not.toHaveBeenCalled();
+            expect(trackEvent).not.toHaveBeenCalledWith(
+                "game_mission_clicked",
+                expect.anything()
+            );
+        }
+    );
 
     it("stamps the tickets gained since the stored visit, and only then", () => {
         currentGame.data = {

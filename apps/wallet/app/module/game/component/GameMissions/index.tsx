@@ -6,37 +6,21 @@ import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    CartIcon,
     CheckIcon,
     ChevronRightIcon,
-    InstagramIcon,
     LockIcon,
-    ReferralIcon,
 } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { ICONS, REWARDS } from "@/module/game/utils/gameMissionDisplay";
 import {
     type Mission,
     type MissionText,
     missionsDone,
 } from "@/module/game/utils/gameMissions";
 import * as styles from "./index.css";
-
-export const ICONS = {
-    join: CheckIcon,
-    instagram: InstagramIcon,
-    friend: ReferralIcon,
-    purchase: CartIcon,
-} as const satisfies Record<Mission["id"], unknown>;
-
-export const REWARDS = {
-    join: "game.page.missions.reward",
-    instagram: "game.page.missions.reward",
-    friend: "game.page.missions.rewardPerFriend",
-    purchase: "game.page.missions.rewardPerPurchase",
-} as const satisfies Record<Mission["id"], string>;
 
 function textOf(
     t: DefaultTranslate,

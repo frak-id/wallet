@@ -54,6 +54,14 @@ describe("countdownOf", () => {
         });
     });
 
+    it("stays calm in the last half-minute before the 24 hour mark, where it reads one day", () => {
+        expect(countdownOf("2026-10-28T11:59:30Z", now)).toMatchObject({
+            days: 1,
+            hours: 0,
+            urgent: false,
+        });
+    });
+
     it("keeps whole hours exact", () => {
         expect(countdownOf("2026-10-27T14:00:00Z", now)).toMatchObject({
             hours: 2,
