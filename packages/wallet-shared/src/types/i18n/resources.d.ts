@@ -515,17 +515,18 @@ export default interface Resources {
       "card": {
         "ariaLabel": "Frak Game: {{prize}}, {{tickets}}",
         "drawn": "You were drawn!",
-        "ended": "Frak Game over",
+        "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
+        "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
         "gained_one": "{{count}} ticket since your last visit",
         "gained_other": "{{count}} tickets since your last visit",
         "label": "Frak Game",
         "statusAllDone": "Every mission done",
         "statusJoin": "Join the game",
         "statusJoinReward": "1st ticket on us",
+        "statusResult": "See the result",
         "ticket_one": "ticket",
         "ticket_other": "tickets",
         "toWin": "to win in the draw",
-        "verifyBy": "Connect your Instagram by {{date}}",
         "yourTicket": "Your ticket"
       },
       "history": {

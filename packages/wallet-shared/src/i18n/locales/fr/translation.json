@@ -1016,9 +1016,10 @@
             "statusJoin": "Rejoindre le jeu",
             "statusJoinReward": "1er ticket offert",
             "statusAllDone": "Toutes les missions sont faites",
-            "ended": "Jeu Frak terminé",
-            "drawn": "Tu as été tiré au sort !",
-            "verifyBy": "Connecte ton Instagram avant le {{date}}"
+            "drawn": "Tu as été tiré au sort !",
+            "drawnAriaLabel": "Jeu Frak : tu as été tiré au sort pour {{prize}}",
+            "endedAriaLabel": "Jeu Frak du {{date}} : {{outcome}}",
+            "statusResult": "Voir le résultat"
         },
         "page": {
             "none": {

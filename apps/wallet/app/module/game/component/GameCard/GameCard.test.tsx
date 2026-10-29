@@ -91,15 +91,56 @@ describe("GameCard", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("shows how the last game went when it ended recently", () => {
-        currentGame.data = { game: null, me: { participating: false } };
-        gameHistory.data = [endedDaysAgo(2), endedDaysAgo(40, "lost")];
-        render(<GameCard />);
+    it.each([
+        ["won", "game.result.won.title"],
+        ["lost", "game.result.lost.title"],
+        ["drawing", "game.result.drawing.title"],
+        ["no_winner", "game.result.noWinner.title"],
+    ] as const)(
+        "shows a game that ended recently as a %s ticket",
+        (outcome, title) => {
+            currentGame.data = { game: null, me: { participating: false } };
+            gameHistory.data = [
+                endedDaysAgo(2, outcome),
+                endedDaysAgo(40, "lost"),
+            ];
+            const { container } = render(<GameCard />);
 
-        expect(screen.getByText("game.card.ended")).toBeInTheDocument();
-        expect(screen.getByText("game.result.badge.won")).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button"));
-        expect(navigate).toHaveBeenCalledWith({ to: "/game" });
+            expect(screen.getByText(title)).toBeInTheDocument();
+            expect(screen.getByText("game.history.gameOf")).toBeInTheDocument();
+            expect(
+                screen.getByText("game.card.statusResult")
+            ).toBeInTheDocument();
+            expect(container.querySelectorAll("[role=button]")).toHaveLength(0);
+            const buttons = screen.getAllByRole("button");
+            expect(buttons).toHaveLength(1);
+            expect(buttons[0]).toHaveAccessibleName("game.card.endedAriaLabel");
+            fireEvent.click(buttons[0]);
+            expect(navigate).toHaveBeenCalledExactlyOnceWith({ to: "/game" });
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "game_card_clicked",
+                {
+                    game_id: "g1",
+                    participating: true,
+                    state: "ended",
+                    target: "game",
+                }
+            );
+        }
+    );
+
+    it("puts the prize on the stub of a won game, the tickets on the others", () => {
+        currentGame.data = { game: null, me: { participating: false } };
+        gameHistory.data = [endedDaysAgo(2, "won")];
+        const { unmount } = render(<GameCard />);
+        expect(screen.getByText(/^50\s€$/)).toBeInTheDocument();
+        unmount();
+
+        gameHistory.data = [endedDaysAgo(2, "lost")];
+        render(<GameCard />);
+        expect(screen.getByText("7")).toBeInTheDocument();
+        expect(screen.getByText("game.card.ticket:7")).toBeInTheDocument();
+        expect(screen.queryByText(/^50\s€$/)).toBeNull();
     });
 
     it("drops the last result from home after two weeks", () => {
@@ -109,23 +150,104 @@ describe("GameCard", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("puts a draw waiting on the user before the open game, with its deadline", () => {
-        currentGame.data = { game, me: player("certified", true) };
-        gameHistory.data = [
-            {
-                ...endedDaysAgo(1, "pending_verification"),
-                verifyBy: new Date(Date.now() + DAY),
-            },
-        ];
-        render(<GameCard />);
+    describe("with a draw waiting on the user", () => {
+        const drawn = (verifyBy: Date | null) => {
+            currentGame.data = { game, me: player("certified", true) };
+            gameHistory.data = [
+                {
+                    ...endedDaysAgo(1, "pending_verification"),
+                    verifyBy,
+                },
+            ];
+            return render(<GameCard />);
+        };
 
-        expect(screen.getByText("game.card.drawn")).toBeInTheDocument();
-        expect(screen.getByText("game.card.verifyBy")).toBeInTheDocument();
-        expect(
-            screen.getByText("game.result.badge.pendingVerification")
-        ).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button"));
-        expect(navigate).toHaveBeenCalledWith({ to: "/profile/instagram" });
+        it("comes before the open game, as a ticket with the prize on the stub", () => {
+            const { container } = drawn(new Date(Date.now() + DAY));
+
+            expect(screen.getByText("game.card.drawn")).toBeInTheDocument();
+            expect(screen.getByText(/^50\s€$/)).toBeInTheDocument();
+            expect(screen.queryByText("game.card.label:")).toBeNull();
+            expect(container.querySelectorAll("[role=button]")).toHaveLength(0);
+            expect(container.querySelectorAll("button button")).toHaveLength(0);
+            expect(screen.getAllByRole("button")).toHaveLength(2);
+        });
+
+        it("sends the main button to the game and the status line to Instagram", () => {
+            drawn(new Date(Date.now() + DAY));
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "game.card.drawnAriaLabel" })
+            );
+            expect(navigate).toHaveBeenLastCalledWith({ to: "/game" });
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: /game.result.pendingVerification.cta/,
+                })
+            );
+            expect(navigate).toHaveBeenLastCalledWith({
+                to: "/profile/instagram",
+            });
+            expect(trackEvent.mock.calls).toEqual([
+                [
+                    "game_card_clicked",
+                    {
+                        game_id: "g1",
+                        participating: true,
+                        state: "drawn",
+                        target: "game",
+                    },
+                ],
+                [
+                    "game_card_clicked",
+                    {
+                        game_id: "g1",
+                        participating: true,
+                        state: "drawn",
+                        target: "instagram",
+                    },
+                ],
+            ]);
+        });
+
+        it("counts the time left and gives the deadline while it is open", () => {
+            drawn(new Date(Date.now() + 21 * 3_600_000 + 60_000));
+
+            expect(
+                screen.getByText("game.result.hero.timeLeftHours")
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText("game.result.hero.deadline")
+            ).toBeInTheDocument();
+        });
+
+        it.each([
+            ["has no deadline", null],
+            ["has passed", new Date(Date.now() - 60_000)],
+        ])(
+            "drops the pill and the date when the deadline %s",
+            (_, verifyBy) => {
+                drawn(verifyBy);
+
+                expect(
+                    screen.queryByText(/game.result.hero.timeLeft/)
+                ).toBeNull();
+                expect(
+                    screen.queryByText("game.result.hero.deadline")
+                ).toBeNull();
+                expect(
+                    screen.getByRole("button", {
+                        name: /game.result.pendingVerification.cta/,
+                    })
+                ).toBeInTheDocument();
+            }
+        );
+
+        it("leaves the deadline line out without a date", () => {
+            drawn(null);
+
+            expect(screen.queryByText("game.result.hero.deadline")).toBeNull();
+        });
     });
 
     it("prefers the open game over the last result", () => {
@@ -154,7 +276,15 @@ describe("GameCard", () => {
         );
         expect(navigate).toHaveBeenLastCalledWith({ to: "/game/join" });
         expect(trackEvent.mock.calls).toEqual([
-            ["game_card_clicked", { game_id: "d1", participating: false }],
+            [
+                "game_card_clicked",
+                {
+                    game_id: "d1",
+                    participating: false,
+                    state: "open",
+                    target: "join",
+                },
+            ],
         ]);
     });
 
@@ -188,7 +318,12 @@ describe("GameCard", () => {
         expect(navigate).toHaveBeenCalledWith({ to: "/game" });
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "game_card_clicked",
-            { game_id: "d1", participating: true }
+            {
+                game_id: "d1",
+                participating: true,
+                state: "open",
+                target: "game",
+            }
         );
     });
 

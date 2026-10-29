@@ -25,11 +25,12 @@ import {
     formatGameEnd,
 } from "@/module/game/utils/formatGameDate";
 import { countdownOf } from "@/module/game/utils/gameCountdown";
+import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { type GameRecord, recordOf } from "@/module/game/utils/gameRecord";
 import { totalTickets } from "@/module/game/utils/ticketAmounts";
 import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
 
-const OUTCOME = {
+export const OUTCOME = {
     drawing: {
         badge: HourglassIcon,
         face: "tickets",
@@ -140,14 +141,6 @@ function RecordChip({ record }: { record: GameRecord }) {
     );
 }
 
-/** A drawn player's certify-by date, until it passes. */
-function openDeadline(result: GameResult, now: number) {
-    if (result.outcome !== "pending_verification" || !result.verifyBy) {
-        return null;
-    }
-    return new Date(result.verifyBy).getTime() > now ? result.verifyBy : null;
-}
-
 /** The result as the page's lead: a hero in `GameHero`'s family, the way on, then the numbers behind it. */
 export function GameResultView({
     result,
@@ -169,7 +162,6 @@ export function GameResultView({
     };
     const deadline = openDeadline(result, now);
     const left = deadline ? countdownOf(deadline, now) : null;
-    const hoursLeft = left ? left.days * 24 + left.hours : 0;
 
     return (
         <Stack space="m">
@@ -200,14 +192,7 @@ export function GameResultView({
                 {deadline && left ? (
                     <>
                         <span className={styles.countdown({ urgent: true })}>
-                            {hoursLeft >= 1
-                                ? t("game.result.hero.timeLeftHours", {
-                                      hours: hoursLeft,
-                                      minutes: left.minutes,
-                                  })
-                                : t("game.result.hero.timeLeftMinutes", {
-                                      minutes: left.minutes,
-                                  })}
+                            {timeLeftOf(t, left)}
                         </span>
                         <Text
                             variant="caption"

@@ -1016,9 +1016,10 @@
             "statusJoin": "Join the game",
             "statusJoinReward": "1st ticket on us",
             "statusAllDone": "Every mission done",
-            "ended": "Frak Game over",
             "drawn": "You were drawn!",
-            "verifyBy": "Connect your Instagram by {{date}}"
+            "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
+            "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
+            "statusResult": "See the result"
         },
         "page": {
             "none": {
