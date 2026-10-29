@@ -2,6 +2,7 @@ import type {
     CurrentGameResponse,
     GameResult,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -18,7 +19,6 @@ import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useNavigate } from "@tanstack/react-router";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
-import { ICONS, REWARDS } from "@/module/game/component/GameMissions";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useNow } from "@/module/game/hook/useNow";
@@ -32,6 +32,7 @@ import { countdownOf } from "@/module/game/utils/gameCountdown";
 import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { gainsSince } from "@/module/game/utils/gameGains";
 import { homeCardOf } from "@/module/game/utils/gameHomeCard";
+import { ICONS, REWARDS } from "@/module/game/utils/gameMissionDisplay";
 import { OUTCOME } from "@/module/game/utils/gameOutcome";
 import {
     type TicketCardStatus,
@@ -428,10 +429,22 @@ function StatusRow({
     title: string;
     detail: string | null;
 }) {
+    const color = ticket.tone({ tone });
     return (
-        <div className={ticket.status({ tone })}>
-            {Icon && <Icon width={16} height={16} className={ticket.icon} />}
-            <span className={ticket.statusText}>
+        <Inline
+            space="xs"
+            alignY="center"
+            wrap={false}
+            className={ticket.status}
+        >
+            {Icon && (
+                <Icon
+                    width={16}
+                    height={16}
+                    className={`${ticket.icon} ${color}`}
+                />
+            )}
+            <span className={`${ticket.statusText} ${color}`}>
                 {title}
                 {detail && (
                     <>
@@ -442,7 +455,11 @@ function StatusRow({
                     </>
                 )}
             </span>
-            <ChevronRightIcon width={16} height={16} className={ticket.icon} />
-        </div>
+            <ChevronRightIcon
+                width={16}
+                height={16}
+                className={`${ticket.icon} ${color}`}
+            />
+        </Inline>
     );
 }

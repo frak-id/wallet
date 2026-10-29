@@ -173,17 +173,10 @@ export const headline = recipe({
     },
 });
 
-export const status = recipe({
-    base: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        minHeight: 40,
-        textAlign: "left",
-        fontSize: 13,
-        fontWeight: 600,
-        lineHeight: 1.3,
-    },
+export const status = style({ minHeight: 40 });
+
+/** success800 rather than the design system's success text, which fails contrast on white. */
+export const tone = recipe({
     variants: {
         tone: {
             action: { color: primary[700] },
@@ -198,6 +191,10 @@ export const statusText = style({
     minWidth: 0,
     display: "flex",
     flexDirection: "column",
+    textAlign: "left",
+    fontSize: 13,
+    fontWeight: 600,
+    lineHeight: 1.3,
 });
 
 export const icon = style({ flex: "0 0 auto" });
