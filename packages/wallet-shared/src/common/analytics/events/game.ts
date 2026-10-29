@@ -13,6 +13,7 @@ export type GameEventMap = {
         tickets: number;
         eligible: boolean;
         instagram: "certified" | "declared" | "none";
+        missions_done: number;
         tickets_join: number;
         tickets_instagram_certified: number;
         tickets_purchase: number;
@@ -20,6 +21,11 @@ export type GameEventMap = {
         tickets_referred_signup: number;
         tickets_brand_share: number;
     };
+    game_mission_clicked: {
+        mission: "instagram" | "friend" | "purchase";
+        status: "done" | "todo" | "gate";
+    };
+    game_progress_shown: { tickets_gained: number; unlocked: boolean };
     game_result_viewed: {
         game_id: string;
         outcome:
@@ -28,6 +34,7 @@ export type GameEventMap = {
             | "won"
             | "lost"
             | "no_winner";
+        record: "first" | "new" | "held";
     };
     game_win_screen_viewed: { game_id: string; prize_amount: number };
     game_win_screen_closed: { game_id: string; action: "history" | "close" };

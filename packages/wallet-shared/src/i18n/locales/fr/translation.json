@@ -1004,22 +1004,22 @@
             "findCode": "Trouver le code sur Instagram"
         },
         "card": {
-            "title": "Jeu Frak en cours",
-            "participating": "Tu participes",
-            "notParticipating": "Pas encore inscrit",
+            "label": "Jeu Frak",
+            "ticket_one": "ticket",
+            "ticket_other": "tickets",
+            "yourTicket": "Ton ticket",
+            "toWin": "à gagner au tirage",
+            "ariaLabel": "Jeu Frak : {{prize}}, {{tickets}}",
+            "gained_one": "{{count}} ticket depuis ta dernière visite",
+            "gained_other": "{{count}} tickets depuis ta dernière visite",
+            "statusJoin": "Rejoindre le jeu",
+            "statusJoinReward": "1er ticket offert",
+            "statusAllDone": "Toutes les missions sont faites",
             "ended": "Jeu Frak terminé",
             "drawn": "Tu as été tiré au sort !",
             "verifyBy": "Connecte ton Instagram avant le {{date}}"
         },
         "page": {
-            "tickets_one": "ticket",
-            "tickets_other": "tickets",
-            "more": "Gagne plus de tickets",
-            "share": "Partage Frak à un ami",
-            "buy": "Achète chez une marque partenaire",
-            "gain_one": "+{{count}} ticket",
-            "gain_other": "+{{count}} tickets",
-            "shareHint": "1 ticket par ami inscrit avec ton code qui a connecté son Instagram et suit @frak_fr, 1 par ami avec un porte-monnaie Frak venu par ton partage d'une marque, puis 3 à chacun de leurs achats.",
             "none": {
                 "title": "Aucun jeu en cours",
                 "description": "Le prochain jeu sera annoncé sur Instagram."
@@ -1027,15 +1027,81 @@
             "error": "Impossible de charger le jeu.",
             "retry": "Réessayer",
             "title": "Jeu Frak",
-            "lockedNone": "Tes tickets sont gardés, mais ils ne comptent au tirage qu'une fois ton Instagram connecté ou ton @ indiqué.",
-            "lockedNotFollowing": "Ton Instagram est connecté, mais tu ne suis pas <igLink>@frak_fr</igLink> : tes tickets ne comptent pas au tirage.",
-            "declared": "Tes tickets comptent. Si tu es tiré au sort, tu auras 24 h pour connecter ton Instagram et suivre @frak_fr.",
-            "activateCta": "Activer mes tickets",
-            "certifyCta": "Connecter mon Instagram",
-            "certified": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus.",
-            "declareCta": "Indiquer juste mon @",
-            "counted_one": "{{count}} ticket au tirage",
-            "counted_other": "{{count}} tickets au tirage"
+            "hero": {
+                "drawn_one": "{{count}} ticket au tirage",
+                "drawn_other": "{{count}} tickets au tirage",
+                "pending_one": "{{count}} ticket en attente",
+                "pending_other": "{{count}} tickets en attente",
+                "unlocked_one": "Ton ticket est débloqué",
+                "unlocked_other": "Tes {{count}} tickets sont débloqués",
+                "subtitleNone_one": "Connecte ton Instagram et suis @frak_fr pour qu'il compte au tirage",
+                "subtitleNone_other": "Connecte ton Instagram et suis @frak_fr pour qu'ils comptent au tirage",
+                "subtitleNotFollowing_one": "Suis à nouveau @frak_fr pour qu'il compte au tirage",
+                "subtitleNotFollowing_other": "Suis à nouveau @frak_fr pour qu'ils comptent au tirage",
+                "countdownDays": "Fin dans {{days}} j {{hours}} h",
+                "countdownHours": "Fin dans {{hours}} h {{minutes}} min",
+                "since": "Depuis ta dernière visite : {{gains}}",
+                "gain": "+{{amount}} {{source}}",
+                "sources": {
+                    "join": "inscription au jeu",
+                    "instagramCertified": "Instagram connecté",
+                    "purchase": "achat chez une marque",
+                    "referredPurchase": "achat d'un ami",
+                    "referredSignup": "ami inscrit",
+                    "brandShare": "ami venu par une marque"
+                }
+            },
+            "missions": {
+                "title": "Missions",
+                "progress": "{{done}} sur {{total}}",
+                "allDone": "Toutes les missions sont faites. Chaque ami et chaque achat ajoute encore des tickets.",
+                "reward_one": "+{{count}} ticket",
+                "reward_other": "+{{count}} tickets",
+                "rewardPerFriend_one": "+{{count}} ticket / ami",
+                "rewardPerFriend_other": "+{{count}} tickets / ami",
+                "rewardPerPurchase_one": "+{{count}} ticket / achat",
+                "rewardPerPurchase_other": "+{{count}} tickets / achat",
+                "earned_one": "+{{count}} gagné",
+                "earned_other": "+{{count}} gagnés",
+                "join": {
+                    "title": "Rejoindre le jeu",
+                    "hint": "C'est fait, bienvenue !"
+                },
+                "instagram": {
+                    "certified": {
+                        "title": "Instagram connecté",
+                        "hint": "Tu suis @frak_fr, tes tickets comptent."
+                    },
+                    "declared": {
+                        "title": "Connecter ton Instagram",
+                        "hint": "Tes tickets comptent. Connecte-le pour {{amount}} tickets de plus, sinon tu devras le faire en 24 h si tu es tiré au sort."
+                    },
+                    "notFollowing": {
+                        "title": "Suivre à nouveau @frak_fr",
+                        "hint": "Ton Instagram reste connecté. Suis à nouveau @frak_fr et tes tickets comptent tout de suite."
+                    },
+                    "none": {
+                        "title": "Débloquer tes tickets",
+                        "hint": "Connecte ton Instagram et suis @frak_fr pour entrer au tirage."
+                    }
+                },
+                "friend": {
+                    "title": "Inviter un ami",
+                    "hint": "Avec ton code : il connecte son Instagram et suit @frak_fr.\nVia une marque : il crée son porte-monnaie Frak.",
+                    "hintEarned": "{{parts}}. Invites-en un autre.",
+                    "withCode": "{{count}} avec ton code",
+                    "viaBrand": "{{count}} via une marque"
+                },
+                "purchase": {
+                    "title": "Acheter chez une marque",
+                    "hint": "Ton achat, ou celui d'un ami que tu as invité.",
+                    "hintEarned": "{{parts}}. Chaque achat en ajoute {{amount}}.",
+                    "own_one": "{{count}} achat à toi",
+                    "own_other": "{{count}} achats à toi",
+                    "friends_one": "{{count}} achat d'un ami",
+                    "friends_other": "{{count}} achats d'amis"
+                }
+            }
         },
         "result": {
             "badge": {
@@ -1044,6 +1110,30 @@
                 "lost": "Pas gagné",
                 "noWinner": "Sans gagnant",
                 "pendingVerification": "À confirmer"
+            },
+            "hero": {
+                "drawing_one": "Ton ticket est dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawing_other": "Tes {{tickets}} tickets sont dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawingOf_one": "Ton ticket sur {{total}} est dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "drawingOf_other": "Tes {{tickets}} tickets sur {{total}} sont dans le tirage. Le gagnant sera annoncé très bientôt.",
+                "lost_one": "Ton ticket n'a pas été tiré.",
+                "lost_other": "Tes {{tickets}} tickets n'ont pas été tirés.",
+                "lostOf_one": "Ton ticket sur {{total}} n'a pas été tiré.",
+                "lostOf_other": "Tes {{tickets}} tickets sur {{total}} n'ont pas été tirés.",
+                "discarded": "Tes tickets n'étaient pas au tirage.",
+                "pendingVerification": "Connecte ton Instagram et suis @frak_fr pour recevoir tes {{prize}}. Sinon, un autre gagnant est tiré au sort.",
+                "timeLeftHours": "Plus que {{hours}} h {{minutes}} min",
+                "timeLeftMinutes": "Plus que {{minutes}} min",
+                "deadline": "Avant le {{date}}",
+                "next": "Le prochain jeu sera annoncé sur Instagram",
+                "record": {
+                    "first_one": "Premier jeu : {{tickets}} ticket, ton record à battre",
+                    "first_other": "Premier jeu : {{tickets}} tickets, ton record à battre",
+                    "new_one": "Nouveau record : {{tickets}} ticket (avant : {{previous}})",
+                    "new_other": "Nouveau record : {{tickets}} tickets (avant : {{previous}})",
+                    "held_one": "Ton record : {{tickets}} ticket, au jeu du {{date}}",
+                    "held_other": "Ton record : {{tickets}} tickets, au jeu du {{date}}"
+                }
             },
             "drawing": {
                 "title": "Tirage en cours",

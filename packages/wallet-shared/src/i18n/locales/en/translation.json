@@ -1004,22 +1004,22 @@
             "findCode": "Find the code on Instagram"
         },
         "card": {
-            "title": "Frak game in progress",
-            "participating": "You're in",
-            "notParticipating": "Not joined yet",
+            "label": "Frak Game",
+            "ticket_one": "ticket",
+            "ticket_other": "tickets",
+            "yourTicket": "Your ticket",
+            "toWin": "to win in the draw",
+            "ariaLabel": "Frak Game: {{prize}}, {{tickets}}",
+            "gained_one": "{{count}} ticket since your last visit",
+            "gained_other": "{{count}} tickets since your last visit",
+            "statusJoin": "Join the game",
+            "statusJoinReward": "1st ticket on us",
+            "statusAllDone": "Every mission done",
             "ended": "Frak Game over",
             "drawn": "You were drawn!",
             "verifyBy": "Connect your Instagram by {{date}}"
         },
         "page": {
-            "tickets_one": "ticket",
-            "tickets_other": "tickets",
-            "more": "Earn more tickets",
-            "share": "Share Frak with a friend",
-            "buy": "Buy from a partner brand",
-            "gain_one": "+{{count}} ticket",
-            "gain_other": "+{{count}} tickets",
-            "shareHint": "1 ticket per friend who signs up with your code, connects their Instagram and follows @frak_fr, 1 per friend with a Frak wallet who comes through your share of a brand, then 3 for each of their purchases.",
             "none": {
                 "title": "No game right now",
                 "description": "The next game will be announced on Instagram."
@@ -1027,15 +1027,81 @@
             "error": "Couldn't load the game.",
             "retry": "Try again",
             "title": "Frak Game",
-            "lockedNone": "Your tickets are saved, but they only count in the draw once your Instagram is connected or your @ is added.",
-            "lockedNotFollowing": "Your Instagram is connected, but you don't follow <igLink>@frak_fr</igLink>: your tickets don't count in the draw.",
-            "declared": "Your tickets count. If you're drawn, you'll have 24 h to connect your Instagram and follow @frak_fr.",
-            "activateCta": "Activate my tickets",
-            "certifyCta": "Connect my Instagram",
-            "certified": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets.",
-            "declareCta": "Just add my @",
-            "counted_one": "{{count}} ticket in the draw",
-            "counted_other": "{{count}} tickets in the draw"
+            "hero": {
+                "drawn_one": "{{count}} ticket in the draw",
+                "drawn_other": "{{count}} tickets in the draw",
+                "pending_one": "{{count}} ticket on hold",
+                "pending_other": "{{count}} tickets on hold",
+                "unlocked_one": "Your ticket is unlocked",
+                "unlocked_other": "Your {{count}} tickets are unlocked",
+                "subtitleNone_one": "Connect your Instagram and follow @frak_fr so it counts in the draw",
+                "subtitleNone_other": "Connect your Instagram and follow @frak_fr so they count in the draw",
+                "subtitleNotFollowing_one": "Follow @frak_fr again so it counts in the draw",
+                "subtitleNotFollowing_other": "Follow @frak_fr again so they count in the draw",
+                "countdownDays": "Ends in {{days}} d {{hours}} h",
+                "countdownHours": "Ends in {{hours}} h {{minutes}} min",
+                "since": "Since your last visit: {{gains}}",
+                "gain": "+{{amount}} {{source}}",
+                "sources": {
+                    "join": "joining the game",
+                    "instagramCertified": "connected Instagram",
+                    "purchase": "brand purchase",
+                    "referredPurchase": "friend's purchase",
+                    "referredSignup": "friend signed up",
+                    "brandShare": "friend from a brand"
+                }
+            },
+            "missions": {
+                "title": "Missions",
+                "progress": "{{done}} of {{total}}",
+                "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
+                "reward_one": "+{{count}} ticket",
+                "reward_other": "+{{count}} tickets",
+                "rewardPerFriend_one": "+{{count}} ticket / friend",
+                "rewardPerFriend_other": "+{{count}} tickets / friend",
+                "rewardPerPurchase_one": "+{{count}} ticket / purchase",
+                "rewardPerPurchase_other": "+{{count}} tickets / purchase",
+                "earned_one": "+{{count}} earned",
+                "earned_other": "+{{count}} earned",
+                "join": {
+                    "title": "Join the game",
+                    "hint": "Done, welcome!"
+                },
+                "instagram": {
+                    "certified": {
+                        "title": "Instagram connected",
+                        "hint": "You follow @frak_fr, your tickets count."
+                    },
+                    "declared": {
+                        "title": "Connect your Instagram",
+                        "hint": "Your tickets count. Connect it for {{amount}} more tickets, or you'll have to do it within 24 h if you're drawn."
+                    },
+                    "notFollowing": {
+                        "title": "Follow @frak_fr again",
+                        "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away."
+                    },
+                    "none": {
+                        "title": "Unlock your tickets",
+                        "hint": "Connect your Instagram and follow @frak_fr to enter the draw."
+                    }
+                },
+                "friend": {
+                    "title": "Invite a friend",
+                    "hint": "With your code: they connect their Instagram and follow @frak_fr.\nVia a brand: they create their Frak wallet.",
+                    "hintEarned": "{{parts}}. Invite another one.",
+                    "withCode": "{{count}} with your code",
+                    "viaBrand": "{{count}} via a brand"
+                },
+                "purchase": {
+                    "title": "Buy from a brand",
+                    "hint": "Your purchase, or one by a friend you invited.",
+                    "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
+                    "own_one": "{{count}} purchase of yours",
+                    "own_other": "{{count}} purchases of yours",
+                    "friends_one": "{{count}} purchase by a friend",
+                    "friends_other": "{{count}} purchases by friends"
+                }
+            }
         },
         "result": {
             "badge": {
@@ -1044,6 +1110,30 @@
                 "lost": "Not won",
                 "noWinner": "No winner",
                 "pendingVerification": "To confirm"
+            },
+            "hero": {
+                "drawing_one": "Your ticket is in the draw. The winner will be announced very soon.",
+                "drawing_other": "Your {{tickets}} tickets are in the draw. The winner will be announced very soon.",
+                "drawingOf_one": "Your ticket out of {{total}} is in the draw. The winner will be announced very soon.",
+                "drawingOf_other": "Your {{tickets}} tickets out of {{total}} are in the draw. The winner will be announced very soon.",
+                "lost_one": "Your ticket wasn't drawn.",
+                "lost_other": "Your {{tickets}} tickets weren't drawn.",
+                "lostOf_one": "Your ticket out of {{total}} wasn't drawn.",
+                "lostOf_other": "Your {{tickets}} tickets out of {{total}} weren't drawn.",
+                "discarded": "Your tickets weren't in the draw.",
+                "pendingVerification": "Connect your Instagram and follow @frak_fr to receive your {{prize}}. Otherwise, another winner is drawn.",
+                "timeLeftHours": "Only {{hours}} h {{minutes}} min left",
+                "timeLeftMinutes": "Only {{minutes}} min left",
+                "deadline": "Before {{date}}",
+                "next": "The next game will be announced on Instagram",
+                "record": {
+                    "first_one": "First game: {{tickets}} ticket, your record to beat",
+                    "first_other": "First game: {{tickets}} tickets, your record to beat",
+                    "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
+                    "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+                    "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
+                    "held_other": "Your record: {{tickets}} tickets, in the {{date}} game"
+                }
             },
             "drawing": {
                 "title": "Draw in progress",
