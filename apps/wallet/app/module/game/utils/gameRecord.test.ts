@@ -49,14 +49,14 @@ describe("recordOf", () => {
         });
     });
 
-    it("holds the record on a tie, pointing at the latest game that reached it", () => {
+    it("calls a tie tied, pointing at the latest game that reached it", () => {
         const latest = played("latest", 17);
         const tied = played("tied", 17, "2026-10-19T18:00:00Z");
         const history = [latest, tied, played("older", 17)];
 
         expect(recordOf(latest, history)).toEqual({
-            kind: "held",
-            best: 18,
+            kind: "tied",
+            mine: 18,
             bestAt: tied.game.endsAt,
         });
     });

@@ -423,7 +423,7 @@ describe("GamePage", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_result_viewed", {
             game_id: "latest",
             outcome: "lost",
-            record: "held",
+            record: "tied",
         });
     });
 
@@ -719,9 +719,33 @@ describe("GamePage result at the top", () => {
         expect(screen.getByText("game.result.discarded")).toBeInTheDocument();
     });
 
+    it("says a tie in tickets is a tied record", () => {
+        currentGame.data = NO_GAME;
+        gameHistory.data = [
+            result("latest", "lost", sources(10)),
+            result("old", "lost", sources(10)),
+        ];
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.result.hero.record.tied:11")
+        ).toBeInTheDocument();
+    });
+
+    it("leaves the record chip out of a discarded result but still tracks it", () => {
+        top("lost", { discarded: "not_following", drawTickets: 0 });
+
+        expect(screen.queryByText(/game.result.hero.record/)).toBeNull();
+        expect(trackEvent).toHaveBeenCalledWith(
+            "game_result_viewed",
+            expect.objectContaining({ record: "first" })
+        );
+    });
+
     it.each([
         ["first", []],
         ["new", [result("old", "lost", sources(2))]],
+        ["tied", [result("old", "lost", sources(10))]],
         ["held", [result("old", "lost", sources(30))]],
     ] as const)(
         "tracks the %s record with the result viewed",

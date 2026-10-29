@@ -92,31 +92,46 @@ function subtitleOf(
     }
 }
 
+function recordText(record: GameRecord, t: TFunction, language: string) {
+    const format = (tickets: number) => tickets.toLocaleString(language);
+    switch (record.kind) {
+        case "first":
+            return t("game.result.hero.record.first", {
+                count: record.mine,
+                tickets: format(record.mine),
+            });
+        case "new":
+            return t("game.result.hero.record.new", {
+                count: record.mine,
+                tickets: format(record.mine),
+                previous: format(record.previous),
+            });
+        case "tied":
+            return t("game.result.hero.record.tied", {
+                count: record.mine,
+                tickets: format(record.mine),
+                date: formatGameDate(record.bestAt, language),
+            });
+        case "held":
+            return t("game.result.hero.record.held", {
+                count: record.best,
+                tickets: format(record.best),
+                date: formatGameDate(record.bestAt, language),
+            });
+    }
+}
+
 function RecordChip({ record }: { record: GameRecord }) {
     const { t, i18n } = useTranslation();
-    const format = (tickets: number) => tickets.toLocaleString(i18n.language);
-    const text =
-        record.kind === "first"
-            ? t("game.result.hero.record.first", {
-                  count: record.mine,
-                  tickets: format(record.mine),
-              })
-            : record.kind === "new"
-              ? t("game.result.hero.record.new", {
-                    count: record.mine,
-                    tickets: format(record.mine),
-                    previous: format(record.previous),
-                })
-              : t("game.result.hero.record.held", {
-                    count: record.best,
-                    tickets: format(record.best),
-                    date: formatGameDate(record.bestAt, i18n.language),
-                });
+    const text = recordText(record, t, i18n.language);
 
     return (
         <span
             className={styles.chip({
-                tone: record.kind === "new" ? "success" : "info",
+                tone:
+                    record.kind === "new" || record.kind === "tied"
+                        ? "success"
+                        : "info",
             })}
         >
             <Trophy size={14} aria-hidden="true" />
@@ -176,7 +191,7 @@ export function GameResultView({
                 <Text variant="heading3" color="onAction" as="p">
                     {t(title, { prize })}
                 </Text>
-                {SHOWS_RECORD.includes(result.outcome) && (
+                {SHOWS_RECORD.includes(result.outcome) && !result.discarded && (
                     <RecordChip record={recordOf(result, history)} />
                 )}
                 <Text color="onAction" as="p">
