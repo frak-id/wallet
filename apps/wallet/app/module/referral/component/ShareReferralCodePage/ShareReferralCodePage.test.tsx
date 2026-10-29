@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { trackEvent, copy, navigate } = vi.hoisted(() => ({
+const { trackEvent, copy, navigate, game } = vi.hoisted(() => ({
     trackEvent: vi.fn(),
     copy: vi.fn(),
     navigate: vi.fn(),
+    game: { data: undefined as unknown },
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
@@ -21,6 +22,9 @@ vi.mock("@frak-labs/wallet-shared", () => ({
         data: { ownedCode: { code: "STORY1", createdAt: "2026-10-20" } },
     }),
 }));
+vi.mock("@/module/game/hook/useCurrentGame", () => ({
+    useCurrentGame: () => game,
+}));
 vi.mock("@/module/stores/modalStore", () => ({
     modalStore: (select: (s: { openModal: () => void }) => unknown) =>
         select({ openModal: vi.fn() }),
@@ -36,9 +40,34 @@ import { ShareReferralCodePage } from "./index";
 const SOURCE = { source: "referral_code" };
 
 describe("ShareReferralCodePage", () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+        game.data = undefined;
+    });
     afterEach(() => {
         Reflect.deleteProperty(navigator, "share");
+    });
+
+    it("explains how a friend counts in the game to a player in it", () => {
+        game.data = { game: {}, me: { participating: true } };
+        render(<ShareReferralCodePage />);
+
+        expect(
+            screen.getByText("wallet.referral.share.gameHint")
+        ).toBeInTheDocument();
+    });
+
+    it.each([
+        ["no game is open", undefined],
+        [
+            "the player is not in the game",
+            { game: {}, me: { participating: false } },
+        ],
+    ])("leaves the game hint out when %s", (_, data) => {
+        game.data = data;
+        render(<ShareReferralCodePage />);
+
+        expect(screen.queryByText("wallet.referral.share.gameHint")).toBeNull();
     });
 
     it("tracks a copy of the code", () => {

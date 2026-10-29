@@ -360,7 +360,8 @@
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
-                "modifyCta": "Modify my code"
+                "modifyCta": "Modify my code",
+                "gameHint": "Frak Game: your friend connects their Instagram and follows @frak_fr, or creates their Frak wallet through a brand. You get a ticket per friend."
             },
             "edit": {
                 "title": "Edit my code",
@@ -1087,7 +1088,7 @@
                 },
                 "friend": {
                     "title": "Invite a friend",
-                    "hint": "With your code: they connect their Instagram and follow @frak_fr.\nVia a brand: they create their Frak wallet.",
+                    "hint": "With your code or through a brand",
                     "hintEarned": "{{parts}}. Invite another one.",
                     "withCode": "{{count}} with your code",
                     "viaBrand": "{{count}} via a brand"

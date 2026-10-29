@@ -575,7 +575,7 @@ export default interface Resources {
           "earned_one": "+{{count}} earned",
           "earned_other": "+{{count}} earned",
           "friend": {
-            "hint": "With your code: they connect their Instagram and follow @frak_fr.\nVia a brand: they create their Frak wallet.",
+            "hint": "With your code or through a brand",
             "hintEarned": "{{parts}}. Invite another one.",
             "title": "Invite a friend",
             "viaBrand": "{{count}} via a brand",
@@ -1786,6 +1786,7 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
+          "gameHint": "Frak Game: your friend connects their Instagram and follows @frak_fr, or creates their Frak wallet through a brand. You get a ticket per friend.",
           "modifyCta": "Modify my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",

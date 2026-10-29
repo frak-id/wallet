@@ -360,7 +360,8 @@
                 "savedToast": "Nouveau code enregistré",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
-                "modifyCta": "Modifier mon code"
+                "modifyCta": "Modifier mon code",
+                "gameHint": "Jeu Frak : ton ami connecte son Instagram et suit @frak_fr, ou crée son porte-monnaie Frak via une marque. Tu gagnes un ticket par ami."
             },
             "edit": {
                 "title": "Modifier mon code",
@@ -1087,7 +1088,7 @@
                 },
                 "friend": {
                     "title": "Inviter un ami",
-                    "hint": "Avec ton code : il connecte son Instagram et suit @frak_fr.\nVia une marque : il crée son porte-monnaie Frak.",
+                    "hint": "Avec ton code ou via une marque",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
