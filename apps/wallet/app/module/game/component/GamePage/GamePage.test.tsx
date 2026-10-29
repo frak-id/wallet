@@ -523,6 +523,7 @@ describe("GamePage", () => {
             me: {
                 participating: false,
                 tickets: 0,
+                ticketsBySource: {},
                 eligible: false,
                 instagram: "none",
             },
@@ -531,11 +532,9 @@ describe("GamePage", () => {
         render(<GamePage />);
 
         expect(screen.queryByText("navigate:/game/join")).toBeNull();
-        expect(
-            screen.getByText("game.card.notParticipating")
-        ).toBeInTheDocument();
+        expect(screen.getByText("game.card.yourTicket")).toBeInTheDocument();
         fireEvent.click(
-            screen.getByRole("button", { name: /game.card.title/ })
+            screen.getByRole("button", { name: /game.card.ariaLabel/ })
         );
         expect(navigate).toHaveBeenCalledWith({ to: "/game/join" });
     });

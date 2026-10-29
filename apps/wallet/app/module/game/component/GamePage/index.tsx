@@ -154,8 +154,8 @@ export function GamePage() {
                     description={t("game.page.none.description")}
                 />
             )}
-            {top.kind === "join" && (
-                <OpenGameCard game={top.game} participating={false} />
+            {top.kind === "join" && me && (
+                <OpenGameCard game={top.game} me={me} />
             )}
             {top.kind === "result" && (
                 <GameResultView result={top.result} history={results} />

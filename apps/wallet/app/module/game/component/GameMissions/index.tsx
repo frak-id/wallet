@@ -24,14 +24,14 @@ import {
 } from "@/module/game/utils/gameMissions";
 import * as styles from "./index.css";
 
-const ICONS = {
+export const ICONS = {
     join: CheckIcon,
     instagram: InstagramIcon,
     friend: ReferralIcon,
     purchase: CartIcon,
 } as const satisfies Record<Mission["id"], unknown>;
 
-const REWARDS = {
+export const REWARDS = {
     join: "game.page.missions.reward",
     instagram: "game.page.missions.reward",
     friend: "game.page.missions.rewardPerFriend",

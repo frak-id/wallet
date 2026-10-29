@@ -1004,9 +1004,17 @@
             "findCode": "Trouver le code sur Instagram"
         },
         "card": {
-            "title": "Jeu Frak en cours",
-            "participating": "Tu participes",
-            "notParticipating": "Pas encore inscrit",
+            "label": "Jeu Frak",
+            "ticket_one": "ticket",
+            "ticket_other": "tickets",
+            "yourTicket": "Ton ticket",
+            "toWin": "à gagner au tirage",
+            "ariaLabel": "Jeu Frak : {{prize}}, {{tickets}}",
+            "gained_one": "{{count}} ticket depuis ta dernière visite",
+            "gained_other": "{{count}} tickets depuis ta dernière visite",
+            "statusJoin": "Rejoindre le jeu",
+            "statusJoinReward": "1er ticket offert",
+            "statusAllDone": "Toutes les missions sont faites",
             "ended": "Jeu Frak terminé",
             "drawn": "Tu as été tiré au sort !",
             "verifyBy": "Connecte ton Instagram avant le {{date}}"

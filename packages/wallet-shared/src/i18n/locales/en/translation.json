@@ -1004,9 +1004,17 @@
             "findCode": "Find the code on Instagram"
         },
         "card": {
-            "title": "Frak game in progress",
-            "participating": "You're in",
-            "notParticipating": "Not joined yet",
+            "label": "Frak Game",
+            "ticket_one": "ticket",
+            "ticket_other": "tickets",
+            "yourTicket": "Your ticket",
+            "toWin": "to win in the draw",
+            "ariaLabel": "Frak Game: {{prize}}, {{tickets}}",
+            "gained_one": "{{count}} ticket since your last visit",
+            "gained_other": "{{count}} tickets since your last visit",
+            "statusJoin": "Join the game",
+            "statusJoinReward": "1st ticket on us",
+            "statusAllDone": "Every mission done",
             "ended": "Frak Game over",
             "drawn": "You were drawn!",
             "verifyBy": "Connect your Instagram by {{date}}"
