@@ -360,7 +360,8 @@
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
-                "modifyCta": "Modify my code"
+                "modifyCta": "Modify my code",
+                "gameHint": "Frak Game: your friend connects their Instagram and follows @frak_fr, or creates their Frak wallet through a brand. You get a ticket per friend."
             },
             "edit": {
                 "title": "Edit my code",
@@ -1015,9 +1016,10 @@
             "statusJoin": "Join the game",
             "statusJoinReward": "1st ticket on us",
             "statusAllDone": "Every mission done",
-            "ended": "Frak Game over",
             "drawn": "You were drawn!",
-            "verifyBy": "Connect your Instagram by {{date}}"
+            "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
+            "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
+            "statusResult": "See the result"
         },
         "page": {
             "none": {
@@ -1087,7 +1089,7 @@
                 },
                 "friend": {
                     "title": "Invite a friend",
-                    "hint": "With your code: they connect their Instagram and follow @frak_fr.\nVia a brand: they create their Frak wallet.",
+                    "hint": "With your code or through a brand",
                     "hintEarned": "{{parts}}. Invite another one.",
                     "withCode": "{{count}} with your code",
                     "viaBrand": "{{count}} via a brand"
@@ -1131,6 +1133,8 @@
                     "first_other": "First game: {{tickets}} tickets, your record to beat",
                     "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
                     "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+                    "tied_one": "Record tied: {{tickets}} ticket, like the {{date}} game",
+                    "tied_other": "Record tied: {{tickets}} tickets, like the {{date}} game",
                     "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
                     "held_other": "Your record: {{tickets}} tickets, in the {{date}} game"
                 }

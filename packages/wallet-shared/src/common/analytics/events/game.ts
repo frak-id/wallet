@@ -28,8 +28,13 @@ export type GameEventMap = {
         surface: "game_page" | "home_card";
         game_id: string;
     };
-    /** The home ticket card's main button; the status line fires `game_mission_clicked` instead. */
-    game_card_clicked: { game_id: string; participating: boolean };
+    /** The home ticket card's main button, or the drawn card's Instagram line; the open card's status line fires `game_mission_clicked`. */
+    game_card_clicked: {
+        game_id: string;
+        participating: boolean;
+        state: "open" | "drawn" | "ended";
+        target: "game" | "join" | "instagram";
+    };
     game_progress_shown: { tickets_gained: number; unlocked: boolean };
     game_result_viewed: {
         game_id: string;
@@ -39,7 +44,7 @@ export type GameEventMap = {
             | "won"
             | "lost"
             | "no_winner";
-        record: "first" | "new" | "held";
+        record: "first" | "new" | "tied" | "held";
     };
     game_win_screen_viewed: { game_id: string; prize_amount: number };
     game_win_screen_closed: { game_id: string; action: "history" | "close" };

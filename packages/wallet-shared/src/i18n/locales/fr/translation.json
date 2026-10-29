@@ -360,7 +360,8 @@
                 "savedToast": "Nouveau code enregistré",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
-                "modifyCta": "Modifier mon code"
+                "modifyCta": "Modifier mon code",
+                "gameHint": "Jeu Frak : ton ami connecte son Instagram et suit @frak_fr, ou crée son porte-monnaie Frak via une marque. Tu gagnes un ticket par ami."
             },
             "edit": {
                 "title": "Modifier mon code",
@@ -1015,9 +1016,10 @@
             "statusJoin": "Rejoindre le jeu",
             "statusJoinReward": "1er ticket offert",
             "statusAllDone": "Toutes les missions sont faites",
-            "ended": "Jeu Frak terminé",
-            "drawn": "Tu as été tiré au sort !",
-            "verifyBy": "Connecte ton Instagram avant le {{date}}"
+            "drawn": "Tu as été tiré au sort !",
+            "drawnAriaLabel": "Jeu Frak : tu as été tiré au sort pour {{prize}}",
+            "endedAriaLabel": "Jeu Frak du {{date}} : {{outcome}}",
+            "statusResult": "Voir le résultat"
         },
         "page": {
             "none": {
@@ -1087,7 +1089,7 @@
                 },
                 "friend": {
                     "title": "Inviter un ami",
-                    "hint": "Avec ton code : il connecte son Instagram et suit @frak_fr.\nVia une marque : il crée son porte-monnaie Frak.",
+                    "hint": "Avec ton code ou via une marque",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
@@ -1131,6 +1133,8 @@
                     "first_other": "Premier jeu : {{tickets}} tickets, ton record à battre",
                     "new_one": "Nouveau record : {{tickets}} ticket (avant : {{previous}})",
                     "new_other": "Nouveau record : {{tickets}} tickets (avant : {{previous}})",
+                    "tied_one": "Record égalé : {{tickets}} ticket, comme au jeu du {{date}}",
+                    "tied_other": "Record égalé : {{tickets}} tickets, comme au jeu du {{date}}",
                     "held_one": "Ton record : {{tickets}} ticket, au jeu du {{date}}",
                     "held_other": "Ton record : {{tickets}} tickets, au jeu du {{date}}"
                 }

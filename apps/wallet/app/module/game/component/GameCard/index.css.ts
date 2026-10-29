@@ -70,6 +70,18 @@ export const count = recipe({
     },
 });
 
+export const prize = recipe({
+    base: { fontWeight: 800, lineHeight: 1, whiteSpace: "nowrap" },
+    variants: {
+        size: {
+            short: { fontSize: 34 },
+            medium: { fontSize: 29 },
+            long: { fontSize: 22 },
+            longest: { fontSize: 18 },
+        },
+    },
+});
+
 export const unit = style({
     fontSize: 12,
     fontWeight: 700,
@@ -185,6 +197,7 @@ export const status = recipe({
             locked: { color: grey700 },
             done: { color: success[800] },
         },
+        passive: { true: { position: "static", zIndex: "auto" } },
     },
 });
 

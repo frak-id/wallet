@@ -24,3 +24,16 @@ export function formatGameEnd(date: Date | string, locale: string): string {
         minute: "2-digit",
     });
 }
+
+/** A deadline short enough for one line on a card (`30 oct., 12:08`). */
+export function formatGameDeadline(
+    date: Date | string,
+    locale: string
+): string {
+    return new Date(date).toLocaleString(locale, {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}

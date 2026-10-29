@@ -515,17 +515,18 @@ export default interface Resources {
       "card": {
         "ariaLabel": "Frak Game: {{prize}}, {{tickets}}",
         "drawn": "You were drawn!",
-        "ended": "Frak Game over",
+        "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
+        "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
         "gained_one": "{{count}} ticket since your last visit",
         "gained_other": "{{count}} tickets since your last visit",
         "label": "Frak Game",
         "statusAllDone": "Every mission done",
         "statusJoin": "Join the game",
         "statusJoinReward": "1st ticket on us",
+        "statusResult": "See the result",
         "ticket_one": "ticket",
         "ticket_other": "tickets",
         "toWin": "to win in the draw",
-        "verifyBy": "Connect your Instagram by {{date}}",
         "yourTicket": "Your ticket"
       },
       "history": {
@@ -575,7 +576,7 @@ export default interface Resources {
           "earned_one": "+{{count}} earned",
           "earned_other": "+{{count}} earned",
           "friend": {
-            "hint": "With your code: they connect their Instagram and follow @frak_fr.\nVia a brand: they create their Frak wallet.",
+            "hint": "With your code or through a brand",
             "hintEarned": "{{parts}}. Invite another one.",
             "title": "Invite a friend",
             "viaBrand": "{{count}} via a brand",
@@ -662,7 +663,9 @@ export default interface Resources {
             "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
             "held_other": "Your record: {{tickets}} tickets, in the {{date}} game",
             "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
-            "new_other": "New record: {{tickets}} tickets (before: {{previous}})"
+            "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+            "tied_one": "Record tied: {{tickets}} ticket, like the {{date}} game",
+            "tied_other": "Record tied: {{tickets}} tickets, like the {{date}} game"
           },
           "timeLeftHours": "Only {{hours}} h {{minutes}} min left",
           "timeLeftMinutes": "Only {{minutes}} min left"
@@ -1784,6 +1787,7 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
+          "gameHint": "Frak Game: your friend connects their Instagram and follows @frak_fr, or creates their Frak wallet through a brand. You get a ticket per friend.",
           "modifyCta": "Modify my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",

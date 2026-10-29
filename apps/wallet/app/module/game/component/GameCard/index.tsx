@@ -2,8 +2,6 @@ import type {
     CurrentGameResponse,
     GameResult,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Card } from "@frak-labs/design-system/components/Card";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -11,83 +9,57 @@ import {
     CheckIcon,
     ChevronRightIcon,
     GiftIcon,
+    InstagramIcon,
     LockIcon,
 } from "@frak-labs/design-system/icons";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useNavigate } from "@tanstack/react-router";
-import { Ticket } from "lucide-react";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { ICONS, REWARDS } from "@/module/game/component/GameMissions";
-import { OutcomeBadge } from "@/module/game/component/GameResult";
+import { OUTCOME } from "@/module/game/component/GameResultView";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useNow } from "@/module/game/hook/useNow";
 import { gameSeenStore } from "@/module/game/stores/gameSeenStore";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
-import { formatGameEnd } from "@/module/game/utils/formatGameDate";
+import {
+    formatGameDate,
+    formatGameDeadline,
+} from "@/module/game/utils/formatGameDate";
 import { countdownOf } from "@/module/game/utils/gameCountdown";
+import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { gainsSince } from "@/module/game/utils/gameGains";
+import { homeCardOf } from "@/module/game/utils/gameHomeCard";
 import type { Mission } from "@/module/game/utils/gameMissions";
 import {
     type TicketCardStatus,
     ticketCardOf,
 } from "@/module/game/utils/gameTicketCard";
-import * as styles from "@/module/wallet/component/AddEmailCard/index.css";
+import { totalTickets } from "@/module/game/utils/ticketAmounts";
 import * as ticket from "./index.css";
-
-/** How long after its end a game's result stays on the wallet home. */
-const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * Wallet-home recap: a draw waiting on the user first (straight to certifying),
  * then the open game, or the last game played when it ended recently; hidden otherwise.
  */
 export function GameCard() {
-    const { t, i18n } = useTranslation();
     const { data } = useCurrentGame();
     const history = useGameHistory();
-    const pending = history.data?.find(
-        (result) => result.outcome === "pending_verification"
-    );
+    const card = homeCardOf(data, history.data);
 
-    if (pending) {
-        return (
-            <GameCardShell
-                to="/profile/instagram"
-                title={t("game.card.drawn")}
-                prize={pending.game}
-                detail={
-                    pending.verifyBy
-                        ? t("game.card.verifyBy", {
-                              date: formatGameEnd(
-                                  pending.verifyBy,
-                                  i18n.language
-                              ),
-                          })
-                        : undefined
-                }
-                badge={<OutcomeBadge outcome={pending.outcome} />}
-            />
-        );
+    switch (card?.kind) {
+        case "drawn":
+            return <DrawnGameCard result={card.result} />;
+        case "open":
+            return <OpenGameCard game={card.game} me={card.me} />;
+        case "ended":
+            return <EndedGameCard result={card.result} />;
+        default:
+            return null;
     }
-
-    if (data?.game) {
-        return <OpenGameCard game={data.game} me={data.me} />;
-    }
-
-    const latest = data && history.data?.[0];
-    if (!(latest && isRecent(latest))) return null;
-    return (
-        <GameCardShell
-            to="/game"
-            title={t("game.card.ended")}
-            prize={latest.game}
-            badge={<OutcomeBadge outcome={latest.outcome} />}
-        />
-    );
 }
 
 type OpenGame = {
@@ -99,6 +71,8 @@ type OpenGame = {
 
 type Me = CurrentGameResponse["me"];
 
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+
 const STATUS_TONE = {
     join: "action",
     locked: "locked",
@@ -108,6 +82,66 @@ const STATUS_TONE = {
 
 const countSize = (count: number) =>
     count < 100 ? "short" : count < 1000 ? "medium" : "long";
+
+const prizeSize = (text: string) =>
+    text.length <= 4
+        ? "short"
+        : text.length <= 5
+          ? "medium"
+          : text.length <= 7
+            ? "long"
+            : "longest";
+
+/** The ticket shape: a stub on the left, the card's main button, a headline and a status line. */
+function TicketShell({
+    tone,
+    stub,
+    ariaLabel,
+    onOpen,
+    pill,
+    headline,
+    status,
+}: {
+    tone: "active" | "muted";
+    stub: ReactNode;
+    ariaLabel: string;
+    onOpen: () => void;
+    pill: ReactNode;
+    headline: ReactNode;
+    status: ReactNode;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <div className={ticket.root}>
+            <div className={ticket.face}>
+                <div className={ticket.stub({ tone })}>{stub}</div>
+                <Stack space="xxs" justify="center" className={ticket.main}>
+                    <Spread space="xs">
+                        <button
+                            type="button"
+                            className={ticket.mainButton}
+                            aria-label={ariaLabel}
+                            onClick={onOpen}
+                        >
+                            <Text
+                                as="span"
+                                variant="caption"
+                                weight="semiBold"
+                                color="secondary"
+                            >
+                                {t("game.card.label")}
+                            </Text>
+                        </button>
+                        {pill}
+                    </Spread>
+                    {headline}
+                    {status}
+                </Stack>
+            </div>
+        </div>
+    );
+}
 
 /** The open game as a ticket: the player's count on the stub, the prize, and the next action. */
 export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
@@ -126,15 +160,13 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
         ? t("game.card.ticket", { count: me.tickets })
         : t("game.card.yourTicket");
     const muted = status.kind === "join" || status.kind === "locked";
+    const target = me.participating ? "game" : "join";
 
     return (
-        <div className={ticket.root}>
-            <div className={ticket.face}>
-                <div
-                    className={ticket.stub({
-                        tone: muted ? "muted" : "active",
-                    })}
-                >
+        <TicketShell
+            tone={muted ? "muted" : "active"}
+            stub={
+                <>
                     <span
                         aria-hidden="true"
                         className={ticket.count({
@@ -160,39 +192,21 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
                             </span>
                         </span>
                     )}
-                </div>
-                <Stack space="xxs" justify="center" className={ticket.main}>
-                    <Spread space="xs">
-                        <button
-                            type="button"
-                            className={ticket.mainButton}
-                            aria-label={t("game.card.ariaLabel", {
-                                prize,
-                                tickets: unit,
-                            })}
-                            onClick={() => {
-                                trackEvent("game_card_clicked", {
-                                    game_id: game.id,
-                                    participating: me.participating,
-                                });
-                                navigate({
-                                    to: me.participating
-                                        ? "/game"
-                                        : "/game/join",
-                                });
-                            }}
-                        >
-                            <Text
-                                as="span"
-                                variant="caption"
-                                weight="semiBold"
-                                color="secondary"
-                            >
-                                {t("game.card.label")}
-                            </Text>
-                        </button>
-                        <Countdown endsAt={game.endsAt} />
-                    </Spread>
+                </>
+            }
+            ariaLabel={t("game.card.ariaLabel", { prize, tickets: unit })}
+            onOpen={() => {
+                trackEvent("game_card_clicked", {
+                    game_id: game.id,
+                    participating: me.participating,
+                    state: "open",
+                    target,
+                });
+                navigate({ to: me.participating ? "/game" : "/game/join" });
+            }}
+            pill={<Countdown endsAt={game.endsAt} />}
+            headline={
+                <>
                     <span
                         className={ticket.headline({
                             kind: amount ? "amount" : "description",
@@ -205,14 +219,162 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
                             {t("game.card.toWin")}
                         </Text>
                     )}
-                    <StatusLine
-                        status={status}
-                        gameId={game.id}
-                        onGo={(to) => navigate({ to })}
-                    />
-                </Stack>
-            </div>
-        </div>
+                </>
+            }
+            status={
+                <StatusLine
+                    status={status}
+                    gameId={game.id}
+                    onGo={(to) => navigate({ to })}
+                />
+            }
+        />
+    );
+}
+
+/** A draw waiting on the user: the prize on the stub, the time left, and the way to certify. */
+function DrawnGameCard({ result }: { result: GameResult }) {
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
+    const now = useNow(30_000);
+    const deadline = openDeadline(result, now);
+    const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
+    const track = (target: "game" | "instagram") =>
+        trackEvent("game_card_clicked", {
+            game_id: result.game.id,
+            participating: true,
+            state: "drawn",
+            target,
+        });
+
+    return (
+        <TicketShell
+            tone="active"
+            stub={<PrizeFace prize={prize} Badge={GiftIcon} />}
+            ariaLabel={t("game.card.drawnAriaLabel", { prize })}
+            onOpen={() => {
+                track("game");
+                navigate({ to: "/game" });
+            }}
+            pill={
+                deadline && (
+                    <span className={ticket.pill({ urgent: true })}>
+                        {timeLeftOf(t, countdownOf(deadline, now))}
+                    </span>
+                )
+            }
+            headline={<Headline>{t("game.card.drawn")}</Headline>}
+            status={
+                <StatusRow
+                    tone="action"
+                    Icon={InstagramIcon}
+                    title={t("game.result.pendingVerification.cta")}
+                    detail={
+                        deadline
+                            ? t("game.result.hero.deadline", {
+                                  date: formatGameDeadline(
+                                      deadline,
+                                      i18n.language
+                                  ),
+                              })
+                            : null
+                    }
+                    onClick={() => {
+                        track("instagram");
+                        navigate({ to: "/profile/instagram" });
+                    }}
+                />
+            }
+        />
+    );
+}
+
+/** How a recent game went: the prize or the tickets on the stub, the outcome as the headline. */
+function EndedGameCard({ result }: { result: GameResult }) {
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
+    const { badge: Badge, face, title } = OUTCOME[result.outcome];
+    const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
+    const tickets = totalTickets(result.ticketsBySource);
+    const headline = t(title, { prize });
+    const date = formatGameDate(result.game.endsAt, i18n.language);
+
+    return (
+        <TicketShell
+            tone={
+                result.outcome === "lost" || result.outcome === "no_winner"
+                    ? "muted"
+                    : "active"
+            }
+            stub={
+                face === "prize" ? (
+                    <PrizeFace prize={prize} Badge={Badge} />
+                ) : (
+                    <>
+                        <span
+                            aria-hidden="true"
+                            className={ticket.count({
+                                size: countSize(tickets),
+                            })}
+                        >
+                            {tickets}
+                        </span>
+                        <span aria-hidden="true" className={ticket.unit}>
+                            {t("game.card.ticket", { count: tickets })}
+                        </span>
+                        {Badge && <Badge width={14} height={14} />}
+                    </>
+                )
+            }
+            ariaLabel={t("game.card.endedAriaLabel", {
+                date,
+                outcome: headline,
+            })}
+            onOpen={() => {
+                trackEvent("game_card_clicked", {
+                    game_id: result.game.id,
+                    participating: true,
+                    state: "ended",
+                    target: "game",
+                });
+                navigate({ to: "/game" });
+            }}
+            pill={
+                <span className={ticket.pill({})}>
+                    {t("game.history.gameOf", { date })}
+                </span>
+            }
+            headline={<Headline>{headline}</Headline>}
+            status={
+                <StatusRow
+                    tone="action"
+                    title={t("game.card.statusResult")}
+                    detail={null}
+                />
+            }
+        />
+    );
+}
+
+function PrizeFace({ prize, Badge }: { prize: string; Badge: Icon | null }) {
+    return (
+        <>
+            <span
+                aria-hidden="true"
+                className={ticket.prize({ size: prizeSize(prize) })}
+            >
+                {prize}
+            </span>
+            {Badge && <Badge width={14} height={14} />}
+        </>
+    );
+}
+
+function Headline({ children }: { children: ReactNode }) {
+    return (
+        <span className={ticket.headline({ kind: "description" })}>
+            {children}
+        </span>
     );
 }
 
@@ -280,16 +442,34 @@ function StatusLine({
             mission?.route ?? (status.kind === "join" ? "/game/join" : "/game")
         );
     };
-    const Icon = iconOf(status);
-    const { title, detail } = statusText(status, t);
 
     return (
-        <button
-            type="button"
-            className={ticket.status({ tone: STATUS_TONE[status.kind] })}
+        <StatusRow
+            tone={STATUS_TONE[status.kind]}
+            Icon={iconOf(status)}
+            {...statusText(status, t)}
             onClick={go}
-        >
-            <Icon width={16} height={16} className={ticket.icon} />
+        />
+    );
+}
+
+/** The card's last row: a button above the stretched area, or a plain row the main button covers. */
+function StatusRow({
+    tone,
+    Icon,
+    title,
+    detail,
+    onClick,
+}: {
+    tone: (typeof STATUS_TONE)[TicketCardStatus["kind"]];
+    Icon?: Icon;
+    title: string;
+    detail: string | null;
+    onClick?: () => void;
+}) {
+    const content = (
+        <>
+            {Icon && <Icon width={16} height={16} className={ticket.icon} />}
             <span className={ticket.statusText}>
                 {title}
                 {detail && (
@@ -302,65 +482,18 @@ function StatusLine({
                 )}
             </span>
             <ChevronRightIcon width={16} height={16} className={ticket.icon} />
-        </button>
+        </>
     );
-}
 
-function isRecent(result: GameResult) {
-    return Date.now() - new Date(result.game.endsAt).getTime() < RESULT_CARD_MS;
-}
-
-function GameCardShell({
-    to,
-    title,
-    prize,
-    detail,
-    badge,
-}: {
-    to: "/game" | "/game/join" | "/profile/instagram";
-    title: string;
-    prize: { prizeAmount: number; prizeDescription: string | null };
-    /** Replaces the prize line. */
-    detail?: string;
-    badge: ReactNode;
-}) {
-    const { i18n } = useTranslation();
-    const navigate = useNavigate();
-    const open = () => navigate({ to });
-    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        open();
-    };
-
-    return (
-        <Card
-            padding="none"
-            className={styles.card}
-            role="button"
-            tabIndex={0}
-            onClick={open}
-            onKeyDown={handleKeyDown}
+    return onClick ? (
+        <button
+            type="button"
+            className={ticket.status({ tone })}
+            onClick={onClick}
         >
-            <Box className={styles.layoutRow}>
-                <Box className={styles.iconBubble}>
-                    <Ticket size={20} />
-                </Box>
-                <Box className={styles.textBlock}>
-                    <Text variant="body" weight="semiBold">
-                        {title}
-                    </Text>
-                    <Text variant="caption" color="secondary">
-                        {detail ??
-                            prize.prizeDescription ??
-                            formatGameAmount(prize.prizeAmount, i18n.language)}
-                    </Text>
-                    <Box>{badge}</Box>
-                </Box>
-                <Box className={styles.chevron}>
-                    <ChevronRightIcon width={16} height={16} />
-                </Box>
-            </Box>
-        </Card>
+            {content}
+        </button>
+    ) : (
+        <div className={ticket.status({ tone, passive: true })}>{content}</div>
     );
 }
