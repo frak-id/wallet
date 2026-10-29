@@ -42,4 +42,22 @@ describe("countdownOf", () => {
             over: true,
         });
     });
+
+    it("rounds a partial minute up", () => {
+        expect(countdownOf("2026-10-27T12:00:30Z", now)).toMatchObject({
+            hours: 0,
+            minutes: 1,
+        });
+        expect(countdownOf("2026-10-27T12:59:30Z", now)).toMatchObject({
+            hours: 1,
+            minutes: 0,
+        });
+    });
+
+    it("keeps whole hours exact", () => {
+        expect(countdownOf("2026-10-27T14:00:00Z", now)).toMatchObject({
+            hours: 2,
+            minutes: 0,
+        });
+    });
 });
