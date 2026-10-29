@@ -13,6 +13,7 @@ const {
     navigate,
     router,
     sent,
+    trackEvent,
 } = vi.hoisted(() => ({
     status: { data: undefined as unknown, isError: false, refetch: vi.fn() },
     code: {
@@ -48,6 +49,7 @@ const {
     ua: { isMobile: true },
     navigate: vi.fn(),
     router: { canGoBack: true, history: { back: vi.fn() } },
+    trackEvent: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -62,6 +64,7 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     getErrorCode: (error: { value?: { code?: string } } | null) =>
         error?.value?.code,
     openExternalUrl,
+    trackEvent,
     ua,
     useCopyToClipboardWithState: () => clipboard,
 }));
@@ -426,6 +429,142 @@ describe("InstagramLinkPage", () => {
             expect(
                 screen.getByText("instagram.certify.checkError")
             ).toBeInTheDocument();
+        });
+    });
+
+    describe("analytics", () => {
+        const settle = (
+            callback: "onSuccess" | "onError",
+            value?: unknown,
+            call = 0
+        ) => sent.mutate.mock.calls[call][1][callback](value);
+
+        it("tracks the page once per mount, once the status is known", () => {
+            status.data = undefined;
+            const { rerender } = render(<InstagramLinkPage />);
+            expect(trackEvent).not.toHaveBeenCalled();
+
+            status.data = NOTHING;
+            rerender(<InstagramLinkPage />);
+            rerender(<InstagramLinkPage />);
+
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "instagram_page_viewed",
+                { level: "none", follows: null }
+            );
+        });
+
+        it.each([
+            ["declared", DECLARED, { level: "declared", follows: null }],
+            [
+                "certified",
+                certified(true),
+                { level: "certified", follows: true },
+            ],
+            [
+                "not following",
+                certified(false),
+                { level: "certified", follows: false },
+            ],
+        ])("reports the %s level", (_name, data, payload) => {
+            status.data = data;
+            render(<InstagramLinkPage />);
+
+            expect(trackEvent).toHaveBeenCalledWith(
+                "instagram_page_viewed",
+                payload
+            );
+        });
+
+        it("tracks the DM being opened", () => {
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(button("instagram.certify.open"));
+
+            expect(trackEvent).toHaveBeenCalledWith("instagram_dm_opened");
+        });
+
+        it("tracks the declare form being opened from its link", () => {
+            render(<InstagramLinkPage />);
+            trackEvent.mockClear();
+
+            fireEvent.click(button("instagram.declare.open"));
+
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "instagram_declare_opened"
+            );
+        });
+
+        it("does not track the declare form when connecting is off", () => {
+            Object.assign(code, {
+                data: undefined,
+                isError: true,
+                error: { value: { code: "INSTAGRAM_UNAVAILABLE" } },
+            });
+            render(<InstagramLinkPage />);
+
+            expect(trackEvent).not.toHaveBeenCalledWith(
+                "instagram_declare_opened"
+            );
+        });
+
+        it("tracks a linked check on return, not as a retry", () => {
+            render(<InstagramLinkPage />);
+            fireEvent.click(button("instagram.certify.open"));
+            setVisibility("hidden");
+            setVisibility("visible");
+            trackEvent.mockClear();
+
+            settle("onSuccess", certified(false));
+
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "instagram_dm_checked",
+                { outcome: "linked", retry: false }
+            );
+        });
+
+        it("tracks an unreceived and a failed check", () => {
+            render(<InstagramLinkPage />);
+            fireEvent.click(button("instagram.certify.open"));
+            setVisibility("hidden");
+            setVisibility("visible");
+            trackEvent.mockClear();
+
+            settle("onSuccess", NOTHING);
+            settle("onError");
+
+            expect(trackEvent.mock.calls).toEqual([
+                [
+                    "instagram_dm_checked",
+                    { outcome: "not_received", retry: false },
+                ],
+                ["instagram_dm_checked", { outcome: "error", retry: false }],
+            ]);
+        });
+
+        it("flags the check again button as a retry", () => {
+            Object.assign(sent, { isSuccess: true, data: NOTHING });
+            render(<InstagramLinkPage />);
+
+            fireEvent.click(button("instagram.certify.checkAgain"));
+            trackEvent.mockClear();
+            settle("onSuccess", NOTHING);
+
+            expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+                "instagram_dm_checked",
+                { outcome: "not_received", retry: true }
+            );
+        });
+
+        it("does not track a check on re-render", () => {
+            Object.assign(sent, { isSuccess: true, data: NOTHING });
+            const { rerender } = render(<InstagramLinkPage />);
+            rerender(<InstagramLinkPage />);
+
+            expect(trackEvent).not.toHaveBeenCalledWith(
+                "instagram_dm_checked",
+                expect.anything()
+            );
         });
     });
 

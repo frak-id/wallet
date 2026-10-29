@@ -4,7 +4,8 @@ export type SharingSource =
     | "sharing_page_listener"
     | "modal"
     | "explorer_detail"
-    | "welcome_card";
+    | "welcome_card"
+    | "referral_code";
 
 type SharingLinkProps = {
     source: SharingSource;

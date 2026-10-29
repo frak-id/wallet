@@ -48,7 +48,7 @@ function textOf(
     });
 }
 
-function MissionRow({ mission }: { mission: Mission }) {
+function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     const { t } = useTranslation();
     const { status } = mission;
     const Icon = ICONS[mission.id];
@@ -98,7 +98,12 @@ function MissionRow({ mission }: { mission: Mission }) {
             to={mission.route}
             className={className}
             onClick={() =>
-                trackEvent("game_mission_clicked", { mission: id, status })
+                trackEvent("game_mission_clicked", {
+                    mission: id,
+                    status,
+                    surface: "game_page",
+                    game_id: gameId,
+                })
             }
         >
             {body}
@@ -107,7 +112,13 @@ function MissionRow({ mission }: { mission: Mission }) {
 }
 
 /** How far the player is through the ways to earn tickets, each a row leading to where to do it. */
-export function GameMissions({ missions }: { missions: Mission[] }) {
+export function GameMissions({
+    missions,
+    gameId,
+}: {
+    missions: Mission[];
+    gameId: string;
+}) {
     const { t } = useTranslation();
     const done = missionsDone(missions);
     const allDone = done === missions.length;
@@ -130,7 +141,11 @@ export function GameMissions({ missions }: { missions: Mission[] }) {
             />
             <Card padding="none">
                 {missions.map((mission) => (
-                    <MissionRow key={mission.id} mission={mission} />
+                    <MissionRow
+                        key={mission.id}
+                        mission={mission}
+                        gameId={gameId}
+                    />
                 ))}
             </Card>
             {allDone && (

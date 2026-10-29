@@ -153,7 +153,9 @@ describe("GameCard", () => {
             })
         );
         expect(navigate).toHaveBeenLastCalledWith({ to: "/game/join" });
-        expect(trackEvent).not.toHaveBeenCalled();
+        expect(trackEvent.mock.calls).toEqual([
+            ["game_card_clicked", { game_id: "d1", participating: false }],
+        ]);
     });
 
     it("shows a description as the headline, without the amount caption", () => {
@@ -184,7 +186,10 @@ describe("GameCard", () => {
             screen.getByRole("button", { name: /game.card.ariaLabel/ })
         );
         expect(navigate).toHaveBeenCalledWith({ to: "/game" });
-        expect(trackEvent).not.toHaveBeenCalled();
+        expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+            "game_card_clicked",
+            { game_id: "d1", participating: true }
+        );
     });
 
     it("leads a locked player to Instagram and tracks the tap", () => {
@@ -200,7 +205,13 @@ describe("GameCard", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
             mission: "instagram",
             status: "gate",
+            surface: "home_card",
+            game_id: "d1",
         });
+        expect(trackEvent).not.toHaveBeenCalledWith(
+            "game_card_clicked",
+            expect.anything()
+        );
     });
 
     it("leads an eligible player to the next mission", () => {
@@ -221,6 +232,8 @@ describe("GameCard", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
             mission: "friend",
             status: "todo",
+            surface: "home_card",
+            game_id: "d1",
         });
     });
 
