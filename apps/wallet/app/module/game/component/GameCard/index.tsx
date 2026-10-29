@@ -170,13 +170,17 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
                                 prize,
                                 tickets: unit,
                             })}
-                            onClick={() =>
+                            onClick={() => {
+                                trackEvent("game_card_clicked", {
+                                    game_id: game.id,
+                                    participating: me.participating,
+                                });
                                 navigate({
                                     to: me.participating
                                         ? "/game"
                                         : "/game/join",
-                                })
-                            }
+                                });
+                            }}
                         >
                             <Text
                                 as="span"
@@ -203,6 +207,7 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
                     )}
                     <StatusLine
                         status={status}
+                        gameId={game.id}
                         onGo={(to) => navigate({ to })}
                     />
                 </Stack>
@@ -253,9 +258,11 @@ function iconOf(status: TicketCardStatus) {
 
 function StatusLine({
     status,
+    gameId,
     onGo,
 }: {
     status: TicketCardStatus;
+    gameId: string;
     onGo: (to: "/game" | "/game/join" | NonNullable<Mission["route"]>) => void;
 }) {
     const { t } = useTranslation();
@@ -265,6 +272,8 @@ function StatusLine({
             trackEvent("game_mission_clicked", {
                 mission: mission.id,
                 status: mission.status,
+                surface: "home_card",
+                game_id: gameId,
             });
         }
         onGo(

@@ -99,6 +99,7 @@ export function GamePage() {
         }
         trackedGameId.current = viewedGameId;
         trackEvent("game_page_viewed", {
+            game_id: viewedGameId,
             tickets: me.tickets,
             eligible: me.eligible,
             instagram: me.instagram,
@@ -174,7 +175,10 @@ export function GamePage() {
                         endsAt={top.game.endsAt}
                         gains={gains}
                     />
-                    <GameMissions missions={missionsOf(me)} />
+                    <GameMissions
+                        missions={missionsOf(me)}
+                        gameId={top.game.id}
+                    />
                 </>
             )}
             {top.kind !== "loading" && (

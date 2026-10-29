@@ -10,6 +10,7 @@ export type GameEventMap = {
         error_key?: string;
     };
     game_page_viewed: {
+        game_id: string;
         tickets: number;
         eligible: boolean;
         instagram: "certified" | "declared" | "none";
@@ -24,7 +25,11 @@ export type GameEventMap = {
     game_mission_clicked: {
         mission: "instagram" | "friend" | "purchase";
         status: "done" | "todo" | "gate";
+        surface: "game_page" | "home_card";
+        game_id: string;
     };
+    /** The home ticket card's main button; the status line fires `game_mission_clicked` instead. */
+    game_card_clicked: { game_id: string; participating: boolean };
     game_progress_shown: { tickets_gained: number; unlocked: boolean };
     game_result_viewed: {
         game_id: string;

@@ -179,6 +179,7 @@ describe("GamePage", () => {
 
         expect(trackEvent).toHaveBeenCalledTimes(1);
         expect(trackEvent).toHaveBeenCalledWith("game_page_viewed", {
+            game_id: "d1",
             tickets: 4,
             eligible: true,
             instagram: "certified",
@@ -308,10 +309,14 @@ describe("GamePage", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
             mission: "instagram",
             status: "gate",
+            surface: "game_page",
+            game_id: "d1",
         });
         expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
             mission: "friend",
             status: "todo",
+            surface: "game_page",
+            game_id: "d1",
         });
     });
 
