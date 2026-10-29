@@ -361,7 +361,7 @@
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code",
-                "gameHint": "Jeu Frak : ton ami connecte son Instagram et suit @frak_fr, ou crée son porte-monnaie Frak via une marque. Tu gagnes un ticket par ami."
+                "gameHint": "Jeu Frak : 1 ticket par ami inscrit avec ton code, une fois son Instagram connecté et @frak_fr suivi."
             },
             "edit": {
                 "title": "Modifier mon code",
