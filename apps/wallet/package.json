@@ -51,6 +51,7 @@
     "tauri:android:dev": "sst dev ./scripts/tauri-dev.sh android",
     "tauri:android:build": "sst shell -- tauri android build",
     "tauri:android:build:dev": "./scripts/build-android-dev.sh",
+    "e2e:android": "./scripts/e2e-android.sh",
     "tauri:version": "./scripts/sync-version.sh",
     "tauri:icons": "./src-tauri/icons/sources/regenerate.sh",
     "tauri:native-icons": "bun scripts/generate-native-icons.ts",

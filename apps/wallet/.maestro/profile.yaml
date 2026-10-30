@@ -1,0 +1,19 @@
+appId: id.frak.wallet.dev
+name: Profile tab lists the account entries
+---
+# Never clearState: the wallet is logged in by hand once, with a passkey.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile"
+- extendedWaitUntil:
+    visible: "Referrals"
+    timeout: 10000
+- assertVisible: "My favorite brands"
+- assertVisible: "Secure your wallet"
+- assertVisible: "Help & support"
+- takeScreenshot: build/maestro/wallet-profile
+- tapOn: "Wallet"
+- assertVisible: "Rewards"

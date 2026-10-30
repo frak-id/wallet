@@ -1,0 +1,14 @@
+appId: id.frak.wallet.dev
+name: Wallet home shows the rewards balance
+---
+# Never clearState: the wallet is logged in by hand once, with a passkey.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- assertVisible: "Transfer to my bank"
+- assertVisible: ".*Pending"
+- assertVisible: ".*Lifetime"
+- assertVisible: "Earnings history"
+- takeScreenshot: build/maestro/wallet-home
