@@ -1,0 +1,49 @@
+appId: id.frak.wallet.dev
+name: Earnings history shows its summary
+---
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- scrollUntilVisible:
+    element: "Earnings history|Historique des gains"
+    direction: DOWN
+# A wallet without earnings offers the Explorer instead of a list.
+- runFlow:
+    when:
+      visible: "Discover offers|Découvrir les offres"
+    commands:
+      - tapOn: "Discover offers|Découvrir les offres"
+      - extendedWaitUntil:
+          visible: ".* (per referral|par parrainage)"
+          timeout: 15000
+          label: "Discover offers opens the Explorer"
+      - tapOn: "Wallet|Porte-monnaie"
+# The full page is linked from home only past 5 entries; the dev deep link always reaches it.
+- openLink: "frakwallet-dev://history"
+# iOS confirms a custom-scheme link with "Open in “Frak Wallet Dev”?".
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Open|Ouvrir"
+          timeout: 5000
+          optional: true
+      - tapOn:
+          text: "Open|Ouvrir"
+          optional: true
+- extendedWaitUntil:
+    visible: "Total shares|Total partages"
+    timeout: 15000
+    label: "Earnings history page opened"
+- assertVisible: "Purchases generated|Achats générés"
+- assertVisible: "Total earnings|Total gains générés"
+- takeScreenshot: build/maestro/wallet-earnings-history
+- tapOn: "Back|Retour"
+- extendedWaitUntil:
+    notVisible: "Total shares|Total partages"
+    timeout: 10000
+    label: "Back leaves the history page"
