@@ -1,7 +1,7 @@
 appId: id.frak.wallet.dev
 name: Log out, then wait for the passkey sheet
 ---
-# Run by e2e-android.sh only (E2E_PASSKEY_FINGER), which then touches the fingerprint sensor.
+# Run by e2e-{android,ios}.sh only, which then answer the biometric check from the script.
 - launchApp
 - extendedWaitUntil:
     visible: "Rewards"
@@ -15,7 +15,20 @@ name: Log out, then wait for the passkey sheet
     element: "Logout"
     direction: DOWN
 - tapOn: "Logout"
-- extendedWaitUntil:
-    visible: ".*needs to verify it.s you.*"
-    timeout: 20000
-    label: "Google Password Manager asks for the screen lock"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible: ".*needs to verify it.s you.*"
+          timeout: 20000
+          label: "Google Password Manager asks for the screen lock"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Use Passkey"
+          timeout: 20000
+          label: "iOS offers the simulator's passkey"
+      - tapOn: "Use Passkey"

@@ -3,8 +3,10 @@
 # booted iOS simulator. Builds nothing: install a simulator build (`tauri ios build
 # --target aarch64-sim --debug` under `sst shell --stage dev`), then log in once by hand.
 # The flows never clear app data, so the session holds.
+# E2E_PASSKEY_FACEID=1 first logs out and back in with the passkey, answering Face ID
+# with the simulator's match signal (Face ID must be enrolled in the simulator).
 #
-# Usage: bun run --cwd apps/wallet e2e:ios [flow.yaml ...]
+# Usage: [E2E_PASSKEY_FACEID=1] bun run --cwd apps/wallet e2e:ios [flow.yaml ...]
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,9 +29,24 @@ xcrun simctl get_app_container "$udid" "$BUNDLE_ID" >/dev/null 2>&1 ||
 cap=()
 # --foreground: in its own process group Maestro is stopped (SIGTTOU) on exit when run from a terminal.
 command -v timeout >/dev/null 2>&1 && cap=(timeout --foreground "${MAESTRO_TIMEOUT:-900}")
+maestro_test() {
+	MAESTRO_CLI_NO_ANALYTICS=1 \
+		MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-180000}" \
+		${cap[@]+"${cap[@]}"} maestro --device "$udid" test "$@"
+}
 cd "$APP_DIR"
+
+if [ -n "${E2E_PASSKEY_FACEID:-}" ]; then
+	log "Logging out, then back in with the passkey (Face ID)..."
+	maestro_test "$APP_DIR/.maestro/passkey/logout-to-prompt.yaml"
+	# Repeated because the Face ID sheet may not be listening yet when Maestro returns.
+	for _ in 1 2 3 4 5; do
+		xcrun simctl spawn "$udid" notifyutil -p com.apple.BiometricKit_Sim.pearl.match >/dev/null
+		sleep 2
+	done
+	# The flows below wait for the wallet home, which proves the login went through.
+fi
+
 log "Running Maestro flows on $udid..."
-MAESTRO_CLI_NO_ANALYTICS=1 \
-	MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-	MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-180000}" \
-	${cap[@]+"${cap[@]}"} maestro --device "$udid" test "${@:-$APP_DIR/.maestro}"
+maestro_test "${@:-$APP_DIR/.maestro}"
