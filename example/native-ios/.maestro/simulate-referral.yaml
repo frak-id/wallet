@@ -1,0 +1,13 @@
+appId: id.frak.example.ios
+name: Simulated referral link is recognized
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- tapOn: "Checkout"
+- tapOn: "Simulate a referral link"
+- extendedWaitUntil:
+    visible: ".*Referral recognized.*"
+    timeout: 10000
