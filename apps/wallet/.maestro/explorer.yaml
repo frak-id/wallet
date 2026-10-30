@@ -1,0 +1,30 @@
+appId: id.frak.wallet.dev
+name: Explorer lists offers and opens one
+---
+# Offers are live dev data: match any card, never a given brand.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Explorer"
+- extendedWaitUntil:
+    visible: ".* (per referral|par parrainage)"
+    timeout: 15000
+    label: "At least one offer card"
+- tapOn:
+    text: ".* (per referral|par parrainage)"
+    index: 0
+- extendedWaitUntil:
+    visible: "Reward as referrer|Récompense en tant que parrain"
+    timeout: 10000
+    label: "Offer detail opened"
+- assertVisible: "Instructions"
+- assertVisible: "Share and earn|Partager et gagner"
+- takeScreenshot: build/maestro/wallet-explorer-offer
+- tapOn: "Close|Fermer"
+- extendedWaitUntil:
+    notVisible: "Reward as referrer|Récompense en tant que parrain"
+    timeout: 10000
+    label: "Offer detail closed"

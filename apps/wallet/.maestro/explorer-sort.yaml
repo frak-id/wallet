@@ -1,0 +1,41 @@
+appId: id.frak.wallet.dev
+name: Explorer sorts offers by highest reward
+---
+# Texts match English|French: the wallet keeps the language of its first launch.
+# Android sorts in a web sheet with Apply; iOS in a native menu that applies on tap.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Explorer"
+- extendedWaitUntil:
+    visible: ".* (per referral|par parrainage)"
+    timeout: 15000
+- tapOn: "Sort.*|Trier.*"
+- extendedWaitUntil:
+    visible: "Sort by|Trier par"
+    timeout: 10000
+- tapOn: "Highest reward|Récompense la plus élevée"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "Apply|Appliquer"
+- extendedWaitUntil:
+    visible: "Sort \\(Highest reward\\)|Trier \\(Récompense la plus élevée\\)"
+    timeout: 10000
+    label: "Sort button shows the active sort"
+- takeScreenshot: build/maestro/wallet-explorer-sorted
+# Back to the default so the next run starts from the same list.
+- tapOn: "Sort.*|Trier.*"
+- tapOn: "Recommended|Recommandés"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "Apply|Appliquer"
+- extendedWaitUntil:
+    visible: "Sort|Trier"
+    timeout: 10000
+    label: "Sort back to the default"
