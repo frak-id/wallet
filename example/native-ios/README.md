@@ -146,6 +146,18 @@ Signing is automatic: `-allowProvisioningUpdates` plus the API key lets xcodebui
 
 `biome` cannot parse Swift, so this folder is excluded from it in `biome.json`. `swift format`, from the Xcode toolchain, fills that gap. Rules live in `.swift-format`, scoped to this folder: 4-space indent to match biome, and `--strict` so findings fail rather than warn.
 
+## End-to-end flows (Maestro)
+
+```bash
+brew install mobile-dev-inc/tap/maestro   # once
+bun run --cwd example/native-ios e2e
+```
+
+Builds, installs and runs every flow in `.maestro/` on a simulator, picked like `run` picks one. Simulator only: Maestro drives physical iPhones only through its paid cloud. Pass flow paths (`e2e .maestro/share-store.yaml`) to run only those. Local only: no Maestro account, analytics off.
+
+- **The share flow is timing-sensitive.** It checks that the hosted page appears, and the SDK falls back to the OS share sheet when the page misses its load budget. On a busy Mac that fallback is real, not a flake in the flow: check the machine's load before reading a failure as a regression.
+- **First run is slow.** Maestro builds its XCTest driver once per simulator. The run is capped at 15 minutes (`MAESTRO_TIMEOUT`).
+
 ## Compile-only checks
 
 `Package.swift` builds the same sources as a library, for a fast typecheck without Xcode. It cannot produce an app bundle, so `Info.plist` settings (URL schemes, `LSApplicationQueriesSchemes`) do not apply to a build done this way.

@@ -106,6 +106,19 @@ jarsigner -verify -verbose:summary app/build/outputs/bundle/release/app-release.
 
 There is no separate typecheck step — `assembleDebug` is it.
 
+## End-to-end flows (Maestro)
+
+```bash
+brew install mobile-dev-inc/tap/maestro   # once
+bun run --cwd example/native-android e2e
+```
+
+Builds, installs and runs every flow in `.maestro/` against an emulator: the running one, or the first AVD booted cold. An attached phone is never used, because the flows clear the app's data. Pass flow paths (`e2e .maestro/share-store.yaml`) to run only those. Local only: no Maestro account, analytics off.
+
+- **Locked emulator.** An AVD with a screen lock boots locked, and nothing can launch until the PIN is entered. The script waits for it.
+- **Hangs.** The run is capped at 10 minutes (`MAESTRO_TIMEOUT`), because Maestro's on-device driver can stall when the emulator is overloaded. Cold-boot the emulator and retry.
+- **Text matches the whole label.** Event-log lines start with `[hh:mm:ss]`, so match them as `".*Referral recognized.*"`.
+
 ## Testing inbound deep link referral flow
 
 ```bash

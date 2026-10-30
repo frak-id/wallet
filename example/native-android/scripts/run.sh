@@ -196,7 +196,7 @@ do_e2e() {
 	MAESTRO_CLI_NO_ANALYTICS=1 \
 		MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
 		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-90000}" \
-		${cap[@]+"${cap[@]}"} maestro --device "$serial" test "$APP_DIR/.maestro" "$@"
+		${cap[@]+"${cap[@]}"} maestro --device "$serial" test "${@:-$APP_DIR/.maestro}"
 }
 
 do_logs() {
