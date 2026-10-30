@@ -97,7 +97,7 @@ const BarInner = memo(function BarInner({
     // Find the index of this bar series among all bar series
     const seriesIndex = useMemo(() => {
         const idx = lines.findIndex((l) => l.dataKey === dataKey);
-        return idx >= 0 ? idx : 0;
+        return Math.max(idx, 0);
     }, [lines, dataKey]);
 
     const seriesCount = lines.length;

@@ -91,6 +91,7 @@ function tokenLine(
     const funded = balance > 0n || allowance > 0n;
     if (coin.symbol !== "eure" && !funded && !hasOwed(owed)) return null;
 
+    // biome-ignore lint/complexity/useMathMinMax: bigint operands, Math.min throws
     const cap = balance < allowance ? balance : allowance;
     const payable = state.isOpen ? cap : 0n;
     const toPay = owed.due.amount + owed.depleted.amount;

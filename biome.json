@@ -43,6 +43,16 @@
             "enabled": true
         }
     },
+    "markdown": {
+        "formatter": {
+            "enabled": false
+        }
+    },
+    "yaml": {
+        "formatter": {
+            "enabled": false
+        }
+    },
     "linter": {
         "enabled": true,
         "rules": {
@@ -113,6 +123,9 @@
                     },
                     "style": {
                         "noNonNullAssertion": "off"
+                    },
+                    "correctness": {
+                        "noComponentHookFactories": "off"
                     }
                 }
             }

@@ -40,7 +40,8 @@ echo "[sync-version] Syncing version $VERSION"
 # 1. tauri.conf.json
 tmp=$(mktemp)
 jq --arg v "$VERSION" '.version = $v' "$TAURI_DIR/tauri.conf.json" > "$tmp" && mv "$tmp" "$TAURI_DIR/tauri.conf.json"
-bunx biome format --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
+# shortcut: biomejs/biome#12317 panics on a file outside the repo root with the gitignore on; drop the flag once fixed
+bunx biome format --vcs-use-ignore-file=false --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
 echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
