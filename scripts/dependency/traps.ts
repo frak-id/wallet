@@ -63,7 +63,7 @@ const TRAPS: Trap[] = [
     {
         match: /^es-check$/,
         flags: ["floor-coupled"],
-        why: "Pinned exact rather than caret. 9.7.1 added Uint8ArrayFromHex detection which fires on @noble/hashes' guarded feature test.",
+        why: "Pinned exact rather than caret. 9.7.1 added Uint8Array hex detection and 9.8 base64 detection; both fire on guarded feature tests (@noble/hashes, base64 helpers) in most app chunks.",
     },
     {
         match: /^(vite|rolldown|tsdown|@rolldown\/plugin-node-polyfills)$/,
