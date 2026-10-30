@@ -1,0 +1,39 @@
+appId: id.frak.wallet.dev
+name: Notifications page opens from its deep link
+---
+# Only a deep link reaches this page; its list is filled by the web service worker, so native is usually empty.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- openLink: "frakwallet-dev://notifications"
+# iOS confirms a custom-scheme link with "Open in “Frak Wallet Dev”?".
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Open|Ouvrir"
+          timeout: 5000
+          optional: true
+      - tapOn:
+          text: "Open|Ouvrir"
+          optional: true
+- extendedWaitUntil:
+    visible: "No notifications|Aucune notifications|Date: .*"
+    timeout: 15000
+    label: "Notifications page shows its empty state or a list"
+- takeScreenshot: build/maestro/wallet-notifications
+# The iOS tab bar keeps Wallet selected here, so tapping it alone does nothing.
+- tapOn: "Explorer"
+- extendedWaitUntil:
+    notVisible: "No notifications|Aucune notifications"
+    timeout: 10000
+    label: "Leaving the notifications page"
+- tapOn: "Wallet|Porte-monnaie"
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 10000
+    label: "Back on the wallet home"
