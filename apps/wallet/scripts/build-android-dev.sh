@@ -14,4 +14,5 @@ export FRAK_VARIANT=dev
 # look for sources under id/frak/wallet/dev/. The Android-specific overlay only flips
 # `plugins.deep-link.mobile` so the dev variant registers `wallet-dev.frak.id` and the
 # `frakwallet-dev://` custom scheme (and only those — strict per-variant routing).
-sst shell -- tauri android build --config src-tauri/tauri.conf.android-dev.json
+# --stage dev: without it sst picks the personal stage, whose BACKEND_URL is a local `sst dev`.
+sst shell --stage dev -- tauri android build --config src-tauri/tauri.conf.android-dev.json
