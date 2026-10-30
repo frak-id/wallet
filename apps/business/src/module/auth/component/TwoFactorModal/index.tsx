@@ -55,7 +55,9 @@ export function TwoFactorModal() {
                 if (!open) cancelVerification();
             }}
         >
-            <DialogContent>
+            {/* Step-up fires from whatever modal ran the gated call
+                (confirm dialogs, sheets…), so it must stack above it. */}
+            <DialogContent layer="top">
                 <TwoFactorChallengePanel
                     methods={request.methods}
                     onVerified={resolveVerification}
