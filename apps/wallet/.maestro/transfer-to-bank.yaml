@@ -1,0 +1,32 @@
+appId: id.frak.wallet.dev
+name: Transfer to my bank opens its options
+---
+# Read-only: never accepts the Monerium onboarding nor sends funds, both leave the wallet changed.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Transfer to my bank|Transférer vers ma banque"
+- extendedWaitUntil:
+    visible: "You don't have any money to transfer yet|Tu n'as pas encore d'argent à transférer|Choose one of the following options to transfer your earnings.|Choisis l'une des options suivantes pour transférer tes gains."
+    timeout: 10000
+    label: "Transfer opens either the empty state or the options"
+# An empty balance only offers the Explorer.
+- runFlow:
+    when:
+      visible: "You don't have any money to transfer yet|Tu n'as pas encore d'argent à transférer"
+    commands:
+      - assertVisible: "Discover offers|Découvrir les offres"
+      - takeScreenshot: build/maestro/wallet-transfer-empty
+      - tapOn: "Close|Fermer"
+# A funded balance offers a bank account (Monerium) and a crypto wallet.
+- runFlow:
+    when:
+      visible: "Choose one of the following options to transfer your earnings.|Choisis l'une des options suivantes pour transférer tes gains."
+    file: transfer/options.yaml
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 10000
+    label: "Back on the wallet home"

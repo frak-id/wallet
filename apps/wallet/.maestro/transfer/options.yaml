@@ -1,0 +1,28 @@
+appId: id.frak.wallet.dev
+name: Transfer options (bank and crypto wallet)
+---
+# Bank account: a wallet without Monerium gets the onboarding info; "Accept and continue" is never tapped.
+- tapOn: ".*(Add an IBAN|Ajouter un IBAN)"
+- extendedWaitUntil:
+    visible: "Complete your account to claim your earnings.|Finalise ton compte pour toucher tes gains."
+    timeout: 15000
+    label: "Bank account opens the Monerium onboarding (fails if this wallet already linked Monerium)"
+- assertVisible: "Verify your identity|Vérifier ton identité"
+- assertVisible: "Add your IBAN|Ajouter ton IBAN"
+- assertVisible: "Accept and continue|Accepter et continuer"
+- takeScreenshot: build/maestro/wallet-transfer-bank
+- tapOn: "Close|Fermer"
+- extendedWaitUntil:
+    notVisible: "Accept and continue|Accepter et continuer"
+    timeout: 8000
+    label: "Close leaves the Monerium onboarding"
+# Crypto wallet: the send form opens; nothing is sent.
+- tapOn: "Transfer to my bank|Transférer vers ma banque"
+- tapOn: ".*(Transfer to a crypto wallet|Transférer vers un crypto wallet)"
+- extendedWaitUntil:
+    visible: "Send|Envoyer"
+    timeout: 10000
+    label: "Crypto wallet opens the send form"
+- assertVisible: "MAX"
+- takeScreenshot: build/maestro/wallet-transfer-crypto
+- tapOn: "Back|Retour"
