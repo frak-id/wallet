@@ -1,0 +1,70 @@
+appId: id.frak.wallet.dev
+name: Explorer offer detail shares a referral link
+---
+# Offers are live dev data: match any card, never a given brand.
+# Read-only: the share sheet is dismissed, nothing is sent; affiliate offers are skipped
+# because their first tap mints a server-side link.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Explorer"
+- extendedWaitUntil:
+    visible: ".* (per referral|par parrainage)"
+    timeout: 15000
+    label: "At least one offer card"
+- tapOn:
+    text: ".* (per referral|par parrainage)"
+    index: 0
+- extendedWaitUntil:
+    visible: "Reward as referrer|Récompense en tant que parrain"
+    timeout: 10000
+    label: "Offer detail opened"
+- assertVisible: "Reward as referee|Récompense en tant que filleul"
+- assertVisible: "Earnings availability|Disponibilité des gains"
+- assertVisible: "Share a product with your friends|Partage un article à tes ami·e·s"
+- runFlow:
+    when:
+      visible: "Share and earn|Partager et gagner"
+    commands:
+      - tapOn: "Share and earn|Partager et gagner"
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - extendedWaitUntil:
+                visible: ".*https://.*[?&]fCtx=.*"
+                timeout: 10000
+                label: "Share sheet carries a link with the referral context"
+            - assertVisible: ".* invite link|Lien d'invitation .*"
+            - takeScreenshot: build/maestro/wallet-explorer-share
+            - back
+      # iOS keeps the offer readable under its share sheet, so the sheet must be dismissed explicitly.
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  id: ".* invite link|Lien d'invitation .*"
+                timeout: 10000
+                label: "Share sheet opened for the offer"
+            - takeScreenshot: build/maestro/wallet-explorer-share
+            - tapOn:
+                id: "PopoverDismissRegion"
+            - extendedWaitUntil:
+                notVisible:
+                  id: "ActivityListView"
+                timeout: 10000
+                label: "Share sheet dismissed"
+      - extendedWaitUntil:
+          visible: "Reward as referrer|Récompense en tant que parrain"
+          timeout: 10000
+          label: "Back on the offer detail after the share sheet"
+- tapOn: "Close|Fermer"
+- extendedWaitUntil:
+    notVisible: "Reward as referrer|Récompense en tant que parrain"
+    timeout: 10000
+    label: "Offer detail closed"
