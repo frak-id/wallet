@@ -371,7 +371,8 @@ do_e2e() {
 	log "Running Maestro flows on $udid..."
 	local cap=()
 	# Maestro has no overall timeout and can hang forever when its XCTest driver never starts.
-	command -v timeout >/dev/null 2>&1 && cap=(timeout "${MAESTRO_TIMEOUT:-900}")
+	# --foreground: in its own process group Maestro is stopped (SIGTTOU) on exit when run from a terminal.
+	command -v timeout >/dev/null 2>&1 && cap=(timeout --foreground "${MAESTRO_TIMEOUT:-900}")
 	cd "$APP_DIR"
 	MAESTRO_CLI_NO_ANALYTICS=1 \
 		MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
