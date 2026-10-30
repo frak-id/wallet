@@ -1,0 +1,62 @@
+appId: id.frak.wallet.dev
+name: Profile settings pages open and close
+---
+# Read-only: no email is submitted, no toggle is touched.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile|Profil"
+- extendedWaitUntil:
+    visible: "Referrals|Parrainages"
+    timeout: 15000
+    label: "Profile tab opened"
+
+# My favorite brands: the Profile tab has no Back button, its sub-pages do.
+- scrollUntilVisible:
+    element: "My favorite brands|Mes marques favorites"
+    direction: DOWN
+- tapOn: "My favorite brands|Mes marques favorites"
+- extendedWaitUntil:
+    visible: "Back|Retour"
+    timeout: 10000
+    label: "Favorites page opened"
+- assertVisible: "My favorite brands|Mes marques favorites"
+- runFlow:
+    when:
+      visible: "No favorites yet|Aucun favori pour le moment"
+    commands:
+      - assertVisible: "Tap the heart on a brand to find it here.|Touche le cœur d'une marque pour la retrouver ici."
+- takeScreenshot: build/maestro/wallet-favorites
+- tapOn: "Back|Retour"
+- extendedWaitUntil:
+    visible: "Referrals|Parrainages"
+    timeout: 10000
+    label: "Back on Profile from favorites"
+
+# Add an email: only shown until the wallet has one.
+- scrollUntilVisible:
+    element: "Secure your wallet|Renforce la sécurité de ton porte-monnaie"
+    direction: UP
+- runFlow:
+    when:
+      visible: "Add an email|Ajouter un email"
+    commands:
+      # The step title reads the same in English; its button sits below the description.
+      - tapOn:
+          text: "Add an email|Ajouter un email"
+          below: "Protect your wallet.*|Protège ton porte-monnaie.*"
+      - extendedWaitUntil:
+          visible: "Add your email|Ajoute ton e-mail"
+          timeout: 10000
+          label: "Add email page opened"
+      - assertVisible: "Continue|Continuer"
+      - takeScreenshot: build/maestro/wallet-add-email
+      - tapOn: "Back|Retour"
+      - extendedWaitUntil:
+          visible: "Referrals|Parrainages"
+          timeout: 10000
+          label: "Back on Profile from add email"
+- tapOn: "Wallet|Porte-monnaie"
