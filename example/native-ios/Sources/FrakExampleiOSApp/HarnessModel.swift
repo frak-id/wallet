@@ -129,8 +129,7 @@ final class HarnessModel: ObservableObject {
     }
 
     func simulateDeepLink() async {
-        let raw = "https://example-merchant.com/product?fCtx=test_referral_token_ios_9988"
-        guard let url = URL(string: raw) else { return }
+        guard let url = sampleReferralLink(merchantId: activeEnvironment.merchantId) else { return }
         addLog("Simulating an inbound referral link...", type: .info)
         await handleInboundURL(url)
     }

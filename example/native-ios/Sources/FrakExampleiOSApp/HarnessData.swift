@@ -49,6 +49,26 @@ let sampleOrderTotalCents: Int64 = 14999
 let sampleCustomerId = "cust_example_ios_001"
 let sampleCheckoutToken = "checkout_token_example_9988"
 
+/// Another device's anonymous id: a link carrying this device's own id is ignored as a self-referral.
+private let sampleSharerClientId = "5a3e2c1d-7b4f-4e8a-9c6d-0f1e2d3c4b5a"
+
+/// A friend's share link for `merchantId`, with a v2 `fCtx` (header, merchant, uint32 seconds,
+/// client id) encoded by hand because the SDK's codec is internal.
+func sampleReferralLink(merchantId: String) -> URL? {
+    guard let merchant = UUID(uuidString: merchantId),
+        let sharer = UUID(uuidString: sampleSharerClientId)
+    else { return nil }
+    var bytes: [UInt8] = [0x12]
+    withUnsafeBytes(of: merchant.uuid) { bytes += $0 }
+    withUnsafeBytes(of: UInt32(Date().timeIntervalSince1970).bigEndian) { bytes += $0 }
+    withUnsafeBytes(of: sharer.uuid) { bytes += $0 }
+    let fCtx = Data(bytes).base64EncodedString()
+        .replacingOccurrences(of: "+", with: "-")
+        .replacingOccurrences(of: "/", with: "_")
+        .replacingOccurrences(of: "=", with: "")
+    return URL(string: "\(storeLink)/product?fCtx=\(fCtx)")
+}
+
 /// Until `config.resolve()` reports the merchant's own currency.
 let fallbackCurrencyCode = "USD"
 
