@@ -50,7 +50,7 @@ function makeOrchestrator(
         opts.merchant === undefined ? { id: FRAK_MERCHANT_ID } : opts.merchant;
     const createRule = vi.fn().mockResolvedValue({ id: "draft-rule" });
     const publish = vi.fn().mockResolvedValue({ id: "rule-9" });
-    const createGame = vi.fn(async (values: object) => ({
+    const createGame = vi.fn(async (values: Partial<GameSelect>) => ({
         ...game(),
         ...values,
     }));
@@ -73,7 +73,7 @@ function makeOrchestrator(
         {
             findByGameId: vi.fn().mockResolvedValue(opts.draw ?? null),
             findSummaries: vi.fn().mockResolvedValue([]),
-        },
+        } as never,
         {
             findByCode: vi
                 .fn()
@@ -96,7 +96,9 @@ function makeOrchestrator(
             ),
             create: createMerchant,
         } as never,
-        { getNormalizedDomain: (domain: string) => domain.replace("www.", "") },
+        {
+            getNormalizedDomain: (domain: string) => domain.replace("www.", ""),
+        } as never,
         {
             participantsOf: vi.fn().mockResolvedValue([
                 { identityGroupId: "g-joiner", joinedAt: NOW },
@@ -104,14 +106,14 @@ function makeOrchestrator(
             ]),
             participantCounts: vi.fn(),
             ticketsOf,
-        },
+        } as never,
         { review: vi.fn(), freeze: vi.fn(), publicDraw: vi.fn() } as never,
         {
             getWalletsForGroups: vi
                 .fn()
                 .mockResolvedValue(new Map([["g-buyer", "0xb0b"]])),
             getWalletForGroup: vi.fn(),
-        },
+        } as never,
         {
             findByIdentityGroups: vi.fn().mockResolvedValue([
                 {
@@ -122,7 +124,9 @@ function makeOrchestrator(
             ]),
         } as never,
         { findDeclarations: vi.fn().mockResolvedValue([]) } as never,
-        { findPayoutStates: vi.fn().mockResolvedValue(opts.payouts ?? []) }
+        {
+            findPayoutStates: vi.fn().mockResolvedValue(opts.payouts ?? []),
+        } as never
     );
     return {
         orchestrator,

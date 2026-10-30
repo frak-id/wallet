@@ -21,7 +21,7 @@ export class InstagramTokenService {
     constructor(
         private readonly repository: InstagramAccessTokenRepository,
         private readonly cipher: InstagramTokenCipher,
-        private readonly graph: Pick<InstagramGraphClient, "refreshToken">
+        private readonly graph: InstagramGraphClient
     ) {}
 
     /** `null` when certification is not configured. A new env token replaces the stored one. */

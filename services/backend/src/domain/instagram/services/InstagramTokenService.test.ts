@@ -14,7 +14,7 @@ const SEED = "seed-token";
 
 const cipher = new InstagramTokenCipher({
     deriveKeyBytes: async () => new Uint8Array(32).fill(7),
-});
+} as never);
 
 function setup(row: InstagramAccessTokenSelect | null = null) {
     let stored = row;
@@ -30,7 +30,7 @@ function setup(row: InstagramAccessTokenSelect | null = null) {
     const service = new InstagramTokenService(
         repository as never,
         cipher,
-        graph
+        graph as never
     );
     return { repository, graph, service, stored: () => stored };
 }
@@ -175,7 +175,7 @@ describe("InstagramTokenCipher", () => {
     it("does not decrypt under another key", async () => {
         const other = new InstagramTokenCipher({
             deriveKeyBytes: async () => new Uint8Array(32).fill(8),
-        });
+        } as never);
         const blob = await cipher.encrypt("token", "frak");
 
         await expect(other.decrypt(blob, "frak")).rejects.toThrow();

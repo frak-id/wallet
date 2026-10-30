@@ -58,8 +58,8 @@ function setup() {
         links as never,
         pending as never,
         linkService as never,
-        tokens,
-        graph
+        tokens as never,
+        graph as never
     );
     return { links, pending, linkService, tokens, graph, service };
 }

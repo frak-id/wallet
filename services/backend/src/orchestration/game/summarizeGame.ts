@@ -4,7 +4,7 @@ import type { MerchantRepository } from "../../domain/merchant/repositories/Merc
 
 export async function summarizeGame(
     game: GameSelect,
-    merchants: Pick<MerchantRepository, "findById">
+    merchants: MerchantRepository
 ): Promise<GameSummary> {
     const sponsor = game.sponsorMerchantId
         ? await merchants.findById(game.sponsorMerchantId)

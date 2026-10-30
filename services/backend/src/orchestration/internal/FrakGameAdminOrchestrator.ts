@@ -127,51 +127,18 @@ export class FrakGameAdminOrchestrator {
 
     constructor(
         private readonly games: GameRepository,
-        private readonly draws: Pick<
-            GameDrawRepository,
-            "findByGameId" | "findSummaries"
-        >,
-        private readonly referralCodes: Pick<
-            ReferralCodeRepository,
-            "findByCode" | "findById"
-        >,
-        private readonly campaignRules: Pick<
-            CampaignRuleRepository,
-            "findById" | "findByMerchantAndStatus" | "findActiveByMerchant"
-        >,
-        private readonly campaignManagement: Pick<
-            CampaignManagementService,
-            "create" | "publish"
-        >,
-        private readonly merchants: Pick<
-            MerchantRepository,
-            "findById" | "create"
-        >,
-        private readonly dnsCheck: Pick<
-            DnsCheckRepository,
-            "getNormalizedDomain"
-        >,
-        private readonly players: Pick<
-            GamePlayerOrchestrator,
-            "participantsOf" | "participantCounts" | "ticketsOf"
-        >,
-        private readonly gameDraw: Pick<
-            GameDrawOrchestrator,
-            "review" | "freeze" | "publicDraw"
-        >,
-        private readonly identities: Pick<
-            IdentityRepository,
-            "getWalletsForGroups" | "getWalletForGroup"
-        >,
-        private readonly instagramLinks: Pick<
-            InstagramLinkRepository,
-            "findByIdentityGroups"
-        >,
-        private readonly instagramPendingLinks: Pick<
-            InstagramPendingLinkRepository,
-            "findDeclarations"
-        >,
-        private readonly assetLogs: Pick<AssetLogRepository, "findPayoutStates">
+        private readonly draws: GameDrawRepository,
+        private readonly referralCodes: ReferralCodeRepository,
+        private readonly campaignRules: CampaignRuleRepository,
+        private readonly campaignManagement: CampaignManagementService,
+        private readonly merchants: MerchantRepository,
+        private readonly dnsCheck: DnsCheckRepository,
+        private readonly players: GamePlayerOrchestrator,
+        private readonly gameDraw: GameDrawOrchestrator,
+        private readonly identities: IdentityRepository,
+        private readonly instagramLinks: InstagramLinkRepository,
+        private readonly instagramPendingLinks: InstagramPendingLinkRepository,
+        private readonly assetLogs: AssetLogRepository
     ) {}
 
     async setup(): Promise<FrakGameSetup> {

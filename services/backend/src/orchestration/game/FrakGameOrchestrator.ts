@@ -80,10 +80,7 @@ export class FrakGameOrchestrator {
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly gamePlayerOrchestrator: GamePlayerOrchestrator,
         private readonly instagramLinkRepository: InstagramLinkRepository,
-        private readonly instagramPendingLinks: Pick<
-            InstagramPendingLinkRepository,
-            "findDeclaration"
-        >
+        private readonly instagramPendingLinks: InstagramPendingLinkRepository
     ) {}
 
     async getCurrentGame(

@@ -12,10 +12,7 @@ const TAG_BYTES = 16;
  */
 export class InstagramTokenCipher {
     constructor(
-        private readonly adminWalletsRepository: Pick<
-            AdminWalletsRepository,
-            "deriveKeyBytes"
-        >
+        private readonly adminWalletsRepository: AdminWalletsRepository
     ) {}
 
     private async key(): Promise<Buffer> {

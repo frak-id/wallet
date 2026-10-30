@@ -33,13 +33,10 @@ export type MessageOutcome =
 export class InstagramVerificationService {
     constructor(
         private readonly links: InstagramLinkRepository,
-        private readonly pending: Pick<
-            InstagramPendingLinkRepository,
-            "findByCodes"
-        >,
+        private readonly pending: InstagramPendingLinkRepository,
         private readonly linkService: InstagramLinkService,
-        private readonly tokens: Pick<InstagramTokenService, "current">,
-        private readonly graph: Pick<InstagramGraphClient, "lookupProfile">
+        private readonly tokens: InstagramTokenService,
+        private readonly graph: InstagramGraphClient
     ) {}
 
     /**

@@ -148,31 +148,13 @@ export function toPayoutState(row: PayoutStateRow): PayoutState {
 /** The bank paying Frak's rewards and prizes, shared with every brand opted into it. */
 export class FrakBankAdminOrchestrator {
     constructor(
-        private readonly merchants: Pick<
-            MerchantRepository,
-            "findById" | "findByIds"
-        >,
-        private readonly banks: Pick<
-            CampaignBankRepository,
-            "getBankOnChainState" | "clearOnChainCache"
-        >,
-        private readonly assetLogs: Pick<
-            AssetLogRepository,
-            "sumOwedByBank" | "findPayoutStates"
-        >,
-        private readonly games: Pick<GameRepository, "findByIds">,
-        private readonly draws: Pick<
-            GameDrawRepository,
-            "findConfirmedPayouts"
-        >,
-        private readonly tokenMetadata: Pick<
-            TokenMetadataRepository,
-            "getDecimals"
-        >,
-        private readonly settlement: Pick<
-            SettlementOrchestrator,
-            "requeueDepletedRewards"
-        >
+        private readonly merchants: MerchantRepository,
+        private readonly banks: CampaignBankRepository,
+        private readonly assetLogs: AssetLogRepository,
+        private readonly games: GameRepository,
+        private readonly draws: GameDrawRepository,
+        private readonly tokenMetadata: TokenMetadataRepository,
+        private readonly settlement: SettlementOrchestrator
     ) {}
 
     /** What the bank holds against what it owes; `shortfall` is what settlement cannot pay right now. */

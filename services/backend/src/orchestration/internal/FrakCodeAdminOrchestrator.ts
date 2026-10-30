@@ -34,16 +34,10 @@ export function parseVanityCode(raw: string): string {
 /** Frak's own referral codes: issued by hand, joined to a game when one is opened on them. */
 export class FrakCodeAdminOrchestrator {
     constructor(
-        private readonly referralCodes: Pick<
-            ReferralCodeRepository,
-            "createFrakCode" | "revokeFrakCode" | "listFrakCodes"
-        >,
-        private readonly referralLinks: Pick<
-            ReferralLinkRepository,
-            "countByCodeIds"
-        >,
-        private readonly games: Pick<GameRepository, "list">,
-        private readonly identities: Pick<IdentityRepository, "ensureGroup">
+        private readonly referralCodes: ReferralCodeRepository,
+        private readonly referralLinks: ReferralLinkRepository,
+        private readonly games: GameRepository,
+        private readonly identities: IdentityRepository
     ) {}
 
     async list(): Promise<FrakCode[]> {

@@ -46,18 +46,9 @@ async function page<T>(
 /** Support view of one person: their identity, referral links, interactions and rewards. */
 export class IdentityLookupOrchestrator {
     constructor(
-        private readonly identities: Pick<
-            IdentityRepository,
-            "findSurvivingGroupId"
-        >,
-        private readonly instagramLinks: Pick<
-            InstagramLinkRepository,
-            "findByIdentityGroups"
-        >,
-        private readonly instagramPendingLinks: Pick<
-            InstagramPendingLinkRepository,
-            "findDeclarations"
-        >
+        private readonly identities: IdentityRepository,
+        private readonly instagramLinks: InstagramLinkRepository,
+        private readonly instagramPendingLinks: InstagramPendingLinkRepository
     ) {}
 
     /** By wallet address, email or identity group id; `null` when it matches nobody. */

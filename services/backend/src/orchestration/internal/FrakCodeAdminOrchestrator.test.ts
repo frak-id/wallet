@@ -34,18 +34,18 @@ function makeOrchestrator(
                     code("GAME01", "c1"),
                     code("PLAIN1", "c2"),
                 ]),
-        },
+        } as never,
         {
             countByCodeIds: vi
                 .fn()
                 .mockResolvedValue(new Map([["c2", { total: 5, active: 4 }]])),
-        },
+        } as never,
         {
             list: vi
                 .fn()
                 .mockResolvedValue([{ id: "game-1", referralCodeId: "c1" }]),
         } as never,
-        { ensureGroup }
+        { ensureGroup } as never
     );
     return { orchestrator, createFrakCode, ensureGroup };
 }

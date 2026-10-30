@@ -53,7 +53,7 @@ function makeOrchestrator(
                 allowances: new Map(opts.allowances ?? []),
             }),
             clearOnChainCache,
-        },
+        } as never,
         {
             sumOwedByBank: vi.fn().mockResolvedValue(opts.owed ?? []),
             findPayoutStates: vi.fn().mockResolvedValue([
@@ -69,7 +69,7 @@ function makeOrchestrator(
                     lastError: null,
                 },
             ]),
-        },
+        } as never,
         {
             findByIds: vi
                 .fn()
@@ -86,13 +86,13 @@ function makeOrchestrator(
                     confirmedAt: NOW,
                 },
             ]),
-        },
+        } as never,
         {
             getDecimals: vi.fn(async ({ token }: { token: Address }) =>
                 token === USDC ? 6 : 18
             ),
-        },
-        { requeueDepletedRewards }
+        } as never,
+        { requeueDepletedRewards } as never
     );
     return { orchestrator, clearOnChainCache, requeueDepletedRewards };
 }

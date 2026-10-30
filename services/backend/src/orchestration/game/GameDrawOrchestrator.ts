@@ -131,19 +131,10 @@ export class GameDrawOrchestrator {
     constructor(
         private readonly games: GameRepository,
         private readonly draws: GameDrawRepository,
-        private readonly players: Pick<
-            GamePlayerOrchestrator,
-            "participantsOf" | "ticketsOf" | "gamesJoinedBy"
-        >,
+        private readonly players: GamePlayerOrchestrator,
         private readonly instagramLinks: InstagramLinkRepository,
-        private readonly instagramPendingLinks: Pick<
-            InstagramPendingLinkRepository,
-            "findDeclaration" | "findDeclarations"
-        >,
-        private readonly instagramVerification: Pick<
-            InstagramVerificationService,
-            "recheck"
-        >,
+        private readonly instagramPendingLinks: InstagramPendingLinkRepository,
+        private readonly instagramVerification: InstagramVerificationService,
         private readonly identities: IdentityRepository,
         private readonly merchants: MerchantRepository,
         private readonly assetLogs: AssetLogRepository,

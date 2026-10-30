@@ -153,7 +153,9 @@ function makeOrchestrator() {
         campaignRuleRepository as never,
         { findById: vi.fn() } as never,
         interactionLogRepository as never,
-        gamePlayer as never
+        gamePlayer as never,
+        { findByIdentityGroup: vi.fn().mockResolvedValue(null) } as never,
+        { findDeclaration: vi.fn().mockResolvedValue(null) } as never
     );
     const orchestrator = new ReferralCodeRedemptionOrchestrator(
         referralCodeService as never,
