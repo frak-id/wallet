@@ -13,7 +13,9 @@ name: Profile tab lists the account entries
     timeout: 10000
 - assertVisible: "My favorite brands"
 - assertVisible: "Secure your wallet"
-- assertVisible: "Help & support"
+- scrollUntilVisible:
+    element: "Help & support"
+    direction: DOWN
 - takeScreenshot: build/maestro/wallet-profile
 - tapOn: "Wallet"
 - assertVisible: "Rewards"

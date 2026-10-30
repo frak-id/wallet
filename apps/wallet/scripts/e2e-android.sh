@@ -29,8 +29,11 @@ export ANDROID_SERIAL="$serial"
 
 adb shell pm path "$PACKAGE_ID" >/dev/null 2>&1 ||
 	die "$PACKAGE_ID is not installed on $serial. Install a dev build and log in once by hand."
-[ "$(adb shell am get-started-user-state 0 | tr -d '\r')" != RUNNING_LOCKED ] ||
-	die "$serial is locked. Enter its screen-lock PIN, then re-run."
+# RUNNING_LOCKED after a cold boot; the keyguard alone once the screen has locked again.
+if [ "$(adb shell am get-started-user-state 0 | tr -d '\r')" = RUNNING_LOCKED ] ||
+	adb shell dumpsys window | grep -q "isKeyguardShowing=true"; then
+	die "$serial is locked. Unlock it (PIN or fingerprint), then re-run."
+fi
 
 cap=()
 # --foreground: in its own process group Maestro is stopped (SIGTTOU) on exit when run from a terminal.
