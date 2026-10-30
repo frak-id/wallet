@@ -11,6 +11,7 @@
         "upload": "./scripts/run.sh upload",
         "xcode": "./scripts/run.sh xcode",
         "lint": "./scripts/run.sh lint",
-        "format": "./scripts/run.sh format"
+        "format": "./scripts/run.sh format",
+        "e2e": "./scripts/run.sh e2e"
     }
 }
