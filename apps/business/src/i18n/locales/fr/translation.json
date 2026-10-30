@@ -239,6 +239,9 @@
             "internalGame": {
                 "nav": "Jeu Frak"
             },
+            "internalBank": {
+                "nav": "Banque"
+            },
             "internalCodes": {
                 "nav": "Codes de parrainage"
             },
@@ -2313,7 +2316,7 @@
             "status": {
                 "frozen": "Gelé",
                 "drawn": "En revue",
-                "confirmed": "Gagnant payé",
+                "confirmed": "Gagnant confirmé",
                 "void": "Pas de gagnant"
             },
             "discarded": {
@@ -2377,7 +2380,10 @@
             },
             "winner": {
                 "title": "Gagnant",
-                "confirmedBy": "confirmé par {{actor}} le {{date}}"
+                "confirmedBy": "confirmé par {{actor}} le {{date}}",
+                "payout": "Versement",
+                "depleted": "La banque ne peut pas encore le couvrir : le gagnant voit « En attente de financement par la marque ».",
+                "openBank": "Ouvrir la banque"
             },
             "rejections": "Rejets",
             "rejection": "n°{{rank}} : {{reason}}, par {{actor}} le {{date}}",
@@ -2399,6 +2405,63 @@
                 "candidates_replay": "Les candidats se rejouent dans le même ordre",
                 "rejections_in_order": "Chaque rejet est passé au candidat suivant dans l'ordre",
                 "winner_first_unrejected": "Le gagnant est le premier candidat non rejeté"
+            }
+        },
+        "payout": {
+            "status": {
+                "pending": "En file",
+                "processing": "En cours d'envoi",
+                "bank_depleted": "En attente de fonds",
+                "settled": "À collecter",
+                "cancelled": "Annulé",
+                "expired": "Expiré"
+            },
+            "missing": "Aucun versement trouvé"
+        },
+        "bank": {
+            "title": "Banque Frak",
+            "open": "Ouverte",
+            "closed": "Fermée",
+            "description": "Paie les récompenses d'inscription et les lots du jeu Frak. Toutes les marques rattachées à la banque partagée puisent dans le même solde.",
+            "reload": "Recharger",
+            "address": "Adresse",
+            "checkedAt": "Lu on-chain",
+            "shortfall": "Il manque {{amount}} : alimente la banque ou augmente son autorisation. D'ici là, ces récompenses s'affichent « En attente de financement par la marque ».",
+            "closedHint": "La banque est fermée : rien n'est versé tant qu'elle n'est pas rouverte.",
+            "recheck": {
+                "trigger": "Revérifier maintenant",
+                "hint": "Le règlement revérifie une banque réalimentée toutes les 3 heures. Après un dépôt, revérifie maintenant pour verser tout de suite ce qu'elle peut couvrir.",
+                "result_zero": "Rien n'attendait de fonds ; le règlement a démarré pour les récompenses en file.",
+                "result_one": "{{count}} récompense remise en file ; le règlement a démarré.",
+                "result_other": "{{count}} récompenses remises en file ; le règlement a démarré."
+            },
+            "owedValue": "{{amount}} ({{count}})",
+            "owed": {
+                "due": "À verser maintenant",
+                "depleted": "En attente de fonds",
+                "processing": "En cours d'envoi",
+                "later": "Bloqué ou verrouillé"
+            },
+            "token": {
+                "balance": "Solde",
+                "allowance": "Autorisation",
+                "payable": "Versable maintenant",
+                "covered": "Couvert",
+                "short": "Manque {{amount}}"
+            },
+            "merchants": {
+                "title": "Ce qu'elle doit",
+                "merchant": "Marchand",
+                "token": "Jeton",
+                "empty": "Rien à verser"
+            },
+            "prizes": {
+                "title": "Lots du jeu",
+                "prize": "Lot",
+                "ended": "terminé le {{date}}",
+                "confirmedAt": "Confirmé",
+                "payout": "Versement",
+                "empty": "Aucun lot confirmé"
             }
         },
         "codes": {

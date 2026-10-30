@@ -121,4 +121,34 @@ describe("DrawPanel", () => {
         await renderPanel(drawn("admin"));
         expect(await payButton()).toBeEnabled();
     });
+
+    it("points at the bank when the prize waits on funds", async () => {
+        await renderPanel({
+            ...drawn("admin"),
+            status: "confirmed",
+            candidate: null,
+            winner: {
+                identityGroupId: "group-1",
+                wallet: null,
+                confirmedBy: "admin@frak.id",
+                confirmedAt: new Date(),
+                assetLogId: "asset-1",
+                payout: {
+                    status: "bank_depleted",
+                    amount: "50",
+                    txHash: null,
+                    statusChangedAt: new Date(),
+                    settledAt: null,
+                    expiresAt: null,
+                    lastError: null,
+                },
+            },
+        });
+        expect(
+            await screen.findByText("internal.payout.status.bank_depleted")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("internal.draw.winner.openBank")
+        ).toBeInTheDocument();
+    });
 });

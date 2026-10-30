@@ -43,6 +43,7 @@ function makeOrchestrator(
         gameOnCode?: GameSelect | null;
         activeRules?: object[];
         draw?: Partial<GameDrawSelect> | null;
+        payouts?: object[];
     } = {}
 ) {
     const merchant =
@@ -120,7 +121,8 @@ function makeOrchestrator(
                 },
             ]),
         } as never,
-        { findDeclarations: vi.fn().mockResolvedValue([]) } as never
+        { findDeclarations: vi.fn().mockResolvedValue([]) } as never,
+        { findPayoutStates: vi.fn().mockResolvedValue(opts.payouts ?? []) }
     );
     return {
         orchestrator,
@@ -295,6 +297,63 @@ describe("FrakGameAdminOrchestrator.seedMerchant", () => {
                 ownerAccountId: "acc",
             })
         );
+    });
+});
+
+describe("FrakGameAdminOrchestrator.drawOf", () => {
+    const confirmed: Partial<GameDrawSelect> = {
+        status: "confirmed",
+        algorithm: "frak-draw-v2",
+        frozenAt: NOW,
+        snapshotRoot: "root",
+        totalTickets: 3,
+        entries: [],
+        drandRound: 1,
+        drandSignature: "sig",
+        candidates: ["p1"],
+        rejections: [],
+        winnerIdentityGroupId: "g-buyer",
+        confirmedBy: "admin@frak.id",
+        confirmedAt: NOW,
+        assetLogId: "asset-1",
+    };
+
+    it("shows where the winner's payout stands", async () => {
+        const { orchestrator } = makeOrchestrator({
+            draw: confirmed,
+            payouts: [
+                {
+                    id: "asset-1",
+                    status: "bank_depleted",
+                    amount: "50",
+                    tokenAddress: "0xe",
+                    txHash: null,
+                    statusChangedAt: NOW,
+                    settledAt: null,
+                    expiresAt: null,
+                    lastError: null,
+                },
+            ],
+        });
+        const draw = await orchestrator.drawOf("game-1");
+        expect(draw?.winner?.payout).toEqual({
+            status: "bank_depleted",
+            amount: "50",
+            txHash: null,
+            statusChangedAt: NOW,
+            settledAt: null,
+            expiresAt: null,
+            lastError: null,
+        });
+    });
+
+    it("has no payout when the reward row is gone", async () => {
+        const { orchestrator } = makeOrchestrator({ draw: confirmed });
+        const draw = await orchestrator.drawOf("game-1");
+        expect(draw?.winner).toMatchObject({
+            assetLogId: "asset-1",
+            payout: null,
+        });
     });
 });
 

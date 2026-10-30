@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import {
     db,
@@ -124,6 +124,36 @@ export class GameDrawRepository {
             .select()
             .from(gameDrawsTable)
             .where(eq(gameDrawsTable.status, status));
+    }
+
+    /** Confirmed draws and the payout each one created, latest first. */
+    async findConfirmedPayouts(limit: number): Promise<
+        {
+            gameId: string;
+            assetLogId: string;
+            winnerIdentityGroupId: string | null;
+            confirmedAt: Date | null;
+        }[]
+    > {
+        const rows = await db
+            .select({
+                gameId: gameDrawsTable.gameId,
+                assetLogId: gameDrawsTable.assetLogId,
+                winnerIdentityGroupId: gameDrawsTable.winnerIdentityGroupId,
+                confirmedAt: gameDrawsTable.confirmedAt,
+            })
+            .from(gameDrawsTable)
+            .where(
+                and(
+                    eq(gameDrawsTable.status, "confirmed"),
+                    isNotNull(gameDrawsTable.assetLogId)
+                )
+            )
+            .orderBy(desc(gameDrawsTable.confirmedAt))
+            .limit(limit);
+        return rows.flatMap(({ assetLogId, ...row }) =>
+            assetLogId ? [{ ...row, assetLogId }] : []
+        );
     }
 
     async recordBeacon(params: {

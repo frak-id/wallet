@@ -48,6 +48,7 @@ import {
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import {
+    FrakBankAdminOrchestrator,
     FrakCodeAdminOrchestrator,
     FrakGameAdminOrchestrator,
     IdentityLookupOrchestrator,
@@ -263,7 +264,18 @@ const frakGameAdminOrchestrator = new FrakGameAdminOrchestrator(
     gameDrawOrchestrator,
     IdentityContext.repositories.identity,
     InstagramContext.repositories.instagramLink,
-    InstagramContext.repositories.instagramPendingLink
+    InstagramContext.repositories.instagramPendingLink,
+    RewardsContext.repositories.assetLog
+);
+
+const frakBankAdminOrchestrator = new FrakBankAdminOrchestrator(
+    MerchantContext.repositories.merchant,
+    CampaignBankContext.repositories.campaignBank,
+    RewardsContext.repositories.assetLog,
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    tokenMetadataRepository,
+    settlementOrchestrator
 );
 
 const identityLookupOrchestrator = new IdentityLookupOrchestrator(
@@ -366,6 +378,7 @@ export namespace OrchestrationContext {
         gameDraw: gameDrawOrchestrator,
         frakCodeAdmin: frakCodeAdminOrchestrator,
         frakGameAdmin: frakGameAdminOrchestrator,
+        frakBankAdmin: frakBankAdminOrchestrator,
         identityLookup: identityLookupOrchestrator,
         missionUnlock: missionUnlockOrchestrator,
         walletMerge: walletMergeOrchestrator,

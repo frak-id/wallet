@@ -24,7 +24,9 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
-import { errorMessage } from "../format";
+import { explorerUrl } from "../explorer";
+import { errorMessage, shortId } from "../format";
+import { linkButton, mono } from "../internal.css";
 
 type PendingAction = { isPending: boolean; error: unknown };
 
@@ -82,6 +84,31 @@ export function Panel({
                 {children}
             </Stack>
         </Card>
+    );
+}
+
+/** A shortened address or tx hash, linked to the chain explorer. */
+export function ExplorerLink({
+    kind,
+    value,
+}: {
+    kind: "address" | "tx";
+    value: string;
+}) {
+    const href = explorerUrl(kind, value);
+    const label = <span className={mono}>{shortId(value)}</span>;
+    if (!href) return <span title={value}>{label}</span>;
+    return (
+        <a
+            className={linkButton}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            title={value}
+            onClick={(event) => event.stopPropagation()}
+        >
+            {label}
+        </a>
     );
 }
 

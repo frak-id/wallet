@@ -17,6 +17,7 @@ import {
     RefreshIcon,
 } from "@frak-labs/design-system/icons";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
@@ -31,8 +32,15 @@ import {
 import { formatCount, formatDateTime, shortId } from "../format";
 import { linkButton, mono, twoColumns } from "../internal.css";
 import { PlayerLink } from "./PlayersTable";
-import { DrawStatusBadge, FollowBadge } from "./StatusBadges";
-import { ConfirmAction, Details, ErrorNotice, OptionSelect, Panel } from "./ui";
+import { DrawStatusBadge, FollowBadge, PayoutBadge } from "./StatusBadges";
+import {
+    ConfirmAction,
+    Details,
+    ErrorNotice,
+    ExplorerLink,
+    OptionSelect,
+    Panel,
+} from "./ui";
 
 const REJECTION_REASONS: DrawRejectionReason[] = [
     "not_verified_in_time",
@@ -341,8 +349,12 @@ function WinnerNotice({
     winner: NonNullable<GameDrawAdmin["winner"]>;
 }) {
     const { t, i18n } = useTranslation();
+    const { payout } = winner;
     return (
-        <Notice tone="success" display="block">
+        <Notice
+            tone={payout?.status === "bank_depleted" ? "warning" : "success"}
+            display="block"
+        >
             <Stack space="xxs">
                 <Text variant="bodySmall" weight="semiBold">
                     {t("internal.draw.winner.title")}
@@ -362,6 +374,34 @@ function WinnerNotice({
                         })}
                     </Text>
                 </Inline>
+                <Inline space="xs" alignY="center">
+                    <Text variant="caption" color="secondary">
+                        {t("internal.draw.winner.payout")}
+                    </Text>
+                    {payout ? (
+                        <PayoutBadge status={payout.status} />
+                    ) : (
+                        <Text variant="caption" color="tertiary">
+                            {t("internal.payout.missing")}
+                        </Text>
+                    )}
+                    {payout?.txHash && (
+                        <ExplorerLink kind="tx" value={payout.txHash} />
+                    )}
+                </Inline>
+                {payout?.status === "bank_depleted" && (
+                    <Text variant="caption">
+                        {t("internal.draw.winner.depleted")}{" "}
+                        <Link to="/internal/bank" className={linkButton}>
+                            {t("internal.draw.winner.openBank")}
+                        </Link>
+                    </Text>
+                )}
+                {payout?.lastError && (
+                    <Text variant="caption" color="error">
+                        {payout.lastError}
+                    </Text>
+                )}
             </Stack>
         </Notice>
     );

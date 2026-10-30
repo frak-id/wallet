@@ -17,6 +17,7 @@ export type PageKey =
     | "pushCreate"
     | "internal"
     | "internalGame"
+    | "internalBank"
     | "internalCodes"
     | "internalLookup"
     | "internalSetupCode";

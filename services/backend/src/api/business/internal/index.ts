@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { internalBankRoutes } from "./bank";
 import { internalGameRoutes } from "./game";
 import { internalReferralCodeRoutes } from "./referralCodes";
 import { internalToolRoutes } from "./tools";
@@ -7,4 +8,5 @@ import { internalToolRoutes } from "./tools";
 export const internalRoutes = new Elysia({ prefix: "/internal" })
     .use(internalReferralCodeRoutes)
     .use(internalGameRoutes)
+    .use(internalBankRoutes)
     .use(internalToolRoutes);

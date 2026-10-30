@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import type { Static, TSchema } from "elysia";
+import { StablecoinSchema } from "../../domain/billing/schemas";
 import { CampaignStatusSchema } from "../../domain/campaign/schemas";
 import {
     DrawDiscardSchema,
@@ -10,6 +11,7 @@ import {
 } from "../../domain/game/schemas";
 import { DRAW_CHECK_IDS } from "../../domain/game/verify";
 import { InstagramLevelSchema } from "../../domain/instagram/schemas";
+import { AssetStatusSchema } from "../../domain/rewards/schemas";
 
 const Nullable = <T extends TSchema>(schema: T) => t.Union([schema, t.Null()]);
 
@@ -166,6 +168,18 @@ export const DrawCandidateSchema = t.Object({
     tickets: TicketBreakdownSchema,
 });
 
+/** A reward row's settlement state; `amount` in human units. */
+export const PayoutStateSchema = t.Object({
+    status: AssetStatusSchema,
+    amount: t.String(),
+    txHash: Nullable(t.String()),
+    statusChangedAt: t.Date(),
+    settledAt: Nullable(t.Date()),
+    expiresAt: Nullable(t.Date()),
+    lastError: Nullable(t.String()),
+});
+export type PayoutState = Static<typeof PayoutStateSchema>;
+
 export const GameDrawAdminSchema = t.Object({
     status: DrawStatusSchema,
     algorithm: t.String(),
@@ -197,6 +211,7 @@ export const GameDrawAdminSchema = t.Object({
             confirmedBy: Nullable(t.String()),
             confirmedAt: Nullable(t.Date()),
             assetLogId: Nullable(t.String()),
+            payout: Nullable(PayoutStateSchema),
         })
     ),
     candidate: Nullable(DrawCandidateSchema),
@@ -225,6 +240,56 @@ export const RunDrawsResponseSchema = t.Object({
     drawn: t.Number(),
     advanced: t.Number(),
 });
+
+const OwedBucketSchema = t.Object({ amount: t.String(), count: t.Number() });
+
+const OwedSchema = t.Object({
+    due: OwedBucketSchema,
+    depleted: OwedBucketSchema,
+    processing: OwedBucketSchema,
+    later: OwedBucketSchema,
+});
+export type BankOwed = Static<typeof OwedSchema>;
+
+/** Token amounts are wei strings: an allowance can be `maxUint256`. */
+export const FrakBankSchema = t.Object({
+    address: t.String(),
+    isOpen: t.Boolean(),
+    checkedAt: t.Date(),
+    tokens: t.Array(
+        t.Object({
+            symbol: StablecoinSchema,
+            address: t.String(),
+            decimals: t.Number(),
+            balance: t.String(),
+            allowance: t.String(),
+            payable: t.String(),
+            owed: OwedSchema,
+            shortfall: t.String(),
+        })
+    ),
+    merchants: t.Array(
+        t.Object({
+            merchantId: t.String(),
+            name: t.String(),
+            domain: t.String(),
+            symbol: StablecoinSchema,
+            owed: OwedSchema,
+        })
+    ),
+    prizes: t.Array(
+        t.Object({
+            gameId: t.String(),
+            prizeAmount: t.Number(),
+            endsAt: t.Date(),
+            confirmedAt: Nullable(t.Date()),
+            payout: Nullable(PayoutStateSchema),
+        })
+    ),
+});
+export type FrakBank = Static<typeof FrakBankSchema>;
+
+export const RecheckBankResponseSchema = t.Object({ requeued: t.Number() });
 
 const ReferralLinkViewSchema = t.Object({
     id: t.String(),

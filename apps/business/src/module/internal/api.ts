@@ -34,6 +34,7 @@ export const internalKeys = {
     draw: (gameId: string) => ["internal", "game", gameId, "draw"] as const,
     verify: (gameId: string) => ["internal", "game", gameId, "verify"] as const,
     lookup: (query: string) => ["internal", "lookup", query] as const,
+    bank: ["internal", "bank"] as const,
 };
 
 /** How often the live player count refreshes; the backend serves one count for 30 s. */
@@ -201,6 +202,21 @@ export function useConfirmWinner(gameId: string) {
     return useInvalidating(
         async () => unwrap(await api().game({ gameId }).draw.confirm.post()),
         () => [internalKeys.gameDetail(gameId), internalKeys.games]
+    );
+}
+
+/** Not polled: every fetch re-reads the bank on-chain. */
+export const frakBankQueryOptions = () =>
+    queryOptions({
+        queryKey: internalKeys.bank,
+        queryFn: async () => unwrap(await api().bank.get()),
+        staleTime: Number.POSITIVE_INFINITY,
+    });
+
+export function useRecheckBank() {
+    return useInvalidating(
+        async () => unwrap(await api().bank.recheck.post()),
+        () => [internalKeys.bank]
     );
 }
 

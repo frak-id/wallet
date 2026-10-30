@@ -239,6 +239,9 @@
             "internalGame": {
                 "nav": "Frak Game"
             },
+            "internalBank": {
+                "nav": "Bank"
+            },
             "internalCodes": {
                 "nav": "Referral codes"
             },
@@ -2313,7 +2316,7 @@
             "status": {
                 "frozen": "Frozen",
                 "drawn": "Under review",
-                "confirmed": "Winner paid",
+                "confirmed": "Winner confirmed",
                 "void": "No winner"
             },
             "discarded": {
@@ -2377,7 +2380,10 @@
             },
             "winner": {
                 "title": "Winner",
-                "confirmedBy": "confirmed by {{actor}} on {{date}}"
+                "confirmedBy": "confirmed by {{actor}} on {{date}}",
+                "payout": "Payout",
+                "depleted": "The bank cannot cover it yet, so the winner sees \"Waiting for brand funding\".",
+                "openBank": "Open the bank"
             },
             "rejections": "Rejections",
             "rejection": "#{{rank}}: {{reason}}, by {{actor}} on {{date}}",
@@ -2399,6 +2405,63 @@
                 "candidates_replay": "The candidates replay in the same order",
                 "rejections_in_order": "Each rejection passed over the next candidate in order",
                 "winner_first_unrejected": "The winner is the first candidate not rejected"
+            }
+        },
+        "payout": {
+            "status": {
+                "pending": "Queued",
+                "processing": "Sending",
+                "bank_depleted": "Waiting for funds",
+                "settled": "Claimable",
+                "cancelled": "Cancelled",
+                "expired": "Expired"
+            },
+            "missing": "No payout found"
+        },
+        "bank": {
+            "title": "Frak bank",
+            "open": "Open",
+            "closed": "Closed",
+            "description": "Pays Frak's signup rewards and game prizes. Every brand opted into the shared bank draws on the same balance.",
+            "reload": "Reload",
+            "address": "Address",
+            "checkedAt": "Read on-chain",
+            "shortfall": "Short by {{amount}}: top up the bank or raise its allowance. Until then these rewards show as \"Waiting for brand funding\".",
+            "closedHint": "The bank is closed: nothing is paid until it reopens.",
+            "recheck": {
+                "trigger": "Re-check now",
+                "hint": "Settlement re-checks a refilled bank every 3 hours. After a top-up, re-check now to pay what it can cover right away.",
+                "result_zero": "Nothing was waiting on funds; settlement started for the queued rewards.",
+                "result_one": "{{count}} reward back in the queue; settlement started.",
+                "result_other": "{{count}} rewards back in the queue; settlement started."
+            },
+            "owedValue": "{{amount}} ({{count}})",
+            "owed": {
+                "due": "To pay now",
+                "depleted": "Waiting for funds",
+                "processing": "Being sent",
+                "later": "Held or locked"
+            },
+            "token": {
+                "balance": "Balance",
+                "allowance": "Allowance",
+                "payable": "Can pay now",
+                "covered": "Covered",
+                "short": "Short {{amount}}"
+            },
+            "merchants": {
+                "title": "What it owes",
+                "merchant": "Merchant",
+                "token": "Token",
+                "empty": "Nothing owed"
+            },
+            "prizes": {
+                "title": "Game prizes",
+                "prize": "Prize",
+                "ended": "ended {{date}}",
+                "confirmedAt": "Confirmed",
+                "payout": "Payout",
+                "empty": "No prize confirmed yet"
             }
         },
         "codes": {

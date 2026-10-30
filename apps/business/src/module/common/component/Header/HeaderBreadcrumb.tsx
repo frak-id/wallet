@@ -46,6 +46,8 @@ function labelFor(segment: string, t: TFunction): string {
             return pageNav(t, "internal");
         case "game":
             return pageNav(t, "internalGame");
+        case "bank":
+            return pageNav(t, "internalBank");
         case "codes":
             return pageNav(t, "internalCodes");
         case "lookup":

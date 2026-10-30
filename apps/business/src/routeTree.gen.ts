@@ -26,6 +26,7 @@ import { Route as RestrictedCampaignsIndexRouteImport } from './routes/_restrict
 import { Route as RestrictedCampaignsCampaignIdRouteImport } from './routes/_restricted/campaigns/$campaignId'
 import { Route as RestrictedCampaignsListRouteImport } from './routes/_restricted/campaigns/list'
 import { Route as RestrictedInternalIndexRouteImport } from './routes/_restricted/internal/index'
+import { Route as RestrictedInternalBankRouteImport } from './routes/_restricted/internal/bank'
 import { Route as RestrictedInternalCodesRouteImport } from './routes/_restricted/internal/codes'
 import { Route as RestrictedInternalLookupRouteImport } from './routes/_restricted/internal/lookup'
 import { Route as RestrictedInternalSetupCodeRouteImport } from './routes/_restricted/internal/setup-code'
@@ -153,6 +154,11 @@ const RestrictedCampaignsListRoute = RestrictedCampaignsListRouteImport.update({
 const RestrictedInternalIndexRoute = RestrictedInternalIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => RestrictedInternalRoute,
+} as any)
+const RestrictedInternalBankRoute = RestrictedInternalBankRouteImport.update({
+  id: '/bank',
+  path: '/bank',
   getParentRoute: () => RestrictedInternalRoute,
 } as any)
 const RestrictedInternalCodesRoute = RestrictedInternalCodesRouteImport.update({
@@ -418,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/internal/bank': typeof RestrictedInternalBankRoute
   '/internal/codes': typeof RestrictedInternalCodesRoute
   '/internal/lookup': typeof RestrictedInternalLookupRoute
   '/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
@@ -475,6 +482,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/internal/bank': typeof RestrictedInternalBankRoute
   '/internal/codes': typeof RestrictedInternalCodesRoute
   '/internal/lookup': typeof RestrictedInternalLookupRoute
   '/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
@@ -536,6 +544,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/_restricted/internal/bank': typeof RestrictedInternalBankRoute
   '/_restricted/internal/codes': typeof RestrictedInternalCodesRoute
   '/_restricted/internal/lookup': typeof RestrictedInternalLookupRoute
   '/_restricted/internal/setup-code': typeof RestrictedInternalSetupCodeRoute
@@ -598,6 +607,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
+    | '/internal/bank'
     | '/internal/codes'
     | '/internal/lookup'
     | '/internal/setup-code'
@@ -655,6 +665,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
+    | '/internal/bank'
     | '/internal/codes'
     | '/internal/lookup'
     | '/internal/setup-code'
@@ -715,6 +726,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
+    | '/_restricted/internal/bank'
     | '/_restricted/internal/codes'
     | '/_restricted/internal/lookup'
     | '/_restricted/internal/setup-code'
@@ -889,6 +901,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/internal/'
       preLoaderRoute: typeof RestrictedInternalIndexRouteImport
+      parentRoute: typeof RestrictedInternalRoute
+    }
+    '/_restricted/internal/bank': {
+      id: '/_restricted/internal/bank'
+      path: '/bank'
+      fullPath: '/internal/bank'
+      preLoaderRoute: typeof RestrictedInternalBankRouteImport
       parentRoute: typeof RestrictedInternalRoute
     }
     '/_restricted/internal/codes': {
@@ -1189,6 +1208,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface RestrictedInternalRouteChildren {
+  RestrictedInternalBankRoute: typeof RestrictedInternalBankRoute
   RestrictedInternalCodesRoute: typeof RestrictedInternalCodesRoute
   RestrictedInternalLookupRoute: typeof RestrictedInternalLookupRoute
   RestrictedInternalSetupCodeRoute: typeof RestrictedInternalSetupCodeRoute
@@ -1198,6 +1218,7 @@ interface RestrictedInternalRouteChildren {
 }
 
 const RestrictedInternalRouteChildren: RestrictedInternalRouteChildren = {
+  RestrictedInternalBankRoute: RestrictedInternalBankRoute,
   RestrictedInternalCodesRoute: RestrictedInternalCodesRoute,
   RestrictedInternalLookupRoute: RestrictedInternalLookupRoute,
   RestrictedInternalSetupCodeRoute: RestrictedInternalSetupCodeRoute,

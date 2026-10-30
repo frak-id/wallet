@@ -61,6 +61,29 @@ export type AnnexAssetLogRow = {
     onchainTxHash: Hex | null;
 };
 
+export type PayoutStateRow = {
+    id: string;
+    status: AssetStatus;
+    amount: string;
+    tokenAddress: Address | null;
+    txHash: Hex | null;
+    statusChangedAt: Date;
+    settledAt: Date | null;
+    expiresAt: Date | null;
+    lastError: string | null;
+};
+
+type OwedBucket = { amount: string; count: number };
+
+export type OwedByBankRow = {
+    merchantId: string;
+    tokenAddress: Address;
+    due: OwedBucket;
+    depleted: OwedBucket;
+    processing: OwedBucket;
+    later: OwedBucket;
+};
+
 export class AssetLogRepository {
     /**
      * The claim window opens when the lockup ends: counted from creation, a
@@ -156,6 +179,79 @@ export class AssetLogRepository {
             .where(eq(assetLogsTable.id, id))
             .limit(1);
         return row?.hash ?? null;
+    }
+
+    async findPayoutStates(ids: string[]): Promise<PayoutStateRow[]> {
+        if (ids.length === 0) return [];
+        return db
+            .select({
+                id: assetLogsTable.id,
+                status: assetLogsTable.status,
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                txHash: assetLogsTable.onchainTxHash,
+                statusChangedAt: assetLogsTable.statusChangedAt,
+                settledAt: assetLogsTable.settledAt,
+                expiresAt: assetLogsTable.expiresAt,
+                lastError: assetLogsTable.lastSettlementError,
+            })
+            .from(assetLogsTable)
+            .where(inArray(assetLogsTable.id, ids));
+    }
+
+    /**
+     * What every merchant paying from `bankAddress` still owes, per token, in human units.
+     * `due` is what settlement would push now; `later` is held or still locked.
+     */
+    async sumOwedByBank(
+        bankAddress: Address,
+        now = new Date()
+    ): Promise<OwedByBankRow[]> {
+        const pending = sql`${assetLogsTable.status} = 'pending'`;
+        // Never NULL, so `NOT deferred` keeps every row without a lockup.
+        const deferred = sql`((${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL) OR (${assetLogsTable.availableAt} IS NOT NULL AND ${gt(assetLogsTable.availableAt, now)}))`;
+        const bucket = (where: SQL) => ({
+            amount: sql<string>`coalesce(sum(${assetLogsTable.amount}) filter (where ${where}), 0)::text`,
+            count: sql<number>`(count(*) filter (where ${where}))::int`,
+        });
+        const rows = await db
+            .select({
+                merchantId: assetLogsTable.merchantId,
+                tokenAddress: assetLogsTable.tokenAddress,
+                due: bucket(sql`${pending} AND NOT ${deferred}`),
+                depleted: bucket(
+                    sql`${assetLogsTable.status} = 'bank_depleted'`
+                ),
+                processing: bucket(
+                    sql`${assetLogsTable.status} = 'processing'`
+                ),
+                later: bucket(sql`${pending} AND ${deferred}`),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                merchantsTable,
+                eq(assetLogsTable.merchantId, merchantsTable.id)
+            )
+            .where(
+                and(
+                    eq(merchantsTable.bankAddress, bankAddress),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                        "processing",
+                    ]),
+                    or(
+                        isNull(assetLogsTable.expiresAt),
+                        gt(assetLogsTable.expiresAt, now)
+                    )
+                )
+            )
+            .groupBy(assetLogsTable.merchantId, assetLogsTable.tokenAddress);
+        return rows.flatMap(({ tokenAddress, ...row }) =>
+            tokenAddress ? [{ ...row, tokenAddress }] : []
+        );
     }
 
     /**

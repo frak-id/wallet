@@ -1,3 +1,4 @@
+export { FrakBankAdminOrchestrator } from "./FrakBankAdminOrchestrator";
 export { FrakCodeAdminOrchestrator } from "./FrakCodeAdminOrchestrator";
 export {
     FrakGameAdminOrchestrator,

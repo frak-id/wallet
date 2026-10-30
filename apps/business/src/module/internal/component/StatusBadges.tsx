@@ -1,6 +1,7 @@
 import type {
     GameDrawAdmin,
     GamePlayer,
+    PayoutState,
 } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -43,6 +44,24 @@ export function DrawStatusBadge({
     return (
         <Badge variant={DRAW_VARIANT[status]} size="small">
             {t(`internal.draw.status.${status}`)}
+        </Badge>
+    );
+}
+
+const PAYOUT_VARIANT: Record<PayoutState["status"], BadgeVariant> = {
+    pending: "info",
+    processing: "info",
+    bank_depleted: "error",
+    settled: "success",
+    cancelled: "neutral",
+    expired: "error",
+};
+
+export function PayoutBadge({ status }: { status: PayoutState["status"] }) {
+    const { t } = useTranslation();
+    return (
+        <Badge variant={PAYOUT_VARIANT[status]} size="small">
+            {t(`internal.payout.status.${status}`)}
         </Badge>
     );
 }

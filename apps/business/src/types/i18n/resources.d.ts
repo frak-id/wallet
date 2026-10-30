@@ -1334,6 +1334,52 @@ export default interface Resources {
       }
     },
     "internal": {
+      "bank": {
+        "address": "Address",
+        "checkedAt": "Read on-chain",
+        "closed": "Closed",
+        "closedHint": "The bank is closed: nothing is paid until it reopens.",
+        "description": "Pays Frak's signup rewards and game prizes. Every brand opted into the shared bank draws on the same balance.",
+        "merchants": {
+          "empty": "Nothing owed",
+          "merchant": "Merchant",
+          "title": "What it owes",
+          "token": "Token"
+        },
+        "open": "Open",
+        "owed": {
+          "depleted": "Waiting for funds",
+          "due": "To pay now",
+          "later": "Held or locked",
+          "processing": "Being sent"
+        },
+        "owedValue": "{{amount}} ({{count}})",
+        "prizes": {
+          "confirmedAt": "Confirmed",
+          "empty": "No prize confirmed yet",
+          "ended": "ended {{date}}",
+          "payout": "Payout",
+          "prize": "Prize",
+          "title": "Game prizes"
+        },
+        "recheck": {
+          "hint": "Settlement re-checks a refilled bank every 3 hours. After a top-up, re-check now to pay what it can cover right away.",
+          "result_one": "{{count}} reward back in the queue; settlement started.",
+          "result_other": "{{count}} rewards back in the queue; settlement started.",
+          "result_zero": "Nothing was waiting on funds; settlement started for the queued rewards.",
+          "trigger": "Re-check now"
+        },
+        "reload": "Reload",
+        "shortfall": "Short by {{amount}}: top up the bank or raise its allowance. Until then these rewards show as \"Waiting for brand funding\".",
+        "title": "Frak bank",
+        "token": {
+          "allowance": "Allowance",
+          "balance": "Balance",
+          "covered": "Covered",
+          "payable": "Can pay now",
+          "short": "Short {{amount}}"
+        }
+      },
       "codes": {
         "downloadQr": "Download the QR (SVG)",
         "issue": {
@@ -1445,7 +1491,7 @@ export default interface Resources {
         "root": "Snapshot root",
         "round": "drand round",
         "status": {
-          "confirmed": "Winner paid",
+          "confirmed": "Winner confirmed",
           "drawn": "Under review",
           "frozen": "Frozen",
           "void": "No winner"
@@ -1461,6 +1507,9 @@ export default interface Resources {
         },
         "winner": {
           "confirmedBy": "confirmed by {{actor}} on {{date}}",
+          "depleted": "The bank cannot cover it yet, so the winner sees \"Waiting for brand funding\".",
+          "openBank": "Open the bank",
+          "payout": "Payout",
           "title": "Winner"
         }
       },
@@ -1599,6 +1648,17 @@ export default interface Resources {
         "referrers": "Referred by",
         "submit": "Search",
         "type": "Type"
+      },
+      "payout": {
+        "missing": "No payout found",
+        "status": {
+          "bank_depleted": "Waiting for funds",
+          "cancelled": "Cancelled",
+          "expired": "Expired",
+          "pending": "Queued",
+          "processing": "Sending",
+          "settled": "Claimable"
+        }
       },
       "rule": {
         "budget": "Budget used",
@@ -2436,6 +2496,9 @@ export default interface Resources {
         },
         "internal": {
           "nav": "Internal"
+        },
+        "internalBank": {
+          "nav": "Bank"
         },
         "internalCodes": {
           "nav": "Referral codes"

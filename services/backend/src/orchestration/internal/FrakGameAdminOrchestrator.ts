@@ -29,6 +29,7 @@ import type {
 } from "../../domain/merchant/repositories/MerchantRepository";
 import { FRAK_SHARED_CAMPAIGN_BANK } from "../../domain/merchant/services/MerchantRegistrationService";
 import type { ReferralCodeRepository } from "../../domain/referral-code/repositories/ReferralCodeRepository";
+import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import { interactionTypes } from "../../domain/rewards/schemas";
 import type { DnsCheckRepository } from "../../infrastructure/dns/DnsCheckRepository";
 import type { GameDrawOrchestrator } from "../game/GameDrawOrchestrator";
@@ -43,6 +44,7 @@ import type {
     GamePlayers,
     PublishSignupRuleInput,
 } from "../schemas/internalSchemas";
+import { toPayoutState } from "./FrakBankAdminOrchestrator";
 
 /** The game rule outlives the game so joins processed after the close still pay. */
 const GAME_RULE_GRACE_MS = 24 * 60 * 60 * 1000;
@@ -168,7 +170,8 @@ export class FrakGameAdminOrchestrator {
         private readonly instagramPendingLinks: Pick<
             InstagramPendingLinkRepository,
             "findDeclarations"
-        >
+        >,
+        private readonly assetLogs: Pick<AssetLogRepository, "findPayoutStates">
     ) {}
 
     async setup(): Promise<FrakGameSetup> {
@@ -521,14 +524,19 @@ export class FrakGameAdminOrchestrator {
         draw: GameDrawSelect
     ): Promise<GameDrawAdmin["winner"]> {
         if (!draw.winnerIdentityGroupId) return null;
+        const [wallet, [payout]] = await Promise.all([
+            this.identities.getWalletForGroup(draw.winnerIdentityGroupId),
+            this.assetLogs.findPayoutStates(
+                draw.assetLogId ? [draw.assetLogId] : []
+            ),
+        ]);
         return {
             identityGroupId: draw.winnerIdentityGroupId,
-            wallet: await this.identities.getWalletForGroup(
-                draw.winnerIdentityGroupId
-            ),
+            wallet,
             confirmedBy: draw.confirmedBy,
             confirmedAt: draw.confirmedAt,
             assetLogId: draw.assetLogId,
+            payout: payout ? toPayoutState(payout) : null,
         };
     }
 

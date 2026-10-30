@@ -20,6 +20,7 @@ import { tabContent } from "./internal.css";
 
 const TABS = [
     { value: "game", to: "/internal/game", page: "internalGame" },
+    { value: "bank", to: "/internal/bank", page: "internalBank" },
     { value: "codes", to: "/internal/codes", page: "internalCodes" },
     { value: "lookup", to: "/internal/lookup", page: "internalLookup" },
     {
