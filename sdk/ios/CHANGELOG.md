@@ -17,6 +17,10 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **The sharing sheet no longer opens the system share sheet on its own.** When the hosted page
+  was slow to report itself ready, the sheet reloaded it and then gave the reload only 1 second, less
+  than a full page load takes, so it fell back to the system share sheet over a page that was about to
+  appear. The reload now gets the full page-load budget.
 - **Share links always carry a lowercase `utm_source`.** A merchant URL that already had an
   upper-case `UTM_SOURCE` was shared without `utm_source=frak`, so analytics reading the lowercase key
   saw the link as unattributed. Attribution parameters are now added unless the exact lowercase key is

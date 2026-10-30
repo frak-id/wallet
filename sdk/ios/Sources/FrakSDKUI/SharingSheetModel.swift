@@ -527,12 +527,12 @@
         ///
         /// The engine cannot answer this: a reclaimed content process still completes its
         /// navigation, so `didFinish` arrives for a document with no page in it.
-        private func armActivationWatchdog() {
+        private func armActivationWatchdog(budget: TimeInterval = activationDeadline) {
             // Never two live budgets: an orphan would recover and fall back on its own.
             deadline?.cancel()
             activationArmed = true
             deadline = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(Self.activationDeadline * 1_000_000_000))
+                try? await Task.sleep(nanoseconds: UInt64(budget * 1_000_000_000))
                 guard !Task.isCancelled else { return }
                 self?.onDeadline()
             }
@@ -767,7 +767,8 @@
                     return
                 }
                 target.navigate(navigation)
-                armActivationWatchdog()
+                // A fresh engine loads the whole document, so it gets the full-load budget.
+                armActivationWatchdog(budget: Self.pageLoadDeadline)
             case .fallBack:
                 guard let session else {
                     deadlineExpired = true
