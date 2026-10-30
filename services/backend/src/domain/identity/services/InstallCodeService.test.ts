@@ -38,7 +38,7 @@ describe("InstallCodeService", () => {
 
             const result = await service.generate({
                 merchantId: "merchant-1",
-                anonymousId: "anon-1",
+                credential: { kind: "anonymous", anonymousId: "anon-1" },
             });
 
             expect(result).toEqual({ code: "ABC234", expiresAt });
@@ -60,7 +60,7 @@ describe("InstallCodeService", () => {
 
             const result = await service.generate({
                 merchantId: "merchant-1",
-                anonymousId: "anon-1",
+                credential: { kind: "anonymous", anonymousId: "anon-1" },
             });
 
             expect(result).toEqual({ code: "REUSED", expiresAt });

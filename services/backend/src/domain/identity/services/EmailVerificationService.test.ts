@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 // Same relative path the service imports (not the alias, which won't resolve here).
 import { resendClient } from "../../../infrastructure/integrations/email";
+import type { EmailVerificationCodeSelect } from "../db/schema";
 import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 import { EmailVerificationService } from "./EmailVerificationService";
@@ -24,6 +25,21 @@ const GROUP_ID = "group-1";
 // Codes are now ambiguity-free uppercase alphanumeric (shared `generateCode`).
 const CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
+const challenge = (
+    overrides: Partial<EmailVerificationCodeSelect> = {}
+): EmailVerificationCodeSelect => ({
+    id: "challenge-1",
+    groupId: GROUP_ID,
+    email: "user@test.com",
+    code: "ABC234",
+    attempts: 0,
+    createdAt: new Date(0),
+    lastSentAt: new Date(0),
+    expiresAt: new Date(Date.now() + 60_000),
+    consumedAt: null,
+    ...overrides,
+});
+
 const createEmailVerificationRepository = () =>
     ({
         findByGroup: vi.fn(),
@@ -31,15 +47,13 @@ const createEmailVerificationRepository = () =>
         incrementAttempts: vi.fn(),
         consume: vi.fn(),
         deleteExpired: vi.fn(),
-    }) as unknown as EmailVerificationRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<EmailVerificationRepository>;
 
 const createIdentityRepository = () =>
     ({
         findLinkedEmail: vi.fn(),
         confirmEmail: vi.fn(async () => true),
-    }) as unknown as IdentityRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<IdentityRepository>;
 
 describe("EmailVerificationService", () => {
     let emailVerificationRepository: ReturnType<
@@ -56,8 +70,8 @@ describe("EmailVerificationService", () => {
         emailVerificationRepository = createEmailVerificationRepository();
         identityRepository = createIdentityRepository();
         service = new EmailVerificationService(
-            emailVerificationRepository as unknown as EmailVerificationRepository,
-            identityRepository as unknown as IdentityRepository
+            emailVerificationRepository,
+            identityRepository
         );
     });
 
@@ -67,11 +81,13 @@ describe("EmailVerificationService", () => {
                 email: "old@test.com",
                 verifiedAt: new Date(),
             });
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                email: "new@test.com",
-                consumedAt: null,
-                expiresAt: new Date(Date.now() + 60_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    email: "new@test.com",
+                    consumedAt: null,
+                    expiresAt: new Date(Date.now() + 60_000),
+                })
+            );
 
             const status = await service.getEmailStatus(GROUP_ID);
 
@@ -87,11 +103,13 @@ describe("EmailVerificationService", () => {
                 email: "user@test.com",
                 verifiedAt: null,
             });
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                email: "user@test.com",
-                consumedAt: null,
-                expiresAt: new Date(Date.now() + 60_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    email: "user@test.com",
+                    consumedAt: null,
+                    expiresAt: new Date(Date.now() + 60_000),
+                })
+            );
 
             const status = await service.getEmailStatus(GROUP_ID);
 
@@ -103,11 +121,13 @@ describe("EmailVerificationService", () => {
                 email: "old@test.com",
                 verifiedAt: new Date(),
             });
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                email: "new@test.com",
-                consumedAt: new Date(),
-                expiresAt: new Date(Date.now() + 60_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    email: "new@test.com",
+                    consumedAt: new Date(),
+                    expiresAt: new Date(Date.now() + 60_000),
+                })
+            );
 
             const status = await service.getEmailStatus(GROUP_ID);
 
@@ -157,9 +177,11 @@ describe("EmailVerificationService", () => {
         });
 
         it("throttles a resend inside the debounce window", async () => {
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                lastSentAt: new Date(),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    lastSentAt: new Date(),
+                })
+            );
 
             const result = await service.sendCode({ groupId: GROUP_ID });
 
@@ -196,12 +218,14 @@ describe("EmailVerificationService", () => {
         });
 
         it("resends to the in-flight challenge target when no address is given", async () => {
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                email: "rotating@test.com",
-                lastSentAt: new Date(Date.now() - 60_000),
-                consumedAt: null,
-                expiresAt: new Date(Date.now() + 60_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    email: "rotating@test.com",
+                    lastSentAt: new Date(Date.now() - 60_000),
+                    consumedAt: null,
+                    expiresAt: new Date(Date.now() + 60_000),
+                })
+            );
 
             const result = await service.sendCode({ groupId: GROUP_ID });
 
@@ -223,14 +247,6 @@ describe("EmailVerificationService", () => {
     });
 
     describe("verifyCode", () => {
-        const validRow = () => ({
-            email: "user@test.com",
-            code: "ABC234",
-            attempts: 0,
-            expiresAt: new Date(Date.now() + 60_000),
-            consumedAt: null,
-        });
-
         it("returns expired when no challenge exists", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(null);
 
@@ -243,10 +259,11 @@ describe("EmailVerificationService", () => {
         });
 
         it("returns expired for a past-expiry challenge", async () => {
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                ...validRow(),
-                expiresAt: new Date(Date.now() - 1_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    expiresAt: new Date(Date.now() - 1_000),
+                })
+            );
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
@@ -257,11 +274,12 @@ describe("EmailVerificationService", () => {
         });
 
         it("returns alreadyVerified for a consumed challenge even past expiry", async () => {
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                ...validRow(),
-                consumedAt: new Date(),
-                expiresAt: new Date(Date.now() - 1_000),
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    consumedAt: new Date(),
+                    expiresAt: new Date(Date.now() - 1_000),
+                })
+            );
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
@@ -277,10 +295,11 @@ describe("EmailVerificationService", () => {
         });
 
         it("returns tooManyAttempts past the cap", async () => {
-            emailVerificationRepository.findByGroup.mockResolvedValue({
-                ...validRow(),
-                attempts: 5,
-            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                challenge({
+                    attempts: 5,
+                })
+            );
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
@@ -292,7 +311,7 @@ describe("EmailVerificationService", () => {
 
         it("increments attempts and returns invalid on mismatch", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
-                validRow()
+                challenge()
             );
 
             const result = await service.verifyCode({
@@ -309,7 +328,7 @@ describe("EmailVerificationService", () => {
 
         it("matches the code case-insensitively", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
-                validRow()
+                challenge()
             );
 
             const result = await service.verifyCode({
@@ -322,7 +341,7 @@ describe("EmailVerificationService", () => {
 
         it("attaches the email and consumes on a correct code", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
-                validRow()
+                challenge()
             );
 
             const result = await service.verifyCode({
@@ -348,7 +367,7 @@ describe("EmailVerificationService", () => {
 
         it("returns conflict and writes nothing when the address is owned by another group", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
-                validRow()
+                challenge()
             );
             identityRepository.confirmEmail.mockResolvedValue(false);
 

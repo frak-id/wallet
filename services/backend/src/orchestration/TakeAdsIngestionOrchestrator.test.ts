@@ -37,6 +37,7 @@ const attribution: AffiliateAttributionSelect = {
 function makeAction(overrides: Partial<TakeAdsAction> = {}): TakeAdsAction {
     return {
         actionId: "act-1",
+        merchantId: 42,
         status: "PENDING",
         subId: "tok-abc",
         orderAmount: 100,

@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 import type { BusinessAccountSelect } from "../db/schema";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 import { BusinessAccountService } from "./BusinessAccountService";
@@ -31,8 +31,7 @@ const createRepository = () =>
         setWallet: vi.fn(),
         findById: vi.fn(),
         create: vi.fn(),
-    }) as unknown as BusinessAccountRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<BusinessAccountRepository>;
 
 describe("BusinessAccountService", () => {
     let repository: ReturnType<typeof createRepository>;
@@ -40,9 +39,7 @@ describe("BusinessAccountService", () => {
 
     beforeEach(() => {
         repository = createRepository();
-        service = new BusinessAccountService(
-            repository as unknown as BusinessAccountRepository
-        );
+        service = new BusinessAccountService(repository);
     });
 
     describe("upsertWalletAccount", () => {
@@ -273,7 +270,9 @@ describe("BusinessAccountService", () => {
 
         it("links a free wallet", async () => {
             repository.findByWallet.mockResolvedValue(null);
-            repository.setWallet.mockResolvedValue(undefined);
+            repository.setWallet.mockResolvedValue(
+                account({ walletAddress: WALLET })
+            );
 
             expect(
                 await service.linkWallet({

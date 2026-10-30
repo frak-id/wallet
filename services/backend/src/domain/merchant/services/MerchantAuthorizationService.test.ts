@@ -1,7 +1,11 @@
 import type { Address } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
+import type { merchantAdminsTable } from "../db/schema";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
-import type { MerchantRepository } from "../repositories/MerchantRepository";
+import type {
+    MerchantRepository,
+    MerchantSelect,
+} from "../repositories/MerchantRepository";
 import { MerchantAuthorizationService } from "./MerchantAuthorizationService";
 
 const MERCHANT_ID = "merchant-1";
@@ -9,13 +13,39 @@ const OWNER_WALLET = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" as Address;
 const OTHER_WALLET = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" as Address;
 const DOMAIN = "shop.myshopify.com";
 
-const merchant = (overrides: Record<string, unknown> = {}) => ({
+const merchant = (overrides: Partial<MerchantSelect> = {}): MerchantSelect => ({
     id: MERCHANT_ID,
+    productId: null,
     domain: DOMAIN,
-    allowedDomains: null,
+    allowedDomains: [],
+    allowedPackageIds: [],
+    name: "Shop",
     ownerWallet: null,
     ownerAccountId: null,
+    bankAddress: null,
+    defaultRewardToken: "0x0000000000000000000000000000000000000000",
+    webhookSignatureKey: null,
+    webhookPlatform: null,
+    explorerConfig: null,
+    explorerEnabledAt: null,
+    sdkConfig: null,
+    accountingInfo: null,
+    verifiedAt: null,
+    createdAt: null,
+    updatedAt: null,
     ...overrides,
+});
+
+const adminRow = (
+    merchantId: string
+): typeof merchantAdminsTable.$inferSelect => ({
+    id: `admin-${merchantId}`,
+    merchantId,
+    wallet: null,
+    accountId: null,
+    addedBy: null,
+    addedByAccountId: null,
+    addedAt: new Date(0),
 });
 
 const createRepos = () => {
@@ -24,13 +54,11 @@ const createRepos = () => {
         findByOwnerWallet: vi.fn().mockResolvedValue([]),
         findByOwnerAccount: vi.fn().mockResolvedValue([]),
         findAll: vi.fn().mockResolvedValue([]),
-    } as unknown as MerchantRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    } as unknown as Mocked<MerchantRepository>;
     const merchantAdminRepository = {
         isAdmin: vi.fn().mockResolvedValue(false),
         findByIdentity: vi.fn().mockResolvedValue([]),
-    } as unknown as MerchantAdminRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    } as unknown as Mocked<MerchantAdminRepository>;
     return { merchantRepository, merchantAdminRepository };
 };
 
@@ -192,17 +220,17 @@ describe("MerchantAuthorizationService.getAccessibleMerchantIds", () => {
 
     it("unions and dedupes ids from every access source", async () => {
         repos.merchantRepository.findByOwnerWallet.mockResolvedValue([
-            { id: "m1" },
+            merchant({ id: "m1", domain: "m1.example.com" }),
         ]);
         repos.merchantRepository.findByOwnerAccount.mockResolvedValue([
-            { id: "m1" }, // duplicate of the wallet-owned merchant
-            { id: "m2" },
+            merchant({ id: "m1", domain: "m1.example.com" }), // duplicate of the wallet-owned merchant
+            merchant({ id: "m2", domain: "m2.example.com" }),
         ]);
         repos.merchantAdminRepository.findByIdentity.mockResolvedValue([
-            { merchantId: "m3" },
+            adminRow("m3"),
         ]);
         repos.merchantRepository.findAll.mockResolvedValue([
-            { id: "m4", domain: DOMAIN, allowedDomains: null },
+            merchant({ id: "m4" }),
         ]);
 
         const ids = await service.getAccessibleMerchantIds({

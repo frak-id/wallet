@@ -1,5 +1,5 @@
 import { sha256Hex } from "@backend-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 import {
     buildSecurityCodeEmail,
     resendClient,
@@ -28,8 +28,7 @@ const createRepository = () =>
         upsert: vi.fn(),
         incrementAttempts: vi.fn(),
         consume: vi.fn(),
-    }) as unknown as BusinessEmailCodeRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<BusinessEmailCodeRepository>;
 
 const row = (
     overrides: Partial<BusinessEmailCodeSelect>
@@ -58,9 +57,7 @@ describe("EmailOtpService", () => {
             .mockReset()
             .mockResolvedValue({ id: "msg-1" });
         repository = createRepository();
-        service = new EmailOtpService(
-            repository as unknown as BusinessEmailCodeRepository
-        );
+        service = new EmailOtpService(repository);
     });
 
     describe("sendCode", () => {
