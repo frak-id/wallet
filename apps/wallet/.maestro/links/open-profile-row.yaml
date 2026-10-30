@@ -1,0 +1,19 @@
+appId: id.frak.wallet.dev
+name: Open a Profile row (ROW)
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile|Profil"
+- extendedWaitUntil:
+    visible: "Referrals|Parrainages"
+    timeout: 15000
+    label: "Profile tab opened"
+# Centred, because the last rows otherwise sit under the floating tab bar and the tap hits it.
+- scrollUntilVisible:
+    element: ${ROW}
+    direction: DOWN
+    centerElement: true
+- tapOn: ${ROW}

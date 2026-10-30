@@ -1,0 +1,86 @@
+appId: id.frak.wallet.dev
+name: Profile links open the browser and the mail app
+---
+# Each row leaves the wallet; the next launchApp brings it back.
+# Texts match English|French: the wallet keeps the language of its first launch.
+
+# Privacy Policy and Terms open frak.id in the system browser.
+- runFlow:
+    file: links/open-profile-row.yaml
+    env:
+      ROW: "Privacy Policy|Politique de confidentialité"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.chrome:id/url_bar"
+            text: "frak.id/privacy"
+          timeout: 20000
+          label: "Chrome opened frak.id/privacy"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "TabBarItemTitle"
+            text: ".*frak\\.id"
+          timeout: 20000
+          label: "Safari opened frak.id"
+      - assertVisible: "Privacy Policy \\| Frak|.* \\| Frak"
+- takeScreenshot: build/maestro/wallet-privacy-policy
+
+- runFlow:
+    file: links/open-profile-row.yaml
+    env:
+      ROW: "Terms and conditions|Conditions générales"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.chrome:id/url_bar"
+            text: "frak.id/terms"
+          timeout: 20000
+          label: "Chrome opened frak.id/terms"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "TabBarItemTitle"
+            text: ".*frak\\.id"
+          timeout: 20000
+          label: "Safari opened frak.id"
+- takeScreenshot: build/maestro/wallet-terms
+
+# Help & support is a mailto: link. Never tap Send; Gmail is force-stopped so no draft is kept.
+- runFlow:
+    file: links/open-profile-row.yaml
+    env:
+      ROW: "Help & support|Aide & support"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible: "Recipients: hello@frak.id.*"
+          timeout: 20000
+          label: "Mail app composes to hello@frak.id"
+      - takeScreenshot: build/maestro/wallet-help-support
+      - stopApp: com.google.android.gm
+# The iOS simulator ships no Mail app, so the link has nowhere to go and the wallet must stay put.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: "Help & support|Aide & support"
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Back in the wallet"
