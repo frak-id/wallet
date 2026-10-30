@@ -1,0 +1,21 @@
+appId: id.frak.wallet.dev
+name: Log out, then wait for the passkey sheet
+---
+# Run by e2e-android.sh only (E2E_PASSKEY_FINGER), which then touches the fingerprint sensor.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile"
+- extendedWaitUntil:
+    visible: "Referrals"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Logout"
+    direction: DOWN
+- tapOn: "Logout"
+- extendedWaitUntil:
+    visible: ".*needs to verify it.s you.*"
+    timeout: 20000
+    label: "Google Password Manager asks for the screen lock"

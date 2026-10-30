@@ -2,8 +2,10 @@
 # Maestro flows in .maestro/ against the dev wallet already installed and logged in on an
 # emulator. Builds nothing: install with `tauri:android:dev` or `tauri:android:build:dev`,
 # then log in once by hand (passkey). The flows never clear app data, so the session holds.
+# E2E_PASSKEY_FINGER=<emulator finger id> first logs out and back in with the passkey,
+# touching that enrolled fingerprint on the screen-lock check.
 #
-# Usage: bun run --cwd apps/wallet e2e:android [flow.yaml ...]
+# Usage: [E2E_PASSKEY_FINGER=1] bun run --cwd apps/wallet e2e:android [flow.yaml ...]
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -30,12 +32,25 @@ adb shell pm path "$PACKAGE_ID" >/dev/null 2>&1 ||
 [ "$(adb shell am get-started-user-state 0 | tr -d '\r')" != RUNNING_LOCKED ] ||
 	die "$serial is locked. Enter its screen-lock PIN, then re-run."
 
-log "Running Maestro flows on $serial..."
 cap=()
 # --foreground: in its own process group Maestro is stopped (SIGTTOU) on exit when run from a terminal.
 command -v timeout >/dev/null 2>&1 && cap=(timeout --foreground "${MAESTRO_TIMEOUT:-600}")
+maestro_test() {
+	MAESTRO_CLI_NO_ANALYTICS=1 \
+		MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-90000}" \
+		${cap[@]+"${cap[@]}"} maestro --device "$serial" test "$@"
+}
 cd "$APP_DIR"
-MAESTRO_CLI_NO_ANALYTICS=1 \
-	MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-	MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-90000}" \
-	${cap[@]+"${cap[@]}"} maestro --device "$serial" test "${@:-$APP_DIR/.maestro}"
+
+if [ -n "${E2E_PASSKEY_FINGER:-}" ]; then
+	log "Logging out, then back in with the passkey (finger $E2E_PASSKEY_FINGER)..."
+	maestro_test "$APP_DIR/.maestro/passkey/logout-to-prompt.yaml"
+	adb emu finger touch "$E2E_PASSKEY_FINGER" >/dev/null
+	sleep 1
+	adb emu finger remove "$E2E_PASSKEY_FINGER" >/dev/null
+	# The flows below wait for the wallet home, which proves the login went through.
+fi
+
+log "Running Maestro flows on $serial..."
+maestro_test "${@:-$APP_DIR/.maestro}"
