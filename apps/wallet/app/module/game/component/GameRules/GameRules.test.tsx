@@ -34,7 +34,7 @@ describe("GameRules", () => {
             />
         );
 
-        expect(screen.getByText(/rules\.unlock\.title/).textContent).toMatch(
+        expect(screen.getByText(/bonus\.title/).textContent).toMatch(
             /"2,50\s€"/
         );
         expect(screen.getByText(/rules\.invite\.reward /).textContent).toMatch(
@@ -59,10 +59,30 @@ describe("GameRules", () => {
         expect(screen.getByText(line)).toBeInTheDocument();
     });
 
+    it("tags each way to earn with its tickets, the bonus as pending", () => {
+        render(<GameRules reward={2} onContinue={vi.fn()} />);
+
+        expect(
+            screen.getByText("onboarding.game.bonus.pending")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('game.page.missions.reward {"count":2}')
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('game.page.missions.rewardPerFriend {"count":1}')
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("onboarding.game.rules.purchase.title")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('game.page.missions.rewardPerPurchase {"count":3}')
+        ).toBeInTheDocument();
+    });
+
     it("drops the unlock row when the join earned nothing", () => {
         render(<GameRules reward={0} onContinue={vi.fn()} />);
 
-        expect(screen.queryByText(/rules\.unlock/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/game\.bonus/)).not.toBeInTheDocument();
         expect(screen.getByText(/rules\.invite\.title/)).toBeInTheDocument();
     });
 

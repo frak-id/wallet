@@ -1,14 +1,16 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { GiftIcon } from "@frak-labs/design-system/icons";
 import { ExternalLink, type RedeemResult } from "@frak-labs/wallet-shared";
 import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { Trans, useTranslation } from "react-i18next";
-import { InstructionList } from "@/module/common/component/InstructionList";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { GameTaskRow } from "@/module/game/component/GameTaskRow";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { ICONS, rewardOf } from "@/module/game/utils/gameMissionDisplay";
 import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
-import * as stepStyles from "@/module/onboarding/component/step/index.css";
 import * as styles from "./index.css";
 
 type InviteRewards = NonNullable<RedeemResult["inviteRewards"]>;
@@ -40,21 +42,12 @@ function inviteDescription(
     return `${amounts} ${tickets}`;
 }
 
+const iconProps = { width: 18, height: 18 } as const;
+
+/** The ways to earn tickets, laid out like the game page's missions. */
 export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
     const { t, i18n } = useTranslation();
-    const unlockStep =
-        reward > 0
-            ? [
-                  {
-                      title: t("onboarding.game.rules.unlock.title", {
-                          reward: formatGameAmount(reward, i18n.language),
-                      }),
-                      description: t(
-                          "onboarding.game.rules.unlock.description"
-                      ),
-                  },
-              ]
-            : [];
+    const { instagram: Instagram, friend: Friend, purchase: Purchase } = ICONS;
 
     return (
         <PageLayout
@@ -63,30 +56,44 @@ export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
                 <Button onClick={onContinue}>{t("onboarding.continue")}</Button>
             }
         >
-            <div className={`${stepStyles.body} ${styles.body}`}>
-                <Box display="flex" flexDirection="column" gap="s">
+            <Stack space="m" className={styles.body}>
+                <Stack space="s">
                     <Text variant="heading1" as="h2" align="center">
                         {t("onboarding.game.rules.title")}
                     </Text>
                     <Text color="secondary" align="center">
                         {t("onboarding.game.rules.description")}
                     </Text>
-                </Box>
-                <InstructionList
-                    title={t("onboarding.game.rules.howItWorks")}
-                    steps={[
-                        ...unlockStep,
-                        {
-                            title: t("onboarding.game.rules.invite.title"),
-                            description: inviteDescription(
-                                t,
-                                i18n.language,
-                                invite
-                            ),
-                        },
-                        {
-                            title: t("onboarding.game.rules.follow.title"),
-                            description: (
+                </Stack>
+                <Stack space="xs">
+                    <Text weight="semiBold">
+                        {t("onboarding.game.rules.howItWorks")}
+                    </Text>
+                    <Card variant="muted" padding="none">
+                        {reward > 0 && (
+                            <GameTaskRow
+                                icon={<GiftIcon {...iconProps} />}
+                                tone="action"
+                                stacked
+                                title={t("onboarding.game.bonus.title", {
+                                    reward: formatGameAmount(
+                                        reward,
+                                        i18n.language
+                                    ),
+                                })}
+                                hint={t("onboarding.game.bonus.description")}
+                                badge={{
+                                    variant: "warning",
+                                    label: t("onboarding.game.bonus.pending"),
+                                }}
+                            />
+                        )}
+                        <GameTaskRow
+                            icon={<Instagram {...iconProps} />}
+                            tone="action"
+                            stacked
+                            title={t("onboarding.game.rules.follow.title")}
+                            hint={
                                 <Trans
                                     i18nKey="onboarding.game.rules.follow.description"
                                     components={{
@@ -98,11 +105,39 @@ export function GameRules({ onContinue, reward, invite }: GameRulesProps) {
                                         ),
                                     }}
                                 />
-                            ),
-                        },
-                    ]}
-                />
-            </div>
+                            }
+                            badge={{
+                                variant: "info",
+                                label: rewardOf(t, "instagram"),
+                            }}
+                        />
+                        <GameTaskRow
+                            icon={<Friend {...iconProps} />}
+                            tone="action"
+                            stacked
+                            title={t("onboarding.game.rules.invite.title")}
+                            hint={inviteDescription(t, i18n.language, invite)}
+                            badge={{
+                                variant: "info",
+                                label: rewardOf(t, "friend"),
+                            }}
+                        />
+                        <GameTaskRow
+                            icon={<Purchase {...iconProps} />}
+                            tone="action"
+                            stacked
+                            title={t("onboarding.game.rules.purchase.title")}
+                            hint={t(
+                                "onboarding.game.rules.purchase.description"
+                            )}
+                            badge={{
+                                variant: "info",
+                                label: rewardOf(t, "purchase"),
+                            }}
+                        />
+                    </Card>
+                </Stack>
+            </Stack>
         </PageLayout>
     );
 }

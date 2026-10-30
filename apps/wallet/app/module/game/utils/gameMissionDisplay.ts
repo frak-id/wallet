@@ -4,7 +4,11 @@ import {
     InstagramIcon,
     ReferralIcon,
 } from "@frak-labs/design-system/icons";
-import type { Mission } from "@/module/game/utils/gameMissions";
+import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
+import {
+    MISSION_REWARDS,
+    type Mission,
+} from "@/module/game/utils/gameMissions";
 
 export const ICONS = {
     join: CheckIcon,
@@ -19,3 +23,8 @@ export const REWARDS = {
     friend: "game.page.missions.rewardPerFriend",
     purchase: "game.page.missions.rewardPerPurchase",
 } as const satisfies Record<Mission["id"], string>;
+
+/** A mission's reward badge: "+2 tickets", "+1 ticket / friend"… */
+export function rewardOf(t: DefaultTranslate, id: Mission["id"]) {
+    return t(REWARDS[id], { count: MISSION_REWARDS[id] });
+}

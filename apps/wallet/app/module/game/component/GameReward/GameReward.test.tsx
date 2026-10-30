@@ -18,6 +18,15 @@ vi.mock("react-i18next", () => ({
 
 import { GameReward } from "./index";
 
+const game = {
+    id: "d1",
+    prizeAmount: 100,
+    prizeDescription: null,
+    startsAt: new Date("2026-10-21T18:00:00Z"),
+    endsAt: new Date(Date.now() + 2 * 86_400_000),
+    sponsor: null,
+};
+
 describe("GameReward", () => {
     it("fires the confetti bursts on mount, respecting reduced motion", async () => {
         confetti.mockClear();
@@ -56,24 +65,55 @@ describe("GameReward", () => {
         expect(confetti.reset).not.toHaveBeenCalled();
     });
 
-    it("shows the earned reward and continues on tap", () => {
+    it("leads with the bonus for a friend's code with no game open, and continues on tap", () => {
         const onContinue = vi.fn();
         render(<GameReward reward={2.5} onContinue={onContinue} />);
 
         expect(screen.getByText(/^2,50\s€$/)).toBeInTheDocument();
+        expect(
+            screen.getByText("onboarding.game.reward.description")
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/bonus\.title/)).toBeNull();
         fireEvent.click(
             screen.getByRole("button", { name: "onboarding.continue" })
         );
         expect(onContinue).toHaveBeenCalled();
     });
 
-    it("shows the join without an amount when it earned nothing", () => {
-        render(<GameReward reward={0} onContinue={vi.fn()} />);
+    it("shows the joined game's first ticket, prize and time left", () => {
+        render(<GameReward reward={0} game={game} onContinue={vi.fn()} />);
 
-        expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+        expect(screen.getByText("+1")).toBeInTheDocument();
+        expect(screen.getByText("game.join.firstTicket")).toBeInTheDocument();
+        expect(
+            screen.getByText(/game\.page\.hero\.countdownDays/)
+        ).toBeInTheDocument();
+    });
+
+    it("shows the join without a bonus when it earned nothing", () => {
+        render(<GameReward reward={0} game={game} onContinue={vi.fn()} />);
+
+        expect(screen.queryByText(/bonus\.title/)).toBeNull();
         expect(
             screen.getByText("onboarding.game.reward.descriptionJoinOnly")
         ).toBeInTheDocument();
+    });
+
+    it("shows the pending bonus and how it unlocks under the joined game", () => {
+        render(<GameReward reward={2.5} game={game} onContinue={vi.fn()} />);
+
+        expect(screen.getByText(/bonus\.title/).textContent).toMatch(
+            /"2,50\s€"/
+        );
+        expect(
+            screen.getByText("onboarding.game.bonus.description")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("onboarding.game.bonus.pending")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText("onboarding.game.reward.descriptionJoinOnly")
+        ).toBeNull();
     });
 
     it("shows the joined game's prize, end date and sponsor", () => {
@@ -122,7 +162,9 @@ describe("GameReward", () => {
             />
         );
 
-        expect(screen.getByText(/^100\s€$/)).toBeInTheDocument();
+        expect(screen.getByText(/game\.prizeToWin/).textContent).toMatch(
+            /"100\s€"/
+        );
     });
 
     it("shows the sponsor's logo when it has one", () => {
@@ -152,11 +194,11 @@ describe("GameReward", () => {
         );
     });
 
-    it("shows no game card for a friend's code", () => {
+    it("shows no game for a friend's code", () => {
         render(<GameReward reward={1} onContinue={vi.fn()} />);
 
         expect(
-            screen.queryByText("onboarding.game.reward.game.label")
+            screen.queryByText(/reward\.game\.endsAt/)
         ).not.toBeInTheDocument();
     });
 });

@@ -522,7 +522,6 @@ export default interface Resources {
         "label": "Frak Game",
         "statusAllDone": "Every mission done",
         "statusJoin": "Join the game",
-        "statusJoinReward": "1st ticket on us",
         "statusResult": "See the result",
         "ticket_one": "ticket",
         "ticket_other": "tickets",
@@ -541,6 +540,10 @@ export default interface Resources {
       "join": {
         "description": "Enter the game code, shared in our Instagram stories, to take part.",
         "findCode": "Find the code on Instagram",
+        "firstTicket": "1st ticket on us",
+        "hero": {
+          "title": "Your ticket is waiting"
+        },
         "label": "Game code",
         "submit": "Join",
         "title": "Join the game"
@@ -626,9 +629,11 @@ export default interface Resources {
           "description": "The next game will be announced on Instagram.",
           "title": "No game right now"
         },
+        "openGame": "Current game",
         "retry": "Try again",
         "title": "Frak Game"
       },
+      "prizeToWin": "{{prize}} to win in the draw",
       "result": {
         "badge": {
           "drawing": "Drawing",
@@ -997,12 +1002,16 @@ export default interface Resources {
         "title": "Enter your email address"
       },
       "game": {
+        "bonus": {
+          "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
+          "pending": "Pending",
+          "title": "Your {{reward}} bonus"
+        },
         "reward": {
           "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
           "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
           "game": {
             "endsAt": "Until {{date}}",
-            "label": "Game prize",
             "sponsor": "Offered by {{name}}"
           },
           "title": "You're in the game!"
@@ -1015,16 +1024,16 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "1 ticket per friend who signs up with your code and connects their Instagram, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's.",
+            "description": "1 ticket per friend who signs up with your code and connects their Instagram, and 1 per friend with a Frak wallet who opens your share of a brand.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
           },
-          "title": "The Frak Game",
-          "unlock": {
-            "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
-            "title": "Your {{reward}} bonus"
-          }
+          "purchase": {
+            "description": "Your purchase, or one by a friend you referred.",
+            "title": "Shop at a partner brand"
+          },
+          "title": "The Frak Game"
         }
       },
       "keypass": {

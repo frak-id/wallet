@@ -11,8 +11,14 @@ import type { TFunction } from "i18next";
 import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
-import { HeroCard, TicketDeck } from "@/module/game/component/GameHero";
-import * as styles from "@/module/game/component/GameHero/index.css";
+import {
+    DeckBadge,
+    HeroCaption,
+    HeroCard,
+    HeroChip,
+    HeroPill,
+    TicketDeck,
+} from "@/module/game/component/GameHero";
 import { GameResultDetail } from "@/module/game/component/GameResult";
 import { useNow } from "@/module/game/hook/useNow";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
@@ -96,17 +102,16 @@ function RecordChip({ record }: { record: GameRecord }) {
     const text = recordText(record, t, i18n.language);
 
     return (
-        <span
-            className={styles.chip({
-                tone:
-                    record.kind === "new" || record.kind === "tied"
-                        ? "success"
-                        : "info",
-            })}
+        <HeroChip
+            tone={
+                record.kind === "new" || record.kind === "tied"
+                    ? "success"
+                    : "info"
+            }
+            icon={<Trophy size={14} aria-hidden="true" />}
         >
-            <Trophy size={14} aria-hidden="true" />
             {text}
-        </span>
+        </HeroChip>
     );
 }
 
@@ -143,11 +148,7 @@ export function GameResultView({
                         pop: true,
                     }}
                 >
-                    {Badge && (
-                        <span className={styles.padlock()}>
-                            <Badge width={18} height={18} />
-                        </span>
-                    )}
+                    {Badge && <DeckBadge icon={Badge} />}
                 </TicketDeck>
                 <Text variant="heading3" color="onAction" as="p">
                     {t(title, { prize })}
@@ -160,28 +161,22 @@ export function GameResultView({
                 </Text>
                 {deadline && left ? (
                     <>
-                        <span className={styles.countdown({ urgent: true })}>
-                            {timeLeftOf(t, left)}
-                        </span>
-                        <Text
-                            variant="caption"
-                            color="onAction"
-                            className={styles.endsAt}
-                        >
+                        <HeroPill urgent>{timeLeftOf(t, left)}</HeroPill>
+                        <HeroCaption>
                             {t("game.result.hero.deadline", {
                                 date: formatGameEnd(deadline, i18n.language),
                             })}
-                        </Text>
+                        </HeroCaption>
                     </>
                 ) : (
-                    <span className={styles.countdown({})}>
+                    <HeroPill>
                         {t("game.history.gameOf", {
                             date: formatGameDate(
                                 result.game.endsAt,
                                 i18n.language
                             ),
                         })}
-                    </span>
+                    </HeroPill>
                 )}
             </HeroCard>
             {result.outcome === "pending_verification" && (

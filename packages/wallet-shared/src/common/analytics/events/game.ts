@@ -23,7 +23,8 @@ export type GameEventMap = {
         tickets_brand_share: number;
     };
     game_mission_clicked: {
-        mission: "instagram" | "friend" | "purchase";
+        /** `join` is the open game's row under a draw still waiting on a non-player. */
+        mission: "join" | "instagram" | "friend" | "purchase";
         status: "done" | "todo" | "gate";
         surface: "game_page";
         game_id: string;

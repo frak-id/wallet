@@ -27,6 +27,7 @@ import {
     formatGameDate,
     formatGameEnd,
 } from "@/module/game/utils/formatGameDate";
+import { prizeOf } from "@/module/game/utils/gamePrize";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -187,10 +188,7 @@ export function GameResultDetail({
             <InfoCard>
                 <Stat
                     label={t("game.result.prize")}
-                    value={
-                        result.game.prizeDescription ??
-                        formatGameAmount(result.game.prizeAmount, i18n.language)
-                    }
+                    value={prizeOf(result.game, i18n.language)}
                 />
                 <Stat
                     label={t("game.result.endedAt")}

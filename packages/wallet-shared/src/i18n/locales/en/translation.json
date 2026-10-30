@@ -969,27 +969,31 @@
                 "title": "The Frak Game",
                 "description": "Collect tickets: a random draw picks the winner when the game ends.",
                 "howItWorks": "How it works",
-                "unlock": {
-                    "title": "Your {{reward}} bonus",
-                    "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand."
-                },
                 "invite": {
                     "title": "Share and earn tickets",
                     "reward": "You each earn {{reward}}.",
                     "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-                    "description": "1 ticket per friend who signs up with your code and connects their Instagram, 1 per friend with a Frak wallet who opens your share of a brand, and 3 per purchase at a partner brand, yours or a referred friend's."
+                    "description": "1 ticket per friend who signs up with your code and connects their Instagram, and 1 per friend with a Frak wallet who opens your share of a brand."
+                },
+                "purchase": {
+                    "title": "Shop at a partner brand",
+                    "description": "Your purchase, or one by a friend you referred."
                 },
                 "follow": {
                     "title": "Activate your tickets with Instagram",
                     "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 2 more tickets. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn."
                 }
             },
+            "bonus": {
+                "title": "Your {{reward}} bonus",
+                "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
+                "pending": "Pending"
+            },
             "reward": {
                 "title": "You're in the game!",
                 "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
                 "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
                 "game": {
-                    "label": "Game prize",
                     "endsAt": "Until {{date}}",
                     "sponsor": "Offered by {{name}}"
                 }
@@ -998,12 +1002,17 @@
     },
     "game": {
         "join": {
+            "hero": {
+                "title": "Your ticket is waiting"
+            },
             "title": "Join the game",
             "description": "Enter the game code, shared in our Instagram stories, to take part.",
             "label": "Game code",
             "submit": "Join",
-            "findCode": "Find the code on Instagram"
+            "findCode": "Find the code on Instagram",
+            "firstTicket": "1st ticket on us"
         },
+        "prizeToWin": "{{prize}} to win in the draw",
         "card": {
             "label": "Frak Game",
             "ticket_one": "ticket",
@@ -1014,7 +1023,6 @@
             "gained_one": "{{count}} ticket since your last visit",
             "gained_other": "{{count}} tickets since your last visit",
             "statusJoin": "Join the game",
-            "statusJoinReward": "1st ticket on us",
             "statusAllDone": "Every mission done",
             "drawn": "You were drawn!",
             "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
@@ -1029,6 +1037,7 @@
             "error": "Couldn't load the game.",
             "retry": "Try again",
             "title": "Frak Game",
+            "openGame": "Current game",
             "hero": {
                 "drawn_one": "{{count}} ticket in the draw",
                 "drawn_other": "{{count}} tickets in the draw",

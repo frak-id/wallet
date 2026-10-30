@@ -2,16 +2,26 @@ import type { RedeemResult } from "@frak-labs/wallet-shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, refetchQueries, redeemResult, trackEvent } = vi.hoisted(
-    () => ({
-        trackEvent: vi.fn(),
-        navigate: vi.fn(),
-        refetchQueries: vi.fn(() => Promise.resolve()),
-        redeemResult: { current: { kind: "frak" } as RedeemResult },
-    })
-);
+const {
+    currentGame,
+    gameHistory,
+    navigate,
+    refetchQueries,
+    redeemResult,
+    trackEvent,
+} = vi.hoisted(() => ({
+    trackEvent: vi.fn(),
+    navigate: vi.fn(),
+    refetchQueries: vi.fn(() => Promise.resolve()),
+    redeemResult: { current: { kind: "frak" } as RedeemResult },
+    currentGame: { data: undefined as unknown, isLoading: false },
+    gameHistory: { data: [] as unknown[] },
+}));
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => navigate,
+    Link: () => null,
+}));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
     trackEvent,
@@ -20,9 +30,20 @@ vi.mock("@tanstack/react-query", () => ({
     useQueryClient: () => ({ refetchQueries }),
 }));
 vi.mock("react-i18next", () => ({
-    useTranslation: () => ({ t: (key: string) => key }),
+    useTranslation: () => ({
+        t: (key: string, values?: { prize?: string }) =>
+            values?.prize === undefined ? key : `${key}:${values.prize}`,
+        i18n: { language: "en" },
+    }),
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
+vi.mock("@/module/game/hook/useCurrentGame", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    useCurrentGame: () => currentGame,
+}));
+vi.mock("@/module/game/hook/useGameHistory", () => ({
+    useGameHistory: () => gameHistory,
+}));
 vi.mock("@/module/referral/component/RedeemReferralCodePage", () => ({
     RedeemForm: ({
         onRedeemed,
@@ -64,6 +85,8 @@ vi.mock("@/module/game/component/GameReward", () => ({
     ),
 }));
 
+import { modalStore } from "@/module/stores/modalStore";
+import { gameResult } from "@/tests/gameFixtures";
 import { JoinGamePage } from "./index";
 
 const game = {
@@ -75,11 +98,71 @@ const game = {
     sponsor: null,
 } as unknown as NonNullable<RedeemResult["game"]>;
 
+const openGame = (participating: boolean, prizeDescription: string | null) => ({
+    game: {
+        ...game,
+        prizeDescription,
+        endsAt: new Date(Date.now() + 3 * 24 * 3_600_000),
+    },
+    me: { participating, tickets: participating ? 1 : 0 },
+});
+
 describe("JoinGamePage", () => {
     beforeEach(() => {
         navigate.mockClear();
         refetchQueries.mockClear();
         trackEvent.mockClear();
+        currentGame.data = undefined;
+        currentGame.isLoading = false;
+        gameHistory.data = [];
+        modalStore.getState().dismissAll();
+    });
+
+    it("shows the open game's prize and time left before the user joins", () => {
+        currentGame.data = openGame(false, null);
+        render(<JoinGamePage />);
+
+        expect(screen.getByText("game.join.hero.title")).toBeInTheDocument();
+        expect(screen.getByText("game.join.firstTicket")).toBeInTheDocument();
+        expect(screen.getByText("game.prizeToWin:€50")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.page.hero.countdownDays")
+        ).toBeInTheDocument();
+    });
+
+    it("shows a prize description as it is", () => {
+        currentGame.data = openGame(false, "A weekend for two");
+        render(<JoinGamePage />);
+
+        expect(screen.getByText("A weekend for two")).toBeInTheDocument();
+        expect(screen.queryByText(/game.prizeToWin/)).toBeNull();
+    });
+
+    it("leaves the hero out for a player already in the game", () => {
+        currentGame.data = openGame(true, null);
+        render(<JoinGamePage />);
+
+        expect(screen.queryByText("game.join.hero.title")).toBeNull();
+        expect(screen.getByText("game.join.description")).toBeInTheDocument();
+    });
+
+    it("lists the past games under the code form, each opening its result", () => {
+        currentGame.data = openGame(false, null);
+        const earlier = gameResult({
+            game: { id: "earlier" },
+            outcome: "lost",
+        });
+        gameHistory.data = [earlier];
+        render(<JoinGamePage />);
+
+        expect(screen.getByText("game.history.title")).toBeInTheDocument();
+        fireEvent.click(
+            screen.getByRole("button", { name: /game.history.gameOf/ })
+        );
+        expect(modalStore.getState().modal).toEqual({
+            id: "gameResult",
+            result: earlier,
+        });
     });
 
     it("tracks the screen view with whether the code was pre-filled", () => {

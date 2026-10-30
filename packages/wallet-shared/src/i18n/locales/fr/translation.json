@@ -969,27 +969,31 @@
                 "title": "Le Jeu Frak",
                 "description": "Cumule des tickets : un tirage au sort désigne le gagnant à la fin du jeu.",
                 "howItWorks": "Comment ça marche",
-                "unlock": {
-                    "title": "Ton bonus de {{reward}}",
-                    "description": "Il se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire."
-                },
                 "invite": {
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "1 ticket par ami inscrit avec ton code qui a connecté son Instagram, 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque, et 3 par achat chez une marque partenaire, le tien ou celui d'un ami parrainé."
+                    "description": "1 ticket par ami inscrit avec ton code qui a connecté son Instagram, et 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque."
+                },
+                "purchase": {
+                    "title": "Achète chez une marque partenaire",
+                    "description": "Ton achat, ou celui d'un ami parrainé."
                 },
                 "follow": {
                     "title": "Active tes tickets avec Instagram",
                     "description": "Suis <igLink>@frak_fr</igLink>, puis indique ton @ : tes tickets comptent au tirage. Connecte ton compte pour 2 tickets de plus. Tiré au sort sans l'avoir connecté ? Tu as 24 h pour le faire, sinon un autre gagnant est tiré."
                 }
             },
+            "bonus": {
+                "title": "Ton bonus de {{reward}}",
+                "description": "Il se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",
+                "pending": "En attente"
+            },
             "reward": {
                 "title": "Tu es dans le jeu !",
                 "description": "Ta récompense est en attente. Elle se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",
                 "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",
                 "game": {
-                    "label": "Lot du jeu",
                     "endsAt": "Jusqu'à {{date}}",
                     "sponsor": "Offert par {{name}}"
                 }
@@ -998,12 +1002,17 @@
     },
     "game": {
         "join": {
+            "hero": {
+                "title": "Ton ticket t'attend"
+            },
             "title": "Participer au jeu",
             "description": "Entre le code du jeu, partagé en story sur Instagram, pour participer.",
             "label": "Code du jeu",
             "submit": "Participer",
-            "findCode": "Trouver le code sur Instagram"
+            "findCode": "Trouver le code sur Instagram",
+            "firstTicket": "1er ticket offert"
         },
+        "prizeToWin": "{{prize}} à gagner au tirage",
         "card": {
             "label": "Jeu Frak",
             "ticket_one": "ticket",
@@ -1014,7 +1023,6 @@
             "gained_one": "{{count}} ticket depuis ta dernière visite",
             "gained_other": "{{count}} tickets depuis ta dernière visite",
             "statusJoin": "Rejoindre le jeu",
-            "statusJoinReward": "1er ticket offert",
             "statusAllDone": "Toutes les missions sont faites",
             "drawn": "Tu as été tiré au sort !",
             "drawnAriaLabel": "Jeu Frak : tu as été tiré au sort pour {{prize}}",
@@ -1029,6 +1037,7 @@
             "error": "Impossible de charger le jeu.",
             "retry": "Réessayer",
             "title": "Jeu Frak",
+            "openGame": "Jeu en cours",
             "hero": {
                 "drawn_one": "{{count}} ticket au tirage",
                 "drawn_other": "{{count}} tickets au tirage",

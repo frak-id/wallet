@@ -28,12 +28,13 @@ import {
     formatGameDate,
     formatGameDeadline,
 } from "@/module/game/utils/formatGameDate";
-import { countdownOf } from "@/module/game/utils/gameCountdown";
+import { countdownOf, endsInOf } from "@/module/game/utils/gameCountdown";
 import { openDeadline, timeLeftOf } from "@/module/game/utils/gameDeadline";
 import { gainsSince } from "@/module/game/utils/gameGains";
 import { homeCardOf } from "@/module/game/utils/gameHomeCard";
-import { ICONS, REWARDS } from "@/module/game/utils/gameMissionDisplay";
+import { ICONS, rewardOf } from "@/module/game/utils/gameMissionDisplay";
 import { OUTCOME } from "@/module/game/utils/gameOutcome";
+import { prizeOf } from "@/module/game/utils/gamePrize";
 import {
     type TicketCardStatus,
     ticketCardOf,
@@ -144,7 +145,7 @@ function TicketShell({
 }
 
 /** The open game as a ticket: the player's count on the stub, the prize, and the next action. */
-export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
+function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const status = ticketCardOf(me);
@@ -153,9 +154,7 @@ export function OpenGameCard({ game, me }: { game: OpenGame; me: Me }) {
         ? gainsSince(baseline ?? null, me).total
         : 0;
     const amount = game.prizeDescription === null;
-    const prize =
-        game.prizeDescription ??
-        formatGameAmount(game.prizeAmount, i18n.language);
+    const prize = prizeOf(game, i18n.language);
     const unit = me.participating
         ? t("game.card.ticket", { count: me.tickets })
         : t("game.card.yourTicket");
@@ -372,9 +371,7 @@ function Countdown({ endsAt }: { endsAt: Date | string }) {
     if (countdown.over) return null;
     return (
         <span className={ticket.pill({ urgent: countdown.urgent })}>
-            {countdown.days >= 1
-                ? t("game.page.hero.countdownDays", countdown)
-                : t("game.page.hero.countdownHours", countdown)}
+            {endsInOf(t, countdown)}
         </span>
     );
 }
@@ -384,15 +381,13 @@ function statusText(status: TicketCardStatus, t: DefaultTranslate) {
         case "join":
             return {
                 title: t("game.card.statusJoin"),
-                detail: t("game.card.statusJoinReward"),
+                detail: t("game.join.firstTicket"),
             };
         case "locked":
         case "next":
             return {
                 title: t(status.mission.title),
-                detail: t(REWARDS[status.mission.id], {
-                    count: status.mission.reward,
-                }),
+                detail: rewardOf(t, status.mission.id),
             };
         case "allDone":
             return { title: t("game.card.statusAllDone"), detail: null };

@@ -41,8 +41,16 @@ export type Mission = MissionBase &
           }
     );
 
+/** Tickets one occurrence of each mission is worth: what its badge promises. */
+export const MISSION_REWARDS = {
+    join: TICKET_AMOUNTS.join,
+    instagram: TICKET_AMOUNTS.instagramCertified,
+    friend: TICKET_AMOUNTS.referredSignup,
+    purchase: TICKET_AMOUNTS.purchase,
+} as const satisfies Record<Mission["id"], number>;
+
 function instagramOf({ instagram, eligible }: Me): Mission {
-    const reward = TICKET_AMOUNTS.instagramCertified;
+    const reward = MISSION_REWARDS.instagram;
     const base = { id: "instagram", reward, earned: 0 } as const;
     const route = "/profile/instagram";
     if (instagram === "certified" && eligible) {
@@ -108,13 +116,13 @@ function friendOf({ ticketsBySource: t }: Me): Mission {
             earned > 0
                 ? { key: "game.page.missions.friend.hintEarned", parts }
                 : { key: "game.page.missions.friend.hint" },
-        reward: TICKET_AMOUNTS.referredSignup,
+        reward: MISSION_REWARDS.friend,
         earned,
     };
 }
 
 function purchaseOf({ ticketsBySource: t }: Me): Mission {
-    const amount = TICKET_AMOUNTS.purchase;
+    const amount = MISSION_REWARDS.purchase;
     const earned = t.purchase + t.referredPurchase;
     const own = t.purchase / TICKET_AMOUNTS.purchase;
     const friends = t.referredPurchase / TICKET_AMOUNTS.referredPurchase;
@@ -157,8 +165,8 @@ export function missionsOf(me: Me): Mission[] {
             status: "done",
             title: "game.page.missions.join.title",
             hint: { key: "game.page.missions.join.hint" },
-            reward: TICKET_AMOUNTS.join,
-            earned: TICKET_AMOUNTS.join,
+            reward: MISSION_REWARDS.join,
+            earned: MISSION_REWARDS.join,
         },
         instagramOf(me),
         friendOf(me),

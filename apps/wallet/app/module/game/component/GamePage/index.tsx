@@ -1,23 +1,27 @@
 import type { GameResult } from "@frak-labs/backend-elysia/domain/game/schemas";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { GiftIcon } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import { Navigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
-import { OpenGameCard } from "@/module/game/component/GameCard";
 import { GameHero } from "@/module/game/component/GameHero";
 import { GameMissions } from "@/module/game/component/GameMissions";
 import { PastGames } from "@/module/game/component/GameResult";
 import { GameResultView } from "@/module/game/component/GameResultView";
+import { GameTaskRow } from "@/module/game/component/GameTaskRow";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useSinceLastVisit } from "@/module/game/hook/useSinceLastVisit";
-import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { rewardOf } from "@/module/game/utils/gameMissionDisplay";
 import { missionsDone, missionsOf } from "@/module/game/utils/gameMissions";
+import { prizeOf, prizeToWinOf } from "@/module/game/utils/gamePrize";
 import { recordOf } from "@/module/game/utils/gameRecord";
 import { useRefreshInstagramFollow } from "@/module/instagram/hook/useInstagramLink";
 
@@ -124,8 +128,8 @@ export function GamePage() {
         });
     }, [gains]);
 
-    // With past games to show, a user not in the open game still gets the page.
-    if (top.kind === "join" && results.length === 0) {
+    // The code screen lists past games too; only a draw waiting on the user keeps them here.
+    if (top.kind === "join" && !pending) {
         return <Navigate to="/game/join" replace />;
     }
 
@@ -155,9 +159,7 @@ export function GamePage() {
                     description={t("game.page.none.description")}
                 />
             )}
-            {top.kind === "join" && me && (
-                <OpenGameCard game={top.game} me={me} />
-            )}
+            {top.kind === "join" && <OpenGameRow game={top.game} />}
             {top.kind === "result" && (
                 <GameResultView result={top.result} history={results} />
             )}
@@ -165,13 +167,7 @@ export function GamePage() {
                 <>
                     <GameHero
                         me={me}
-                        prize={
-                            top.game.prizeDescription ??
-                            formatGameAmount(
-                                top.game.prizeAmount,
-                                i18n.language
-                            )
-                        }
+                        prize={prizeOf(top.game, i18n.language)}
                         endsAt={top.game.endsAt}
                         gains={gains}
                     />
@@ -188,6 +184,35 @@ export function GamePage() {
                     )}
                 />
             )}
+        </Stack>
+    );
+}
+
+/** The open game under a draw still waiting on the user, as the join mission it starts with. */
+function OpenGameRow({ game }: { game: OpenGame }) {
+    const { t, i18n } = useTranslation();
+
+    return (
+        <Stack space="xs">
+            <Text weight="semiBold">{t("game.page.openGame")}</Text>
+            <Card padding="none">
+                <GameTaskRow
+                    icon={<GiftIcon width={18} height={18} />}
+                    tone="action"
+                    title={t("game.join.title")}
+                    hint={prizeToWinOf(t, game, i18n.language)}
+                    badge={{ variant: "info", label: rewardOf(t, "join") }}
+                    to="/game/join"
+                    onClick={() =>
+                        trackEvent("game_mission_clicked", {
+                            mission: "join",
+                            status: "todo",
+                            surface: "game_page",
+                            game_id: game.id,
+                        })
+                    }
+                />
+            </Card>
         </Stack>
     );
 }

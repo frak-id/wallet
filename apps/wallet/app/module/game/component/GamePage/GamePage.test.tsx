@@ -522,7 +522,7 @@ describe("GamePage", () => {
         expect(screen.queryByText("game.result.lost.title")).toBeNull();
     });
 
-    it("keeps a past player who has not joined the open game on the page", () => {
+    it("sends a past player who has not joined to the code screen, which lists their past games", () => {
         currentGame.data = {
             game,
             me: {
@@ -536,12 +536,47 @@ describe("GamePage", () => {
         gameHistory.data = [result("earlier", "lost")];
         render(<GamePage />);
 
+        expect(screen.getByText("navigate:/game/join")).toBeInTheDocument();
+    });
+
+    it("keeps a player with a draw waiting on them on the page, the open game as a join row under it", () => {
+        trackEvent.mockClear();
+        currentGame.data = {
+            game,
+            me: {
+                participating: false,
+                tickets: 0,
+                ticketsBySource: {},
+                eligible: false,
+                instagram: "none",
+            },
+        };
+        gameHistory.data = [
+            result("drawn", "pending_verification", {
+                verifyBy: new Date(Date.now() + 3_600_000),
+            }),
+        ];
+        render(<GamePage />);
+
+        expect(
+            screen.getByText("game.result.pendingVerification.title")
+        ).toBeInTheDocument();
+
         expect(screen.queryByText("navigate:/game/join")).toBeNull();
-        expect(screen.getByText("game.card.yourTicket")).toBeInTheDocument();
-        fireEvent.click(
-            screen.getByRole("button", { name: /game.card.ariaLabel/ })
-        );
-        expect(navigate).toHaveBeenCalledWith({ to: "/game/join" });
+        expect(screen.queryByText("game.card.yourTicket")).toBeNull();
+        expect(screen.getByText("game.page.openGame")).toBeInTheDocument();
+        const row = screen.getByRole("link", { name: /game.join.title/ });
+        expect(row).toHaveAttribute("href", "/game/join");
+        expect(row).toHaveTextContent("50 \u20ac \u00e0 gagner");
+        expect(row).toHaveTextContent("game.page.missions.reward:1");
+
+        fireEvent.click(row);
+        expect(trackEvent).toHaveBeenCalledWith("game_mission_clicked", {
+            mission: "join",
+            status: "todo",
+            surface: "game_page",
+            game_id: "d1",
+        });
     });
 
     it("sends a user who has not joined to the code screen", () => {

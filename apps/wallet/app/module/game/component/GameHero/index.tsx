@@ -5,11 +5,11 @@ import type {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { LockIcon } from "@frak-labs/design-system/icons";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { useNow } from "@/module/game/hook/useNow";
 import { formatGameEnd } from "@/module/game/utils/formatGameDate";
-import { countdownOf } from "@/module/game/utils/gameCountdown";
+import { countdownOf, endsInOf } from "@/module/game/utils/gameCountdown";
 import type { GameGains } from "@/module/game/utils/gameGains";
 import * as styles from "./index.css";
 
@@ -75,6 +75,85 @@ export function TicketDeck({
     );
 }
 
+/** A white disc on the deck's corner; `out` plays it off as the tickets unlock. */
+export function DeckBadge({
+    icon: Icon,
+    out = false,
+}: {
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
+    out?: boolean;
+}) {
+    return (
+        <span className={styles.padlock({ out })}>
+            <Icon width={18} height={18} />
+        </span>
+    );
+}
+
+/** The tickets just gained, popped on the deck's corner. */
+export function GainBadge({ count }: { count: number }) {
+    return <span className={styles.gainBadge}>+{count}</span>;
+}
+
+/** A tinted line under the hero's title. */
+export function HeroChip({
+    tone,
+    icon,
+    children,
+}: {
+    tone: "success" | "info";
+    icon?: ReactNode;
+    children: ReactNode;
+}) {
+    return (
+        <span className={styles.chip({ tone })}>
+            {icon}
+            {children}
+        </span>
+    );
+}
+
+/** A time left on the hero; `urgent` turns it amber. */
+export function HeroPill({
+    urgent = false,
+    children,
+}: {
+    urgent?: boolean;
+    children: ReactNode;
+}) {
+    return <span className={styles.countdown({ urgent })}>{children}</span>;
+}
+
+/** The date tucked under a `HeroPill`. */
+export function HeroCaption({ children }: { children: ReactNode }) {
+    return (
+        <Text variant="caption" color="onAction" className={styles.endsAt}>
+            {children}
+        </Text>
+    );
+}
+
+/** The time left as a pill while the game runs, then the end date under it. */
+export function HeroEndsAt({ endsAt }: { endsAt: Date | string }) {
+    const { t, i18n } = useTranslation();
+    const countdown = countdownOf(endsAt, useNow(30_000));
+
+    return (
+        <>
+            {!countdown.over && (
+                <HeroPill urgent={countdown.urgent}>
+                    {endsInOf(t, countdown)}
+                </HeroPill>
+            )}
+            <HeroCaption>
+                {t("onboarding.game.reward.game.endsAt", {
+                    date: formatGameEnd(endsAt, i18n.language),
+                })}
+            </HeroCaption>
+        </>
+    );
+}
+
 type GameHeroProps = {
     me: CurrentGameResponse["me"];
     prize: string;
@@ -84,8 +163,7 @@ type GameHeroProps = {
 
 /** The player's tickets as a deck, held under a padlock until they count in the draw. */
 export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
-    const { t, i18n } = useTranslation();
-    const countdown = countdownOf(endsAt, useNow(30_000));
+    const { t } = useTranslation();
     const locked = !me.eligible;
     const showPadlock = locked || gains.unlocked;
     const count = me.tickets;
@@ -119,19 +197,15 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                 front={{ pop: gains.total > 0 || gains.unlocked }}
             >
                 {showPadlock && (
-                    <span className={styles.padlock({ out: gains.unlocked })}>
-                        <LockIcon width={18} height={18} />
-                    </span>
+                    <DeckBadge icon={LockIcon} out={gains.unlocked} />
                 )}
-                {gains.total > 0 && (
-                    <span className={styles.gainBadge}>+{gains.total}</span>
-                )}
+                {gains.total > 0 && <GainBadge count={gains.total} />}
             </TicketDeck>
             <Text variant="heading3" color="onAction" as="p">
                 {title}
             </Text>
             {gains.total > 0 && (
-                <span className={styles.chip({ tone: "success" })}>
+                <HeroChip tone="success">
                     {t("game.page.hero.since", {
                         gains: gains.gains
                             .map((gain) =>
@@ -142,27 +216,12 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                             )
                             .join(", "),
                     })}
-                </span>
+                </HeroChip>
             )}
             <Text color="onAction" as="p">
                 {subtitle}
             </Text>
-            {!countdown.over && (
-                <span
-                    className={styles.countdown({
-                        urgent: countdown.urgent,
-                    })}
-                >
-                    {countdown.days >= 1
-                        ? t("game.page.hero.countdownDays", countdown)
-                        : t("game.page.hero.countdownHours", countdown)}
-                </span>
-            )}
-            <Text variant="caption" color="onAction" className={styles.endsAt}>
-                {t("onboarding.game.reward.game.endsAt", {
-                    date: formatGameEnd(endsAt, i18n.language),
-                })}
-            </Text>
+            <HeroEndsAt endsAt={endsAt} />
         </HeroCard>
     );
 }

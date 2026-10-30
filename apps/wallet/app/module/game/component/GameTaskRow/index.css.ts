@@ -17,6 +17,7 @@ export const row = recipe({
     },
     variants: {
         gate: { true: { background: brand.colors.primary[50] } },
+        stacked: { true: { alignItems: "flex-start" } },
     },
 });
 
@@ -25,3 +26,9 @@ export const text = style({ flex: 1, minWidth: 0 });
 export const hint = style({ whiteSpace: "pre-line" });
 
 export const reward = style({ flexShrink: 0, whiteSpace: "nowrap" });
+
+export const rewardBelow = style({
+    alignSelf: "flex-start",
+    marginTop: alias.spacing.xxs,
+    whiteSpace: "nowrap",
+});
