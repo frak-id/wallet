@@ -1,0 +1,44 @@
+appId: id.frak.wallet.dev
+name: Redeeming an unknown referral code shows an error
+---
+# The backend rejects the code, so nothing changes on the dev wallet.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile|Profil"
+- tapOn: "Referrals|Parrainages"
+- extendedWaitUntil:
+    visible: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+    timeout: 15000
+    label: "Referral status loaded"
+- assertVisible:
+    text: "Enter a referral code|Entrer un code de parrainage"
+    label: "No code redeemed yet (this flow needs a wallet without one)"
+# The card's title and its button share this text: the button sits below the description.
+- tapOn:
+    text: "Enter a referral code|Entrer un code de parrainage"
+    below: "Earn money on every purchase.*|Gagne de l'argent à chaque achat.*"
+- extendedWaitUntil:
+    visible: "Got a referral code\\?|Tu as reçu un code \\?"
+    timeout: 10000
+# The input exposes neither text nor hint: select it between its label and the button.
+- tapOn:
+    below: "Referral code|Code de parrainage"
+    above: "Apply the code|Appliquer le code"
+- inputText: "QZ0QZ0"
+- hideKeyboard
+- tapOn: "Apply the code|Appliquer le code"
+# A wallet invited through Frak is first asked to give up its Frak cashback: keep it.
+- runFlow:
+    when:
+      visible: "Keep my cashback|Garder mon cashback"
+    commands:
+      - tapOn: "Keep my cashback|Garder mon cashback"
+- extendedWaitUntil:
+    visible: "This code does not exist.*|Ce code n'existe pas.*"
+    timeout: 15000
+    label: "Backend rejects the unknown code"
+- takeScreenshot: build/maestro/wallet-referral-redeem-unknown

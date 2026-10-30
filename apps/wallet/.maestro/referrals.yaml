@@ -1,0 +1,38 @@
+appId: id.frak.wallet.dev
+name: Referrals page shows the invite and redeem entries
+---
+# Read-only: issuing or redeeming a code would change the dev wallet for every later run.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- extendedWaitUntil:
+    visible: "Rewards|Total balance"
+    timeout: 30000
+    label: "Wallet home loaded (if this fails, log in by hand on this device first)"
+- tapOn: "Profile|Profil"
+- tapOn: "Referrals|Parrainages"
+- extendedWaitUntil:
+    visible: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+    timeout: 15000
+    label: "Referral status loaded"
+# Without a code yet, the invite card leads to the create page: check it, then leave.
+- runFlow:
+    when:
+      visible: "Generate my code|Générer mon code"
+    commands:
+      - tapOn: "Generate my code|Générer mon code"
+      - extendedWaitUntil:
+          visible: "My referral code|Mon code de parrainage"
+          timeout: 10000
+      - assertVisible: "Customize your code|Personnalise ton code"
+      - assertVisible: "Generate automatically|Générer automatiquement"
+      - takeScreenshot: build/maestro/wallet-referral-create
+      - tapOn: "Back|Retour"
+      - extendedWaitUntil:
+          visible: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+          timeout: 10000
+- takeScreenshot: build/maestro/wallet-referrals
+- tapOn: "Back|Retour"
+- extendedWaitUntil:
+    visible: "My favorite brands|Mes marques favorites"
+    timeout: 10000
+    label: "Back on the profile"
