@@ -169,6 +169,13 @@
             "when": 1792153072727,
             "tag": "0023_plain_thunderbolts",
             "breakpoints": true
+        },
+        {
+            "idx": 24,
+            "version": "7",
+            "when": 1793636966127,
+            "tag": "0024_violet_quicksilver",
+            "breakpoints": true
         }
     ]
 }
