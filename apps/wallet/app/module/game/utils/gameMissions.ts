@@ -176,3 +176,8 @@ export function missionsOf(me: Me): Mission[] {
 
 export const missionsDone = (missions: Mission[]) =>
     missions.filter((mission) => mission.status === "done").length;
+
+/** The step to do now: the gate locking the tickets first, else the first not done. */
+export const nextMissionOf = (missions: Mission[]) =>
+    missions.find((mission) => mission.status === "gate") ??
+    missions.find((mission) => mission.status !== "done");

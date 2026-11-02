@@ -1072,8 +1072,6 @@
                 "rewardPerFriend_other": "+{{count}} tickets / friend",
                 "rewardPerPurchase_one": "+{{count}} ticket / purchase",
                 "rewardPerPurchase_other": "+{{count}} tickets / purchase",
-                "earned_one": "+{{count}} earned",
-                "earned_other": "+{{count}} earned",
                 "join": {
                     "title": "Join the game",
                     "hint": "Done, welcome!"

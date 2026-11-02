@@ -3,7 +3,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, LockIcon } from "@frak-labs/design-system/icons";
+import { LockIcon } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import {
     type Mission,
     type MissionText,
     missionsDone,
+    nextMissionOf,
 } from "@/module/game/utils/gameMissions";
 
 function textOf(
@@ -33,9 +34,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     return (
         <GameTaskRow
             icon={
-                status === "done" ? (
-                    <CheckIcon width={16} height={16} />
-                ) : status === "gate" ? (
+                status === "gate" ? (
                     <LockIcon width={16} height={16} />
                 ) : (
                     <Icon width={18} height={18} />
@@ -44,15 +43,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
             tone={status === "todo" ? "neutral" : "action"}
             title={t(mission.title)}
             hint={textOf(t, mission.hint)}
-            badge={{
-                variant: status === "done" ? "success" : "info",
-                label:
-                    status === "done"
-                        ? t("game.page.missions.earned", {
-                              count: mission.earned,
-                          })
-                        : rewardOf(t, id),
-            }}
+            badge={{ variant: "info", label: rewardOf(t, id) }}
             gate={status === "gate"}
             to={mission.route}
             onClick={() =>
@@ -67,7 +58,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     );
 }
 
-/** How far the player is through the ways to earn tickets, each a row leading to where to do it. */
+/** How far the player is through the ways to earn tickets, and the one step to do now. */
 export function GameMissions({
     missions,
     gameId,
@@ -77,7 +68,7 @@ export function GameMissions({
 }) {
     const { t } = useTranslation();
     const done = missionsDone(missions);
-    const allDone = done === missions.length;
+    const next = nextMissionOf(missions);
 
     return (
         <Stack space="xs">
@@ -92,19 +83,14 @@ export function GameMissions({
             </Inline>
             <ProgressBar
                 value={(done / missions.length) * 100}
-                tone={allDone ? "success" : "primary"}
+                tone={next ? "primary" : "success"}
                 label={t("game.page.missions.title")}
             />
-            <Card padding="none">
-                {missions.map((mission) => (
-                    <MissionRow
-                        key={mission.id}
-                        mission={mission}
-                        gameId={gameId}
-                    />
-                ))}
-            </Card>
-            {allDone && (
+            {next ? (
+                <Card padding="none">
+                    <MissionRow mission={next} gameId={gameId} />
+                </Card>
+            ) : (
                 <Text variant="bodySmall" color="secondary">
                     {t("game.page.missions.allDone")}
                 </Text>

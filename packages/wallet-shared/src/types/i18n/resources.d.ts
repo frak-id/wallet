@@ -576,8 +576,6 @@ export default interface Resources {
         },
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
-          "earned_one": "+{{count}} earned",
-          "earned_other": "+{{count}} earned",
           "friend": {
             "hint": "With your code or through a brand",
             "hintEarned": "{{parts}}. Invite another one.",

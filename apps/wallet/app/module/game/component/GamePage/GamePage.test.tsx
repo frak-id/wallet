@@ -205,9 +205,9 @@ describe("GamePage", () => {
         expect(screen.queryByText("game.page.hero.pending:4")).toBeNull();
     });
 
-    it("lists the missions with how many are done, friend and purchase leading to where to earn", () => {
+    it("shows how many missions are done and only the step to do now", () => {
         currentGame.data = player(4, true);
-        render(<GamePage />);
+        const { container } = render(<GamePage />);
 
         expect(
             screen.getByText("game.page.missions.progress")
@@ -222,28 +222,31 @@ describe("GamePage", () => {
             })
         ).toHaveAttribute("href", "/profile/referral/share");
         expect(
-            screen.getByRole("link", {
-                name: /game.page.missions.purchase.title/,
-            })
-        ).toHaveAttribute("href", "/explorer");
-        expect(
-            screen.getByText("game.page.missions.earned:3")
-        ).toBeInTheDocument();
-        expect(
             screen.getByText("game.page.missions.rewardPerFriend:1")
         ).toBeInTheDocument();
-    });
-
-    it("confirms to a certified follower that their Instagram is done, with nothing to open", () => {
-        currentGame.data = player(4, true);
-        const { container } = render(<GamePage />);
-
         expect(
-            screen.getByText("game.page.missions.instagram.certified.title")
-        ).toBeInTheDocument();
+            screen.queryByText("game.page.missions.instagram.certified.title")
+        ).toBeNull();
+        expect(container.querySelector('a[href="/explorer"]')).toBeNull();
         expect(
             container.querySelector('a[href="/profile/instagram"]')
         ).toBeNull();
+    });
+
+    it("says every mission is done, with no step left to show", () => {
+        const data = player(7, true);
+        data.me.ticketsBySource.referredSignup = 1;
+        currentGame.data = data;
+        const { container } = render(<GamePage />);
+
+        expect(screen.getByRole("progressbar")).toHaveAttribute(
+            "aria-valuenow",
+            "100"
+        );
+        expect(
+            screen.getByText("game.page.missions.allDone")
+        ).toBeInTheDocument();
+        expect(container.querySelector('a[href^="/profile"]')).toBeNull();
     });
 
     it("locks the tickets of a player with no Instagram and gates the first mission", () => {
@@ -293,13 +296,16 @@ describe("GamePage", () => {
     it("tracks a tap on a mission with its status", () => {
         trackEvent.mockReset();
         currentGame.data = player(2, false);
-        render(<GamePage />);
+        const { unmount } = render(<GamePage />);
 
         fireEvent.click(
             screen.getByRole("link", {
                 name: /game.page.missions.instagram.none.title/,
             })
         );
+        unmount();
+        currentGame.data = player(1, true);
+        render(<GamePage />);
         fireEvent.click(
             screen.getByRole("link", {
                 name: /game.page.missions.friend.title/,
