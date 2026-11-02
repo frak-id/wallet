@@ -486,9 +486,9 @@ struct EventQueueTests {
         #expect(String(decoding: data, as: UTF8.self) == expected)
     }
 
-    // FileProtectionType is unavailable on macOS, the only host this target is verified on;
-    // applyProtection() is a no-op there, so there is nothing to assert.
-    #if canImport(UIKit)
+    // applyProtection() is a no-op on macOS, and the iOS Simulator drops the protection class,
+    // so only a device can assert it.
+    #if canImport(UIKit) && !targetEnvironment(simulator)
         @Test("protects the file so it is unreadable before first unlock")
         func protectsTheFile() async throws {
             let (queue, fileURL) = makeQueue()
