@@ -89,6 +89,10 @@
         ) -> SharingPresentation {
             let trace = SharingTrace()
             let sessionId = UUID().uuidString.lowercased()
+            // Here, not in `warm()`: only the request knows which image the page will hand back.
+            if let image = sharingPreviewImageURL(request) {
+                Task { await imageCache.prefetch(image) }
+            }
 
             let webView = pool.acquire(SharingWebViewBinding(sessionId: sessionId))
 
