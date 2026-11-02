@@ -26,6 +26,7 @@ export type AppErrorSource =
     | "notifications"
     | "safe_area"
     | "native_glass"
+    | "sharing"
     | "pending_actions"
     | "manual";
 
