@@ -14,9 +14,6 @@ import {
 
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    isMoneriumEnabled: true,
-}));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
     return {

@@ -23,8 +23,8 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    isMoneriumEnabled: false,
+vi.mock("@/module/monerium/component/MoneriumConnect", () => ({
+    MoneriumConnect: () => <div>monerium-connect</div>,
 }));
 
 vi.mock("@frak-labs/wallet-shared", async () => {

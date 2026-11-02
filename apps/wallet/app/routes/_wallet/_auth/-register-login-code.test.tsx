@@ -26,8 +26,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     };
 });
 
-vi.mock("@/module/game/config", () => ({ frakGame: { enabled: true } }));
-
 vi.mock("@/module/onboarding/hook/useInstallReferrer", () => ({
     useInstallReferrer: () => ({
         data: mockReferrerCode.current

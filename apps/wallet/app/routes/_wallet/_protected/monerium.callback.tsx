@@ -6,13 +6,12 @@ import {
 } from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { MoneriumScreen } from "@/module/monerium/component/MoneriumBankFlow/MoneriumScreen";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import {
     getMoneriumErrorCode,
     unwrapMoneriumResponse,
@@ -20,11 +19,6 @@ import {
 import * as styles from "./monerium.callback.css";
 
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
-    beforeLoad: () => {
-        if (!isMoneriumEnabled) {
-            throw redirect({ to: "/wallet", replace: true });
-        }
-    },
     component: MoneriumCallback,
     validateSearch: (search: Record<string, unknown>) => ({
         code: (search.code as string) || undefined,

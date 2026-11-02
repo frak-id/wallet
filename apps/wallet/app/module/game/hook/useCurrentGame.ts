@@ -1,6 +1,5 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import { frakGame } from "@/module/game/config";
 
 export const currentGameKeys = {
     all: ["game", "current"] as const,
@@ -16,6 +15,5 @@ export function useCurrentGame() {
             if (error) throw error;
             return data;
         },
-        enabled: frakGame.enabled,
     });
 }

@@ -24,14 +24,12 @@ const {
     mockTrackEvent,
     mockRecordError,
     mockNavigate,
-    mockEnabled,
 } = vi.hoisted(() => ({
     mockSearch: { current: {} as Search },
     mockCallback: vi.fn(),
     mockTrackEvent: vi.fn(),
     mockRecordError: vi.fn(),
     mockNavigate: vi.fn(),
-    mockEnabled: { current: true },
 }));
 
 // `Route.useSearch()` reads the router context, which no bare `render` has.
@@ -46,12 +44,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
         }),
     };
 });
-
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    get isMoneriumEnabled() {
-        return mockEnabled.current;
-    },
-}));
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
@@ -72,7 +64,6 @@ vi.mock("react-i18next", () => ({
 import { Route } from "./monerium.callback";
 
 const MoneriumCallback = Route.options.component as () => ReactElement;
-const beforeLoad = Route.options.beforeLoad as () => void;
 
 const STATUS = moneriumStatus({
     environment: "sandbox",
@@ -104,7 +95,6 @@ describe("MoneriumCallback", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSearch.current = {};
-        mockEnabled.current = true;
         mockCallback.mockResolvedValue(ok(STATUS));
     });
 
@@ -208,30 +198,5 @@ describe("MoneriumCallback", () => {
         fireEvent.click(await findByText("monerium.callback.tryAgain"));
 
         expect(mockNavigate).toHaveBeenCalledWith(OPEN_BANK_FLOW);
-    });
-});
-
-describe("monerium callback route guard", () => {
-    function thrownBy(run: () => void): unknown {
-        try {
-            run();
-        } catch (error) {
-            return error;
-        }
-        return undefined;
-    }
-
-    test("redirects to the wallet while Monerium is disabled", () => {
-        mockEnabled.current = false;
-
-        expect(thrownBy(beforeLoad)).toMatchObject({
-            options: { to: "/wallet", replace: true },
-        });
-    });
-
-    test("lets the callback through when Monerium is enabled", () => {
-        mockEnabled.current = true;
-
-        expect(thrownBy(beforeLoad)).toBeUndefined();
     });
 });

@@ -10,9 +10,6 @@ const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    isMoneriumEnabled: false,
-}));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
     return {

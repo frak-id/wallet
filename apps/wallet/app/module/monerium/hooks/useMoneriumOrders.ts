@@ -1,7 +1,6 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
-import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import {
     isMoneriumRetryable,
     unwrapMoneriumResponse,
@@ -24,7 +23,7 @@ export function useMoneriumOrders() {
             );
             return orders;
         },
-        enabled: isMoneriumEnabled && isConnected,
+        enabled: isConnected,
         staleTime: FIVE_MINUTES_MS,
         // Counterpart IBANs never reach the persisted query cache.
         meta: { storable: false },

@@ -3,7 +3,6 @@ import { InstagramIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
-import { instagramLink } from "@/module/instagram/config";
 import {
     useInstagramStatus,
     useRefreshInstagramFollow,
@@ -20,7 +19,7 @@ export function InstagramProfileCard() {
     const playing = useCurrentGame().data?.me.participating ?? false;
     useRefreshInstagramFollow();
     const account = data?.link ?? data?.declaration;
-    if (!(instagramLink.enabled && (account || playing))) return null;
+    if (!(account || playing)) return null;
 
     return (
         <InfoCard>

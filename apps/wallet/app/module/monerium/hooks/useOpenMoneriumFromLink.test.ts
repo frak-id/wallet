@@ -6,17 +6,11 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 const mocks = vi.hoisted(() => ({
     navigate: vi.fn(),
-    enabled: { current: true },
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
     ...(await importOriginal<typeof ReactRouter>()),
     useNavigate: () => mocks.navigate,
-}));
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    get isMoneriumEnabled() {
-        return mocks.enabled.current;
-    },
 }));
 
 import { useOpenMoneriumFromLink } from "./useOpenMoneriumFromLink";
@@ -24,7 +18,6 @@ import { useOpenMoneriumFromLink } from "./useOpenMoneriumFromLink";
 describe("useOpenMoneriumFromLink", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mocks.enabled.current = true;
         modalStore.getState().dismissAll();
     });
 
@@ -42,14 +35,6 @@ describe("useOpenMoneriumFromLink", () => {
             search: {},
             replace: true,
         });
-    });
-
-    test("still strips the param but opens nothing while Monerium is disabled", () => {
-        mocks.enabled.current = false;
-        renderHook(() => useOpenMoneriumFromLink("monerium"));
-
-        expect(modalStore.getState().modal).toBeNull();
-        expect(mocks.navigate).toHaveBeenCalledOnce();
     });
 
     test("does nothing without the param", () => {

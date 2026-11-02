@@ -1,10 +1,3 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
-
-/** The link is account-wide; the Frak Game is its only consumer so far, and ships with it. */
-export const instagramLink = {
-    enabled: !isRunningInProd,
-} as const;
-
 /** Connected to every stage's Meta app (FRA-372): DMs and follows are checked against it. */
 const FRAK_INSTAGRAM_HANDLE = "frak_fr";
 

@@ -2,9 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { status, config, game } = vi.hoisted(() => ({
+const { status, game } = vi.hoisted(() => ({
     status: { data: undefined as unknown },
-    config: { enabled: true },
     game: { data: undefined as unknown },
 }));
 
@@ -16,7 +15,6 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock("@/module/instagram/config", () => ({ instagramLink: config }));
 vi.mock("@/module/game/hook/useCurrentGame", () => ({
     useCurrentGame: () => game,
 }));
@@ -35,7 +33,6 @@ const certified = (follows: boolean) => ({
 describe("InstagramProfileCard", () => {
     beforeEach(() => {
         status.data = { link: null, declaration: null };
-        config.enabled = true;
         game.data = { game: {}, me: { participating: true } };
     });
 
@@ -101,12 +98,5 @@ describe("InstagramProfileCard", () => {
         expect(
             screen.getByRole("link", { name: "instagram.profile.label" })
         ).toBeInTheDocument();
-    });
-
-    it("stays hidden while the feature is off", () => {
-        config.enabled = false;
-        const { container } = render(<InstagramProfileCard />);
-
-        expect(container).toBeEmptyDOMElement();
     });
 });

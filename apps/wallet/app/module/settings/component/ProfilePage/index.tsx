@@ -20,7 +20,6 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 import { InstagramProfileCard } from "@/module/instagram/component/InstagramProfileCard";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
-import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { ProfileIdentityCard } from "@/module/settings/component/ProfileIdentityCard";
@@ -116,7 +115,7 @@ export function ProfilePage() {
             <ProfileLinksCard />
             <PrivateKey />
             <CrashlyticsDebug />
-            {isMoneriumEnabled ? <MoneriumConnect /> : null}
+            <MoneriumConnect />
             <Logout />
             <Box className={styles.footer}>
                 {displayVersion ? (

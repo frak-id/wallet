@@ -8,9 +8,6 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 const mocks = vi.hoisted(() => ({ orders: vi.fn(), status: vi.fn() }));
 
-vi.mock("@/module/monerium/utils/moneriumConfig", () => ({
-    isMoneriumEnabled: true,
-}));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual = await importOriginal<typeof WalletShared>();
     return {

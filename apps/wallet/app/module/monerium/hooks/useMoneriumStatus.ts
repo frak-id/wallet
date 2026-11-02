@@ -5,7 +5,6 @@ import {
     isMoneriumStatusPending,
     type MoneriumStatus,
 } from "@/module/monerium/utils/deriveSetupScreen";
-import { isMoneriumEnabled } from "@/module/monerium/utils/moneriumConfig";
 import {
     isMoneriumRetryable,
     unwrapMoneriumResponse,
@@ -24,7 +23,6 @@ async function fetchMoneriumStatus(refresh: boolean): Promise<MoneriumStatus> {
 const statusQuery = {
     queryKey: moneriumKey.status,
     queryFn: () => fetchMoneriumStatus(false),
-    enabled: isMoneriumEnabled,
     retry: (failureCount: number, error: Error) =>
         failureCount < 2 && isMoneriumRetryable(error),
 };

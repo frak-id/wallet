@@ -22,7 +22,6 @@ import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { GameReward } from "@/module/game/component/GameReward";
 import { GameRules } from "@/module/game/component/GameRules";
-import { frakGame } from "@/module/game/config";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
 import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
@@ -328,7 +327,7 @@ function RegisterPage() {
                 code_kind: result.kind,
                 prefill_source: referralPrefillSource,
             });
-            if (frakGame.enabled && (result.game || gameRewardOf(result) > 0)) {
+            if (result.game || gameRewardOf(result) > 0) {
                 setGameRedeem(result);
                 goToStep("gameReward");
                 return;

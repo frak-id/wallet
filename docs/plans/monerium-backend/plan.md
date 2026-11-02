@@ -124,8 +124,8 @@ move is used to ship the best end-user UX we can on the OAuth plan.
    `GET /beneficiaries` into the local store (local entries win). Logout wipes both
    Monerium stores; the server connection survives logout by design.
 8. `moneriumStore` keeps UI state only; a persist migration purges the old tokens.
-9. One `isMoneriumEnabled` flag gates TransferModal, ProfilePage, the callback route and
-   the push deep link.
+9. No feature flag: TransferModal, ProfilePage, the callback route and the push deep link
+   are live on every stage, production included.
 10. Removed: `moneriumApi.ts`, `moneriumTypes.ts`, client PKCE, the `MONERIUM_CLIENT_ID`
     define, the nginx `/monerium-api/` location + envsubst, Dockerfile args, the vite dev
     proxy, the Tauri CSP entries, the wallet's `MONERIUM_*` env in `infra/gcp/wallet.ts`.
@@ -150,7 +150,9 @@ move is used to ship the best end-user UX we can on the OAuth plan.
 - Mobile push taps: the `frak-firebase` plugin does not open `data.url` on iOS or Android, for any
   notification. Needs a native change and a mobile release; the wallet already handles
   `/wallet?open=monerium` once the URL reaches it.
-- Production launch: flip `isMoneriumEnabled` once Monerium approves the production application.
+- Production launch: the wallet shows Monerium in production as soon as this ships, so the
+  production application must be approved at Monerium, with `MONERIUM_CLIENT_ID` and the
+  redirect URI registered for `wallet.frak.id`, before the deploy.
 
 ## Implementation notes (backend lane)
 

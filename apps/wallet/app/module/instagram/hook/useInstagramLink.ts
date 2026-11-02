@@ -8,7 +8,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { gameHistoryKeys } from "@/module/game/hook/useGameHistory";
-import { instagramLink } from "@/module/instagram/config";
 
 export const instagramKeys = {
     status: ["instagram", "status"] as const,
@@ -38,7 +37,6 @@ export function useInstagramStatus() {
     return useQuery({
         queryKey: instagramKeys.status,
         queryFn: fetchStatus,
-        enabled: instagramLink.enabled,
     });
 }
 
@@ -52,7 +50,6 @@ export function useInstagramLinkCode() {
             if (error) throw error;
             return data.code;
         },
-        enabled: instagramLink.enabled,
         staleTime: Number.POSITIVE_INFINITY,
         retry: false,
     });
@@ -109,7 +106,7 @@ export function useRefreshInstagramFollow() {
             }
             return next;
         },
-        enabled: instagramLink.enabled && Boolean(status?.link),
+        enabled: Boolean(status?.link),
         staleTime: RECHECK_STALE_MS,
         retry: false,
     });

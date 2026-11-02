@@ -24,17 +24,12 @@ const gameCodeRedeem: MockRedeem = {
     gameReward: 1,
 };
 
-const { mockGame, track, navigate, referralStatus, redeem } = vi.hoisted(
-    () => ({
-        mockGame: { enabled: false },
-        track: vi.fn(),
-        navigate: vi.fn(),
-        referralStatus: { data: undefined as unknown },
-        redeem: { result: undefined as unknown },
-    })
-);
-
-vi.mock("@/module/game/config", () => ({ frakGame: mockGame }));
+const { track, navigate, referralStatus, redeem } = vi.hoisted(() => ({
+    track: vi.fn(),
+    navigate: vi.fn(),
+    referralStatus: { data: undefined as unknown },
+    redeem: { result: undefined as unknown },
+}));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
     const actual =
@@ -190,7 +185,6 @@ const click = (name: string) =>
 
 describe("RegisterPage — Frak Game onboarding", () => {
     beforeEach(() => {
-        mockGame.enabled = false;
         modalStore.getState().dismissAll();
         pendingActionsStore.getState().clearAll();
         referralStatus.data = undefined;
@@ -221,8 +215,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         return view;
     };
 
-    test("flag on: an applied code leads to the reward, then the rules, then notifications", () => {
-        mockGame.enabled = true;
+    test("an applied code leads to the reward, then the rules, then notifications", () => {
         reachReferralCode();
 
         click("apply");
@@ -260,29 +253,24 @@ describe("RegisterPage — Frak Game onboarding", () => {
             result: { kind: "frak" },
             to: "/wallet",
         },
-    ] as const)(
-        "flag on: welcome after $name opens $to",
-        async ({ result, to }) => {
-            mockGame.enabled = true;
-            redeem.result = result;
-            reachReferralCode();
-            click("apply");
-            if ("game" in result) {
-                click("continue");
-                click("continue");
-            }
-
-            click("enable");
-            click("onboarding.welcome.button");
-
-            await waitFor(() =>
-                expect(navigate).toHaveBeenCalledWith({ to, replace: true })
-            );
+    ] as const)("welcome after $name opens $to", async ({ result, to }) => {
+        redeem.result = result;
+        reachReferralCode();
+        click("apply");
+        if ("game" in result) {
+            click("continue");
+            click("continue");
         }
-    );
 
-    test("flag on: the status refetch landing mid-transition does not skip the game screens", () => {
-        mockGame.enabled = true;
+        click("enable");
+        click("onboarding.welcome.button");
+
+        await waitFor(() =>
+            expect(navigate).toHaveBeenCalledWith({ to, replace: true })
+        );
+    });
+
+    test("the status refetch landing mid-transition does not skip the game screens", () => {
         const { rerender } = reachReferralCode();
         const pending: Array<() => void> = [];
         const startViewTransition = vi.fn((update: () => void) => {
@@ -303,8 +291,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         expect(screen.getByText("game-reward")).toBeInTheDocument();
     });
 
-    test("flag on: a friend's signup shows its own reward plus the friend's game", () => {
-        mockGame.enabled = true;
+    test("a friend's signup shows its own reward plus the friend's game", () => {
         redeem.result = { ...gameCodeRedeem, kind: "user", signupReward: 1.5 };
         reachReferralCode();
 
@@ -318,9 +305,8 @@ describe("RegisterPage — Frak Game onboarding", () => {
         { name: "a game code", kind: "frak" },
         { name: "a friend's code", kind: "user" },
     ] as const)(
-        "flag on: $name that joins a game without a reward still shows the game screens",
+        "$name that joins a game without a reward still shows the game screens",
         ({ kind }) => {
-            mockGame.enabled = true;
             redeem.result = { kind, game: { prizeDescription: "game-prize" } };
             reachReferralCode();
 
@@ -333,8 +319,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         }
     );
 
-    test("flag on: a code that joins no game and earns nothing keeps the applied toast", () => {
-        mockGame.enabled = true;
+    test("a code that joins no game and earns nothing keeps the applied toast", () => {
         redeem.result = { kind: "frak" };
         reachReferralCode();
 
@@ -347,8 +332,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         ).toBeInTheDocument();
     });
 
-    test("flag on: skipping the code skips the game screens", () => {
-        mockGame.enabled = true;
+    test("skipping the code skips the game screens", () => {
         reachReferralCode();
 
         click("onboarding.skipStep");
@@ -357,20 +341,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         expect(screen.queryByText("game-reward")).not.toBeInTheDocument();
     });
 
-    test("flag off: an applied code leads straight to notifications", () => {
-        reachReferralCode();
-
-        click("apply");
-
-        expect(screen.getByText("notification-step")).toBeInTheDocument();
-        expect(screen.queryByText("game-reward")).not.toBeInTheDocument();
-        expect(
-            screen.getByText("onboarding.referral.frakAppliedToast")
-        ).toBeInTheDocument();
-    });
-
-    test("flag on, pairing context: no game screen between step one and welcome", () => {
-        mockGame.enabled = true;
+    test("pairing context: no game screen between step one and welcome", () => {
         pendingActionsStore.getState().addAction({
             type: "navigation",
             to: "/pairing",
