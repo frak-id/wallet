@@ -162,13 +162,15 @@
             self._model = ObservedObject(wrappedValue: presentation.model)
         }
 
+        private var liveWebView: SharingWebView { (model.webView as? SharingWebView) ?? presentation.webView }
+
         var body: some View {
             ZStack {
                 // From the model, not the presentation: recovery can swap the engine, and only
                 // the model publishes that. Falls back to the presentation's own view until
                 // `attach` has run.
                 SharingWebViewContainer(
-                    webView: model.webView ?? presentation.webView,
+                    webView: liveWebView,
                     onDismantled: { [presentation] in presentation.onContentDismantled() }
                 )
                 // A `UIViewRepresentable` reports no intrinsic size, so the stack would be held
@@ -177,7 +179,7 @@
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 // A representable keeps whatever `makeUIView` returned, so a swapped engine
                 // needs a new identity to be built at all.
-                .id(ObjectIdentifier(model.webView ?? presentation.webView))
+                .id(ObjectIdentifier(liveWebView))
 
                 if !model.pageVisible {
                     SharingSheetSkeleton()

@@ -655,9 +655,6 @@ jobs:
   # macOS runner is unavoidable: `swift format` and the iphonesimulator SDK both come
   # from the Xcode toolchain. Kept to a single job so the 10× billing multiplier is paid
   # once, and gated on `sdk/ios/**` by the `changes` job above.
-  #
-  # Compile-verified only, not executed on a simulator: the suites cannot be run at the
-  # simulator triple from SwiftPM at all (see the comments in `sdk/ios/scripts/run.sh`).
   ios-sdk:
     name: "🍏 iOS SDK · Lint, build & test"
     runs-on: macos-26
@@ -691,7 +688,6 @@ jobs:
       - name: "🔨 Build (iOS simulator triple, Swift 6)"
         run: bun run --cwd sdk/ios build
 
-      # Two stages inside the script: compile the suites at the simulator triple (they
-      # cannot be *run* there from SwiftPM), then run them on the host toolchain.
+      # Runs the suites on an iOS simulator, then on the macOS host.
       - name: "🧪 Tests"
         run: bun run --cwd sdk/ios test
