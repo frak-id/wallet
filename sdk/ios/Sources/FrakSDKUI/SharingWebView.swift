@@ -30,6 +30,14 @@
         static var warm: SharingWebViewBinding { SharingWebViewBinding(sessionId: SharingPageURL.warmSessionId) }
     }
 
+    /// What `SharingSheetModel` drives, so its tests can run without WebKit.
+    @MainActor
+    protocol SharingEngine: AnyObject {
+        func navigate(_ navigation: SharingNavigation)
+    }
+
+    extension SharingWebView: SharingEngine {}
+
     /// The web view the sheet loads the hosted page in, and the navigation policy that is its
     /// only channel back to the host. No JavaScript bridge: the page reports by navigating to
     /// `returnScheme://result?sid=…&action=…`, intercepted here and never allowed to leave the app.

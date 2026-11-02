@@ -56,10 +56,11 @@
         var onClose: (() -> Void)?
         /// Swaps in a fresh engine, for the document a reload cannot bring back. Set by
         /// `SharingPresentation`, which owns the pool.
-        var onRebuildEngine: (() -> SharingWebView?)?
+        var onRebuildEngine: (() -> (any SharingEngine)?)?
 
         private let sessionId: String
         private let trace: SharingTrace
+        private let loadBudget: TimeInterval
         /// The document the lent view is already showing, if the warm-up finished. Decided once
         /// at the tap by `SharingPresentation`; re-asking later would race the answer.
         private let activationBaseURL: String?
@@ -85,7 +86,7 @@
         private let imageCache: SharingImagePreviewCache
 
         /// Published: recovery can swap the engine, and the sheet has to present the new one.
-        @Published private(set) var webView: SharingWebView?
+        @Published private(set) var webView: (any SharingEngine)?
         private var session: SharingSession?
         private var deadline: Task<Void, Never>?
         private var started = false
@@ -165,10 +166,12 @@
             },
             metadataName: @escaping @Sendable () -> String? = { (try? Frak.client)?.metadataName },
             metadataLang: @escaping @Sendable () -> FrakLanguage? = { (try? Frak.client)?.metadataLang },
-            imageCache: SharingImagePreviewCache = SharingImagePreviewCache()
+            imageCache: SharingImagePreviewCache = SharingImagePreviewCache(),
+            loadBudget: TimeInterval = SharingSheetModel.pageLoadDeadline
         ) {
             self.sessionId = sessionId
             self.trace = trace
+            self.loadBudget = loadBudget
             self.activationBaseURL = activationBaseURL
             self.language = language
             self.storeInvite = StoreInvites.make(install)
@@ -187,7 +190,7 @@
             self.imageCache = imageCache
         }
 
-        func attach(_ webView: SharingWebView) {
+        func attach(_ webView: any SharingEngine) {
             guard self.webView !== webView else { return }
             self.webView = webView
             loadSessionURL()
@@ -198,8 +201,9 @@
         func start(_ request: SharingRequest) async {
             guard !started else { return }
             started = true
+            let budget = loadBudget
             deadline = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(Self.pageLoadDeadline * 1_000_000_000))
+                try? await Task.sleep(nanoseconds: UInt64(budget * 1_000_000_000))
                 guard !Task.isCancelled else { return }
                 self?.onDeadline()
             }
@@ -364,7 +368,7 @@
                         return
                     }
                     // A full load, never an activation: this is a different document.
-                    webView?.load(url)
+                    webView?.navigate(.load(url))
                     showingInstallPage = true
                 }
             case .shareAgain:
@@ -501,7 +505,7 @@
         /// word for it — and that rides two `requestAnimationFrame`s, which do not run until the
         /// sheet has put the view on screen. That made the fastest path the one that timed out on
         /// the load deadline and raised the chooser over a page that was already there.
-        private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
+        private func navigateNow(_ webView: any SharingEngine, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
             // Only a finished document can be activated, so tap-to-content is already met.
             // Only the first activation off the warm document is watched: the page emits `ready`
@@ -768,7 +772,7 @@
                 }
                 target.navigate(navigation)
                 // A fresh engine loads the whole document, so it gets the full-load budget.
-                armActivationWatchdog(budget: Self.pageLoadDeadline)
+                armActivationWatchdog(budget: loadBudget)
             case .fallBack:
                 guard let session else {
                     deadlineExpired = true
