@@ -1,0 +1,59 @@
+appId: id.frak.wallet.dev
+name: Logged out, a referral link launches the login
+---
+# Run by e2e-{android,ios}.sh only. Stops at the biometric check the script
+# answers; join-page-after-login.yaml then checks where the code landed.
+- launchApp
+- runFlow: ../common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- extendedWaitUntil:
+    visible: "Referrals|Parrainages"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Logout|Déconnexion"
+    direction: DOWN
+- tapOn: "Logout|Déconnexion"
+# The session clears only after the push unsubscribe; stopping sooner keeps it.
+- extendedWaitUntil:
+    notVisible: "Referrals|Parrainages"
+    timeout: 20000
+    label: "The logout left the profile"
+# shortcut: the WebView writes the cleared session to disk lazily, and a stop
+# within a second or two can bring it back; a fixed pause until a wait exists.
+- extendedWaitUntil:
+    visible: "__never_shown__"
+    timeout: 5000
+    optional: true
+# Killing the app also drops the passkey sheet a logout opens.
+- stopApp
+- openLink: "frakwallet-dev://r/TEST02"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Open|Ouvrir"
+          timeout: 5000
+          optional: true
+      - tapOn:
+          text: "Open|Ouvrir"
+          optional: true
+# The login opens the passkey check by itself once the page shows.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Use Passkey|Utiliser la clé d.accès"
+          timeout: 30000
+          label: "The logged-out cold start offers the simulator's passkey"
+      - tapOn: "Use Passkey|Utiliser la clé d.accès"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.systemui:id/biometric_icon"
+          timeout: 30000
+          label: "The logged-out cold start asks for the screen lock"
