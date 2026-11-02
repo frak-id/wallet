@@ -1,6 +1,6 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
-import { trackEvent } from "../../common/analytics";
+import { recordError, trackEvent } from "../../common/analytics";
 import type { SharingSource } from "../../common/analytics/events";
 import { getInvoke } from "../../common/tauri";
 import { sharingKey } from "../queryKeys";
@@ -137,7 +137,14 @@ export function useShareLink(
                     onShared?.();
                     return true;
                 } catch (err) {
-                    console.warn(err);
+                    // A dismissed sheet resolves `shared: false`, so a rejection is a real failure.
+                    recordError(err, {
+                        source: "sharing",
+                        context: {
+                            sharing_source: source,
+                            merchant_id: merchantId,
+                        },
+                    });
                     return;
                 }
             }

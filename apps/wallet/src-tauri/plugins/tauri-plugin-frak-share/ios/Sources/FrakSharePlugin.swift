@@ -22,6 +22,7 @@ import UIKit
  */
 class FrakSharePlugin: Plugin {
     private var shareWindow: UIWindow?
+    private var shareInvoke: Invoke?
 
     @objc public func shareText(_ invoke: Invoke) {
         guard let args = try? invoke.getArgs() else {
@@ -113,21 +114,18 @@ class FrakSharePlugin: Plugin {
         }
 
         DispatchQueue.main.async {
-            // iOS 15+ scene-based apps return [] from UIApplication.shared.windows,
-            // so walk connectedScenes instead. Matches the WebAuthn plugin's
-            // presentationAnchor pattern — keeps the share sheet reachable on
-            // every supported iOS version.
-            let appWindow = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow }
-            guard let appWindow = appWindow, let scene = appWindow.windowScene else {
-                invoke.reject("No key window available")
+            guard let appWindow = self.appWindow(), let scene = appWindow.windowScene else {
+                invoke.reject("No app window available")
                 return
             }
-            guard self.shareWindow == nil else {
-                invoke.reject("A share sheet is already open")
-                return
+            if let open = self.shareWindow {
+                // A sheet torn down without its completion handler must not refuse every share after it.
+                guard open.rootViewController?.presentedViewController == nil else {
+                    invoke.reject("A share sheet is already open")
+                    return
+                }
+                self.shareInvoke?.reject("The share sheet was dismissed")
+                self.close(open, restoring: appWindow)
             }
 
             // Never present from tao's window: it reports an unknown interface orientation,
@@ -138,6 +136,7 @@ class FrakSharePlugin: Plugin {
             shareWindow.windowLevel = appWindow.windowLevel + 1
             shareWindow.makeKeyAndVisible()
             self.shareWindow = shareWindow
+            self.shareInvoke = invoke
 
             let activityController = UIActivityViewController(
                 activityItems: items,
@@ -156,10 +155,8 @@ class FrakSharePlugin: Plugin {
                 popover.permittedArrowDirections = []
             }
 
-            activityController.completionWithItemsHandler = { [weak self] _, completed, _, error in
-                self?.shareWindow?.isHidden = true
-                self?.shareWindow = nil
-                appWindow.makeKey()
+            activityController.completionWithItemsHandler = { [weak self, weak shareWindow] _, completed, _, error in
+                if let shareWindow { self?.close(shareWindow, restoring: appWindow) }
                 if let error = error {
                     invoke.reject(error.localizedDescription)
                     return
@@ -172,6 +169,25 @@ class FrakSharePlugin: Plugin {
 
             presenter.present(activityController, animated: true, completion: nil)
         }
+    }
+
+    /// The window hosting the webview, not the key window: none may be key after the app returns from the background.
+    private func appWindow() -> UIWindow? {
+        if let window = manager.viewController?.view.window { return window }
+        let windows = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .filter { $0 !== shareWindow }
+        return windows.first { $0.isKeyWindow } ?? windows.first
+    }
+
+    // A late completion from a replaced sheet only hides its own window.
+    private func close(_ window: UIWindow, restoring appWindow: UIWindow) {
+        window.isHidden = true
+        guard window === shareWindow else { return }
+        shareWindow = nil
+        shareInvoke = nil
+        appWindow.makeKey()
     }
 
     /// Downloads `imageUrl` into a transient `NSItemProvider` so it can be
