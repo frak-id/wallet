@@ -152,7 +152,7 @@ class HarnessModel(
 
     /** The only place in the harness that calls `handleReferral` directly. */
     suspend fun simulateDeepLink() {
-        val testUrl = "https://example-merchant.com/product?fCtx=test_referral_token_android_9988"
+        val testUrl = sampleReferralLink(activeEnvironment.merchantId)
         addLog("Simulating an inbound referral link...", LogType.INFO)
         try {
             val handled = Frak.client.appLink.handleReferral(testUrl)
