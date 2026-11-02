@@ -1,0 +1,5 @@
+appId: id.frak.example.android
+name: Open a friend's referral link
+---
+# v2 fCtx for the Development merchant 0a799880-…, dated 2026-11-01, from HarnessData's sample sharer.
+- openLink: "merchantapp://product?fCtx=Egp5mIC6VEJ2pzTbhyGRG6tq5oEAWj4sHXtPToqcbQ8eLTxLWg"

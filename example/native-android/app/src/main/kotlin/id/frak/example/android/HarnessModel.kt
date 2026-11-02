@@ -142,12 +142,11 @@ class HarnessModel(
     }
 
     /**
-     * Reports arrival at the activity, which is all this callback can honestly observe. Whether the
-     * SDK tracked it is a separate question that only Debug info answers, so this is not a SUCCESS.
+     * Reports arrival at the activity, which is all this callback can honestly observe. Nothing in
+     * the harness shows whether the SDK then tracked it, so this is not a SUCCESS.
      */
     fun logInboundIntent(url: String) {
         addLog("Inbound link reached the app: $url", LogType.INFO)
-        addLog("Open Debug to confirm the SDK picked up the referral.", LogType.INFO)
     }
 
     /** The only place in the harness that calls `handleReferral` directly. */

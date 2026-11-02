@@ -1,0 +1,14 @@
+appId: id.frak.example.android
+name: A real referral link reaches the running app
+---
+# Through Android's own intent routing to onNewIntent, unlike "Simulate a referral link".
+# Automatic deep-link handling leaves the app nothing to read back, so this proves delivery only.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- runFlow: common/open-referral-link.yaml
+- extendedWaitUntil:
+    visible: ".*Inbound link reached the app: merchantapp://product\\?fCtx=.*"
+    timeout: 10000

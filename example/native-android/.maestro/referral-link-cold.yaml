@@ -1,0 +1,19 @@
+appId: id.frak.example.android
+name: A real referral link launches the stopped app
+---
+# Automatic deep-link handling leaves the app nothing to read back, so this proves delivery only.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- stopApp
+- runFlow: common/open-referral-link.yaml
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+# Logged in onCreate, before the SDK start-up lines, so it sits below the collapsed log.
+- tapOn: "Expand"
+- extendedWaitUntil:
+    visible: ".*Inbound link reached the app: merchantapp://product\\?fCtx=.*"
+    timeout: 10000
