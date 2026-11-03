@@ -18,6 +18,7 @@
 
         private final class Calls {
             var rebuilds = 0
+            var closed = false
         }
 
         private final class FakeEngine: SharingEngine {
@@ -65,6 +66,7 @@
                 calls.rebuilds += 1
                 return nil
             }
+            model.onClose = { calls.closed = true }
             let engine = FakeEngine()
             model.attach(engine)
             await model.start(SharingRequest())
@@ -128,6 +130,29 @@
             await Self.stop(model)
 
             #expect(calls.rebuilds == 1)
+        }
+
+        @Test("a page that arrives after the fallback stays covered under the system share sheet")
+        func lateFallbackPageStaysCovered() async throws {
+            let (model, engine, calls) = await Self.started(loadBudget: 0.2, bootBudget: 0.2)
+            try await Self.wait(seconds: 10) { !engine.navigations.isEmpty }
+            // Finished but silent, and uncovered by the skeleton grace, as on a slow page.
+            model.onDocumentFinished()
+            model.onPageVisible()
+            // Silent again after the recovery: the share falls back. No window, so the chooser
+            // cannot present and the sheet closes straight after.
+            try await Self.wait(seconds: 10) { calls.closed }
+            let coveredAtFallback = !model.pageVisible
+            // The recovery's engine finishes and its page reports, too late.
+            model.onDocumentFinished()
+            model.onPageAction(.ready)
+            let coveredAfterLatePage = !model.pageVisible
+            await Self.stop(model)
+
+            #expect(calls.rebuilds == 1)
+            #expect(calls.closed)
+            #expect(coveredAtFallback)
+            #expect(coveredAfterLatePage)
         }
 
         @Test("an activation on a document that just finished gets the rest of its boot budget")

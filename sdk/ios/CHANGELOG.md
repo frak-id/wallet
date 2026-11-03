@@ -32,6 +32,9 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
   2 seconds from the tap to load and report itself ready, but it needs up to 2 more seconds after
   loading to start, so on a slow device or network the sheet gave up on a working page and opened
   the system share sheet. Loading still has 2 seconds; starting now gets 3 seconds of its own.
+- **The sharing page no longer appears under the system share sheet it fell back to.** When the
+  sheet fell back, the page it had given up on kept loading and showed up behind the system share
+  sheet, two share screens at once. The sheet now keeps its placeholder until it closes.
 - **Share links always carry a lowercase `utm_source`.** A merchant URL that already had an
   upper-case `UTM_SOURCE` was shared without `utm_source=frak`, so analytics reading the lowercase key
   saw the link as unattributed. Attribution parameters are now added unless the exact lowercase key is

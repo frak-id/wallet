@@ -306,6 +306,8 @@
         }
 
         func onPageVisible() {
+            // A late page under the tier-3 chooser would stack two share UIs; the sheet closes after it.
+            guard !fellBack else { return }
             if page == .loading || page == .documentReady { page = .painted }
         }
 
@@ -809,6 +811,8 @@
         private func fallBack(to session: SharingSession) async {
             guard !fellBack else { return }
             fellBack = true
+            // Covered again: the skeleton grace may have uncovered a page that is only now arriving.
+            page = .loading
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.
