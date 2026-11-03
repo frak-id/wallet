@@ -26,6 +26,40 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
 });
 
 /**
+ * Offline referral demo (installable PWA, fully mocked, no Frak backend).
+ * Unhashed files stay revalidated so a deploy reaches installed copies.
+ */
+export const referralDemoWebsite = new sst.aws.StaticSite("ReferralDemo", {
+    path: "example/referral-demo",
+    domain: {
+        name: "referral-demo.frak-labs.com",
+    },
+    build: {
+        command: "bun run build",
+        output: "dist",
+    },
+    assets: {
+        fileOptions: [
+            {
+                files: "**",
+                cacheControl: "max-age=31536000,public,immutable",
+            },
+            {
+                files: [
+                    "**/*.html",
+                    "sw.js",
+                    "manifest.webmanifest",
+                    "fonts/*",
+                    "icons/*",
+                ],
+                cacheControl: "max-age=0,no-cache,no-store,must-revalidate",
+            },
+        ],
+    },
+    dev: { autostart: false },
+});
+
+/**
  * Vanilla JS demo website
  */
 export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
