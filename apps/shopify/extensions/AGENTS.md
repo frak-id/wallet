@@ -88,7 +88,8 @@ Theme detection works by parsing theme JSON templates and matching block type su
 
 - **Block naming**: snake_case (`referral_button`, not `referralButton`)
 - **Locales**: `en.default.json` is source of truth. Match keys when adding translations.
-- **Extension API version**: matches main app (`2026-07`): the three extension tomls, both `shopify.app.*.toml` and `ApiVersion.July26` in `app/shopify.server.ts`. `check:shopify-api-version` only gates the post-purchase toml against `@shopify/ui-extensions`; keep the rest in step by hand.
+- **Extension API version**: matches main app (`2026-10`): the three extension tomls, both `shopify.app.*.toml` and `ApiVersion.October26` in `app/shopify.server.ts` (and the `proxy.ambassador.test.ts` mock). `check:shopify-api-version` only gates the post-purchase toml against `@shopify/ui-extensions`; keep the rest in step by hand.
+- **Post-purchase metafield declarations carry `owner_type = "SHOP"`**: optional on 2026-10, required from 2027-01 (deploys without it are blocked). A new `[[extensions.metafields]]` entry needs one too.
 - **Monorepo workspace**: `checkout-post-purchase` and `checkout-web-pixel` are workspaces of `apps/shopify` (`extensions/*`), not of the repo root. `theme-components` has no `package.json` — it is pure Liquid and is not a workspace.
 
 ## ANTI-PATTERNS

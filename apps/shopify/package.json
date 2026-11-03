@@ -71,7 +71,7 @@
     "@react-router/fs-routes": "^7.18.5",
     "@shopify/app-bridge-types": "^0.7.3",
     "@shopify/polaris-types": "^2.0.0",
-    "@shopify/ui-extensions": "~2026.7.4",
+    "@shopify/ui-extensions": "~2026.10.2",
     "@shopify/web-pixels-extension": "^2.18.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

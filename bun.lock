@@ -195,7 +195,7 @@
         "@react-router/fs-routes": "^7.18.5",
         "@shopify/app-bridge-types": "^0.7.3",
         "@shopify/polaris-types": "^2.0.0",
-        "@shopify/ui-extensions": "~2026.7.4",
+        "@shopify/ui-extensions": "~2026.10.2",
         "@shopify/web-pixels-extension": "^2.18.0",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
@@ -1712,7 +1712,7 @@
 
     "@shopify/storefront-api-client": ["@shopify/storefront-api-client@2.0.1", "", { "dependencies": { "@shopify/graphql-client": "^2.0.1" } }, "sha512-GsEb5L3y8ffqWHr7LPyrs8tFtfZJPlyC1kS3YClGQXX1eWS3HqWysvMwnEiXbYwCA0pUkthvAcqLZj/xXx3wCQ=="],
 
-    "@shopify/ui-extensions": ["@shopify/ui-extensions@2026.7.4", "", { "dependencies": { "ts-morph": "^25.0.1" }, "peerDependencies": { "@preact/signals": "*", "preact": "*" }, "optionalPeers": ["@preact/signals", "preact"] }, "sha512-z0CcCIpQCAYnEJ+A4pW0zW1KdVQZnrD4uZVMWcci8IeCTCF62yYm0k5CZCnwdrP70l2v7ZX3rsy/bGqOjRAbug=="],
+    "@shopify/ui-extensions": ["@shopify/ui-extensions@2026.10.2", "", { "dependencies": { "htm": "^3.1.1", "ts-morph": "^25.0.1" }, "peerDependencies": { "@preact/signals": "*", "preact": "*" }, "optionalPeers": ["@preact/signals", "preact"] }, "sha512-4uqNfx0jh/OxRVE75629+aunraaU12qoo2nLErTI95F0QF+TUCp2Z739mHdxHCJrsqgnF5c9AgEXCnjF3BKPyA=="],
 
     "@shopify/web-pixels-extension": ["@shopify/web-pixels-extension@2.18.0", "", {}, "sha512-qHp93QKdxJ8UREzkYOje6343An2wvXLUF71uduahiTjBfYXQ7VqIAXoHCwzCnP3Kss1AXLpz7XPaKCRC0ONOTw=="],
 
@@ -2573,6 +2573,8 @@
     "hookable": ["hookable@6.1.2", "", {}, "sha512-+abwxtiEA52GCVIsQqut3S/uKTbUwYIp4Pe/vv+6py5XiXBCqMZHg6pA6Y5qhgLSEys0/cYuPbO0z1QFj5ZCmg=="],
 
     "hosted-git-info": ["hosted-git-info@9.0.3", "", { "dependencies": { "lru-cache": "^11.1.0" } }, "sha512-Hc+ghLoSt6QaYZUv0WBiIvmMDZuZZ7oaDvdH8MbfOO4lOsxdXLEvuC6ePoGs9H1X9oCLyq6+NVN0MKqD+ydxyg=="],
+
+    "htm": ["htm@3.1.1", "", {}, "sha512-983Vyg8NwUE7JkZ6NmOqpCZ+sh1bKv2iYTlUkzlWmA5JD2acKoxd4KVxbMmxX/85mtfdnDmTFoNKcg5DGAvxNQ=="],
 
     "html-encoding-sniffer": ["html-encoding-sniffer@7.0.0", "", { "dependencies": { "@exodus/bytes": "^1.15.1" } }, "sha512-UikN5yr7xsCDAq87Or5or0PAlD3HJJOKVzM05az588WnpDJ4Ux7a2A53Qi6gofGg2/EtvF/H4hCi/TXfCW4Y6w=="],
 
