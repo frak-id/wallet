@@ -1,5 +1,15 @@
 # @frak-labs/core-sdk
 
+## 1.5.4
+
+### Patch Changes
+
+- [#358](https://github.com/frak-id/wallet/pull/358) [`0990bfc`](https://github.com/frak-id/wallet/commit/0990bfc8e36389445a51472d12947f24f3f0ffcb) Thanks [@KONFeature](https://github.com/KONFeature)! - Leaving Instagram's in-app browser on iOS works again. Instagram silently drops `x-safari-https://` since its version 417, so `redirectToExternalBrowser` now uses Instagram's own `instagram://extbrowser/` scheme there (Instagram asks the user to confirm, then opens the default browser). It only works from a user tap. Facebook and Android are unchanged. New export: `isInstagramBrowser`.
+
+- [#358](https://github.com/frak-id/wallet/pull/358) [`02bc412`](https://github.com/frak-id/wallet/commit/02bc41295e5cd1d873d15ec91f669911e7090266) Thanks [@KONFeature](https://github.com/KONFeature)! - Pages where the browser blocks storage (for example Firefox with all cookies blocked) no longer report a false `sdk_iframe_handshake_failed` with reason `asset_push`: blocked storage now simply means there is no backup to restore. When a CSS, i18n or backup push to the wallet really fails, the event now names the `asset` and carries the `error_name` and `error_message`.
+
+- [#358](https://github.com/frak-id/wallet/pull/358) [`d9d53c9`](https://github.com/frak-id/wallet/commit/d9d53c9a588a16068463f5369d89875e7530f007) Thanks [@KONFeature](https://github.com/KONFeature)! - An empty product `utmContent` no longer hides the caller's `utmContent`: `mergeAttribution` now treats it as absent and uses `perCall.utmContent`. `FrakContextManager.update` now returns `null` for a URL that is not `http:` or `https:` (for example `myapp://…` or `ftp://…`) instead of adding `fCtx` to it, so a share link never opens another app. `FrakContextManager.replaceUrl` is unaffected and still rewrites a `capacitor://` or `file://` page. New `@frak-labs/core-sdk/context/sharing-links-fixtures` export: the share-link and `fCtx` corpus the native SDKs assert against.
+
 ## 1.5.3
 
 ### Patch Changes
