@@ -60,7 +60,7 @@ Requires [XcodeGen](https://github.com/yonaskolb/XcodeGen) once: `brew install x
 
 ```bash
 bun run --cwd example/native-ios start    # generate project, boot/use a simulator, build, install, launch, stream logs
-bun run --cwd example/native-ios device   # same, on a physical iPhone (see "Running on a device")
+bun run --cwd example/native-ios device   # same, on a physical iPhone or iPad (see "Running on a device")
 bun run --cwd example/native-ios build    # compile-only typecheck (Swift 6 strict concurrency), no simulator
 bun run --cwd example/native-ios xcode    # regenerate the project and open it in Xcode
 bun run --cwd example/native-ios lint     # swift-format lint (strict), no simulator
