@@ -160,10 +160,10 @@
         "@react-router/express": "^7.18.5",
         "@react-router/node": "^7.18.5",
         "@react-router/serve": "^7.18.5",
-        "@shopify/shopify-api": "^13.1.0",
-        "@shopify/shopify-app-react-router": "^1.2.1",
-        "@shopify/shopify-app-session-storage": "^5.0.1",
-        "@shopify/shopify-app-session-storage-memory": "^6.0.1",
+        "@shopify/shopify-api": "^15.0.1",
+        "@shopify/shopify-app-react-router": "^4.0.0",
+        "@shopify/shopify-app-session-storage": "^7.0.1",
+        "@shopify/shopify-app-session-storage-memory": "^8.0.1",
         "@tanstack/query-sync-storage-persister": "catalog:",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-query-persist-client": "catalog:",
@@ -194,7 +194,7 @@
         "@react-router/dev": "^7.18.5",
         "@react-router/fs-routes": "^7.18.5",
         "@shopify/app-bridge-types": "^0.7.3",
-        "@shopify/polaris-types": "^1.1.0",
+        "@shopify/polaris-types": "^2.0.0",
         "@shopify/ui-extensions": "~2026.7.4",
         "@shopify/web-pixels-extension": "^2.18.0",
         "@types/node": "catalog:",
@@ -1694,23 +1694,23 @@
 
     "@scure/bip39": ["@scure/bip39@1.6.0", "", { "dependencies": { "@noble/hashes": "~1.8.0", "@scure/base": "~1.2.5" } }, "sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A=="],
 
-    "@shopify/admin-api-client": ["@shopify/admin-api-client@1.1.2", "", { "dependencies": { "@shopify/graphql-client": "^1.4.2" } }, "sha512-sV5gS8x4kj0KLULlOJkoBzm+tu6tn+1PCK9a6inySv5qtzmf/JxDWtLgaW9vRXeXHo/Sl/p3mBWhY3//fKA8iw=="],
+    "@shopify/admin-api-client": ["@shopify/admin-api-client@2.0.1", "", { "dependencies": { "@shopify/graphql-client": "^2.0.1" } }, "sha512-s9Ysgq5we9QI5XYFkOxLX2Sj6F1I/S+f/PDC7WolaELzDhyjvFgR5d68JQDpgrGc8a8uvwzS/OuiXvybUU6sXw=="],
 
     "@shopify/app-bridge-types": ["@shopify/app-bridge-types@0.7.3", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" } }, "sha512-zhLsMVRNNjwwLmvHPLWfKr5tRtAsr+rN7J4b6DCFMwVku2Q+zbo2DnSLnmouLBcGZrb3r6+d9vmQ4IbdXZ/Hkg=="],
 
-    "@shopify/graphql-client": ["@shopify/graphql-client@1.4.2", "", {}, "sha512-C/fEyx6BZmTGeJv0HSsduhfn5ZbkXk0nePkyo0+xXxorP1I+uvx9pobdFxTfiPnOrh+P6QiKzBgIviksnSo4YA=="],
+    "@shopify/graphql-client": ["@shopify/graphql-client@2.0.1", "", {}, "sha512-rMWnql45haEQdVnz62azY6yKt67W2jNgyuYLb6cJc6GuQzEp3LNgIUuQRuroGrF0rklt/ZxqPWS2g013ci3lWQ=="],
 
-    "@shopify/polaris-types": ["@shopify/polaris-types@1.1.0", "", {}, "sha512-hqd+58XbpsShQmTiMakiUraLL9yjeqcFkaEfiajdxAArQJGREsnNBxY1+cN0egWHFQ7/1Xsqjx0RObd3V0Fy1w=="],
+    "@shopify/polaris-types": ["@shopify/polaris-types@2.0.0", "", {}, "sha512-G1nv58jrTVvR07cBzIybtM66/wFykUyyBab4WSncV08ZmWamPfbs6bv3c0wC4UTDz4f2V0et0HbqLsBH8ZkJCQ=="],
 
-    "@shopify/shopify-api": ["@shopify/shopify-api@13.1.0", "", { "dependencies": { "@shopify/admin-api-client": "^1.1.2", "@shopify/graphql-client": "^1.4.2", "@shopify/storefront-api-client": "^1.0.10", "compare-versions": "^6.1.1", "isbot": "^5.1.40", "jose": "^5.9.6", "lossless-json": "^4.3.0", "tslib": "^2.8.1" } }, "sha512-TwYL9kPxOgQwwlc9tmnAmSDs79Gdg9QLaIMCfkaCJxkhWxIHVkPWa74GvbBwnmTtB8jkg61Ja4/Qxrk9bCBUiA=="],
+    "@shopify/shopify-api": ["@shopify/shopify-api@15.0.1", "", { "dependencies": { "@shopify/admin-api-client": "^2.0.1", "@shopify/graphql-client": "^2.0.1", "@shopify/storefront-api-client": "^2.0.1", "compare-versions": "^6.1.1", "isbot": "^5.2.0", "jose": "^5.9.6", "lossless-json": "^4.3.0", "tslib": "^2.8.1" } }, "sha512-WLRmMar1JoMxqAYNvlPxukqEu/gYZ+tSICy8IkpVFa9erInI3xP/rEmWDtxCC0ZG1E41B6VsZFlFfKwQOrdKfQ=="],
 
-    "@shopify/shopify-app-react-router": ["@shopify/shopify-app-react-router@1.2.1", "", { "dependencies": { "@shopify/admin-api-client": "^1.1.2", "@shopify/shopify-api": "^13.1.0", "@shopify/shopify-app-session-storage": "^5.0.1", "@shopify/storefront-api-client": "^1.0.10", "compare-versions": "^6.1.1", "isbot": "^5.1.40" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18", "react-router": "^7.6.2" } }, "sha512-37FtkGoHkvXFUsBU/ibhTrlAGoogfq0VodyEckkggi35lrjZfOGX7xKzMWW13QyD6q8bGg/wCBNOW4WANvewEA=="],
+    "@shopify/shopify-app-react-router": ["@shopify/shopify-app-react-router@4.0.0", "", { "dependencies": { "@shopify/admin-api-client": "^2.0.1", "@shopify/shopify-api": "^15.0.1", "@shopify/shopify-app-session-storage": "^7.0.1", "@shopify/storefront-api-client": "^2.0.1", "compare-versions": "^6.1.1", "isbot": "^5.2.0" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18", "react-router": "^7.6.2" } }, "sha512-VP8k7C33iMMrlQVcgAXaOLFj9FO/cr+re1+60T7wmgaSWSiXtFj5sLBqA3Y0ACiTGwhk8TftWxFdXajJm4Dt+g=="],
 
-    "@shopify/shopify-app-session-storage": ["@shopify/shopify-app-session-storage@5.0.1", "", { "peerDependencies": { "@shopify/shopify-api": "^13.0.0" } }, "sha512-VL66qkz2w1x5hH14v+swFZAnN36VrFuVi/Lc6FkLTJxCSvSu4fPNYn04kjIxGykgsRb7trLBXC7mF3j8yDUFeA=="],
+    "@shopify/shopify-app-session-storage": ["@shopify/shopify-app-session-storage@7.0.1", "", { "peerDependencies": { "@shopify/shopify-api": "^15.0.0" } }, "sha512-YWkFNffVbGZGGBlg6dSCCqkl2dtGzl37SpxM5hZ38ObllYQvuPvAc9e/zvUStYkEVTbkStIeUuEEpKZ/4Y2HKA=="],
 
-    "@shopify/shopify-app-session-storage-memory": ["@shopify/shopify-app-session-storage-memory@6.0.1", "", { "peerDependencies": { "@shopify/shopify-api": "^13.0.0", "@shopify/shopify-app-session-storage": "^5.0.0" } }, "sha512-8NJFaAAA/3PjpDD/zG8/kQVK2+GM5ZdezIMZOZdCJihHLVE6nQ6x1HAVva0dysJD7evZnCymZ/qRhistUVlVRg=="],
+    "@shopify/shopify-app-session-storage-memory": ["@shopify/shopify-app-session-storage-memory@8.0.1", "", { "peerDependencies": { "@shopify/shopify-api": "^15.0.0", "@shopify/shopify-app-session-storage": "^7.0.0" } }, "sha512-9ApSufx1MlMwsvBR3fNAF4Rb/p89tbyvls1OKP525XfznLuHAiK691K5NCD1GLt2livk4vVHfRB7v2VXmR1P8g=="],
 
-    "@shopify/storefront-api-client": ["@shopify/storefront-api-client@1.0.10", "", { "dependencies": { "@shopify/graphql-client": "^1.4.2" } }, "sha512-A0ItFW58L5+y/jnnJDEsmt2YcQSt2BG+pNoQOYRpPBJaOLpTj7A13q1QVrE5XYVGZCA6ZQ6FqAtgosHHrkut0Q=="],
+    "@shopify/storefront-api-client": ["@shopify/storefront-api-client@2.0.1", "", { "dependencies": { "@shopify/graphql-client": "^2.0.1" } }, "sha512-GsEb5L3y8ffqWHr7LPyrs8tFtfZJPlyC1kS3YClGQXX1eWS3HqWysvMwnEiXbYwCA0pUkthvAcqLZj/xXx3wCQ=="],
 
     "@shopify/ui-extensions": ["@shopify/ui-extensions@2026.7.4", "", { "dependencies": { "ts-morph": "^25.0.1" }, "peerDependencies": { "@preact/signals": "*", "preact": "*" }, "optionalPeers": ["@preact/signals", "preact"] }, "sha512-z0CcCIpQCAYnEJ+A4pW0zW1KdVQZnrD4uZVMWcci8IeCTCF62yYm0k5CZCnwdrP70l2v7ZX3rsy/bGqOjRAbug=="],
 

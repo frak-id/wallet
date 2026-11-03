@@ -21,6 +21,7 @@ import {
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
 import { fetchAllOnboardingData } from "app/utils/onboarding.server";
+import { POLARIS_URL } from "app/utils/polaris";
 import { type ReactNode, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
@@ -94,7 +95,7 @@ export default function App() {
         onboardingDataPromise,
     } = useLoaderData<typeof loader>();
     return (
-        <AppProvider embedded apiKey={apiKey}>
+        <AppProvider apiKey={apiKey} polarisUrl={POLARIS_URL}>
             <RootProvider>
                 <Suspense fallback={<Skeleton />}>
                     <AppContent

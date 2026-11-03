@@ -1,8 +1,8 @@
-import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, Form, useActionData, useLoaderData } from "react-router";
 import { login } from "../../shopify.server";
+import { POLARIS_URL } from "../../utils/polaris";
 import { loginErrorMessage } from "./error.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -26,7 +26,8 @@ export default function Auth() {
     const { errors } = actionData || loaderData;
 
     return (
-        <AppProvider embedded={false}>
+        <>
+            <script src={POLARIS_URL} />
             <s-page>
                 <s-section>
                     <Form method="post">
@@ -48,6 +49,6 @@ export default function Auth() {
                     </Form>
                 </s-section>
             </s-page>
-        </AppProvider>
+        </>
     );
 }

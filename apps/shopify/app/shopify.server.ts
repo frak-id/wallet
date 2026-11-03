@@ -8,6 +8,7 @@ import { MemorySessionStorage } from "@shopify/shopify-app-session-storage-memor
 import { DrizzleSessionStorageAdapter } from "../db/adapter/sessionAdapter";
 import { sessionTable } from "../db/schema/sessionTable";
 import { drizzleDb } from "./db.server";
+import { POLARIS_URL } from "./utils/polaris";
 
 // If the app is running locally, use the memory session storage
 // Otherwise, use the drizzle session storage
@@ -27,6 +28,7 @@ const shopify = shopifyApp({
     authPathPrefix: "/auth",
     sessionStorage: sessionStorageAdapter,
     distribution: AppDistribution.AppStore,
+    polarisUrl: POLARIS_URL,
 });
 
 export default shopify;

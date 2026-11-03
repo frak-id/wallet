@@ -64,7 +64,7 @@ export default function App() {
                     content="width=device-width,initial-scale=1"
                 />
                 <link rel="preconnect" href="https://cdn.shopify.com/" />
-                {/* `polaris.js` appends this same sheet with `crossOrigin=""`;
+                {/* The Polaris script appends this same sheet with `crossOrigin=""`;
                     preload under that exact mode or the entry is not reused. */}
                 <link
                     rel="preload"
