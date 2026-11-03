@@ -557,8 +557,20 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
 /// the only step with no fallback, and a throwing one closes the sheet outright.
 let sharingBuildRetryDelays: [TimeInterval] = [0.25, 0.75]
 
-/// Tap-to-content budget for a full load, timed from the tap. Must stay above the ladder above.
+/// How long a full load has to reach `didFinish`, timed from the tap. Must stay above the ladder above.
 let sharingPageLoadDeadline: TimeInterval = 2
+
+/// How long a finished document has to say `ready`: the page boots after `didFinish` (up to 2.1 s seen).
+let sharingPageBootBudget: TimeInterval = 3
+
+/// An activation on a booted document; above `FrakSharingSheet`'s 0.4 s paint grace and two frames.
+let sharingActivationDeadline: TimeInterval = 1
+
+/// The activation watchdog's budget: what is left of `boot` on a warm document too young to have booted.
+func sharingActivationBudget(warmDocumentAge: TimeInterval?, boot: TimeInterval) -> TimeInterval {
+    guard let warmDocumentAge else { return sharingActivationDeadline }
+    return min(boot, max(sharingActivationDeadline, boot - warmDocumentAge))
+}
 
 /// Whether a failed session build is worth another attempt.
 ///

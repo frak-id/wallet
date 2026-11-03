@@ -94,12 +94,14 @@
                 Task { await imageCache.prefetch(image) }
             }
 
+            // Before `acquire`, which lends the view out and so always answers false after it.
+            let hadWarmView = pool.hasWarmView
             let webView = pool.acquire(SharingWebViewBinding(sessionId: sessionId))
 
             // A fragment activation is only same-document if the document is actually there;
             // hanging one off a half-loaded page would strand it.
             let activationBaseURL = webView.documentReady ? webView.loadedBaseURL : nil
-            switch (activationBaseURL, pool.hasWarmView) {
+            switch (activationBaseURL, hadWarmView) {
             case (.some, _): trace.mark("launch (warm view, ACTIVATING)")
             case (nil, true): trace.mark("launch (warm view, still loading)")
             case (nil, false): trace.mark("launch (COLD view)")
@@ -109,6 +111,7 @@
                 sessionId: sessionId,
                 trace: trace,
                 activationBaseURL: activationBaseURL,
+                warmDocumentReadyAt: activationBaseURL == nil ? nil : webView.documentReadyAt,
                 install: install,
                 detectInstall: detectInstall,
                 language: language,
@@ -123,7 +126,7 @@
                     onAction: { model?.onPageAction($0) },
                     onPageReady: {
                         trace.mark("document finished")
-                        model?.onPageReady()
+                        model?.onDocumentFinished()
                     },
                     onLoadFailed: {
                         trace.mark("load FAILED")

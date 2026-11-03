@@ -56,7 +56,9 @@
 
         /// Whether `loadedBaseURL` finished loading. A fragment change starts no request, so
         /// activating on top of a half-loaded document would leave the page stuck where it got to.
-        private(set) var documentReady = false
+        var documentReady: Bool { documentReadyAt != nil }
+        /// `Date`, as in `SharingTrace`: a monotonic clock would add a privacy-manifest reason.
+        private(set) var documentReadyAt: Date?
 
         /// Jetsammed content process, not loaded since. WebKit gives the view a new process on the
         /// next load, so this only tells `SharingWebViewPool` its warm URL is stale.
@@ -155,7 +157,7 @@
         ///     `SharingSession.warmBaseURL`, so it must not rely on `URL(string:)` round-tripping.
         func load(_ url: URL, baseURL: String? = nil) {
             loadedBaseURL = (baseURL ?? url.absoluteString).components(separatedBy: "#")[0]
-            documentReady = false
+            documentReadyAt = nil
             // This load is what gives a jetsammed view its new content process back.
             rendererGone = false
             requested = url
@@ -163,7 +165,7 @@
         }
 
         func onDocumentReady() {
-            documentReady = true
+            documentReadyAt = Date()
         }
 
         /// Performs a `SharingNavigation`. The activation case hangs its fragment off
@@ -433,7 +435,7 @@
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             // Ahead of the `settled` guard: a jetsammed renderer leaves nothing on screen, so a
             // pooled view still claiming `documentReady` would activate into a dead renderer.
-            documentReady = false
+            documentReadyAt = nil
             // Tells the pool its warm URL describes nothing on screen.
             rendererGone = true
             // A booked retry would only navigate a view with nothing behind it.
