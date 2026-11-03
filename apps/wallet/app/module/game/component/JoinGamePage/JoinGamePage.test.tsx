@@ -21,6 +21,10 @@ const {
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => navigate,
     Link: () => null,
+    Navigate: (props: object) => {
+        navigate(props);
+        return null;
+    },
 }));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
@@ -166,11 +170,25 @@ describe("JoinGamePage", () => {
     });
 
     it("tracks the screen view with whether the code was pre-filled", () => {
+        currentGame.data = openGame(false, null);
         render(<JoinGamePage initialCode="FRAK26" />);
 
         expect(trackEvent).toHaveBeenCalledWith("game_code_entry_viewed", {
             prefilled: true,
         });
+    });
+
+    it("sends a code to the referral page when no game is open", () => {
+        currentGame.data = { game: null, me: { participating: false } };
+        render(<JoinGamePage initialCode="LOLA10" />);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/referral/redeem",
+            search: { code: "LOLA10" },
+            replace: true,
+        });
+        expect(screen.queryByText("game.join.title")).toBeNull();
+        expect(trackEvent).not.toHaveBeenCalled();
     });
 
     it.each([

@@ -319,6 +319,18 @@ describe("RegisterPage — Frak Game onboarding", () => {
         }
     );
 
+    test("a friend's bonus with no game open skips the game rules", () => {
+        redeem.result = { kind: "user", signupReward: 1.5 };
+        reachReferralCode();
+
+        click("apply");
+        expect(screen.getByText("reward-1.5")).toBeInTheDocument();
+
+        click("continue");
+        expect(screen.queryByText("game-rules")).not.toBeInTheDocument();
+        expect(screen.getByText("notification-step")).toBeInTheDocument();
+    });
+
     test("a code that joins no game and earns nothing keeps the applied toast", () => {
         redeem.result = { kind: "frak" };
         reachReferralCode();

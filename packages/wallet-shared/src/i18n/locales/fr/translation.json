@@ -990,6 +990,7 @@
                 "pending": "En attente"
             },
             "reward": {
+                "bonusTitle": "Code appliqué, ta récompense t'attend !",
                 "title": "Tu es dans le jeu !",
                 "description": "Ta récompense est en attente. Elle se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",
                 "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",

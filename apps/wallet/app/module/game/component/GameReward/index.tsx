@@ -79,7 +79,7 @@ function BonusHero({ amount }: { amount: string }) {
                 <DeckBadge icon={GiftIcon} />
             </TicketDeck>
             <Text variant="heading3" color="onAction" as="h2">
-                {t("onboarding.game.reward.title")}
+                {t("onboarding.game.reward.bonusTitle")}
             </Text>
             <Text color="onAction" as="p">
                 {t("onboarding.game.reward.description")}
