@@ -244,6 +244,46 @@ describe("SoftUpdatePrompt — DownloadedBanner", () => {
     });
 });
 
+describe("SoftUpdatePrompt — ota_ready", () => {
+    test("restart reloads the webview onto the staged bundle", async () => {
+        const reload = vi.fn();
+        vi.stubGlobal("location", { ...window.location, reload });
+        const { wrapper } = createTestClient();
+
+        try {
+            render(<SoftUpdatePrompt mode="ota_ready" onDismiss={vi.fn()} />, {
+                wrapper,
+            });
+            fireEvent.click(
+                await screen.findByRole("button", {
+                    name: "version.softUpdate.downloaded.cta",
+                })
+            );
+        } finally {
+            vi.unstubAllGlobals();
+        }
+
+        expect(reload).toHaveBeenCalledTimes(1);
+        expect(completeNativeSoftUpdateMock).not.toHaveBeenCalled();
+    });
+
+    test("later hides it without reloading", async () => {
+        const { wrapper } = createTestClient();
+        const onDismiss = vi.fn();
+
+        render(<SoftUpdatePrompt mode="ota_ready" onDismiss={onDismiss} />, {
+            wrapper,
+        });
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "version.softUpdate.dismiss",
+            })
+        );
+
+        expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+});
+
 describe("SoftUpdatePrompt — in_progress", () => {
     test("invokes onDismiss so a wedged progress banner can be hidden", async () => {
         const { wrapper } = createTestClient();

@@ -1,5 +1,5 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { focusManager, type QueryClient } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { useVersionGate } from "@/module/version/hook/useVersionGate";
 import { versionKey } from "@/module/version/queryKeys/version";
@@ -19,7 +19,11 @@ const {
     isIosMock,
     isTauriMock,
     backendVersionGetMock,
+    stageOtaUpdateMock,
+    recordErrorMock,
 } = vi.hoisted(() => ({
+    stageOtaUpdateMock: vi.fn(),
+    recordErrorMock: vi.fn(),
     checkNativeUpdateMock: vi.fn(),
     listenToNativeUpdateStatusMock: vi.fn(),
     isAndroidMock: vi.fn(),
@@ -31,6 +35,10 @@ const {
 vi.mock("@/module/version/utils/nativeUpdater", () => ({
     checkNativeUpdate: checkNativeUpdateMock,
     listenToNativeUpdateStatus: listenToNativeUpdateStatusMock,
+}));
+
+vi.mock("@/module/version/utils/otaUpdater", () => ({
+    stageOtaUpdate: stageOtaUpdateMock,
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
@@ -51,6 +59,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         await importOriginal<typeof import("@frak-labs/wallet-shared")>();
     return {
         ...actual,
+        recordError: recordErrorMock,
         authenticatedBackendApi: {
             common: {
                 version: { get: backendVersionGetMock },
@@ -80,6 +89,9 @@ function setAndroidFloor(floor: string) {
 describe("useVersionGate hard floor", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
+        stageOtaUpdateMock.mockReset().mockResolvedValue({
+            status: "up_to_date",
+        });
         checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);
         listenToNativeUpdateStatusMock.mockReset().mockResolvedValue(null);
         isAndroidMock.mockReset().mockReturnValue(true);
@@ -224,9 +236,151 @@ describe("useVersionGate hard floor", () => {
     });
 });
 
+describe("useVersionGate OTA", () => {
+    beforeEach(({ queryWrapper }: WalletTestFixtures) => {
+        queryWrapper.client.clear();
+        stageOtaUpdateMock.mockReset();
+        recordErrorMock.mockReset();
+        checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);
+        listenToNativeUpdateStatusMock.mockReset().mockResolvedValue(null);
+        isAndroidMock.mockReset().mockReturnValue(false);
+        isIosMock.mockReset().mockReturnValue(true);
+        isTauriMock.mockReset().mockReturnValue(true);
+        backendVersionGetMock
+            .mockReset()
+            .mockResolvedValue({ data: { minVersion: { ios: "0.0.0" } } });
+        vi.useFakeTimers({ toFake: ["Date"] });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        focusManager.setFocused(undefined);
+    });
+
+    const comeBackLater = () =>
+        act(() => {
+            vi.setSystemTime(Date.now() + 10 * 60 * 1000);
+            focusManager.setFocused(false);
+            focusManager.setFocused(true);
+        });
+
+    test("offers a reload once an OTA bundle is staged", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        stageOtaUpdateMock.mockResolvedValue({ status: "staged" });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current).toEqual({ kind: "ota_ready" });
+        });
+    });
+
+    test("checks again when the app comes back to the foreground", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        stageOtaUpdateMock
+            .mockResolvedValueOnce({ status: "up_to_date" })
+            .mockResolvedValue({ status: "staged" });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() =>
+            expect(stageOtaUpdateMock).toHaveBeenCalledTimes(1)
+        );
+        expect(result.current.kind).toBe("idle");
+
+        comeBackLater();
+
+        await waitFor(() => {
+            expect(result.current).toEqual({ kind: "ota_ready" });
+        });
+    });
+
+    test("stops checking once a bundle is staged", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        stageOtaUpdateMock.mockResolvedValue({ status: "staged" });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() => expect(result.current.kind).toBe("ota_ready"));
+
+        comeBackLater();
+        await act(() => Promise.resolve());
+
+        expect(stageOtaUpdateMock).toHaveBeenCalledTimes(1);
+        expect(result.current.kind).toBe("ota_ready");
+    });
+
+    test("reports a failed check and stays idle", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        const error = new Error("offline");
+        stageOtaUpdateMock.mockRejectedValue(error);
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() =>
+            expect(recordErrorMock).toHaveBeenCalledWith(error, {
+                source: "ota_update",
+            })
+        );
+        expect(result.current.kind).toBe("idle");
+    });
+
+    test("a Play download in progress still wins over a staged bundle", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        isAndroidMock.mockReturnValue(true);
+        isIosMock.mockReturnValue(false);
+        backendVersionGetMock.mockResolvedValue({
+            data: { minVersion: { android: "0.0.0" } },
+        });
+        stageOtaUpdateMock.mockResolvedValue({ status: "staged" });
+        checkNativeUpdateMock.mockResolvedValue({
+            status: "downloaded",
+            currentVersion: "1.2.3",
+        });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() =>
+            expect(
+                queryWrapper.client.getQueryData(versionKey.otaUpdate)
+            ).toBeDefined()
+        );
+        await waitFor(() =>
+            expect(result.current.kind).toBe("soft_update_downloaded")
+        );
+    });
+
+    test("does not check outside Tauri", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        isTauriMock.mockReturnValue(false);
+
+        renderHook(() => useVersionGate(), { wrapper: queryWrapper.wrapper });
+
+        await act(() => Promise.resolve());
+        expect(stageOtaUpdateMock).not.toHaveBeenCalled();
+    });
+});
+
 describe("useVersionGate", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
+        stageOtaUpdateMock.mockReset().mockResolvedValue({
+            status: "up_to_date",
+        });
         checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);
         listenToNativeUpdateStatusMock.mockReset().mockResolvedValue(null);
         isAndroidMock.mockReset().mockReturnValue(true);

@@ -17,6 +17,8 @@ export function VersionGate() {
     const state = useVersionGate();
     const [dismissedFor, setDismissedFor] = useState<string | null>(null);
     const [progressDismissed, setProgressDismissed] = useState(false);
+    // The staged bundle boots at the next launch anyway, so "later" holds for the session.
+    const [otaDismissed, setOtaDismissed] = useState(false);
 
     // Reset dismissal whenever the store advertises a newer release than
     // the one the user previously dismissed — staying silent across
@@ -62,6 +64,16 @@ export function VersionGate() {
 
     if (state.kind === "soft_update_downloaded") {
         return <SoftUpdatePrompt mode="downloaded" />;
+    }
+
+    if (state.kind === "ota_ready") {
+        if (otaDismissed) return null;
+        return (
+            <SoftUpdatePrompt
+                mode="ota_ready"
+                onDismiss={() => setOtaDismissed(true)}
+            />
+        );
     }
 
     if (state.kind === "soft_update") {
