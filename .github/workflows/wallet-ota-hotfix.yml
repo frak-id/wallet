@@ -193,6 +193,8 @@ jobs:
       # the __OTA_CHANNEL__ define this bundle will be published under.
       - name: "🏗️ Build wallet frontend"
         run: |
+          OTA_UPDATE_ID=$(git rev-parse --short HEAD)
+          export OTA_UPDATE_ID
           sst shell --stage "$STAGE" --print-logs -- bash -c \
             "cd apps/wallet && NODE_ENV=production TAURI_CLI_RUNNING=1 TAURI_ENV_PLATFORM=$PLATFORM vite build"
         env:

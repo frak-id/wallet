@@ -119,6 +119,26 @@ describe("ProfilePage", () => {
         ).toBeInTheDocument();
     });
 
+    test("names the OTA update the bundle was built from", () => {
+        vi.stubEnv("APP_VERSION", "1.1.12");
+        vi.stubEnv("OTA_UPDATE_ID", "07ee37d5d");
+
+        const view = within(render(<ProfilePage />).container);
+
+        expect(
+            view.getByText("Version 1.1.12 - Update 07ee37d5d")
+        ).toBeInTheDocument();
+    });
+
+    test("shows the version alone for a store build", () => {
+        vi.stubEnv("APP_VERSION", "1.1.12");
+        vi.stubEnv("OTA_UPDATE_ID", "");
+
+        const view = within(render(<ProfilePage />).container);
+
+        expect(view.getByText("Version 1.1.12")).toBeInTheDocument();
+    });
+
     test("should hide the version when the environment fallback is UNKNOWN", async ({
         freshAuthenticationStore,
     }) => {

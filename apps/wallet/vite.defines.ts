@@ -104,6 +104,8 @@ export async function getDefineProps({
         __IS_ANDROID__: JSON.stringify(isTauriAndroid),
         __OTA_CHANNEL__: JSON.stringify(otaChannel),
         "process.env.APP_VERSION": JSON.stringify(appVersion),
+        // Set only by wallet-ota-hotfix.yml: the commit an OTA bundle was built from.
+        "process.env.OTA_UPDATE_ID": JSON.stringify(process.env.OTA_UPDATE_ID),
         "process.env.FRAK_WALLET_URL": JSON.stringify(
             sandboxEnv.walletUrl ??
                 getSstResource("FRAK_WALLET_URL") ??
