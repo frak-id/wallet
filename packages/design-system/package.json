@@ -7,6 +7,7 @@
   "exports": {
     "./components/charts": "./src/components/charts/index.ts",
     "./components/RadioGroup/styles": "./src/components/RadioGroup/radioGroup.css.ts",
+    "./components/ToastSurface/styles": "./src/components/ToastSurface/toastSurface.css.ts",
     "./components/*": "./src/components/*/index.tsx",
     "./hooks/useMediaQuery": "./src/hooks/useMediaQuery.ts",
     "./hooks/useResponsiveValue": "./src/hooks/useResponsiveValue.ts",
