@@ -149,6 +149,13 @@ private func sharingHTTPSImageURL(_ value: String) -> URL? {
     return url
 }
 
+/// The image the page hands back on Share, absent a pick: mirrors `useSharingPageController`'s
+/// precedence, minus the logo, which the warm-up already fetches.
+func sharingPreviewImageURL(_ request: SharingRequest) -> URL? {
+    let firstTitled = request.products.first { nonEmpty($0.title) != nil }
+    return (nonEmpty(request.shareImageURL) ?? nonEmpty(firstTitled?.imageURL)).flatMap(URL.init(string:))
+}
+
 /// https-only and no private/link-local target: this SDK fetches a URL it did not choose.
 func isFetchableShareImageURL(_ url: URL) -> Bool {
     guard url.scheme == "https", let host = url.host?.lowercased(), !host.isEmpty else { return false }

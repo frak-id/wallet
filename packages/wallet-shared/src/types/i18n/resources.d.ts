@@ -1006,6 +1006,7 @@ export default interface Resources {
           "title": "Your {{reward}} bonus"
         },
         "reward": {
+          "bonusTitle": "Code applied, your reward is waiting!",
           "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
           "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
           "game": {

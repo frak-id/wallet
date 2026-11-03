@@ -17,6 +17,10 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **The share preview image is fetched when the sheet opens.** `shareImageURL`, or the image of
+  the product the sheet selects, was only fetched when the user tapped Share, and had 0.3 seconds
+  to arrive before the system share sheet opened without it. It is now fetched as soon as the sheet
+  is presented. The image URL must answer directly: redirects are still refused.
 - **The sharing sheet no longer opens the system share sheet on its own.** When the hosted page
   was slow to report itself ready, the sheet reloaded it and then gave the reload only 1 second, less
   than a full page load takes, so it fell back to the system share sheet over a page that was about to

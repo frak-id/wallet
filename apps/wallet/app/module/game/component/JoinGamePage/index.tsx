@@ -5,7 +5,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { GiftIcon, InstagramIcon } from "@frak-labs/design-system/icons";
 import { type RedeemResult, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
@@ -65,10 +65,14 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
         current.data?.game && !current.data.me.participating
             ? current.data.game
             : null;
+    // Every shared code lands here; with no game open it can only be a friend's code.
+    const noGame = current.data !== undefined && !current.data.game;
+    const hasGame = !!current.data?.game;
 
     useEffect(() => {
+        if (!hasGame) return;
         trackEvent("game_code_entry_viewed", { prefilled: !!initialCode });
-    }, [initialCode]);
+    }, [initialCode, hasGame]);
 
     const handleRedeemed = async (result: RedeemResult) => {
         trackEvent("game_code_submitted", {
@@ -97,6 +101,16 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
                 reward={gameRewardOf(joined)}
                 game={joined.game}
                 onContinue={() => navigate({ to: "/game", replace: true })}
+            />
+        );
+    }
+
+    if (noGame) {
+        return (
+            <Navigate
+                to="/profile/referral/redeem"
+                search={{ code: initialCode }}
+                replace
             />
         );
     }

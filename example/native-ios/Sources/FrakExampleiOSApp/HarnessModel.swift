@@ -63,7 +63,8 @@ final class HarnessModel: ObservableObject {
         addLog("Opening the share sheet for the whole store...", type: .info)
         pendingSharingRequest = SharingRequest(
             targetInteraction: "purchase",
-            placement: "home"
+            placement: "home",
+            shareImageURL: storeShareImageURL
         )
         isSharingPresented = true
     }

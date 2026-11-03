@@ -8,7 +8,7 @@
 #   bun run native:ios              # generate + build + install + launch
 #   bun run native:ios:build        # compile-only typecheck, no simulator needed
 #   bun run native:ios:xcode        # open the generated project in Xcode
-#   bun run native:ios:device       # build + install + launch on a physical iPhone
+#   bun run native:ios:device       # build + install + launch on a physical iPhone or iPad
 #
 # Simulator selection, in priority order:
 #   1. an already-booted simulator
@@ -249,8 +249,8 @@ do_run() {
 	xcrun simctl launch --console-pty "$udid" "$BUNDLE_ID"
 }
 
-# Emits "<udid>\t<name>" per connected device. devicectl's JSON output is the only
-# stable read: the human table pads columns and truncates long names.
+# Emits "<CoreDevice id>\t<name>\t<UDID>" per connected physical device. devicectl's JSON
+# output is the only stable read: the human table pads columns and truncates long names.
 list_devices() {
 	local json
 	json="$(mktemp)"
@@ -270,7 +270,11 @@ for d in devices:
         continue
     if conn.get("tunnelState") == "unavailable" and not conn.get("transportType"):
         continue
-    print("\t".join([d["identifier"], d.get("deviceProperties", {}).get("name", "?")]))
+    # Simulators are listed as paired with a `sameMachine` transport, so the check above keeps them.
+    hardware = d.get("hardwareProperties", {})
+    if hardware.get("reality") != "physical":
+        continue
+    print("\t".join([d["identifier"], d.get("deviceProperties", {}).get("name", "?"), hardware.get("udid", "?")]))
 ' "$json"
 	rm -f "$json"
 }
@@ -278,14 +282,14 @@ for d in devices:
 select_device() {
 	local devices
 	devices="$(list_devices)"
-	[ -n "$devices" ] || die "No paired device found. Plug in the iPhone, unlock it, and trust this Mac."
+	[ -n "$devices" ] || die "No paired device found. Plug in the iPhone or iPad, unlock it, and trust this Mac."
 
 	local wanted="${IOS_DEVICE:-}"
 	if [ -n "$wanted" ]; then
 		local match
-		match="$(echo "$devices" | awk -F'\t' -v w="$wanted" '$1 == w || $2 == w {print $1; exit}')"
+		match="$(echo "$devices" | awk -F'\t' -v w="$wanted" '$1 == w || $2 == w || $3 == w {print $1; exit}')"
 		[ -n "$match" ] || die "No paired device matching IOS_DEVICE=\"$wanted\". Available:
-$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $1}')"
+$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $3}')"
 		echo "$match"
 		return
 	fi
@@ -293,7 +297,7 @@ $(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $1}')"
 	local count
 	count="$(echo "$devices" | wc -l | tr -d ' ')"
 	[ "$count" -eq 1 ] || die "$count paired devices found — set IOS_DEVICE to pick one:
-$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $1}')"
+$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $3}')"
 	echo "$devices" | cut -f1
 }
 
@@ -388,8 +392,8 @@ format) do_format ;;
 	echo "Usage: $0 {run|device|logs|build|archive|upload|xcode|lint|format}"
 	echo ""
 	echo "  run     - generate + build + install + launch on a simulator, then stream logs"
-	echo "  device  - same, on a physical iPhone (needs Developer Mode and a signing team)"
-	echo "  logs    - relaunch on a physical iPhone and stream the SDK log output"
+	echo "  device  - same, on a physical iPhone or iPad (needs Developer Mode and a signing team)"
+	echo "  logs    - relaunch on a physical iPhone or iPad and stream the SDK log output"
 	echo "  build   - compile-only typecheck (Swift 6 strict concurrency), no simulator"
 	echo "  archive - signed App Store .ipa (needs FRAK_ASC_* and a signing team)"
 	echo "  upload  - send an archived .ipa to App Store Connect / TestFlight"

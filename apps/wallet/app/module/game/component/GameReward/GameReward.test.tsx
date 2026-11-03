@@ -71,6 +71,10 @@ describe("GameReward", () => {
 
         expect(screen.getByText(/^2,50\s€$/)).toBeInTheDocument();
         expect(
+            screen.getByText("onboarding.game.reward.bonusTitle")
+        ).toBeInTheDocument();
+        expect(screen.queryByText("onboarding.game.reward.title")).toBeNull();
+        expect(
             screen.getByText("onboarding.game.reward.description")
         ).toBeInTheDocument();
         expect(screen.queryByText(/bonus\.title/)).toBeNull();
