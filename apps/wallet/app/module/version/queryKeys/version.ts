@@ -15,6 +15,12 @@ export namespace versionKey {
     export const nativeStatus = [base, "native-status"] as const;
 
     /**
+     * OTA bundle check and staging (CrabNebula). Never persisted: a stored
+     * `up_to_date` would outlive the binary it was checked for.
+     */
+    export const otaUpdate = [base, "ota-update"] as const;
+
+    /**
      * Mutation: deep-link to the platform store from the hard-update gate.
      */
     export const openStore = [base, "open-store"] as const;

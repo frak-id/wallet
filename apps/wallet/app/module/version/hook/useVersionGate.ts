@@ -3,7 +3,7 @@ import {
     IS_IOS,
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi, recordError } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginListener } from "@tauri-apps/api/core";
 import { useEffect } from "react";
@@ -14,6 +14,7 @@ import {
     listenToNativeUpdateStatus,
     type NativeUpdateStatus,
 } from "../utils/nativeUpdater";
+import { stageOtaUpdate } from "../utils/otaUpdater";
 
 export type VersionGateState =
     | { kind: "idle" }
@@ -23,7 +24,8 @@ export type VersionGateState =
           storeVersion?: string;
       }
     | { kind: "soft_update_in_progress" }
-    | { kind: "soft_update_downloaded" };
+    | { kind: "soft_update_downloaded" }
+    | { kind: "ota_ready" };
 
 /**
  * 5 min cache: the wallet refetches on focus anyway, this just avoids
@@ -99,6 +101,22 @@ export function useVersionGate(): VersionGateState {
             query.state.data?.status === "in_progress" ? 3000 : false,
     });
 
+    const ota = useQuery({
+        queryKey: versionKey.otaUpdate,
+        queryFn: () =>
+            stageOtaUpdate().catch((error: unknown) => {
+                recordError(error, { source: "ota_update" });
+                throw error;
+            }),
+        enabled: IS_TAURI,
+        // A staged bundle stays staged until the reload: re-checking could hide the prompt.
+        staleTime: (query) =>
+            query.state.data?.status === "staged" ? "static" : STALE_TIME_MS,
+        refetchOnWindowFocus: true,
+        retry: false,
+        meta: { storable: false },
+    });
+
     // Subscribe to the native push channel on Android so download progress
     // and completion land in the cache without waiting for window focus.
     // No-op on iOS / web — the helper resolves to `null` there.
@@ -162,6 +180,9 @@ export function useVersionGate(): VersionGateState {
     }
     if (native.data?.status === "downloaded") {
         return { kind: "soft_update_downloaded" };
+    }
+    if (ota.data?.status === "staged") {
+        return { kind: "ota_ready" };
     }
     if (native.data?.status === "available") {
         return {

@@ -25,7 +25,8 @@ const MAX_SOFT_UPDATE_ATTEMPTS = 2;
 type SoftUpdatePromptProps =
     | { mode: "available"; storeVersion?: string; onDismiss: () => void }
     | { mode: "in_progress"; onDismiss: () => void }
-    | { mode: "downloaded" };
+    | { mode: "downloaded" }
+    | { mode: "ota_ready"; onDismiss: () => void };
 
 /**
  * Dismissible banner shown when a soft update is available.
@@ -38,6 +39,8 @@ type SoftUpdatePromptProps =
  *                  pulls the update in the background.
  * `downloaded`   — Android only. Final "Restart now" CTA that calls
  *                  `completeUpdate()` to install + relaunch.
+ * `ota_ready`    — An OTA bundle is staged. "Restart now" reloads the
+ *                  webview, which then boots the new bundle.
  *
  * Layout mirrors the wallet's `ResponsiveModal` confirmation modals
  * (e.g. `DeleteRedemptionConfirmModal`): heading + secondary description
@@ -72,6 +75,16 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
                     </Box>
                 </Box>
             </Card>
+        );
+    }
+
+    if (props.mode === "ota_ready") {
+        return (
+            <ReadyBanner
+                t={t}
+                onRestart={() => location.reload()}
+                onDismiss={props.onDismiss}
+            />
         );
     }
 
@@ -197,6 +210,26 @@ function DownloadedBanner({ t }: { t: DefaultTranslate }) {
     });
 
     return (
+        <ReadyBanner
+            t={t}
+            onRestart={() => complete.mutate()}
+            disabled={complete.isPending}
+        />
+    );
+}
+
+function ReadyBanner({
+    t,
+    onRestart,
+    onDismiss,
+    disabled,
+}: {
+    t: DefaultTranslate;
+    onRestart: () => void;
+    onDismiss?: () => void;
+    disabled?: boolean;
+}) {
+    return (
         <Card variant="elevated" className={styles.banner}>
             <Box className={styles.body}>
                 <Box className={styles.successContent}>
@@ -212,12 +245,14 @@ function DownloadedBanner({ t }: { t: DefaultTranslate }) {
                     </Text>
                 </Box>
                 <Box className={styles.actions}>
-                    <Button
-                        onClick={() => complete.mutate()}
-                        disabled={complete.isPending}
-                    >
+                    <Button onClick={onRestart} disabled={disabled}>
                         {t("version.softUpdate.downloaded.cta")}
                     </Button>
+                    {onDismiss && (
+                        <Button variant="secondary" onClick={onDismiss}>
+                            {t("version.softUpdate.dismiss")}
+                        </Button>
+                    )}
                 </Box>
             </Box>
         </Card>
