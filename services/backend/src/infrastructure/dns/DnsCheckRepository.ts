@@ -5,6 +5,7 @@ import {
     type Address,
     concatHex,
     type Hex,
+    isAddress,
     isHex,
     keccak256,
     toHex,
@@ -39,6 +40,33 @@ function setupCodeSubject(
     if ("wallet" in owner) return owner.wallet;
     if (email) return toHex(email.trim().toLowerCase());
     return null;
+}
+
+/** `null` without a salt: an unsalted code is computable by anyone. */
+function setupCodeHash(host: string, subject: Hex): Hex | null {
+    const salt = process.env.PRODUCT_SETUP_CODE_SALT;
+    if (!salt) return null;
+    return keccak256(concatHex([toHex(host), subject, toHex(salt)]));
+}
+
+/** The setup code for an already-normalized `host`, bound to a wallet address or an email; 400 `INVALID_OWNER` otherwise. */
+export function setupCodeFor(host: string, walletOrEmail: string): Hex {
+    const owner = walletOrEmail.trim();
+    if (!isAddress(owner) && !owner.includes("@")) {
+        throw HttpError.badRequest(
+            "INVALID_OWNER",
+            "The owner is a wallet address or an email"
+        );
+    }
+    const subject = isAddress(owner) ? owner : toHex(owner.toLowerCase());
+    const code = setupCodeHash(host, subject);
+    if (!code) {
+        throw HttpError.internal(
+            "SETUP_CODE_SALT_MISSING",
+            "PRODUCT_SETUP_CODE_SALT is not set"
+        );
+    }
+    return code;
 }
 
 /**
@@ -125,15 +153,9 @@ export class DnsCheckRepository {
         // stable public identifier (wallet address, else account email).
         if (setupCode && isHex(setupCode)) {
             const subject = setupCodeSubject(owner, email);
-            if (subject) {
-                const hash = keccak256(
-                    concatHex([
-                        toHex(domain),
-                        subject,
-                        toHex(process.env.PRODUCT_SETUP_CODE_SALT as string),
-                    ])
-                );
-                if (BigInt(hash) === BigInt(setupCode)) return true;
+            const expected = subject && setupCodeHash(domain, subject);
+            if (expected && BigInt(expected) === BigInt(setupCode)) {
+                return true;
             }
         }
 

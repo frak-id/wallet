@@ -35,6 +35,7 @@ describe("useGetRewardHistory", () => {
     }
 
     const mockItem = {
+        id: "asset-1",
         merchant: {
             id: "merchant-1",
             name: "Frak",

@@ -51,7 +51,7 @@ describe("ShareButtonPreview", () => {
         });
 
         expect(button).toHaveStyle({
-            background: "transparent",
+            backgroundColor: "rgba(0, 0, 0, 0)",
             borderWidth: "1px",
         });
     });

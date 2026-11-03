@@ -5,7 +5,13 @@ import { Balance } from "./index";
 
 const mockUseGetUserBalance = vi.fn();
 const mockUseGetPendingRewards = vi.fn();
+const mockUseGetUnpaidRewards = vi.fn();
+const mockNavigate = vi.fn();
 const mockT = vi.fn((key: string) => key);
+
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => mockNavigate,
+}));
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
@@ -28,6 +34,10 @@ vi.mock("@/module/tokens/hook/useGetPendingRewards", () => ({
     useGetPendingRewards: () => mockUseGetPendingRewards(),
 }));
 
+vi.mock("@/module/tokens/hook/useGetUnpaidRewards", () => ({
+    useGetUnpaidRewards: () => mockUseGetUnpaidRewards(),
+}));
+
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -36,6 +46,7 @@ describe("Balance", () => {
             totalClaimable: 0,
             pendingRewards: [],
         });
+        mockUseGetUnpaidRewards.mockReturnValue({ totalUnpaid: 0 });
     });
     it("should render balance label via i18n", () => {
         mockUseGetUserBalance.mockReturnValue({
@@ -182,6 +193,39 @@ describe("Balance", () => {
         expect(modalStore.getState().modal).toEqual({
             id: "pendingGains",
         });
+    });
+
+    it("adds the rewards not on-chain yet to the pending amount", () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: { total: { eurAmount: 0 } },
+        });
+        mockUseGetPendingRewards.mockReturnValue({
+            totalClaimable: 2,
+            pendingRewards: [],
+        });
+        mockUseGetUnpaidRewards.mockReturnValue({ totalUnpaid: 1.5 });
+
+        render(<Balance />);
+
+        expect(screen.getByText("\u20ac3.50")).toBeInTheDocument();
+    });
+
+    it("opens the history when only rewards not on-chain yet are pending", () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: { total: { eurAmount: 0 } },
+        });
+        mockUseGetUnpaidRewards.mockReturnValue({ totalUnpaid: 1 });
+
+        render(<Balance />);
+
+        fireEvent.click(
+            screen
+                .getByText("wallet.stats.pending")
+                .closest("button") as HTMLButtonElement
+        );
+
+        expect(mockNavigate).toHaveBeenCalledWith({ to: "/history" });
+        expect(modalStore.getState().modal).toBeNull();
     });
 
     it("should open empty transferred gains modal when lifetime stat card is clicked with zero amount", () => {

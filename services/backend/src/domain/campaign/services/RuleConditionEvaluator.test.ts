@@ -7,6 +7,13 @@ import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 const evaluator = new RuleConditionEvaluator();
 
+const item = (fields: Partial<PurchaseItem>): PurchaseItem => ({
+    quantity: 1,
+    unitPrice: 0,
+    totalPrice: 0,
+    ...fields,
+});
+
 // productScope items — evaluated with the item itself as the root object
 // (`field: "productId"`, not `field: "purchase.items.productId"`).
 const itemA = {
@@ -237,8 +244,8 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
 describe("RuleConditionEvaluator — numeric comparison with string operands", () => {
     // Thresholds arrive from JSON as strings ("10") while the item field is a
     // real number: a lexicographic fallback would rank "9" above "10".
-    const cheap = { unitPrice: 9, quantity: 9 };
-    const pricey = { unitPrice: 10, quantity: 10 };
+    const cheap = item({ unitPrice: 9, quantity: 9 });
+    const pricey = item({ unitPrice: 10, quantity: 10 });
 
     it("compares a numeric-string condition value numerically", () => {
         const gt: RuleCondition = {
@@ -247,7 +254,7 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
             value: "10",
         };
         expect(evaluator.evaluate([gt], cheap)).toBe(false);
-        expect(evaluator.evaluate([gt], { unitPrice: 11 })).toBe(true);
+        expect(evaluator.evaluate([gt], item({ unitPrice: 11 }))).toBe(true);
 
         const lt: RuleCondition = {
             field: "unitPrice",
@@ -270,14 +277,14 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
             operator: "gte",
             value: "79.90",
         };
-        expect(evaluator.evaluate([gte], { unitPrice: 79.9 })).toBe(true);
+        expect(evaluator.evaluate([gte], item({ unitPrice: 79.9 }))).toBe(true);
 
         const gt: RuleCondition = {
             field: "unitPrice",
             operator: "gt",
             value: "79.90",
         };
-        expect(evaluator.evaluate([gt], { unitPrice: 79.9 })).toBe(false);
+        expect(evaluator.evaluate([gt], item({ unitPrice: 79.9 }))).toBe(false);
     });
 
     it("compares between bounds numerically when authored as strings", () => {
@@ -287,9 +294,13 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
             value: "9",
             valueTo: "100",
         };
-        expect(evaluator.evaluate([between], { unitPrice: 50 })).toBe(true);
+        expect(evaluator.evaluate([between], item({ unitPrice: 50 }))).toBe(
+            true
+        );
         // 200 is outside [9, 100]; lexicographically "200" < "9" would pass.
-        expect(evaluator.evaluate([between], { unitPrice: 200 })).toBe(false);
+        expect(evaluator.evaluate([between], item({ unitPrice: 200 }))).toBe(
+            false
+        );
     });
 
     it("treats equal between bounds as exactly that value", () => {
@@ -299,9 +310,15 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
             value: 50,
             valueTo: 50,
         };
-        expect(evaluator.evaluate([between], { unitPrice: 50 })).toBe(true);
-        expect(evaluator.evaluate([between], { unitPrice: 49 })).toBe(false);
-        expect(evaluator.evaluate([between], { unitPrice: 51 })).toBe(false);
+        expect(evaluator.evaluate([between], item({ unitPrice: 50 }))).toBe(
+            true
+        );
+        expect(evaluator.evaluate([between], item({ unitPrice: 49 }))).toBe(
+            false
+        );
+        expect(evaluator.evaluate([between], item({ unitPrice: 51 }))).toBe(
+            false
+        );
     });
 
     it("still compares genuine text lexicographically", () => {
@@ -310,8 +327,8 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
             operator: "gt",
             value: "A",
         };
-        expect(evaluator.evaluate([gt], { name: "B" })).toBe(true);
-        expect(evaluator.evaluate([gt], { name: "0" })).toBe(false);
+        expect(evaluator.evaluate([gt], item({ name: "B" }))).toBe(true);
+        expect(evaluator.evaluate([gt], item({ name: "0" }))).toBe(false);
     });
 });
 
@@ -369,10 +386,12 @@ describe("RuleConditionEvaluator — between with a null bound", () => {
             value: 10,
             valueTo: null,
         };
-        expect(evaluator.evaluate([condition], { unitPrice: 5000 })).toBe(
+        expect(evaluator.evaluate([condition], item({ unitPrice: 5000 }))).toBe(
             false
         );
-        expect(evaluator.evaluate([condition], { unitPrice: 50 })).toBe(false);
+        expect(evaluator.evaluate([condition], item({ unitPrice: 50 }))).toBe(
+            false
+        );
     });
 
     it("fails closed on a null lower bound", () => {
@@ -382,7 +401,9 @@ describe("RuleConditionEvaluator — between with a null bound", () => {
             value: null,
             valueTo: 100,
         };
-        expect(evaluator.evaluate([condition], { unitPrice: 50 })).toBe(false);
+        expect(evaluator.evaluate([condition], item({ unitPrice: 50 }))).toBe(
+            false
+        );
     });
 });
 
@@ -411,8 +432,12 @@ describe("RuleConditionEvaluator — ordering operators on an absent field", () 
             operator: "gte",
             value: 1000000,
         };
-        expect(evaluator.evaluate([gt], { unitPrice: 50 })).toBe(false);
-        expect(evaluator.evaluate([gte], { unitPrice: 50 })).toBe(false);
+        expect(evaluator.evaluate([gt], { unitPrice: 50 } as never)).toBe(
+            false
+        );
+        expect(evaluator.evaluate([gte], { unitPrice: 50 } as never)).toBe(
+            false
+        );
     });
 
     it("does not let a null item field satisfy an ordering operator", () => {
@@ -448,8 +473,12 @@ describe("RuleConditionEvaluator — exists/not_exists on a null field", () => {
             operator: "exists",
             value: null,
         };
-        expect(evaluator.evaluate([condition], { sku: "SHOE-42" })).toBe(true);
-        expect(evaluator.evaluate([condition], { sku: null })).toBe(false);
+        expect(evaluator.evaluate([condition], item({ sku: "SHOE-42" }))).toBe(
+            true
+        );
+        expect(evaluator.evaluate([condition], { sku: null } as never)).toBe(
+            false
+        );
     });
 
     it("treats a null field as absent for not_exists", () => {
@@ -458,7 +487,11 @@ describe("RuleConditionEvaluator — exists/not_exists on a null field", () => {
             operator: "not_exists",
             value: null,
         };
-        expect(evaluator.evaluate([condition], { sku: null })).toBe(true);
-        expect(evaluator.evaluate([condition], { sku: "SHOE-42" })).toBe(false);
+        expect(evaluator.evaluate([condition], { sku: null } as never)).toBe(
+            true
+        );
+        expect(evaluator.evaluate([condition], item({ sku: "SHOE-42" }))).toBe(
+            false
+        );
     });
 });

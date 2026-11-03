@@ -25,9 +25,10 @@ const FrakType = {
     /**
      * Custom hex type
      */
-    HexType: () => {
+    HexType: (options?: { maxLength?: number }) => {
         const schema = elysiaTypes.String({
             pattern: "0x[0-9a-fA-F]*",
+            ...options,
         }) as TElysiaString & { static: Hex };
 
         return elysiaTypes

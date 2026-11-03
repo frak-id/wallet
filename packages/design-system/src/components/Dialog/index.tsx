@@ -1,9 +1,11 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { Overlay } from "../Overlay";
 import {
-    dialogContentStyle,
+    dialogContent,
     dialogDescriptionStyle,
+    dialogOverlay,
     dialogTitleStyle,
 } from "./dialog.css";
 
@@ -45,23 +47,25 @@ export function DialogDescription({
 
 export const DialogClose = RadixDialog.Close;
 
-type DialogContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
-    children: ReactNode;
-};
+type DialogContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> &
+    RecipeVariants<typeof dialogContent> & {
+        children: ReactNode;
+    };
 
 export function DialogContent({
     children,
     className,
+    layer,
     ...props
 }: DialogContentProps) {
-    const combinedClassName = [dialogContentStyle, className]
+    const combinedClassName = [dialogContent({ layer }), className]
         .filter(Boolean)
         .join(" ");
 
     return (
         <RadixDialog.Portal>
             <RadixDialog.Overlay asChild>
-                <Overlay />
+                <Overlay className={dialogOverlay({ layer })} />
             </RadixDialog.Overlay>
             <RadixDialog.Content className={combinedClassName} {...props}>
                 {children}

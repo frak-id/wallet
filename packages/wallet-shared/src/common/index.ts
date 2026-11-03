@@ -40,6 +40,8 @@ export type {
     ModalEventMap,
     MoneriumCallbackOutcome,
     MoneriumEventMap,
+    MoneriumOrderAmountBucket,
+    MoneriumSiweFailure,
     NotificationEventMap,
     NotificationOptInOutcome,
     NotificationTogglePhase,
@@ -77,6 +79,7 @@ export {
 export {
     authenticatedBackendApi,
     authenticatedWalletApi,
+    backendUrl,
 } from "./api/backendClient";
 export {
     type ApiError,
@@ -84,6 +87,7 @@ export {
     type ApiErrorKeyMap,
     asApiError,
     getErrorCode,
+    getErrorStatus,
     isPermanentHttpError,
     isTransientHttpError,
     resolveApiErrorKey,

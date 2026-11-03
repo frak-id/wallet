@@ -17,6 +17,7 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 
 type LoginSearch = {
@@ -53,11 +54,7 @@ function LoginPage() {
         const navigated = await executePendingActions();
         if (navigated) return;
         if (ref) {
-            navigate({
-                to: "/profile/referral/redeem",
-                search: { code: ref },
-                replace: true,
-            });
+            navigate({ ...redeemCodeRoute(ref), replace: true });
             return;
         }
         navigate({ to: "/wallet", replace: true });

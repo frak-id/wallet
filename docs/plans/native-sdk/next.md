@@ -52,17 +52,20 @@ message for the failure case.
   `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. Still none at
   2026-10-13, after both harnesses were split into tabs; `example/native-android` has no `NavHost`.
 
-## 3. Port `ServerClock` to iOS, and bound it
+## 3. Port `ServerClock` to iOS, and bound it — done 2026-10-23
 
-**Precondition:** none.
+The port is `Net/ServerClock.swift`, fed by `HTTPClient` and read by
+`AnonymousIdStore.signProof`, with the same 2025-01-01 … 2100-01-01 bound as Android.
 
-The clock-skew fix shipped on Android only, which makes it the largest remaining parity gap: an iOS
-device 61 s fast fails every proof, non-retryably. Two things to fix together, since the port should
-not carry the flaw:
-
-- Android's `ServerClock` adopts only a `Date` between 2025-01-01 and 2100-01-01 (`net/ServerClock.kt`).
-  The port should carry that bound; iOS still stamps from `Date()` (`AnonymousIdStore.swift:71`).
-- It is not persisted, so a cold start runs on the device clock until the first response.
+The offset is deliberately not persisted. A cold start runs on the device clock until the first
+response, and a merge signed in that window is refused once: the 403 carries a `Date` that corrects
+the clock, the outbox keeps the row (`maxFailures = 3`) and re-signs on the next drain, and the
+backend checks the proof before it spends the merge token. A persisted offset would instead outlive
+a correction of the device clock and push proofs into the future. On gcp-dev, a device 120 s fast got
+403 `PROOF_INVALID` on its first proof and 200 once one response had been seen. Both platforms pin
+the retry with a test that fails if the 403 stops correcting the clock, the outbox drops a rejected
+merge, or the sender reuses a proof: `MergeClockSelfHealTest` (Android) and the "Server clock
+wiring" suite in `ServerClockTests.swift` (iOS).
 
 ## 4. The device tier
 
@@ -85,20 +88,15 @@ compiles the real `.css.ts` and asserts the shipped declarations (`2020de05c`).
 The first slice of the tier that needs no device is running the UIKit suites on a simulator: Linear
 FRA-314, audit NSD-12. CI already pays for the macOS runner.
 
-## 5. Rewards conformance, then the sharing-link corpus
+## 5. Golden corpora — done 2026-10-23
 
-**Precondition:** none for the first, none for the second.
-
-- `golden-rewards.json` has **67 entries and is loaded by nobody** — the largest fixture file in the
-  corpus, currently asserting nothing, while reward decoding is checked against hand-written
-  literals. Wiring the loader is small and closes the biggest gap between what the corpus claims and
-  what it does.
-- Then `golden-sharing-links.json` for the 325 lines hand-ported three ways
-  ([`open.md`](./open.md) §9.1). It has already produced three real divergences, including one where
-  a web-built and a native-built link byte-differ on identical input with nothing to notice.
-- While there: **break one byte on one platform and confirm a test fails.** The corpus has never
-  caught a divergence and the deliberate-injection check has never been run, so its correctness is
-  currently an assumption.
+- `golden-rewards.json` needs no native loader. Its 67 entries pin `formatAmount`, reward selection
+  and formatting in `sdk/core`, which the web SDK tests already load; the backend runs the same
+  `selectBestReward` and sends `BestReward.formatted`, which the native SDKs display unchanged.
+- `golden-sharing-links.json` covers share-link building and inbound `fCtx` parsing on all three
+  platforms (`sdk/core/scripts/generate-golden-sharing-links.ts`). Links are compared decoded, not
+  byte for byte. Building it fixed four divergences; a fifth (base64url padding) is in
+  [`open.md`](./open.md) §9.1. Changing one expected byte fails the iOS and Android suites.
 
 ## 6. First external consumer
 

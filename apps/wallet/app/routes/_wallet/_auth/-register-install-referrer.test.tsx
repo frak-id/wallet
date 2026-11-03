@@ -50,7 +50,12 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     return {
         ...actual,
         trackEvent: vi.fn(),
-        startFlow: () => ({ ended: false, track: vi.fn(), end: vi.fn() }),
+        startFlow: () => ({
+            ended: false,
+            track: vi.fn(),
+            end: vi.fn(),
+            reopen: vi.fn(),
+        }),
         useLogin: () => ({ login: vi.fn(), isLoading: false }),
         useReferralStatus: () => ({ data: undefined }),
     };

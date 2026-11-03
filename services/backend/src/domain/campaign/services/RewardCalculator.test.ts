@@ -32,8 +32,6 @@ const baseContext: RuleContext = {
         timestamp: 0,
     },
     attribution: {
-        source: "referral_link",
-        touchpointId: null,
         referrerIdentityGroupId: "referrer-1",
     },
 };

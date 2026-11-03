@@ -1270,6 +1270,68 @@
                                           "type": "string"
                                         }
                                       }
+                                    },
+                                    "ambassador": {
+                                      "type": "object",
+                                      "properties": {
+                                        "heroTitle": {
+                                          "type": "string"
+                                        },
+                                        "heroLede": {
+                                          "type": "string"
+                                        },
+                                        "heroRewardCaption": {
+                                          "type": "string"
+                                        },
+                                        "heroCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "rewardHeading": {
+                                          "type": "string"
+                                        },
+                                        "rewardLede": {
+                                          "type": "string"
+                                        },
+                                        "rewardCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "referralCtaLabel": {
+                                          "type": "string"
+                                        },
+                                        "faq1Question": {
+                                          "type": "string"
+                                        },
+                                        "faq1Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq2Question": {
+                                          "type": "string"
+                                        },
+                                        "faq2Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq3Question": {
+                                          "type": "string"
+                                        },
+                                        "faq3Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq4Question": {
+                                          "type": "string"
+                                        },
+                                        "faq4Answer": {
+                                          "type": "string"
+                                        },
+                                        "faq5Question": {
+                                          "type": "string"
+                                        },
+                                        "faq5Answer": {
+                                          "type": "string"
+                                        },
+                                        "heroImageUrl": {
+                                          "type": "string"
+                                        }
+                                      }
                                     }
                                   }
                                 },
@@ -1399,6 +1461,68 @@
                                   "type": "string"
                                 },
                                 "css": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "ambassador": {
+                              "type": "object",
+                              "properties": {
+                                "heroTitle": {
+                                  "type": "string"
+                                },
+                                "heroLede": {
+                                  "type": "string"
+                                },
+                                "heroRewardCaption": {
+                                  "type": "string"
+                                },
+                                "heroCtaLabel": {
+                                  "type": "string"
+                                },
+                                "rewardHeading": {
+                                  "type": "string"
+                                },
+                                "rewardLede": {
+                                  "type": "string"
+                                },
+                                "rewardCtaLabel": {
+                                  "type": "string"
+                                },
+                                "referralCtaLabel": {
+                                  "type": "string"
+                                },
+                                "faq1Question": {
+                                  "type": "string"
+                                },
+                                "faq1Answer": {
+                                  "type": "string"
+                                },
+                                "faq2Question": {
+                                  "type": "string"
+                                },
+                                "faq2Answer": {
+                                  "type": "string"
+                                },
+                                "faq3Question": {
+                                  "type": "string"
+                                },
+                                "faq3Answer": {
+                                  "type": "string"
+                                },
+                                "faq4Question": {
+                                  "type": "string"
+                                },
+                                "faq4Answer": {
+                                  "type": "string"
+                                },
+                                "faq5Question": {
+                                  "type": "string"
+                                },
+                                "faq5Answer": {
+                                  "type": "string"
+                                },
+                                "heroImageUrl": {
                                   "type": "string"
                                 }
                               }
@@ -6776,7 +6900,10 @@
               "enum": [
                 "promotional",
                 "reward_pending",
-                "reward_settled"
+                "reward_settled",
+                "game_won",
+                "game_candidate_drawn",
+                "game_candidate_reminder"
               ]
             }
           },
@@ -7044,6 +7171,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "id",
                           "merchant",
                           "token",
                           "amount",
@@ -7053,6 +7181,9 @@
                           "createdAt"
                         ],
                         "properties": {
+                          "id": {
+                            "type": "string"
+                          },
                           "merchant": {
                             "type": "object",
                             "required": [
@@ -7125,7 +7256,8 @@
                               "cancelled",
                               "expired",
                               "bank_depleted",
-                              "consumed"
+                              "consumed",
+                              "locked"
                             ]
                           },
                           "role": {
@@ -7133,7 +7265,8 @@
                             "enum": [
                               "referrer",
                               "referee",
-                              "welcome_bonus"
+                              "welcome_bonus",
+                              "winner"
                             ]
                           },
                           "trigger": {
@@ -7142,7 +7275,9 @@
                               "referral",
                               "create_referral_link",
                               "purchase",
-                              "custom"
+                              "custom",
+                              "referral_signup",
+                              "game_join"
                             ]
                           },
                           "txHash": {
@@ -7192,6 +7327,9 @@
                                 "type": "number"
                               }
                             ]
+                          },
+                          "waitsOnFriend": {
+                            "type": "boolean"
                           },
                           "cancellationReason": {
                             "type": "string",
@@ -7244,6 +7382,67 @@
           }
         },
         "operationId": "getUserWalletRewardsHistory"
+      }
+    },
+    "/user/wallet/rewards/unpaid": {
+      "get": {
+        "parameters": [
+          {
+            "name": "x-wallet-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-wallet-sdk-auth",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-sdk-version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "eurAmount"
+                  ],
+                  "properties": {
+                    "eurAmount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletRewardsUnpaid"
       }
     },
     "/user/wallet/referral/code/issue": {
@@ -7443,6 +7642,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7462,6 +7664,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7481,6 +7686,9 @@
                   "context": {
                     "const": "onboarding",
                     "type": "string"
+                  },
+                  "replaceFrakReferrer": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -7504,6 +7712,107 @@
                         "user",
                         "frak"
                       ]
+                    },
+                    "game": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "prizeAmount",
+                        "prizeDescription",
+                        "startsAt",
+                        "endsAt",
+                        "sponsor"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "prizeAmount": {
+                          "type": "number"
+                        },
+                        "prizeDescription": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "startsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "endsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "sponsor": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "required": [
+                            "id",
+                            "name",
+                            "domain"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            },
+                            "logoUrl": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "gameReward": {
+                      "type": "number"
+                    },
+                    "signupReward": {
+                      "type": "number"
+                    },
+                    "inviteRewards": {
+                      "type": "object",
+                      "required": [
+                        "referrer",
+                        "referee"
+                      ],
+                      "properties": {
+                        "referrer": {
+                          "type": "number"
+                        },
+                        "referee": {
+                          "type": "number"
+                        }
+                      }
                     }
                   }
                 }
@@ -7896,6 +8205,1009 @@
           }
         },
         "operationId": "getUserWalletReferralStatus"
+      }
+    },
+    "/user/wallet/game/current": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "game",
+                    "me"
+                  ],
+                  "properties": {
+                    "game": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "id",
+                        "prizeAmount",
+                        "prizeDescription",
+                        "startsAt",
+                        "endsAt",
+                        "sponsor"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "prizeAmount": {
+                          "type": "number"
+                        },
+                        "prizeDescription": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "startsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "endsAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "sponsor": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "required": [
+                            "id",
+                            "name",
+                            "domain"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            },
+                            "logoUrl": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "me": {
+                      "type": "object",
+                      "required": [
+                        "participating",
+                        "tickets",
+                        "ticketsBySource",
+                        "eligible",
+                        "instagram"
+                      ],
+                      "properties": {
+                        "participating": {
+                          "type": "boolean"
+                        },
+                        "tickets": {
+                          "type": "number"
+                        },
+                        "ticketsBySource": {
+                          "type": "object",
+                          "required": [
+                            "join",
+                            "instagramCertified",
+                            "purchase",
+                            "referredPurchase",
+                            "referredSignup",
+                            "brandShare"
+                          ],
+                          "properties": {
+                            "join": {
+                              "type": "number"
+                            },
+                            "instagramCertified": {
+                              "type": "number"
+                            },
+                            "purchase": {
+                              "type": "number"
+                            },
+                            "referredPurchase": {
+                              "type": "number"
+                            },
+                            "referredSignup": {
+                              "type": "number"
+                            },
+                            "brandShare": {
+                              "type": "number"
+                            }
+                          }
+                        },
+                        "eligible": {
+                          "type": "boolean"
+                        },
+                        "instagram": {
+                          "type": "string",
+                          "enum": [
+                            "certified",
+                            "declared",
+                            "none"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletGameCurrent"
+      }
+    },
+    "/user/wallet/game/history": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "games"
+                  ],
+                  "properties": {
+                    "games": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "game",
+                          "outcome",
+                          "ticketsBySource",
+                          "drawTickets",
+                          "discarded",
+                          "verifyBy",
+                          "pid",
+                          "totalTickets",
+                          "participants",
+                          "confirmedAt"
+                        ],
+                        "properties": {
+                          "game": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "prizeAmount",
+                              "prizeDescription",
+                              "startsAt",
+                              "endsAt",
+                              "sponsor"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "prizeAmount": {
+                                "type": "number"
+                              },
+                              "prizeDescription": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startsAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "endsAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "sponsor": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "domain"
+                                ],
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "domain": {
+                                    "type": "string"
+                                  },
+                                  "logoUrl": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "drawing",
+                              "pending_verification",
+                              "won",
+                              "lost",
+                              "no_winner"
+                            ]
+                          },
+                          "ticketsBySource": {
+                            "type": "object",
+                            "required": [
+                              "join",
+                              "instagramCertified",
+                              "purchase",
+                              "referredPurchase",
+                              "referredSignup",
+                              "brandShare"
+                            ],
+                            "properties": {
+                              "join": {
+                                "type": "number"
+                              },
+                              "instagramCertified": {
+                                "type": "number"
+                              },
+                              "purchase": {
+                                "type": "number"
+                              },
+                              "referredPurchase": {
+                                "type": "number"
+                              },
+                              "referredSignup": {
+                                "type": "number"
+                              },
+                              "brandShare": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "drawTickets": {
+                            "type": "number"
+                          },
+                          "discarded": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "not_following",
+                              "not_linked"
+                            ]
+                          },
+                          "verifyBy": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "pid": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "totalTickets": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "participants": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "confirmedAt": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletGameHistory"
+      }
+    },
+    "/user/wallet/instagram/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link",
+                    "declaration"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserWalletInstagram"
+      }
+    },
+    "/user/wallet/instagram/declaration": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username"
+                ],
+                "properties": {
+                  "username": {
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link",
+                    "declaration"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for status 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "putUserWalletInstagramDeclaration"
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link",
+                    "declaration"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "deleteUserWalletInstagramDeclaration"
+      }
+    },
+    "/user/wallet/instagram/code": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletInstagramCode"
+      }
+    },
+    "/user/wallet/instagram/check": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "link",
+                    "declaration"
+                  ],
+                  "properties": {
+                    "link": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "follows",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "follows": {
+                          "type": "boolean"
+                        },
+                        "checkedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "declaration": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "username",
+                        "declaredAt"
+                      ],
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "declaredAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Response for status 502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "postUserWalletInstagramCheck"
       }
     },
     "/user/wallet/merge/preview": {

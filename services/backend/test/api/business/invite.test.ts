@@ -7,8 +7,9 @@ const bunPassword = {
     verify: async (password: string, hash: string) =>
         hash === `hashed:${password}`,
 };
-type GlobalWithBun = typeof globalThis & { Bun?: Record<string, unknown> };
-const globalWithBun = globalThis as GlobalWithBun;
+const globalWithBun = globalThis as unknown as {
+    Bun?: Record<string, unknown>;
+};
 globalWithBun.Bun = { ...globalWithBun.Bun, password: bunPassword };
 
 const {

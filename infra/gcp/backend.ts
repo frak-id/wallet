@@ -4,7 +4,7 @@ import { isProd, normalizedStageName } from "../utils";
 import { backendUpstreamTraffic, gatewayRoute } from "./gateway";
 import { bootstrapImage, elysiaImage } from "./images";
 import { bootstrapEnv, elysiaEnv } from "./secrets";
-import { domainName, walletNamespace } from "./utils";
+import { walletNamespace } from "./utils";
 
 const appLabels = { app: "elysia" };
 
@@ -51,8 +51,6 @@ const bootstrapJob = new KubernetesJob("ElysiaBootstrap", {
     },
 });
 
-const legacyDomain = isProd ? "backend.frak.id" : "backend-dev.frak.id";
-
 export const backendInstance = new KubernetesService(
     "Elysia",
     {
@@ -67,7 +65,7 @@ export const backendInstance = new KubernetesService(
                     ports: [
                         { containerPort: 3030, name: "http" },
                         // Cluster-internal Prometheus metrics port. NOT routed
-                        // by the ingress — only scraped pod-to-pod.
+                        // by the Gateway — only scraped pod-to-pod.
                         { containerPort: 9464, name: "metrics" },
                     ],
                     env: [
@@ -116,7 +114,7 @@ export const backendInstance = new KubernetesService(
             ports: [
                 { port: 80, targetPort: 3030, protocol: "TCP", name: "http" },
                 // Metrics port is exposed on the ClusterIP service only (no
-                // ingress rule references it), so it stays internal.
+                // route references it), so it stays internal.
                 {
                     port: 9464,
                     targetPort: 9464,
@@ -131,30 +129,6 @@ export const backendInstance = new KubernetesService(
             max: 2,
             // Yup 120% cpu, limits = request x2, and hpa based on requests cpu usage
             cpuUtilization: 120,
-        },
-
-        ingress: {
-            host: domainName,
-            tlsSecretName: "elysia-tls",
-            // For legacy purposes
-            additionalHosts: [legacyDomain],
-            // Performance optimizations for API backend
-            customAnnotations: {
-                // Connection pooling for ingress -> backend pod connections
-                "nginx.ingress.kubernetes.io/upstream-keepalive-connections":
-                    "32",
-                "nginx.ingress.kubernetes.io/upstream-keepalive-requests":
-                    "1000",
-                "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "60",
-                // Optimized timeouts for API responses
-                "nginx.ingress.kubernetes.io/proxy-connect-timeout": "5",
-                "nginx.ingress.kubernetes.io/proxy-send-timeout": "30",
-                "nginx.ingress.kubernetes.io/proxy-read-timeout": "30",
-                // Buffer settings for API responses
-                "nginx.ingress.kubernetes.io/proxy-buffering": "on",
-                "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
-                "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
-            },
         },
 
         httpRoute: {
@@ -173,7 +147,7 @@ export const backendInstance = new KubernetesService(
 
         // ServiceMonitor config — scrapes the dedicated, cluster-internal
         // `metrics` port (9464). Kept off the public `http` port so /metrics
-        // is never reachable through the ingress.
+        // is never reachable through the Gateway.
         serviceMonitor: {
             port: "metrics",
             path: "/metrics",

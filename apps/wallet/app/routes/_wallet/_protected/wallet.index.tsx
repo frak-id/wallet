@@ -10,14 +10,20 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppShellScroll } from "@/module/common/component/AppShell";
 import { Title } from "@/module/common/component/Title";
+import { GameCard } from "@/module/game/component/GameCard";
+import { useOpenMoneriumFromLink } from "@/module/monerium/hooks/useOpenMoneriumFromLink";
 import { Balance } from "@/module/tokens/component/Balance";
 import { AddEmailCard } from "@/module/wallet/component/AddEmailCard";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { EarningsSection } from "@/module/wallet/component/EarningsSection";
 import { WelcomeCard } from "@/module/wallet/component/WelcomeCard";
 
+type WalletSearch = { open?: "monerium" };
+
 export const Route = createFileRoute("/_wallet/_protected/wallet/")({
     component: WalletPage,
+    validateSearch: (search: Record<string, unknown>): WalletSearch =>
+        search.open === "monerium" ? { open: "monerium" } : {},
     // Warm the balance in parallel with the route transition. The address is
     // read outside React the same way `_protected.tsx`'s `beforeLoad` does.
     // `void prefetchQuery` (not `ensureQueryData`) so navigation never waits on
@@ -36,6 +42,8 @@ function WalletPage() {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const scrollRef = useAppShellScroll();
+    const { open } = Route.useSearch();
+    useOpenMoneriumFromLink(open);
 
     const handleRefresh = useCallback(async () => {
         // Only refetch queries currently mounted on this page (balance,
@@ -52,6 +60,7 @@ function WalletPage() {
                 <Balance />
                 <AddEmailCard />
                 <WelcomeCard />
+                <GameCard />
                 <EarningsSection />
             </Box>
         </PullToRefresh>

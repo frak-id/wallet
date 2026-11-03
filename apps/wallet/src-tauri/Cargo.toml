@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.1.0"
+version = "1.1.11"
 description = "Frak Wallet"
 authors = ["Frak Labs"]
 license = "GNU GPL 3.0"
@@ -36,6 +36,11 @@ tauri-plugin-frak-firebase = { path = "plugins/tauri-plugin-frak-firebase" }
 tauri-plugin-frak-updater = { path = "plugins/tauri-plugin-frak-updater" }
 tauri-plugin-frak-glass = { path = "plugins/tauri-plugin-frak-glass" }
 tauri-plugin-clipboard-manager = "2"
+# CrabNebula OTA: swaps the embedded web assets at boot. `rustls-tls` avoids
+# linking OpenSSL into the iOS/Android builds, which have no system OpenSSL.
+tauri-plugin-ota-updater = { version = "2.1.0", default-features = false, features = [
+    "rustls-tls",
+] }
 
 # Android-only: share + fs plugins for file sharing (needed for recovery file download)
 [target.'cfg(target_os = "android")'.dependencies]
@@ -63,3 +68,8 @@ strip = false
 # Fast incremental dev builds
 [profile.dev]
 incremental = true
+
+# shortcut: tao 0.37.1 drops a link that cold-starts the iOS app (tauri-apps/tao#1248);
+# remove once tauri-apps/tao#1376 ships in a tao release.
+[patch.crates-io]
+tao = { git = "https://github.com/TartanLeGrand/tao", rev = "09ca3b1d98576e5ffa4e8d9b290c626de0e513af" }

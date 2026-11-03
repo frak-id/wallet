@@ -13,6 +13,7 @@ import { type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
+import { ReplaceFrakReferrerModal } from "@/module/referral/component/ReplaceFrakReferrerModal";
 import * as styles from "./index.css";
 
 type ReferralCodeStepProps = {
@@ -54,6 +55,9 @@ export function ReferralCodeStep({
         handleClear,
         handlePaste,
         handleSubmit,
+        confirmingFrakReplace,
+        confirmFrakReplace,
+        cancelFrakReplace,
     } = useRedeemReferralCodeForm({
         onApplied,
         onError,
@@ -153,6 +157,12 @@ export function ReferralCodeStep({
                     </Button>
                 </Stack>
             </form>
+            <ReplaceFrakReferrerModal
+                open={confirmingFrakReplace}
+                onConfirm={confirmFrakReplace}
+                onCancel={cancelFrakReplace}
+                isPending={isPending}
+            />
         </FlowStepScreen>
     );
 }

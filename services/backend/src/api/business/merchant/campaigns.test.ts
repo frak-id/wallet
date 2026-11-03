@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Elysia } from "elysia";
 import { describe, expect, it } from "vitest";
-import { merchantCampaignsRoutes } from "./campaigns";
+import { merchantCampaignsRoutes, toMerchantRule } from "./campaigns";
 
 const ROUTE_START = /^\s*\.(get|post|put|patch|delete|all|head|options)\(/;
 const GUARD = /^\s*requireMerchantAccess:\s*true,$/m;
@@ -73,5 +73,21 @@ describe("campaign mutation without a session", () => {
     ])("rejects an anonymous %s %s", async (method, path) => {
         const response = await request(method, path);
         expect(response.status).toBe(401);
+    });
+});
+
+describe("toMerchantRule", () => {
+    it("drops the Frak Game hold from a merchant rule", () => {
+        const rule = toMerchantRule(
+            {
+                trigger: "purchase",
+                conditions: [],
+                rewards: [],
+                holdUntilReleased: true,
+            },
+            null
+        );
+
+        expect(rule).not.toHaveProperty("holdUntilReleased");
     });
 });

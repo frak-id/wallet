@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { airtableRoutes } from "./airtable";
 import { commonRoutes } from "./common";
+import { gameRoutes } from "./game";
 import { socialRoute } from "./social";
 import { versionRoutes } from "./version";
 
@@ -15,4 +16,5 @@ export const commonApi = new Elysia({ prefix: "/common" })
     .use(airtableRoutes)
     .use(socialRoute)
     .use(commonRoutes)
+    .use(gameRoutes)
     .use(versionRoutes);

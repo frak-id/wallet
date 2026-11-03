@@ -53,6 +53,9 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_sharing_timestamp_idx")
             .using("btree", sql`((payload->>'sharingTimestamp')::int)`)
             .where(sql`"type" = 'create_referral_link'`),
+        index("interaction_logs_game_join_idx")
+            .using("btree", sql`(payload->>'gameId')`, table.identityGroupId)
+            .where(sql`"type" = 'game_join'`),
         index("interaction_logs_unprocessed_idx")
             .on(table.createdAt)
             .where(
@@ -112,6 +115,9 @@ export const assetLogsTable = pgTable(
         cancellationReason: text(
             "cancellation_reason"
         ).$type<CancellationReason>(),
+        /** Set on a held reward: not claimable until `released_at` is set. */
+        heldAt: timestamp("held_at"),
+        releasedAt: timestamp("released_at"),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
@@ -138,6 +144,12 @@ export const assetLogsTable = pgTable(
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)
             .where(sql`"status" = 'processing'`),
+        // Held rewards that can still pay: the release pass.
+        index("asset_logs_held_idx")
+            .on(table.releasedAt)
+            .where(
+                sql`"held_at" IS NOT NULL AND "status" IN ('pending', 'bank_depleted')`
+            ),
         // One live welcome bonus per (user, merchant): the claim guard across
         // concurrent reward workers.
         uniqueIndex("asset_logs_welcome_bonus_live_idx")

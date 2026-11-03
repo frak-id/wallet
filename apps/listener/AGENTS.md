@@ -1,6 +1,6 @@
 # apps/listener — Compass
 
-Iframe RPC handler bridging partner-site SDK ↔ Frak Wallet. Single-view (no routing). Minimal bundle (iframe load time critical). Served at `/listener` path on wallet ingress — not standalone.
+Iframe RPC handler bridging partner-site SDK ↔ Frak Wallet. Single-view (no routing). Minimal bundle (iframe load time critical). Served at `/listener` path on the wallet HTTPRoute — not standalone.
 
 ## Quick Commands
 ```bash
@@ -21,7 +21,7 @@ bun run test         # listener-unit Vitest project
 ## Non-Obvious Patterns
 - **No routing**: single-view iframe; adding a route means rethinking the architecture.
 - **Bundle size is a KPI**: avoid heavy deps; always run `bundle:check` before merging.
-- **Served via wallet ingress**: path-based routing `/listener` — do NOT deploy as independent service.
+- **Served via the wallet HTTPRoute**: path-based routing `/listener` — do NOT deploy as independent service.
 - **postMessage security**: mock `window.origin` + `document.referrer` in tests (see `test-foundation/dom-mocks.ts`, `setupListenerDomMocks`).
 - **Shared logic comes from `@frak-labs/wallet-shared`** (auth, smart wallet, sessions) — do not duplicate.
 - **RPC protocol defined in `@frak-labs/frame-connector`** — adding a method also requires SDK schema updates in `sdk/core/src/types/rpc/` + `IFrameRpcSchema`.
@@ -30,4 +30,4 @@ bun run test         # listener-unit Vitest project
 Adding routes · heavy dependencies · bypassing `frame-connector` schema · deploying standalone.
 
 ## See Also
-Parent `/AGENTS.md` · `apps/wallet/AGENTS.md` (shares ingress) · `packages/wallet-shared/AGENTS.md` · `packages/rpc/` (frame-connector) · `sdk/core/AGENTS.md` (RPC schema).
+Parent `/AGENTS.md` · `apps/wallet/AGENTS.md` (shares its route) · `packages/wallet-shared/AGENTS.md` · `packages/rpc/` (frame-connector) · `sdk/core/AGENTS.md` (RPC schema).

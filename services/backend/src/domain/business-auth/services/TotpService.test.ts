@@ -1,7 +1,8 @@
 import { sha256Hex } from "@backend-utils";
 import * as OTPAuth from "otpauth";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
+import type { BusinessAccountSelect } from "../db/schema";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 import { TWO_FACTOR_LOCKOUT } from "./attemptGuard";
 import { TotpService } from "./TotpService";
@@ -9,6 +10,26 @@ import { TotpService } from "./TotpService";
 // MASTER_KEY_SECRET is set by the global vitest-setup.
 
 const ACCOUNT_ID = "acc-1";
+
+const account = (
+    overrides: Partial<BusinessAccountSelect> = {}
+): BusinessAccountSelect => ({
+    id: ACCOUNT_ID,
+    email: null,
+    emailVerifiedAt: null,
+    passwordHash: null,
+    shopifyUserId: null,
+    shopifyShopDomain: null,
+    walletAddress: null,
+    totpSecretEnc: null,
+    totpActivatedAt: null,
+    totpRecoveryCodesHash: null,
+    twoFactorAttempts: 0,
+    twoFactorWindowStartedAt: null,
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+    ...overrides,
+});
 
 const createRepository = () =>
     ({
@@ -18,8 +39,7 @@ const createRepository = () =>
         consumeTotpRecoveryCode: vi.fn().mockResolvedValue(false),
         recordTwoFactorFailure: vi.fn(),
         resetTwoFactorAttempts: vi.fn(),
-    }) as unknown as BusinessAccountRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<BusinessAccountRepository>;
 
 describe("TotpService", () => {
     let repository: ReturnType<typeof createRepository>;
@@ -27,10 +47,7 @@ describe("TotpService", () => {
 
     beforeEach(() => {
         repository = createRepository();
-        service = new TotpService(
-            repository as unknown as BusinessAccountRepository,
-            new AdminWalletsRepository()
-        );
+        service = new TotpService(repository, new AdminWalletsRepository());
     });
 
     describe("setup", () => {
@@ -52,9 +69,11 @@ describe("TotpService", () => {
         });
 
         it("refuses to overwrite an activated enrollment", async () => {
-            repository.findById.mockResolvedValue({
-                totpActivatedAt: new Date(),
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    totpActivatedAt: new Date(),
+                })
+            );
 
             // Typed conflict (§1.6 / M5), not a bare Error.
             await expect(
@@ -96,12 +115,14 @@ describe("TotpService", () => {
 
         it("activates with a valid code and returns 8 recovery codes", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: null,
-                totpRecoveryCodesHash: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: null,
+                    totpRecoveryCodesHash: null,
+                })
+            );
 
             const code = generateCode(secret);
             const result = await service.activate({
@@ -124,12 +145,14 @@ describe("TotpService", () => {
 
         it("returns null when a concurrent activation won the conditional write", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: null,
-                totpRecoveryCodesHash: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: null,
+                    totpRecoveryCodesHash: null,
+                })
+            );
             // The repository's `WHERE totp_activated_at IS NULL` predicate
             // made another call the winner — the loser must not surface a
             // second (clobbered) recovery-code set.
@@ -144,12 +167,14 @@ describe("TotpService", () => {
 
         it("rejects activation with a wrong code", async () => {
             const { encryptedSecret } = await setupWithSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: null,
-                totpRecoveryCodesHash: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: null,
+                    totpRecoveryCodesHash: null,
+                })
+            );
 
             const result = await service.activate({
                 accountId: ACCOUNT_ID,
@@ -160,12 +185,14 @@ describe("TotpService", () => {
 
         it("verifies a valid code on an activated enrollment", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [],
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: new Date(),
+                    totpRecoveryCodesHash: [],
+                })
+            );
 
             const code = generateCode(secret);
             expect(await service.verify({ accountId: ACCOUNT_ID, code })).toBe(
@@ -178,12 +205,14 @@ describe("TotpService", () => {
 
         it("refuses to verify a non-activated enrollment", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: null,
-                totpRecoveryCodesHash: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: null,
+                    totpRecoveryCodesHash: null,
+                })
+            );
 
             const code = generateCode(secret);
             expect(await service.verify({ accountId: ACCOUNT_ID, code })).toBe(
@@ -203,14 +232,16 @@ describe("TotpService", () => {
             const encryptedSecret =
                 repository.setPendingTotp.mock.calls[0][0].encryptedSecret;
 
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
-                twoFactorAttempts: 0,
-                twoFactorWindowStartedAt: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: new Date(),
+                    totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
+                    twoFactorAttempts: 0,
+                    twoFactorWindowStartedAt: null,
+                })
+            );
             // Matching + single-use consumption is now atomic in the repo
             // (§1.7): the service just delegates and trusts the boolean.
             repository.consumeTotpRecoveryCode.mockImplementation(
@@ -253,14 +284,16 @@ describe("TotpService", () => {
         it("throws TWO_FACTOR_LOCKED once the windowed ceiling is hit", async () => {
             // At the ceiling inside an active window — the guard short-circuits
             // before any decryption, so a dummy secret is fine.
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: "0xdead",
-                totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [],
-                twoFactorAttempts: TWO_FACTOR_LOCKOUT.MAX_ATTEMPTS,
-                twoFactorWindowStartedAt: new Date(),
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: "0xdead",
+                    totpActivatedAt: new Date(),
+                    totpRecoveryCodesHash: [],
+                    twoFactorAttempts: TWO_FACTOR_LOCKOUT.MAX_ATTEMPTS,
+                    twoFactorWindowStartedAt: new Date(),
+                })
+            );
 
             await expect(
                 service.verify({ accountId: ACCOUNT_ID, code: "000000" })
@@ -273,14 +306,16 @@ describe("TotpService", () => {
 
         it("records a windowed failure on a wrong code", async () => {
             const encryptedSecret = await setupSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [],
-                twoFactorAttempts: 0,
-                twoFactorWindowStartedAt: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: new Date(),
+                    totpRecoveryCodesHash: [],
+                    twoFactorAttempts: 0,
+                    twoFactorWindowStartedAt: null,
+                })
+            );
             repository.consumeTotpRecoveryCode.mockResolvedValue(false);
 
             expect(
@@ -295,14 +330,16 @@ describe("TotpService", () => {
 
         it("consumes a recovery code exactly once (double-spend safe)", async () => {
             const encryptedSecret = await setupSecret();
-            repository.findById.mockResolvedValue({
-                id: ACCOUNT_ID,
-                totpSecretEnc: encryptedSecret,
-                totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
-                twoFactorAttempts: 0,
-                twoFactorWindowStartedAt: null,
-            });
+            repository.findById.mockResolvedValue(
+                account({
+                    id: ACCOUNT_ID,
+                    totpSecretEnc: encryptedSecret,
+                    totpActivatedAt: new Date(),
+                    totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
+                    twoFactorAttempts: 0,
+                    twoFactorWindowStartedAt: null,
+                })
+            );
             // The atomic conditional UPDATE succeeds once, then the row is gone
             // — a replay of the same code returns false (§1.7).
             repository.consumeTotpRecoveryCode

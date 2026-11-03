@@ -12,6 +12,7 @@ import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
+    authenticatedBackendApi,
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
@@ -48,7 +49,53 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
-import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
+import {
+    isMerchantDomain,
+    sanitizeRedirectUrl,
+} from "@/module/common/utils/sanitizeRedirectUrl";
+
+type RedirectBinding =
+    | { ok: true; url: string }
+    | {
+          ok: false;
+          reason:
+              | "invalid_url"
+              | "no_merchant"
+              | "unknown_merchant"
+              | "lookup_failed"
+              | "host_mismatch";
+          host?: string;
+      };
+
+/** Proves the redirect is one of the merchant's own domains, since it receives the wallet session. */
+async function bindRedirectToMerchant(
+    redirectUrl: string,
+    merchantId: string | undefined
+): Promise<RedirectBinding> {
+    let url: string | undefined;
+    try {
+        url = sanitizeRedirectUrl(decodeURIComponent(redirectUrl));
+    } catch {}
+    if (!url) return { ok: false, reason: "invalid_url" };
+    const host = new URL(url).host;
+    if (!merchantId) return { ok: false, reason: "no_merchant", host };
+    const { data, error } = await authenticatedBackendApi.user.merchant.resolve
+        .get({ query: { merchantId } })
+        .catch(() => ({ data: null, error: null }));
+    if (!data) {
+        const status = error?.status;
+        const unknown =
+            typeof status === "number" && status >= 400 && status < 500;
+        return {
+            ok: false,
+            reason: unknown ? "unknown_merchant" : "lookup_failed",
+            host,
+        };
+    }
+    return isMerchantDomain(url, data.allowedDomains)
+        ? { ok: true, url }
+        : { ok: false, reason: "host_mismatch", host };
+}
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,
@@ -77,8 +124,38 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         // Convert compressed params to full params
-        const { merchantId, redirectUrl, directExit, lang, metadata, proof } =
-            compressedSsoToParams(compressedParam);
+        const {
+            merchantId,
+            redirectUrl: requestedRedirectUrl,
+            directExit,
+            lang,
+            metadata,
+            proof,
+        } = compressedSsoToParams(compressedParam);
+
+        let redirectUrl: string | undefined;
+        if (requestedRedirectUrl) {
+            const binding = await bindRedirectToMerchant(
+                requestedRedirectUrl,
+                merchantId
+            );
+            if (!binding.ok) {
+                const error = new Error(
+                    "This sign-in link does not lead back to the merchant's site."
+                );
+                recordError(error, {
+                    source: "sso",
+                    context: {
+                        stage: "redirect_binding",
+                        reason: binding.reason,
+                        host: binding.host,
+                        merchant_id: merchantId,
+                    },
+                });
+                return { error };
+            }
+            redirectUrl = binding.url;
+        }
 
         // Apply default for directExit: close the popup after completion
         // unless the caller provided a redirectUrl. This matches the SDK-side
@@ -266,22 +343,9 @@ function Sso() {
     const redirectOrClose = useCallback(() => {
         // Check the current store context
         const ssoContext = authenticationStore.getState().ssoContext;
-        // If we got a redirect, redirect to the page directly with success status
+        // beforeLoad only stores a redirect bound to the merchant's domains.
         if (ssoContext?.redirectUrl) {
-            // Validate the redirect target (https-only, no open redirect) before
-            // using it. sanitizeRedirectUrl strips the hash/query, so we rebuild
-            // from the sanitized origin+pathname and re-add our own sso param.
-            const safeRedirect = sanitizeRedirectUrl(
-                decodeURIComponent(ssoContext.redirectUrl)
-            );
-            if (!safeRedirect) {
-                recordError(new Error("Invalid SSO redirect URL"), {
-                    source: "sso",
-                    context: { stage: "redirect_validation" },
-                });
-                return;
-            }
-            const redirectUrl = new URL(safeRedirect);
+            const redirectUrl = new URL(ssoContext.redirectUrl);
 
             // Get the full SSO params and compress them for URL passthrough
             const session = sessionStore.getState().session;
@@ -339,7 +403,12 @@ function Sso() {
                     title="An error occurred"
                     description={t(`${view.baseKey}.message`)}
                     footer={
-                        <Button variant="ghost" onClick={() => window.close()}>
+                        <Button
+                            variant="ghost"
+                            onClick={() =>
+                                window.opener ? window.close() : history.back()
+                            }
+                        >
                             Close
                         </Button>
                     }

@@ -1,0 +1,242 @@
+/** @jsxImportSource react */
+import type * as WalletShared from "@frak-labs/wallet-shared";
+import { renderHook, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import { ibanStore } from "@/module/monerium/store/ibanStore";
+import { fail, ok } from "@/tests/moneriumFixtures";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+
+const WALLET = "0x1111111111111111111111111111111111111111";
+const mocks = vi.hoisted(() => ({
+    get: vi.fn(),
+    recordError: vi.fn(),
+    sessionAddress: { current: null as string | null },
+}));
+
+vi.mock("wagmi", () => ({ useConnection: () => ({ address: WALLET }) }));
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({
+        t: (key: string) =>
+            key.endsWith("ownAccountLabel") ? "My account" : key,
+    }),
+}));
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual = await importOriginal<typeof WalletShared>();
+    return {
+        ...actual,
+        recordError: mocks.recordError,
+        sessionStore: {
+            getState: () => ({
+                session: { address: mocks.sessionAddress.current },
+            }),
+        },
+        authenticatedWalletApi: {
+            monerium: { beneficiaries: { get: mocks.get } },
+        },
+    };
+});
+
+import {
+    beneficiaryToIbanEntry,
+    useMoneriumBeneficiarySync,
+} from "./useMoneriumBeneficiarySync";
+
+describe("beneficiaryToIbanEntry", () => {
+    test("third-party gets a 'First Last' pseudo", () => {
+        expect(
+            beneficiaryToIbanEntry(
+                {
+                    iban: "de89 3704 0044 0532 0130 00",
+                    own: false,
+                    firstName: "Ada",
+                    lastName: "Lovelace",
+                    country: "DE",
+                    lastUsedAt: "2026-01-01T00:00:00Z",
+                },
+                "My account"
+            )
+        ).toEqual({
+            iban: "DE89370400440532013000",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            pseudo: "Ada Lovelace",
+            own: false,
+            country: "DE",
+        });
+    });
+
+    test("own gets the translated label and no names", () => {
+        expect(
+            beneficiaryToIbanEntry(
+                {
+                    iban: "DE89370400440532013000",
+                    own: true,
+                    firstName: "X",
+                    lastUsedAt: "2026-01-01T00:00:00Z",
+                },
+                "My account"
+            )
+        ).toMatchObject({
+            pseudo: "My account",
+            firstName: "",
+            own: true,
+        });
+    });
+});
+
+describe("useMoneriumBeneficiarySync", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        ibanStore.getState().reset();
+        mocks.sessionAddress.current = WALLET;
+        mocks.get.mockResolvedValue(
+            ok({
+                beneficiaries: [
+                    {
+                        iban: "FR7630006000011234567890189",
+                        own: false,
+                        firstName: "Remote",
+                        lastName: "Name",
+                        country: "FR",
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                    {
+                        iban: "DE89370400440532013000",
+                        own: true,
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                ],
+            })
+        );
+    });
+
+    test("merges once, local entries win, then sets the marker", async ({
+        queryWrapper,
+    }) => {
+        ibanStore.getState().addIban({
+            iban: "FR7630006000011234567890189",
+            firstName: "Local",
+            lastName: "Entry",
+            pseudo: "Local",
+            own: false,
+            country: "FR",
+        });
+
+        const { rerender } = renderHook(
+            () => useMoneriumBeneficiarySync(true),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+        const entries = ibanStore.getState().knownIbans;
+        expect(entries.map((e) => e.pseudo)).toEqual(["Local", "My account"]);
+
+        rerender();
+        expect(mocks.get).toHaveBeenCalledTimes(1);
+    });
+
+    test("does nothing when already synced for this wallet", async ({
+        queryWrapper,
+    }) => {
+        ibanStore.getState().mergeRemoteIbans([], WALLET);
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+        expect(mocks.get).not.toHaveBeenCalled();
+    });
+
+    test("does nothing while not connected", async ({ queryWrapper }) => {
+        renderHook(() => useMoneriumBeneficiarySync(false), {
+            wrapper: queryWrapper.wrapper,
+        });
+        expect(mocks.get).not.toHaveBeenCalled();
+    });
+
+    test("syncs again when the marker belongs to another wallet", async ({
+        queryWrapper,
+    }) => {
+        ibanStore
+            .getState()
+            .mergeRemoteIbans([], "0x2222222222222222222222222222222222222222");
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+    });
+
+    test("drops third-party beneficiaries without a usable name", async ({
+        queryWrapper,
+    }) => {
+        mocks.get.mockResolvedValue(
+            ok({
+                beneficiaries: [
+                    {
+                        iban: "FR7630006000011234567890189",
+                        own: false,
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                    {
+                        iban: "ES9121000418450200051332",
+                        own: false,
+                        firstName: "A",
+                        lastName: "Lovelace",
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                    {
+                        iban: "DE89370400440532013000",
+                        own: true,
+                        lastUsedAt: "2026-01-01T00:00:00Z",
+                    },
+                ],
+            })
+        );
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+        expect(ibanStore.getState().knownIbans.map((e) => e.iban)).toEqual([
+            "DE89370400440532013000",
+        ]);
+    });
+
+    test("drops the response when the session left that wallet meanwhile", async ({
+        queryWrapper,
+    }) => {
+        mocks.sessionAddress.current = null;
+        renderHook(() => useMoneriumBeneficiarySync(true), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(mocks.get).toHaveBeenCalledOnce());
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(ibanStore.getState().knownIbans).toEqual([]);
+        expect(ibanStore.getState().syncedWallet).toBeNull();
+    });
+
+    test("a failed sync is reported and retried when the wallet reconnects", async ({
+        queryWrapper,
+    }) => {
+        mocks.get.mockResolvedValueOnce(fail(502));
+        const { rerender } = renderHook(
+            ({ connected }) => useMoneriumBeneficiarySync(connected),
+            { wrapper: queryWrapper.wrapper, initialProps: { connected: true } }
+        );
+
+        await waitFor(() => expect(mocks.recordError).toHaveBeenCalledOnce());
+        expect(ibanStore.getState().syncedWallet).toBeNull();
+
+        rerender({ connected: false });
+        rerender({ connected: true });
+        await waitFor(() =>
+            expect(ibanStore.getState().syncedWallet).toBe(WALLET)
+        );
+        expect(mocks.get).toHaveBeenCalledTimes(2);
+    });
+});

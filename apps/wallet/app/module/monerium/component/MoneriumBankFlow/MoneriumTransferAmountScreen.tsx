@@ -1,3 +1,9 @@
+import {
+    exceedsThirdPartyLimit,
+    isMoneriumOwnPayoutAvailable,
+    MONERIUM_LIMITS,
+    normalizeRedeemAmount,
+} from "@frak-labs/app-essentials/monerium";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -5,11 +11,11 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowDownIcon } from "@frak-labs/design-system/icons";
-import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
-import { MAX_REDEEM_AMOUNT_EUR } from "@/module/monerium/hooks/useMoneriumOfframp";
+import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
 import {
     ibanStore,
     selectEffectiveIban,
@@ -17,7 +23,6 @@ import {
 import {
     moneriumFlowStore,
     selectAmount,
-    selectSelectedIbanOverride,
 } from "@/module/monerium/store/moneriumFlowStore";
 import { maskIban } from "@/module/monerium/utils/maskIban";
 import * as styles from "./index.css";
@@ -28,10 +33,8 @@ type MoneriumTransferAmountScreenProps = {
 };
 
 function parseAmount(value: string): number {
-    const normalized = value.replace(",", ".").trim();
-    if (normalized.length === 0) return 0;
-    const parsed = Number.parseFloat(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
+    const normalized = normalizeRedeemAmount(value);
+    return normalized ? Number.parseFloat(normalized) : 0;
 }
 
 function SwitcherIcon() {
@@ -49,28 +52,42 @@ function SwitcherIcon() {
 export function MoneriumTransferAmountScreen({
     onClose,
 }: MoneriumTransferAmountScreenProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { userBalance } = useGetUserBalance();
 
     const amount = moneriumFlowStore(selectAmount);
     const setAmount = moneriumFlowStore((s) => s.setAmount);
     const goTo = moneriumFlowStore((s) => s.goTo);
-    const selectedOverride = moneriumFlowStore(selectSelectedIbanOverride);
-    const effectiveIban = ibanStore(selectEffectiveIban);
-    const selectedIban = selectedOverride ?? effectiveIban;
+    const selectedIban = ibanStore(selectEffectiveIban);
 
     const eureBalance = useMemo(() => {
-        if (!userBalance?.balances) return 0;
-        const eureToken = userBalance.balances.find((b) => b.symbol === "EURe");
-        return eureToken?.amount ?? 0;
+        const raw =
+            userBalance?.balances?.find((b) => b.symbol === "EURe")?.amount ??
+            0;
+        // Floored to cents: amounts carry two decimals, so the display never rounds above what is sendable.
+        return Math.floor(Number((raw * 100).toFixed(6))) / 100;
     }, [userBalance]);
 
     const numericAmount = parseAmount(amount);
     const hasAmount = numericAmount > 0;
     const isInsufficient = hasAmount && numericAmount > eureBalance;
-    const isAboveMax = hasAmount && numericAmount >= MAX_REDEEM_AMOUNT_EUR;
+    const { status } = useMoneriumStatus();
+    const isAboveMax =
+        selectedIban !== null &&
+        exceedsThirdPartyLimit(amount, {
+            own: selectedIban.own,
+            profileKind: status?.profile?.kind,
+        });
+    const isOwnUnavailable =
+        selectedIban?.own === true &&
+        status !== undefined &&
+        !isMoneriumOwnPayoutAvailable(status.profile?.state);
     const canContinue =
-        hasAmount && !isInsufficient && !isAboveMax && selectedIban !== null;
+        hasAmount &&
+        !isInsufficient &&
+        !isAboveMax &&
+        !isOwnUnavailable &&
+        selectedIban !== null;
 
     function handleAmountInput(event: React.ChangeEvent<HTMLInputElement>) {
         const raw = event.target.value;
@@ -92,10 +109,8 @@ export function MoneriumTransferAmountScreen({
             <Box className={styles.cardsStack}>
                 <Card
                     variant="elevated"
-                    padding="none"
-                    className={`${styles.transferCellPadding}${
-                        isInsufficient ? ` ${styles.walletCardError}` : ""
-                    }`}
+                    padding="cell"
+                    tone={isInsufficient ? "error" : undefined}
                 >
                     <Stack space="xxs">
                         <Text variant="body" weight="medium">
@@ -105,7 +120,16 @@ export function MoneriumTransferAmountScreen({
                             variant="bodySmall"
                             color={isInsufficient ? "error" : "secondary"}
                         >
-                            {`${t("monerium.bankFlow.transfer.amount.totalBalance")} : ${eureBalance}€`}
+                            {t(
+                                "monerium.bankFlow.transfer.amount.totalBalance",
+                                {
+                                    amount: formatCurrency(
+                                        eureBalance,
+                                        "EUR",
+                                        i18n.language
+                                    ),
+                                }
+                            )}
                         </Text>
                     </Stack>
                 </Card>
@@ -114,11 +138,7 @@ export function MoneriumTransferAmountScreen({
                     <SwitcherIcon />
                 </Box>
 
-                <Card
-                    variant="elevated"
-                    padding="none"
-                    className={styles.transferCellPadding}
-                >
+                <Card variant="elevated" padding="cell">
                     <Inline
                         space="m"
                         alignY="center"
@@ -176,7 +196,11 @@ export function MoneriumTransferAmountScreen({
                         €
                     </Text>
                 </Inline>
-                {isInsufficient ? (
+                {isOwnUnavailable ? (
+                    <Text variant="caption" color="error">
+                        {t("monerium.bankFlow.transfer.amount.ownUnavailable")}
+                    </Text>
+                ) : isInsufficient ? (
                     <Text variant="caption" color="error">
                         {t(
                             "monerium.bankFlow.transfer.amount.insufficientBalance"
@@ -185,7 +209,7 @@ export function MoneriumTransferAmountScreen({
                 ) : isAboveMax ? (
                     <Text variant="caption" color="error">
                         {t("monerium.bankFlow.transfer.amount.aboveMax", {
-                            max: MAX_REDEEM_AMOUNT_EUR,
+                            max: MONERIUM_LIMITS.THIRD_PARTY_DOCUMENT_THRESHOLD_EUR,
                         })}
                     </Text>
                 ) : null}

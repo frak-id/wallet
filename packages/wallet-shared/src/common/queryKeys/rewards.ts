@@ -8,4 +8,6 @@ export const rewardsKey = {
     histories: () => [...rewardsKey.all, "history"] as const,
     historyByAddress: (address?: Address) =>
         [...rewardsKey.histories(), address ?? "no-address"] as const,
+    unpaidByAddress: (address?: Address) =>
+        [...rewardsKey.all, "unpaid", address ?? "no-address"] as const,
 };

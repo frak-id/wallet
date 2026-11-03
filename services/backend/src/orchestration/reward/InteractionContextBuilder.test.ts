@@ -57,4 +57,39 @@ describe("InteractionContextBuilder", () => {
             expect.objectContaining({ productId: "product-2", sku: undefined }),
         ]);
     });
+
+    it.each([
+        {
+            name: "true",
+            payload: { gameId: "game-1", newcomer: true },
+            expected: true,
+        },
+        {
+            name: "false",
+            payload: { gameId: "game-1", newcomer: false },
+            expected: false,
+        },
+        { name: "missing", payload: { gameId: "game-1" }, expected: false },
+    ])(
+        "exposes the joined game with newcomer $name to the rule conditions",
+        async ({ payload, expected }) => {
+            const interaction = {
+                type: "game_join",
+                payload,
+            } as InteractionLogSelect;
+
+            const result = await buildBuilder().build(
+                interaction,
+                "merchant-1",
+                "identity-1",
+                null
+            );
+
+            expect(result.trigger).toBe("game_join");
+            expect(result.context.game).toEqual({
+                id: "game-1",
+                newcomer: expected,
+            });
+        }
+    );
 });

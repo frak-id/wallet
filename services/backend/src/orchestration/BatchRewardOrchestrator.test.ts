@@ -84,6 +84,7 @@ function makeOrchestrator(opts: {
                 campaignRuleId: p.campaignRuleId,
                 recipientType: p.recipientType,
                 amount: p.amount.toString(),
+                held: p.held,
             })),
     };
     const campaignRuleRepository = { restoreBudget: vi.fn() };
@@ -160,4 +161,33 @@ describe("BatchRewardOrchestrator Frak referral policy", () => {
             10
         );
     });
+});
+
+describe("BatchRewardOrchestrator held rewards", () => {
+    beforeEach(() => {
+        txInsert.mockImplementation(async (rows: AssetLogInsert[]) => rows);
+        txUpdate.mockResolvedValue(undefined);
+    });
+
+    it.each([true, undefined])(
+        "inserts a reward with held %s",
+        async (held) => {
+            const { orchestrator } = makeOrchestrator({
+                rewards: [
+                    reward({
+                        recipient: "referrer",
+                        recipientIdentityGroupId: "referrer-group",
+                        held,
+                    }),
+                ],
+                referrer: "referrer-group",
+            });
+
+            await orchestrator.processPendingInteractions({ limit: 10 });
+
+            expect(txInsert).toHaveBeenCalledWith([
+                expect.objectContaining({ held }),
+            ]);
+        }
+    );
 });

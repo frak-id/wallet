@@ -73,6 +73,21 @@ class UrlQueryTest {
     }
 
     @Test
+    fun `fillIfAbsent adds a key whose only match differs in case`() {
+        val query = UrlQuery.parse("https://acme.example/p?UTM_SOURCE=mail")!!
+        query.fillIfAbsent("utm_source", "frak")
+        assertEquals("https://acme.example/p?UTM_SOURCE=mail&utm_source=frak", query.toString())
+    }
+
+    @Test
+    fun `matches a percent-encoded key by its decoded name`() {
+        val query = UrlQuery.parse("https://acme.example/p?f%43tx=old&utm%5Fsource=nl")!!
+        assertEquals("old", query.get("fCtx"))
+        query.set("fCtx", "new").fillIfAbsent("utm_source", "frak")
+        assertEquals("https://acme.example/p?utm%5Fsource=nl&fCtx=new", query.toString())
+    }
+
+    @Test
     fun `set removes every casing of a key before appending`() {
         val query = UrlQuery.parse("https://acme.example/p?fctx=old&FCTX=older&a=1")!!
         query.set("fCtx", "new")

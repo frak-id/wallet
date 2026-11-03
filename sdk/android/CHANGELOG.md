@@ -16,6 +16,17 @@ independently — see [`../ios/CHANGELOG.md`](../ios/CHANGELOG.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A share link now always carries its attribution parameters, even when the merchant's URL spells
+  them in another case.** A merchant URL such as `?UTM_SOURCE=newsletter` used to suppress
+  `utm_source=frak`, leaving the shared link unattributed in analytics that read lowercase keys.
+  The merchant's own parameter is kept and the lowercase one is added next to it.
+- **A percent-encoded parameter name is read by what it means.** `?f%43tx=…` is `fCtx` and
+  `?utm%5Fsource=…` is `utm_source`, as browsers read them. An inbound referral in such a link was
+  missed, a stale one was kept next to the new `fCtx`, and a merchant's `utm_source` gained a second
+  `utm_source=frak`. The merchant's spelling is still written back unchanged.
+
 ## [1.0.0] - 2026-09-08
 
 ### Changed

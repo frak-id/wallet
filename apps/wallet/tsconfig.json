@@ -24,7 +24,7 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": ["./app/*"],
-      "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
+      "@/tests/*": ["./tests/*"],
       "tests/*": ["./tests/*"],
       "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],

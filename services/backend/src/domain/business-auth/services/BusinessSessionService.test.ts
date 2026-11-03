@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 import type { BusinessSessionSelect } from "../db/schema";
 import type { BusinessSessionRepository } from "../repositories/BusinessSessionRepository";
 import {
@@ -22,8 +22,7 @@ const createRepository = () =>
         touch: vi.fn(),
         revoke: vi.fn(),
         setTwoFactorVerified: vi.fn(),
-    }) as unknown as BusinessSessionRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    }) as unknown as Mocked<BusinessSessionRepository>;
 
 describe("BusinessSessionService", () => {
     let repository: ReturnType<typeof createRepository>;
@@ -31,9 +30,7 @@ describe("BusinessSessionService", () => {
 
     beforeEach(() => {
         repository = createRepository();
-        service = new BusinessSessionService(
-            repository as unknown as BusinessSessionRepository
-        );
+        service = new BusinessSessionService(repository);
     });
 
     describe("create", () => {

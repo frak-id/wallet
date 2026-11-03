@@ -14,6 +14,7 @@ const welcomeBonusLog: DetailedAssetLog = {
     createdAt: new Date("2026-09-25T10:00:00Z"),
     settledAt: null,
     availableAt: null,
+    held: false,
     cancellationReason: null,
     onchainTxHash: null,
     interactionType: "purchase",
@@ -33,16 +34,34 @@ const welcomeBonusLog: DetailedAssetLog = {
     merchantExplorerConfig: null,
 };
 
+const emptyEnrichment = {
+    tokenMetadata: new Map(),
+    tokenPrices: new Map(),
+    purchaseAmounts: new Map(),
+    referrerPurchases: new Map(),
+};
+
 describe("RewardHistoryService", () => {
+    it.each([
+        { status: "pending", held: true, shown: "locked" },
+        { status: "expired", held: true, shown: "expired" },
+        { status: "pending", held: false, shown: "pending" },
+    ] as const)(
+        "shows a $status reward (held: $held) as $shown",
+        ({ status, held, shown }) => {
+            const [item] = new RewardHistoryService().buildRewardItems(
+                [{ ...welcomeBonusLog, status, held }],
+                emptyEnrichment
+            );
+
+            expect(item?.status).toBe(shown);
+        }
+    );
+
     it("renders a welcome bonus with its role and the user's own purchase", () => {
         const [item] = new RewardHistoryService().buildRewardItems(
             [welcomeBonusLog],
-            {
-                tokenMetadata: new Map(),
-                tokenPrices: new Map(),
-                purchaseAmounts: new Map(),
-                referrerPurchases: new Map(),
-            }
+            emptyEnrichment
         );
 
         expect(item).toMatchObject({

@@ -113,6 +113,30 @@ describe("initDeepLinks", () => {
         });
     });
 
+    test("holds a cold-start link until the first load settles", async () => {
+        vi.useFakeTimers();
+        getCurrentMock.mockResolvedValue(["frakwallet://pair?id=pair-123"]);
+        let settle = () => {};
+        const firstLoad = new Promise<void>((resolve) => {
+            settle = resolve;
+        });
+
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate, firstLoad);
+        vi.runAllTimers();
+        expect(navigate).not.toHaveBeenCalled();
+
+        settle();
+        await firstLoad;
+        vi.runAllTimers();
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "pair-123", mode: "embedded" },
+            replace: true,
+        });
+    });
+
     test("should handle warm-start send deep link", async () => {
         const navigate = vi.fn();
 
@@ -569,7 +593,7 @@ describe("install deep link — ref", () => {
         });
     });
 
-    test("logged in: routes to the redeem page with the code", async () => {
+    test("logged in: routes to the game join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const navigate = vi.fn();
 
@@ -580,7 +604,7 @@ describe("install deep link — ref", () => {
         openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
 
         expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/redeem",
+            to: "/game/join",
             search: { code: "FRAKPA" },
             replace: true,
         });
@@ -697,13 +721,13 @@ describe("short referral deep link — /r/<code>", () => {
         expect(pendingActionsStore.getState().actions).toHaveLength(0);
     });
 
-    test("logged in: routes to the redeem page with the code", async () => {
+    test("logged in: routes to the game join screen with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
 
         const navigate = await open("https://wallet.frak.id/r/FRAKPA");
 
         expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/redeem",
+            to: "/game/join",
             search: { code: "FRAKPA" },
             replace: true,
         });
@@ -880,97 +904,33 @@ describe("monerium OAuth callback", () => {
         vi.useRealTimers();
     });
 
-    test("should handle HTTPS App Link for monerium callback with code and state", async () => {
+    async function openLink(url: string) {
         const navigate = vi.fn();
-
         await initDeepLinks(navigate);
+        if (!openUrlHandler) throw new Error("Expected openUrlHandler");
+        openUrlHandler([url]);
+        return navigate;
+    }
 
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler([
+    test.for([
+        [
             "https://wallet-dev.frak.id/monerium/callback?code=abc123&state=xyz",
-        ]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123", state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle custom scheme monerium-callback with code and state", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler([
-            "frakwallet://monerium-callback?code=abc123&state=xyz",
-        ]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123", state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with only code parameter", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback?code=abc123"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { code: "abc123" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with only state parameter", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback?state=xyz"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            search: { state: "xyz" },
-            replace: true,
-        });
-    });
-
-    test("should handle monerium callback with no parameters", async () => {
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        openUrlHandler(["frakwallet://monerium-callback"]);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/monerium/callback",
-            replace: true,
-            search: {},
-        });
+            {
+                to: "/monerium/callback",
+                search: { code: "abc123", state: "xyz" },
+            },
+        ],
+        [
+            "https://wallet-dev.frak.id/monerium/callback?error=access_denied&error_description=User%20cancelled",
+            { to: "/monerium/callback", search: { error: "access_denied" } },
+        ],
+        [
+            "https://wallet-dev.frak.id/wallet?open=monerium",
+            { to: "/wallet", search: { open: "monerium" } },
+        ],
+        ["https://wallet-dev.frak.id/wallet?open=elsewhere", { to: "/wallet" }],
+    ] as const)("%s navigates to %o", async ([url, target]) => {
+        const navigate = await openLink(url);
+        expect(navigate).toHaveBeenCalledWith({ ...target, replace: true });
     });
 });

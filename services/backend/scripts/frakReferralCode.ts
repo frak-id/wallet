@@ -1,16 +1,13 @@
-import { IdentityContext } from "../src/domain/identity/context";
-import {
-    FRAK_REFERRAL_IDENTITY_GROUP_ID,
-    ReferralCodeContext,
-} from "../src/domain/referral-code";
-import { CODE_LENGTH, generateCandidates, STEM_ALPHABET } from "../src/utils";
+import { OrchestrationContext } from "../src/orchestration/context";
+import { HttpError } from "../src/utils/httpError";
 
 const USAGE = `Usage: bun scripts/frakReferralCode.ts <command>
   issue [CODE]   issue a Frak code, vanity when CODE is given, random otherwise
   revoke <CODE>  stop new redemptions; existing referees keep Frak as referrer
-  list           every Frak code`;
+  list           every Frak code
+Also on the business dashboard, under Internal > Referral codes.`;
 
-const referralCodes = ReferralCodeContext.repositories.referralCode;
+const codes = OrchestrationContext.orchestrators.frakCodeAdmin;
 
 // All uppercase so the QR encoder can use its denser alphanumeric mode.
 function qrUrl(code: string): string {
@@ -23,64 +20,40 @@ function fail(message: string): never {
     process.exit(1);
 }
 
-function parseVanityCode(raw: string): string {
-    const code = raw.toUpperCase();
-    if (code.length !== CODE_LENGTH) {
-        fail(`Code must be exactly ${CODE_LENGTH} characters: ${raw}`);
-    }
-    const invalid = [...code].find((ch) => !STEM_ALPHABET.includes(ch));
-    if (invalid) fail(`Code contains an invalid character: ${invalid}`);
-    return code;
-}
-
 async function issue(raw: string | undefined) {
-    await IdentityContext.repositories.identity.ensureGroup(
-        FRAK_REFERRAL_IDENTITY_GROUP_ID
-    );
-
-    const candidates = raw ? [parseVanityCode(raw)] : generateCandidates();
-    for (const candidate of candidates) {
-        const created = await referralCodes.createFrakCode(candidate);
-        if (created) {
-            console.log(`Issued Frak referral code ${created.code}`);
-            console.log(`QR link: ${qrUrl(created.code)}`);
-            return;
-        }
-    }
-    fail(raw ? `Code ${raw.toUpperCase()} is already taken` : "No free code");
+    const created = await codes.issue(raw);
+    console.log(`Issued Frak referral code ${created.code}`);
+    console.log(`QR link: ${qrUrl(created.code)}`);
 }
 
 async function revoke(raw: string | undefined) {
     if (!raw) fail(USAGE);
-    const revoked = await referralCodes.revokeFrakCode(raw);
-    if (!revoked) fail(`No active Frak code ${raw.toUpperCase()}`);
+    const revoked = await codes.revoke(raw);
     console.log(`Revoked Frak referral code ${revoked.code}`);
 }
 
 async function list() {
-    const codes = await referralCodes.listFrakCodes();
     console.table(
-        codes.map((code) => ({
+        (await codes.list()).map((code) => ({
             code: code.code,
             qrUrl: qrUrl(code.code),
             createdAt: code.createdAt.toISOString(),
             revokedAt: code.revokedAt?.toISOString() ?? "",
+            redemptions: code.redemptions,
+            activeReferees: code.activeReferees,
+            game: code.gameId ?? "",
         }))
     );
 }
 
 const [command, arg] = process.argv.slice(2);
-switch (command) {
-    case "issue":
-        await issue(arg);
-        break;
-    case "revoke":
-        await revoke(arg);
-        break;
-    case "list":
-        await list();
-        break;
-    default:
-        fail(USAGE);
+try {
+    if (command === "issue") await issue(arg);
+    else if (command === "revoke") await revoke(arg);
+    else if (command === "list") await list();
+    else fail(USAGE);
+} catch (error) {
+    if (error instanceof HttpError) fail(error.message);
+    throw error;
 }
 process.exit(0);

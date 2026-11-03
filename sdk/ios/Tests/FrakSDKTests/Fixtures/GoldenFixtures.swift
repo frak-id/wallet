@@ -14,8 +14,8 @@ enum GoldenFixtures {
     /// FrakContext v2 codec vectors.
     static let contextCodec = "sdk/core/src/context/fixtures/golden-context.json"
 
-    /// Reward selection and currency formatting vectors.
-    static let rewards = "sdk/core/src/rewards/fixtures/golden-rewards.json"
+    /// Share-link building and `fCtx` parsing vectors.
+    static let sharingLinks = "sdk/core/src/context/fixtures/golden-sharing-links.json"
 
     /// A parsed fixture file: the envelope, validated, with payloads left opaque.
     struct Corpus {
@@ -57,7 +57,7 @@ enum GoldenFixtures {
                     Regenerate with (from the repo root):
                       bun run --cwd sdk/core fixtures:generate           # identity
                       bun run --cwd sdk/core fixtures:generate:context   # codec
-                      bun run --cwd sdk/core fixtures:generate:rewards   # rewards
+                      bun run --cwd sdk/core fixtures:generate:links     # share links
 
                     This is a hard failure by design.
                     """

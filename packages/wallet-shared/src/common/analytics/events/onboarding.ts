@@ -36,6 +36,7 @@ type EmailInputOutcome =
     | "login_existing"
     | "already_used";
 
+// Every page hide sends `onboarding_abandoned` and a return resumes the flow: a flow's outcome is its last end event.
 type OnboardingFlow = FlowEvents<"onboarding">;
 
 type OnboardingMidFlowEvents = {
@@ -55,6 +56,10 @@ type OnboardingMidFlowEvents = {
         error_key?: string;
         code_kind?: ReferralCodeKind;
         prefill_source: ReferralPrefillSource;
+    };
+    // Fires once when the user lands on a Frak Game onboarding step.
+    game_step_viewed: OnboardingBaseProps & {
+        step: "rules" | "reward";
     };
     // Fires once when the user lands on the `emailInput` onboarding step.
     email_input_viewed: OnboardingBaseProps | undefined;

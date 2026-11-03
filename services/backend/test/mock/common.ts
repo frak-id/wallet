@@ -379,6 +379,14 @@ let mockGenuineMerchantAccessGranted = true;
 export function setMockGenuineMerchantAccess(granted: boolean) {
     mockGenuineMerchantAccessGranted = granted;
 }
+let mockPlatformAdmin = false;
+export function setMockPlatformAdmin(granted: boolean) {
+    mockPlatformAdmin = granted;
+}
+let mockStepUpFresh = true;
+export function setMockStepUpFresh(fresh: boolean) {
+    mockStepUpFresh = fresh;
+}
 
 function mockPermissions(): MockMerchantPermissions {
     if (!mockMerchantAccessGranted) {
@@ -469,6 +477,32 @@ export const businessSessionContextMock = new Elysia({
                         return status(403, "Access denied");
                     }
                     return { merchantPermissions };
+                },
+            };
+        },
+        // Same status codes as the real macros; `setMockPlatformAdmin` and
+        // `setMockStepUpFresh` stand in for the allow-list and the 2FA window.
+        platformAdminAuthenticated(enabled?: boolean) {
+            if (!enabled) return;
+            return {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+                beforeHandle: ({ businessSession }: any) => {
+                    if (!businessSession) return status(401, "Unauthorized");
+                    if (!mockPlatformAdmin) {
+                        return status(403, "Platform admin access required");
+                    }
+                },
+            };
+        },
+        requireStepUp(enabled?: boolean) {
+            if (!enabled) return;
+            return {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+                beforeHandle: ({ businessSession }: any) => {
+                    if (!businessSession) return status(401, "Unauthorized");
+                    if (!mockStepUpFresh) {
+                        return status(401, "step-up-required");
+                    }
                 },
             };
         },

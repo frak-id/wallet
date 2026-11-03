@@ -11,10 +11,12 @@ import {
     TransferIcon,
 } from "@frak-labs/design-system/icons";
 import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalStore } from "@/module/stores/modalStore";
 import { useGetPendingRewards } from "@/module/tokens/hook/useGetPendingRewards";
+import { useGetUnpaidRewards } from "@/module/tokens/hook/useGetUnpaidRewards";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -110,14 +112,18 @@ function StatCardsRow() {
     const locale = i18n.language;
     const { userBalance } = useGetUserBalance();
     const { totalClaimable } = useGetPendingRewards();
+    const { totalUnpaid } = useGetUnpaidRewards();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
     const openModal = modalStore((s) => s.openModal);
+    const navigate = useNavigate();
 
     const handlePendingClick = () => {
-        if (totalClaimable <= 0) {
-            openModal({ id: "emptyPendingGains" });
-        } else {
+        if (totalClaimable > 0) {
             openModal({ id: "pendingGains" });
+        } else if (totalUnpaid > 0) {
+            void navigate({ to: "/history" });
+        } else {
+            openModal({ id: "emptyPendingGains" });
         }
     };
 
@@ -136,7 +142,11 @@ function StatCardsRow() {
                 onClick={handlePendingClick}
             >
                 <StatCard
-                    amount={formatCurrency(totalClaimable, "EUR", locale)}
+                    amount={formatCurrency(
+                        totalClaimable + totalUnpaid,
+                        "EUR",
+                        locale
+                    )}
                     label={t("wallet.stats.pending")}
                     icon={<HourglassIcon width={14} height={14} />}
                 />

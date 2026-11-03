@@ -19,10 +19,6 @@ export const body = style({
     gap: alias.spacing.m,
 });
 
-export const hero = style({
-    backgroundColor: vars.surface.overlay,
-});
-
 export const headerSection = style({
     alignItems: "center",
     textAlign: "center",

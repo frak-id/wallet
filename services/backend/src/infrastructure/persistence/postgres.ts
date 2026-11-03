@@ -18,6 +18,7 @@ import {
     businessSessionsTable,
 } from "../../domain/business-auth/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
+import { gameDrawsTable, gamesTable } from "../../domain/game/db/schema";
 import {
     emailVerificationCodesTable,
     identityGroupsTable,
@@ -26,10 +27,20 @@ import {
     recoveryBlobsTable,
 } from "../../domain/identity/db/schema";
 import {
+    instagramAccessTokensTable,
+    instagramLinksTable,
+    instagramPendingLinksTable,
+} from "../../domain/instagram/db/schema";
+import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
     merchantsTable,
 } from "../../domain/merchant/db/schema";
+import {
+    moneriumConnectionsTable,
+    moneriumPendingAuthsTable,
+    moneriumTrackedOrdersTable,
+} from "../../domain/monerium/db/schema";
 import {
     notificationBroadcastsTable,
     notificationSentTable,
@@ -94,6 +105,11 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
+        gamesTable,
+        gameDrawsTable,
+        instagramLinksTable,
+        instagramPendingLinksTable,
+        instagramAccessTokensTable,
         affiliateBrandTable,
         affiliateAttributionTable,
         affiliateSyncStateTable,
@@ -102,6 +118,9 @@ export const db = drizzle({
         businessAccountsTable,
         businessSessionsTable,
         businessEmailCodesTable,
+        moneriumConnectionsTable,
+        moneriumPendingAuthsTable,
+        moneriumTrackedOrdersTable,
     },
 });
 

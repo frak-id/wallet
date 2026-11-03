@@ -7,7 +7,7 @@ export const noticeVariants = recipe({
     base: {
         display: "flex",
         alignItems: "center",
-        gap: alias.spacing.xxs,
+        gap: alias.spacing.xs,
         fontSize: "12px",
         lineHeight: "20px",
     },

@@ -15,7 +15,10 @@ import {
     sql,
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
-import { db } from "../../../infrastructure/persistence/postgres";
+import {
+    db,
+    type PgRunner,
+} from "../../../infrastructure/persistence/postgres";
 
 import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
@@ -56,6 +59,29 @@ export type AnnexAssetLogRow = {
     tokenAddress: Address | null;
     settledAt: Date | null;
     onchainTxHash: Hex | null;
+};
+
+export type PayoutStateRow = {
+    id: string;
+    status: AssetStatus;
+    amount: string;
+    tokenAddress: Address | null;
+    txHash: Hex | null;
+    statusChangedAt: Date;
+    settledAt: Date | null;
+    expiresAt: Date | null;
+    lastError: string | null;
+};
+
+type OwedBucket = { amount: string; count: number };
+
+export type OwedByBankRow = {
+    merchantId: string;
+    tokenAddress: Address;
+    due: OwedBucket;
+    depleted: OwedBucket;
+    processing: OwedBucket;
+    later: OwedBucket;
 };
 
 export class AssetLogRepository {
@@ -112,8 +138,120 @@ export class AssetLogRepository {
                     p.expirationDays
                 ),
                 availableAt,
+                heldAt: p.held ? new Date() : undefined,
             };
         });
+    }
+
+    /** A game prize: payable at once, tied to no campaign rule nor interaction. */
+    async createWinnerPayout(
+        params: {
+            identityGroupId: string;
+            merchantId: string;
+            amount: number;
+            tokenAddress: Address;
+        },
+        runner: PgRunner = db
+    ): Promise<string> {
+        const now = new Date();
+        const [created] = await runner
+            .insert(assetLogsTable)
+            .values({
+                identityGroupId: params.identityGroupId,
+                merchantId: params.merchantId,
+                assetType: "token",
+                amount: params.amount.toString(),
+                tokenAddress: params.tokenAddress,
+                recipientType: "winner",
+                status: "pending",
+                statusChangedAt: now,
+                expiresAt: this.calculateExpiresAt(null),
+            })
+            .returning({ id: assetLogsTable.id });
+        if (!created) throw new Error("Failed to create the winner payout");
+        return created.id;
+    }
+
+    async findOnchainTxHash(id: string): Promise<Hex | null> {
+        const [row] = await db
+            .select({ hash: assetLogsTable.onchainTxHash })
+            .from(assetLogsTable)
+            .where(eq(assetLogsTable.id, id))
+            .limit(1);
+        return row?.hash ?? null;
+    }
+
+    async findPayoutStates(ids: string[]): Promise<PayoutStateRow[]> {
+        if (ids.length === 0) return [];
+        return db
+            .select({
+                id: assetLogsTable.id,
+                status: assetLogsTable.status,
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                txHash: assetLogsTable.onchainTxHash,
+                statusChangedAt: assetLogsTable.statusChangedAt,
+                settledAt: assetLogsTable.settledAt,
+                expiresAt: assetLogsTable.expiresAt,
+                lastError: assetLogsTable.lastSettlementError,
+            })
+            .from(assetLogsTable)
+            .where(inArray(assetLogsTable.id, ids));
+    }
+
+    /**
+     * What every merchant paying from `bankAddress` still owes, per token, in human units.
+     * `due` is what settlement would push now; `later` is held or still locked.
+     */
+    async sumOwedByBank(
+        bankAddress: Address,
+        now = new Date()
+    ): Promise<OwedByBankRow[]> {
+        const pending = sql`${assetLogsTable.status} = 'pending'`;
+        // Never NULL, so `NOT deferred` keeps every row without a lockup.
+        const deferred = sql`((${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL) OR (${assetLogsTable.availableAt} IS NOT NULL AND ${gt(assetLogsTable.availableAt, now)}))`;
+        const bucket = (where: SQL) => ({
+            amount: sql<string>`coalesce(sum(${assetLogsTable.amount}) filter (where ${where}), 0)::text`,
+            count: sql<number>`(count(*) filter (where ${where}))::int`,
+        });
+        const rows = await db
+            .select({
+                merchantId: assetLogsTable.merchantId,
+                tokenAddress: assetLogsTable.tokenAddress,
+                due: bucket(sql`${pending} AND NOT ${deferred}`),
+                depleted: bucket(
+                    sql`${assetLogsTable.status} = 'bank_depleted'`
+                ),
+                processing: bucket(
+                    sql`${assetLogsTable.status} = 'processing'`
+                ),
+                later: bucket(sql`${pending} AND ${deferred}`),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                merchantsTable,
+                eq(assetLogsTable.merchantId, merchantsTable.id)
+            )
+            .where(
+                and(
+                    eq(merchantsTable.bankAddress, bankAddress),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                        "processing",
+                    ]),
+                    or(
+                        isNull(assetLogsTable.expiresAt),
+                        gt(assetLogsTable.expiresAt, now)
+                    )
+                )
+            )
+            .groupBy(assetLogsTable.merchantId, assetLogsTable.tokenAddress);
+        return rows.flatMap(({ tokenAddress, ...row }) =>
+            tokenAddress ? [{ ...row, tokenAddress }] : []
+        );
     }
 
     /**
@@ -165,6 +303,10 @@ export class AssetLogRepository {
                         or(
                             isNull(assetLogsTable.availableAt),
                             lte(assetLogsTable.availableAt, now)
+                        ),
+                        or(
+                            isNull(assetLogsTable.heldAt),
+                            isNotNull(assetLogsTable.releasedAt)
                         ),
                         // Gate on an active wallet node (see method doc).
                         exists(
@@ -269,6 +411,69 @@ export class AssetLogRepository {
                             )
                         )
                     )
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /**
+     * Release held rewards. Each stays unpaid until its `availableAt` (if
+     * later) and payable for at least `graceMs` after that. A reward already
+     * past its expiry stays expired.
+     */
+    async releaseHeld(
+        items: { id: string; availableAt: Date | null }[],
+        graceMs: number
+    ): Promise<string[]> {
+        if (items.length === 0) return [];
+
+        const now = new Date();
+        const rows = JSON.stringify(
+            items.map(({ id, availableAt }) => ({ id, ready_at: availableAt }))
+        );
+        const opensAt = sql`GREATEST(${assetLogsTable.availableAt}, v.ready_at)`;
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                releasedAt: now,
+                availableAt: opensAt,
+                expiresAt: sql`GREATEST(${assetLogsTable.expiresAt}, GREATEST(${opensAt}, ${now.toISOString()}::timestamp) + ${graceMs} * interval '1 millisecond')`,
+            })
+            .from(
+                sql`jsonb_to_recordset(${rows}::jsonb) AS v(id uuid, ready_at timestamp)`
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.id, sql`v.id`),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
+                    gt(assetLogsTable.expiresAt, now)
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.map(({ id }) => id);
+    }
+
+    /** Hold released rewards again, as long as they are not being paid. */
+    async reholdReleased(ids: string[]): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ releasedAt: null, heldAt: new Date() })
+            .where(
+                and(
+                    inArray(assetLogsTable.id, ids),
+                    isNotNull(assetLogsTable.heldAt),
+                    isNotNull(assetLogsTable.releasedAt),
+                    inArray(assetLogsTable.status, ["pending", "bank_depleted"])
                 )
             )
             .returning({ id: assetLogsTable.id });
@@ -517,6 +722,7 @@ export class AssetLogRepository {
                 createdAt: assetLogsTable.createdAt,
                 settledAt: assetLogsTable.settledAt,
                 availableAt: assetLogsTable.availableAt,
+                held: sql<boolean>`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL`,
                 cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
@@ -547,6 +753,34 @@ export class AssetLogRepository {
             .orderBy(desc(assetLogsTable.createdAt))
             .limit(options?.limit ?? 500)
             .offset(options?.offset ?? 0);
+    }
+
+    /** Per-token totals of the group's live rewards not on-chain yet: locked, pending, being pushed or waiting on funding. */
+    async sumUnpaidByIdentityGroup(
+        identityGroupId: string
+    ): Promise<Array<{ tokenAddress: Address; total: string }>> {
+        return db
+            .select({
+                tokenAddress: assetLogsTable.tokenAddress,
+                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                    String
+                ),
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "bank_depleted",
+                    ]),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .groupBy(assetLogsTable.tokenAddress) as Promise<
+            Array<{ tokenAddress: Address; total: string }>
+        >;
     }
 
     async countByIdentityGroup(identityGroupId: string): Promise<number> {

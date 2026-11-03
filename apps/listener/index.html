@@ -16,17 +16,30 @@
 
         <!-- Inter @font-face is inlined by the inlineFontFaces Vite plugin (vite.config.ts) -->
 
-        <!-- A throw while the module graph loads kills bootstrap() before analytics exists; the SDK reports the last error it sees before connecting -->
+        <!-- A throw or a failed script load kills bootstrap() before analytics exists; the SDK reports the last error it sees before connecting -->
         <script>
-        addEventListener("error", (event) => {
-            parent.postMessage(
-                {
-                    iframeLifecycle: "boot-error",
-                    data: { message: String(event.message) },
-                },
-                "*"
-            );
-        });
+        addEventListener(
+            "error",
+            (event) => {
+                const target = event.target;
+                let message;
+                // A failed load fires on the element and does not bubble, hence the capture phase
+                if (target instanceof HTMLScriptElement) {
+                    message = `Failed to load ${target.src}`;
+                } else if (target instanceof HTMLLinkElement) {
+                    message = `Failed to load ${target.href}`;
+                } else if (event instanceof ErrorEvent) {
+                    message = String(event.message);
+                } else {
+                    return;
+                }
+                parent.postMessage(
+                    { iframeLifecycle: "boot-error", data: { message } },
+                    "*"
+                );
+            },
+            true
+        );
         </script>
     </head>
     <body>

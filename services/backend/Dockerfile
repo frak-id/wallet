@@ -8,7 +8,7 @@
 # of being bundled. Switching to alpine would require validating its musl
 # prebuild on every dependency bump.
 
-ARG BUN_VERSION=1.4.2
+ARG BUN_VERSION=1.4.4
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 # Node 24 is required for the SDK build step (vanilla-extract VM-sandbox quirks);

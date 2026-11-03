@@ -27,6 +27,28 @@ export class InteractionLogRepository {
         return result ?? null;
     }
 
+    async existsByExternalEvent(params: {
+        merchantId: string;
+        type: InteractionType;
+        externalEventId: string;
+    }): Promise<boolean> {
+        const [row] = await db
+            .select({ id: interactionLogsTable.id })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, params.merchantId),
+                    eq(interactionLogsTable.type, params.type),
+                    eq(
+                        interactionLogsTable.externalEventId,
+                        params.externalEventId
+                    )
+                )
+            )
+            .limit(1);
+        return row !== undefined;
+    }
+
     async findUnprocessedForRewards({
         limit,
     }: {

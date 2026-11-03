@@ -360,7 +360,8 @@
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
-                "modifyCta": "Modify my code"
+                "modifyCta": "Modify my code",
+                "gameHint": "Frak Game: 1 ticket per friend who signs up with your code, once they connect their Instagram and follow @frak_fr."
             },
             "edit": {
                 "title": "Edit my code",
@@ -387,6 +388,7 @@
                 "errorSelf": "You can't use your own code.",
                 "errorCycle": "This code can't be used with your account.",
                 "errorAlreadyRedeemed": "You already have an active referral code.",
+                "errorGameClosed": "This game isn't open right now. Watch for the next one on Instagram.",
                 "errorInvalid": "This code isn't valid.",
                 "errorGeneric": "Something went wrong. Please try again.",
                 "confirmDelete": {
@@ -394,6 +396,12 @@
                     "description": "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.",
                     "confirmCta": "Delete the code",
                     "cancelCta": "Cancel"
+                },
+                "replaceFrak": {
+                    "title": "Replace your\nFrak code?",
+                    "description": "By using this referral code, you lose your exclusive cashback on your first purchase at every brand.",
+                    "confirmCta": "Use this code",
+                    "cancelCta": "Keep my cashback"
                 }
             }
         },
@@ -406,9 +414,10 @@
         "pendingGains": {
             "subtitle": "Pending earnings",
             "heading": "Great news!\nMoney is waiting for you.",
-            "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+            "description": "Your earnings have arrived. Collect them now into your wallet.",
             "confirm": "Collect my earnings",
-            "success": "Earnings collected!"
+            "success": "Earnings collected!",
+            "unpaid": "Plus {{amount}} still to come"
         },
         "pendingEmpty": {
             "title": "You don't have any earnings yet",
@@ -779,6 +788,12 @@
             "rewardDetail": {
                 "ariaLabel": "Reward details"
             },
+            "gameResult": {
+                "ariaLabel": "Game result"
+            },
+            "gameWin": {
+                "ariaLabel": "You won the Frak Game"
+            },
             "moneriumOrderDetail": {
                 "ariaLabel": "Transfer details"
             },
@@ -865,7 +880,10 @@
             "title": "Your referral code",
             "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
             "codeCopied": "Referral code copied!",
-            "manualEntry": "Referral code to enter at sign-up"
+            "manualEntry": "Referral code to enter at sign-up",
+            "openApp": "I already have the Frak app",
+            "openBrowser": "Open in the browser",
+            "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser"
         }
     },
     "pendingActions": {
@@ -945,6 +963,298 @@
             "descriptionHighlight": "Your earnings are secure and accessible at any time.",
             "button": "Get started",
             "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>"
+        },
+        "game": {
+            "rules": {
+                "title": "The Frak Game",
+                "description": "Collect tickets: a random draw picks the winner when the game ends.",
+                "howItWorks": "How it works",
+                "invite": {
+                    "title": "Share and earn tickets",
+                    "reward": "You each earn {{reward}}.",
+                    "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
+                    "description": "1 ticket per friend who signs up with your code and connects their Instagram, and 1 per friend with a Frak wallet who opens your share of a brand."
+                },
+                "purchase": {
+                    "title": "Shop at a partner brand",
+                    "description": "Your purchase, or one by a friend you referred."
+                },
+                "follow": {
+                    "title": "Activate your tickets with Instagram",
+                    "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 2 more tickets. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn."
+                }
+            },
+            "bonus": {
+                "title": "Your {{reward}} bonus",
+                "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
+                "pending": "Pending"
+            },
+            "reward": {
+                "title": "You're in the game!",
+                "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
+                "descriptionJoinOnly": "Your first ticket is in. Collect more before the game ends for a chance to win the prize.",
+                "game": {
+                    "endsAt": "Until {{date}}",
+                    "sponsor": "Offered by {{name}}"
+                }
+            }
+        }
+    },
+    "game": {
+        "join": {
+            "hero": {
+                "title": "Your ticket is waiting"
+            },
+            "title": "Join the game",
+            "description": "Enter the game code, shared in our Instagram stories, to take part.",
+            "label": "Game code",
+            "submit": "Join",
+            "findCode": "Find the code on Instagram",
+            "firstTicket": "1st ticket on us"
+        },
+        "prizeToWin": "{{prize}} to win in the draw",
+        "card": {
+            "label": "Frak Game",
+            "ticket_one": "ticket",
+            "ticket_other": "tickets",
+            "yourTicket": "Your ticket",
+            "toWin": "to win in the draw",
+            "ariaLabel": "Frak Game: {{prize}}, {{tickets}}",
+            "gained_one": "{{count}} ticket since your last visit",
+            "gained_other": "{{count}} tickets since your last visit",
+            "statusJoin": "Join the game",
+            "statusAllDone": "Every mission done",
+            "drawn": "You were drawn!",
+            "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
+            "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
+            "statusResult": "See the result"
+        },
+        "page": {
+            "none": {
+                "title": "No game right now",
+                "description": "The next game will be announced on Instagram."
+            },
+            "error": "Couldn't load the game.",
+            "retry": "Try again",
+            "title": "Frak Game",
+            "openGame": "Current game",
+            "hero": {
+                "drawn_one": "{{count}} ticket in the draw",
+                "drawn_other": "{{count}} tickets in the draw",
+                "pending_one": "{{count}} ticket on hold",
+                "pending_other": "{{count}} tickets on hold",
+                "unlocked_one": "Your ticket is unlocked",
+                "unlocked_other": "Your {{count}} tickets are unlocked",
+                "subtitleNone_one": "Connect your Instagram and follow @frak_fr so it counts in the draw",
+                "subtitleNone_other": "Connect your Instagram and follow @frak_fr so they count in the draw",
+                "subtitleNotFollowing_one": "Follow @frak_fr again so it counts in the draw",
+                "subtitleNotFollowing_other": "Follow @frak_fr again so they count in the draw",
+                "countdownDays": "Ends in {{days}} d {{hours}} h",
+                "countdownHours": "Ends in {{hours}} h {{minutes}} min",
+                "since": "Since your last visit: {{gains}}",
+                "gain": "+{{amount}} {{source}}",
+                "sources": {
+                    "join": "joining the game",
+                    "instagramCertified": "connected Instagram",
+                    "purchase": "brand purchase",
+                    "referredPurchase": "friend's purchase",
+                    "referredSignup": "friend signed up",
+                    "brandShare": "friend from a brand"
+                }
+            },
+            "missions": {
+                "title": "Missions",
+                "progress": "{{done}} of {{total}}",
+                "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
+                "reward_one": "+{{count}} ticket",
+                "reward_other": "+{{count}} tickets",
+                "rewardPerFriend_one": "+{{count}} ticket / friend",
+                "rewardPerFriend_other": "+{{count}} tickets / friend",
+                "rewardPerPurchase_one": "+{{count}} ticket / purchase",
+                "rewardPerPurchase_other": "+{{count}} tickets / purchase",
+                "join": {
+                    "title": "Join the game",
+                    "hint": "Done, welcome!"
+                },
+                "instagram": {
+                    "certified": {
+                        "title": "Instagram connected",
+                        "hint": "You follow @frak_fr, your tickets count."
+                    },
+                    "declared": {
+                        "title": "Connect your Instagram",
+                        "hint": "Your tickets count. Connect it for {{amount}} more tickets, or you'll have to do it within 24 h if you're drawn."
+                    },
+                    "notFollowing": {
+                        "title": "Follow @frak_fr again",
+                        "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away."
+                    },
+                    "none": {
+                        "title": "Unlock your tickets",
+                        "hint": "Connect your Instagram and follow @frak_fr to enter the draw."
+                    }
+                },
+                "friend": {
+                    "title": "Invite a friend",
+                    "hint": "With your code or through a brand",
+                    "hintEarned": "{{parts}}. Invite another one.",
+                    "withCode": "{{count}} with your code",
+                    "viaBrand": "{{count}} via a brand"
+                },
+                "purchase": {
+                    "title": "Buy from a brand",
+                    "hint": "Your purchase, or one by a friend you invited.",
+                    "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
+                    "own_one": "{{count}} purchase of yours",
+                    "own_other": "{{count}} purchases of yours",
+                    "friends_one": "{{count}} purchase by a friend",
+                    "friends_other": "{{count}} purchases by friends"
+                }
+            }
+        },
+        "result": {
+            "badge": {
+                "drawing": "Drawing",
+                "won": "Won",
+                "lost": "Not won",
+                "noWinner": "No winner",
+                "pendingVerification": "To confirm"
+            },
+            "hero": {
+                "drawing_one": "Your ticket is in the draw. The winner will be announced very soon.",
+                "drawing_other": "Your {{tickets}} tickets are in the draw. The winner will be announced very soon.",
+                "drawingOf_one": "Your ticket out of {{total}} is in the draw. The winner will be announced very soon.",
+                "drawingOf_other": "Your {{tickets}} tickets out of {{total}} are in the draw. The winner will be announced very soon.",
+                "lost_one": "Your ticket wasn't drawn.",
+                "lost_other": "Your {{tickets}} tickets weren't drawn.",
+                "lostOf_one": "Your ticket out of {{total}} wasn't drawn.",
+                "lostOf_other": "Your {{tickets}} tickets out of {{total}} weren't drawn.",
+                "discarded": "Your tickets weren't in the draw.",
+                "pendingVerification": "Connect your Instagram and follow @frak_fr to receive your {{prize}}. Otherwise, another winner is drawn.",
+                "timeLeftHours": "Only {{hours}} h {{minutes}} min left",
+                "timeLeftMinutes": "Only {{minutes}} min left",
+                "deadline": "Before {{date}}",
+                "next": "The next game will be announced on Instagram",
+                "record": {
+                    "first_one": "First game: {{tickets}} ticket, your record to beat",
+                    "first_other": "First game: {{tickets}} tickets, your record to beat",
+                    "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
+                    "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+                    "tied_one": "Record tied: {{tickets}} ticket, like the {{date}} game",
+                    "tied_other": "Record tied: {{tickets}} tickets, like the {{date}} game",
+                    "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
+                    "held_other": "Your record: {{tickets}} tickets, in the {{date}} game"
+                }
+            },
+            "drawing": {
+                "title": "Draw in progress",
+                "description": "The game is over. The winner will be announced very soon."
+            },
+            "won": {
+                "title": "You won {{prize}}!",
+                "description": "Your ticket was drawn. Your prize is on its way to your wallet.",
+                "cta": "See my prize"
+            },
+            "lost": {
+                "title": "Not this time",
+                "description": "Your ticket wasn't drawn. Try your luck in the next game!"
+            },
+            "noWinner": {
+                "title": "No winner",
+                "description": "No ticket could be drawn for this game."
+            },
+            "discarded": "Your tickets didn't count: you weren't following @frak_fr at draw time.",
+            "prize": "Prize",
+            "myTickets": "Your tickets",
+            "totalTickets": "Tickets in the draw",
+            "participants": "Players",
+            "endedAt": "Game ended",
+            "sources": {
+                "title": "Where your tickets came from",
+                "join": "Joining the game",
+                "purchase": "Your purchases",
+                "referredPurchase": "Your friends' purchases",
+                "referredSignup": "Friends who signed up with your code",
+                "brandShare": "Friends reached through your brand shares",
+                "instagramCertified": "Connected Instagram"
+            },
+            "verify": {
+                "link": "Check the draw",
+                "pid": "Your id in the draw: {{pid}}"
+            },
+            "pendingVerification": {
+                "title": "You were drawn!",
+                "description": "Connect your Instagram and follow @frak_fr before {{date}} to receive your prize. Otherwise, another winner is drawn.",
+                "cta": "Connect my Instagram"
+            },
+            "discardedNotLinked": "Your tickets didn't count: you hadn't added your Instagram at draw time."
+        },
+        "history": {
+            "title": "Past games",
+            "gameOf": "{{date}} game",
+            "tickets_one": "{{count}} ticket",
+            "tickets_other": "{{count}} tickets",
+            "ticketsOf_one": "{{count}} ticket out of {{total}}",
+            "ticketsOf_other": "{{count}} tickets out of {{total}}",
+            "notCounted": "0 tickets counted"
+        },
+        "win": {
+            "title": "You won the Frak Game!",
+            "description": "Your ticket was drawn. Your {{prize}} is on its way to your wallet.",
+            "cta": "See my prize",
+            "close": "Close"
+        }
+    },
+    "instagram": {
+        "title": "Your Instagram",
+        "error": "Couldn't load your Instagram account.",
+        "retry": "Try again",
+        "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
+        "certify": {
+            "title": "Connect your Instagram",
+            "perks": "+2 tickets in every game, and your welcome reward unlocked.",
+            "codeLabel": "Your code",
+            "copy": "Copy the code",
+            "copied": "Copied",
+            "hint": "The button copies your code and opens the chat with @frak_fr: paste it and send it.",
+            "open": "Send my code on Instagram",
+            "waiting": "Checking for your message…",
+            "notYet": "Nothing yet. Check that you sent {{code}} to @frak_fr.",
+            "checkAgain": "Check again",
+            "unavailable": "Connecting isn't available yet. Add your @ for now.",
+            "error": "Couldn't get your code. Try again in a moment.",
+            "checkError": "Couldn't check your Instagram account right now. Try again in a moment."
+        },
+        "declare": {
+            "open": "Not now? Just add your @",
+            "title": "Add your Instagram @",
+            "editTitle": "Change account",
+            "description": "Your tickets count right away. If you're drawn, you'll have 24 h to connect this account.",
+            "label": "Your Instagram account",
+            "placeholder": "@your_account",
+            "submit": "Save",
+            "cancel": "Cancel",
+            "badge": "Unconfirmed",
+            "counting": "Your tickets count. If you're drawn, you'll have 24 h to connect this account.",
+            "change": "Change",
+            "remove": "Remove",
+            "invalid": "That isn't a valid Instagram account.",
+            "error": "Couldn't save your account. Try again.",
+            "removeError": "Couldn't remove your account. Try again."
+        },
+        "linked": {
+            "badge": "Connected",
+            "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets in every game.",
+            "notFollowing": "Last step: follow @frak_fr so your tickets count.",
+            "follow": "Follow @frak_fr",
+            "checkAgain": "Check again",
+            "stillNotFollowing": "We still don't see you following @frak_fr. If you just followed, wait a few seconds and try again.",
+            "done": "Done"
+        },
+        "profile": {
+            "label": "Instagram",
+            "notLinked": "Not connected",
+            "notFollowing": "Not following"
         }
     },
     "reward": {
@@ -955,7 +1265,15 @@
             "settled": "To collect",
             "consumed": "Consumed",
             "cancelled": "Cancelled",
-            "expired": "Expired"
+            "expired": "Expired",
+            "locked": "Locked"
+        },
+        "pending": {
+            "onItsWay": "On its way",
+            "onItsWayDisclaimer": "This reward is on its way to your wallet. You'll be able to collect it very soon.",
+            "availableOn": "Available on {{date}}",
+            "availableOnLabel": "Available on",
+            "availableOnDisclaimer": "You'll be able to collect this reward from that date."
         },
         "trigger": {
             "unknown": "Reward",
@@ -983,6 +1301,7 @@
             "updatedAt": "Updated on {{date}} · {{time}}",
             "purchaseMadeOn": "Purchase made on {{date}} at {{time}}",
             "purchaseDate": "Purchase date",
+            "earnedDate": "Earned on",
             "rewardGenerated": "Reward generated",
             "toCollect": "To collect",
             "creditedOn": "Credited on",
@@ -990,56 +1309,39 @@
             "generatedOn": "Generated on {{date}} · {{time}}",
             "pendingValidation": "Pending brand validation",
             "estimatedValidation": "Estimated validation",
-            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
+            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
+            "lockedExplanation": "Unlocks as soon as you connect your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
+            "lockedOnFriendExplanation": "Unlocks as soon as your friend connects their Instagram and follows @frak_fr, or with their first reward from a partner brand."
         },
         "frakBonus": {
             "label": "Welcome bonus",
             "detailTitle": "Your welcome bonus",
             "detailDescription": "Because you joined Frak with an invitation, Frak passed its referrer reward to you on your first purchase at {{merchant}}."
+        },
+        "gamePrize": {
+            "label": "Draw prize",
+            "detailTitle": "You won the Frak Game",
+            "detailDescription": "Your ticket was drawn when the game ended. The prize is on its way to your wallet."
         }
     },
     "monerium": {
         "account": "Monerium Account",
         "connect": "Connect",
-        "connecting": "Connecting...",
         "disconnect": "Disconnect",
         "completeSetup": "Complete setup",
-        "linkWallet": "Link wallet",
-        "status": {
-            "settingUp": "Setting up...",
-            "created": "Account created, complete verification on Monerium",
-            "pending": "Verification in progress",
-            "approved": "Verified ✓",
-            "rejected": "Verification failed"
-        },
-        "badge": {
-            "pending": "Bank verification in progress...",
-            "approved": "Bank connected:",
-            "notLinked": "IBAN not linked to this wallet",
-            "rejected": "Verification failed"
-        },
-        "offramp": {
-            "amountLabel": "Amount (EURe)",
-            "balance": "Balance:",
-            "max": "MAX",
-            "destinationIban": "Destination IBAN",
-            "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
-            "submit": "Withdraw to bank",
-            "submitting": "Submitting order...",
-            "confirmBiometric": "Confirm with biometric...",
-            "success": "Order submitted! Funds will arrive in 1-2 business days.",
-            "tryAgain": "Try again",
-            "noIban": "No IBAN linked. Please complete Monerium verification first.",
-            "amountRequired": "Amount is required",
-            "amountInvalid": "Amount must be greater than 0"
+        "disconnectConfirm": {
+            "title": "Disconnect Monerium?",
+            "description": "You will need to sign in to Monerium again to transfer your earnings.",
+            "cancel": "Cancel",
+            "confirm": "Disconnect"
         },
         "callback": {
             "cancelledTitle": "Connection cancelled",
             "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
             "errorTitle": "Connection failed",
             "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
-            "csrfTitle": "Security check failed",
-            "csrfDescription": "We couldn't verify the connection request. Please retry from the start.",
+            "expiredTitle": "Link expired",
+            "expiredDescription": "This sign-in took too long or was already used. Please start again.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -1053,15 +1355,34 @@
                 "feature2Description": "To receive your earnings directly into your bank account.",
                 "feature3Title": "Secure your transfers",
                 "feature3Description": "Your transactions are protected and comply with current security standards.",
-                "cta": "Accept and continue"
+                "cta": "Accept and continue",
+                "secondaryCta": "I already have a Monerium account"
             },
             "kyc": {
-                "title": "Complete your identity verification",
-                "description": "To transfer your earnings, you need to verify your identity.",
-                "notice": "This step is quick and secure.",
+                "title": "Finish setting up your Monerium account",
+                "description": "Your account is created but not complete yet. Finish the steps on Monerium to transfer your earnings.",
+                "notice": "You'll come back to Frak Wallet automatically when you're done.",
                 "featureTitle": "Verify your identity",
                 "featureDescription": "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.",
-                "cta": "Verify my identity"
+                "cta": "Continue on Monerium"
+            },
+            "reconnect": {
+                "title": "Reconnect your Monerium account",
+                "description": "Your Monerium session has expired. Reconnect to keep transferring your earnings.",
+                "cta": "Reconnect"
+            },
+            "verification": {
+                "title": "Verification in progress",
+                "description": "Monerium is reviewing your identity. This can take from a few minutes to a couple of days.",
+                "pushTitle": "Get notified",
+                "pushDescription": "We'll send you a notification as soon as your account is verified.",
+                "pushCta": "Notify me",
+                "checkAgain": "Check again"
+            },
+            "blocked": {
+                "title": "Verification not completed",
+                "description": "Monerium couldn't verify this account. Open Monerium to see why and what you can do next.",
+                "cta": "Open Monerium"
             },
             "link": {
                 "title": "Link your wallet",
@@ -1069,6 +1390,11 @@
                 "featureTitle": "Link your Monerium account to your wallet",
                 "featureDescription": "To fully use your wallet, we need to link your account.",
                 "cta": "Link my account"
+            },
+            "linking": {
+                "title": "Linking your wallet",
+                "description": "Monerium is linking your wallet to your account. It usually only takes a moment.",
+                "checkAgain": "Check again"
             },
             "success": {
                 "title": "You can now transfer your earnings 🎉",
@@ -1079,26 +1405,29 @@
                 "amount": {
                     "title": "Amount to transfer",
                     "walletLabel": "Frak Wallet",
-                    "totalBalance": "Total balance",
+                    "totalBalance": "Total balance: {{amount}}",
                     "ibanLabel": "IBAN",
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",
                     "insufficientBalance": "Insufficient balance",
-                    "aboveMax": "Transfers of {{max}}€ or more require additional documentation."
+                    "aboveMax": "Transfers of {{max}}€ or more to someone else aren't supported yet. Send it to your own account instead.",
+                    "ownUnavailable": "Sending to your own account needs a verified Monerium profile. Pick another IBAN."
                 },
                 "recap": {
                     "title": "Summary",
                     "cancel": "Cancel",
                     "amountLabel": "Amount",
                     "beneficiaryLabel": "Beneficiary",
+                    "beneficiaryIban": "IBAN {{iban}}",
                     "addNote": "Add a note",
                     "warning": "Once confirmed, this operation cannot be cancelled",
-                    "confirm": "Confirm transfer"
+                    "confirm": "Confirm transfer",
+                    "memoInvalid": "The note must be between {{min}} and {{max}} characters."
                 },
                 "success": {
-                    "title": "Your transfer request of {{amount}} € has been received",
-                    "description": "You will receive your payout within 10 seconds."
+                    "title": "Your transfer request of {{amount}} has been received",
+                    "description": "Your transfer is on its way. You can follow it in your history."
                 },
                 "ibanManager": {
                     "title": "Manage my IBANs",
@@ -1112,10 +1441,21 @@
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Save",
-                    "remove": "Remove",
+                    "remove": "Remove {{name}}",
                     "empty": "No IBAN saved. Add one to get started.",
-                    "select": "Select"
+                    "ownToggle": "This is my own account",
+                    "ownToggleDescription": "No name needed, and no amount limit.",
+                    "countryLabel": "Beneficiary country",
+                    "countryPlaceholder": "Select a country",
+                    "ibanInvalid": "This IBAN isn't valid",
+                    "nameInvalid": "Enter at least {{min}} characters",
+                    "ownAccountLabel": "My account"
                 }
+            },
+            "loadError": {
+                "title": "Couldn't load your account",
+                "description": "We couldn't get the status of your Monerium account. Please try again.",
+                "retry": "Try again"
             }
         },
         "order": {
@@ -1137,6 +1477,30 @@
                 "to": "To",
                 "transaction": "Transaction"
             }
+        },
+        "reconnect": "Reconnect",
+        "errors": {
+            "generic": "Something went wrong. Please try again.",
+            "network": "We couldn't reach the server. Check your connection and try again.",
+            "cancelled": "Signature cancelled. Nothing was sent.",
+            "notConnected": "Your Monerium account isn't connected yet.",
+            "reauthRequired": "Your Monerium session has expired. Reconnect to continue.",
+            "authStateInvalid": "This sign-in link has expired. Please start again.",
+            "tokenExchangeFailed": "Monerium didn't accept the connection. Please try again.",
+            "siweRejected": "Monerium couldn't confirm your wallet. Sign in on Monerium instead.",
+            "siweUnavailable": "Quick reconnect isn't available right now. Sign in on Monerium instead.",
+            "profileNotApproved": "Your Monerium profile isn't verified yet.",
+            "linkRejected": "Monerium refused to link this wallet. Please try again or contact support.",
+            "invalidAmount": "Enter a valid amount.",
+            "amountLimit": "This amount is above the limit for transfers to someone else. Send it to your own account instead.",
+            "invalidIban": "This IBAN isn't valid.",
+            "invalidCounterpart": "Check the recipient's name and country.",
+            "invalidMemo": "The note is too short or too long.",
+            "invalidMessage": "The transfer couldn't be confirmed. Please try again.",
+            "messageExpired": "The confirmation expired. Please try again.",
+            "walletNotLinked": "This wallet isn't linked to your Monerium account yet.",
+            "orderRejected": "Monerium rejected this transfer. Check the details and try again.",
+            "upstreamUnavailable": "Monerium is temporarily unavailable. Please try again in a few minutes."
         }
     },
     "favorites": {

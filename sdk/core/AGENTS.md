@@ -11,7 +11,7 @@ Framework-agnostic core SDK. Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`
 - `src/utils/` — compression (`compressJsonToB64`), base64url, URL builders, `sdkConfigStore`, `FrakContextManager`
 
 ## Subpath Exports
-`.`, `./actions`, `./bundle`, `./rewards`, `./identity`, plus the three read-only fixture subpaths (`./identity/fixtures`, `./context/fixtures`, `./rewards/fixtures`) the native SDKs read. `package.json` `exports` is authoritative. `development` condition → `./src/index.ts` (monorepo dev). No `browser` field on purpose — it pointed bundlers (`mainFields: ["browser"]`) at the non-tree-shakeable 39.5 KB IIFE and defeated `sideEffects: false`. CDN consumers fetch `cdn/bundle.js` by URL, not via package resolution.
+`.`, `./actions`, `./bundle`, `./rewards`, `./identity`, plus the four read-only fixture subpaths (`./identity/fixtures`, `./context/fixtures`, `./context/sharing-links-fixtures`, `./rewards/fixtures`) the native SDKs read. `package.json` `exports` is authoritative. `development` condition → `./src/index.ts` (monorepo dev). No `browser` field on purpose — it pointed bundlers (`mainFields: ["browser"]`) at the non-tree-shakeable 39.5 KB IIFE and defeated `sideEffects: false`. CDN consumers fetch `cdn/bundle.js` by URL, not via package resolution.
 
 ## Defined Variables (tsdown)
 `OPEN_PANEL_API_URL`, `SDK_VERSION` — injected at build time; not read from runtime env.

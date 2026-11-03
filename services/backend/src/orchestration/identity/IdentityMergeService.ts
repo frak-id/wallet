@@ -1,5 +1,5 @@
 import { db, log, type PgTx } from "@backend-infrastructure";
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { affiliateAttributionTable } from "../../domain/affiliate/db/schema";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
@@ -10,6 +10,15 @@ import {
     type MergedGroup,
 } from "../../domain/identity/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import {
+    instagramLinksTable,
+    instagramPendingLinksTable,
+} from "../../domain/instagram/db/schema";
+import {
+    pickSurvivingDeclaration,
+    pickSurvivingLink,
+    toDeclarationRow,
+} from "../../domain/instagram/utils";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
@@ -39,6 +48,13 @@ type MergeResult = {
     // (provider, merchant) — the anchor's token remains authoritative.
     migratedAffiliateAttributions: number;
     deletedConflictingAffiliateAttributions: number;
+    // Identity-keyed, one row per group: `deletedConflictingInstagramLinks`
+    // counts the rows that lost to the survivor (see `pickSurvivingLink`).
+    migratedInstagramLinks: number;
+    deletedConflictingInstagramLinks: number;
+    migratedInstagramDeclarations: number;
+    deletedInstagramDeclarations: number;
+    deletedInstagramLinkCodes: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     softDeletedConflictingReferralLinks: number;
@@ -331,6 +347,20 @@ export class IdentityMergeService {
                 mergingGroupIds,
             });
 
+        // Before the links: a webhook mid-certification holds its code row, so the two serialize.
+        const deletedInstagramLinkCodes =
+            await this.clearInstagramLinkCodesInTrx(trx, mergingGroupIds);
+        const instagramLinkOps = await this.migrateInstagramLinksInTrx(trx, {
+            anchorGroupId,
+            mergingGroupIds,
+        });
+        const instagramDeclarationOps =
+            await this.migrateInstagramPendingLinksInTrx(trx, {
+                anchorGroupId,
+                mergingGroupIds,
+                certified: instagramLinkOps.survived,
+            });
+
         await this.updateAnchorMergedGroupsInTrx(
             trx,
             anchorGroupId,
@@ -369,6 +399,11 @@ export class IdentityMergeService {
                 affiliateAttributionOps.migratedAffiliateAttributions,
             deletedConflictingAffiliateAttributions:
                 affiliateAttributionOps.deletedConflictingAffiliateAttributions,
+            migratedInstagramLinks: instagramLinkOps.migratedInstagramLinks,
+            deletedConflictingInstagramLinks:
+                instagramLinkOps.deletedConflictingInstagramLinks,
+            ...instagramDeclarationOps,
+            deletedInstagramLinkCodes,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -785,6 +820,148 @@ export class IdentityMergeService {
     }
 
     /**
+     * Re-point the one surviving `instagram_links` row onto the anchor and drop
+     * the rest, deleting first so the unique `identity_group_id` and `igsid`
+     * indexes never see two rows. Runs while the loser groups still exist.
+     */
+    private async migrateInstagramLinksInTrx(
+        trx: PgTx,
+        {
+            anchorGroupId,
+            mergingGroupIds,
+        }: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+        }
+    ): Promise<{
+        migratedInstagramLinks: number;
+        deletedConflictingInstagramLinks: number;
+        survived: boolean;
+    }> {
+        const links = await trx
+            .select()
+            .from(instagramLinksTable)
+            .where(
+                inArray(instagramLinksTable.identityGroupId, [
+                    anchorGroupId,
+                    ...mergingGroupIds,
+                ])
+            );
+        const survivor = pickSurvivingLink(links, anchorGroupId);
+        if (!survivor) {
+            return {
+                migratedInstagramLinks: 0,
+                deletedConflictingInstagramLinks: 0,
+                survived: false,
+            };
+        }
+
+        const beaten = links
+            .filter((link) => link.id !== survivor.id)
+            .map((link) => link.id);
+        if (beaten.length > 0) {
+            await trx
+                .delete(instagramLinksTable)
+                .where(inArray(instagramLinksTable.id, beaten));
+        }
+        const needsMove = survivor.identityGroupId !== anchorGroupId;
+        if (needsMove) {
+            await trx
+                .update(instagramLinksTable)
+                .set({ identityGroupId: anchorGroupId })
+                .where(eq(instagramLinksTable.id, survivor.id));
+        }
+
+        return {
+            migratedInstagramLinks: needsMove ? 1 : 0,
+            deletedConflictingInstagramLinks: beaten.length,
+            survived: true,
+        };
+    }
+
+    /** Loser groups' link codes go: a DM carrying one would link a deleted group. */
+    private async clearInstagramLinkCodesInTrx(
+        trx: PgTx,
+        mergingGroupIds: string[]
+    ): Promise<number> {
+        const pending = instagramPendingLinksTable;
+        const cleared = await trx
+            .update(pending)
+            .set({ code: null })
+            .where(
+                and(
+                    inArray(pending.identityGroupId, mergingGroupIds),
+                    isNotNull(pending.code)
+                )
+            )
+            .returning({ id: pending.id });
+        return cleared.length;
+    }
+
+    /**
+     * Keeps one declaration on the anchor, none when a certified link survived.
+     * Loser rows go; the anchor's keeps its code unless the anchor is now certified.
+     */
+    private async migrateInstagramPendingLinksInTrx(
+        trx: PgTx,
+        {
+            anchorGroupId,
+            mergingGroupIds,
+            certified,
+        }: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+            certified: boolean;
+        }
+    ): Promise<{
+        migratedInstagramDeclarations: number;
+        deletedInstagramDeclarations: number;
+    }> {
+        const pending = instagramPendingLinksTable;
+        const rows = await trx
+            .select()
+            .from(pending)
+            .where(
+                inArray(pending.identityGroupId, [
+                    anchorGroupId,
+                    ...mergingGroupIds,
+                ])
+            );
+        const declarations = rows.flatMap((row) => toDeclarationRow(row) ?? []);
+        const survivor = certified
+            ? null
+            : pickSurvivingDeclaration(declarations, anchorGroupId);
+        const dropped = rows
+            .filter((row) => certified || row.identityGroupId !== anchorGroupId)
+            .map((row) => row.id);
+        if (dropped.length > 0) {
+            await trx.delete(pending).where(inArray(pending.id, dropped));
+        }
+        const needsMove =
+            survivor !== null && survivor.identityGroupId !== anchorGroupId;
+        if (needsMove) {
+            const declared = {
+                username: survivor.username,
+                declaredAt: survivor.declaredAt,
+            };
+            await trx
+                .insert(pending)
+                .values({ identityGroupId: anchorGroupId, ...declared })
+                .onConflictDoUpdate({
+                    target: pending.identityGroupId,
+                    set: declared,
+                });
+        }
+
+        return {
+            migratedInstagramDeclarations: needsMove ? 1 : 0,
+            deletedInstagramDeclarations: declarations.filter(
+                (declaration) => declaration.id !== survivor?.id
+            ).length,
+        };
+    }
+
+    /**
      * Migrate `affiliate_attribution` rows from one-or-many loser groups
      * onto the anchor group. Identity-keyed (`identity_group_id`), so it
      * runs for every identity merge.
@@ -1029,6 +1206,11 @@ function emptyMergeResult(): MergeResult {
         migratedAssetLogs: 0,
         migratedAffiliateAttributions: 0,
         deletedConflictingAffiliateAttributions: 0,
+        migratedInstagramLinks: 0,
+        deletedConflictingInstagramLinks: 0,
+        migratedInstagramDeclarations: 0,
+        deletedInstagramDeclarations: 0,
+        deletedInstagramLinkCodes: 0,
         migratedReferralLinksReferrer: 0,
         migratedReferralLinksReferee: 0,
         softDeletedConflictingReferralLinks: 0,

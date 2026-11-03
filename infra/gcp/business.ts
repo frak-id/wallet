@@ -11,16 +11,9 @@ import {
     openPanelBusinessClientId,
     walletUrl,
 } from "../config";
-import { isProd, normalizedStageName } from "../utils";
+import { normalizedStageName } from "../utils";
 import { gatewayRoute } from "./gateway";
-import {
-    baseDomainName,
-    cachedImage,
-    getRegistryPath,
-    walletNamespace,
-} from "./utils";
-
-const subDomain = isProd ? "business" : "business-dev";
+import { cachedImage, getRegistryPath, walletNamespace } from "./utils";
 
 export const businessEnv = {
     STAGE: normalizedStageName,
@@ -114,12 +107,6 @@ export const businessService = new KubernetesService(
             ports: [
                 { port: 80, targetPort: 80, protocol: "TCP", name: "http" },
             ],
-        },
-
-        ingress: {
-            host: `${subDomain}.frak.id`,
-            tlsSecretName: "business-tls",
-            additionalHosts: [`business.${baseDomainName}`],
         },
 
         httpRoute: gatewayRoute("business", "business"),

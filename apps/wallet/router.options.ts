@@ -46,7 +46,7 @@ export const routerGenerationOptions = {
     // re-coalesce these into one chunk per feature so each navigation is a
     // single fetch.
     autoCodeSplitting: true,
-    routeFileIgnorePattern: "\\.css\\.ts$",
+    routeFileIgnorePattern: "\\.(css\\.ts|test\\.tsx?)$",
     // Per-route splitting policy. Pure-`<Outlet/>` layouts are not split:
     // each would otherwise produce a 200-300 B chunk downloaded eagerly with
     // the child route anyway. Inlining them into the static route tree adds

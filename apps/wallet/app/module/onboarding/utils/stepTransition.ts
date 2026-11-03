@@ -43,5 +43,7 @@ export function withStepTransition(
         }
     };
 
+    // `ready` rejects with AbortError when a newer transition skips this one; the update still runs.
+    transition.ready.catch(() => {});
     transition.finished.then(cleanup, cleanup);
 }

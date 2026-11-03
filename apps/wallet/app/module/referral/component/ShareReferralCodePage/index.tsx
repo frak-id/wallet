@@ -10,12 +10,14 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    trackEvent,
     useCopyToClipboardWithState,
     useReferralStatus,
 } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { modalStore } from "@/module/stores/modalStore";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
@@ -33,6 +35,7 @@ export function ShareReferralCodePage() {
     const openModal = modalStore((s) => s.openModal);
 
     const { data: status } = useReferralStatus();
+    const inGame = useCurrentGame().data?.me.participating ?? false;
     const ownedCode = status?.ownedCode ?? null;
     const shouldRedirect = status !== undefined && !ownedCode;
 
@@ -94,6 +97,7 @@ export function ShareReferralCodePage() {
     const handleCopy = () => {
         if (!ownedCode) return;
         copy(ownedCode.code);
+        trackEvent("sharing_link_copied", { source: "referral_code" });
     };
 
     const handleShare = async () => {
@@ -108,10 +112,18 @@ export function ShareReferralCodePage() {
             // Swallow rejections (the user dismissing the share sheet
             // throws AbortError); falling through to `copy()` here would
             // re-fire the "copied" toast they didn't ask for.
-            await navigator.share({ text: shareText }).catch(() => {});
+            trackEvent("sharing_link_started", { source: "referral_code" });
+            await navigator.share({ text: shareText }).then(
+                () =>
+                    trackEvent("sharing_link_shared", {
+                        source: "referral_code",
+                    }),
+                () => {}
+            );
             return;
         }
         copy(shareText);
+        trackEvent("sharing_link_copied", { source: "referral_code" });
     };
 
     return (
@@ -182,6 +194,12 @@ export function ShareReferralCodePage() {
                             </Box>
                         </Box>
                     </Box>
+
+                    {inGame ? (
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.referral.share.gameHint")}
+                        </Text>
+                    ) : null}
 
                     <Stack space="m">
                         <Button

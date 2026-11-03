@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useMemo } from "react";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { InstallView } from "@/module/install/component/InstallView";
 import { parseInstallSearch } from "@/module/install/params";
 import * as styles from "./install.css";
@@ -25,6 +26,8 @@ function InstallPage() {
         () => ({
             toWallet: () => navigate({ to: "/wallet", replace: true }),
             toRegister: () => navigate({ to: "/register", replace: true }),
+            toCode: (code: string) =>
+                navigate({ ...redeemCodeRoute(code), replace: true }),
         }),
         [navigate]
     );

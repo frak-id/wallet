@@ -127,12 +127,6 @@ const devProxy = {
         secure: false, // Allow self-signed certs in dev
         ws: true,
     },
-    // Monerium sandbox doesn't whitelist localhost origins.
-    "/monerium-api": {
-        target: "https://api.monerium.dev",
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/monerium-api/, ""),
-    },
 };
 
 // Code-splitting groups for Rolldown. Same shape for web and Tauri.
@@ -261,9 +255,8 @@ function buildChunkGroups() {
             priority: 24,
             minShareCount: 1,
         },
-        // Monerium subtree — entire 12-file flow + REST client + zustand stores.
-        // No external SDK; ~70KB of hand-rolled code. Captured here so it lazy-
-        // loads when the user opens the bank-flow modal or hits the OAuth callback.
+        // Monerium subtree (flow, hooks, stores) + the OAuth callback route,
+        // lazy-loaded with the bank-flow modal.
         {
             name: "feature-monerium",
             test: /[\\/]app[\\/](?:module[\\/]monerium[\\/]|routes[\\/]_wallet[\\/]_protected[\\/]monerium\.)/,

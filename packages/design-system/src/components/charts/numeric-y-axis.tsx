@@ -4,7 +4,7 @@ import { useChartStable } from "./chart-context";
 import * as styles from "./charts.css";
 
 export interface NumericYAxisProps {
-    /** Explicit tick values. Falls back to the scale's own ticks. */
+    /** Explicit tick values; those outside the data's range are dropped. Falls back to the scale's own ticks. */
     ticks?: number[];
     /** Formats each tick value into its label. */
     formatter?: (value: number) => string;
@@ -31,7 +31,10 @@ export function NumericYAxis({
         return null;
     }
 
-    const tickValues = ticks ?? (yScale.ticks(4) as number[]);
+    const [min, max] = yScale.domain();
+    const tickValues = (ticks ?? (yScale.ticks(4) as number[])).filter(
+        (value) => value >= min && value <= max
+    );
 
     return createPortal(
         <div

@@ -8,6 +8,7 @@ export {
     type InstallCredentialOutcome,
     infraMetrics,
 } from "./infraMetrics";
+export { type ProductEventMap, productEvents } from "./productEvents";
 export {
     metricsContentType,
     register,

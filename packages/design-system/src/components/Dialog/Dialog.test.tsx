@@ -10,6 +10,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from ".";
+import { dialogContent, dialogOverlay } from "./dialog.css";
 
 function renderDialog(open?: boolean) {
     return render(
@@ -63,5 +64,21 @@ describe("Dialog", () => {
             </Dialog>
         );
         expect(document.querySelector(".custom-dialog")).toBeTruthy();
+    });
+
+    it("should raise both overlay and content on the top layer", () => {
+        render(
+            <Dialog defaultOpen>
+                <DialogContent layer="top">
+                    <DialogTitle>Title</DialogTitle>
+                    <DialogDescription>Desc</DialogDescription>
+                </DialogContent>
+            </Dialog>
+        );
+        const overlay = document.querySelector(`.${overlayStyle}`);
+        expect(overlay?.className).toContain(dialogOverlay({ layer: "top" }));
+        expect(screen.getByRole("dialog").className).toContain(
+            dialogContent({ layer: "top" })
+        );
     });
 });

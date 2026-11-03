@@ -1,4 +1,3 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -19,6 +18,7 @@ import { useStore } from "zustand";
 import { Logout } from "@/module/authentication/component/Logout";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
+import { InstagramProfileCard } from "@/module/instagram/component/InstagramProfileCard";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
@@ -79,6 +79,7 @@ export function ProfilePage() {
                     to="/profile/referral"
                 />
             </InfoCard>
+            <InstagramProfileCard />
             {hasPairings ? (
                 <InfoCard>
                     <InfoRow
@@ -114,7 +115,7 @@ export function ProfilePage() {
             <ProfileLinksCard />
             <PrivateKey />
             <CrashlyticsDebug />
-            {!isRunningInProd ? <MoneriumConnect /> : null}
+            <MoneriumConnect />
             <Logout />
             <Box className={styles.footer}>
                 {displayVersion ? (

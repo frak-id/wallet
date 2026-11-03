@@ -3,20 +3,6 @@ import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
- * Repaints the `DetailSheet` with `surface.background2` so the white
- * elevated cards stand out as Figma shows. Overrides both the mobile
- * overlay bg and the desktop (>=1024px) `surface.background` rule.
- */
-export const sheetSurface = style({
-    backgroundColor: vars.surface.background2,
-    "@media": {
-        "screen and (min-width: 1024px)": {
-            backgroundColor: vars.surface.background2,
-        },
-    },
-});
-
-/**
  * Body wrapper. Vertical padding intentionally omitted — the toolbar
  * already contributes `pb-xs` and the footer owns its own spacing.
  */
@@ -42,15 +28,6 @@ export const featureIconSlot = style({
     paddingBlock: "2px",
     color: vars.icon.primary,
     flexShrink: 0,
-});
-
-/**
- * 12/16 padding instead of the `Card` recipe's 16/16 default — Figma
- * specifies a tighter cell so each row sits at ~62px tall.
- */
-export const transferCellPadding = style({
-    paddingBlock: alias.spacing.s,
-    paddingInline: alias.spacing.m,
 });
 
 /**
@@ -152,10 +129,6 @@ export const noteClearButton = style({
     color: vars.icon.secondary,
 });
 
-export const walletCardError = style({
-    backgroundColor: vars.surface.error,
-});
-
 export const ibanRow = style({
     width: "100%",
     textAlign: "left",
@@ -165,15 +138,4 @@ export const ibanRow = style({
     cursor: "pointer",
     font: "inherit",
     color: "inherit",
-});
-
-/**
- * Hits `text.action` directly because the design-system has no
- * `border.action` token (its `border.focus` resolves to grey-400, which
- * vanishes against a white card on `surface.background2`). `outline`
- * (not `border`) avoids any layout shift between selected states.
- */
-export const ibanCardSelected = style({
-    outline: `1.5px solid ${vars.text.action}`,
-    outlineOffset: "-1.5px",
 });

@@ -26,12 +26,22 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
     const uniqueId = useId();
     const gradientId = `area-gradient-${dataKey}-${uniqueId}`;
 
+    const isDefined = useCallback(
+        (d: Record<string, unknown>) => typeof d[dataKey] === "number",
+        [dataKey]
+    );
+
     const getY = useCallback(
-        (d: Record<string, unknown>) => {
-            const value = d[dataKey];
-            return typeof value === "number" ? (yScale(value) ?? 0) : 0;
-        },
+        (d: Record<string, unknown>) => yScale(d[dataKey] as number) ?? 0,
         [dataKey, yScale]
+    );
+
+    // A value with no defined neighbour forms no line segment, so mark it.
+    const lonePoints = renderData.filter(
+        (d, i) =>
+            isDefined(d) &&
+            !(renderData[i - 1] && isDefined(renderData[i - 1])) &&
+            !(renderData[i + 1] && isDefined(renderData[i + 1]))
     );
 
     return (
@@ -60,6 +70,7 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
                     <AreaClosed
                         curve={curveMonotoneX}
                         data={renderData}
+                        defined={isDefined}
                         fill={`url(#${gradientId})`}
                         x={(d) => xScale(xAccessor(d)) ?? 0}
                         y={getY}
@@ -70,6 +81,7 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
                 <LinePath
                     curve={curveMonotoneX}
                     data={renderData}
+                    defined={isDefined}
                     innerRef={pathRef}
                     stroke={stroke}
                     strokeLinecap="round"
@@ -77,6 +89,15 @@ export function Area({ dataKey, fill, stroke }: AreaProps) {
                     x={(d) => xScale(xAccessor(d)) ?? 0}
                     y={getY}
                 />
+                {lonePoints.map((d) => (
+                    <circle
+                        cx={xScale(xAccessor(d)) ?? 0}
+                        cy={getY(d)}
+                        fill={stroke}
+                        key={xAccessor(d).getTime()}
+                        r={3}
+                    />
+                ))}
             </SeriesHoverDim>
 
             <SeriesHighlightLayer

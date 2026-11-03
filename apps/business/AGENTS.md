@@ -14,7 +14,7 @@ bun run test         # business-unit Vitest project
 ## Key Files
 
 - `src/routes/__root.tsx` — root shell · `src/routes/_restricted/` — auth guards for dashboard
-- `src/module/{auth,campaigns,common,dashboard,forms,login,members,merchant,settings}/` — features
+- `src/module/{auth,campaigns,common,dashboard,forms,internal,login,members,merchant,settings}/` — features. `internal` is the platform-admin-only Internal page (`/internal`, one guard on its layout route, own `feature-internal` lazy chunk so merchants never download it)
 - `src/stores/` — Zustand stores (separate from modules)
 - `nginx.conf` — production SPA fallback; local `preview` differs from prod
 - `vite.config.ts` — `define` block bakes config at build time

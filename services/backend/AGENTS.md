@@ -58,6 +58,7 @@ constructor(repo?: IdentityRepository) { this.repo = repo ?? new IdentityReposit
 - **Blockchain via viem + permissionless + ox**; Pimlico/ZeroDev for ERC-4337 bundler/paymaster.
 - **Merkle oracle** for purchase proofs. LRU cache for token metadata.
 - **Error-as-body**: some endpoints return HTTP 200 with error payload inside body (legacy plugin integrations) — check the shape, not the status.
+- **Ops scripts are thin CLIs**: `scripts/{frakGame,frakReferralCode,walletHistory,genSetupCode}.ts` and the dashboard's platform-admin Internal page (`src/api/business/internal/`, every group behind `platformAdminAuthenticated`, money moves also `requireStepUp`) call the same `src/orchestration/internal/` orchestrators. Change behaviour there, never in a script.
 - **Media storage via Bun.s3** (`src/domain/media/repositories/MediaStorageRepository.ts`). Bucket provisioning is NOT runtime — handled by `services/bootstrap/`. Local dev requires running `bun -F @frak-labs/bootstrap start` once before `bun dev`.
 
 ## Anti-Patterns

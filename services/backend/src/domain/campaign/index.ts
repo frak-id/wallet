@@ -56,6 +56,7 @@ export type {
     CustomInteractionContext,
     EvaluationResult,
     FixedRewardDefinition,
+    GameRuleContext,
     PercentageRewardDefinition,
     PurchaseContext,
     ReferralChainFetcher,

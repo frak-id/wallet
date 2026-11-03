@@ -323,6 +323,48 @@
             "when": 1790591732011,
             "tag": "0045_gray_jocasta",
             "breakpoints": true
+        },
+        {
+            "idx": 46,
+            "version": "7",
+            "when": 1792153069916,
+            "tag": "0046_charming_texas_twister",
+            "breakpoints": true
+        },
+        {
+            "idx": 47,
+            "version": "7",
+            "when": 1792488841330,
+            "tag": "0047_orange_jackal",
+            "breakpoints": true
+        },
+        {
+            "idx": 48,
+            "version": "7",
+            "when": 1792688368122,
+            "tag": "0048_clammy_black_panther",
+            "breakpoints": true
+        },
+        {
+            "idx": 49,
+            "version": "7",
+            "when": 1793009192338,
+            "tag": "0049_rapid_drax",
+            "breakpoints": true
+        },
+        {
+            "idx": 50,
+            "version": "7",
+            "when": 1793095393758,
+            "tag": "0050_red_agent_brand",
+            "breakpoints": true
+        },
+        {
+            "idx": 51,
+            "version": "7",
+            "when": 1793179809337,
+            "tag": "0051_productive_vindicator",
+            "breakpoints": true
         }
     ]
 }

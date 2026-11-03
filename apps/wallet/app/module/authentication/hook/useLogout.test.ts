@@ -3,6 +3,9 @@ import { act, renderHook } from "@testing-library/react";
 // imports, so routing it through the fixtures module would reference an
 // uninitialized binding.
 import { vi } from "vitest";
+import { gameSeenStore } from "@/module/game/stores/gameSeenStore";
+import { ibanStore } from "@/module/monerium/store/ibanStore";
+import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import {
     afterEach,
     beforeEach,
@@ -153,5 +156,58 @@ describe("useLogout", () => {
 
         expect(window.localStorage.getItem("frak_demoPrivateKey")).toBeNull();
         expect(mockNavigate).toHaveBeenCalled();
+    });
+
+    test("wipes the saved IBANs and the Monerium UI state, keys included", async ({
+        queryWrapper,
+    }) => {
+        ibanStore.getState().addIban({
+            iban: "FR7630006000011234567890189",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            pseudo: "Ada",
+            own: false,
+            country: "FR",
+        });
+        ibanStore
+            .getState()
+            .mergeRemoteIbans([], "0x1111111111111111111111111111111111111111");
+        moneriumStore.getState().markSetupSuccessSeen();
+        expect(window.localStorage.getItem("frak_iban_store")).not.toBeNull();
+        expect(
+            window.localStorage.getItem("frak_monerium_store")
+        ).not.toBeNull();
+
+        await runLogout(queryWrapper.wrapper);
+
+        expect(ibanStore.getState().knownIbans).toEqual([]);
+        expect(ibanStore.getState().syncedWallet).toBeNull();
+        expect(moneriumStore.getState().hasSeenSetupSuccess).toBe(false);
+        expect(window.localStorage.getItem("frak_iban_store")).toBeNull();
+        expect(window.localStorage.getItem("frak_monerium_store")).toBeNull();
+    });
+
+    test("forgets the game snapshots, key included", async ({
+        queryWrapper,
+    }) => {
+        gameSeenStore.getState().markSeen("g1", {
+            ticketsBySource: {
+                join: 1,
+                instagramCertified: 0,
+                purchase: 0,
+                referredPurchase: 0,
+                referredSignup: 0,
+                brandShare: 0,
+            },
+            eligible: false,
+        });
+        expect(
+            window.localStorage.getItem("frak_game_seen_store")
+        ).not.toBeNull();
+
+        await runLogout(queryWrapper.wrapper);
+
+        expect(gameSeenStore.getState().seen).toEqual({});
+        expect(window.localStorage.getItem("frak_game_seen_store")).toBeNull();
     });
 });

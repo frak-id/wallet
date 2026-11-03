@@ -4,8 +4,11 @@ import { AuthContext } from "../domain/auth";
 import { BillingContext } from "../domain/billing/context";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
+import { GameContext } from "../domain/game/context";
 import { IdentityContext } from "../domain/identity/context";
+import { InstagramContext } from "../domain/instagram/context";
 import { MerchantContext } from "../domain/merchant/context";
+import { MoneriumContext } from "../domain/monerium/context";
 import { NotificationContext } from "../domain/notifications/context";
 import { PairingContext } from "../domain/pairing/context";
 import { PurchasesContext } from "../domain/purchases/context";
@@ -14,6 +17,7 @@ import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
+import { DrandClient } from "../infrastructure/integrations/drand";
 import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { AffiliateReportingOrchestrator } from "./AffiliateReportingOrchestrator";
@@ -26,6 +30,12 @@ import {
 } from "./campaigns";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
+    FrakGameOrchestrator,
+    GameDrawOrchestrator,
+    GamePlayerOrchestrator,
+    MissionUnlockOrchestrator,
+} from "./game";
+import {
     AnonymousMergeOrchestrator,
     AuthenticatorLookupOrchestrator,
     IdentityMergeService,
@@ -37,7 +47,14 @@ import {
     WalletSessionOrchestrator,
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
+import {
+    FrakBankAdminOrchestrator,
+    FrakCodeAdminOrchestrator,
+    FrakGameAdminOrchestrator,
+    IdentityLookupOrchestrator,
+} from "./internal";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
+import { MoneriumSyncOrchestrator } from "./monerium";
 import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
@@ -199,12 +216,82 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.identityProof
 );
 
+const missionUnlockOrchestrator = new MissionUnlockOrchestrator(
+    RewardsContext.repositories.assetLog
+);
+
+const gamePlayerOrchestrator = new GamePlayerOrchestrator();
+
+const frakGameOrchestrator = new FrakGameOrchestrator(
+    GameContext.repositories.game,
+    CampaignContext.repositories.campaignRule,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.interactionLog,
+    gamePlayerOrchestrator,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink
+);
+
+const gameDrawOrchestrator = new GameDrawOrchestrator(
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    gamePlayerOrchestrator,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink,
+    InstagramContext.services.instagramVerification,
+    IdentityContext.repositories.identity,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    new DrandClient()
+);
+
+const frakCodeAdminOrchestrator = new FrakCodeAdminOrchestrator(
+    ReferralCodeContext.repositories.referralCode,
+    AttributionContext.repositories.referralLink,
+    GameContext.repositories.game,
+    IdentityContext.repositories.identity
+);
+
+const frakGameAdminOrchestrator = new FrakGameAdminOrchestrator(
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    ReferralCodeContext.repositories.referralCode,
+    CampaignContext.repositories.campaignRule,
+    CampaignContext.services.management,
+    MerchantContext.repositories.merchant,
+    MerchantContext.repositories.dnsCheck,
+    gamePlayerOrchestrator,
+    gameDrawOrchestrator,
+    IdentityContext.repositories.identity,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink,
+    RewardsContext.repositories.assetLog
+);
+
+const frakBankAdminOrchestrator = new FrakBankAdminOrchestrator(
+    MerchantContext.repositories.merchant,
+    CampaignBankContext.repositories.campaignBank,
+    RewardsContext.repositories.assetLog,
+    GameContext.repositories.game,
+    GameContext.repositories.gameDraw,
+    tokenMetadataRepository,
+    settlementOrchestrator
+);
+
+const identityLookupOrchestrator = new IdentityLookupOrchestrator(
+    IdentityContext.repositories.identity,
+    InstagramContext.repositories.instagramLink,
+    InstagramContext.repositories.instagramPendingLink
+);
+
 const referralCodeRedemptionOrchestrator =
     new ReferralCodeRedemptionOrchestrator(
         ReferralCodeContext.services.referralCode,
         AttributionContext.repositories.referralLink,
         IdentityContext.repositories.identity,
-        RewardsContext.repositories.interactionLog
+        RewardsContext.repositories.interactionLog,
+        GameContext.repositories.game,
+        frakGameOrchestrator
     );
 
 const walletSessionOrchestrator = new WalletSessionOrchestrator(
@@ -260,6 +347,15 @@ const installCredentialOrchestrator = new InstallCredentialOrchestrator(
     PurchasesContext.repositories.purchaseClaim
 );
 
+const moneriumSyncOrchestrator = new MoneriumSyncOrchestrator(
+    MoneriumContext.repositories.connection,
+    MoneriumContext.repositories.trackedOrder,
+    MoneriumContext.services.status,
+    MoneriumContext.services.orders,
+    NotificationContext.services.notifications,
+    MoneriumContext.rateLimitPause
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -278,6 +374,13 @@ export namespace OrchestrationContext {
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
+        frakGame: frakGameOrchestrator,
+        gameDraw: gameDrawOrchestrator,
+        frakCodeAdmin: frakCodeAdminOrchestrator,
+        frakGameAdmin: frakGameAdminOrchestrator,
+        frakBankAdmin: frakBankAdminOrchestrator,
+        identityLookup: identityLookupOrchestrator,
+        missionUnlock: missionUnlockOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
         recoveryClaim: recoveryClaimOrchestrator,
@@ -289,5 +392,6 @@ export namespace OrchestrationContext {
         affiliateReporting: affiliateReportingOrchestrator,
         billing: billingOrchestrator,
         monthlyBill: monthlyBillOrchestrator,
+        moneriumSync: moneriumSyncOrchestrator,
     };
 }

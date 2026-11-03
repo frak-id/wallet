@@ -1,3 +1,4 @@
+import { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { purchaseItemsTable, purchasesTable } from "../db/schema";
@@ -26,14 +27,14 @@ const {
     setUpdateResponse,
     setStoredGroupId,
 } = vi.hoisted(() => {
-    let capturedSet: unknown = null;
+    let capturedSet: Record<string, unknown> = {};
     let capturedWhere: unknown = null;
     let updateResponse: unknown[] = [];
     let storedGroupId: string | null = null;
 
     const dbMock = {
-        update: vi.fn(() => ({
-            set: vi.fn((set: unknown) => {
+        update: vi.fn((_table: unknown) => ({
+            set: vi.fn((set: Record<string, unknown>) => {
                 capturedSet = set;
                 return {
                     where: vi.fn((where: unknown) => {
@@ -63,9 +64,15 @@ const {
         mockItemsValues: vi.fn(),
         mockItemsOnConflictDoUpdate: vi.fn(),
         mockTrxUpdate: vi.fn(),
-        capturedItemsSetRef: { current: null as unknown },
+        capturedItemsSetRef: {
+            current: null as {
+                target: unknown;
+                targetWhere?: unknown;
+                set: Record<string, unknown>;
+            } | null,
+        },
         mockSelectWhere: vi.fn(),
-        capturedSetRef: { current: null as unknown },
+        capturedSetRef: { current: null as Record<string, unknown> | null },
         dbMock,
         getCapturedSet: () => capturedSet,
         getCapturedWhere: () => capturedWhere,
@@ -92,7 +99,7 @@ vi.mock("@backend-infrastructure", () => ({
                 select: mockTrxSelect,
             })
         ),
-        update: (...args: unknown[]) => dbMock.update(...args),
+        update: (table: unknown) => dbMock.update(table),
         query: dbMock.query,
     },
 }));
@@ -100,13 +107,31 @@ const pgDialect = new PgDialect();
 const capturedBackfills: { set: unknown; where: unknown }[] = [];
 const capturedDeletes: { where: unknown }[] = [];
 
+/** Renders a captured drizzle fragment, failing when nothing SQL was captured. */
+function render(fragment: unknown) {
+    if (!(fragment instanceof SQL)) throw new Error("no SQL fragment captured");
+    return pgDialect.sqlToQuery(fragment);
+}
+
+function upsertSet() {
+    const set = capturedSetRef.current;
+    if (!set) throw new Error("the purchase upsert was never captured");
+    return set;
+}
+
+function itemsConflict() {
+    const conflict = capturedItemsSetRef.current;
+    if (!conflict) throw new Error("the items upsert was never captured");
+    return conflict;
+}
+
 const basePurchase = {
     externalId: "order-1",
     webhookId: 1,
     externalCustomerId: "cust-1",
     totalPrice: "42.00",
     currencyCode: "USD",
-    status: "paid" as const,
+    status: "confirmed" as const,
 };
 
 describe("PurchaseRepository", () => {
@@ -181,13 +206,13 @@ describe("PurchaseRepository", () => {
                 identityGroupId: newGroupId,
             });
 
-            const set = capturedSetRef.current;
+            const set = upsertSet();
             expect(set.identityGroupId).toBeDefined();
 
             // Render the actual SQL: the bare column must resolve to the
             // existing row (not "excluded") with the supplied value as fallback,
             // so a redelivery can't clobber an already-set attribution.
-            const rendered = pgDialect.sqlToQuery(set.identityGroupId);
+            const rendered = render(set.identityGroupId);
             expect(rendered.sql).toBe(
                 'coalesce("purchases"."identity_group_id", $1)'
             );
@@ -202,7 +227,7 @@ describe("PurchaseRepository", () => {
                 items: [],
             });
 
-            const set = capturedSetRef.current;
+            const set = upsertSet();
             // Absent entirely, not undefined/null: only an absent key leaves
             // the column untouched in the SET clause.
             expect("identityGroupId" in set).toBe(false);
@@ -223,7 +248,7 @@ describe("PurchaseRepository", () => {
                 identityGroupId: "33333333-3333-3333-3333-333333333333",
             });
 
-            const set = capturedSetRef.current;
+            const set = upsertSet();
             expect(set.status).toBe("refunded");
             expect(set.totalPrice).toBe("50.00");
             expect(set.currencyCode).toBe("EUR");
@@ -240,7 +265,7 @@ describe("PurchaseRepository", () => {
                 purchase: {
                     externalId: "order-1",
                     webhookId: 1,
-                    status: "paid",
+                    status: "confirmed",
                     totalPrice: "10.00",
                     currencyCode: "usd",
                 } as never,
@@ -294,7 +319,7 @@ describe("PurchaseRepository", () => {
             });
 
             expect(mockItemsValues).toHaveBeenCalledTimes(1);
-            const args = capturedItemsSetRef.current;
+            const args = itemsConflict();
             expect(args.target).toEqual([
                 purchaseItemsTable.purchaseId,
                 purchaseItemsTable.externalId,
@@ -311,7 +336,7 @@ describe("PurchaseRepository", () => {
 
             expect(capturedBackfills).toHaveLength(1);
             expect(capturedBackfills[0]?.set).toEqual({ sku: "A-S" });
-            expect(pgDialect.sqlToQuery(capturedBackfills[0]?.where).sql).toBe(
+            expect(render(capturedBackfills[0]?.where).sql).toBe(
                 '("purchase_items"."purchase_id" = $1 and "purchase_items"."external_id" = $2 and "purchase_items"."sku" is null and not exists ("taken"."purchase_id" = $3 and "taken"."external_id" = $4 and "taken"."sku" = $5))'
             );
         });
@@ -324,7 +349,7 @@ describe("PurchaseRepository", () => {
 
             // Without the guard this UPDATE moves the stored NULL row onto an
             // existing (purchase, product, sku) and violates the line index.
-            const rendered = pgDialect.sqlToQuery(capturedBackfills[0]?.where);
+            const rendered = render(capturedBackfills[0]?.where);
             expect(rendered.sql).toContain("not exists");
             expect(rendered.params).toEqual([
                 "purchase-1",
@@ -342,7 +367,7 @@ describe("PurchaseRepository", () => {
             });
 
             expect(capturedDeletes).toHaveLength(1);
-            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            const rendered = render(capturedDeletes[0]?.where);
             // `is not distinct from` and not `=`: a stored NULL sku compared
             // with `= $n` yields NULL, and DELETE only removes rows on TRUE.
             expect(rendered.sql).toBe(
@@ -357,7 +382,7 @@ describe("PurchaseRepository", () => {
                 items: [item({}) as never],
             });
 
-            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            const rendered = render(capturedDeletes[0]?.where);
             expect(rendered.params).toEqual(["purchase-1", "product-1", null]);
         });
 
@@ -373,7 +398,7 @@ describe("PurchaseRepository", () => {
             // The backfill deliberately skips this shape, so the orphan
             // sku-less row is only removed by the reconciliation.
             expect(capturedBackfills).toHaveLength(0);
-            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            const rendered = render(capturedDeletes[0]?.where);
             expect(rendered.params).toEqual([
                 "purchase-1",
                 "product-1",
@@ -438,13 +463,13 @@ describe("PurchaseRepository", () => {
                 items: [item({ sku: "A-S" }) as never],
             });
 
-            const set = capturedItemsSetRef.current.set;
+            const set = itemsConflict().set;
             // `excluded` is the incoming row, the qualified column the stored
             // one: a redelivery fills a gap and never overwrites with NULL.
-            expect(pgDialect.sqlToQuery(set.totalPrice).sql).toBe(
+            expect(render(set.totalPrice).sql).toBe(
                 'coalesce(excluded.total_price, "purchase_items"."total_price")'
             );
-            expect(pgDialect.sqlToQuery(set.imageUrl).sql).toBe(
+            expect(render(set.imageUrl).sql).toBe(
                 'coalesce(excluded.image_url, "purchase_items"."image_url")'
             );
         });
@@ -456,7 +481,7 @@ describe("PurchaseRepository", () => {
                 purchase: {
                     externalId: "order-1",
                     webhookId: 1,
-                    status: "paid",
+                    status: "confirmed",
                     totalPrice: "10.00",
                     currencyCode: "usd",
                 } as never,
@@ -510,7 +535,7 @@ describe("PurchaseRepository.updateIdentityGroup — compare-and-swap", () => {
         // The NULL guard has to be in the SQL, not a JS pre-check: two
         // concurrent unauthenticated claims both observe NULL, so only the DB
         // can arbitrate which one lands.
-        const rendered = pgDialect.sqlToQuery(getCapturedWhere());
+        const rendered = render(getCapturedWhere());
         expect(rendered.sql).toContain('"identity_group_id" is null');
         expect(rendered.params).toContain(PURCHASE_ID);
     });
@@ -525,7 +550,7 @@ describe("PurchaseRepository.updateIdentityGroup — compare-and-swap", () => {
             observed
         );
 
-        const rendered = pgDialect.sqlToQuery(getCapturedWhere());
+        const rendered = render(getCapturedWhere());
         expect(rendered.sql).toContain('"identity_group_id" = ');
         expect(rendered.params).toEqual([PURCHASE_ID, observed]);
         expect(getCapturedSet().identityGroupId).toBe(NEW_GROUP);

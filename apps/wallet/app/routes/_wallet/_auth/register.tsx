@@ -15,11 +15,15 @@ import {
     useReferralStatus,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
+import { GameReward } from "@/module/game/component/GameReward";
+import { GameRules } from "@/module/game/component/GameRules";
+import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -177,6 +181,9 @@ function RegisterPage() {
         useState<ReferralCodeKind>("user");
 
     const { data: referralStatus } = useReferralStatus();
+    // The redeem refetches this status, which must not auto-skip the step it was just applied on.
+    const referralAppliedRef = useRef(false);
+    const [gameRedeem, setGameRedeem] = useState<RedeemResult>();
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
 
     const openModal = modalStore((s) => s.openModal);
@@ -224,12 +231,17 @@ function RegisterPage() {
     // web we still redirect to `/login` so the user can pick the dedicated
     // login UX (existing-account shortcut, connect another account, QR
     // pairing).
+    const loginCode = referralPrefill.code;
     const handlePostLoginRedirect = useCallback(async () => {
         const navigated = await executePendingActions();
-        if (!navigated) {
-            navigate({ to: "/wallet", replace: true });
-        }
-    }, [executePendingActions, navigate]);
+        if (navigated) return;
+        // An existing user arriving with a code (link or Play referrer) still wants it.
+        navigate(
+            loginCode
+                ? { ...redeemCodeRoute(loginCode), replace: true }
+                : { to: "/wallet", replace: true }
+        );
+    }, [executePendingActions, navigate, loginCode]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: handlePostLoginRedirect,
@@ -259,7 +271,12 @@ function RegisterPage() {
     // Auto-skip referral step if the user already has an applied referrer
     // (e.g. install-referrer resolved before the user reaches this screen).
     useEffect(() => {
-        if (step !== "referralCode" || !hasExistingReferrer) return;
+        if (
+            step !== "referralCode" ||
+            !hasExistingReferrer ||
+            referralAppliedRef.current
+        )
+            return;
         flowRef.current?.track("referral_code_resolved", {
             outcome: "auto_skipped_existing",
             prefill_source: referralPrefillSource,
@@ -304,11 +321,17 @@ function RegisterPage() {
     const handleReferralApplied = useCallback(
         (result: RedeemResult) => {
             if (stepRef.current !== "referralCode") return;
+            referralAppliedRef.current = true;
             flowRef.current?.track("referral_code_resolved", {
                 outcome: "applied",
                 code_kind: result.kind,
                 prefill_source: referralPrefillSource,
             });
+            if (result.game || gameRewardOf(result) > 0) {
+                setGameRedeem(result);
+                goToStep("gameReward");
+                return;
+            }
             setReferralToastKind(result.kind);
             setReferralToast("shown");
             goToStep("notification");
@@ -489,6 +512,20 @@ function RegisterPage() {
                     onBack={() => goToStep("emailInput", "backward")}
                 />
             )}
+            {step === "gameReward" && gameRedeem && (
+                <GameReward
+                    reward={gameRewardOf(gameRedeem)}
+                    game={gameRedeem.game}
+                    onContinue={() => goToStep("gameRules")}
+                />
+            )}
+            {step === "gameRules" && gameRedeem && (
+                <GameRules
+                    reward={gameRewardOf(gameRedeem)}
+                    invite={gameRedeem.inviteRewards}
+                    onContinue={() => goToStep("notification")}
+                />
+            )}
             {step === "referralCode" && !hasExistingReferrer && (
                 <ReferralCodeStep
                     onApplied={handleReferralApplied}
@@ -513,7 +550,11 @@ function RegisterPage() {
                         // Drain navigation actions now that onboarding is done
                         const navigated = await executePendingActions();
                         if (!navigated) {
-                            navigate({ to: "/wallet", replace: true });
+                            // A player who just joined a game sees what unlocks their tickets.
+                            navigate({
+                                to: gameRedeem?.game ? "/game" : "/wallet",
+                                replace: true,
+                            });
                         }
                     }}
                 />

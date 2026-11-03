@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 // Same relative path the service imports (not the alias, which won't resolve here).
 import {
     buildRecoveryEmail,
     resendClient,
 } from "../../../infrastructure/integrations/email";
+import type { identityNodesTable, RecoveryBlobSelect } from "../db/schema";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 import type { RecoveryRepository } from "../repositories/RecoveryRepository";
 import { RecoveryEmailService } from "./RecoveryEmailService";
@@ -24,19 +25,30 @@ const GROUP_ID = "group-1";
 const EMAIL = "user@test.com";
 
 const createIdentityRepository = () =>
-    ({ findEmailNode: vi.fn() }) as unknown as IdentityRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    ({ findEmailNode: vi.fn() }) as unknown as Mocked<IdentityRepository>;
 
 const createRecoveryRepository = () =>
-    ({ findByGroup: vi.fn() }) as unknown as RecoveryRepository &
-        Record<string, ReturnType<typeof vi.fn>>;
+    ({ findByGroup: vi.fn() }) as unknown as Mocked<RecoveryRepository>;
 
-const verifiedEmailNode = () => ({
+const verifiedEmailNode = (): typeof identityNodesTable.$inferSelect => ({
+    id: "node-1",
     groupId: GROUP_ID,
     identityValue: EMAIL,
-    identityType: "email" as const,
+    identityType: "email",
+    merchantId: null,
+    validationData: null,
+    createdAt: new Date(0),
     unlinkedAt: null,
     verifiedAt: new Date(),
+    proofSeenAt: null,
+});
+
+const recoveryBlob = (blob: string): RecoveryBlobSelect => ({
+    id: "blob-1",
+    groupId: GROUP_ID,
+    blob,
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
 });
 
 describe("RecoveryEmailService", () => {
@@ -53,14 +65,16 @@ describe("RecoveryEmailService", () => {
         identityRepository = createIdentityRepository();
         recoveryRepository = createRecoveryRepository();
         service = new RecoveryEmailService(
-            identityRepository as unknown as IdentityRepository,
-            recoveryRepository as unknown as RecoveryRepository
+            identityRepository,
+            recoveryRepository
         );
     });
 
     it("mails the blob + deeplink when the email is verified and recoverable", async () => {
         identityRepository.findEmailNode.mockResolvedValue(verifiedEmailNode());
-        recoveryRepository.findByGroup.mockResolvedValue({ blob: "blob-xyz" });
+        recoveryRepository.findByGroup.mockResolvedValue(
+            recoveryBlob("blob-xyz")
+        );
 
         await service.requestRecoveryEmail(EMAIL);
 
@@ -117,7 +131,9 @@ describe("RecoveryEmailService", () => {
 
     it("swallows send failures so existence is never leaked", async () => {
         identityRepository.findEmailNode.mockResolvedValue(verifiedEmailNode());
-        recoveryRepository.findByGroup.mockResolvedValue({ blob: "blob-xyz" });
+        recoveryRepository.findByGroup.mockResolvedValue(
+            recoveryBlob("blob-xyz")
+        );
         vi.mocked(resendClient.send).mockRejectedValue(
             new Error("resend down")
         );

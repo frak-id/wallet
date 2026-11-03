@@ -2,6 +2,10 @@ import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
+    GameSummarySchema,
+    InviteRewardsSchema,
+} from "../../../../domain/game";
+import {
     RedeemContextSchema,
     ReferralCodeContext,
     ReferralCodeKindSchema,
@@ -97,24 +101,40 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
         "/redeem",
         async ({ identityGroupId, body }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            const { kind } =
+            const { kind, game, gameReward, signupReward } =
                 await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
                     {
                         code: body.code,
                         refereeIdentityGroupId: identityGroupId,
                         context: body.context,
+                        replaceFrakReferrer: body.replaceFrakReferrer,
                     }
                 );
-            return { kind };
+            const inviteRewards =
+                await OrchestrationContext.orchestrators.frakGame.inviteRewards();
+            return {
+                kind,
+                game,
+                gameReward,
+                signupReward,
+                inviteRewards: inviteRewards ?? undefined,
+            };
         },
         {
             withAuthedIdentity: true,
             body: t.Object({
                 code: t.String({ minLength: 6, maxLength: 6 }),
                 context: t.Optional(RedeemContextSchema),
+                replaceFrakReferrer: t.Optional(t.Boolean()),
             }),
             response: {
-                200: t.Object({ kind: ReferralCodeKindSchema }),
+                200: t.Object({
+                    kind: ReferralCodeKindSchema,
+                    game: t.Optional(GameSummarySchema),
+                    gameReward: t.Optional(t.Number()),
+                    signupReward: t.Optional(t.Number()),
+                    inviteRewards: t.Optional(InviteRewardsSchema),
+                }),
                 401: t.String(),
                 429: t.String(),
                 400: t.ErrorResponse,

@@ -40,9 +40,9 @@ const config: KnipConfig = {
             project: ["src/**/*.{ts,tsx}"],
         },
         "services/backend": {
-            entry: ["src/jobs/*.ts"],
-            project: "src/**/*.ts",
-            // Enable class member detection for backend (DDD with repositories/services)
+            // scripts/ are the admin CLIs: some repository methods have no other caller.
+            entry: ["src/jobs/*.ts", "scripts/*.ts"],
+            project: ["src/**/*.ts", "scripts/**/*.ts"],
             includeEntryExports: true,
         },
         "services/bootstrap": {

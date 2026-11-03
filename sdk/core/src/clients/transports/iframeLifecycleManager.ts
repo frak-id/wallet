@@ -5,12 +5,15 @@ import {
     isFrakDeepLink,
     triggerDeepLinkWithFallback,
 } from "../../utils/browser/deepLinkWithFallback";
-import { isInAppBrowser, isIOS } from "../../utils/browser/inAppBrowser";
+import {
+    isInAppBrowser,
+    isIOS,
+    redirectToExternalBrowser,
+} from "../../utils/browser/inAppBrowser";
 import { changeIframeVisibility } from "../../utils/iframe/iframeHelper";
 
 // iOS in-app browsers (Instagram, Facebook) silently swallow server-side 302
-// redirects to custom URL schemes (x-safari-https://) in WKWebView; direct
-// window.location.href assignment works.
+// redirects to custom URL schemes in WKWebView; navigate to the scheme directly.
 const isIOSInAppBrowser = isIOS && isInAppBrowser;
 
 /** @ignore */
@@ -54,20 +57,6 @@ function computeRedirectUrl(
     } catch {
         return baseRedirectUrl;
     }
-}
-
-/**
- * Redirect current page to Safari via x-safari-https:// scheme.
- * Used on iOS in-app browsers where backend 302 → custom scheme fails.
- */
-function redirectToSafari(mergeToken?: string) {
-    const url = new URL(window.location.href);
-    if (mergeToken) {
-        url.searchParams.set("fmt", mergeToken);
-    }
-    const scheme =
-        url.protocol === "http:" ? "x-safari-http" : "x-safari-https";
-    window.location.href = `${scheme}://${url.host}${url.pathname}${url.search}${url.hash}`;
 }
 
 /**
@@ -125,9 +114,9 @@ function handleRedirect(
             },
         });
     } else if (isIOSInAppBrowser && isSocialRedirect(baseRedirectUrl)) {
-        // iOS WKWebView silently swallows 302 redirects to custom URL
-        // schemes — bypass the server redirect entirely
-        redirectToSafari(mergeToken);
+        redirectToExternalBrowser(
+            appendMergeToken(window.location.href, mergeToken)
+        );
     } else {
         const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
         window.location.href = finalUrl;

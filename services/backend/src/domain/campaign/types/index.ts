@@ -91,12 +91,18 @@ export type CustomInteractionContext = {
     data: Record<string, unknown>;
 };
 
+export type GameRuleContext = {
+    id: string;
+    newcomer: boolean;
+};
+
 export type RuleContext = {
     purchase?: PurchaseContext;
     attribution?: AttributionContext;
     user: UserContext;
     time: TimeContext;
     custom?: CustomInteractionContext;
+    game?: GameRuleContext;
 };
 
 export type CalculatedReward = {
@@ -111,6 +117,8 @@ export type CalculatedReward = {
     expirationDays?: number;
     /** Seconds the reward stays locked before settlement. 0/undefined = no lockup. */
     lockupSeconds?: number;
+    /** Copied from the rule's `holdUntilReleased`. */
+    held?: boolean;
 };
 
 export type EvaluationResult = {

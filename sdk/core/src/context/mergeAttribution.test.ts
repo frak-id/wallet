@@ -128,6 +128,15 @@ describe("mergeAttribution", () => {
             ).toEqual({ utmContent: "fallback" });
         });
 
+        it("falls back to perCall.utmContent when productUtmContent is empty", () => {
+            expect(
+                mergeAttribution({
+                    perCall: { utmContent: "fallback" },
+                    productUtmContent: "",
+                })
+            ).toEqual({ utmContent: "fallback" });
+        });
+
         it("never inherits utm_content from defaults (shape excludes it)", () => {
             // Even if a backend/SDK config erroneously contained utm_content
             // at runtime, the merged result must not carry it.

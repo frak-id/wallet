@@ -75,4 +75,8 @@ export class HttpError extends Error {
     static internal(code: string, message: string): HttpError {
         return new HttpError({ status: 500, code, message });
     }
+
+    static badGateway(code: string, message: string): HttpError {
+        return new HttpError({ status: 502, code, message });
+    }
 }

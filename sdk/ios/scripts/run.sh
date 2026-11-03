@@ -4,7 +4,7 @@
 #
 # Usage:
 #   bun run --cwd sdk/ios build         # compile against the iOS simulator SDK
-#   bun run --cwd sdk/ios test          # swift test, same triple
+#   bun run --cwd sdk/ios test          # xcodebuild test on a simulator, then swift test on macOS
 #   bun run --cwd sdk/ios lint          # swift-format lint (strict)
 #   bun run --cwd sdk/ios format        # swift-format rewrite in place
 #   bun run --cwd sdk/ios version       # every version site + the CHANGELOG section
@@ -43,19 +43,6 @@ set_ios_flags() {
 	)
 }
 
-# Swift Testing (not XCTest) lives in the platform Developer frameworks directory; SwiftPM
-# does not add it for a cross-compiled triple. XCTest's overlay cannot link for
-# iOS-simulator from SwiftPM at all.
-# Sets IOS_TESTING_FLAGS.
-set_ios_testing_flags() {
-	local dev_dir
-	dev_dir="$(xcrun --sdk iphonesimulator --show-sdk-platform-path)/Developer/Library/Frameworks"
-	IOS_TESTING_FLAGS=(
-		-Xswiftc -F -Xswiftc "$dev_dir"
-		-Xlinker -F -Xlinker "$dev_dir"
-	)
-}
-
 # FrakSDKVersion.current rides on the wire (x-frak-sdk-version, ?sdkVersion=) and is one of three
 # files carrying this SDK's version — the mirror README pin being the one a merchant copies. The
 # list lives at the monorepo root in `scripts/native-version.ts`, shared with Android, whose own set
@@ -82,26 +69,27 @@ do_build() {
 	swift build "${IOS_FLAGS[@]}"
 }
 
-# Two stages: neither alone is the full test.
-#   1. Build the test targets for arm64-apple-ios15.0-simulator, proving the suites
-#      compile under Swift 6 strict concurrency. Cannot run them: SwiftPM's test runner
-#      is a macOS process and refuses to dlopen an iOS-simulator bundle. Running on a
-#      simulator needs `xcodebuild test -destination 'platform=iOS Simulator,...'` with a
-#      generated Xcode project — not done yet, deferred with the XCFramework work.
-#   2. Run the suites on the host. FrakSDKUI hides everything UIKit behind
-#      `#if canImport(UIKit)`, so on the host that target reduces to `SharingPageURL` and
-#      `SharingResult`. The sheet, the web view, the state machine and native share are
-#      type-checked by stage 1 only, not executed anywhere yet.
+# SwiftPM's test runner is a macOS process and cannot load an iOS-simulator bundle, so the
+# `#if canImport(UIKit)` tests only run through xcodebuild. The simulator gets just those:
+# CI's simulator is slow enough to break FrakSDKTests' wall-clock budgets, which `swift test`
+# covers on the host. A new UIKit-only test in FrakSDKTests must be added to -only-testing.
 do_test() {
 	cd "$PKG_DIR"
 	check_sdk_version
 
-	log "Compiling tests against the iOS simulator SDK (Swift 6 strict concurrency)..."
-	set_ios_flags
-	set_ios_testing_flags
-	swift build --build-tests "${IOS_FLAGS[@]}" "${IOS_TESTING_FLAGS[@]}"
+	local udid
+	udid="$(xcrun simctl list devices available | sed -nE 's/^ +iPhone.*\(([0-9A-F-]{36})\).*/\1/p' | head -n 1)"
+	[ -n "$udid" ] || die "No available iPhone simulator. Install an iOS runtime in Xcode."
 
-	log "Running tests on the host toolchain..."
+	log "Running tests on the iOS simulator $udid..."
+	xcodebuild test \
+		-scheme FrakSDK-Package \
+		-destination "platform=iOS Simulator,id=$udid" \
+		-derivedDataPath .build/xcodebuild \
+		-only-testing:FrakSDKUITests \
+		'-only-testing:FrakSDKTests/FrakClientTests/foregroundNotificationTriggersADrain()'
+
+	log "Running tests on the macOS host..."
 	swift test
 }
 
@@ -189,7 +177,7 @@ mirror-stage) do_mirror_stage "${2:-}" ;;
 	echo "Usage: $0 {build|test|lint|format|version|xcframework|mirror-stage <dir>}"
 	echo ""
 	echo "  build        - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
-	echo "  test         - swift test, same triple"
+	echo "  test         - xcodebuild test on an iOS simulator, then swift test on macOS"
 	echo "  lint         - swift-format lint (strict), no simulator"
 	echo "  format       - swift-format rewrite in place"
 	echo "  version      - every file carrying the version, plus its CHANGELOG section"

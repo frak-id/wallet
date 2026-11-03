@@ -48,6 +48,7 @@ struct FrakClientTests {
             queue: EventQueue(fileURL: queueURL, logger: logger),
             launcher: launcher,
             logger: logger,
+            serverClock: ServerClock(),
             session: session,
             backendURL: "https://\(host)"
         )

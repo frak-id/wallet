@@ -48,24 +48,30 @@ struct URLQuery {
     /// base64url payload would then fail to decode.
     func value(for key: String) -> String? {
         let match =
-            parameters.first { $0.key == key }
-            ?? parameters.first { $0.key.caseInsensitiveCompare(key) == .orderedSame }
+            parameters.first { Self.name(of: $0) == key }
+            ?? parameters.first { Self.name(of: $0).caseInsensitiveCompare(key) == .orderedSame }
         return match.map { Self.percentDecode($0.value) }
     }
 
     /// Exact-key lookup, for parameters the web client reads through `URLSearchParams.get`. `fCtx`
     /// tolerates mangled casing; `fmt` authorises an identity merge, so it matches web or not at all.
     func exactValue(for key: String) -> String? {
-        parameters.first { $0.key == key }.map { Self.percentDecode($0.value) }
+        parameters.first { Self.name(of: $0) == key }.map { Self.percentDecode($0.value) }
     }
 
     mutating func remove(_ key: String) {
-        parameters.removeAll { $0.key.caseInsensitiveCompare(key) == .orderedSame }
+        parameters.removeAll { Self.name(of: $0).caseInsensitiveCompare(key) == .orderedSame }
     }
 
-    /// Appends `key` only when it is absent — gap-fill, so a merchant's own value always wins.
+    /// Keys compare decoded, as `URLSearchParams` reads them: `f%43tx` is `fCtx`. The raw key is what gets written back.
+    private static func name(of parameter: (key: String, value: String)) -> String {
+        percentDecode(parameter.key)
+    }
+
+    /// Appends `key` only when no parameter carries that exact spelling, so a merchant's own value
+    /// wins but an `UTM_SOURCE` does not stand in for the lowercase key analytics read.
     mutating func fillIfAbsent(_ key: String, _ value: String?) {
-        guard let value, !value.isEmpty, self.value(for: key) == nil else { return }
+        guard let value, !value.isEmpty, exactValue(for: key) == nil else { return }
         parameters.append((key, PercentEncoding.encode(value)))
     }
 

@@ -47,7 +47,7 @@ export function ProjectedRevenueCard({
     const locale = i18n.language;
     const currency = revenue.currency ?? DEFAULT_CURRENCY;
 
-    const { data, total, currencyFormatter } = useMemo(() => {
+    const { data, total, currencyFormatter, axisFormatter } = useMemo(() => {
         const data = buildAreaSeries(series.buckets, series.granularity);
         const total = data.reduce(
             (acc, p) => acc + (p.actual ?? p.forecast ?? 0),
@@ -58,7 +58,13 @@ export function ProjectedRevenueCard({
             currency,
             maximumFractionDigits: 0,
         });
-        return { data, total, currencyFormatter };
+        const axisFormatter = new Intl.NumberFormat(locale, {
+            style: "currency",
+            currency,
+            currencyDisplay: "narrowSymbol",
+            notation: "compact",
+        });
+        return { data, total, currencyFormatter, axisFormatter };
     }, [series, locale, currency]);
 
     const isEmpty = total === 0;
@@ -109,8 +115,7 @@ export function ProjectedRevenueCard({
                             />
                             <XAxis />
                             <NumericYAxis
-                                formatter={(v) => `${v / 1000}k€`}
-                                ticks={[0, 5000, 10000, 15000]}
+                                formatter={(v) => axisFormatter.format(v)}
                             />
                             <ChartTooltip
                                 rows={(point) =>

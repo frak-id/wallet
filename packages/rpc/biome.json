@@ -1,8 +1,13 @@
 {
     "root": false,
-    "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+    "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
     "files": {
         "includes": ["**", "!dist"]
+    },
+    "markdown": {
+        "formatter": {
+            "enabled": false
+        }
     },
     "assist": {
         "actions": {

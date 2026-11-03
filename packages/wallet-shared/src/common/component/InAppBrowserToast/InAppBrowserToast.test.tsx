@@ -4,6 +4,8 @@ import { InAppBrowserToast } from "./index";
 
 const inAppState = vi.hoisted(() => ({
     isInAppBrowser: false,
+    isIOS: false,
+    isInstagramBrowser: false,
     isInIframe: false,
     isIPad: false,
 }));
@@ -55,6 +57,12 @@ vi.mock("@frak-labs/core-sdk", () => ({
     get isInAppBrowser() {
         return inAppState.isInAppBrowser;
     },
+    get isIOS() {
+        return inAppState.isIOS;
+    },
+    get isInstagramBrowser() {
+        return inAppState.isInstagramBrowser;
+    },
     getBackendUrl: () => "https://backend.frak.id",
     redirectToExternalBrowser: eventMocks.redirectToExternalBrowser,
 }));
@@ -73,6 +81,8 @@ describe("InAppBrowserToast", () => {
         vi.clearAllMocks();
 
         inAppState.isInAppBrowser = false;
+        inAppState.isIOS = false;
+        inAppState.isInstagramBrowser = false;
         inAppState.isInIframe = false;
         inAppState.isIPad = false;
 
@@ -97,6 +107,20 @@ describe("InAppBrowserToast", () => {
     it("should not render when not in app browser", () => {
         const { container } = render(<InAppBrowserToast />);
         expect(container.firstChild).toBeNull();
+    });
+
+    it("waits for a tap inside Instagram on iOS instead of redirecting on load", () => {
+        inAppState.isInAppBrowser = true;
+        inAppState.isIOS = true;
+        inAppState.isInstagramBrowser = true;
+
+        render(<InAppBrowserToast />);
+
+        expect(eventMocks.redirectToExternalBrowser).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
+        expect(eventMocks.redirectToExternalBrowser).toHaveBeenCalledWith(
+            window.location.href
+        );
     });
 
     it("should not render when dismissed", () => {

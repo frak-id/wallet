@@ -73,6 +73,10 @@ export type InstallEventMap = {
         // merchantId/anonymousId pair.
         has_referrer_proof: boolean;
     };
+    // A visitor who already has the app hands the code to it from `/install?ref=`.
+    install_open_app_clicked: {
+        in_app_browser: boolean;
+    };
     install_page_dismissed: undefined;
 
     // iOS post-install detection. Sourced from the SDK's fragment rewrite

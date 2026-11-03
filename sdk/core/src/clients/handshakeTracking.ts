@@ -10,7 +10,7 @@ import {
 /** The SDK stops polling the listener, and reports a timeout, after this. */
 export const HANDSHAKE_TIMEOUT_MS = 30_000;
 
-type TrackLifecycle = <E extends keyof SdkLifecycleEventMap>(
+export type TrackLifecycle = <E extends keyof SdkLifecycleEventMap>(
     event: E,
     properties: SdkLifecycleEventMap[E]
 ) => void;

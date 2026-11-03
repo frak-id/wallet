@@ -3,6 +3,7 @@ import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type {
     CampaignRuleDefinition,
+    ConditionGroup,
     RewardTier,
     RuleCondition,
 } from "../schemas";
@@ -104,9 +105,9 @@ describe("CampaignManagementService start-date edit", () => {
         await service.update("campaign-1", { startDate: START });
 
         const rule = update.mock.calls[0][1].rule as CampaignRuleDefinition;
-        const timeConditions = (
-            rule.conditions as CampaignRuleDefinition["conditions"] & unknown[]
-        ).filter((c) => "field" in c && c.field === "time.timestamp");
+        const timeConditions = (rule.conditions as RuleCondition[]).filter(
+            (c) => c.field === "time.timestamp"
+        );
         expect(timeConditions).toEqual([
             { field: "time.timestamp", operator: "gte", value: START_UNIX },
         ]);
@@ -539,13 +540,12 @@ describe("CampaignManagementService productScope validation", () => {
     });
 
     it("rejects an over-deep nested scope", async () => {
-        let deep: CampaignRuleDefinition["productScope"] = {
-            field: "productId",
-            operator: "eq",
-            value: "A",
+        let deep: ConditionGroup = {
+            logic: "all",
+            conditions: [{ field: "productId", operator: "eq", value: "A" }],
         };
-        for (let i = 0; i < 7; i++) {
-            deep = { logic: "all", conditions: [deep as never] };
+        for (let i = 0; i < 6; i++) {
+            deep = { logic: "all", conditions: [deep] };
         }
         const rule = productScopedRule({ productScope: deep });
         await expect(
@@ -621,24 +621,11 @@ describe("CampaignManagementService productScope validation", () => {
         const scope: CampaignRuleDefinition["productScope"] = [
             { field: "productId", operator: "eq", value: "A" },
         ];
+        const active = activeCampaign([]);
         const campaign = {
-            id: "campaign-1",
-            status: "active",
-            publishedAt: null,
-            rule: {
-                trigger: "purchase",
-                conditions: [],
-                productScope: scope,
-                rewards: [
-                    {
-                        recipient: "referee",
-                        type: "token",
-                        amountType: "fixed",
-                        amount: 10,
-                    },
-                ],
-            },
-        } as CampaignRuleSelect;
+            ...active,
+            rule: { ...active.rule, productScope: scope },
+        };
         const { service, update } = serviceWith(campaign);
 
         await service.update("campaign-1", {

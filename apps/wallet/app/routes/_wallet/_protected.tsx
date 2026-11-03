@@ -1,6 +1,7 @@
 import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
+import { GameWinScreen } from "@/module/game/component/GameWinScreen";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 export const Route = createFileRoute("/_wallet/_protected")({
@@ -12,11 +13,15 @@ export const Route = createFileRoute("/_wallet/_protected")({
             const search = Object.fromEntries(
                 new URLSearchParams(location.search)
             );
-            pendingActionsStore.getState().addAction({
-                type: "navigation",
-                to: location.pathname,
-                search: Object.keys(search).length > 0 ? search : undefined,
-            });
+            const hasSearch = Object.keys(search).length > 0;
+            // The default landing is no destination: storing it would outrank a code carried into onboarding.
+            if (location.pathname !== "/wallet" || hasSearch) {
+                pendingActionsStore.getState().addAction({
+                    type: "navigation",
+                    to: location.pathname,
+                    search: hasSearch ? search : undefined,
+                });
+            }
             throw redirect({
                 to: "/register",
                 replace: true,
@@ -27,8 +32,11 @@ export const Route = createFileRoute("/_wallet/_protected")({
 
 function ProtectedLayout() {
     return (
-        <AppShell navigation={true}>
-            <Outlet />
-        </AppShell>
+        <>
+            <AppShell navigation={true}>
+                <Outlet />
+            </AppShell>
+            <GameWinScreen />
+        </>
     );
 }

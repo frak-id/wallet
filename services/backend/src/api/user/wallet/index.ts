@@ -1,7 +1,10 @@
 import { Elysia } from "elysia";
 import { authRoutes } from "./auth";
 import { balanceRoutes } from "./balance";
+import { gameRoutes } from "./game";
+import { instagramRoutes } from "./instagram";
 import { mergeRoutes } from "./merge";
+import { moneriumRoutes } from "./monerium";
 import { notificationRoutes } from "./notifications";
 import { pairingRoutes } from "./pairing";
 import { referralRoutes } from "./referral";
@@ -14,4 +17,7 @@ export const walletApi = new Elysia({ prefix: "/wallet" })
     .use(balanceRoutes)
     .use(rewardsRoutes)
     .use(referralRoutes)
-    .use(mergeRoutes);
+    .use(gameRoutes)
+    .use(instagramRoutes)
+    .use(mergeRoutes)
+    .use(moneriumRoutes);

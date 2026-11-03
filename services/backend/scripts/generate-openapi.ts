@@ -37,7 +37,16 @@ const app = new Elysia()
     .model({ [CONDITION_GROUP_SCHEMA_ID]: ConditionGroupSchema })
     .use(userApi);
 
-const { components, paths } = toOpenAPISchema(app);
+const { components, paths: allPaths } = toOpenAPISchema(app);
+
+// Wallet-private: the native SDKs must not generate (and freeze) bank-account types.
+const EXCLUDED_PATH_PREFIXES = ["/user/wallet/monerium"];
+const paths = Object.fromEntries(
+    Object.entries(allPaths ?? {}).filter(
+        ([path]) =>
+            !EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))
+    )
+);
 
 const document = {
     openapi: OPENAPI_VERSION,

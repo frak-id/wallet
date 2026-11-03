@@ -172,8 +172,6 @@ is wrong.
 
 - XCFramework build and signing are unbuilt. `bun run --cwd sdk/ios xcframework`
   exits 1; only source distribution via a SwiftPM path/git dependency works today.
-- `golden-rewards.json`'s `format-amount` vectors are hand-copied as literals in
-  `RewardsDecoderTests.swift` instead of loaded from the shared fixture corpus.
 - `PrivacyInfo.xcprivacy` propagation has not been validated against a real consumer
   app (AppsFlyer's issue #281 shows a comparable manifest failing to bundle in the
   static SPM variant).

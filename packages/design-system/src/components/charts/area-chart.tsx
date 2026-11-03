@@ -42,6 +42,8 @@ function xAccessor(d: Record<string, unknown>): Date {
     return value instanceof Date ? value : new Date(value as string | number);
 }
 
+const EDGE_BLEED = 4;
+
 const bisectDate = bisector<Record<string, unknown>, Date>((d) =>
     xAccessor(d)
 ).left;
@@ -237,8 +239,9 @@ const AreaChartCore = memo(function AreaChartCore({
                 <defs>
                     {showReveal ? (
                         <clipPath id="chart-area-grow-clip">
+                            {/* Bleeds past the plot so edge dots and line caps are not cut in half. */}
                             <motion.rect
-                                animate={{ width: innerWidth }}
+                                animate={{ width: innerWidth + 2 * EDGE_BLEED }}
                                 height={innerHeight + 20}
                                 initial={{ width: 0 }}
                                 key={`reveal-${revealEpoch}`}
@@ -246,8 +249,8 @@ const AreaChartCore = memo(function AreaChartCore({
                                     type: "tween",
                                     duration: ANIMATION_DURATION_MS / 1000,
                                 }}
-                                width={innerWidth}
-                                x={0}
+                                width={innerWidth + 2 * EDGE_BLEED}
+                                x={-EDGE_BLEED}
                                 y={0}
                             />
                         </clipPath>

@@ -444,6 +444,7 @@ export class SettlementOrchestrator {
         const allowance = state.allowances.get(token) ?? 0n;
         return {
             key: `${bank}:${token}`,
+            // biome-ignore lint/complexity/useMathMinMax: bigint operands, Math.min throws
             capacity: balance < allowance ? balance : allowance,
             amountWei: parseUnits(reward.amount, decimals),
         };

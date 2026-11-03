@@ -16,13 +16,14 @@ import {
     formatCurrency,
     type RewardHistoryItem as RewardHistoryItemType,
 } from "@frak-labs/wallet-shared";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { HistoryEntryRow } from "@/module/history/component/HistoryEntryRow";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useHistory } from "@/module/history/hook/useHistory";
+import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
+import { pendingReason } from "@/module/history/utils/pendingReason";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -119,10 +120,19 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                                     {t("reward.frakBonus.label")}
                                 </Badge>
                             )}
+                            {item.role === "winner" && (
+                                <Badge variant="success" size="small">
+                                    {t("reward.gamePrize.label")}
+                                </Badge>
+                            )}
                         </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
-                                {formatRewardDate(item.createdAt, locale, t)}
+                                {formatHistoryDateTime(
+                                    item.createdAt,
+                                    locale,
+                                    t
+                                )}
                             </Text>
                             {item.status !== "consumed" && (
                                 <Text
@@ -134,7 +144,7 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                                     }
                                     className={styles.statusText}
                                 >
-                                    {t(`reward.status.${item.status}`)}
+                                    <StatusLabel item={item} />
                                 </Text>
                             )}
                         </Stack>
@@ -158,6 +168,21 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
     );
 }
 
+function StatusLabel({ item }: { item: RewardHistoryItemType }) {
+    const { t, i18n } = useTranslation();
+    if (item.status !== "pending") return t(`reward.status.${item.status}`);
+
+    const reason = pendingReason(item);
+    if (reason.kind === "purchase") return t("reward.status.pending");
+    if (reason.kind === "payout") return t("reward.pending.onItsWay");
+    return t("reward.pending.availableOn", {
+        date: new Date(reason.availableAt).toLocaleDateString(i18n.language, {
+            day: "numeric",
+            month: "long",
+        }),
+    });
+}
+
 function MerchantLogoWithBadge({
     merchant,
     status,
@@ -175,36 +200,6 @@ function MerchantLogoWithBadge({
     );
 }
 
-function formatRewardDate(
-    timestamp: number,
-    locale: string,
-    t: TFunction
-): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    const time = date.toLocaleTimeString(locale, {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-
-    if (date.toDateString() === now.toDateString()) {
-        return `${t("common.today")}, ${time}`;
-    }
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `${t("common.yesterday")}, ${time}`;
-    }
-
-    const dayMonth = date.toLocaleDateString(locale, {
-        day: "numeric",
-        month: "long",
-    });
-    return `${dayMonth}, ${time}`;
-}
-
 const displayAmountIcons: Partial<
     Record<
         RewardHistoryItemType["status"],
@@ -213,6 +208,7 @@ const displayAmountIcons: Partial<
 > = {
     settled: HourglassIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function DisplayAmount({
@@ -235,11 +231,12 @@ function DisplayAmount({
 }
 
 const badgeIcons: Record<
-    "settled" | "pending",
+    "settled" | "pending" | "locked",
     typeof ClockHandsIcon | typeof LockIcon
 > = {
     settled: ClockHandsIcon,
     pending: LockIcon,
+    locked: LockIcon,
 };
 
 function StatusBadge({
@@ -249,8 +246,8 @@ function StatusBadge({
     status: RewardHistoryItemType["status"];
     role: RewardHistoryItemType["role"];
 }) {
-    // Welcome-bonus rows always carry the gift accent, regardless of status.
-    if (role === "welcome_bonus") {
+    // Welcome bonuses and game prizes always carry the gift accent, regardless of status.
+    if (role === "welcome_bonus" || role === "winner") {
         return (
             <div className={styles.badge}>
                 <div className={styles.badgeInner({ status: "bonus" })}>
@@ -264,7 +261,7 @@ function StatusBadge({
         );
     }
 
-    if (status !== "settled" && status !== "pending") {
+    if (status !== "settled" && status !== "pending" && status !== "locked") {
         return null;
     }
 

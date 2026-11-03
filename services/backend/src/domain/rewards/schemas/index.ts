@@ -12,6 +12,8 @@ export const interactionTypes = {
     createReferralLink: "create_referral_link",
     purchase: "purchase",
     custom: "custom",
+    referralSignup: "referral_signup",
+    gameJoin: "game_join",
 } as const;
 
 export const InteractionTypeSchema = t.Union([
@@ -19,6 +21,8 @@ export const InteractionTypeSchema = t.Union([
     t.Literal(interactionTypes.createReferralLink),
     t.Literal(interactionTypes.purchase),
     t.Literal(interactionTypes.custom),
+    t.Literal(interactionTypes.referralSignup),
+    t.Literal(interactionTypes.gameJoin),
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
 
@@ -42,13 +46,14 @@ export const LIVE_ASSET_STATUSES = [
 
 /**
  * Status surfaced to wallet clients. Superset of {@link AssetStatusSchema}
- * with the display-only `consumed` state, which the wallet derives from
- * `settled` (the backend cannot yet observe the on-chain settled → consumed
- * transition, so `consumed` is never persisted to `asset_logs.status`).
+ * with two display-only states, never persisted to `asset_logs.status`:
+ * `consumed` (derived by the wallet from `settled`) and `locked` (a `pending`
+ * reward that is held and not released yet).
  */
 export const RewardDisplayStatusSchema = t.Union([
     ...AssetStatusSchema.anyOf,
     t.Literal("consumed"),
+    t.Literal("locked"),
 ]);
 export type RewardDisplayStatus = Static<typeof RewardDisplayStatusSchema>;
 
@@ -79,11 +84,13 @@ export type RecipientType = Static<typeof RecipientTypeSchema>;
 
 /**
  * Recipient of a persisted reward. `welcome_bonus` is a Frak referrer share
- * redirected to the referee; campaign configs keep {@link RecipientTypeSchema}.
+ * redirected to the referee, `winner` a Frak Game prize; campaign configs
+ * keep {@link RecipientTypeSchema}.
  */
 export const AssetLogRecipientTypeSchema = t.Union([
     ...RecipientTypeSchema.anyOf,
     t.Literal("welcome_bonus"),
+    t.Literal("winner"),
 ]);
 export type AssetLogRecipientType = Static<typeof AssetLogRecipientTypeSchema>;
 
@@ -108,6 +115,8 @@ const PurchaseInfoSchema = t.Object({
 export type PurchaseInfo = Static<typeof PurchaseInfoSchema>;
 
 export const RewardHistoryItemSchema = t.Object({
+    /** The asset log's id: one settlement batch stamps the same `txHash` on many rewards. */
+    id: t.String(),
     merchant: MerchantInfoSchema,
     token: TokenInfoSchema,
     amount: t.TokenAmount,
@@ -119,6 +128,8 @@ export const RewardHistoryItemSchema = t.Object({
     settledAt: t.Optional(t.Date()),
     /** Timestamp at which a locked reward becomes claimable. Undefined when no lockup. */
     availableAt: t.Optional(t.Date()),
+    /** Set on a `locked` reward that waits on another user's mission (the referee's). */
+    waitsOnFriend: t.Optional(t.Boolean()),
     /** Reason a `cancelled` reward was cancelled. Undefined for non-cancelled rewards. */
     cancellationReason: t.Optional(CancellationReasonSchema),
     purchase: t.Optional(PurchaseInfoSchema),

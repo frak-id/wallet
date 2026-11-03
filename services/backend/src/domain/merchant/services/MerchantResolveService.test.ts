@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { MerchantRepository } from "../repositories/MerchantRepository";
+import type {
+    MerchantRepository,
+    MerchantSelect,
+} from "../repositories/MerchantRepository";
 import type { ExplorerConfig, SdkConfig } from "../schemas";
 import {
     MerchantResolveService,
     normalizePackageId,
 } from "./MerchantResolveService";
 
-function buildMerchant(overrides: Partial<Record<string, unknown>> = {}) {
+function buildMerchant(
+    overrides: Partial<MerchantSelect> = {}
+): MerchantSelect {
     return {
         id: "merchant-id",
         productId: null,
@@ -15,6 +20,7 @@ function buildMerchant(overrides: Partial<Record<string, unknown>> = {}) {
         allowedPackageIds: [],
         name: "Example",
         ownerWallet: "0x0000000000000000000000000000000000000000",
+        ownerAccountId: null,
         bankAddress: null,
         defaultRewardToken: "0x0000000000000000000000000000000000000000",
         webhookSignatureKey: null,
@@ -22,6 +28,7 @@ function buildMerchant(overrides: Partial<Record<string, unknown>> = {}) {
         explorerConfig: null,
         explorerEnabledAt: null,
         sdkConfig: null,
+        accountingInfo: null,
         verifiedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),

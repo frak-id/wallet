@@ -1,6 +1,8 @@
 import {
     getBackendUrl,
     isInAppBrowser,
+    isInstagramBrowser,
+    isIOS,
     redirectToExternalBrowser,
 } from "@frak-labs/core-sdk";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
@@ -80,6 +82,8 @@ export function InAppBrowserToast({
     useEffect(() => {
         if (!isInAppBrowser || hasAttemptedRedirect) return;
         if (isIPad && isInIframe) return;
+        // Instagram on iOS only hands off from a tap: leave it to the banner CTA.
+        if (isIOS && isInstagramBrowser) return;
 
         setHasAttemptedRedirect(true);
         handleRedirect();

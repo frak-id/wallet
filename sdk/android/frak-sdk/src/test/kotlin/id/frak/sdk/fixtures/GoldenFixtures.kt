@@ -20,8 +20,8 @@ internal object GoldenFixtures {
     /** FrakContext v2 codec vectors. Owned by the context corpus work. */
     const val CONTEXT_CODEC: String = "sdk/core/src/context/fixtures/golden-context.json"
 
-    /** Reward selection and currency formatting vectors. */
-    const val REWARDS: String = "sdk/core/src/rewards/fixtures/golden-rewards.json"
+    /** Share-link building and inbound `fCtx` parsing vectors. */
+    const val SHARING_LINKS: String = "sdk/core/src/context/fixtures/golden-sharing-links.json"
 
     /** Entries handed back as raw [JSONObject]s: only the envelope is a contract, payloads vary per concern. */
     internal data class Corpus(
@@ -56,7 +56,7 @@ internal object GoldenFixtures {
                     append("Regenerate with (from the repo root):\n")
                     append("  bun run --cwd sdk/core fixtures:generate           # identity\n")
                     append("  bun run --cwd sdk/core fixtures:generate:context   # codec\n")
-                    append("  bun run --cwd sdk/core fixtures:generate:rewards   # rewards\n\n")
+                    append("  bun run --cwd sdk/core fixtures:generate:links     # sharing links\n\n")
                     append("This is a hard failure by design.")
                 },
             )

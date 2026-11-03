@@ -1,5 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { FrakWalletSdkConfig } from "../types/config";
+
+const openPanelTrack = vi.hoisted(() => vi.fn());
+vi.mock("@openpanel/web", () => ({
+    OpenPanel: class {
+        track = openPanelTrack;
+        init = vi.fn();
+        setGlobalProperties = vi.fn();
+        global = {};
+    },
+}));
 
 vi.mock("../config/clientId", () => ({
     getClientId: vi.fn(() => "anon-client-id"),
@@ -555,5 +565,101 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         const [firstCall, secondCall] = resolvedConfigCalls();
         expect(firstCall.data.pendingMergeToken).toBe("merge-token-123");
         expect(secondCall.data.pendingMergeToken).toBeUndefined();
+    });
+});
+
+describe("createIFrameFrakClient - asset push failures", () => {
+    let sendLifecycle: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        localStorage.clear();
+        vi.stubEnv("OPEN_PANEL_API_URL", "https://op.example.com");
+        vi.stubEnv("OPEN_PANEL_SDK_CLIENT_ID", "op-client-id");
+
+        currentConfig = {
+            isResolved: true,
+            merchantId: "merchant",
+            domain: "merchant.example.com",
+            allowedDomains: [],
+        };
+
+        const { signProof } = await import("../identity/sign");
+        vi.mocked(signProof).mockResolvedValue(null);
+
+        sendLifecycle = vi.fn();
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        vi.mocked(createRpcClient).mockReturnValue({
+            sendLifecycle,
+            request: vi.fn(),
+            listen: vi.fn(),
+            cleanup: vi.fn(),
+        } as any);
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+        vi.restoreAllMocks();
+    });
+
+    async function setup(config: FrakWalletSdkConfig) {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const iframe = document.createElement("iframe");
+        document.body.appendChild(iframe);
+        const client = await createIFrameFrakClient({ config, iframe });
+        resolveFreshConfig({
+            merchantId: "merchant",
+            domain: "merchant.example.com",
+            allowedDomains: [],
+        });
+        await client.waitForSetup;
+    }
+
+    function handshakeFailures() {
+        return openPanelTrack.mock.calls
+            .filter(([event]) => event === "sdk_iframe_handshake_failed")
+            .map(([, properties]) => properties);
+    }
+
+    test("treats blocked storage as no backup, not a failed handshake", async () => {
+        vi.spyOn(window.localStorage, "getItem").mockImplementation(() => {
+            throw new DOMException(
+                "The operation is insecure.",
+                "SecurityError"
+            );
+        });
+
+        await setup({ metadata: { name: "Test Merchant" } });
+
+        expect(handshakeFailures()).toEqual([]);
+        expect(
+            sendLifecycle.mock.calls.filter(
+                ([event]) => event.clientLifecycle === "restore-backup"
+            )
+        ).toEqual([]);
+    });
+
+    test("names the asset and the error when a push fails", async () => {
+        sendLifecycle.mockImplementation((event) => {
+            if (event.clientLifecycle === "modal-i18n") {
+                throw new TypeError("i18n is not cloneable");
+            }
+        });
+
+        await setup({
+            metadata: { name: "Test Merchant" },
+            customizations: { i18n: { title: "Bonjour" } },
+        });
+
+        expect(handshakeFailures()).toEqual([
+            {
+                reason: "asset_push",
+                asset: "i18n",
+                error_name: "TypeError",
+                error_message: "i18n is not cloneable",
+            },
+        ]);
     });
 });

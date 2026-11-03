@@ -17,6 +17,15 @@ import walletPackage from "./package.json" with { type: "json" };
 
 const DEBUG = JSON.stringify(false);
 
+/** CrabNebula rejects dots in a channel name, so `1.1.8` becomes `1-1-8`. */
+export function otaChannelFor(
+    stage: string,
+    platform: "ios" | "android",
+    version: string
+) {
+    return `${stage}-${platform}-${version.replaceAll(".", "-")}`;
+}
+
 export type PlatformFlags = {
     isTauri: boolean;
     isTauriIos: boolean;
@@ -54,8 +63,19 @@ export async function getDefineProps({
 
     const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
+    const stage = getSstResource("STAGE") ?? "dev";
+
+    // OTA channel for this exact binary: stage (BACKEND_URL), platform (__IS_IOS__)
+    // and version (the Rust command surface) are all baked in. `walletPackage.version`,
+    // not `appVersion`, which is COMMIT_HASH on web deploys. Must match the channel
+    // computed in wallet-ota-hotfix.yml. `null` disables OTA.
+    const otaPlatform = isTauriIos ? "ios" : isTauriAndroid ? "android" : null;
+    const otaChannel = otaPlatform
+        ? otaChannelFor(stage, otaPlatform, walletPackage.version)
+        : null;
+
     return {
-        "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
+        "process.env.STAGE": JSON.stringify(stage),
         "process.env.BACKEND_URL": JSON.stringify(backendUrl),
         "process.env.ERPC_URL": JSON.stringify(
             getSstResource("ERPC_URL") ??
@@ -82,6 +102,7 @@ export async function getDefineProps({
         __IS_TAURI__: JSON.stringify(isTauri),
         __IS_IOS__: JSON.stringify(isTauriIos),
         __IS_ANDROID__: JSON.stringify(isTauriAndroid),
+        __OTA_CHANNEL__: JSON.stringify(otaChannel),
         "process.env.APP_VERSION": JSON.stringify(appVersion),
         "process.env.FRAK_WALLET_URL": JSON.stringify(
             sandboxEnv.walletUrl ??
@@ -97,11 +118,14 @@ export async function getDefineProps({
         "process.env.WEBAUTHN_RP_ID": JSON.stringify(
             process.env.WEBAUTHN_RP_ID
         ),
+        // Same split as the listener: prod opens id.frak.wallet, every other stage the dev variant.
+        "process.env.DEEP_LINK_SCHEME": JSON.stringify(
+            process.env.STAGE?.includes("prod")
+                ? "frakwallet://"
+                : "frakwallet-dev://"
+        ),
         "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
             getSstResource("ANDROID_SHA256_FINGERPRINT")
-        ),
-        "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
-            getSstResource("MONERIUM_CLIENT_ID")
         ),
     };
 }

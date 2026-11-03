@@ -24,10 +24,27 @@ export const card = recipe({
                 backgroundColor: vars.surface.secondary,
             },
         },
+        // Declared after `variant` so its background wins over the surface one.
+        tone: {
+            error: {
+                backgroundColor: vars.surface.error,
+            },
+        },
         padding: {
             none: { padding: "0" },
             compact: { padding: alias.spacing.s },
             default: { padding: alias.spacing.m },
+            cell: {
+                paddingBlock: alias.spacing.s,
+                paddingInline: alias.spacing.m,
+            },
+        },
+        // `border.focus` vanishes on a white card, so the ring uses the action colour.
+        selected: {
+            true: {
+                outline: `1.5px solid ${vars.text.action}`,
+                outlineOffset: "-1.5px",
+            },
         },
     },
     defaultVariants: {

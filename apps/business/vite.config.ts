@@ -101,6 +101,13 @@ function buildChunkGroups() {
             priority: 22,
             minShareCount: 1,
         },
+        // Platform-admin tools: merchants never load them.
+        {
+            name: "feature-internal",
+            test: /[\\/]src[\\/](?:module[\\/]internal[\\/]|routes[\\/]_restricted[\\/]internal(?:\.|[\\/]))/,
+            priority: 23,
+            minShareCount: 1,
+        },
         // Everything behind the `_restricted` auth gate (dashboard, campaigns,
         // members, merchant, settings).
         {

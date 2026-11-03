@@ -38,6 +38,14 @@ type ProductScopeOutcome = {
 };
 
 /** Flags a campaign whose product scope selected no line item. */
+function holdIfRequired(
+    campaign: CampaignRuleSelect,
+    rewards: CalculatedReward[]
+): CalculatedReward[] {
+    if (!campaign.rule.holdUntilReleased) return rewards;
+    return rewards.map((reward) => ({ ...reward, held: true }));
+}
+
 function collectScopeMiss(
     result: SingleCampaignResult,
     campaignId: string,
@@ -399,7 +407,7 @@ export class RuleEngineService {
 
         return campaignResult({
             matched: true,
-            rewards: calculated,
+            rewards: holdIfRequired(campaign, calculated),
             errors,
         });
     }

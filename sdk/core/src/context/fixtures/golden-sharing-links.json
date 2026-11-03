@@ -1,0 +1,1327 @@
+{
+    "formatVersion": 1,
+    "fixtures": [
+        {
+            "name": "plain",
+            "description": "a plain https URL gains fCtx and utm_source=frak",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/product"
+            },
+            "expected": {
+                "base": "https://shop.example/product",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "bare-origin",
+            "description": "an empty path becomes /",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example"
+            },
+            "expected": {
+                "base": "https://shop.example/",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "upper-host",
+            "description": "scheme and host are lowercased, the path keeps its case",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "HTTPS://Shop.Example/Path"
+            },
+            "expected": {
+                "base": "https://shop.example/Path",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "http-scheme",
+            "description": "plain http is accepted",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "http://shop.example/p"
+            },
+            "expected": {
+                "base": "http://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "port-userinfo",
+            "description": "port and userinfo survive",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://user:pw@shop.example:8443/p"
+            },
+            "expected": {
+                "base": "https://user:pw@shop.example:8443/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "encoded-space",
+            "description": "%20 in a merchant value decodes to a space",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?note=hello%20world"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "note",
+                        "hello world"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "plus-space",
+            "description": "+ in a merchant value decodes to a space",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?note=hello+world"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "note",
+                        "hello world"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "encoded-plus",
+            "description": "%2B in a merchant value stays a literal plus",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?q=a%2Bb"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "q",
+                        "a+b"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "raw-unicode",
+            "description": "a raw non-ASCII merchant value decodes to the same text",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?name=caf\u00e9"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "name",
+                        "caf\u00e9"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "unencoded-url-value",
+            "description": "an unencoded URL inside a merchant value splits on the first =",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?redirect=https://x.example/?a=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "redirect",
+                        "https://x.example/?a=1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "empty-value",
+            "description": "a key with an empty value is kept",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?a=&b=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "a",
+                        ""
+                    ],
+                    [
+                        "b",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "key-no-value",
+            "description": "a key without = decodes to an empty value",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?flag&x=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "flag",
+                        ""
+                    ],
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "trailing-question",
+            "description": "a lone ? contributes no query entries",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "fragment",
+            "description": "the fragment is kept after the query",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?x=1#section"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": "#section"
+            }
+        },
+        {
+            "name": "fragment-no-query",
+            "description": "the query is inserted before the fragment",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p#top"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": "#top"
+            }
+        },
+        {
+            "name": "duplicate-keys",
+            "description": "duplicate merchant keys keep their order",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?a=1&a=2"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "a",
+                        "1"
+                    ],
+                    [
+                        "a",
+                        "2"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "stale-fctx",
+            "description": "a stale fCtx is replaced",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?fCtx=stale&x=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "stale-fctx-lowercase",
+            "description": "a stale lowercase fctx is removed case-insensitively",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?fctx=stale&x=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "stale-fctx-uppercase",
+            "description": "a stale uppercase FCTX is removed case-insensitively",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?FCTX=stale&x=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "merchant-utm-source",
+            "description": "an existing utm_source is not overwritten",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?utm_source=newsletter"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "utm_source",
+                        "newsletter"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "merchant-utm-source-upper",
+            "description": "gap-fill is exact-case: UTM_SOURCE does not count as utm_source",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?UTM_SOURCE=newsletter"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "UTM_SOURCE",
+                        "newsletter"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "merchant-empty-utm",
+            "description": "an existing empty utm_source still counts as present",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?utm_source="
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "utm_source",
+                        ""
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "merchant-utm-no-value",
+            "description": "an existing utm_source without = still counts as present",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?utm_source"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "utm_source",
+                        ""
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "merchant-utm-encoded-key",
+            "description": "keys match decoded: utm%5Fsource is utm_source",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?utm%5Fsource=newsletter"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "utm_source",
+                        "newsletter"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "stale-fctx-encoded-key",
+            "description": "a stale fCtx with a percent-encoded key is removed",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p?f%43tx=stale&x=1"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "x",
+                        "1"
+                    ],
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "percall-all",
+            "description": "every per-call attribution field is written",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmSource": "s",
+                    "utmMedium": "m",
+                    "utmCampaign": "c",
+                    "utmContent": "ct",
+                    "utmTerm": "t",
+                    "via": "v",
+                    "ref": "r"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "s"
+                    ],
+                    [
+                        "utm_medium",
+                        "m"
+                    ],
+                    [
+                        "utm_campaign",
+                        "c"
+                    ],
+                    [
+                        "utm_content",
+                        "ct"
+                    ],
+                    [
+                        "utm_term",
+                        "t"
+                    ],
+                    [
+                        "via",
+                        "v"
+                    ],
+                    [
+                        "ref",
+                        "r"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "defaults-only",
+            "description": "merchant defaults apply without a per-call override",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "defaults": {
+                    "utmSource": "ds",
+                    "utmMedium": "dm",
+                    "utmCampaign": "dc",
+                    "utmTerm": "dt",
+                    "via": "dv",
+                    "ref": "dr"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "ds"
+                    ],
+                    [
+                        "utm_medium",
+                        "dm"
+                    ],
+                    [
+                        "utm_campaign",
+                        "dc"
+                    ],
+                    [
+                        "utm_term",
+                        "dt"
+                    ],
+                    [
+                        "via",
+                        "dv"
+                    ],
+                    [
+                        "ref",
+                        "dr"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "percall-over-defaults",
+            "description": "per-call wins field by field over defaults",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmMedium": "m"
+                },
+                "defaults": {
+                    "utmMedium": "dm",
+                    "utmCampaign": "dc"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_medium",
+                        "m"
+                    ],
+                    [
+                        "utm_campaign",
+                        "dc"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "percall-empty-string-over-default",
+            "description": "an empty per-call value overrides the default and is then omitted",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmMedium": ""
+                },
+                "defaults": {
+                    "utmMedium": "dm"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "percall-empty-object",
+            "description": "an empty per-call object still lets defaults apply",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {},
+                "defaults": {
+                    "utmCampaign": "dc"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_campaign",
+                        "dc"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "product-utm-wins",
+            "description": "productUtmContent wins over perCall.utmContent",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmContent": "pc"
+                },
+                "productUtmContent": "prod"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_content",
+                        "prod"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "product-utm-only",
+            "description": "productUtmContent alone produces utm_content",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "productUtmContent": "prod"
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_content",
+                        "prod"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "product-utm-empty",
+            "description": "an empty productUtmContent is absent, so perCall.utmContent applies",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmContent": "pc"
+                },
+                "productUtmContent": ""
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_content",
+                        "pc"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "values-need-encoding",
+            "description": "attribution values with reserved characters round-trip through decoding",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "https://shop.example/p",
+                "perCall": {
+                    "utmCampaign": "black friday & co/\u20ac",
+                    "via": "a=b?c#d"
+                }
+            },
+            "expected": {
+                "base": "https://shop.example/p",
+                "query": [
+                    [
+                        "fCtx",
+                        "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+                    ],
+                    [
+                        "utm_source",
+                        "frak"
+                    ],
+                    [
+                        "utm_campaign",
+                        "black friday & co/\u20ac"
+                    ],
+                    [
+                        "via",
+                        "a=b?c#d"
+                    ]
+                ],
+                "fragment": ""
+            }
+        },
+        {
+            "name": "non-http-scheme",
+            "description": "a vendor scheme is refused",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "myapp://shop/p"
+            },
+            "expected": null
+        },
+        {
+            "name": "ftp-scheme",
+            "description": "ftp is refused",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "ftp://shop.example/p"
+            },
+            "expected": null
+        },
+        {
+            "name": "not-a-url",
+            "description": "a bare host without a scheme is refused",
+            "kind": "build",
+            "input": {
+                "context": {
+                    "v": 2,
+                    "m": "550e8400-e29b-41d4-a716-446655440000",
+                    "t": 1709654400,
+                    "c": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "baseUrl": "shop.example/p"
+            },
+            "expected": null
+        },
+        {
+            "name": "exact",
+            "description": "fCtx in the query",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "lowercase-key",
+            "description": "the key is matched case-insensitively: fctx",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fctx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "uppercase-key",
+            "description": "the key is matched case-insensitively: FCTX",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?FCTX=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "exact-wins-over-mangled",
+            "description": "an exact-case fCtx wins over a mangled duplicate",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fctx=garbage&fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "percent-encoded-key",
+            "description": "the key is matched decoded: f%43tx is fCtx",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?f%43tx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "percent-encoded-value",
+            "description": "a percent-encoded base64url character (%45 is E) decodes before the codec",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fCtx=%45lUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "fragment-after",
+            "description": "a fragment after the query does not affect the value",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ#x"
+            },
+            "expected": {
+                "v": 2,
+                "m": "550e8400-e29b-41d4-a716-446655440000",
+                "t": 1709654400,
+                "c": "550e8400-e29b-41d4-a716-446655440001"
+            }
+        },
+        {
+            "name": "in-fragment-only",
+            "description": "fCtx inside the fragment is ignored",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p#fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": null
+        },
+        {
+            "name": "missing",
+            "description": "no fCtx is null",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?x=1"
+            },
+            "expected": null
+        },
+        {
+            "name": "garbage-value",
+            "description": "an undecodable value is null",
+            "kind": "parse",
+            "input": {
+                "url": "https://shop.example/p?fCtx=%%%"
+            },
+            "expected": null
+        },
+        {
+            "name": "not-a-url",
+            "description": "a bare host without a scheme is null",
+            "kind": "parse",
+            "input": {
+                "url": "shop.example/p?fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            },
+            "expected": null
+        }
+    ]
+}

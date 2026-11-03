@@ -4,7 +4,7 @@ Only open and partial items. Closed findings are not listed; git history has the
 the original audits (`A*`/`S*`/`T*`/`D*` round 1, `2.x`–`8.x` round 2, `9.x` round 3, `§n` from the
 2026-08-13 alpha audit) so older commit messages still resolve.
 
-**State as of 2026-10-13** (HEAD `5638ed04f`) for §0, §1, §3 (S11, §3.7, the install rungs), §4
+**State as of 2026-10-13** (HEAD `5638ed04f`) for §0, §1, §3 (S11, the install rungs), §4
 (§2.3, §2.4, §3.6), §5, §8 (FRA-307, the harness gaps, 9.13) and the `1.0.0` facts, each read against
 the tree. Every other row keeps its 2026-08-14 read. Any count or severity below without a date and
 a verification method is suspect — that was the failure mode of the register this replaces.
@@ -81,7 +81,6 @@ Open, tracked, knowingly not being worked.
 
 | Id | Item | Platform | Verified |
 |---|---|---|---|
-| §3.7 | **Clock skew, half-fixed.** A device 61 s fast fails every proof, non-retryably. Android got `ServerClock` (stamps from the backend `Date` header) and the backend widened the merge window 2→10 min on the past side; `MAX_FUTURE_SKEW_SECONDS=60` is untouched. **iOS still stamps from the device clock — `ServerClock` was never ported** (`AnonymousIdStore.swift:71` reads `Date()`). Android's `ServerClock` adopts only a `Date` between 2025-01-01 and 2100-01-01 (`net/ServerClock.kt`); it is not persisted, so a cold start runs on the device clock until the first response | iOS open | read 2026-10-13 |
 | S4 | iOS keeps the resolve cache in Preferences, not Caches, with no backup exclusion. A per-read xattr mitigation was tried and reverted — `cfprefsd` reallocates the inode on every flush. Now a decision, not a design problem: the config cache is the SDK's own copy of someone else's data, so leaving it backed up is defensible. **Decide and record, or move it** | iOS | read |
 | S5 / 3.7 | Unbounded peak memory reading a response body. Android streams in 8 KiB chunks and aborts past 1 MiB; iOS stays on a pre-check plus post-buffer cap, so a chunked or lying response is unbounded during the read. A streaming rewrite was tried and reverted (`session.bytes(for:)` is ~100k suspensions per response) | iOS | read |
 | S11 | The sharing WebView URL puts `clientId` in a query string, and nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent` — zero references in either module. It fails closed by design in the core: `buildSharingLink` checks consent first (`DefaultFrakClient.kt:213`, `DefaultFrakClient.swift:259`) and the failure reaches `SharingResult.Failed`. One guard, in the core; none in the UI modules | both | read 2026-10-13 |
@@ -154,35 +153,16 @@ Open, tracked, knowingly not being worked.
 Not bugs — the highest-leverage structural gaps. Each is a place where three implementations must
 agree and nothing makes them.
 
-### 9.1 No golden corpus for URL query editing and attribution merge
+### 9.1 Golden corpus gaps
 
-325 lines of code (507 raw, measured 2026-08-13) hand-ported three ways:
-`queryParams.ts`/`UrlQuery.kt`/`URLQuery.swift` and
-`mergeAttribution.ts`/`AttributionParams.kt`/`SharingLinkBuilder.swift`. Between them they encode a
-case-insensitive `fCtx` lookup, tolerant percent-decoding, "never re-encode the merchant's URL",
-empty-value skipping, and a seven-field precedence rule.
+Share links and inbound `fCtx` are pinned by `golden-sharing-links.json` (2026-10-23). Still open:
 
-`golden-sharing-links.json` would close it the way `golden-context.json` closed the codec. **Not
-built.**
-
-Three concrete drifts this gap has already produced:
-
-- **9.11 — the TypeScript reference does not implement "never re-encode the merchant's URL."**
-  `frakContext.ts`'s `update()` round-trips through `URLSearchParams`/`URL.toString()`, so
-  `?note=hello%20world` becomes `?note=hello+world`. Both native ports deliberately avoid this and
-  each has a test asserting an exact untouched query string. `frakContext.test.ts` only reads back
-  decoded values, so it passes either way. **A link built web-side and one built natively can
-  byte-differ on identical input and nothing would notice.**
-- `mergeAttribution.ts`'s doc claims hardcoded fallbacks for `utm_medium`, `utm_campaign`, `ref` and
-  `via`; only `utm_source=frak` exists in any of the three implementations. All three agree on the
-  simpler real behaviour — the risk is that the next port is written from the comment.
-- The resolve-response decoder is the second candidate. There is no TypeScript runtime decoder to
-  conform to (`sdkConfigStore.ts:146` is a bare cast), so the forgiveness policy was invented
-  independently on each platform and has produced three real divergences.
-
-Related and still open: base64url strictness is asymmetric between web and native (native is
-stricter, which is the right direction — closing it means loosening web); and there is no
-uppercase-UUID vector, which belongs with the golden-proof work.
+- The resolve-response decoder. There is no TypeScript runtime decoder to conform to
+  (`sdkConfigStore.ts:146` is a bare cast), so the forgiveness policy was invented independently on
+  each platform and has produced three real divergences.
+- Base64url strictness is asymmetric: web accepts a padded `fCtx` (`==`), native refuses it. Native
+  is the right direction; closing it means tightening web, through the codec corpus.
+- No uppercase-UUID vector, which belongs with the golden-proof work.
 
 ### 9.2 The native↔web style contract
 

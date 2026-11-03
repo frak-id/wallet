@@ -30,6 +30,20 @@ describe("Card", () => {
         expect(elevatedClass).not.toBe(mutedClass);
     });
 
+    it("adds a class for the error tone, the selected ring and the cell padding", () => {
+        const { rerender } = render(<Card>test</Card>);
+        const defaultClass = screen.getByText("test").className;
+
+        for (const props of [
+            { tone: "error" },
+            { selected: true },
+            { padding: "cell" },
+        ] as const) {
+            rerender(<Card {...props}>test</Card>);
+            expect(screen.getByText("test").className).not.toBe(defaultClass);
+        }
+    });
+
     it("should render children correctly", () => {
         render(
             <Card>

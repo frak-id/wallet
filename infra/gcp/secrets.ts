@@ -5,6 +5,7 @@ import {
     erpcUrl,
     fcmServiceAccount,
     jwtBusinessSecret,
+    moneriumClientId,
     mongoNexusUri,
     nexusRpcSecret,
     pimlicoApiKey,
@@ -140,6 +141,20 @@ export const elysiaEnv = {
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     SHOPIFY_CLIENT_ID: shopifyClientId.value,
 
+    // Monerium (EUR e-money): OAuth tokens stay server-side
+    MONERIUM_CLIENT_ID: moneriumClientId.value,
+    // Must equal the app name registered at Monerium for MONERIUM_CLIENT_ID.
+    MONERIUM_APP_NAME: isProd ? "Frak" : "Frak Legacy",
+
+    // Instagram certification for the Frak Game (Meta app per stage); any empty = off.
+    INSTAGRAM_APP_SECRET: new sst.Secret("INSTAGRAM_APP_SECRET", "").value,
+    INSTAGRAM_WEBHOOK_VERIFY_TOKEN: new sst.Secret(
+        "INSTAGRAM_WEBHOOK_VERIFY_TOKEN",
+        ""
+    ).value,
+    // Seed only: the backend stores and renews the token itself afterwards.
+    INSTAGRAM_ACCESS_TOKEN: new sst.Secret("INSTAGRAM_ACCESS_TOKEN", "").value,
+
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 
@@ -159,6 +174,13 @@ export const elysiaEnv = {
         .value,
     OPEN_PANEL_BACKEND_CLIENT_SECRET: new sst.Secret(
         "OPEN_PANEL_BACKEND_CLIENT_SECRET"
+    ).value,
+    // Write client of the wallet project for server-side product events; empty = events off.
+    OPEN_PANEL_TRACK_CLIENT_ID: new sst.Secret("OPEN_PANEL_TRACK_CLIENT_ID", "")
+        .value,
+    OPEN_PANEL_TRACK_CLIENT_SECRET: new sst.Secret(
+        "OPEN_PANEL_TRACK_CLIENT_SECRET",
+        ""
     ).value,
 
     // Mobile app version floor (hard-update gate). `0.0.0` = disabled.

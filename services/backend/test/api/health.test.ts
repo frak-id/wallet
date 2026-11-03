@@ -1,16 +1,18 @@
 import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it } from "vitest";
 
+const createApp = () =>
+    new Elysia().get("/health", () => ({
+        status: "ok",
+        hostname: process.env.HOSTNAME,
+        stage: process.env.STAGE,
+    }));
+
 describe("Health Check API", () => {
-    let app: Elysia;
+    let app: ReturnType<typeof createApp>;
 
     beforeEach(() => {
-        // Create a minimal app with just the health endpoint for testing
-        app = new Elysia().get("/health", () => ({
-            status: "ok",
-            hostname: process.env.HOSTNAME,
-            stage: process.env.STAGE,
-        }));
+        app = createApp();
     });
 
     describe("GET /health", () => {

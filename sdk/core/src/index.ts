@@ -130,6 +130,7 @@ export {
     getQueryParamCaseInsensitive,
     getSupportedCurrency,
     isInAppBrowser,
+    isInstagramBrowser,
     isIOS,
     isMobile,
     normalizeProductDetails,
@@ -142,6 +143,7 @@ export {
     withCache,
 } from "./utils";
 export type {
+    SdkAssetPushContext,
     SdkEventMap,
     SdkHandshakeFailureReason,
 } from "./utils/analytics";

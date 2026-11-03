@@ -1,4 +1,5 @@
 import type {
+    LocalisedNotificationPayload,
     SendNotificationPayload,
     SendNotificationTargets,
 } from "@backend-domain/notifications";
@@ -54,6 +55,85 @@ const notificationMessages = {
         },
     }),
 } as const;
+
+function formatEuros(amount: number, locale: string) {
+    const digits = Number.isInteger(amount) ? 0 : 2;
+    return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(amount);
+}
+
+function gameWonMessage(prizeAmount: number) {
+    const data = { url: walletNotificationUrl };
+    return {
+        en: {
+            title: "You won the Frak Game!",
+            body: `Your ${formatEuros(prizeAmount, "en")} prize is on its way to your wallet.`,
+            data,
+        },
+        fr: {
+            title: "Tu as gagné le Jeu Frak !",
+            body: `Tes ${formatEuros(prizeAmount, "fr")} arrivent dans ton porte-monnaie.`,
+            data,
+        },
+    };
+}
+
+/** Players are in France: the deadline reads in Paris time whatever the server's zone. */
+function formatDeadline(at: Date, locale: string) {
+    return new Intl.DateTimeFormat(locale, {
+        timeZone: "Europe/Paris",
+        day: "numeric",
+        month: "long",
+        hour: "numeric",
+        minute: "2-digit",
+    }).format(at);
+}
+
+function gameCandidateMessage(
+    kind: "game_candidate_drawn" | "game_candidate_reminder",
+    prizeAmount: number,
+    verifyBy: Date
+) {
+    const data = { url: walletNotificationUrl };
+    const en = {
+        prize: formatEuros(prizeAmount, "en"),
+        by: formatDeadline(verifyBy, "en"),
+    };
+    const fr = {
+        prize: formatEuros(prizeAmount, "fr"),
+        by: formatDeadline(verifyBy, "fr"),
+    };
+    if (kind === "game_candidate_drawn") {
+        return {
+            en: {
+                title: "You were drawn in the Frak Game!",
+                body: `Connect your Instagram before ${en.by} to receive your ${en.prize}.`,
+                data,
+            },
+            fr: {
+                title: "Tu as été tiré au sort au Jeu Frak !",
+                body: `Connecte ton Instagram avant le ${fr.by} pour recevoir tes ${fr.prize}.`,
+                data,
+            },
+        };
+    }
+    return {
+        en: {
+            title: "A few hours left to claim your prize",
+            body: `Connect your Instagram before ${en.by}, or another winner is drawn.`,
+            data,
+        },
+        fr: {
+            title: "Plus que quelques heures pour ton gain",
+            body: `Connecte ton Instagram avant le ${fr.by}, sinon un autre gagnant est tiré au sort.`,
+            data,
+        },
+    };
+}
 
 export class NotificationOrchestrator {
     constructor(
@@ -144,6 +224,30 @@ export class NotificationOrchestrator {
     }
 
     private async handleNotificationEvent(event: NotificationEvent) {
+        if (event.type === "game_won") {
+            await this.send(
+                [event.wallet],
+                gameWonMessage(event.prizeAmount),
+                event.type
+            );
+            return;
+        }
+        if (
+            event.type === "game_candidate_drawn" ||
+            event.type === "game_candidate_reminder"
+        ) {
+            await this.send(
+                [event.wallet],
+                gameCandidateMessage(
+                    event.type,
+                    event.prizeAmount,
+                    event.verifyBy
+                ),
+                event.type
+            );
+            return;
+        }
+
         const merchantNames = await this.resolveMerchantNames(
             event.notifications
         );
@@ -157,23 +261,26 @@ export class NotificationOrchestrator {
                 merchantName,
                 notification.rewardCount
             );
+            await this.send(notification.wallets, payload, event.type);
+        }
+    }
 
-            try {
-                await this.notificationsService.sendAndStore({
-                    wallets: notification.wallets,
-                    payload,
-                    type: event.type,
-                });
-            } catch (error) {
-                log.warn(
-                    {
-                        error,
-                        type: event.type,
-                        walletCount: notification.wallets.length,
-                    },
-                    "[NotificationOrchestrator] Failed to send notification"
-                );
-            }
+    private async send(
+        wallets: Address[],
+        payload: LocalisedNotificationPayload,
+        type: NotificationEvent["type"]
+    ) {
+        try {
+            await this.notificationsService.sendAndStore({
+                wallets,
+                payload,
+                type,
+            });
+        } catch (error) {
+            log.warn(
+                { error, type, walletCount: wallets.length },
+                "[NotificationOrchestrator] Failed to send notification"
+            );
         }
     }
 

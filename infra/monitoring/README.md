@@ -11,7 +11,7 @@ Elysia backend (`services/backend`), built on the Prometheus metrics it exposes.
 
 - The backend serves `/metrics` on a **dedicated internal port** (`9464`), via a
   separate `Bun.serve` — **not** on the public app port (`3030`). The metrics
-  port is on the `ClusterIP` Service (`name: metrics`) but no ingress rule
+  port is on the `ClusterIP` Service (`name: metrics`) but no HTTPRoute rule
   references it, so `/metrics` is **never reachable from the public internet**,
   only pod-to-pod inside the cluster.
 - The `ServiceMonitor` in `infra/gcp/backend.ts` (`port: metrics`,

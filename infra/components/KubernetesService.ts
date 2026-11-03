@@ -51,8 +51,8 @@ type HttpRouteRule = {
 };
 
 /**
- * What ingress-nginx does for us today: 5s connect, no total cap, 60s without
- * a byte. Upstream idle stays below nginx's 75s keep-alive in the SPA pods.
+ * 5s connect, no total cap, 60s without a byte. Upstream idle stays below
+ * the 75s keep-alive of the nginx serving each SPA pod.
  */
 const edgeTrafficDefaults: Required<EdgeTraffic> = {
     connectTimeout: "5s",
@@ -132,23 +132,7 @@ type KubernetesServiceArgs = {
         cpuUtilization?: Input<number>; // Default to 80
     };
 
-    // Info for the ingress
-    ingress?: {
-        host: Input<string>;
-        tlsSecretName: Input<string>;
-        additionalHosts?: string[];
-        // Additional path-based routes to other services
-        pathRoutes?: Array<{
-            path: Input<string>;
-            pathType?: Input<"Prefix" | "Exact" | "ImplementationSpecific">; // Default to "Prefix"
-            serviceName: Input<string>;
-            servicePort: Input<number>;
-        }>;
-        // Custom annotations to add/override
-        customAnnotations?: Record<string, Input<string>>;
-    };
-
-    // Gateway API route, published next to `ingress` during the migration
+    // Gateway API route, attached to the shared Envoy Gateway
     httpRoute?: {
         hostnames: Input<string>[];
         parentRefs: Input<HttpRouteParentRef>[];
@@ -165,7 +149,7 @@ type KubernetesServiceArgs = {
 };
 
 /**
- * Deploy a full on kubernetes service with a deployment, service, hpa, ingress and service monitor
+ * Deploy a full on kubernetes service with a deployment, service, hpa, HTTPRoute and service monitor
  */
 export class KubernetesService extends ComponentResource {
     // Resources
@@ -173,7 +157,6 @@ export class KubernetesService extends ComponentResource {
     public readonly service: k8s.core.v1.Service | null = null;
     public readonly hpa: k8s.autoscaling.v1.HorizontalPodAutoscaler | null =
         null;
-    public readonly ingress: k8s.networking.v1.Ingress | null = null;
     public readonly httpRoute: k8s.apiextensions.CustomResource | null = null;
     public readonly serviceMonitor: k8s.apiextensions.CustomResource | null =
         null;
@@ -210,11 +193,6 @@ export class KubernetesService extends ComponentResource {
         // Create the HPA if defined
         if (this.args.hpa) {
             this.hpa = this.createHPA();
-        }
-
-        // Create the ingress if defined
-        if (this.args.ingress && this.service) {
-            this.ingress = this.createIngress();
         }
 
         if (this.args.httpRoute && this.service) {
@@ -334,108 +312,6 @@ export class KubernetesService extends ComponentResource {
                 parent: this,
                 dependsOn: this.deployment,
             }
-        );
-    }
-
-    private createIngress(): k8s.networking.v1.Ingress {
-        if (!this.args.ingress || !this.service) {
-            throw new Error(
-                "Ingress configuration and Service are required to create an Ingress"
-            );
-        }
-
-        const hasPathRoutes =
-            this.args.ingress.pathRoutes &&
-            this.args.ingress.pathRoutes.length > 0;
-        const serviceName = this.service.metadata.name;
-
-        // Mapper for the ingress rules
-        const hostToRule = (host: Input<string>) => {
-            // Build paths array: main service path + additional path routes
-            const paths: Input<inputs.networking.v1.HTTPIngressPath>[] = [
-                {
-                    path: "/",
-                    pathType: "Prefix",
-                    backend: {
-                        service: {
-                            name: serviceName,
-                            port: { number: 80 },
-                        },
-                    },
-                },
-            ];
-
-            // Add additional path routes if specified
-            if (hasPathRoutes) {
-                for (const route of this.args.ingress?.pathRoutes ?? []) {
-                    paths.push({
-                        path: route.path,
-                        pathType: route.pathType || "Prefix",
-                        backend: {
-                            service: {
-                                name: route.serviceName,
-                                port: { number: route.servicePort },
-                            },
-                        },
-                    });
-                }
-            }
-
-            return {
-                host,
-                http: { paths },
-            };
-        };
-        const rules = [
-            hostToRule(this.args.ingress.host),
-            ...(this.args.ingress.additionalHosts?.map(hostToRule) ?? []),
-        ];
-        const hosts = [
-            this.args.ingress.host,
-            ...(this.args.ingress.additionalHosts ?? []),
-        ];
-
-        // Build annotations
-        const baseAnnotations = {
-            "kubernetes.io/ingress.class": "nginx",
-            "kubernetes.io/tls-acme": "true",
-            "cert-manager.io/cluster-issuer": "letsencrypt",
-            "nginx.ingress.kubernetes.io/ssl-redirect": "true",
-            "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
-            "nginx.ingress.kubernetes.io/enable-modsecurity": "false",
-        };
-
-        // Add default rewrite-target for backward compatibility
-        // (only if no path routes are defined - those override with custom logic)
-        const defaultAnnotations: Record<string, string> = hasPathRoutes
-            ? {}
-            : { "nginx.ingress.kubernetes.io/rewrite-target": "/" };
-
-        return new k8s.networking.v1.Ingress(
-            `${this.name}Ingress`,
-            {
-                metadata: {
-                    name: `${this.name}-${normalizedStageName}-ingress`.toLocaleLowerCase(),
-                    namespace: this.args.namespace,
-                    annotations: {
-                        ...baseAnnotations,
-                        ...defaultAnnotations,
-                        // Merge custom annotations if provided (can override defaults)
-                        ...(this.args.ingress?.customAnnotations ?? {}),
-                    },
-                },
-                spec: {
-                    ingressClassName: "nginx",
-                    rules,
-                    tls: [
-                        {
-                            hosts,
-                            secretName: this.args.ingress.tlsSecretName,
-                        },
-                    ],
-                },
-            },
-            { ...this.opts, parent: this, dependsOn: this.service }
         );
     }
 

@@ -6,6 +6,7 @@ import {
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
+import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -16,6 +17,9 @@ type DeepLinkParams = {
     mode?: string;
     code?: string;
     state?: string;
+    error?: string;
+    /** Wallet screen to open on landing; only `monerium` is honoured. */
+    open?: string;
     m?: string;
     a?: string;
     /** `frak-install-v1` proof. Search param, not a fragment: see `routeResolvers.install`. */
@@ -34,6 +38,8 @@ function extractSearchParams(
         mode: searchParams.get("mode") ?? undefined,
         code: searchParams.get("code") ?? undefined,
         state: searchParams.get("state") ?? undefined,
+        error: searchParams.get("error") ?? undefined,
+        open: searchParams.get("open") ?? undefined,
         m: searchParams.get("m") ?? undefined,
         a: searchParams.get("a") ?? undefined,
         p: searchParams.get("p") ?? undefined,
@@ -237,15 +243,20 @@ function storePendingActions(params: DeepLinkParams) {
 
 type Route = { to: string; search?: Record<string, string> };
 
-/**
- * Resolve a monerium OAuth callback deep link.
- */
+/** Resolve a monerium OAuth callback deep link, cancelled ones included. */
 const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
     const search: Record<string, string> = {};
     if (params.code) search.code = params.code;
     if (params.state) search.state = params.state;
+    if (params.error) search.error = params.error;
     return { to: "/monerium/callback", search };
 };
+
+/** The `/wallet?open=monerium` push link; any other `open` value is dropped. */
+const resolveWalletRoute = (params: DeepLinkParams): Route =>
+    params.open === "monerium"
+        ? { to: "/wallet", search: { open: "monerium" } }
+        : { to: "/wallet" };
 
 /**
  * Resolve a pairing deep link. Aliased under `pair`, `pairing`, and the
@@ -266,7 +277,7 @@ const resolvePairRoute = (params: DeepLinkParams): Route =>
 // `install` and `r` are public actions, so the session arrives as `null`: read it here.
 function resolveReferralCodeRoute(code: string): Route {
     return getSafeSession()?.token
-        ? { to: "/profile/referral/redeem", search: { code } }
+        ? redeemCodeRoute(code)
         : { to: "/register", search: { ref: code } };
 }
 
@@ -310,6 +321,7 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
         search: params.to ? { to: params.to } : undefined,
     }),
     receive: () => ({ to: "/wallet" }),
+    wallet: resolveWalletRoute,
     // Campaign-launch notification deep link: opens the explorer with the
     // merchant's detail modal. Falls back to the explorer list when no
     // (or a malformed) merchantId is present in the path.
@@ -322,7 +334,6 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     notifications: () => ({ to: "/notifications" }),
     history: () => ({ to: "/history" }),
     monerium: resolveMoneriumRoute,
-    "monerium-callback": resolveMoneriumRoute,
 };
 
 /**
@@ -346,7 +357,14 @@ function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     }
 }
 
-export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
+/**
+ * `coldStartReady` resolves once the router's first load has settled: on iOS a
+ * cold-start link navigated earlier is overwritten by the launch redirects.
+ */
+export async function initDeepLinks(
+    navigate: NavigateFn,
+    coldStartReady: Promise<void> = Promise.resolve()
+): Promise<void> {
     if (!IS_TAURI) {
         return;
     }
@@ -361,11 +379,13 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
             const initialUrls = await getCurrent();
             if (initialUrls && initialUrls.length > 0) {
                 const url = initialUrls[0];
-                setTimeout(() => {
-                    const params = parseDeepLink(url);
-                    if (!params) return;
-                    handleDeepLinkAction(navigate, params, "cold_start");
-                }, 100);
+                void coldStartReady.then(() =>
+                    setTimeout(() => {
+                        const params = parseDeepLink(url);
+                        if (!params) return;
+                        handleDeepLinkAction(navigate, params, "cold_start");
+                    }, 100)
+                );
             }
         } catch {
             // Ignore errors from getCurrent - may not be available on all platforms

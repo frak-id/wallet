@@ -40,6 +40,7 @@ actor DefaultFrakClient {
         queue: EventQueue,
         launcher: any AppLauncher,
         logger: FrakLogger,
+        serverClock: ServerClock,
         session: URLSession = HTTPClient.defaultSession,
         backendURL: String? = nil
     ) {
@@ -48,7 +49,12 @@ actor DefaultFrakClient {
         self.consent = consent
         self.launcher = launcher
         self.logger = logger
-        let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session, logger: logger)
+        let http = HTTPClient(
+            baseURL: backendURL ?? settings.env.backend,
+            session: session,
+            logger: logger,
+            serverClock: serverClock
+        )
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
         self.merge = IdentityMerge()

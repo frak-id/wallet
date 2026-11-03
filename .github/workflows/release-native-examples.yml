@@ -97,7 +97,7 @@ jobs:
 
       - name: "📦 Upload .ipa artifact"
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-example-ios-ipa
           path: example/native-ios/build/export/*.ipa
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "☕ Setup Java 17"
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
@@ -125,8 +125,10 @@ jobs:
           packages: platform-tools
 
       - name: "🐘 Setup Gradle"
-        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
+          # v6 defaults to the proprietary enhanced cache (Gradle Terms of Use); basic stays MIT.
+          cache-provider: basic
           build-root-directory: example/native-android
           cache-read-only: true
           validate-wrappers: true
@@ -169,7 +171,7 @@ jobs:
 
       - name: "📦 Upload .aab artifact"
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-example-android-aab
           path: example/native-android/app/build/outputs/bundle/release/app-release.aab

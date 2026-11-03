@@ -18,7 +18,6 @@ import { isProd, normalizedStageName } from "../utils";
 import { gatewayRoute } from "./gateway";
 import { shopifyPostgresEnv } from "./secrets";
 import {
-    baseDomainName,
     cachedImage,
     dbTunnelLocalPort,
     getRegistryPath,
@@ -216,7 +215,7 @@ export const shopifyService = new KubernetesService(
             ],
         },
 
-        // Service config (ingress :80 -> container :3000)
+        // Service config (:80 -> container :3000)
         service: {
             ports: [
                 { port: 80, targetPort: 3000, protocol: "TCP", name: "http" },
@@ -228,15 +227,6 @@ export const shopifyService = new KubernetesService(
             min: 1,
             max: isProd ? 3 : 2,
             cpuUtilization: 120,
-        },
-
-        // Every host below shares ONE cert (single tlsSecretName), validated via
-        // HTTP-01: cert-manager issues it only once EVERY SAN passes its challenge,
-        // so adding a host whose DNS does not point here leaves the whole cert pending.
-        ingress: {
-            host: `${subDomain}.${baseDomainName}`,
-            tlsSecretName: "shopify-tls",
-            additionalHosts: [`${subDomain}.frak.id`],
         },
 
         httpRoute: {
