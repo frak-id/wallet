@@ -244,9 +244,10 @@ do_run() {
 	xcrun simctl install "$udid" "$app"
 
 	log "Launching. Streaming SDK logs (Ctrl-C to stop)..."
-	# --console-pty streams the SDK's print() output; it does not reach the
-	# unified log system, so `log show` would find nothing.
-	xcrun simctl launch --console-pty "$udid" "$BUNDLE_ID"
+	# The SDK logs through os.Logger: DT mode echoes it to the console, and the sharing trace is .debug, dropped unless the subsystem is raised.
+	xcrun simctl spawn "$udid" log config --subsystem id.frak.sdk --mode "level:debug" ||
+		log "Could not raise id.frak.sdk to debug: the sharing trace will be missing."
+	SIMCTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun simctl launch --console-pty --terminate-running-process "$udid" "$BUNDLE_ID"
 }
 
 # Emits "<CoreDevice id>\t<name>\t<UDID>" per connected physical device. devicectl's JSON
@@ -333,10 +334,11 @@ do_device() {
 		die "Install failed. Check that Developer Mode is on and the device is unlocked."
 
 	log "Launching. Streaming SDK logs (Ctrl-C to stop)..."
-	# --console streams the app's stdout, where the SDK's print() output goes.
+	# DT mode echoes the SDK's os.Logger lines to --console, which only carries stdout/stderr.
+	# The .debug sharing trace stays dropped: `log config` cannot reach a device.
 	# First launch of a build signed by a new team needs the profile trusted on-device:
 	# Settings > General > VPN & Device Management.
-	xcrun devicectl device process launch --device "$udid" --console \
+	DEVICECTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun devicectl device process launch --device "$udid" --console \
 		--terminate-existing "$BUNDLE_ID"
 }
 
@@ -354,7 +356,7 @@ do_logs() {
 	fi
 
 	log "Relaunching to stream SDK logs (Ctrl-C to stop)..."
-	xcrun devicectl device process launch --device "$udid" --console \
+	DEVICECTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun devicectl device process launch --device "$udid" --console \
 		--terminate-existing "$BUNDLE_ID"
 }
 
