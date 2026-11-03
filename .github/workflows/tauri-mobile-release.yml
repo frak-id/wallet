@@ -43,6 +43,11 @@ jobs:
     name: "📝 Prepare release PR"
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      PI_SKIP_VERSION_CHECK: "1"
+      PI_TELEMETRY: "0"
+      # Same pin as dependency-report.yml: a pi release must not change the notes silently.
+      PI_VERSION: "0.86.1"
     steps:
       - name: "📥 Checkout source branch"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -93,6 +98,143 @@ jobs:
       - name: "🔒 Update lockfile"
         run: bun install --lockfile-only
 
+      # The store notes describe everything since the release live on both stores: the latest
+      # non-prerelease `app-*` GitHub release, the same target "Ship Wallet OTA" patches.
+      - name: "🔖 Resolve the live store release"
+        id: live
+        if: inputs.stage == 'prod'
+        run: |
+          set -euo pipefail
+          TAG=$(gh release list --exclude-pre-releases --exclude-drafts --limit 100 \
+            --json tagName --jq '[.[].tagName | select(startswith("app-"))][0] // empty')
+          if [ -z "$TAG" ] || ! git merge-base --is-ancestor "$TAG" HEAD; then
+            echo "::error::No production app-* release that HEAD descends from (found '${TAG}')."
+            exit 1
+          fi
+          echo "[ci] store notes cover $TAG..HEAD"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+
+      # Both files are deleted once read: a stale one left behind by the agent would pass the gate.
+      - name: "🧾 Collect the changes since ${{ steps.live.outputs.tag }}"
+        if: inputs.stage == 'prod'
+        run: |
+          bun scripts/store-notes.ts collect --base "$BASE" --version "$VERSION" \
+            --out "$RUNNER_TEMP/store-notes-context.md"
+          rm -f apps/wallet/store/whatsnew/whatsnew-*
+        env:
+          BASE: ${{ steps.live.outputs.tag }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+
+      # Fails in seconds rather than inside the agent with pi's "No API key found for cliproxy".
+      - name: "🔑 Preflight the proxy credential"
+        if: inputs.stage == 'prod'
+        env:
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+        run: |
+          for name in CLIPROXY_API_KEY CLIPROXY_BASE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${name} is empty. Set it as an Actions secret on this repo, or as an org secret shared with it."
+              exit 1
+            fi
+          done
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "Authorization: Bearer ${CLIPROXY_API_KEY}" "${CLIPROXY_BASE_URL}/v1/models" || echo 000)
+          if [ "${code}" != "200" ]; then
+            echo "::error::The proxy returned HTTP ${code} — key rejected or unreachable from the runner."
+            exit 1
+          fi
+
+      - name: "🟢 Setup Node"
+        if: inputs.stage == 'prod'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: "🤖 Install pi"
+        if: inputs.stage == 'prod'
+        run: npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+      # Same lighter pi as the dependency report: no extensions, no skills, built-in tools only.
+      # Everything this step leaves in the worktree is committed into the release PR, so any
+      # change outside the notes directory fails it.
+      - name: "✍️ Write the store notes"
+        if: inputs.stage == 'prod'
+        env:
+          PI_CODING_AGENT_DIR: ${{ runner.temp }}/pi
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+          BASE: ${{ steps.live.outputs.tag }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${PI_CODING_AGENT_DIR}"
+          jq -n --arg baseUrl "${CLIPROXY_BASE_URL}" -f .github/pi/models.jq \
+            > "${PI_CODING_AGENT_DIR}/models.json"
+
+          outside_notes() { git status --porcelain=v1 -uall | grep -v ' apps/wallet/store/whatsnew/' || true; }
+          BEFORE=$(outside_notes)
+
+          pi \
+            --name "store-notes" \
+            --no-extensions \
+            --no-skills \
+            --model cliproxy/claude-sonnet-5 \
+            --thinking medium \
+            --tools read,write,bash,grep,find,ls \
+            -p @.github/pi/store-notes.prompt.md \
+            "Frak Wallet ${VERSION} is being released; ${BASE} is live on both stores. The context file is ${RUNNER_TEMP}/store-notes-context.md. Write the two whatsnew files now."
+
+          if [ "$(outside_notes)" != "$BEFORE" ]; then
+            echo "::error::The agent changed files outside apps/wallet/store/whatsnew/:"
+            diff <(echo "$BEFORE") <(outside_notes) || true
+            exit 1
+          fi
+
+      - name: "📝 Gate the store notes"
+        if: inputs.stage == 'prod'
+        run: bun scripts/store-notes.ts check
+
+      - name: "📄 Compose the PR body"
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          STAGE: ${{ inputs.stage }}
+          BASE: ${{ steps.live.outputs.tag }}
+        run: |
+          {
+            echo "Release **Frak Wallet Mobile ${VERSION}** (stage: \`${STAGE}\`)."
+            echo
+            echo "Merging this PR will:"
+            echo "- Build iOS (IPA) and Android (AAB)"
+            if [ "$STAGE" = "prod" ]; then
+              echo "- Upload iOS to TestFlight, then draft App Store version ${VERSION} with that build and the notes below"
+              echo "- Upload Android to Google Play as a draft on the internal and production tracks, with the notes below"
+            else
+              echo "- Upload iOS to TestFlight and Android to Google Play (internal track)"
+            fi
+            echo "- Tag the merge commit as \`app-${VERSION}\`"
+            echo "- Create a GitHub release with auto-generated notes + IPA + AAB"
+            if [ "$STAGE" = "prod" ]; then
+              echo
+              echo "Then a human submits both drafts: **Add for Review** in App Store Connect, **Send for review** in Play Console."
+              echo
+              echo "## What's new since \`${BASE}\`"
+              echo
+              echo "Written by pi from the commits since the live store release. The merge ships what \`apps/wallet/store/whatsnew/\` holds, not this preview: edit those files in this PR to change it (plain text, 500 characters max each)."
+              for file in apps/wallet/store/whatsnew/whatsnew-*; do
+                echo
+                echo "**${file##*whatsnew-}**"
+                echo
+                echo '```text'
+                cat "$file"
+                echo '```'
+              done
+            fi
+          } > "$RUNNER_TEMP/pr-body.md"
+
       - name: "📌 Create release PR"
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
@@ -100,14 +242,7 @@ jobs:
           base: ${{ github.ref_name }}
           title: "chore(mobile): release ${{ steps.resolve.outputs.version }} (${{ inputs.stage }})"
           commit-message: "chore(mobile): release ${{ steps.resolve.outputs.version }}"
-          body: |
-            Release **Frak Wallet Mobile ${{ steps.resolve.outputs.version }}** (stage: `${{ inputs.stage }}`).
-
-            Merging this PR will:
-            - Build iOS (IPA) and Android (AAB)
-            - Upload iOS to TestFlight and Android to Google Play (internal track)
-            - Tag the merge commit as `app-${{ steps.resolve.outputs.version }}`
-            - Create a GitHub release with auto-generated notes + IPA + AAB
+          body-path: ${{ runner.temp }}/pr-body.md
           labels: |
             release:mobile
             release:mobile:${{ inputs.stage }}
@@ -166,6 +301,12 @@ jobs:
       # assetlinks.json is stage-scoped, so nothing delegates to the prod package.
       - name: "🤖 Gate the Android deep-link manifest"
         run: bun scripts/check-android-manifest.ts
+
+      # Play refuses notes over its cap only after the AAB is built; a hand edit in the PR
+      # must fail here instead.
+      - name: "📝 Gate the store notes"
+        if: steps.extract.outputs.stage == 'prod'
+        run: bun scripts/store-notes.ts check
 
   prepare:
     name: "📦 Build SDK"
@@ -654,15 +795,25 @@ jobs:
           STAGE: ${{ needs.validate.outputs.stage }}
           FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
 
-      # TODO: Graduate from `internal` track to `production` when ready for public release
+      # One edit, one upload. prod: a draft on internal (testers) and on production (review),
+      # both carrying the store notes; a human sends production for review. dev: internal only.
       - name: "🚀 Upload to Play Store"
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ needs.validate.outputs.stage == 'dev' && 'id.frak.wallet.dev' || 'id.frak.wallet' }}
           releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
-          tracks: internal
+          tracks: ${{ needs.validate.outputs.stage == 'prod' && 'internal,production' || 'internal' }}
           status: draft
+          whatsNewDirectory: ${{ needs.validate.outputs.stage == 'prod' && 'apps/wallet/store/whatsnew' || '' }}
+
+      - name: "📝 Point at the Play draft"
+        if: needs.validate.outputs.stage == 'prod'
+        run: |
+          echo "🤖 ${VERSION} is a draft on the internal and production tracks, with its notes. Send it for review in Play Console → Publishing overview." \
+            >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
 
       - name: "📦 Upload Android artifact"
         if: always()
@@ -670,6 +821,36 @@ jobs:
         with:
           name: android-aab
           path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
+
+  # Apart from `ios` so the wait for Apple's processing bills Linux minutes, not macOS, and so
+  # it can be re-run alone once a version Apple still holds is out of the way.
+  app-store-draft:
+    name: "📝 Draft App Store version"
+    needs: [validate, ios]
+    if: needs.validate.outputs.stage == 'prod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      # No `bun install`: the script imports only `node:` modules and `store-notes.ts`.
+      - name: "📝 Attach the build and What's New"
+        run: bun scripts/app-store-draft.ts --bundle-id id.frak.wallet --version "$VERSION" --timeout-minutes 60
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          ASC_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
   github-release:
     name: "🏷️ GitHub Release"
