@@ -8,6 +8,7 @@ import android.os.Looper
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import app.tauri.plugin.PluginManager
@@ -38,7 +39,14 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     val splashScreen = installSplashScreen()
     splashScreen.setKeepOnScreenCondition { keepSplash }
-    enableEdgeToEdge()
+    // The web UI is light-only: dark bar icons even when the phone is in dark mode.
+    enableEdgeToEdge(
+      statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+      navigationBarStyle = SystemBarStyle.light(
+        Color.argb(0xe6, 0xFF, 0xFF, 0xFF),
+        Color.argb(0x80, 0x1b, 0x1b, 0x1b),
+      ),
+    )
 
     val deepLink = intent.takeIf(::isDeepLinkIntent)
     if (deepLink != null) {
