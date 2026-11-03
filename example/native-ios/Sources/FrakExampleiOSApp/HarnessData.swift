@@ -17,10 +17,9 @@ let activeEnvironment = HarnessEnvironmentStore.read()
 /// Store homepage, used by the unscoped share and as the collection landing page.
 let storeLink = "https://example.com"
 
-/// The share sheet's preview image for the unscoped share. A direct URL: the SDK refuses
-/// redirects, and the `picsum.photos/seed/…` product images all answer 302.
-let storeShareImageURL =
-    "https://fastly.picsum.photos/id/594/1200/630.jpg?hmac=2M5-y79lB34JLoPls5PV2nx8bQk5z5s5tIP4RdHnIG8"
+/// The share sheet's preview image for the unscoped share. Answers 302, like the product images,
+/// so the redirect path is what every share exercises.
+let storeShareImageURL = "https://picsum.photos/seed/frak-store/1200/630"
 
 /// Shared with the Android harness — same ids, titles, links, images.
 let sampleProducts = [

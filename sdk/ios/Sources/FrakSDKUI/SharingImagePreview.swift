@@ -14,7 +14,7 @@
         /// queue alive until it is invalidated, so building one per fetch leaks all three.
         private static let session = URLSession(
             configuration: .ephemeral,
-            delegate: NoRedirectDelegate(),
+            delegate: ShareImageRedirectPolicy(),
             delegateQueue: nil
         )
 
@@ -76,14 +76,17 @@
         fileprivate var isSuccess: Bool { (200..<300).contains(statusCode) }
     }
 
-    private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate {
+    /// Each hop passes the guard the first URL did, or a public URL could send the fetch to a private
+    /// one. URLSession's own redirect limit and `timeoutSeconds` bound a chain or a loop.
+    final class ShareImageRedirectPolicy: NSObject, URLSessionTaskDelegate {
         func urlSession(
             _ session: URLSession,
             task: URLSessionTask,
             willPerformHTTPRedirection response: HTTPURLResponse,
             newRequest request: URLRequest
         ) async -> URLRequest? {
-            nil
+            guard let url = request.url, isFetchableShareImageURL(url) else { return nil }
+            return request
         }
     }
 
