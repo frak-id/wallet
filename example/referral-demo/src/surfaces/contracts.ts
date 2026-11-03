@@ -1,0 +1,64 @@
+import type { ProductId } from "@/data/merchant";
+import type { PersonaId } from "@/data/personas";
+
+/*
+ * Props of every screen the story engine (`src/core/steps.tsx`) mounts.
+ * Each surface owns its implementation; the shapes here are the seam between
+ * them, so they only change together with `steps.tsx`.
+ */
+
+// Merchant website (maisonlune.fr), rendered inside a browser chrome.
+export type StoreHomeProps = Record<string, never>;
+export type ProductPageProps = {
+    productId: ProductId;
+    /** Shows the Frak referral banner: the visitor arrived through a shared link. */
+    referred: boolean;
+    /** `express` swaps "add to cart" for a one-tap Apple Pay buy. */
+    mode: "standard" | "express";
+};
+export type CartPageProps = { persona: PersonaId };
+export type CheckoutPageProps = {
+    persona: PersonaId;
+    /** Opens the Apple Pay sheet on mount instead of showing the full form first. */
+    express: boolean;
+};
+export type PostPurchaseCardState =
+    /** Referrer, before sharing: "Earn 10 € by sharing". */
+    | "referrer-share"
+    /** Referrer, back from Instagram: the link is out, collect the earnings. */
+    | "referrer-collect"
+    /** Referee, after buying through the link: "You just earned 5 €". */
+    | "referee-reward";
+export type ThankYouPageProps = {
+    persona: PersonaId;
+    card: PostPurchaseCardState;
+};
+
+// Frak sharing page (wallet.frak.id/sharing), iOS share sheet, Instagram.
+export type FrakSharingPageProps = {
+    /** Rendered as a static backdrop under another sheet: no interaction, no entrance animation. */
+    inert?: boolean;
+};
+export type ShareSheetProps = Record<string, never>;
+export type StoryComposerProps = Record<string, never>;
+export type InstagramFeedProps = Record<string, never>;
+export type StoryViewerProps = Record<string, never>;
+
+// Frak wallet: install page, app onboarding, wallet home.
+export type InstallPageProps = { persona: PersonaId };
+export type OnboardingProps = Record<string, never>;
+export type PasskeyCreationProps = { persona: PersonaId };
+export type ExpressClaimProps = { persona: PersonaId };
+export type WalletPhase =
+    /** Léa after scenario 1: 10 € waiting for a friend's purchase. */
+    | "referrer-pending"
+    /** Léa at the finale: Chloé bought, the 10 € are hers to collect. */
+    | "referrer-earned"
+    /** Chloé after her purchase: 5 € to collect. */
+    | "referee-earned";
+export type WalletHomeProps = {
+    persona: PersonaId;
+    phase: WalletPhase;
+    /** Shrunk inside the finale's side-by-side phones: no entrance celebration, no scroll hijack. */
+    embedded?: boolean;
+};
