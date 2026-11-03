@@ -34,6 +34,7 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
+    const otaUpdateId = process.env.OTA_UPDATE_ID;
     const lastAuthenticationAt = useStore(
         authenticationStore,
         selectLastAuthenticationAt
@@ -126,6 +127,7 @@ export function ProfilePage() {
                         className={styles.version}
                     >
                         Version {displayVersion}
+                        {otaUpdateId ? ` - Update ${otaUpdateId}` : null}
                     </Text>
                 ) : null}
                 <Text variant="caption" align="center" color="tertiary">
