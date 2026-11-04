@@ -223,4 +223,20 @@ describe("AmbassadorPhonePreview", () => {
         expect(screen.getByText("App Store")).toBeInTheDocument();
         expect(screen.getByText("Google Play")).toBeInTheDocument();
     });
+
+    it("paints the buttons with the merchant accent, and leaves the default without one", () => {
+        const { rerender } = render(
+            <AmbassadorPhonePreview {...base} accentColor="#ffd400" />
+        );
+        const screenEl = screen.getByTestId("ambassador-phone-scroll");
+        expect(screenEl.style.getPropertyValue("--frak-amb-accent")).toBe(
+            "#ffd400"
+        );
+        expect(screenEl.style.getPropertyValue("--frak-amb-accent-ink")).toBe(
+            "#000"
+        );
+
+        rerender(<AmbassadorPhonePreview {...base} />);
+        expect(screenEl.style.getPropertyValue("--frak-amb-accent")).toBe("");
+    });
 });

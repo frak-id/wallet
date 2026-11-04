@@ -84,6 +84,19 @@ describe("AmbassadorHeroPreview", () => {
         shopName: "Nowa",
     };
 
+    it("sets the accent on the hero, and nothing without one", () => {
+        const { container, rerender } = render(
+            <AmbassadorHeroPreview {...props} accentColor="#b00020" />
+        );
+        const hero = container.firstElementChild as HTMLElement;
+        expect(hero.style.getPropertyValue("--frak-amb-accent")).toBe(
+            "#b00020"
+        );
+
+        rerender(<AmbassadorHeroPreview {...props} />);
+        expect(hero.style.getPropertyValue("--frak-amb-accent")).toBe("");
+    });
+
     it("draws the photo with the reward card over it", () => {
         const { container } = render(
             <AmbassadorHeroPreview

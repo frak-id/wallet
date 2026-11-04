@@ -189,8 +189,8 @@ export const ambassadorMuted = style({
 export const ambassadorCta = style({
     padding: "8px 16px",
     borderRadius: 9999,
-    backgroundColor: "#1a1a1a",
-    color: "#ffffff",
+    backgroundColor: "var(--frak-amb-accent, #1a1a1a)",
+    color: "var(--frak-amb-accent-ink, #ffffff)",
     fontSize: 11,
     fontWeight: 700,
     textTransform: "uppercase",

@@ -41,10 +41,12 @@ import {
     ambassadorToFormValues,
     builtInText,
     formValuesToAmbassador,
+    isAccentColor,
 } from "./ambassadorForm";
 import { WordingLangTabs } from "./ComponentEditor";
 import * as customizeStyles from "./customize.css";
 import { AdvancedDisclosure } from "./Disclosure";
+import { ColorControl } from "./fields/ColorRow";
 import { FieldGroup } from "./fields/shared";
 import { resolveBuiltInLang } from "./localizable";
 import {
@@ -246,6 +248,8 @@ export function AmbassadorPagePanel({
                             hasExplorerImage={Boolean(explorerHeroImageUrl)}
                             onHeroFocus={() => reportFocus("hero")}
                         />
+
+                        <AccentColorField form={form} />
 
                         <ToneSection
                             form={form}
@@ -549,6 +553,43 @@ function HeroPhotoField({
     );
 }
 
+function AccentColorField({
+    form,
+}: {
+    form: UseFormReturn<AmbassadorFormValues>;
+}) {
+    const { t } = useTranslation();
+    return (
+        <Stack space="xs">
+            <FormField
+                control={form.control}
+                name="accentColor"
+                rules={{
+                    validate: (value) =>
+                        !value || isAccentColor(value)
+                            ? true
+                            : t("customize.ambassador.accent.invalid"),
+                }}
+                render={({ field }) => (
+                    <ColorControl
+                        name={field.name}
+                        label={t("customize.ambassador.accent.label")}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        inputRef={field.ref}
+                        isValid={isAccentColor}
+                        emptyLabel={t("customize.ambassador.accent.automatic")}
+                    />
+                )}
+            />
+            <Text variant="caption" color="tertiary">
+                {t("customize.ambassador.accent.hint")}
+            </Text>
+        </Stack>
+    );
+}
+
 function HeroPreview({
     form,
     lang,
@@ -566,7 +607,7 @@ function HeroPreview({
     shopName: string;
     explorerHeroImageUrl: string | undefined;
 }) {
-    const { texts, photo, heroImageUrl } = form.watch();
+    const { texts, photo, heroImageUrl, accentColor } = form.watch();
     const wording = (field: AmbassadorTextField) =>
         tabWording(texts[field], lang, builtInLang, builtInText(copy, field));
 
@@ -578,6 +619,7 @@ function HeroPreview({
             ctaLabel={wording("heroCtaLabel")}
             rewardCaption={wording("heroRewardCaption")}
             caption={copy.heroFacesCaption}
+            accentColor={accentColor}
             currency={currency}
             shopName={shopName}
             imageUrl={heroImageUrlFor(
@@ -608,7 +650,7 @@ function PhonePreview({
     explorerHeroImageUrl: string | undefined;
     focus: AmbassadorPhoneFocus | undefined;
 }) {
-    const { texts, photo, heroImageUrl } = form.watch();
+    const { texts, photo, heroImageUrl, accentColor } = form.watch();
 
     return (
         <AmbassadorPhonePreview
@@ -620,6 +662,7 @@ function PhonePreview({
                 heroImageUrl,
                 explorerHeroImageUrl
             )}
+            accentColor={accentColor}
             focus={focus}
         />
     );

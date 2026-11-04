@@ -1,5 +1,6 @@
 import type { Currency } from "@frak-labs/core-sdk";
 import type { CSSProperties } from "react";
+import { accentVars } from "../utils/accent";
 import {
     replaceAmbassadorVariables,
     replaceVariables,
@@ -18,6 +19,8 @@ export type AmbassadorHeroPreviewProps = {
     shopName: string;
     /** Hero photo; absent collapses the 4:5 frame around the reward card. */
     imageUrl?: string;
+    /** `#rrggbb` accent of the button; absent keeps the black default. */
+    accentColor?: string;
 };
 
 /** Preview of the hero of <frak-ambassador>, with a sample reward amount. */
@@ -31,11 +34,12 @@ export function AmbassadorHeroPreview({
     currency,
     shopName,
     imageUrl,
+    accentColor,
 }: AmbassadorHeroPreviewProps) {
     const fill = (text: string) =>
         replaceAmbassadorVariables(text, currency, shopName);
     return (
-        <div className={styles.ambassadorHero}>
+        <div className={styles.ambassadorHero} style={accentVars(accentColor)}>
             <div className={styles.ambassadorBody}>
                 <p className={styles.ambassadorMuted}>{fill(eyebrow)}</p>
                 <p className={styles.ambassadorTitle}>{fill(title)}</p>
