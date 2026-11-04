@@ -112,6 +112,7 @@ jobs:
               - 'packages/wallet-shared/**'
               - 'packages/design-system/**'
               - 'packages/app-essentials/**'
+              - 'packages/dev-tooling/**'
               - 'sdk/core/**'
               - 'packages/rpc/**'
               - 'packages/test-foundation/**'
@@ -516,8 +517,8 @@ jobs:
       # through the `import` condition to `dist/`, not source.
       - name: "🔨 Build the core SDK"
         run: bun run --cwd sdk/core build
-      # `--project standalone` skips `pages.check.ts`, which needs a running SPA
-      # (dev server plus SST) that this job deliberately does not start.
+      # `--project standalone` leaves the SPA specs to `wallet-spa-light`, which
+      # starts the dev server this job does not.
       # `STANDALONE_HOST` widens the server's loopback-only default: the runner
       # is a disposable container, so there is no LAN to expose `dist/` to, and
       # loopback is not reachable across its network namespace.
@@ -531,6 +532,50 @@ jobs:
         with:
           name: wallet-pages-report
           path: apps/wallet/playwright-report/
+          retention-days: 7
+
+  # ── Wallet SPA light specs ──────────────────────────────
+  # The `spa` half of `playwright.light.config.ts`, against a plain `vite dev` (no SST):
+  # every backend call is mocked or aborted by `tests-light/mocks/api.ts`. Behaviour only,
+  # like `wallet-pages`. The storage state is pinned to https://localhost:3000, so the
+  # server must be vite-plugin-mkcert's https on that port (the config ignores cert errors).
+  wallet-spa-light:
+    name: "🧭 Wallet SPA · Light specs"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.wallet == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # Through the workspace, not `bunx`: see `wallet-pages`.
+      - name: "🌐 Install Chromium"
+        timeout-minutes: 5
+        run: bun run --cwd apps/wallet test:light:install
+      # On PATH, vite-plugin-mkcert uses it instead of downloading it through the
+      # unauthenticated GitHub API.
+      - name: "🔐 Install mkcert"
+        run: sudo apt-get install -y --no-install-recommends mkcert
+      - name: "🔨 Build the core SDK"
+        run: bun run --cwd sdk/core build
+      - name: "🚀 Start the SPA"
+        working-directory: apps/wallet
+        run: |
+          bun run build:sw
+          nohup bun x vite dev --port 3000 --strictPort > /tmp/vite.log 2>&1 &
+          timeout 180 bash -c 'until curl -skf https://localhost:3000/ > /dev/null; do sleep 2; done' \
+            || { cat /tmp/vite.log; exit 1; }
+      - name: "🧪 SPA light specs"
+        run: bun run --cwd apps/wallet test:light -- --project spa
+      - name: "📄 Upload report on failure"
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wallet-spa-light-report
+          path: |
+            apps/wallet/playwright-report/
+            /tmp/vite.log
           retention-days: 7
 
   # ── Design-system gallery ───────────────────────────────
