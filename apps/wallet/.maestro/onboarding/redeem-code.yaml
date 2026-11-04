@@ -1,0 +1,27 @@
+appId: id.frak.wallet.dev
+name: The new wallet redeems the previous wallet's code
+---
+# Run from after-passkey.yaml on the referral step, with REFERRAL_CODE set.
+# While a game is open, a friend's code also joins it: two more screens.
+- tapOn: "Clear|Effacer"
+- tapOn:
+    below: "Referral code|Code de parrainage"
+    above: "Paste|Coller"
+- inputText: ${REFERRAL_CODE}
+- hideKeyboard
+- tapOn: "Apply code|Appliquer le code"
+- extendedWaitUntil:
+    visible: "Referral code applied|Code de parrainage appliqué|Don't miss any reward!|Ne rate aucun gain !|You're in the game!|Tu es dans le jeu !|Code applied, your reward is waiting!|Code appliqué, ta récompense t'attend !"
+    timeout: 20000
+    label: "The backend accepts the previous wallet's code"
+- takeScreenshot: build/maestro/wallet-onboarding-referral-applied
+- runFlow:
+    when:
+      visible: "You're in the game!|Tu es dans le jeu !|Code applied, your reward is waiting!|Code appliqué, ta récompense t'attend !"
+    commands:
+      - tapOn: "Continue|Continuer"
+- runFlow:
+    when:
+      visible: "The Frak Game|Le Jeu Frak"
+    commands:
+      - tapOn: "Continue|Continuer"

@@ -7,7 +7,9 @@
 # logs back in with the passkey, answering Face ID with the simulator's match signal
 # (the script enrolls Face ID in the simulator).
 # E2E_ONBOARDING=1 first logs out and onboards a brand-new wallet (new passkey, new dev
-# account), which stays logged in for every later flow.
+# account), which stays logged in for every later flow. The new wallet redeems the previous
+# one's referral code, then deletes it; then the biometric lock is turned on, unlocks a cold
+# start, and is turned off.
 #
 # Usage: [E2E_ONBOARDING=1] [E2E_PASSKEY_FACEID=1] bun run --cwd apps/wallet e2e:ios [flow.yaml ...]
 set -euo pipefail
@@ -62,10 +64,27 @@ if [ -n "${E2E_ONBOARDING:-}${E2E_PASSKEY_FACEID:-}" ]; then
 fi
 
 if [ -n "${E2E_ONBOARDING:-}" ]; then
+	log "Reading the current wallet's referral code..."
+	code_dir="$APP_DIR/build/maestro/referral-code"
+	rm -rf "$code_dir"
+	referral_code=""
+	if maestro_test --debug-output "$code_dir" --flatten-debug-output \
+		"$APP_DIR/.maestro/onboarding/read-referral-code.yaml"; then
+		referral_code="$(grep -rhoE 'FRAK_REFERRAL_CODE=[A-Z0-9]+' "$code_dir" | tail -1 | cut -d= -f2 || true)"
+	fi
+	[ -n "$referral_code" ] || log "No referral code read: the onboarding skips the accepted code."
 	log "Onboarding a new wallet (Face ID)..."
 	maestro_test "$APP_DIR/.maestro/onboarding/to-passkey.yaml"
-	maestro_test_with_faceid "$APP_DIR/.maestro/onboarding/after-passkey.yaml" ||
+	maestro_test_with_faceid -e REFERRAL_CODE="$referral_code" \
+		"$APP_DIR/.maestro/onboarding/after-passkey.yaml" ||
 		die "Onboarding after the passkey creation failed."
+
+	log "Biometric lock on, cold start, unlock, lock off (Face ID)..."
+	maestro_test_with_faceid "$APP_DIR/.maestro/biometric/enable.yaml" ||
+		die "Turning the biometric lock on failed."
+	maestro_test "$APP_DIR/.maestro/biometric/relaunch-locked.yaml"
+	maestro_test_with_faceid "$APP_DIR/.maestro/biometric/unlocked-disable.yaml" ||
+		die "Unlocking or turning the biometric lock off failed."
 fi
 
 if [ -n "${E2E_PASSKEY_FACEID:-}" ]; then

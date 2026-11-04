@@ -6,7 +6,9 @@
 # stopped app and logs back in with the passkey, touching that enrolled fingerprint on
 # the screen-lock check.
 # E2E_ONBOARDING=1 (needs E2E_PASSKEY_FINGER) first logs out and onboards a brand-new
-# wallet (new passkey, new dev account), which stays logged in for every later flow.
+# wallet (new passkey, new dev account), which stays logged in for every later flow. The new
+# wallet redeems the previous one's referral code, then deletes it; then the biometric lock
+# is turned on, unlocks a cold start, and is turned off.
 #
 # Usage: [E2E_ONBOARDING=1] [E2E_PASSKEY_FINGER=<n>] bun run --cwd apps/wallet e2e:android [flow.yaml ...]
 set -euo pipefail
@@ -59,10 +61,26 @@ cd "$APP_DIR"
 
 if [ -n "${E2E_ONBOARDING:-}" ]; then
 	[ -n "${E2E_PASSKEY_FINGER:-}" ] || die "E2E_ONBOARDING needs E2E_PASSKEY_FINGER to create the passkey."
+	log "Reading the current wallet's referral code..."
+	code_dir="$APP_DIR/build/maestro/referral-code"
+	rm -rf "$code_dir"
+	referral_code=""
+	if maestro_test --debug-output "$code_dir" --flatten-debug-output \
+		"$APP_DIR/.maestro/onboarding/read-referral-code.yaml"; then
+		referral_code="$(grep -rhoE 'FRAK_REFERRAL_CODE=[A-Z0-9]+' "$code_dir" | tail -1 | cut -d= -f2 || true)"
+	fi
+	[ -n "$referral_code" ] || log "No referral code read: the onboarding skips the accepted code."
 	log "Onboarding a new wallet (finger $E2E_PASSKEY_FINGER)..."
 	maestro_test "$APP_DIR/.maestro/onboarding/to-passkey.yaml"
 	touch_finger
-	maestro_test "$APP_DIR/.maestro/onboarding/after-passkey.yaml"
+	maestro_test -e REFERRAL_CODE="$referral_code" "$APP_DIR/.maestro/onboarding/after-passkey.yaml"
+
+	log "Biometric lock on, cold start, unlock, lock off..."
+	maestro_test "$APP_DIR/.maestro/biometric/enable.yaml"
+	touch_finger
+	maestro_test "$APP_DIR/.maestro/biometric/relaunch-locked.yaml"
+	touch_finger
+	maestro_test "$APP_DIR/.maestro/biometric/unlocked-disable.yaml"
 fi
 
 if [ -n "${E2E_PASSKEY_FINGER:-}" ]; then

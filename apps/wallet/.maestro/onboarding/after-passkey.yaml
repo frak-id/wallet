@@ -34,7 +34,16 @@ name: The new wallet finishes its onboarding
     timeout: 15000
     label: "Backend rejects a too-short code"
 - takeScreenshot: build/maestro/wallet-onboarding-referral-invalid
-- tapOn: "Later|Plus tard"
+# REFERRAL_CODE comes from read-referral-code.yaml; without it the step is skipped.
+- runFlow:
+    when:
+      true: ${typeof REFERRAL_CODE !== "undefined" && REFERRAL_CODE !== ""}
+    file: redeem-code.yaml
+- runFlow:
+    when:
+      visible: "Add a referral code|Ajoute un code de parrainage"
+    commands:
+      - tapOn: "Later|Plus tard"
 - extendedWaitUntil:
     visible: "Don't miss any reward!|Ne rate aucun gain !"
     timeout: 10000
@@ -43,5 +52,18 @@ name: The new wallet finishes its onboarding
     visible: "Welcome to your wallet|Bienvenue dans ton porte-monnaie"
     timeout: 10000
 - tapOn: "Get started|Commencer"
+# A wallet that joined a game lands on the game page instead of the home.
+- extendedWaitUntil:
+    visible: "Total balance|Solde total|Back|Retour"
+    timeout: 30000
+- runFlow:
+    when:
+      notVisible: "Total balance|Solde total"
+    commands:
+      - tapOn: "Back|Retour"
 - runFlow: ../common/wallet-home.yaml
 - takeScreenshot: build/maestro/wallet-onboarding-home
+- runFlow:
+    when:
+      true: ${typeof REFERRAL_CODE !== "undefined" && REFERRAL_CODE !== ""}
+    file: delete-redeemed-code.yaml
