@@ -1330,6 +1330,9 @@
                                         },
                                         "heroImageUrl": {
                                           "type": "string"
+                                        },
+                                        "accentColor": {
+                                          "type": "string"
                                         }
                                       }
                                     }
@@ -1523,6 +1526,9 @@
                                   "type": "string"
                                 },
                                 "heroImageUrl": {
+                                  "type": "string"
+                                },
+                                "accentColor": {
                                   "type": "string"
                                 }
                               }
