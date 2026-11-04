@@ -15,7 +15,7 @@ on this repo would, and your final message is posted as a PR comment as is.
   changed file (`find . -name AGENTS.md -not -path '*/node_modules/*'`). They
   hold the conventions and traps this repo enforces. A violation of one of them
   is a finding.
-- The worktree is the PR head. Read the code around a change, its callers and
+- The worktree is the PR merged into its base: the code as it will land. Read the code around a change, its callers and
   its tests before you claim it is wrong. A finding you did not check against
   the surrounding code is a guess, and guesses do not go in the review.
 
