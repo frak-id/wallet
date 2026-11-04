@@ -148,7 +148,9 @@ function parseFinding(raw: unknown, at: number): Parsed<Finding> {
         error: `findings[${at}]: ${why}`,
     });
     if (!isRecord(raw)) return fail("not an object");
-    const { severity, path, line, startLine, body, suggestion } = raw;
+    const { severity, path, line, body } = raw;
+    const startLine = raw.startLine ?? undefined;
+    const suggestion = raw.suggestion ?? undefined;
     if (!isSeverity(severity))
         return fail(`severity ${JSON.stringify(severity)}`);
     if (typeof path !== "string" || path === "") return fail("path missing");
@@ -339,7 +341,7 @@ async function listAll<T>(github: Github, path: string): Promise<T[]> {
     }
 }
 
-const SUPERSEDED = "Superseded by the review on";
+const SUPERSEDED = "Superseded on";
 
 const ours = (login: string, marker: string) => (comment: Comment) =>
     comment.user?.login === login && (comment.body ?? "").startsWith(marker);
@@ -360,18 +362,34 @@ async function postInline(args: {
             await github(`/pulls/comments/${stale.id}`, { method: "DELETE" });
         }
     }
-    const reviews = await listAll<Comment>(github, `/pulls/${pr}/reviews`);
-    for (const old of reviews.filter(ours(login, REVIEW_MARKER))) {
-        if (!old.body?.includes(SUPERSEDED)) {
-            await github(`/pulls/${pr}/reviews/${old.id}`, {
-                method: "PUT",
-                body: JSON.stringify({
-                    body: `${REVIEW_MARKER}\n${SUPERSEDED} ${headSha.slice(0, 7)}.`,
-                }),
-            });
-        }
+    const older = (
+        await listAll<Comment>(github, `/pulls/${pr}/reviews`)
+    ).filter(
+        (review) =>
+            ours(login, REVIEW_MARKER)(review) &&
+            !review.body?.includes(SUPERSEDED)
+    );
+    const posted =
+        inline.length === 0 ||
+        (await postReview({ github, pr, headSha, inline }));
+    for (const old of older) {
+        await github(`/pulls/${pr}/reviews/${old.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+                body: `${REVIEW_MARKER}\n${SUPERSEDED} ${headSha.slice(0, 7)}. The summary comment holds the current review.`,
+            }),
+        });
     }
-    if (inline.length === 0) return true;
+    return posted;
+}
+
+async function postReview(args: {
+    github: Github;
+    pr: string;
+    headSha: string;
+    inline: Finding[];
+}): Promise<boolean> {
+    const { github, pr, headSha, inline } = args;
     const { status } = await github(`/pulls/${pr}/reviews`, {
         method: "POST",
         body: JSON.stringify({

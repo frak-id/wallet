@@ -111,6 +111,21 @@ describe("parseAgentReview", () => {
         });
     });
 
+    it("reads a null optional field as absent", () => {
+        expect(
+            parseAgentReview(
+                '{"findings":[{"severity":"minor","path":"a.ts","line":2,"startLine":null,"body":"x","suggestion":null}]}'
+            )
+        ).toEqual({
+            ok: true,
+            value: {
+                findings: [
+                    { severity: "minor", path: "a.ts", line: 2, body: "x" },
+                ],
+            },
+        });
+    });
+
     it("names the finding that breaks the contract", () => {
         expect(
             parseAgentReview(
