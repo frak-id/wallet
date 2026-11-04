@@ -42,9 +42,9 @@ export const stageMessages = defineMessages({
         "finale.merchant.revenue": "Chiffre d'affaires",
         "finale.merchant.cost": "Récompenses versées",
         "finale.merchant.roi": "Coût payé uniquement après l'achat",
-        "finale.notification.title": "Vos {amount} sont débloqués",
+        "finale.notification.title": "Chloé a commandé grâce à vous",
         "finale.notification.body":
-            "Maison Lune a validé la commande de Chloé, passée grâce à vous. Récupérez vos gains !",
+            "Vos {amount} de récompense Maison Lune sont débloqués. Récupérez-les !",
         "finale.now": "maintenant",
         "finale.replay": "Rejouer la démo",
     },
@@ -87,9 +87,9 @@ export const stageMessages = defineMessages({
         "finale.merchant.revenue": "Revenue",
         "finale.merchant.cost": "Rewards paid",
         "finale.merchant.roi": "Paid only after the purchase",
-        "finale.notification.title": "Your {amount} is unlocked",
+        "finale.notification.title": "Chloé ordered thanks to you",
         "finale.notification.body":
-            "Maison Lune validated Chloé's order, placed thanks to you. Collect your earnings!",
+            "Your {amount} Maison Lune reward is unlocked. Collect it now!",
         "finale.now": "now",
         "finale.replay": "Replay the demo",
     },

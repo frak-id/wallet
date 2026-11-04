@@ -6,7 +6,7 @@ import { vars } from "@frak-labs/design-system/theme";
 import { bank } from "@/data/bank";
 import { useT } from "@/i18n";
 import { useFormatMoney } from "@/i18n/format";
-import { maskIban, useDayTime } from "../../format";
+import { maskIban } from "../../format";
 import { walletMessages } from "../../messages";
 import type { PhaseTransfer } from "../phases";
 import * as styles from "./transferRow.css";
@@ -15,7 +15,6 @@ import * as styles from "./transferRow.css";
 export function TransferRow({ transfer }: { transfer: PhaseTransfer }) {
     const t = useT(walletMessages);
     const money = useFormatMoney();
-    const dayTime = useDayTime();
 
     return (
         <button type="button" className={styles.row}>
@@ -33,7 +32,7 @@ export function TransferRow({ transfer }: { transfer: PhaseTransfer }) {
                             {t("history.transfer")}
                         </Text>
                         <Text variant="bodySmall" color="secondary">
-                            {`${maskIban(bank.iban)} · ${dayTime(transfer.daysAgo, transfer.time)}`}
+                            {`${maskIban(bank.iban)} · ${t("common.today")}, ${transfer.time}`}
                         </Text>
                     </Stack>
                     <span className={styles.amount}>

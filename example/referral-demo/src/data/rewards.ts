@@ -13,9 +13,4 @@ export const campaign = {
 export const clock = {
     lea: "19:24",
     chloe: "21:31",
-    /** After Monerium verified Chloé: she sends her earnings to her bank. */
-    transfer: "12:47",
 } as const;
-
-/** Days between Chloé's purchase and her bank transfer: Monerium's identity check. */
-export const daysUntilTransfer = 2;

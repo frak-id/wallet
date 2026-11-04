@@ -9,7 +9,7 @@ and the Frak wallet are all mocked, in French (default) and English.
 | Scenario | Persona | Path |
 | --- | --- | --- |
 | 1 | **Léa**, the referrer | `maisonlune.fr` → product page → cart → Apple Pay → thank-you page with the Frak post-purchase card → Frak sharing page → iOS share sheet → Instagram story → back on the thank-you page, the card offers to collect → Frak install page → App Store → onboarding → passkey → wallet, **10 € pending** |
-| 2 | **Chloé**, the referee | Instagram feed → Léa's story → link sticker → product page with the Frak referral banner → express Apple Pay → thank-you card with **5 €** → Safari, `wallet.frak.id`: Face ID, no app to install → web wallet, **5 € collected** → first transfer to her bank: Monerium identity check → *two days later*, "account verified" on her lock screen → amount, recap, Face ID → her bank app shows **+5,00 € from FRAK LABS** |
+| 2 | **Chloé**, the referee | Instagram feed → Léa's story → link sticker → product page with the Frak referral banner → express Apple Pay → thank-you card with **5 €** → Safari, `wallet.frak.id`: Face ID, no app to install → web wallet, **5 € collected** → first transfer to her bank: Monerium checks her ID on the spot → amount, recap, Face ID → her bank app shows **+5,00 € from FRAK LABS** |
 | Finale | both | Léa is notified that Chloé ordered and her 10 € become collectable; both wallets side by side, Chloé's showing the transfer |
 
 ## Run it

@@ -31,7 +31,6 @@ import {
     shareSheetMessages,
     sharingMessages,
 } from "../src/surfaces/social/messages.ts";
-import { lockScreenMessages } from "../src/surfaces/system/messages.ts";
 import { walletMessages } from "../src/surfaces/wallet/messages.ts";
 
 const { values } = parseArgs({
@@ -62,7 +61,6 @@ const sharing = sharingMessages[lang];
 const shareSheet = shareSheetMessages[lang];
 const instagram = instagramMessages[lang];
 const wallet = walletMessages[lang];
-const lockScreen = lockScreenMessages[lang];
 
 const say = interpolate;
 /** The fixed text before a template's first placeholder. */
@@ -231,17 +229,12 @@ const script: {
         step: "referee.cashout",
         taps: [
             (ui) => button(ui, wallet["bankFlow.info.cta"]),
-            (ui) => button(ui, wallet["bankFlow.verification.emailCta"]),
+            (ui) => button(ui, wallet["bankFlow.success.cta"]),
         ],
-    },
-    {
-        step: "referee.later",
-        taps: [(ui) => button(ui, lockScreen.notificationLabel)],
     },
     {
         step: "referee.transfer",
         taps: [
-            (ui) => button(ui, wallet["bankFlow.success.cta"]),
             (ui) => button(ui, wallet["bankFlow.amount.continue"], true),
             (ui) => button(ui, wallet["bankFlow.recap.confirm"]),
             (ui) => button(ui, bank.name),

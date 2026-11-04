@@ -1,4 +1,3 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
@@ -20,19 +19,17 @@ import { useT } from "@/i18n";
 import { useDelayedFlag } from "@/shell/useDelayedFlag";
 import type { CashOutSetupProps } from "@/surfaces/contracts";
 import { FlowPages, FlowScreen } from "../components/FlowScreen";
-import { TapHalo } from "../components/TapHalo";
 import { maskIban } from "../format";
 import { walletMessages } from "../messages";
 import { WalletHome } from "../WalletHome";
 import * as styles from "./cashOutSetup.css";
 import { MoneriumMark } from "./MoneriumMark";
 
-type Stage = "info" | "handoff" | "verification" | "acknowledged";
+type Stage = "info" | "handoff" | "success";
 
 const HANDOFF_ROW_MS = [700, 1300, 1900] as const;
 const HANDOFF_BACK_MS = 2500;
 const HANDOFF_DONE_MS = 3300;
-const ACKNOWLEDGED_NEXT_MS = 1100;
 
 const FEATURES = [
     { key: "feature1", Icon: PersonIcon },
@@ -123,7 +120,7 @@ function HandoffRow({
     );
 }
 
-/** The redirect to Monerium's KYC, condensed to one beat: what was sent, then back to Frak. */
+/** The redirect to Monerium's KYC, condensed to one beat: each item validated, then back to Frak. */
 function HandoffScreen({ onDone }: { onDone: () => void }) {
     const t = useT(walletMessages);
     const back = useDelayedFlag(HANDOFF_BACK_MS);
@@ -159,13 +156,13 @@ function HandoffScreen({ onDone }: { onDone: () => void }) {
                 <HandoffRow
                     icon={<DocumentIcon width={22} height={22} />}
                     label={t("bankFlow.handoff.document")}
-                    value={t("bankFlow.handoff.documentSent")}
+                    value={t("bankFlow.handoff.documentVerified")}
                     doneAfter={HANDOFF_ROW_MS[0]}
                 />
                 <HandoffRow
                     icon={<PersonIcon width={22} height={22} />}
                     label={t("bankFlow.handoff.selfie")}
-                    value={t("bankFlow.handoff.selfieSent")}
+                    value={t("bankFlow.handoff.selfieVerified")}
                     doneAfter={HANDOFF_ROW_MS[1]}
                 />
                 <HandoffRow
@@ -194,70 +191,12 @@ function HandoffScreen({ onDone }: { onDone: () => void }) {
     );
 }
 
-/** `MoneriumPendingScreen`, variant `verification`; a Safari tab cannot get web push, so Monerium emails. */
-function VerificationScreen({
-    acknowledged,
-    onAcknowledge,
-}: {
-    acknowledged: boolean;
-    onAcknowledge: () => void;
-}) {
-    const t = useT(walletMessages);
-    return (
-        <FlowScreen
-            title={t("bankFlow.verification.title")}
-            description={t("bankFlow.verification.description")}
-            cta={{ label: t("bankFlow.verification.checkAgain") }}
-        >
-            <AnimatePresence>
-                {!acknowledged && (
-                    <motion.div
-                        key="email"
-                        exit={{ opacity: 0, scale: 0.97 }}
-                        transition={{ duration: 0.25 }}
-                    >
-                        <Card variant="elevated">
-                            <Stack space="s">
-                                <Text variant="body" weight="medium">
-                                    {t("bankFlow.verification.emailTitle")}
-                                </Text>
-                                <Text variant="bodySmall" color="secondary">
-                                    {t(
-                                        "bankFlow.verification.emailDescription"
-                                    )}
-                                </Text>
-                                <TapHalo active={true} fill={false}>
-                                    <Button
-                                        variant="secondary"
-                                        size="small"
-                                        width="auto"
-                                        onClick={onAcknowledge}
-                                    >
-                                        {t("bankFlow.verification.emailCta")}
-                                    </Button>
-                                </TapHalo>
-                            </Stack>
-                        </Card>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </FlowScreen>
-    );
-}
-
-/** Chloé's first "transfer to my bank": Monerium's setup over her wallet, then its pending check. */
+/** Chloé's first "transfer to my bank": Monerium's setup over her wallet, verified on the spot. */
 export function CashOutSetup({ persona }: CashOutSetupProps) {
+    const t = useT(walletMessages);
     const { next } = useDemoNav();
     const [stage, setStage] = useState<Stage>("info");
-    const toVerification = useCallback(() => setStage("verification"), []);
-
-    useEffect(() => {
-        if (stage !== "acknowledged") return;
-        const timer = window.setTimeout(next, ACKNOWLEDGED_NEXT_MS);
-        return () => window.clearTimeout(timer);
-    }, [stage, next]);
-
-    const page = stage === "info" || stage === "handoff" ? stage : "pending";
+    const toSuccess = useCallback(() => setStage("success"), []);
 
     return (
         <div className={styles.screen}>
@@ -275,17 +214,21 @@ export function CashOutSetup({ persona }: CashOutSetupProps) {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
             >
-                <FlowPages page={page}>
-                    {page === "info" && (
+                <FlowPages page={stage}>
+                    {stage === "info" && (
                         <InfoScreen onAccept={() => setStage("handoff")} />
                     )}
-                    {page === "handoff" && (
-                        <HandoffScreen onDone={toVerification} />
+                    {stage === "handoff" && (
+                        <HandoffScreen onDone={toSuccess} />
                     )}
-                    {page === "pending" && (
-                        <VerificationScreen
-                            acknowledged={stage === "acknowledged"}
-                            onAcknowledge={() => setStage("acknowledged")}
+                    {stage === "success" && (
+                        <FlowScreen
+                            title={t("bankFlow.success.title")}
+                            description={t("bankFlow.success.description")}
+                            cta={{
+                                label: t("bankFlow.success.cta"),
+                                onClick: next,
+                            }}
                         />
                     )}
                 </FlowPages>

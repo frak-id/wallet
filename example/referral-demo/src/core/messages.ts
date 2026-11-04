@@ -74,16 +74,13 @@ export const stepMessages = defineMessages({
             "Les 5 € de Chloé sont dans son porte-monnaie. Elle les collecte… puis veut les envoyer sur son compte.",
         "referee.cashout.title": "Vers son compte bancaire",
         "referee.cashout.note":
-            "Premier virement : Monerium, partenaire financier régulé, vérifie l'identité de Chloé. Ça prend de quelques minutes à quelques jours.",
-        "referee.later.title": "Deux jours plus tard",
-        "referee.later.note":
-            "Monerium a vérifié Chloé et la prévient par e-mail : elle rouvre son porte-monnaie pour virer ses gains.",
+            "Premier virement : Monerium, partenaire financier régulé, vérifie l'identité de Chloé. Validé en direct ici ; en vrai, de quelques minutes à quelques jours.",
         "referee.transfer.title": "Virement",
         "referee.transfer.note":
             "IBAN déjà enregistré pendant la vérification : montant, récap, Face ID. C'est parti.",
         "referee.bank.title": "Sur son compte",
         "referee.bank.note":
-            "Les 5 € arrivent sur le compte de Chloé, juste après sa commande Maison Lune : la récompense, c'est de l'argent réel.",
+            "Les 5 € arrivent sur le compte de Chloé, juste au-dessus de sa commande Maison Lune : la récompense, c'est de l'argent réel.",
         "finale.title": "Tout le monde gagne",
         "finale.note":
             "Léa touche 10 €, Chloé 5 €, et Maison Lune gagne une nouvelle cliente, payée uniquement à la performance.",
@@ -160,16 +157,13 @@ export const stepMessages = defineMessages({
             "Chloé's €5 is in her wallet. She collects it… then wants it in her bank account.",
         "referee.cashout.title": "To her bank account",
         "referee.cashout.note":
-            "First transfer: Monerium, a regulated financial partner, checks Chloé's identity. That takes anywhere from minutes to a few days.",
-        "referee.later.title": "Two days later",
-        "referee.later.note":
-            "Monerium verified Chloé and emails her: she reopens her wallet to transfer her earnings.",
+            "First transfer: Monerium, a regulated financial partner, checks Chloé's identity. Approved on the spot here; in real life, anywhere from minutes to a few days.",
         "referee.transfer.title": "Transfer",
         "referee.transfer.note":
             "IBAN already saved during the check: amount, summary, Face ID. Done.",
         "referee.bank.title": "In her account",
         "referee.bank.note":
-            "The €5 lands in Chloé's account, right under her Maison Lune order: the reward is real money.",
+            "The €5 lands in Chloé's account, right above her Maison Lune order: the reward is real money.",
         "finale.title": "Everybody wins",
         "finale.note":
             "Léa earns €10, Chloé €5, and Maison Lune wins a new customer, paid for on performance only.",

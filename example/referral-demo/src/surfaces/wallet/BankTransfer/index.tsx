@@ -29,7 +29,7 @@ import { maskIban } from "../format";
 import { walletMessages } from "../messages";
 import * as styles from "./bankTransfer.css";
 
-type Stage = "success" | "amount" | "recap" | "scanning" | "verified" | "sent";
+type Stage = "amount" | "recap" | "scanning" | "verified" | "sent";
 
 /** Face ID while the transfer is signed with the passkey, then its check. */
 const SIGNING_MS: Partial<Record<Stage, [ms: number, then: Stage]>> = {
@@ -229,10 +229,9 @@ function BankPush() {
     );
 }
 
-/** Two days later, verified: success → amount → recap → Face ID → "on its way", then the bank's push. */
+/** Amount → recap → Face ID → "on its way", then the bank's push. */
 export function BankTransfer(_props: BankTransferProps) {
-    const t = useT(walletMessages);
-    const [stage, setStage] = useState<Stage>("success");
+    const [stage, setStage] = useState<Stage>("amount");
 
     useEffect(() => {
         const signing = SIGNING_MS[stage];
@@ -242,23 +241,12 @@ export function BankTransfer(_props: BankTransferProps) {
         return () => window.clearTimeout(timer);
     }, [stage]);
 
-    const page =
-        stage === "success" || stage === "amount" ? stage : ("recap" as const);
+    const page = stage === "amount" ? stage : ("recap" as const);
     const scanning = stage === "scanning" || stage === "verified";
 
     return (
         <div className={styles.screen}>
             <FlowPages page={page}>
-                {page === "success" && (
-                    <FlowScreen
-                        title={t("bankFlow.success.title")}
-                        description={t("bankFlow.success.description")}
-                        cta={{
-                            label: t("bankFlow.success.cta"),
-                            onClick: () => setStage("amount"),
-                        }}
-                    />
-                )}
                 {page === "amount" && (
                     <AmountScreen onContinue={() => setStage("recap")} />
                 )}

@@ -24,7 +24,6 @@ export const STEP_IDS = [
     "referee.claim",
     "referee.wallet",
     "referee.cashout",
-    "referee.later",
     "referee.transfer",
     "referee.bank",
     "finale",

@@ -60,7 +60,7 @@ export type WalletPhase =
     | "referrer-earned"
     /** Chloé after her purchase: 5 € to collect. */
     | "referee-earned"
-    /** Chloé at the finale, two days later: the 5 € collected, then sent to her bank. */
+    /** Chloé at the finale: the 5 € collected, then sent to her bank. */
     | "referee-transferred";
 export type WalletHomeProps = {
     persona: PersonaId;
@@ -71,8 +71,6 @@ export type WalletHomeProps = {
     cashOut?: boolean;
 };
 
-// iOS itself and Chloé's bank app.
-/** Two days later: Chloé's lock screen, where Frak's "account verified" notification lands. */
-export type LockScreenProps = { persona: PersonaId };
+// Chloé's bank app.
 /** Chloé's bank app (fictional bank), the Frak transfer on top of her history. */
 export type BankAppProps = { persona: PersonaId };

@@ -38,17 +38,17 @@ function FinalePhone({
     const t = useT(stageMessages);
     const money = useFormatMoney();
     return (
-        <PhoneFrame tone="dark" time={clock.transfer} maxScale={maxScale}>
+        <PhoneFrame tone="dark" time={clock.chloe} maxScale={maxScale}>
             <div className={styles.appScreen}>
                 <WalletHome persona={persona} phase={phase} embedded={true} />
                 {persona === "lea" && (
                     <PushNotification
                         delay={1.2}
                         time={t("finale.now")}
-                        title={t("finale.notification.title", {
+                        title={t("finale.notification.title")}
+                        body={t("finale.notification.body", {
                             amount: money(campaign.referrerReward, "reward"),
                         })}
-                        body={t("finale.notification.body")}
                     />
                 )}
             </div>

@@ -12,15 +12,15 @@ export const bank = {
     senderName: "FRAK LABS",
 } as const;
 
-/** Her statement before the transfer, newest first; the Maison Lune order is two days old. */
+/** Her statement before the transfer, newest first; the Maison Lune order is from this evening. */
 export const bankHistory = [
-    { label: "Monoprix", detail: "card", amount: -23.4, daysAgo: 0 },
-    { label: "Navigo", detail: "card", amount: -86.4, daysAgo: 1 },
     {
         label: "Maison Lune",
         detail: "card",
         amount: -products[heroProductId].price,
-        daysAgo: 2,
+        daysAgo: 0,
     },
+    { label: "Monoprix", detail: "card", amount: -23.4, daysAgo: 0 },
+    { label: "Navigo", detail: "card", amount: -86.4, daysAgo: 1 },
     { label: "Atelier Nord", detail: "transfer", amount: 2140, daysAgo: 5 },
 ] as const;
