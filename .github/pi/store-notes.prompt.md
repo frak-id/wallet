@@ -1,6 +1,6 @@
 # Task: the store "What's new" text for a Frak Wallet release
 
-You are running non-interactively in CI, in a checkout of `frak-id/frak-wallet`,
+You are running non-interactively in CI, in a checkout of `frak-id/wallet`,
 while the mobile release PR is being prepared. You write the text the App Store
 and Google Play show under "What's new" for this version. A human reads it in
 the release PR before merging; the merge sends it to both stores as is.
