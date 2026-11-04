@@ -467,6 +467,8 @@
         /// Sizes the engine to the host SwiftUI gave it: the view is pooled, so it arrives
         /// carrying whatever frame and autoresizing state its last presentation left it.
         func updateUIView(_ uiView: WKWebView, context: Context) {
+            // A sheet reopened mid-dismissal keeps this container for the next session.
+            context.coordinator.onDismantled = onDismantled
             uiView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             guard let host = uiView.superview, uiView.frame != host.bounds else { return }
             uiView.frame = host.bounds
@@ -479,7 +481,7 @@
         /// Carries the callback, which `dismantleUIView` cannot reach any other way — it is
         /// static, and the representable value is gone by the time it runs.
         final class Coordinator {
-            let onDismantled: () -> Void
+            var onDismantled: () -> Void
 
             init(onDismantled: @escaping () -> Void) {
                 self.onDismantled = onDismantled

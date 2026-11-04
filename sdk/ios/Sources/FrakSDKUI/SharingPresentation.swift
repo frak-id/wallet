@@ -44,8 +44,8 @@
         ///
         /// The presenter calls this itself before starting the next session: SwiftUI dismantles a
         /// closed sheet's content *after* the next sheet is already up, so a dismantle left to its
-        /// own timing can arrive once the pool has re-lent this very view — and `release` detaches
-        /// it and re-warms it, which strands the live sheet on its skeleton showing warm content.
+        /// own timing can arrive once the pool has re-lent this very view — and `release` re-warms
+        /// it, which strands the live sheet on its skeleton showing warm content.
         func reclaimWebView() {
             guard disposed, !reclaimed else { return }
             reclaimed = true

@@ -17,6 +17,9 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **Reopening the sharing sheet right after swiping it away shows the page at once.** The reopened
+  sheet got a web view that was no longer on screen, so the page could not report itself ready and
+  the SDK rebuilt the web view: 1.4 to 3.4 seconds to the page instead of well under one.
 - **Reopening the sharing sheet right after swiping it away no longer leaves it empty.** SwiftUI
   reports a swiped sheet's dismissal a second time when its animation ends; a share opened in that
   half second was closed by the late report, and its sheet came up blank. A dismissal now only

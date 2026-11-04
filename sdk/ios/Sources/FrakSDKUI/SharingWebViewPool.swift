@@ -60,8 +60,9 @@
             view.load(target, baseURL: url)
         }
 
-        /// The view the sheet should present, already bound to `binding`. Detached from any
-        /// previous superview first: a reopened sheet can race SwiftUI's own removal.
+        /// The view the sheet should present, already bound to `binding`. Never detached here or
+        /// in `release`: a sheet reopened mid-dismissal reuses the closing sheet's container
+        /// without calling `makeUIView` again, so a detached view never comes back on screen.
         func acquire(_ binding: SharingWebViewBinding) -> SharingWebView {
             guard let reused = pooled, !lent else {
                 // Nothing to lend: `prepare()` has not run, or a previous sheet still holds the
@@ -76,7 +77,6 @@
                 return view
             }
             lent = true
-            reused.view.removeFromSuperview()
             // Only stop a load that cannot be salvaged — a finished document is what the
             // session activates on top of.
             if !reused.documentReady { reused.stopLoading() }
@@ -126,7 +126,6 @@
                 return
             }
             lent = false
-            view.view.removeFromSuperview()
 
             let reclaim = sharingReclaim(
                 warmURL: warmURL,
