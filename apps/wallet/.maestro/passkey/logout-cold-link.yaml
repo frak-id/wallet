@@ -12,6 +12,8 @@ name: Logged out, a referral link launches the login
 - scrollUntilVisible:
     element: "Logout|Déconnexion"
     direction: DOWN
+    # Uncentered, the row can stop under the floating tab bar, which takes the tap.
+    centerElement: true
 - tapOn: "Logout|Déconnexion"
 # The session clears only after the push unsubscribe; stopping sooner keeps it.
 - extendedWaitUntil:
