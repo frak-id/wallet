@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 
 type Knob = [name: string, value: string];
 
@@ -28,6 +28,9 @@ const VISIBLE_DISTANCE = 60;
 // The stylesheet's own defaults for the accent and the reward tag.
 const DEFAULT_ACCENT = "rgb(17, 17, 17)";
 const DEFAULT_TAG_BG = "rgb(255, 255, 255)";
+const WHITE = "rgb(255, 255, 255)";
+const BLACK = "rgb(0, 0, 0)";
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const TAG_TINT = 0.08;
 // A host h1 no bigger than this many body sizes is an unstyled reset, not a title style.
 const RESET_HEADING_RATIO = 1.25;
@@ -38,6 +41,7 @@ const LOGO_HINT = /logo|brand|site-title|wordmark/i;
 const CLIPPING_OVERFLOW = new Set(["hidden", "clip", "auto", "scroll"]);
 const FONT_ATTRIBUTE = "data-frak-amb-font";
 const FONT_KNOBS = ["h1-family", "h1-transform", "h2-family", "h2-transform"];
+const ACCENT_KNOBS = ["accent", "accent-ink", "accent-text"];
 // Unrendered theme headings a host page (the Shopify proxy page) renders for us to sample.
 const REFERENCE_HEADINGS = "[data-frak-amb-ref]";
 
@@ -391,7 +395,8 @@ function knobsFrom(source: ThemeSource): Knob[] {
         ...typographyOf(source.button, "cta", source.buttonBg, false),
     ];
     if (source.radius) knobs.push(["radius", source.radius]);
-    knobs.push(...accentKnobs(source), ...tagKnobs(source));
+    knobs.push(...accentKnobs(source));
+    knobs.push(...tagKnobs(source));
     if (source.button) {
         const from = getComputedStyle(source.button);
         knobs.push(
@@ -409,18 +414,25 @@ function knobsSignature(knobs: Knob[]): string {
         .join("|");
 }
 
-function writeKnobs(anchor: HTMLElement, knobs: Knob[]): void {
+/** The `--frak-amb-*` knobs among `names` that already resolve on the anchor: the merchant's own. */
+function merchantKnobs(anchor: HTMLElement, names: string[]): Set<string> {
+    const current = getComputedStyle(anchor);
+    return new Set(
+        names.filter((name) =>
+            current.getPropertyValue(`--frak-amb-${name}`).trim()
+        )
+    );
+}
+
+function writeKnobs(anchor: HTMLElement, knobs: Knob[]): string[] {
     // The component declares no knob of its own, so one resolving here is the
     // merchant's: their explicit value outranks a sample. Read before writing
     // any, or an inline write invalidates the reads that follow it.
-    const current = getComputedStyle(anchor);
-    const merchantSet = new Set(
-        knobs
-            .map(([name]) => name)
-            .filter((name) =>
-                current.getPropertyValue(`--frak-amb-${name}`).trim()
-            )
+    const merchantSet = merchantKnobs(
+        anchor,
+        knobs.map(([name]) => name)
     );
+    const written: string[] = [];
 
     for (const [name, value] of knobs) {
         // A sample that renders as nothing must not become a knob.
@@ -429,8 +441,70 @@ function writeKnobs(anchor: HTMLElement, knobs: Knob[]): void {
         // The merchant's own accent is theirs to judge, not ours to reroute.
         if (name === "accent-text" && merchantSet.has("accent")) continue;
         anchor.style.setProperty(`--frak-amb-${name}`, value);
+        written.push(name);
     }
     markFontKnobs(anchor);
+    return written;
+}
+
+function rgbFromHex(hex: string): string {
+    const channel = (at: number) => Number.parseInt(hex.slice(at, at + 2), 16);
+    return `rgb(${channel(1)}, ${channel(3)}, ${channel(5)})`;
+}
+
+/**
+ * The dashboard accent, its ink and the figures' text. A light accent on a
+ * light page (or a dark one on a dark page) sends the text to the page's own
+ * colour, the same rule the sampled accent follows.
+ */
+function dashboardKnobs(anchor: HTMLElement, hex: string): Knob[] {
+    const fill = rgbFromHex(hex);
+    const ink =
+        contrastRatio(fill, WHITE) >= contrastRatio(fill, BLACK)
+            ? "#fff"
+            : "#000";
+    const knobs: Knob[] = [
+        ["accent", hex],
+        ["accent-ink", ink],
+    ];
+    if (!(contrastRatio(fill, backdropOf(anchor)) >= READABLE_CONTRAST)) {
+        knobs.push(["accent-text", "currentColor"]);
+    }
+    return knobs;
+}
+
+/**
+ * Writes the dashboard accent synchronously, so it neither waits for the
+ * sampler nor depends on it. A merchant's CSS accent takes it over entirely.
+ */
+function writeDashboardAccent(anchor: HTMLElement, hex: string): string[] {
+    if (!HEX_COLOR.test(hex)) return [];
+    const knobs = dashboardKnobs(anchor, hex);
+    const merchantSet = merchantKnobs(
+        anchor,
+        knobs.map(([name]) => name)
+    );
+    if (merchantSet.has("accent")) return [];
+    const written: string[] = [];
+    for (const [name, value] of knobs) {
+        if (merchantSet.has(name)) continue;
+        anchor.style.setProperty(`--frak-amb-${name}`, value);
+        written.push(name);
+    }
+    return written;
+}
+
+/** The one place that decides who owns the accent: the dashboard, else the sample. */
+function writeAccent(
+    anchor: HTMLElement,
+    dashboardHex: string | undefined,
+    sampled: Knob[] | undefined
+): string[] {
+    const dashboard = dashboardHex
+        ? writeDashboardAccent(anchor, dashboardHex)
+        : [];
+    if (dashboard.includes("accent")) return dashboard;
+    return sampled ? writeKnobs(anchor, sampled) : [];
 }
 
 /**
@@ -458,27 +532,45 @@ async function settled(): Promise<void> {
     await nextFrame();
 }
 
-export function useHostTheme(target: HostThemeTarget): void {
+/**
+ * Themes the page from the host. `accentColor` (the dashboard setting) outranks
+ * the sampled button colour; the merchant's own `--frak-amb-accent` outranks both.
+ */
+export function useHostTheme(
+    target: HostThemeTarget,
+    accentColor?: string
+): void {
+    const [sampledAccent, setSampledAccent] = useState<Knob[]>();
+
     useEffect(() => {
         let cancelled = false;
+        const anchor = target.current;
+        // Everything this run wrote, so a re-run starts from the merchant's CSS alone.
+        const written: string[] = [];
 
         const run = async () => {
             try {
                 await settled();
                 if (cancelled) return;
-                const anchor = target.current;
-                if (!anchor) return;
-
-                const first = knobsFrom(sampleTheme(anchor));
+                const current = target.current;
+                if (!current) return;
+                const first = knobsFrom(sampleTheme(current));
                 await nextFrame();
                 if (cancelled) return;
-                const second = knobsFrom(sampleTheme(anchor));
+                const second = knobsFrom(sampleTheme(current));
 
                 // Two samples that disagree mean the host moved between
                 // frames, and a moving host offers no colour to choose.
                 if (knobsSignature(first) !== knobsSignature(second)) return;
 
-                writeKnobs(anchor, first);
+                const isAccent = ([name]: Knob) => ACCENT_KNOBS.includes(name);
+                written.push(
+                    ...writeKnobs(
+                        current,
+                        first.filter((k) => !isAccent(k))
+                    )
+                );
+                setSampledAccent(first.filter(isAccent));
             } catch {
                 // This runs on a merchant's page: their page must survive it.
             }
@@ -487,6 +579,23 @@ export function useHostTheme(target: HostThemeTarget): void {
 
         return () => {
             cancelled = true;
+            if (!anchor) return;
+            for (const name of written) {
+                anchor.style.removeProperty(`--frak-amb-${name}`);
+            }
+            markFontKnobs(anchor);
         };
     }, [target]);
+
+    // Layout, not passive: a cached config must not paint one frame of the default accent.
+    useLayoutEffect(() => {
+        const anchor = target.current;
+        if (!anchor) return;
+        const written = writeAccent(anchor, accentColor, sampledAccent);
+        return () => {
+            for (const name of written) {
+                anchor.style.removeProperty(`--frak-amb-${name}`);
+            }
+        };
+    }, [target, accentColor, sampledAccent]);
 }

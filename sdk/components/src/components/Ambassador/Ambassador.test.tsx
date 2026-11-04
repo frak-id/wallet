@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/preact";
+import { render as renderUnflushed } from "preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
@@ -273,6 +274,37 @@ describe("Ambassador", () => {
         expect(
             container.querySelector(".frak-ambassador__hero-image")
         ).toBeNull();
+    });
+
+    it("applies the dashboard accent colour to the page root at once", () => {
+        setDashboard({ accentColor: "#b00020" });
+        const { container } = render(<Ambassador />);
+        const root = container.querySelector<HTMLElement>(".frak-ambassador");
+        expect(root?.style.getPropertyValue("--frak-amb-accent")).toBe(
+            "#b00020"
+        );
+        expect(root?.style.getPropertyValue("--frak-amb-accent-ink")).toBe(
+            "#fff"
+        );
+    });
+
+    it("sets the dashboard accent before passive effects run, so the first paint has it", () => {
+        setDashboard({ accentColor: "#b00020" });
+        const host = document.createElement("div");
+        document.body.append(host);
+        renderUnflushed(<Ambassador />, host);
+        const root = host.querySelector<HTMLElement>(".frak-ambassador");
+        expect(root?.style.getPropertyValue("--frak-amb-accent")).toBe(
+            "#b00020"
+        );
+        renderUnflushed(null, host);
+        host.remove();
+    });
+
+    it("leaves the accent to the stylesheet when the dashboard sets none", () => {
+        const { container } = render(<Ambassador />);
+        const root = container.querySelector<HTMLElement>(".frak-ambassador");
+        expect(root?.style.getPropertyValue("--frak-amb-accent")).toBe("");
     });
 
     it("replaces the whole FAQ 5 answer with the dashboard text and keeps the attribution link", () => {
