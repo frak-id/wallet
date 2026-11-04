@@ -16,6 +16,15 @@
                     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
                 },
                 {
+                    id: "claude-opus-latest",
+                    name: "Claude Opus latest (cliproxy)",
+                    reasoning: true,
+                    input: ["text"],
+                    contextWindow: 1000000,
+                    maxTokens: 128000,
+                    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+                },
+                {
                     id: "claude-haiku-4-5",
                     name: "Claude Haiku 4.5 (cliproxy)",
                     reasoning: false,
