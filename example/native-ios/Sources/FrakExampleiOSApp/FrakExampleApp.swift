@@ -7,24 +7,7 @@ struct FrakExampleApp: App {
     @StateObject private var model = HarnessModel()
 
     init() {
-        // .manual is the only DeepLinkHandling option on iOS: inbound URLs are routed to
-        // appLink.handleReferral(_:) by hand — see .onOpenURL below.
-        Frak.initialize(
-            FrakConfig(
-                merchantId: activeEnvironment.merchantId,
-                metadata: FrakMetadata(
-                    name: "Frak iOS Harness",
-                    // Last fallback of the share link chain, so the unscoped share
-                    // (no link, no products) still has something to link to.
-                    homepageLink: storeLink
-                ),
-                // Each stage has its own wallet URL scheme, so isFrakAppInstalled() only reports
-                // true for the wallet build matching this one.
-                env: activeEnvironment.frakEnvironment,
-                deepLink: .manual,
-                logLevel: .info
-            )
-        )
+        Frak.initialize(harnessFrakConfig())
     }
 
     var body: some Scene {
@@ -32,6 +15,27 @@ struct FrakExampleApp: App {
             RootView(model: model)
         }
     }
+}
+
+/// Also what `HarnessModel.initializeSDK()` passes after `Frak.shutdown()`, so a re-initialization
+/// runs on exactly the launch config.
+func harnessFrakConfig() -> FrakConfig {
+    // .manual is the only DeepLinkHandling option on iOS: inbound URLs are routed to
+    // appLink.handleReferral(_:) by hand — see .onOpenURL below.
+    FrakConfig(
+        merchantId: activeEnvironment.merchantId,
+        metadata: FrakMetadata(
+            name: "Frak iOS Harness",
+            // Last fallback of the share link chain, so the unscoped share
+            // (no link, no products) still has something to link to.
+            homepageLink: storeLink
+        ),
+        // Each stage has its own wallet URL scheme, so isFrakAppInstalled() only reports
+        // true for the wallet build matching this one.
+        env: activeEnvironment.frakEnvironment,
+        deepLink: .manual,
+        logLevel: .info
+    )
 }
 
 private enum HarnessTab: Int, CaseIterable, Identifiable {
@@ -94,6 +98,7 @@ struct RootView: View {
         .frakSharingSheet(
             isPresented: $model.isSharingPresented,
             request: model.pendingSharingRequest,
+            configuration: FrakSharingConfiguration(heightFraction: model.sheetHeightFraction),
             onResult: model.handleSharingResult
         )
     }
@@ -123,7 +128,14 @@ struct RootView: View {
                 debugRows: model.debugRows,
                 debugExport: model.debugExport,
                 isDebugRefreshing: model.isDebugRefreshing,
-                onRefreshDebugInfo: { Task { await model.refreshDebugInfo(log: true) } }
+                onRefreshDebugInfo: { Task { await model.refreshDebugInfo(log: true) } },
+                trackingEnabled: model.trackingEnabled,
+                isInitialized: model.isInitialized,
+                sheetHeightFraction: $model.sheetHeightFraction,
+                onSetTracking: { enabled in Task { await model.setTrackingEnabled(enabled) } },
+                onResetAnonymousId: { Task { await model.resetAnonymousId() } },
+                onShutDown: { Task { await model.shutDownSDK() } },
+                onInitialize: { Task { await model.initializeSDK() } }
             )
         }
     }

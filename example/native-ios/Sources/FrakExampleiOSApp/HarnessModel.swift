@@ -23,6 +23,14 @@ final class HarnessModel: ObservableObject {
     @Published var selectedEnvironment = HarnessEnvironmentStore.read()
     @Published var isSharingPresented = false
     @Published var pendingSharingRequest = SharingRequest()
+    @Published private(set) var trackingEnabled: Bool?
+    @Published private(set) var isInitialized = Frak.isInitialized
+    @Published var sheetHeightFraction = FrakSharingDefaults.heightFraction {
+        didSet {
+            guard sheetHeightFraction != oldValue else { return }
+            addLog("Sharing sheet height set to \(Int((sheetHeightFraction * 100).rounded()))%.", type: .info)
+        }
+    }
 
     var pendingRestart: Bool { selectedEnvironment != activeEnvironment }
 
@@ -158,6 +166,64 @@ final class HarnessModel: ObservableObject {
         }
     }
 
+    /// `false` also purges the queue, a purchase not yet sent included.
+    func setTrackingEnabled(_ enabled: Bool) async {
+        guard let client = client() else {
+            addLog("Frak.client unavailable — tracking unchanged.", type: .error)
+            return
+        }
+        await client.setTrackingEnabled(enabled)
+        let now = await client.isTrackingEnabled()
+        if now == enabled {
+            addLog(enabled ? "Tracking enabled." : "Tracking disabled, queued events purged.", type: .success)
+        } else {
+            addLog("Asked to \(enabled ? "enable" : "disable") tracking, but it reads \(now).", type: .error)
+        }
+        await refreshDebugInfo(log: false)
+    }
+
+    /// Judged by the id read back, not by the returned flag.
+    func resetAnonymousId() async {
+        guard let client = client() else {
+            addLog("Frak.client unavailable — anonymous id not reset.", type: .error)
+            return
+        }
+        let before = await client.anonymousId
+        let erased = await client.resetAnonymousId()
+        let after = await client.anonymousId
+        switch (before, after) {
+        case (let before?, let after?) where before != after:
+            addLog("Anonymous id rotated: \(before.prefix(8))… → \(after.prefix(8))….", type: .success)
+        case (nil, nil):
+            addLog("Reset returned \(erased); no id to compare while tracking is off.", type: .info)
+        default:
+            addLog(
+                "Reset returned \(erased) but the id did not rotate: \(before ?? "none") → \(after ?? "none").",
+                type: .error
+            )
+        }
+        await refreshDebugInfo(log: false)
+    }
+
+    func shutDownSDK() async {
+        await Frak.shutdown()
+        isInitialized = Frak.isInitialized
+        sdkState = .failed("shut down")
+        if Frak.clientOrNull == nil {
+            addLog("Frak.shutdown() done: Frak.client is gone.", type: .success)
+        } else {
+            addLog("Frak.shutdown() returned but Frak.client is still live.", type: .error)
+        }
+        await refreshDebugInfo(log: false)
+    }
+
+    func initializeSDK() async {
+        Frak.initialize(harnessFrakConfig())
+        isInitialized = Frak.isInitialized
+        sdkState = .checking
+        await start()
+    }
+
     func clearLogs() {
         logs.removeAll()
         addLog("Log cleared.", type: .info)
@@ -235,6 +301,7 @@ final class HarnessModel: ObservableObject {
 
         guard let client = client() else {
             rows.append(DebugRow(label: "Client", value: "not initialized"))
+            trackingEnabled = nil
             debugRows = rows
             if log { addLog("SDK debug info: client not initialized.", type: .error) }
             return
@@ -249,7 +316,9 @@ final class HarnessModel: ObservableObject {
         let installed = await client.appLink.isFrakAppInstalled()
         walletInstalled = installed
         rows.append(DebugRow(label: "Wallet app installed", value: "\(installed)"))
-        rows.append(DebugRow(label: "Tracking enabled", value: "\(await client.isTrackingEnabled())"))
+        let tracking = await client.isTrackingEnabled()
+        trackingEnabled = tracking
+        rows.append(DebugRow(label: "Tracking enabled", value: "\(tracking)"))
         rows.append(
             DebugRow(
                 label: "Anonymous id",
