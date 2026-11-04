@@ -136,7 +136,8 @@ jobs:
           fi
           # GitHub masks secrets in logs, not in comments. Checked raw and JSON-decoded, since `\/` or `\u002f` hide a URL from grep.
           review="${RUNNER_TEMP}/review.json"
-          if ! decoded=$(sed '/^```/d' "${review}" | jq -r '.. | strings'); then
+          # Same outermost {…} slice as parseAgentReview, so both accept the same answers.
+          if ! decoded=$(tr '\n' '\r' < "${review}" | sed -e 's/^[^{]*//' -e 's/[^}]*$//' | tr '\r' '\n' | jq -r '.. | strings'); then
             echo "::error::The review is not a JSON document; not posting it."
             exit 1
           fi

@@ -236,9 +236,17 @@ function location(finding: Finding): string {
     return `${finding.path}:${range}`;
 }
 
+/** An empty suggestion block is how GitHub deletes the lines; a blank line inside would replace them with one. */
 function fenced(info: string, code: string): string {
-    const fence = code.includes("```") ? "````" : "```";
-    return `${fence}${info}\n${code.replace(/\n$/, "")}\n${fence}`;
+    const longest = Math.max(
+        0,
+        ...(code.match(/`+/g) ?? []).map((run) => run.length)
+    );
+    const fence = "`".repeat(Math.max(3, longest + 1));
+    const content = code.replace(/\n$/, "");
+    return content === ""
+        ? `${fence}${info}\n${fence}`
+        : `${fence}${info}\n${content}\n${fence}`;
 }
 
 export function renderInline(finding: Finding): string {
@@ -285,14 +293,14 @@ export function renderSummary(args: {
 
 // ─── GitHub ────────────────────────────────────────────────────────────────
 
-type Comment = {
+export type Comment = {
     id: number;
     body: string | null;
     user: { login: string } | null;
     in_reply_to_id?: number;
 };
 
-type Github = <T>(
+export type Github = <T>(
     path: string,
     init?: RequestInit
 ) => Promise<{ status: number; data: T | null }>;
@@ -335,9 +343,16 @@ function parseJson<T>(text: string): T | null {
 async function listAll<T>(github: Github, path: string): Promise<T[]> {
     const all: T[] = [];
     for (let page = 1; ; page++) {
-        const { data } = await github<T[]>(`${path}?per_page=100&page=${page}`);
-        all.push(...(data ?? []));
-        if (!data || data.length < 100) return all;
+        const { status, data } = await github<T[]>(
+            `${path}?per_page=100&page=${page}`
+        );
+        if (status !== 200 || !data) {
+            throw new Error(
+                `listing ${path} failed (HTTP ${status}); a partial list would duplicate or orphan comments`
+            );
+        }
+        all.push(...data);
+        if (data.length < 100) return all;
     }
 }
 
@@ -347,7 +362,7 @@ const ours = (login: string, marker: string) => (comment: Comment) =>
     comment.user?.login === login && (comment.body ?? "").startsWith(marker);
 
 /** Each run converges the PR to this head's review: earlier inline comments go, unless someone replied. */
-async function postInline(args: {
+export async function postInline(args: {
     github: Github;
     pr: string;
     login: string;
@@ -356,15 +371,14 @@ async function postInline(args: {
 }): Promise<boolean> {
     const { github, pr, login, headSha, inline } = args;
     const comments = await listAll<Comment>(github, `/pulls/${pr}/comments`);
+    const reviews = await listAll<Comment>(github, `/pulls/${pr}/reviews`);
     const replied = new Set(comments.map((comment) => comment.in_reply_to_id));
     for (const stale of comments.filter(ours(login, INLINE_MARKER))) {
         if (!replied.has(stale.id)) {
             await github(`/pulls/comments/${stale.id}`, { method: "DELETE" });
         }
     }
-    const older = (
-        await listAll<Comment>(github, `/pulls/${pr}/reviews`)
-    ).filter(
+    const older = reviews.filter(
         (review) =>
             ours(login, REVIEW_MARKER)(review) &&
             !review.body?.includes(SUPERSEDED)
@@ -410,7 +424,7 @@ async function postReview(args: {
     return status === 200;
 }
 
-async function upsertSummary(args: {
+export async function upsertSummary(args: {
     github: Github;
     pr: string;
     login: string;
@@ -428,8 +442,9 @@ async function upsertSummary(args: {
               method: "POST",
               body: JSON.stringify({ body }),
           });
-    if (status >= 300)
-        die(`could not post the summary comment (HTTP ${status})`);
+    if (status >= 300) {
+        throw new Error(`could not post the summary comment (HTTP ${status})`);
+    }
 }
 
 // ─── CLI ───────────────────────────────────────────────────────────────────

@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
     annotateDiff,
+    type Comment,
     type Finding,
+    type Github,
     INLINE_MARKER,
     indexDiff,
+    MARKER,
     parseAgentReview,
     place,
+    postInline,
+    REVIEW_MARKER,
     renderInline,
     renderSummary,
+    upsertSummary,
 } from "./pr-review";
 
 const diff = [
@@ -215,5 +221,177 @@ describe("renderSummary", () => {
         expect(body).toContain("**2 findings**: 1 on the diff, 1 outside it.");
         expect(body).toContain("- **major** `src/other.ts:7`: Off.");
         expect(body).not.toContain("Wrong value.");
+    });
+});
+
+const BOT = "frak-review[bot]";
+
+const comment = (
+    id: number,
+    login: string,
+    body: string,
+    inReplyTo?: number
+): Comment => ({
+    id,
+    body,
+    user: { login },
+    ...(inReplyTo === undefined ? {} : { in_reply_to_id: inReplyTo }),
+});
+
+/** An in-memory PR: the review comments, reviews and conversation comments the script reads and writes. */
+function fakePr(state: {
+    inline?: Comment[];
+    reviews?: Comment[];
+    conversation?: Comment[];
+    failing?: string;
+}) {
+    const pr = {
+        inline: [...(state.inline ?? [])],
+        reviews: [...(state.reviews ?? [])],
+        conversation: [...(state.conversation ?? [])],
+    };
+    let nextId = 1000;
+    const replace = (list: Comment[], id: number, body: string) =>
+        list.map((c) => (c.id === id ? { ...c, body } : c));
+    type Handler = (id: number, body: string) => [number, unknown];
+    const routes: [RegExp, Handler][] = [
+        [/^GET \/pulls\/1\/comments$/, () => [200, pr.inline]],
+        [/^GET \/pulls\/1\/reviews$/, () => [200, pr.reviews]],
+        [/^GET \/issues\/1\/comments$/, () => [200, pr.conversation]],
+        [
+            /^DELETE \/pulls\/comments\/\d+$/,
+            (id) => {
+                pr.inline = pr.inline.filter((c) => c.id !== id);
+                return [204, null];
+            },
+        ],
+        [
+            /^PUT \/pulls\/1\/reviews\/\d+$/,
+            (id, body) => {
+                pr.reviews = replace(pr.reviews, id, body);
+                return [200, {}];
+            },
+        ],
+        [
+            /^POST \/pulls\/1\/reviews$/,
+            (_, body) => {
+                pr.reviews.push(comment(nextId++, BOT, body));
+                return [200, {}];
+            },
+        ],
+        [
+            /^PATCH \/issues\/comments\/\d+$/,
+            (id, body) => {
+                pr.conversation = replace(pr.conversation, id, body);
+                return [200, {}];
+            },
+        ],
+        [
+            /^POST \/issues\/1\/comments$/,
+            (_, body) => {
+                pr.conversation.push(comment(nextId++, BOT, body));
+                return [201, {}];
+            },
+        ],
+    ];
+    const github: Github = async <T>(path: string, init: RequestInit = {}) => {
+        const route = `${init.method ?? "GET"} ${path.split("?")[0]}`;
+        const handler = routes.find(([pattern]) => pattern.test(route))?.[1];
+        if (!handler) throw new Error(`unexpected ${route}`);
+        const body =
+            typeof init.body === "string" ? JSON.parse(init.body).body : "";
+        const [status, data] =
+            route === state.failing
+                ? [500, null]
+                : handler(Number(route.split("/").pop()), body);
+        return { status, data: data as T };
+    };
+    return { github, pr };
+}
+
+describe("postInline", () => {
+    const args = {
+        pr: "1",
+        login: BOT,
+        headSha: "bbbbbbbbbb",
+        inline: [finding()],
+    };
+
+    it("removes the last run's unanswered comments and keeps the answered one and any human's", async () => {
+        const { github, pr } = fakePr({
+            inline: [
+                comment(1, BOT, `${INLINE_MARKER}\nstale`),
+                comment(2, BOT, `${INLINE_MARKER}\nanswered`),
+                comment(3, "srod", "Agreed, fixing.", 2),
+                comment(4, "srod", `${INLINE_MARKER} quoted by a human`),
+            ],
+        });
+        expect(await postInline({ github, ...args })).toBe(true);
+        expect(pr.inline.map((c) => c.id)).toEqual([2, 3, 4]);
+    });
+
+    it("marks earlier reviews superseded and leaves the new one alone", async () => {
+        const { github, pr } = fakePr({
+            reviews: [
+                comment(10, BOT, `${REVIEW_MARKER}\nreview on aaaaaaa`),
+                comment(11, "srod", "LGTM"),
+            ],
+        });
+        await postInline({ github, ...args });
+        expect(pr.reviews.map((r) => r.body)).toEqual([
+            `${REVIEW_MARKER}\nSuperseded on bbbbbbb. The summary comment holds the current review.`,
+            "LGTM",
+            `${REVIEW_MARKER}\n🔎 pi review on bbbbbbb: 1 finding on the diff.`,
+        ]);
+    });
+
+    it("reports a refused review so the caller can fold its findings into the summary", async () => {
+        const { github } = fakePr({ failing: "POST /pulls/1/reviews" });
+        expect(await postInline({ github, ...args })).toBe(false);
+    });
+
+    it("stops before deleting anything when a listing fails", async () => {
+        const { github, pr } = fakePr({
+            inline: [comment(1, BOT, `${INLINE_MARKER}\nstale`)],
+            failing: "GET /pulls/1/reviews",
+        });
+        await expect(postInline({ github, ...args })).rejects.toThrow(
+            "listing /pulls/1/reviews failed"
+        );
+        expect(pr.inline).toHaveLength(1);
+    });
+});
+
+describe("upsertSummary", () => {
+    it("edits its own summary instead of posting a second one", async () => {
+        const { github, pr } = fakePr({
+            conversation: [
+                comment(5, "srod", `${MARKER} pasted`),
+                comment(6, BOT, `${MARKER}\nold`),
+            ],
+        });
+        await upsertSummary({
+            github,
+            pr: "1",
+            login: BOT,
+            body: `${MARKER}\nnew`,
+        });
+        expect(pr.conversation.map((c) => c.body)).toEqual([
+            `${MARKER} pasted`,
+            `${MARKER}\nnew`,
+        ]);
+    });
+
+    it("posts the first summary on a fresh PR", async () => {
+        const { github, pr } = fakePr({});
+        await upsertSummary({
+            github,
+            pr: "1",
+            login: BOT,
+            body: `${MARKER}\nfirst`,
+        });
+        expect(pr.conversation.map((c) => c.body)).toEqual([
+            `${MARKER}\nfirst`,
+        ]);
     });
 });
