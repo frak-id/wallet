@@ -278,10 +278,9 @@
         /// The sheet has gone.
         ///
         /// - Parameters:
-        ///   - onlyIfUnpresented: pass true from the `isPresented` change, which fires before the
-        ///     dismissal animation; a presented sheet is left to `onDismiss`.
+        ///   - exit: which signal fired; `sharingExitEndsSession` decides whether it is this session's.
         ///   - onSettled: the merchant-visible report, called synchronously. Not called on a no-op.
-        func finish(onlyIfUnpresented: Bool = false, onSettled: () -> Void) {
+        func finish(_ exit: SharingSheetExit, onSettled: () -> Void) {
             switch phase {
             case .idle:
                 return
@@ -289,7 +288,7 @@
                 phase = .idle
                 onSettled()
             case .live(let current):
-                if onlyIfUnpresented, current.wasPresented { return }
+                guard sharingExitEndsSession(exit, wasPresented: current.wasPresented) else { return }
                 // `presentation` is deliberately left pointing at this session — see its doc. The
                 // sheet is on its way out and still rendering the page it showed; the next
                 // `launch` replaces it.

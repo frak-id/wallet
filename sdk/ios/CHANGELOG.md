@@ -17,6 +17,10 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **Reopening the sharing sheet right after swiping it away no longer leaves it empty.** SwiftUI
+  reports a swiped sheet's dismissal a second time when its animation ends; a share opened in that
+  half second was closed by the late report, and its sheet came up blank. A dismissal now only
+  closes a session whose sheet had appeared.
 - **The share preview image is fetched when the sheet opens.** `shareImageURL`, or the image of
   the product the sheet selects, was only fetched when the user tapped Share, and had 0.3 seconds
   to arrive before the system share sheet opened without it. It is now fetched as soon as the sheet

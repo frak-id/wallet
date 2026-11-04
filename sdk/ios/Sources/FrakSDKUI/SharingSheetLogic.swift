@@ -372,6 +372,25 @@ func sharingShouldWatchActivation(
     return true
 }
 
+/// The signal ending a sheet's session.
+enum SharingSheetExit {
+    /// `isPresented` went false, ahead of the dismissal animation.
+    case bindingCleared
+    /// The sheet's `onDismiss`. A swipe fires it again when the animation ends, after a fast re-tap.
+    case sheetDismissed
+    /// The surface is going, or the UIKit sheet's own dismissal: ends any live session.
+    case unconditional
+}
+
+/// Whether `exit` ends the live session: a sheet cannot be dismissed before it appeared.
+func sharingExitEndsSession(_ exit: SharingSheetExit, wasPresented: Bool) -> Bool {
+    switch exit {
+    case .bindingCleared: return !wasPresented
+    case .sheetDismissed: return wasPresented
+    case .unconditional: return true
+    }
+}
+
 /// Where a link the hosted page handed out should go.
 enum SharingExternalRoute: Equatable {
     /// Not http(s), so it is an app-to-app launch the merchant never sanctioned.
