@@ -1,5 +1,4 @@
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
-import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useCallback } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
@@ -7,6 +6,7 @@ import { data, useLoaderData } from "react-router";
 import { DescriptionList } from "../components/ui/DescriptionList";
 import { log } from "../services.server/logger";
 import { getPurchase } from "../services.server/purchase";
+import { POLARIS_URL } from "../utils/polaris";
 import { parseChargeId } from "../utils/url";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -36,7 +36,8 @@ export default function PostPurchase() {
     }, []);
 
     return (
-        <AppProvider embedded={false}>
+        <>
+            <script src={POLARIS_URL} />
             <s-page>
                 <s-stack gap="large-400" alignItems="center">
                     <img
@@ -51,7 +52,7 @@ export default function PostPurchase() {
                     <s-button onClick={close}>Close</s-button>
                 </s-stack>
             </s-page>
-        </AppProvider>
+        </>
     );
 }
 

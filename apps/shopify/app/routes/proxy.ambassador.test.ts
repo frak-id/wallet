@@ -15,7 +15,7 @@ vi.mock("../shopify.server", async () => {
     const app = shopifyApp({
         apiKey: "proxy-test-key",
         apiSecretKey: SECRET,
-        apiVersion: ApiVersion.July26,
+        apiVersion: ApiVersion.October26,
         appUrl: "https://app.example",
         sessionStorage: new MemorySessionStorage(),
         distribution: AppDistribution.AppStore,

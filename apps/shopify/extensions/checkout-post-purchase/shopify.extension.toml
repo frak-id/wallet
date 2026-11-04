@@ -1,4 +1,4 @@
-api_version = "2026-07"
+api_version = "2026-10"
 uid = "6a386c9f-1650-0932-cc95-5da6a42ace695f4c002e"
 
 [[extensions]]
@@ -29,10 +29,12 @@ module = "./src/OrderStatus.tsx"
 [[extensions.metafields]]
 namespace = "frak"
 key = "merchant_id"
+owner_type = "SHOP"
 
 [[extensions.metafields]]
 namespace = "frak"
 key = "appearance"
+owner_type = "SHOP"
 
 # Merchant-configurable text settings
 [extensions.settings]

@@ -251,7 +251,7 @@ function ExistingFilePicker({
     // Anchored popover (not inline expand) so opening it doesn't shift the
     // sections below. Open/close is declarative command/commandFor; each
     // thumbnail also uses `command="--hide"` to close on pick, since the
-    // runtime polaris.js doesn't expose the typed `hideOverlay()` method.
+    // Polaris runtime doesn't expose the typed `hideOverlay()` method.
     const popoverId = useId();
 
     if (!pickableFiles.length) return null;
