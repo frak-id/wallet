@@ -1,0 +1,47 @@
+appId: id.frak.wallet.dev
+name: The new wallet finishes its onboarding
+---
+# Half two of to-passkey.yaml: no launchApp, the passkey left it here.
+# Bad codes only: the backend rejects them, so the new wallet keeps no referrer.
+- extendedWaitUntil:
+    visible: "Add a referral code|Ajoute un code de parrainage"
+    timeout: 60000
+    label: "The passkey was created and the wallet registered"
+- assertVisible:
+    text: "Apply code|Appliquer le code"
+    enabled: false
+    label: "An empty code cannot be submitted"
+- tapOn:
+    below: "Referral code|Code de parrainage"
+    above: "Paste|Coller"
+- inputText: "QZ0QZ0"
+- hideKeyboard
+- tapOn: "Apply code|Appliquer le code"
+- extendedWaitUntil:
+    visible: "This code does not exist.*|Ce code n'existe pas.*"
+    timeout: 15000
+    label: "Backend rejects an unknown code"
+- takeScreenshot: build/maestro/wallet-onboarding-referral-unknown
+- tapOn: "Clear|Effacer"
+- tapOn:
+    below: "Referral code|Code de parrainage"
+    above: "Paste|Coller"
+- inputText: "AB"
+- hideKeyboard
+- tapOn: "Apply code|Appliquer le code"
+- extendedWaitUntil:
+    visible: "This code isn't valid.*|Ce code n'est pas valide.*"
+    timeout: 15000
+    label: "Backend rejects a too-short code"
+- takeScreenshot: build/maestro/wallet-onboarding-referral-invalid
+- tapOn: "Later|Plus tard"
+- extendedWaitUntil:
+    visible: "Don't miss any reward!|Ne rate aucun gain !"
+    timeout: 10000
+- tapOn: "Later|Plus tard"
+- extendedWaitUntil:
+    visible: "Welcome to your wallet|Bienvenue dans ton porte-monnaie"
+    timeout: 10000
+- tapOn: "Get started|Commencer"
+- runFlow: ../common/wallet-home.yaml
+- takeScreenshot: build/maestro/wallet-onboarding-home

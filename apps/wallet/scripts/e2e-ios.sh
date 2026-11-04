@@ -5,9 +5,11 @@
 # The flows never clear app data, so the session holds.
 # E2E_PASSKEY_FACEID=1 first logs out, opens a referral link from the stopped app and
 # logs back in with the passkey, answering Face ID with the simulator's match signal
-# (Face ID must be enrolled in the simulator).
+# (the script enrolls Face ID in the simulator).
+# E2E_ONBOARDING=1 first logs out and onboards a brand-new wallet (new passkey, new dev
+# account), which stays logged in for every later flow.
 #
-# Usage: [E2E_PASSKEY_FACEID=1] bun run --cwd apps/wallet e2e:ios [flow.yaml ...]
+# Usage: [E2E_ONBOARDING=1] [E2E_PASSKEY_FACEID=1] bun run --cwd apps/wallet e2e:ios [flow.yaml ...]
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -38,23 +40,39 @@ maestro_test() {
 		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-180000}" \
 		${cap[@]+"${cap[@]}"} maestro --device "$udid" test "$@"
 }
-cd "$APP_DIR"
-
-if [ -n "${E2E_PASSKEY_FACEID:-}" ]; then
-	log "Logging out, then back in from a referral link (Face ID)..."
-	maestro_test "$APP_DIR/.maestro/passkey/logout-cold-link.yaml"
-	# The Face ID scan opens seconds after the tap, so keep matching until the login lands.
-	# A match with no scan open does nothing.
+# Runs a flow while answering Face ID: the scan opens seconds after the tap, so keep
+# matching until the flow ends. A match with no scan open does nothing.
+maestro_test_with_faceid() {
 	while :; do
 		xcrun simctl spawn "$udid" notifyutil -p com.apple.BiometricKit_Sim.pearl.match >/dev/null
 		sleep 2
 	done &
-	matcher=$!
-	login_status=0
-	maestro_test "$APP_DIR/.maestro/passkey/join-page-after-login.yaml" || login_status=$?
+	local matcher=$! flow_status=0
+	maestro_test "$@" || flow_status=$?
 	kill "$matcher"
 	wait "$matcher" 2>/dev/null || true
-	[ "$login_status" -eq 0 ] || die "Passkey login from the referral link failed (exit $login_status)."
+	return "$flow_status"
+}
+cd "$APP_DIR"
+
+if [ -n "${E2E_ONBOARDING:-}${E2E_PASSKEY_FACEID:-}" ]; then
+	# Without enrolled Face ID the simulator refuses to save or use a passkey.
+	xcrun simctl spawn "$udid" notifyutil -s com.apple.BiometricKit.enrollmentChanged 1
+	xcrun simctl spawn "$udid" notifyutil -p com.apple.BiometricKit.enrollmentChanged
+fi
+
+if [ -n "${E2E_ONBOARDING:-}" ]; then
+	log "Onboarding a new wallet (Face ID)..."
+	maestro_test "$APP_DIR/.maestro/onboarding/to-passkey.yaml"
+	maestro_test_with_faceid "$APP_DIR/.maestro/onboarding/after-passkey.yaml" ||
+		die "Onboarding after the passkey creation failed."
+fi
+
+if [ -n "${E2E_PASSKEY_FACEID:-}" ]; then
+	log "Logging out, then back in from a referral link (Face ID)..."
+	maestro_test "$APP_DIR/.maestro/passkey/logout-cold-link.yaml"
+	maestro_test_with_faceid "$APP_DIR/.maestro/passkey/join-page-after-login.yaml" ||
+		die "Passkey login from the referral link failed."
 fi
 
 log "Running Maestro flows on $udid..."

@@ -5,8 +5,10 @@
 # E2E_PASSKEY_FINGER=<emulator finger id> first logs out, opens a referral link from the
 # stopped app and logs back in with the passkey, touching that enrolled fingerprint on
 # the screen-lock check.
+# E2E_ONBOARDING=1 (needs E2E_PASSKEY_FINGER) first logs out and onboards a brand-new
+# wallet (new passkey, new dev account), which stays logged in for every later flow.
 #
-# Usage: [E2E_PASSKEY_FINGER=<n>] bun run --cwd apps/wallet e2e:android [flow.yaml ...]
+# Usage: [E2E_ONBOARDING=1] [E2E_PASSKEY_FINGER=<n>] bun run --cwd apps/wallet e2e:android [flow.yaml ...]
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -48,14 +50,25 @@ maestro_test() {
 		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-90000}" \
 		${cap[@]+"${cap[@]}"} maestro --device "$serial" test "$@"
 }
+touch_finger() {
+	adb emu finger touch "$E2E_PASSKEY_FINGER" >/dev/null
+	sleep 1
+	adb emu finger remove "$E2E_PASSKEY_FINGER" >/dev/null
+}
 cd "$APP_DIR"
+
+if [ -n "${E2E_ONBOARDING:-}" ]; then
+	[ -n "${E2E_PASSKEY_FINGER:-}" ] || die "E2E_ONBOARDING needs E2E_PASSKEY_FINGER to create the passkey."
+	log "Onboarding a new wallet (finger $E2E_PASSKEY_FINGER)..."
+	maestro_test "$APP_DIR/.maestro/onboarding/to-passkey.yaml"
+	touch_finger
+	maestro_test "$APP_DIR/.maestro/onboarding/after-passkey.yaml"
+fi
 
 if [ -n "${E2E_PASSKEY_FINGER:-}" ]; then
 	log "Logging out, then back in from a referral link (finger $E2E_PASSKEY_FINGER)..."
 	maestro_test "$APP_DIR/.maestro/passkey/logout-cold-link.yaml"
-	adb emu finger touch "$E2E_PASSKEY_FINGER" >/dev/null
-	sleep 1
-	adb emu finger remove "$E2E_PASSKEY_FINGER" >/dev/null
+	touch_finger
 	maestro_test "$APP_DIR/.maestro/passkey/join-page-after-login.yaml"
 fi
 

@@ -1,0 +1,36 @@
+appId: id.frak.wallet.dev
+name: Login page left for the onboarding
+---
+# The login fires its passkey check by itself: close it, then Back opens the onboarding.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Use Passkey|Utiliser la clé d.accès"
+          timeout: 10000
+          optional: true
+      - tapOn:
+          text: "close|Fermer"
+          optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.systemui:id/biometric_icon"
+          timeout: 10000
+          optional: true
+      # Without a saved login hint no check opens, and Back would leave the app.
+      - runFlow:
+          when:
+            visible:
+              id: "com.android.systemui:id/biometric_icon"
+          commands:
+            - back
+- extendedWaitUntil:
+    visible: "Log in to your wallet|Connectez-vous à votre porte-monnaie"
+    timeout: 10000
+    label: "The passkey check closed on the login page"
+- tapOn: "Back|Retour"

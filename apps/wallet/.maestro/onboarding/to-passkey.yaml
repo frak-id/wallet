@@ -1,0 +1,71 @@
+appId: id.frak.wallet.dev
+name: A new user reaches the passkey creation
+---
+# Run by e2e-{android,ios}.sh only (E2E_ONBOARDING=1). Stops at the biometric check the
+# script answers; after-passkey.yaml then finishes the onboarding on the new wallet.
+# The one flow allowed to clear app data: a logout keeps the device's passkey list, which the
+# registration excludes, so Google Password Manager would refuse a new passkey.
+- launchApp:
+    clearState: true
+# A device that remembers a passkey lands on the login, which fires its own passkey check.
+- extendedWaitUntil:
+    visible: "Log in to your wallet|Connectez-vous à votre porte-monnaie|Earn money by recommending|Gagne de l'argent en recommandant"
+    timeout: 45000
+    label: "The wallet opened on its login or onboarding"
+- runFlow:
+    when:
+      visible: "Log in to your wallet|Connectez-vous à votre porte-monnaie"
+    file: ../common/dismiss-login-passkey.yaml
+- extendedWaitUntil:
+    visible: "Earn money by recommending|Gagne de l'argent en recommandant"
+    timeout: 15000
+    label: "Onboarding step one"
+- tapOn: "Get started|Commencer"
+- extendedWaitUntil:
+    visible: "Your earnings in real time|Tes gains en temps réel"
+    timeout: 10000
+- tapOn: "Continue|Continuer"
+- extendedWaitUntil:
+    visible: "Enter your email address|Entre ton adresse e-mail"
+    timeout: 10000
+# Bad input: a malformed email keeps Continue disabled, and nothing is sent.
+- tapOn:
+    below: "Email"
+    above: "Continue|Continuer"
+- inputText: "not-an-email"
+- hideKeyboard
+- assertVisible:
+    text: "Continue|Continuer"
+    enabled: false
+    label: "A malformed email cannot be submitted"
+- takeScreenshot: build/maestro/wallet-onboarding-email-invalid
+- tapOn: "Later|Plus tard"
+- extendedWaitUntil:
+    visible: "Activate your secure space in 10 sec|Active ton espace sécurisé en 10 sec.*"
+    timeout: 10000
+- tapOn: "Activate my secure space|Activer mon espace sécurisé"
+- extendedWaitUntil:
+    visible: "Secure your account|Sécurise ton compte"
+    timeout: 10000
+- tapOn:
+    text: "Continue|Continuer"
+    below: "Secure your account|Sécurise ton compte"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Add Passkey|Ajouter une clé d.accès"
+          timeout: 15000
+          label: "The OS offers to save a new passkey"
+      - tapOn: "Add Passkey|Ajouter une clé d.accès"
+# Google Password Manager goes straight to the screen lock, with no sheet of its own.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.systemui:id/biometric_icon"
+          timeout: 30000
+          label: "The passkey creation asks for the screen lock"
