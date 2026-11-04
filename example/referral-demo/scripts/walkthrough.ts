@@ -17,6 +17,7 @@ import {
     type StepId,
     stepIndex,
 } from "../src/core/stepIds.ts";
+import { bank } from "../src/data/bank.ts";
 import { merchant, products } from "../src/data/merchant.ts";
 import { personas } from "../src/data/personas.ts";
 import { campaign } from "../src/data/rewards.ts";
@@ -30,6 +31,7 @@ import {
     shareSheetMessages,
     sharingMessages,
 } from "../src/surfaces/social/messages.ts";
+import { lockScreenMessages } from "../src/surfaces/system/messages.ts";
 import { walletMessages } from "../src/surfaces/wallet/messages.ts";
 
 const { values } = parseArgs({
@@ -60,6 +62,7 @@ const sharing = sharingMessages[lang];
 const shareSheet = shareSheetMessages[lang];
 const instagram = instagramMessages[lang];
 const wallet = walletMessages[lang];
+const lockScreen = lockScreenMessages[lang];
 
 const say = interpolate;
 /** The fixed text before a template's first placeholder. */
@@ -221,8 +224,32 @@ const script: {
         step: "referee.wallet",
         taps: [
             (ui) => button(ui, wallet["pendingGains.confirm"]),
-            (ui) => button(ui, shell["continue.referee"]),
+            (ui) => button(ui, wallet["balance.transfer"]),
         ],
+    },
+    {
+        step: "referee.cashout",
+        taps: [
+            (ui) => button(ui, wallet["bankFlow.info.cta"]),
+            (ui) => button(ui, wallet["bankFlow.verification.emailCta"]),
+        ],
+    },
+    {
+        step: "referee.later",
+        taps: [(ui) => button(ui, lockScreen.notificationLabel)],
+    },
+    {
+        step: "referee.transfer",
+        taps: [
+            (ui) => button(ui, wallet["bankFlow.success.cta"]),
+            (ui) => button(ui, wallet["bankFlow.amount.continue"], true),
+            (ui) => button(ui, wallet["bankFlow.recap.confirm"]),
+            (ui) => button(ui, bank.name),
+        ],
+    },
+    {
+        step: "referee.bank",
+        taps: [(ui) => button(ui, shell["continue.referee"])],
     },
     { step: "finale", taps: [] },
 ];

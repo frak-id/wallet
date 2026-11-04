@@ -49,16 +49,30 @@ export type InstallPageProps = { persona: PersonaId };
 export type OnboardingProps = Record<string, never>;
 export type PasskeyCreationProps = { persona: PersonaId };
 export type ExpressClaimProps = { persona: PersonaId };
+/** First "transfer to my bank": Monerium's account setup, then its identity check pending. */
+export type CashOutSetupProps = { persona: PersonaId };
+/** Amount → recap → Face ID → "on its way"; the bank's push lands on top and opens the bank app. */
+export type BankTransferProps = { persona: PersonaId };
 export type WalletPhase =
     /** Léa after scenario 1: 10 € waiting for a friend's purchase. */
     | "referrer-pending"
     /** Léa at the finale: Chloé bought, the 10 € are hers to collect. */
     | "referrer-earned"
     /** Chloé after her purchase: 5 € to collect. */
-    | "referee-earned";
+    | "referee-earned"
+    /** Chloé at the finale, two days later: the 5 € collected, then sent to her bank. */
+    | "referee-transferred";
 export type WalletHomeProps = {
     persona: PersonaId;
     phase: WalletPhase;
     /** Shrunk inside the finale's side-by-side phones: no entrance celebration, no scroll hijack. */
     embedded?: boolean;
+    /** Once the reward is collected, "Transfer to my bank" moves the story on. */
+    cashOut?: boolean;
 };
+
+// iOS itself and Chloé's bank app.
+/** Two days later: Chloé's lock screen, where Frak's "account verified" notification lands. */
+export type LockScreenProps = { persona: PersonaId };
+/** Chloé's bank app (fictional bank), the Frak transfer on top of her history. */
+export type BankAppProps = { persona: PersonaId };

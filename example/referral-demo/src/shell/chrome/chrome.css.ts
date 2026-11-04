@@ -12,6 +12,8 @@ export const bare = recipe({
         app: {
             instagram: { background: "#fff" },
             wallet: { background: "#fff" },
+            bank: { background: "#fff" },
+            lock: { background: "#000" },
             stage: { background: "#060b1f" },
         },
     },

@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { type Lang, useLang } from "@/i18n";
 
-const LOCALES: Record<Lang, string> = { fr: "fr-FR", en: "en-GB" };
+/** BCP 47 locale behind each demo language, for every `Intl` formatter. */
+export const LOCALES: Record<Lang, string> = { fr: "fr-FR", en: "en-GB" };
 
 type MoneyStyle = "price" | "reward";
 

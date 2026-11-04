@@ -62,7 +62,8 @@ function KeyIcon() {
     );
 }
 
-function FaceIdHud({ verified }: { verified: boolean }) {
+/** The Face ID check iOS draws over the screen; position it through `DeviceOverlay`. */
+export function FaceIdHud({ verified }: { verified: boolean }) {
     const t = useT(walletMessages);
     return (
         <motion.div

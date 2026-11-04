@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, type Variants } from "motion/react";
+import { useEffect, useRef } from "react";
 import { StepScope } from "@/core/stepScope";
 import { chromeKey, type StepDef, steps } from "@/core/steps";
 import { useDemoStore } from "@/core/store";
@@ -58,41 +59,60 @@ const page: Record<Enter, Variants> = {
     },
 };
 
+/**
+ * `true` during a component's first render only. Layers use it instead of
+ * `<AnimatePresence initial={false}>`, whose context would also block the
+ * entrance of everything mounted inside the layer for as long as it lives.
+ */
+function useFirstRender(): boolean {
+    const first = useRef(true);
+    useEffect(() => {
+        first.current = false;
+    }, []);
+    return first.current;
+}
+
+/** The pages of one chrome: the first one is simply there, later ones slide or fade in. */
+function Pages({ step, direction }: { step: StepDef; direction: Direction }) {
+    const first = useFirstRender();
+    return (
+        <AnimatePresence custom={direction}>
+            <motion.div
+                key={step.id}
+                className={styles.layer}
+                custom={direction}
+                variants={page[step.enter ?? "slide"]}
+                initial={first ? false : "initial"}
+                animate="animate"
+                exit="exit"
+            >
+                <StepScope stepId={step.id}>{step.render()}</StepScope>
+            </motion.div>
+        </AnimatePresence>
+    );
+}
+
 /** Renders the current step inside its chrome, animating between steps. */
 export function StepStage() {
     const stepId = useDemoStore((s) => s.stepId);
     const direction = useDemoStore((s) => s.direction);
     const step = steps[stepId];
-    const enter = step.enter ?? "slide";
+    const first = useFirstRender();
 
     return (
         <div className={styles.stage}>
-            <AnimatePresence initial={false} custom={direction}>
+            <AnimatePresence custom={direction}>
                 <motion.div
                     key={chromeKey(step)}
                     className={styles.layer}
                     custom={direction}
                     variants={appSwitch}
-                    initial="initial"
+                    initial={first ? false : "initial"}
                     animate="animate"
                     exit="exit"
                 >
                     <ChromeFrame chrome={step.chrome}>
-                        <AnimatePresence initial={false} custom={direction}>
-                            <motion.div
-                                key={step.id}
-                                className={styles.layer}
-                                custom={direction}
-                                variants={page[enter]}
-                                initial="initial"
-                                animate="animate"
-                                exit="exit"
-                            >
-                                <StepScope stepId={step.id}>
-                                    {step.render()}
-                                </StepScope>
-                            </motion.div>
-                        </AnimatePresence>
+                        <Pages step={step} direction={direction} />
                     </ChromeFrame>
                     <OverlayHosts stepId={step.id} />
                 </motion.div>

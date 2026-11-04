@@ -112,6 +112,67 @@ export const walletMessages = defineMessages({
             "Vos gains sont arrivés. Collectez-les maintenant dans votre porte-monnaie.",
         "pendingGains.confirm": "Collecter mes gains",
         "pendingGains.success": "Gains collectés !",
+        "history.transfer": "Frak Labs → IBAN ••••",
+
+        "bankFlow.info.title": "Finalisez votre compte pour toucher vos gains.",
+        "bankFlow.info.description":
+            "Pour transférer vos gains sur votre compte bancaire, vous devez finaliser votre compte de paiement sécurisé.",
+        "bankFlow.info.redirectNotice":
+            "Vous allez être redirigé vers notre partenaire financier, Monerium, pour :",
+        "bankFlow.info.feature1Title": "Vérifier votre identité",
+        "bankFlow.info.feature1Description":
+            "Pour sécuriser votre compte et vérifier que vous êtes bien le titulaire des gains.",
+        "bankFlow.info.feature2Title": "Ajouter votre IBAN",
+        "bankFlow.info.feature2Description":
+            "Pour recevoir vos gains directement sur votre compte bancaire.",
+        "bankFlow.info.feature3Title": "Sécuriser vos transferts",
+        "bankFlow.info.feature3Description":
+            "Vos transactions sont protégées et conformes aux normes de sécurité en vigueur.",
+        "bankFlow.info.cta": "Accepter et continuer",
+        "bankFlow.info.secondaryCta": "J'ai déjà un compte Monerium",
+        "bankFlow.handoff.title": "Vérification avec Monerium",
+        "bankFlow.handoff.description":
+            "Vos informations sont transmises à Monerium, sur son espace sécurisé.",
+        "bankFlow.handoff.document": "Pièce d'identité",
+        "bankFlow.handoff.selfie": "Selfie",
+        "bankFlow.handoff.iban": "IBAN",
+        "bankFlow.handoff.documentSent": "Envoyée",
+        "bankFlow.handoff.selfieSent": "Envoyé",
+        "bankFlow.handoff.back": "Retour sur Frak Wallet…",
+        "bankFlow.verification.title": "Vérification en cours",
+        "bankFlow.verification.description":
+            "Monerium vérifie votre identité. Cela peut prendre de quelques minutes à quelques jours.",
+        "bankFlow.verification.emailTitle": "Monerium vous prévient par e-mail",
+        "bankFlow.verification.emailDescription":
+            "Vous recevrez un e-mail dès que votre compte sera vérifié. Vous pouvez fermer cette page.",
+        "bankFlow.verification.emailCta": "Compris",
+        "bankFlow.verification.checkAgain": "Vérifier à nouveau",
+        "bankFlow.success.title":
+            "Vous pouvez maintenant transférer vos gains 🎉",
+        "bankFlow.success.description":
+            "Votre compte est prêt. Vous pouvez maintenant transférer vos gains sur votre compte bancaire en toute simplicité.",
+        "bankFlow.success.cta": "Transférer mes gains",
+        "bankFlow.amount.title": "Montant à transférer",
+        "bankFlow.amount.walletLabel": "Porte-monnaie Frak",
+        "bankFlow.amount.totalBalance": "Solde total : {amount}",
+        "bankFlow.amount.ibanLabel": "IBAN",
+        "bankFlow.amount.modify": "Modifier",
+        "bankFlow.amount.continue": "Continuer",
+        "bankFlow.recap.title": "Récapitulatif",
+        "bankFlow.recap.cancel": "Annuler",
+        "bankFlow.recap.amountLabel": "Montant",
+        "bankFlow.recap.beneficiaryLabel": "Bénéficiaire",
+        "bankFlow.recap.beneficiaryIban": "IBAN {iban}",
+        "bankFlow.recap.addNote": "Ajouter une note",
+        "bankFlow.recap.warning":
+            "Une fois validée, l'opération ne peut être annulée",
+        "bankFlow.recap.confirm": "Confirmer le transfert",
+        "bankFlow.sent.title":
+            "Votre demande de transfert de {amount} a été prise en compte",
+        "bankFlow.sent.description":
+            "Votre transfert est en route. Vous pouvez le suivre dans votre historique.",
+        "bankPush.body": "Virement reçu de {sender} : +{amount}",
+        "bankPush.time": "maintenant",
     },
     en: {
         "common.close": "Close",
@@ -222,5 +283,65 @@ export const walletMessages = defineMessages({
             "Your earnings have arrived. Collect them now into your wallet.",
         "pendingGains.confirm": "Collect my earnings",
         "pendingGains.success": "Earnings collected!",
+        "history.transfer": "Frak Labs → IBAN ••••",
+
+        "bankFlow.info.title": "Complete your account to claim your earnings.",
+        "bankFlow.info.description":
+            "To transfer your earnings to your bank account, you need to complete your secure payment account setup.",
+        "bankFlow.info.redirectNotice":
+            "You will be redirected to our financial partner, Monerium, to:",
+        "bankFlow.info.feature1Title": "Verify your identity",
+        "bankFlow.info.feature1Description":
+            "To secure your account and verify that you are the rightful owner of the earnings.",
+        "bankFlow.info.feature2Title": "Add your IBAN",
+        "bankFlow.info.feature2Description":
+            "To receive your earnings directly into your bank account.",
+        "bankFlow.info.feature3Title": "Secure your transfers",
+        "bankFlow.info.feature3Description":
+            "Your transactions are protected and comply with current security standards.",
+        "bankFlow.info.cta": "Accept and continue",
+        "bankFlow.info.secondaryCta": "I already have a Monerium account",
+        "bankFlow.handoff.title": "Verifying with Monerium",
+        "bankFlow.handoff.description":
+            "Your details are sent to Monerium, on its secure space.",
+        "bankFlow.handoff.document": "ID document",
+        "bankFlow.handoff.selfie": "Selfie",
+        "bankFlow.handoff.iban": "IBAN",
+        "bankFlow.handoff.documentSent": "Sent",
+        "bankFlow.handoff.selfieSent": "Sent",
+        "bankFlow.handoff.back": "Back to Frak Wallet…",
+        "bankFlow.verification.title": "Verification in progress",
+        "bankFlow.verification.description":
+            "Monerium is reviewing your identity. This can take from a few minutes to a couple of days.",
+        "bankFlow.verification.emailTitle": "Monerium will email you",
+        "bankFlow.verification.emailDescription":
+            "You'll get an email as soon as your account is verified. You can close this page.",
+        "bankFlow.verification.emailCta": "Got it",
+        "bankFlow.verification.checkAgain": "Check again",
+        "bankFlow.success.title": "You can now transfer your earnings 🎉",
+        "bankFlow.success.description":
+            "Your account is ready. You can now transfer your earnings to your bank account with ease.",
+        "bankFlow.success.cta": "Transfer my earnings",
+        "bankFlow.amount.title": "Amount to transfer",
+        "bankFlow.amount.walletLabel": "Frak Wallet",
+        "bankFlow.amount.totalBalance": "Total balance: {amount}",
+        "bankFlow.amount.ibanLabel": "IBAN",
+        "bankFlow.amount.modify": "Edit",
+        "bankFlow.amount.continue": "Continue",
+        "bankFlow.recap.title": "Summary",
+        "bankFlow.recap.cancel": "Cancel",
+        "bankFlow.recap.amountLabel": "Amount",
+        "bankFlow.recap.beneficiaryLabel": "Beneficiary",
+        "bankFlow.recap.beneficiaryIban": "IBAN {iban}",
+        "bankFlow.recap.addNote": "Add a note",
+        "bankFlow.recap.warning":
+            "Once confirmed, this operation cannot be cancelled",
+        "bankFlow.recap.confirm": "Confirm transfer",
+        "bankFlow.sent.title":
+            "Your transfer request of {amount} has been received",
+        "bankFlow.sent.description":
+            "Your transfer is on its way. You can follow it in your history.",
+        "bankPush.body": "Transfer received from {sender}: +{amount}",
+        "bankPush.time": "now",
     },
 });

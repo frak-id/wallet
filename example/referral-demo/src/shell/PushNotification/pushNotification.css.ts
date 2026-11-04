@@ -1,31 +1,39 @@
 import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { deviceInset, fonts } from "../device.css";
 
-export const banner = style({
-    position: "absolute",
-    zIndex: 45,
-    top: `calc(${deviceInset.top} + 4px)`,
-    left: 8,
-    right: 8,
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    padding: "12px 14px",
-    borderRadius: 26,
-    background: "rgba(246, 246, 246, 0.82)",
-    backdropFilter: "saturate(180%) blur(24px)",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.18)",
-    color: "#000",
-    fontFamily: fonts.system,
+export const banner = recipe({
+    base: {
+        position: "absolute",
+        zIndex: 45,
+        top: `calc(${deviceInset.top} + 4px)`,
+        left: 8,
+        right: 8,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 14px",
+        borderRadius: 26,
+        background: "rgba(246, 246, 246, 0.82)",
+        backdropFilter: "saturate(180%) blur(24px)",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.18)",
+        color: "#000",
+        fontFamily: fonts.system,
+    },
+    variants: {
+        tappable: { true: { cursor: "pointer" }, false: {} },
+    },
 });
 
+/** 38px app-icon slot; a custom icon fills it edge to edge. */
 export const icon = style({
     flexShrink: 0,
     width: 38,
     height: 38,
     display: "grid",
     placeItems: "center",
+    overflow: "hidden",
     borderRadius: 10,
     background: "#fff",
     color: brand.colors.primary[600],

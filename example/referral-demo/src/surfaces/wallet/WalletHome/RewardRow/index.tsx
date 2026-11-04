@@ -14,6 +14,7 @@ import { merchant } from "@/data/merchant";
 import { useT } from "@/i18n";
 import { useFormatMoney } from "@/i18n/format";
 import { MerchantLogo } from "../../components/MerchantLogo";
+import { useDayTime } from "../../format";
 import { walletMessages } from "../../messages";
 import type { PhaseReward, RewardStatus, RewardTag } from "../phases";
 import * as styles from "./rewardRow.css";
@@ -112,6 +113,7 @@ export function RewardRow({
 }) {
     const t = useT(walletMessages);
     const money = useFormatMoney();
+    const dayTime = useDayTime();
 
     return (
         <motion.button
@@ -157,7 +159,7 @@ export function RewardRow({
                         </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
-                                {`${t("common.today")}, ${reward.time}`}
+                                {dayTime(reward.daysAgo, reward.time)}
                             </Text>
                             {status !== "consumed" && (
                                 <Text

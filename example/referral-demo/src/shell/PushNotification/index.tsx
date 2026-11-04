@@ -1,24 +1,37 @@
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import { motion } from "motion/react";
+import type { ReactNode } from "react";
 import * as styles from "./pushNotification.css";
 
-/** iOS banner notification from the Frak app, dropped over the current screen. */
+/** iOS banner notification, dropped over the current screen; the Frak app's unless `icon` says otherwise. */
 export function PushNotification({
     title,
     body,
     time,
     delay = 0,
+    icon = <LogoFrak width={22} height={22} />,
+    onTap,
 }: {
     title: string;
     body: string;
     /** Relative time label, e.g. "maintenant". */
     time: string;
     delay?: number;
+    icon?: ReactNode;
+    /** Makes the banner a button, like tapping a notification to open its app. */
+    onTap?: () => void;
 }) {
     return (
         <motion.div
-            className={styles.banner}
-            role="status"
+            className={styles.banner({ tappable: !!onTap })}
+            role={onTap ? "button" : "status"}
+            tabIndex={onTap ? 0 : undefined}
+            onClick={onTap}
+            onKeyDown={(event) => {
+                if (onTap && (event.key === "Enter" || event.key === " ")) {
+                    onTap();
+                }
+            }}
             initial={{ y: -120, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             transition={{
@@ -28,9 +41,7 @@ export function PushNotification({
                 stiffness: 260,
             }}
         >
-            <span className={styles.icon}>
-                <LogoFrak width={22} height={22} />
-            </span>
+            <span className={styles.icon}>{icon}</span>
             <span className={styles.text}>
                 <span className={styles.header}>
                     <span className={styles.title}>{title}</span>

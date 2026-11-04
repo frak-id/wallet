@@ -3,6 +3,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+import { useDemoNav } from "@/core/store";
 import { useT } from "@/i18n";
 import { useHoldContinue } from "@/shell/ContinuePrompt/hold";
 import type { WalletHomeProps, WalletPhase } from "@/surfaces/contracts";
@@ -11,9 +12,15 @@ import { Balance } from "./Balance";
 import { BottomTabBar } from "./BottomTabBar";
 import { CollectedToast, Confetti } from "./Celebration";
 import { PendingGainsCard, PendingGainsSheet } from "./PendingGains";
-import { type PhaseReward, phaseRewards } from "./phases";
+import {
+    type PhaseReward,
+    type PhaseTransfer,
+    phaseRewards,
+    phaseTransfers,
+} from "./phases";
 import { RewardRow } from "./RewardRow";
 import { ShareNudge } from "./ShareNudge";
+import { TransferRow } from "./TransferRow";
 import * as styles from "./walletHome.css";
 
 type CollectState = "pending" | "collecting" | "collected";
@@ -21,12 +28,15 @@ type CollectState = "pending" | "collecting" | "collected";
 const SHEET_DELAY_MS = 650;
 const COLLECT_MS = 1100;
 
-/** Chloé collected her 5 € on her own wallet step, so the finale shows them banked. */
+/** Chloé collects her 5 € on her own wallet step: any later view of it shows them banked. */
 function initialCollectState(
     phase: WalletPhase,
     embedded: boolean
 ): CollectState {
-    return embedded && phase === "referee-earned" ? "collected" : "pending";
+    const banked =
+        phase === "referee-transferred" ||
+        (embedded && phase === "referee-earned");
+    return banked ? "collected" : "pending";
 }
 
 function useCollect(
@@ -34,10 +44,10 @@ function useCollect(
     phase: WalletPhase,
     embedded: boolean
 ) {
-    const collectable = reward.status === "settled";
-    const [state, setState] = useState(() =>
-        initialCollectState(phase, embedded)
-    );
+    const initialState = initialCollectState(phase, embedded);
+    const collectable =
+        reward.status === "settled" && initialState === "pending";
+    const [state, setState] = useState(initialState);
     const [sheetOpen, setSheetOpen] = useState(false);
 
     useEffect(() => {
@@ -74,10 +84,12 @@ function useCollect(
 
 function EarningsSection({
     reward,
+    transfer,
     collected,
     animated,
 }: {
     reward: PhaseReward;
+    transfer: PhaseTransfer | undefined;
     collected: boolean;
     animated: boolean;
 }) {
@@ -88,6 +100,7 @@ function EarningsSection({
                 {t("history.title")}
             </Text>
             <Card padding="none">
+                {transfer && <TransferRow transfer={transfer} />}
                 <RewardRow
                     reward={reward}
                     status={collected ? "consumed" : reward.status}
@@ -99,11 +112,18 @@ function EarningsSection({
 }
 
 /** The wallet home: title, balance, earnings history and the tab bar. */
-export function WalletHome({ phase, embedded = false }: WalletHomeProps) {
+export function WalletHome({
+    phase,
+    embedded = false,
+    cashOut = false,
+}: WalletHomeProps) {
     const t = useT(walletMessages);
+    const { next } = useDemoNav();
     const reward = phaseRewards[phase];
+    const transfer = phaseTransfers[phase];
     const collect = useCollect(reward, phase, embedded);
     const collected = collect.state === "collected";
+    const transferable = cashOut && collected && !embedded;
     useHoldContinue(collect.sheetOpen || collect.state === "collecting");
     const pendingTitle =
         reward.tag.kind === "referralOf"
@@ -122,9 +142,15 @@ export function WalletHome({ phase, embedded = false }: WalletHomeProps) {
                         {t("wallet.pageTitle")}
                     </Text>
                     <Balance
-                        balance={collected ? reward.amount : 0}
+                        balance={
+                            collected
+                                ? reward.amount - (transfer?.amount ?? 0)
+                                : 0
+                        }
                         pending={collected ? 0 : reward.amount}
+                        lifetime={collected ? reward.amount : 0}
                         onPendingClick={collect.openSheet}
+                        onTransfer={transferable ? next : undefined}
                     />
                     {embedded && collect.collectable && !collected && (
                         <PendingGainsCard
@@ -136,13 +162,14 @@ export function WalletHome({ phase, embedded = false }: WalletHomeProps) {
                     )}
                     <EarningsSection
                         reward={reward}
+                        transfer={transfer}
                         collected={collected}
                         animated={!embedded}
                     />
                     {phase === "referrer-pending" && (
                         <ShareNudge variant="live" />
                     )}
-                    {phase === "referee-earned" && (
+                    {phase === "referee-earned" && !cashOut && (
                         <ShareNudge variant="turn" />
                     )}
                 </Stack>

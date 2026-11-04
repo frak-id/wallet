@@ -21,7 +21,7 @@ const cast: { persona: PersonaId; phase: WalletPhase; amount: number }[] = [
     },
     {
         persona: "chloe",
-        phase: "referee-earned",
+        phase: "referee-transferred",
         amount: campaign.refereeReward,
     },
 ];
@@ -38,17 +38,17 @@ function FinalePhone({
     const t = useT(stageMessages);
     const money = useFormatMoney();
     return (
-        <PhoneFrame tone="dark" time={clock.chloe} maxScale={maxScale}>
+        <PhoneFrame tone="dark" time={clock.transfer} maxScale={maxScale}>
             <div className={styles.appScreen}>
                 <WalletHome persona={persona} phase={phase} embedded={true} />
                 {persona === "lea" && (
                     <PushNotification
                         delay={1.2}
                         time={t("finale.now")}
-                        title={t("finale.notification.title")}
-                        body={t("finale.notification.body", {
+                        title={t("finale.notification.title", {
                             amount: money(campaign.referrerReward, "reward"),
                         })}
+                        body={t("finale.notification.body")}
                     />
                 )}
             </div>

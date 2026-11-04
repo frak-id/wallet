@@ -23,11 +23,14 @@ export function BottomSheet({
     open,
     look,
     label,
+    handle = look === "frak",
     children,
 }: {
     open: boolean;
     look: SheetLook;
     label: string;
+    /** The drawer's grab handle; Frak's modals hide it. */
+    handle?: boolean;
     children: ReactNode;
 }) {
     return (
@@ -54,7 +57,7 @@ export function BottomSheet({
                         exit={{ y: "110%", transition: { duration: 0.28 } }}
                         transition={spring}
                     >
-                        {look === "frak" && <span className={styles.handle} />}
+                        {handle && <span className={styles.handle} />}
                         {children}
                     </motion.div>
                 )}

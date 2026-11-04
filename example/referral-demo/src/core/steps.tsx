@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import type { PersonaId } from "@/data/personas";
+import { clock } from "@/data/rewards";
 import { Finale } from "@/stage/Finale";
 import { Launcher } from "@/stage/Launcher";
 import { PersonaIntro } from "@/stage/PersonaIntro";
+import { BankApp } from "@/surfaces/bank";
 import {
     CartPage,
     CheckoutPage,
@@ -17,7 +19,10 @@ import {
     StoryComposer,
     StoryViewer,
 } from "@/surfaces/social";
+import { LockScreen } from "@/surfaces/system";
 import {
+    BankTransfer,
+    CashOutSetup,
     ExpressClaim,
     InstallPage,
     Onboarding,
@@ -34,7 +39,7 @@ export type Chrome =
     /** Instagram's in-app browser around a web page. */
     | { kind: "inAppBrowser"; url: string }
     /** A native app drawing edge to edge. */
-    | { kind: "app"; app: "instagram" | "wallet" };
+    | { kind: "app"; app: "instagram" | "wallet" | "bank" | "lock" };
 
 export type StepDef = {
     id: StepId;
@@ -43,6 +48,8 @@ export type StepDef = {
     chrome: Chrome;
     /** Status bar glyph colour: `dark` on light screens, `light` on dark ones. */
     statusBar: "dark" | "light";
+    /** Status bar clock when it differs from the persona's; `""` hides it (lock screen). */
+    clock?: string;
     /** `instant` when the screen animates its own entrance (sheets over a backdrop). */
     enter?: "slide" | "fade" | "instant";
     /** Shows the "continue to the next scenario" prompt once the screen settles. */
@@ -200,8 +207,39 @@ const defs: { [K in StepId]: Omit<StepDef, "id"> } = {
         chrome: { kind: "safari", url: `${WALLET}/wallet` },
         statusBar: "dark",
         enter: "fade",
+        render: () => (
+            <WalletHome persona="chloe" phase="referee-earned" cashOut={true} />
+        ),
+    },
+    "referee.cashout": {
+        persona: "chloe",
+        chrome: { kind: "safari", url: `${WALLET}/wallet` },
+        statusBar: "dark",
+        enter: "instant",
+        render: () => <CashOutSetup persona="chloe" />,
+    },
+    "referee.later": {
+        persona: "chloe",
+        chrome: { kind: "app", app: "lock" },
+        statusBar: "light",
+        clock: "",
+        enter: "fade",
+        render: () => <LockScreen persona="chloe" />,
+    },
+    "referee.transfer": {
+        persona: "chloe",
+        chrome: { kind: "safari", url: `${WALLET}/wallet` },
+        statusBar: "dark",
+        clock: clock.transfer,
+        render: () => <BankTransfer persona="chloe" />,
+    },
+    "referee.bank": {
+        persona: "chloe",
+        chrome: { kind: "app", app: "bank" },
+        statusBar: "dark",
+        clock: clock.transfer,
         final: true,
-        render: () => <WalletHome persona="chloe" phase="referee-earned" />,
+        render: () => <BankApp persona="chloe" />,
     },
     finale: {
         persona: null,

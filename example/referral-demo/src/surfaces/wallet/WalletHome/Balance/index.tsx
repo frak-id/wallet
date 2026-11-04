@@ -14,6 +14,7 @@ import { animate } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useLang, useT } from "@/i18n";
 import { useFormatMoney } from "@/i18n/format";
+import { TapHalo } from "../../components/TapHalo";
 import { walletMessages } from "../../messages";
 import * as styles from "./balance.css";
 
@@ -42,11 +43,16 @@ function useCountUp(value: number) {
 export function Balance({
     balance,
     pending,
+    lifetime,
     onPendingClick,
+    onTransfer,
 }: {
     balance: number;
     pending: number;
+    lifetime: number;
     onPendingClick: () => void;
+    /** Set when the transfer CTA moves the story on: it also gets a halo. */
+    onTransfer?: () => void;
 }) {
     const t = useT(walletMessages);
     const money = useFormatMoney();
@@ -79,13 +85,16 @@ export function Balance({
                         <span className={styles.currencySuffix}>EUR</span>
                     </div>
                 </Stack>
-                <Button
-                    variant="primary"
-                    size="large"
-                    icon={<TransferIcon width={16} height={16} />}
-                >
-                    {t("balance.transfer")}
-                </Button>
+                <TapHalo active={!!onTransfer}>
+                    <Button
+                        variant="primary"
+                        size="large"
+                        icon={<TransferIcon width={16} height={16} />}
+                        onClick={onTransfer}
+                    >
+                        {t("balance.transfer")}
+                    </Button>
+                </TapHalo>
             </div>
 
             <div className={styles.statCardsRow}>
@@ -102,10 +111,10 @@ export function Balance({
                 </button>
                 <button type="button" className={styles.statCardButton}>
                     <StatCard
-                        amount={money(balance)}
+                        amount={money(lifetime)}
                         label={t("balance.lifetime")}
                         icon={<BarChartIcon width={14} height={14} />}
-                        highlighted={balance > 0}
+                        highlighted={lifetime > 0}
                     />
                 </button>
             </div>
