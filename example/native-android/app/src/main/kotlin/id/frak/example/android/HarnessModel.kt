@@ -142,17 +142,16 @@ class HarnessModel(
     }
 
     /**
-     * Reports arrival at the activity, which is all this callback can honestly observe. Whether the
-     * SDK tracked it is a separate question that only Debug info answers, so this is not a SUCCESS.
+     * Reports arrival at the activity, which is all this callback can honestly observe. Nothing in
+     * the harness shows whether the SDK then tracked it, so this is not a SUCCESS.
      */
     fun logInboundIntent(url: String) {
         addLog("Inbound link reached the app: $url", LogType.INFO)
-        addLog("Open Debug to confirm the SDK picked up the referral.", LogType.INFO)
     }
 
     /** The only place in the harness that calls `handleReferral` directly. */
     suspend fun simulateDeepLink() {
-        val testUrl = "https://example-merchant.com/product?fCtx=test_referral_token_android_9988"
+        val testUrl = sampleReferralLink(activeEnvironment.merchantId)
         addLog("Simulating an inbound referral link...", LogType.INFO)
         try {
             val handled = Frak.client.appLink.handleReferral(testUrl)

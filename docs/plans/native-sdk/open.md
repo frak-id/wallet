@@ -146,7 +146,7 @@ Open, tracked, knowingly not being worked.
 | 9.3t | Android's `ResolvedConfigDecoderTest` never supplies a good and a bad placement together — the test that would catch the bug this row exists for is unwritten. iOS closed it | Android |
 | 8.3, 8.6, 8.9 | A guard that cannot fail (`FrakContextCodecTest.kt:38-42` compares a count against the same filtered list that produced it); no iOS redirect/cache/`Accept-Encoding` assertions where Android has both; no concurrent-queue-writer test on either platform | both |
 | — | `SharingSheetStateTest` initialises the real SDK against the production backend and makes a live HTTPS GET every CI run, with no shutdown or reset. **Accepted by decision** — "the backend absorbs the load" | Android |
-| — | Harness gaps with zero call sites in `example/` source (`.kt`/`.swift`, verified 2026-10-13, after the harnesses were split into tabs): `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. `example/native-android` also has no `NavHost`, which is why §4's Compose `onDispose` row cannot be reproduced | both |
+| — | Harness gaps with zero call sites in `example/native-android` (verified 2026-11-04): `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. `example/native-ios` calls its four from the Debug tab since 2026-11-04. `example/native-android` also has no `NavHost`, which is why §4's Compose `onDispose` row cannot be reproduced | Android |
 
 ## 9. The unpinned surfaces
 

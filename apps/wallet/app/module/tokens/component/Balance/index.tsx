@@ -54,7 +54,7 @@ export function Balance() {
                 <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
                     <Box className={styles.headerRow}>
                         <Text variant="bodySmall" color="secondary">
-                            {t("common.rewards")}
+                            {t("wallet.balance.label")}
                         </Text>
                         {isHidden ? (
                             <EyeIcon

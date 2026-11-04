@@ -20,7 +20,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
 cd "$REPO_ROOT"
 
-FRAK_VARIANT=dev sst shell -- bash -c \
+# --stage dev: without it sst picks the personal stage, whose BACKEND_URL is a local `sst dev`.
+FRAK_VARIANT=dev sst shell --stage dev -- bash -c \
     "cd apps/wallet && tauri ios build --config src-tauri/tauri.conf.dev.json --export-method app-store-connect"
 
 bash apps/wallet/scripts/verify-ios-artifact.sh dev \

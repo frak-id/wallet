@@ -3,7 +3,13 @@ import { persist } from "zustand/middleware";
 
 export type BiometricLockTimeout = "immediate" | "1min" | "5min" | "15min";
 
-type BiometryType = "faceId" | "touchId" | "fingerprint" | "iris" | null;
+type BiometryType =
+    | "faceId"
+    | "face"
+    | "touchId"
+    | "fingerprint"
+    | "iris"
+    | null;
 
 type BiometricsState = {
     enabled: boolean;

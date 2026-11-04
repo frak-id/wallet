@@ -1,0 +1,19 @@
+appId: id.frak.wallet.dev
+name: The redeemed code is deleted from the profile
+---
+# Run from after-passkey.yaml once the new wallet holds REFERRAL_CODE as its referrer.
+- runFlow: ../common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- tapOn: "Referrals|Parrainages"
+- extendedWaitUntil:
+    visible: ${REFERRAL_CODE}
+    timeout: 15000
+    label: "The referrals page lists the redeemed code"
+- tapOn: ${REFERRAL_CODE}
+- tapOn: "Delete active code|Supprimer le code actif"
+- tapOn: "Delete the code|Supprimer le code"
+- extendedWaitUntil:
+    visible: "Got a referral code\\?|Tu as reçu un code \\?|Enter a referral code|Entrer un code de parrainage"
+    timeout: 15000
+    label: "The deletion leaves no active code"
+- takeScreenshot: build/maestro/wallet-referral-deleted

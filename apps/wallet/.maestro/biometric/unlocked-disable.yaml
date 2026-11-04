@@ -1,0 +1,38 @@
+appId: id.frak.wallet.dev
+name: Biometrics unlock the wallet, then the lock is turned off
+---
+# Half three: no launchApp, the script just answered the unlock check.
+# An unanswered simulator Face ID scan gives up and leaves the Unlock button.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Total balance|Solde total"
+          timeout: 10000
+          optional: true
+      - runFlow:
+          when:
+            visible: "Unlock|Déverrouiller"
+          commands:
+            - tapOn: "Unlock|Déverrouiller"
+- runFlow: ../common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- scrollUntilVisible:
+    element: "Lock after|Verrouiller après"
+    direction: DOWN
+    centerElement: true
+# Turning it off asks for nothing.
+- runFlow:
+    file: tap-switch.yaml
+- extendedWaitUntil:
+    notVisible: "Lock after|Verrouiller après"
+    timeout: 10000
+    label: "The lock is off"
+# Same lazy write: the next launchApp must not bring the lock back.
+- extendedWaitUntil:
+    visible: "__never_shown__"
+    timeout: 5000
+    optional: true
+- tapOn: "Wallet|Porte-monnaie"
+- runFlow: ../common/wallet-home.yaml

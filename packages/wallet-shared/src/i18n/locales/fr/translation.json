@@ -54,7 +54,6 @@
         "notifications": "Notifications",
         "pending": "en attente",
         "refresh": "Rafraîchir",
-        "rewards": "Total balance",
         "send": "Envoyer",
         "submit": "Envoyer",
         "today": "Aujourd'hui",
@@ -75,6 +74,9 @@
         "share": "Partager"
     },
     "wallet": {
+        "balance": {
+            "label": "Solde total"
+        },
         "pageTitle": "Porte-monnaie",
         "tabBar": {
             "wallet": "Porte-monnaie",

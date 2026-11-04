@@ -1,0 +1,158 @@
+name: "🔎 PR review"
+
+# One pi agent reviews each non-draft PR. Frak Bot (a GitHub App) posts each
+# finding on the line it cites, and the rest in one summary comment edited in
+# place; every push replaces the previous run's inline comments that nobody
+# answered. Same lighter pi as the dependency report: no extensions, no skills,
+# read-only tools. The trust boundary is the
+# same-repo filter on the job, not the tools: the agent can still read the proxy
+# key from its own env, which is acceptable only because every reviewed author
+# can already read it by editing this workflow in their PR.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  PI_SKIP_VERSION_CHECK: '1'
+  PI_TELEMETRY: '0'
+  PI_VERSION: '0.86.1'
+  MODEL: claude-opus-latest
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  review:
+    name: "🔎 PR review"
+    # Fork PRs get no secrets on `pull_request`. Never switch this to
+    # `pull_request_target`: the agent would read untrusted text with the proxy key in its env.
+    if: >-
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # Default ref = the PR merged into its base, so this prompt exists even on branches cut before it.
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Minted before the agent runs, so a missing App credential fails in seconds, not after the review.
+      - name: "🤖 Frak Bot token"
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.FRAK_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.FRAK_BOT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: "🔑 Preflight the proxy credential"
+        env:
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+        run: |
+          for name in CLIPROXY_API_KEY CLIPROXY_BASE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${name} is empty. Set it as an Actions secret on this repo, or as an org secret shared with it."
+              exit 1
+            fi
+          done
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "Authorization: Bearer ${CLIPROXY_API_KEY}" "${CLIPROXY_BASE_URL}/v1/models" || echo 000)
+          if [ "${code}" != "200" ]; then
+            echo "::error::The proxy returned HTTP ${code} — key rejected or unreachable from the runner."
+            exit 1
+          fi
+
+      - name: "🧾 Collect the PR context"
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          exclude=(':(exclude)bun.lock' ':(exclude)**/Cargo.lock' ':(exclude)**/composer.lock' ':(exclude)**/Package.resolved')
+          git diff "${BASE_SHA}...${HEAD_SHA}" -- . "${exclude[@]}" > "${RUNNER_TEMP}/pr.diff"
+          {
+            jq -r '.pull_request | "# \(.title)\n\nBase: \(.base.ref) (\(.base.sha))\nHead: \(.head.ref) (\(.head.sha))\n\n## Description\n\n\(.body // "(none)")\n"' "${GITHUB_EVENT_PATH}"
+            echo '## Diff stat'
+            echo
+            git diff --stat "${BASE_SHA}...${HEAD_SHA}" -- . "${exclude[@]}"
+            echo
+            echo '## Diff'
+            echo
+            bun scripts/pr-review.ts annotate --diff "${RUNNER_TEMP}/pr.diff"
+          } > "${RUNNER_TEMP}/pr-context.md"
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: "🤖 Install pi"
+        run: npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+      - name: "🔎 Review the change"
+        env:
+          PI_CODING_AGENT_DIR: ${{ runner.temp }}/pi
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${PI_CODING_AGENT_DIR}"
+          jq -n --arg baseUrl "${CLIPROXY_BASE_URL}" -f .github/pi/models.jq \
+            > "${PI_CODING_AGENT_DIR}/models.json"
+
+          pi \
+            --name "pr-review" \
+            --no-extensions \
+            --no-skills \
+            --model "cliproxy/${MODEL}" \
+            --thinking high \
+            --tools read,grep,find,ls \
+            -p @.github/pi/code-review.prompt.md \
+            "The context file is ${RUNNER_TEMP}/pr-context.md. Review the pull request now." \
+            > "${RUNNER_TEMP}/review.json"
+
+          if [ ! -s "${RUNNER_TEMP}/review.json" ]; then
+            echo "::error::The agent produced an empty review."
+            exit 1
+          fi
+          # GitHub masks secrets in logs, not in comments. Checked raw and JSON-decoded, since `\/` or `\u002f` hide a URL from grep.
+          review="${RUNNER_TEMP}/review.json"
+          # Same outermost {…} slice as parseAgentReview, so both accept the same answers.
+          if ! decoded=$(tr '\n' '\r' < "${review}" | sed -e 's/^[^{]*//' -e 's/[^}]*$//' | tr '\r' '\n' | jq -r '.. | strings'); then
+            echo "::error::The review is not a JSON document; not posting it."
+            exit 1
+          fi
+          for secret in "${CLIPROXY_API_KEY}" "${CLIPROXY_BASE_URL}"; do
+            if grep -qF -- "${secret}" "${review}" || grep -qF -- "${secret}" <<< "${decoded}"; then
+              echo "::error::The review contains a proxy secret; not posting it."
+              exit 1
+            fi
+          done
+
+      - name: "📮 Post the review"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT_LOGIN: ${{ steps.app-token.outputs.app-slug }}[bot]
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bun scripts/pr-review.ts post --diff "${RUNNER_TEMP}/pr.diff" --review "${RUNNER_TEMP}/review.json"

@@ -54,7 +54,6 @@
         "notifications": "Notifications",
         "pending": "pending",
         "refresh": "Refresh",
-        "rewards": "Rewards",
         "send": "Send",
         "submit": "Submit",
         "today": "Today",
@@ -75,6 +74,9 @@
         "share": "Share"
     },
     "wallet": {
+        "balance": {
+            "label": "Total balance"
+        },
         "pageTitle": "Wallet",
         "tabBar": {
             "wallet": "Wallet",

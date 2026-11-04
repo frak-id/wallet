@@ -1,0 +1,13 @@
+appId: id.frak.example.ios
+name: Open a friend's referral link
+---
+# v2 fCtx for the Development merchant 0a799880-…, dated 2026-11-01, from HarnessData's sample sharer.
+- openLink: "merchantapp://product?fCtx=Egp5mIC6VEJ2pzTbhyGRG6tq5oEAWj4sHXtPToqcbQ8eLTxLWg"
+# iOS may confirm a custom-scheme link with "Open in “Frak iOS Harness”?".
+- extendedWaitUntil:
+    visible: "Open"
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: "Open"
+    optional: true

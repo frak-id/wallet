@@ -57,7 +57,7 @@ describe("Balance", () => {
 
         render(<Balance />);
 
-        expect(mockT).toHaveBeenCalledWith("common.rewards");
+        expect(mockT).toHaveBeenCalledWith("wallet.balance.label");
     });
 
     it("should render integer and decimal parts separately", () => {

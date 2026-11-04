@@ -1,0 +1,15 @@
+appId: id.frak.example.android
+name: Share the store, then dismiss the sheet
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Frak Demo Store"
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- tapOn: "Share the store"
+- takeScreenshot: build/maestro/share-store-sheet
+- back
+- extendedWaitUntil:
+    visible: ".*Sharing sheet dismissed by user."
+    timeout: 5000

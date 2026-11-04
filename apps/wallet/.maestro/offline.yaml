@@ -1,0 +1,23 @@
+appId: id.frak.wallet.dev
+name: Losing the network shows the offline banner
+tags:
+  - android
+# Runs even when a step fails, so the emulator never stays offline.
+onFlowComplete:
+  - setAirplaneMode: disabled
+---
+# Android only: Maestro cannot cut a simulator's network.
+- launchApp
+- runFlow: common/wallet-home.yaml
+- setAirplaneMode: enabled
+- extendedWaitUntil:
+    visible: "You're offline|Vous êtes hors ligne"
+    timeout: 15000
+    label: "The offline banner appears"
+- takeScreenshot: build/maestro/wallet-offline
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible: "You're offline|Vous êtes hors ligne"
+    timeout: 30000
+    label: "The banner leaves once the network is back"
+- runFlow: common/wallet-home.yaml

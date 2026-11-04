@@ -1,6 +1,6 @@
 # Task: weekly dependency report
 
-You are running non-interactively in CI, in a checkout of `frak-id/frak-wallet`.
+You are running non-interactively in CI, in a checkout of `frak-id/wallet`.
 A deterministic collector has already resolved every pinned version in this repo
 against its upstream registry. **You do not discover versions — you explain
 them.**

@@ -1,0 +1,35 @@
+appId: id.frak.wallet.dev
+name: A cold start with the lock on asks for biometrics
+---
+# Half two of enable.yaml. Stops at the unlock check the script answers.
+# The switch exposes no checked state; its timeout row only shows while the lock is on.
+- extendedWaitUntil:
+    visible: "Lock after|Verrouiller après"
+    timeout: 20000
+    label: "The lock is on"
+# shortcut: the WebView writes the setting to disk lazily; a fixed pause until a wait exists.
+- extendedWaitUntil:
+    visible: "__never_shown__"
+    timeout: 5000
+    optional: true
+- stopApp
+- launchApp
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.systemui:id/biometric_icon"
+          timeout: 30000
+          label: "The cold start asks for the fingerprint"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # While the Face ID panel is up, it is all the accessibility tree holds.
+      - extendedWaitUntil:
+          visible: "Unlock|Déverrouiller|Face ID"
+          timeout: 30000
+          label: "The cold start shows the lock screen"
+- takeScreenshot: build/maestro/wallet-biometric-locked

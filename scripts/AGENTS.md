@@ -45,6 +45,19 @@ agent that writes the report issue.
 | `check-shopify-api-version.ts` | `api_version` in each extension's `shopify.extension.toml` | `@shopify/ui-extensions` ships one release line per API version, pinned in `apps/shopify/package.json` (the installed one; bun ignores the nested `extensions/*` workspaces) and in the extension's own `package.json`. A toml bump alone typechecks and deploys fine against the old line's types |
 | `check-es-version.ts` | `BROWSER_TARGET_ECMA` | The only layer that sees what actually ships — `lib` cannot reject an ambient augmentation and `skipLibCheck` hides dependency `.d.ts` |
 | `check-comments.ts` | `comment-budget-baseline.json` | A file may only ever get better. Pay some down, then `bun run lint:comments -- --update-baseline` |
+| `store-notes.ts check` | `apps/wallet/store/whatsnew/whatsnew-{en-US,fr-FR}` | r0adkll uploads every `whatsnew-*` file as is, so an extra locale, markdown, or a file over Play's 500 characters (counted raw, trailing newline included) fails the Play upload only after the AAB is built |
+
+## The mobile store release
+
+- **`store-notes.ts collect` + `.github/pi/store-notes.prompt.md` write the store "What's new"** in the
+  release PR's `prepare-pr` job (prod only), against the latest non-prerelease `app-*` GitHub release,
+  the same "live on the stores" rule as `wallet-ota-hotfix.yml`. The files are committed into the
+  release PR, so the PR is where a human edits them; the merge ships the files, not the PR body.
+  Commits are filtered to `APP_PATHS` and to user-facing conventional types before the agent sees them.
+- **`app-store-draft.ts` runs after `altool`**, in its own Linux job: it waits for processing, reuses
+  the editable iOS version (renaming it) or creates one, attaches the build and sets `whatsNew` on
+  every localization. It refuses while Apple holds another version (in review, pending release):
+  clear that version, then re-run the job alone. It never submits for review.
 
 ## The dependency pipeline
 
@@ -123,6 +136,16 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
   throws on any surviving id collision.
 - `GITHUB_TOKEN` is optional locally but caps at 60 requests/hour without it, which is not enough for
   the action pins alone.
+
+## The PR review
+
+- **`pr-review.ts` is the deterministic half of `.github/workflows/pr-review.yml`.** `annotate` prefixes
+  each new-side diff line with its file line number, which is the number the agent cites. `post`
+  parses the agent's JSON, posts a finding inline only when all its lines sit in one hunk (GitHub
+  rejects the whole review otherwise), and puts the rest in the summary comment.
+- **It posts as Frak Bot, a GitHub App**: `vars.FRAK_BOT_CLIENT_ID` + `secrets.FRAK_BOT_PRIVATE_KEY`.
+  Comments are found again by marker and by the App's own login, because an App can only edit or
+  delete its own comments. Each run deletes the previous run's inline comments that nobody replied to.
 
 ## Anti-Patterns
 

@@ -1,0 +1,13 @@
+appId: id.frak.example.ios
+name: A real referral link launches the stopped app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- stopApp
+- runFlow: common/open-referral-link.yaml
+- extendedWaitUntil:
+    visible: ".*Referral recognized.*"
+    timeout: 20000

@@ -411,7 +411,6 @@ export default interface Resources {
       "or": "or",
       "pending": "pending",
       "refresh": "Refresh",
-      "rewards": "Rewards",
       "send": "Send",
       "share": "Share",
       "submit": "Submit",
@@ -1227,6 +1226,9 @@ export default interface Resources {
         "placeholder": "your.email@gmail.com",
         "submitError": "Unable to save this email right now. Please try again.",
         "title": "Add your email"
+      },
+      "balance": {
+        "label": "Total balance"
       },
       "distantReauth": {
         "action": "Reconnect",

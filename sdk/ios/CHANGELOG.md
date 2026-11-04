@@ -17,6 +17,13 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **Reopening the sharing sheet right after swiping it away shows the page at once.** The reopened
+  sheet got a web view that was no longer on screen, so the page could not report itself ready and
+  the SDK rebuilt the web view: 1.4 to 3.4 seconds to the page instead of well under one.
+- **Reopening the sharing sheet right after swiping it away no longer leaves it empty.** SwiftUI
+  reports a swiped sheet's dismissal a second time when its animation ends; a share opened in that
+  half second was closed by the late report, and its sheet came up blank. A dismissal now only
+  closes a session whose sheet had appeared.
 - **The share preview image is fetched when the sheet opens.** `shareImageURL`, or the image of
   the product the sheet selects, was only fetched when the user tapped Share, and had 0.3 seconds
   to arrive before the system share sheet opened without it. It is now fetched as soon as the sheet
@@ -28,6 +35,13 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
   was slow to report itself ready, the sheet reloaded it and then gave the reload only 1 second, less
   than a full page load takes, so it fell back to the system share sheet over a page that was about to
   appear. The reload now gets the full page-load budget.
+- **A share tapped while the sharing page is still loading no longer falls back.** The page had
+  2 seconds from the tap to load and report itself ready, but it needs up to 2 more seconds after
+  loading to start, so on a slow device or network the sheet gave up on a working page and opened
+  the system share sheet. Loading still has 2 seconds; starting now gets 3 seconds of its own.
+- **The sharing page no longer appears under the system share sheet it fell back to.** When the
+  sheet fell back, the page it had given up on kept loading and showed up behind the system share
+  sheet, two share screens at once. The sheet now keeps its placeholder until it closes.
 - **Share links always carry a lowercase `utm_source`.** A merchant URL that already had an
   upper-case `UTM_SOURCE` was shared without `utm_source=frak`, so analytics reading the lowercase key
   saw the link as unattributed. Attribution parameters are now added unless the exact lowercase key is

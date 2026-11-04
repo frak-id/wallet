@@ -106,18 +106,36 @@ jarsigner -verify -verbose:summary app/build/outputs/bundle/release/app-release.
 
 There is no separate typecheck step — `assembleDebug` is it.
 
+## End-to-end flows (Maestro)
+
+```bash
+brew install mobile-dev-inc/tap/maestro   # once
+bun run --cwd example/native-android e2e
+```
+
+Builds, installs and runs every flow in `.maestro/` against an emulator: the running one, or the first AVD booted cold. An attached phone is never used, because the flows clear the app's data. Pass flow paths (`e2e .maestro/share-store.yaml`) to run only those. Local only: no Maestro account, analytics off.
+
+- **Locked emulator.** An AVD with a screen lock boots locked, and nothing can launch until the PIN is entered. The script waits for it.
+- **Hangs.** The run is capped at 10 minutes (`MAESTRO_TIMEOUT`), because Maestro's on-device driver can stall when the emulator is overloaded. Cold-boot the emulator and retry.
+- **Text matches the whole label.** Event-log lines start with `[hh:mm:ss]`, so match them as `".*Referral recognized.*"`.
+
 ## Testing inbound deep link referral flow
 
 ```bash
-adb shell am start -a android.intent.action.VIEW -d "https://example-merchant.com/product?fCtx=test_token_123" id.frak.example.android
+adb shell am start -a android.intent.action.VIEW -d "https://example-merchant.com/product?fCtx=Egp5mIC6VEJ2pzTbhyGRG6tq5oEAWj4sHXtPToqcbQ8eLTxLWg" id.frak.example.android
 ```
+
+That `fCtx` is a v2 context for the Development merchant, from another device's client id. The SDK
+refuses a made-up token, so a link carrying one tracks nothing.
 
 With `DeepLinkHandling.Automatic` configured, the SDK's own `ActivityLifecycleCallbacks` picks up the
 intent and calls `appLink.handleReferral` itself; the app only logs that the intent arrived, which is
-all it can honestly observe. Open the **Debug** tab to confirm the SDK actually tracked it.
+all it can honestly observe. Nothing in the harness shows whether the SDK then tracked the arrival:
+the **Debug** tab has no row for it.
 
 Run that command while the app is already running and you are testing the *warm* path, which is a
-different code path (`OnNewIntentProvider`) and the one with no device evidence. The harness logs
-`INFO` there rather than a green tick for exactly that reason.
+different code path (`OnNewIntentProvider`). `.maestro/referral-link-warm.yaml` and
+`referral-link-cold.yaml` drive both on an emulator; they prove delivery to the activity, not the
+tracking.
 
 `example-merchant.com` is a placeholder domain with no `assetlinks.json`, so App Links verification will not pass — that is expected here.

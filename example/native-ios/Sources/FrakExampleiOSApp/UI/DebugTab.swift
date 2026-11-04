@@ -1,3 +1,4 @@
+import FrakSDKUI
 import SwiftUI
 
 /// Everything an engineer needs and a tester may be asked to read out: which stage is live and the
@@ -9,6 +10,13 @@ struct DebugTab: View {
     let debugExport: String
     let isDebugRefreshing: Bool
     let onRefreshDebugInfo: () -> Void
+    let trackingEnabled: Bool?
+    let isInitialized: Bool
+    @Binding var sheetHeightFraction: CGFloat
+    let onSetTracking: (Bool) -> Void
+    let onResetAnonymousId: () -> Void
+    let onShutDown: () -> Void
+    let onInitialize: () -> Void
 
     var body: some View {
         ScrollView {
@@ -16,6 +24,15 @@ struct DebugTab: View {
                 EnvironmentCard(
                     selected: $selectedEnvironment,
                     onSelect: onSelectEnvironment
+                )
+                SdkControlsCard(
+                    trackingEnabled: trackingEnabled,
+                    isInitialized: isInitialized,
+                    sheetHeightFraction: $sheetHeightFraction,
+                    onSetTracking: onSetTracking,
+                    onResetAnonymousId: onResetAnonymousId,
+                    onShutDown: onShutDown,
+                    onInitialize: onInitialize
                 )
                 SdkDebugCard(
                     rows: debugRows,
@@ -61,6 +78,66 @@ private struct EnvironmentCard: View {
             if selected != activeEnvironment {
                 RestartBanner(target: selected)
             }
+        }
+    }
+}
+
+private let sheetHeightOptions: [CGFloat] = [0.5, FrakSharingDefaults.heightFraction, 1.0]
+
+/// The public calls a merchant makes outside a share or a purchase. The model judges each by what
+/// the SDK reads back afterwards, so a call that reports success without effect logs an error.
+private struct SdkControlsCard: View {
+    let trackingEnabled: Bool?
+    let isInitialized: Bool
+    @Binding var sheetHeightFraction: CGFloat
+    let onSetTracking: (Bool) -> Void
+    let onResetAnonymousId: () -> Void
+    let onShutDown: () -> Void
+    let onInitialize: () -> Void
+
+    var body: some View {
+        HarnessCard(
+            title: "SDK controls",
+            subtitle: "Consent, identity and lifecycle calls, and the sharing sheet's height."
+        ) {
+            Toggle("Tracking enabled", isOn: Binding(get: { trackingEnabled ?? false }, set: onSetTracking))
+                .font(.callout)
+                .foregroundColor(FrakTheme.textPrimary)
+                .disabled(trackingEnabled == nil)
+
+            ActionButton(
+                label: "Reset anonymous id",
+                systemImage: "arrow.triangle.2.circlepath",
+                tint: .neutral,
+                isDisabled: !isInitialized,
+                action: onResetAnonymousId
+            )
+
+            HStack(spacing: 8) {
+                ActionButton(
+                    label: "Shut down",
+                    systemImage: "power",
+                    tint: .neutral,
+                    isDisabled: !isInitialized,
+                    action: onShutDown
+                )
+                ActionButton(
+                    label: "Initialize",
+                    systemImage: "play.fill",
+                    isDisabled: isInitialized,
+                    action: onInitialize
+                )
+            }
+
+            Text("Sharing sheet height")
+                .font(.caption)
+                .foregroundColor(FrakTheme.textSecondary)
+            Picker("Sharing sheet height", selection: $sheetHeightFraction) {
+                ForEach(sheetHeightOptions, id: \.self) { fraction in
+                    Text("\(Int((fraction * 100).rounded()))%").tag(fraction)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
         }
     }
 }

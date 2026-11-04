@@ -1,0 +1,13 @@
+appId: id.frak.example.ios
+name: A real referral link reaches the running app
+---
+# Through .onOpenURL into appLink.handleReferral, unlike "Simulate a referral link".
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- runFlow: common/open-referral-link.yaml
+- extendedWaitUntil:
+    visible: ".*Referral recognized.*"
+    timeout: 10000

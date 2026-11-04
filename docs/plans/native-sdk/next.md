@@ -48,9 +48,10 @@ message for the failure case.
 - A **two-destination `NavHost`** in `example/native-android`. This is the precondition for §3.6
   (the orphaned Compose sheet) and cannot be worked around — a single-screen harness cannot
   reproduce it.
-- Call sites for the five public members with none: `setTrackingEnabled`, `resetAnonymousId`,
-  `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. Still none at
-  2026-10-13, after both harnesses were split into tabs; `example/native-android` has no `NavHost`.
+- Call sites in `example/native-android` for the five public members it never calls:
+  `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the
+  `@Composable build()` overload. `example/native-ios` calls its four since 2026-11-04 (Debug tab,
+  "SDK controls"); `example/native-android` still has no `NavHost`.
 
 ## 3. Port `ServerClock` to iOS, and bound it — done 2026-10-23
 

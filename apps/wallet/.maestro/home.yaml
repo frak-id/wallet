@@ -1,0 +1,12 @@
+appId: id.frak.wallet.dev
+name: Wallet home shows the total balance
+---
+# Never clearState: the wallet is logged in by hand once, with a passkey.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- runFlow: common/wallet-home.yaml
+- assertVisible: "Transfer to my bank|Transférer vers ma banque"
+- assertVisible: ".*(Pending|En attente)"
+- assertVisible: ".*(Lifetime|Depuis le début)"
+- assertVisible: "Earnings history|Historique des gains"
+- takeScreenshot: build/maestro/wallet-home

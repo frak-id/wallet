@@ -1,0 +1,18 @@
+appId: id.frak.wallet.dev
+name: Tap the biometric lock switch
+---
+# The switch has no label of its own: it sits right of its row's text.
+# iOS exposes its value as text, and rightOf alone picks another element there.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "[01]"
+          rightOf: "Require .* at every app launch|Demander .* à chaque ouverture de l'app"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          rightOf: "Require .* at every app launch|Demander .* à chaque ouverture de l'app"

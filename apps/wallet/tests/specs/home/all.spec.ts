@@ -67,7 +67,7 @@ test("should display the correct total balance on the home page", async ({
     await homePage.verifyBalanceInformations(420);
 });
 
-// Rewards-card stat triggers open their empty-state modals (zero wallet).
+// Balance-card stat triggers open their empty-state modals (zero wallet).
 // Transfer/Lifetime open the empty modals only when the balance is <= 0, so
 // mock a zero balance rather than relying on the live wallet staying empty.
 const zeroBalance = {
