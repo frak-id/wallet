@@ -1,12 +1,15 @@
 package id.frak.example.android
 
+import android.util.Base64
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.sharing.SharingProduct
+import java.nio.ByteBuffer
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Currency
 import java.util.Locale
+import java.util.UUID
 
 /** Catalog row display model, shared with the iOS harness (same ids, titles, links, images). */
 data class ProductItem(
@@ -51,6 +54,29 @@ const val SAMPLE_ORDER_TOTAL_CENTS = 14999L
 /** `tracking.purchase` needs a customer id and checkout token; both are fabricated for the demo. */
 const val SAMPLE_CUSTOMER_ID = "cust_example_android_001"
 const val SAMPLE_CHECKOUT_TOKEN = "checkout_token_example_9988"
+
+/** Another device's anonymous id: a link carrying this device's own id is ignored as a self-referral. */
+private val SAMPLE_SHARER_CLIENT_ID: UUID = UUID.fromString("5a3e2c1d-7b4f-4e8a-9c6d-0f1e2d3c4b5a")
+
+/**
+ * A friend's share link for [merchantId], with a v2 `fCtx` (header, merchant, uint32 seconds,
+ * client id) encoded by hand because the SDK's codec is internal.
+ */
+fun sampleReferralLink(merchantId: String): String {
+    val merchant = UUID.fromString(merchantId)
+    val bytes =
+        ByteBuffer
+            .allocate(37)
+            .put(0x12)
+            .putLong(merchant.mostSignificantBits)
+            .putLong(merchant.leastSignificantBits)
+            .putInt((System.currentTimeMillis() / 1000).toInt())
+            .putLong(SAMPLE_SHARER_CLIENT_ID.mostSignificantBits)
+            .putLong(SAMPLE_SHARER_CLIENT_ID.leastSignificantBits)
+            .array()
+    val fCtx = Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+    return "$STORE_LINK/product?fCtx=$fCtx"
+}
 
 /** Until `config.resolve()` reports the merchant's own currency. */
 const val FALLBACK_CURRENCY_CODE = "USD"

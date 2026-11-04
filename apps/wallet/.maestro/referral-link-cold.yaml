@@ -1,0 +1,37 @@
+appId: id.frak.wallet.dev
+name: A referral link launches the stopped wallet on its code entry page
+---
+# FRA-374: a cold-start link must reach the router, not the home.
+# Read-only: the code is only prefilled, never submitted.
+- launchApp
+- runFlow: common/wallet-home.yaml
+- stopApp
+- openLink: "frakwallet-dev://r/TEST02"
+# iOS confirms a custom-scheme link with "Open in “Frak Wallet Dev”?".
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Open|Ouvrir"
+          timeout: 5000
+          optional: true
+      - tapOn:
+          text: "Open|Ouvrir"
+          optional: true
+# Join page while a game is open, else the referral redeem page; never the home.
+- extendedWaitUntil:
+    visible: "Game code|Code du jeu|Referral code|Code de parrainage"
+    timeout: 30000
+    label: "The stopped wallet opened on a code entry page"
+- extendedWaitUntil:
+    visible: "TEST02"
+    timeout: 15000
+    label: "The link's code fills the code field"
+- takeScreenshot: build/maestro/wallet-referral-link-cold
+# Scoped: on Android an open keyboard shows its own "Back" button.
+- tapOn:
+    text: "Back|Retour"
+    above: "Join the game|Participer au jeu|\
+      Got a referral code\\?|Tu as reçu un code \\?"
+- runFlow: common/wallet-home.yaml

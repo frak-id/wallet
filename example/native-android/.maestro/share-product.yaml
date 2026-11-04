@@ -1,0 +1,24 @@
+appId: id.frak.example.android
+name: Share one product, then dismiss the sheet
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Share this product"
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    text: "Share this product"
+    index: 0
+- extendedWaitUntil:
+    visible: "Share with your friends"
+    timeout: 20000
+- takeScreenshot: build/maestro/share-product-sheet
+- back
+- extendedWaitUntil:
+    visible: ".*Sharing sheet dismissed by user\\."
+    timeout: 5000
+- assertVisible: ".*Opening the share sheet for 'Babies camel cuir velours bout carré'.*"

@@ -1,0 +1,31 @@
+appId: id.frak.wallet.dev
+name: The biometric lock is turned on from the profile
+---
+# Run by e2e-{android,ios}.sh only, which answers the biometric check that turning it on asks.
+- launchApp
+- runFlow: ../common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- scrollUntilVisible:
+    element: "Require .* at every app launch|Demander .* à chaque ouverture de l'app"
+    direction: DOWN
+    centerElement: true
+- runFlow:
+    file: tap-switch.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.android.systemui:id/biometric_icon"
+          timeout: 15000
+          label: "Turning the lock on asks for the fingerprint"
+# iOS: the script answers Face ID while this flow runs, so wait here for the answer.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "Lock after|Verrouiller après"
+          timeout: 30000
+          label: "Face ID turned the lock on"

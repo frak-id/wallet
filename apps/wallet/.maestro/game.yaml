@@ -1,0 +1,49 @@
+appId: id.frak.wallet.dev
+name: The game card opens the game or its join page
+---
+# Read-only: never submits a game code, never connects Instagram.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- runFlow: common/wallet-home.yaml
+# Home shows a card only while a game is open or a recent one has a result.
+- scrollUntilVisible:
+    element: "(Frak Game|Jeu Frak).*"
+    direction: DOWN
+    centerElement: true
+    optional: true
+- runFlow:
+    when:
+      visible: "(Frak Game|Jeu Frak).*"
+    commands:
+      - tapOn: "(Frak Game|Jeu Frak).*"
+      - extendedWaitUntil:
+          visible: "Back|Retour"
+          timeout: 15000
+          label: "The game card left the wallet home"
+      # Playing, or a draw to read: the game page. First, so its return home
+      # leaves the join branch below nothing to match.
+      - runFlow:
+          when:
+            visible: "Back|Retour"
+            notVisible: "Game code|Code du jeu"
+          commands:
+            - assertVisible: "Frak Game|Jeu Frak"
+            - extendedWaitUntil:
+                visible: "Missions|.*(ticket|drawn|tiré au sort|\
+                  No game right now|Aucun jeu en cours).*"
+                timeout: 15000
+                label: "The game page shows the missions, a result, or no game"
+            - takeScreenshot: build/maestro/wallet-game
+            - tapOn: "Back|Retour"
+      # Not playing yet: the card leads to the code entry page.
+      - runFlow:
+          when:
+            visible: "Game code|Code du jeu"
+          commands:
+            - assertVisible: "Join the game|Participer au jeu"
+            - takeScreenshot: build/maestro/wallet-game-join
+            # Scoped: on Android an open keyboard shows its own "Back" button.
+            - tapOn:
+                text: "Back|Retour"
+                above: "Join the game|Participer au jeu"
+- runFlow: common/wallet-home.yaml

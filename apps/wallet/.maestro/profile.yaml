@@ -1,0 +1,19 @@
+appId: id.frak.wallet.dev
+name: Profile tab lists the account entries
+---
+# Never clearState: the wallet is logged in by hand once, with a passkey.
+# Texts match English|French: the wallet keeps the language of its first launch.
+- launchApp
+- runFlow: common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- extendedWaitUntil:
+    visible: "Referrals|Parrainages"
+    timeout: 10000
+- assertVisible: "My favorite brands|Mes marques favorites"
+- assertVisible: "Secure your wallet|Renforce la sécurité de ton porte-monnaie"
+- scrollUntilVisible:
+    element: "Help & support|Aide & support"
+    direction: DOWN
+- takeScreenshot: build/maestro/wallet-profile
+- tapOn: "Wallet|Porte-monnaie"
+- runFlow: common/wallet-home.yaml

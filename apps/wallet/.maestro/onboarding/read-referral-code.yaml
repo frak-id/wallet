@@ -1,0 +1,39 @@
+appId: id.frak.wallet.dev
+name: The wallet about to be replaced shares its referral code
+---
+# Run by e2e-{android,ios}.sh before to-passkey.yaml: the new wallet redeems this code.
+# A wallet without one gets a code generated, a lasting change to that wallet only.
+- launchApp
+- runFlow: ../common/wallet-home.yaml
+- tapOn: "Profile|Profil"
+- tapOn: "Referrals|Parrainages"
+- extendedWaitUntil:
+    visible: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+    timeout: 15000
+    label: "Referral status loaded"
+- runFlow:
+    when:
+      visible: "Generate my code|Générer mon code"
+    commands:
+      - tapOn: "Generate my code|Générer mon code"
+      - tapOn: "Generate automatically|Générer automatiquement"
+      - tapOn: "Validate my code|Valider mon code"
+      - extendedWaitUntil:
+          visible: "Share my code|Partager mon code"
+          timeout: 15000
+          label: "The generated code is saved"
+- runFlow:
+    when:
+      notVisible: "Share my code|Partager mon code"
+    commands:
+      - tapOn: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+- extendedWaitUntil:
+    visible: "Share my code|Partager mon code"
+    timeout: 15000
+# Maestro matches text case-insensitively, so the anchors keep "Back" out of the pattern.
+- copyTextFrom:
+    text: "[A-Z0-9]{4,12}"
+    below: "My referral code|Mon code de parrainage"
+    above: "Active since|Actif depuis le"
+# The script reads this line from the debug log.
+- evalScript: ${console.log("FRAK_REFERRAL_CODE=" + maestro.copiedText)}

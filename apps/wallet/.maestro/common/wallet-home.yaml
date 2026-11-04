@@ -1,0 +1,8 @@
+appId: id.frak.wallet.dev
+name: Wallet home is visible
+---
+# The only place naming the wallet home: every flow waits on it via runFlow.
+- extendedWaitUntil:
+    visible: "Total balance|Solde total"
+    timeout: 30000
+    label: "Wallet home (else: logged out, an alert on top, or dev server down)"

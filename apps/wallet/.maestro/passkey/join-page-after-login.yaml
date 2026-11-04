@@ -1,0 +1,20 @@
+appId: id.frak.wallet.dev
+name: After the login, the link's code waits on its code entry page
+---
+# Half two of logout-cold-link.yaml: no launchApp, the login left it here.
+# Read-only: the code is only prefilled, never submitted.
+# Join page while a game is open, else the referral redeem page; never the home.
+- extendedWaitUntil:
+    visible: "Game code|Code du jeu|Referral code|Code de parrainage"
+    timeout: 60000
+    label: "After the login, the link's code waits on a code entry page"
+- extendedWaitUntil:
+    visible: "TEST02"
+    timeout: 15000
+    label: "The link's code fills the code field"
+- takeScreenshot: build/maestro/wallet-referral-link-logged-out
+- tapOn:
+    text: "Back|Retour"
+    above: "Join the game|Participer au jeu|\
+      Got a referral code\\?|Tu as reçu un code \\?"
+- runFlow: ../common/wallet-home.yaml
