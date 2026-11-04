@@ -137,6 +137,16 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
 - `GITHUB_TOKEN` is optional locally but caps at 60 requests/hour without it, which is not enough for
   the action pins alone.
 
+## The PR review
+
+- **`pr-review.ts` is the deterministic half of `.github/workflows/pr-review.yml`.** `annotate` prefixes
+  each new-side diff line with its file line number, which is the number the agent cites. `post`
+  parses the agent's JSON, posts a finding inline only when all its lines sit in one hunk (GitHub
+  rejects the whole review otherwise), and puts the rest in the summary comment.
+- **It posts as Frak Bot, a GitHub App**: `vars.FRAK_BOT_CLIENT_ID` + `secrets.FRAK_BOT_PRIVATE_KEY`.
+  Comments are found again by marker and by the App's own login, because an App can only edit or
+  delete its own comments. Each run deletes the previous run's inline comments that nobody replied to.
+
 ## Anti-Patterns
 
 `console.log` outside the JSON payload in `dependency-inventory.ts` (stdout must stay a clean
