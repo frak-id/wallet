@@ -55,7 +55,7 @@ const appOrigin = new URL(WALLET_URL).origin;
 
 // Real-dev: the page origin is wallet-dev.frak.id resolved to the local server; the service worker refuses its mkcert cert without the flag.
 const browser = await (onWebkit ? webkit : chromium).launch({
-    headless: true,
+    headless: process.env.VERIFY_HEADED !== "1",
     args: realDev
         ? [
               "--ignore-certificate-errors",
