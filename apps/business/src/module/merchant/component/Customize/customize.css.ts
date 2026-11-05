@@ -106,12 +106,6 @@ export const advancedBody = style({
     paddingTop: alias.spacing.xs,
 });
 
-export const colorRow = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-});
-
 export const colorField = style({
     flex: 1,
     minWidth: 0,
@@ -119,9 +113,6 @@ export const colorField = style({
 
 /** Reserves the widest action set, so a row without "none" keeps field width. */
 export const colorActions = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
     flexShrink: 0,
     minWidth: "150px",
 });
