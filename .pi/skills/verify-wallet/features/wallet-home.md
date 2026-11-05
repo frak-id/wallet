@@ -25,7 +25,7 @@ Preconditions:
 - Default seeded session (do not pass `--logged-out`).
 
 - **Whole recipe.** Run `H flow spa .pi/skills/verify-wallet/flows/wallet-home.mjs`. Verdict `PASS`, steps `01-wallet` … `05-explorer`. The flow answers `/user/wallet/balance` with a zero balance itself, because the empty-state dialogs below need one.
-- **Render.** `page.goto(url + "/wallet")`, then `expect(getByRole("heading", { name: "Wallet", level: 1 })).toBeVisible()`. With the light mocks the Rewards card reads `12 ,50 EUR` and the Lifetime card is `button "€12.50 Lifetime"` (see Gotchas).
+- **Render.** `page.goto(url + "/wallet")`, then `expect(getByRole("heading", { name: "Wallet", level: 1 })).toBeVisible()`. With the light mocks the Rewards card reads `€12 .50` and the Lifetime card is `button "€12.50 Lifetime"` (see Gotchas).
 - **Pending card.** `getByRole("button", { name: "€0 Pending", exact: true }).click()`. `dialog "You don't have any earnings yet"` is visible; its `Close` button hides it.
 - **Lifetime card.** `getByRole("button", { name: "€0 Lifetime", exact: true }).click()`. `dialog "You haven't transferred any earnings yet"` with a `Got it` button.
 - **Transfer.** `getByRole("button", { name: "Transfer to my bank" }).click()`. `dialog "You don't have any money to transfer yet"` with a `Discover offers` button.

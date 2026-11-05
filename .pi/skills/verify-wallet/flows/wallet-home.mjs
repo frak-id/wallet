@@ -17,7 +17,7 @@ export default async ({ page, url, step, expect }) => {
     await expect(
         page.getByRole("heading", { name: "Wallet", level: 1 })
     ).toBeVisible();
-    await expect(page.getByRole("main")).toContainText("0,00EUR");
+    await expect(page.getByRole("main")).toContainText("Total balance€0.00");
     await expect(
         page.getByRole("heading", { name: "Earnings history", level: 2 })
     ).toBeVisible();
