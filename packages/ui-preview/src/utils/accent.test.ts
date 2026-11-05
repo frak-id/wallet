@@ -7,6 +7,11 @@ describe("accentInk", () => {
         ["#ffffff", "#000"],
         ["#b00020", "#fff"],
         ["#111111", "#fff"],
+        ["#d209ec", "#fff"],
+        ["#e90c0c", "#fff"],
+        ["#16a34a", "#fff"],
+        ["#ff6600", "#000"],
+        ["#00a3ff", "#000"],
     ])("picks the readable ink for %s", (hex, ink) => {
         expect(accentInk(hex)).toBe(ink);
     });

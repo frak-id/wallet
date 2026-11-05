@@ -29,7 +29,6 @@ const VISIBLE_DISTANCE = 60;
 const DEFAULT_ACCENT = "rgb(17, 17, 17)";
 const DEFAULT_TAG_BG = "rgb(255, 255, 255)";
 const WHITE = "rgb(255, 255, 255)";
-const BLACK = "rgb(0, 0, 0)";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const TAG_TINT = 0.08;
 // A host h1 no bigger than this many body sizes is an unstyled reset, not a title style.
@@ -459,10 +458,9 @@ function rgbFromHex(hex: string): string {
  */
 function dashboardKnobs(anchor: HTMLElement, hex: string): Knob[] {
     const fill = rgbFromHex(hex);
+    // White until it stops reading: max-contrast flips to black on saturated mid-tones people read better in white.
     const ink =
-        contrastRatio(fill, WHITE) >= contrastRatio(fill, BLACK)
-            ? "#fff"
-            : "#000";
+        contrastRatio(fill, WHITE) >= READABLE_CONTRAST ? "#fff" : "#000";
     const knobs: Knob[] = [
         ["accent", hex],
         ["accent-ink", ink],
