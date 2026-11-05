@@ -24,8 +24,9 @@ Usage:
   verify-wallet.sh check [--evidence DIR] -- <playwright args for playwright.light.config.ts>
 
 flow   starts its own server on a free port, runs the flow in headless Chromium
-       (Pixel 7 by default) with backend/RPC/analytics mocked and every other
-       off-origin request blocked, then stops the server.
+       (visible with VERIFY_HEADED=1; Pixel 7 by default) with backend/RPC/
+       analytics mocked and every other off-origin request blocked, then stops
+       the server.
        --real-dev: no mocks. The local SPA is served as https://wallet-dev.frak.id
        and logs in (registering once) to the real gcp-dev backend and Arbitrum
        Sepolia with a persisted test passkey. Writes to the shared dev database.
