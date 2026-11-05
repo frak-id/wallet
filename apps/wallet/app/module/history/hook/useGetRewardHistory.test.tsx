@@ -1,7 +1,11 @@
 /** @jsxImportSource react */
-import { renderHook, waitFor } from "@testing-library/react";
+import { rewardsKey } from "@frak-labs/wallet-shared";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
+import {
+    useGetRewardHistory,
+    useTrimRewardHistoryOnLeave,
+} from "@/module/history/hook/useGetRewardHistory";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 vi.mock("wagmi", () => ({
@@ -192,4 +196,236 @@ describe("useGetRewardHistory", () => {
 
         expect(result.current.totalCount).toBe(1);
     });
+
+    test("loads older rewards page by page until the total is reached", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+
+        const get = await serveHistory(rewards(25));
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        expect(result.current.hasNextPage).toBe(true);
+
+        await act(() => result.current.fetchNextPage());
+
+        await waitFor(() => expect(result.current.items).toHaveLength(25));
+        expect(result.current.items.at(-1)?.id).toBe("asset-25");
+        expect(result.current.hasNextPage).toBe(false);
+        expect(get).toHaveBeenLastCalledWith({
+            query: { offset: 20, limit: 20 },
+        });
+    });
+
+    test("shows a reward once when a new reward shifts the next page", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+
+        const all = rewards(25);
+        await serveHistory(all);
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+
+        all.unshift({ ...mockItem, id: "asset-new" });
+        await act(() => result.current.fetchNextPage());
+
+        await waitFor(() => expect(result.current.hasNextPage).toBe(false));
+        const ids = result.current.items.map((item) => item.id);
+        expect(ids).toHaveLength(25);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test("keeps only the first page once the history page is left", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+        await serveHistory(rewards(25));
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        const historyPage = renderHook(() => useTrimRewardHistoryOnLeave(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await act(() => result.current.fetchNextPage());
+        await waitFor(() => expect(result.current.items).toHaveLength(25));
+
+        historyPage.unmount();
+
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        expect(result.current.hasNextPage).toBe(true);
+    });
+
+    test("keeps the trim when the history page is left mid-load", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+        const get = await serveHistory(rewards(45));
+        const serve = get.getMockImplementation();
+        let releaseLastPage = () => {};
+        get.mockImplementation((async (options?: {
+            query?: { offset?: number };
+        }) => {
+            if (options?.query?.offset === 40) {
+                await new Promise<void>((resolve) => {
+                    releaseLastPage = resolve;
+                });
+            }
+            return serve?.(options as never);
+        }) as any);
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        const historyPage = renderHook(() => useTrimRewardHistoryOnLeave(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await act(() => result.current.fetchNextPage());
+        await waitFor(() => expect(result.current.items).toHaveLength(40));
+        act(() => {
+            void result.current.fetchNextPage();
+        });
+        await waitFor(() =>
+            expect(result.current.isFetchingNextPage).toBe(true)
+        );
+
+        historyPage.unmount();
+        await act(async () => releaseLastPage());
+
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        expect(result.current.items).toHaveLength(20);
+    });
+
+    test("keeps the trim when the wallet home replaces the history page", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+        await serveHistory(rewards(45));
+        const seen: { items: number; next?: () => Promise<unknown> } = {
+            items: 0,
+        };
+        function HistoryPage() {
+            const history = useGetRewardHistory();
+            useTrimRewardHistoryOnLeave();
+            seen.items = history.items.length;
+            seen.next = history.fetchNextPage;
+            return null;
+        }
+        function Home() {
+            seen.items = useGetRewardHistory().items.length;
+            return null;
+        }
+        const Wrapper = queryWrapper.wrapper;
+        const view = render(
+            <Wrapper>
+                <HistoryPage />
+            </Wrapper>
+        );
+        await waitFor(() => expect(seen.items).toBe(20));
+        await act(async () => {
+            await seen.next?.();
+        });
+        await act(async () => {
+            await seen.next?.();
+        });
+        await waitFor(() => expect(seen.items).toBe(45));
+
+        view.rerender(
+            <Wrapper>
+                <Home />
+            </Wrapper>
+        );
+
+        await act(() => new Promise((resolve) => setTimeout(resolve, 150)));
+        expect(seen.items).toBe(20);
+    });
+
+    test("keeps the first page's fetch time when the history page is left", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+        await serveHistory(rewards(25));
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        const historyPage = renderHook(() => useTrimRewardHistoryOnLeave(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        await act(() => result.current.fetchNextPage());
+        await waitFor(() => expect(result.current.items).toHaveLength(25));
+        const historyQuery = () =>
+            queryWrapper.client
+                .getQueryCache()
+                .find({ queryKey: rewardsKey.histories(), exact: false });
+        const fetchedAt = historyQuery()?.state.dataUpdatedAt;
+        expect(fetchedAt).toBeGreaterThan(0);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        historyPage.unmount();
+
+        await waitFor(() => expect(result.current.items).toHaveLength(20));
+        expect(historyQuery()?.state.dataUpdatedAt).toBe(fetchedAt);
+    });
+
+    function rewards(count: number) {
+        return Array.from({ length: count }, (_, index) => ({
+            ...mockItem,
+            id: `asset-${index + 1}`,
+        }));
+    }
+
+    async function serveHistory(all: ReturnType<typeof rewards>) {
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        const get = vi.mocked(authenticatedWalletApi.rewards.history.get);
+        get.mockImplementation((async (options?: {
+            query?: { offset?: number; limit?: number };
+        }) => {
+            const offset = options?.query?.offset ?? 0;
+            const limit = options?.query?.limit ?? 20;
+            return createSuccessResponse({
+                items: all.slice(offset, offset + limit),
+                totalCount: all.length,
+            });
+        }) as any);
+        return get;
+    }
 });

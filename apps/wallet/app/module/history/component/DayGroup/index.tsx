@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 /**
  * Component for an history day group with optional per-day totals
  */
-export function HistoryDayGroup<T>({
+export function HistoryDayGroup<T extends { id: string }>({
     group,
     innerComponent,
     dayTotals,
@@ -34,8 +34,8 @@ export function HistoryDayGroup<T>({
                 )}
             </Inline>
             <Card padding="none">
-                {items.map((item, index) => (
-                    <Box key={`${day}-${index}`}>{innerComponent(item)}</Box>
+                {items.map((item) => (
+                    <Box key={item.id}>{innerComponent(item)}</Box>
                 ))}
             </Card>
         </Stack>
