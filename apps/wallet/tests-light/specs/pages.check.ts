@@ -3,7 +3,7 @@ import { expect, test } from "../fixtures";
 test.describe("Wallet Dashboard", () => {
     test("should render the wallet page", async ({ page }) => {
         await page.goto("/wallet");
-        await expect(page.getByRole("main")).toContainText("12,50EUR");
+        await expect(page.getByRole("main")).toContainText("€12.50");
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveScreenshot("wallet-dashboard.png", {
             animations: "disabled",
@@ -29,7 +29,9 @@ test.describe("Wallet Dashboard", () => {
         );
 
         await page.goto("/wallet");
-        await expect(page.getByRole("main")).toContainText("0,00EUR");
+        await expect(page.getByRole("main")).toContainText(
+            "Total balance€0.00"
+        );
         await page.getByRole("button", { name: "Transfer to my bank" }).click();
         const emptyTransfer = page.getByRole("dialog", {
             name: "You don't have any money to transfer yet",

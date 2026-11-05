@@ -56,12 +56,6 @@ export const amountDecimals = style({
     lineHeight: 1,
 });
 
-export const currencySuffix = style({
-    fontSize: fontSize.m,
-    color: vars.text.secondary,
-    marginLeft: alias.spacing.xxs,
-});
-
 export const statCardsRow = style({
     display: "flex",
     flexDirection: "row",

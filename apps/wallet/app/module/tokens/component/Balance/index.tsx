@@ -19,8 +19,23 @@ import { useGetPendingRewards } from "@/module/tokens/hook/useGetPendingRewards"
 import { useGetUnpaidRewards } from "@/module/tokens/hook/useGetUnpaidRewards";
 import * as styles from "./index.css";
 
+function balanceRuns(amount: number, locale: string) {
+    const runs: { decimals: boolean; text: string }[] = [];
+    const parts = new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "EUR",
+    }).formatToParts(amount);
+    for (const part of parts) {
+        const decimals = part.type === "decimal" || part.type === "fraction";
+        const last = runs.at(-1);
+        if (last?.decimals === decimals) last.text += part.value;
+        else runs.push({ decimals, text: part.value });
+    }
+    return runs;
+}
+
 export function Balance() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { userBalance } = useGetUserBalance();
     const [isHidden, setIsHidden] = useState(
         () => localStorage.getItem("frak_balance_hidden") === "true"
@@ -29,7 +44,6 @@ export function Balance() {
     const openModal = modalStore((s) => s.openModal);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
-    const [integerPart, decimalPart] = amount.toFixed(2).split(".");
 
     const handleTransferClick = () => {
         if (amount <= 0) {
@@ -77,17 +91,18 @@ export function Balance() {
                         {isHidden ? (
                             <span className={styles.amountInteger}>••••</span>
                         ) : (
-                            <>
-                                <span className={styles.amountInteger}>
-                                    {integerPart}
+                            balanceRuns(amount, i18n.language).map((run) => (
+                                <span
+                                    key={run.text}
+                                    className={
+                                        run.decimals
+                                            ? styles.amountDecimals
+                                            : styles.amountInteger
+                                    }
+                                >
+                                    {run.text}
                                 </span>
-                                <span className={styles.amountDecimals}>
-                                    ,{decimalPart}
-                                </span>
-                                <span className={styles.currencySuffix}>
-                                    EUR
-                                </span>
-                            </>
+                            ))
                         )}
                     </Box>
                 </Box>
