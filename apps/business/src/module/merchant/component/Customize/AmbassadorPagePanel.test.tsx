@@ -192,6 +192,19 @@ describe("AmbassadorPagePanel", () => {
         expect(editSdkConfig).not.toHaveBeenCalled();
     });
 
+    it("tells the merchant which field is wrong when the accent colour is invalid", async () => {
+        const { save } = renderPanel({});
+        const hex = screen.getByTestId("accentColor-hex");
+        fireEvent.change(hex, { target: { value: "#fd0" } });
+
+        await expect(save()).rejects.toThrow();
+        await act(async () => {});
+        expect(
+            await screen.findByText("customize.ambassador.accent.invalid")
+        ).toBeInTheDocument();
+        expect(hex).toHaveAttribute("aria-invalid", "true");
+    });
+
     it("paints the previews with the unsaved accent colour", () => {
         const view = renderPanel({});
         fireEvent.change(screen.getByTestId("accentColor-hex"), {
