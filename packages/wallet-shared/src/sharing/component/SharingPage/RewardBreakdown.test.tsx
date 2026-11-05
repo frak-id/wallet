@@ -25,7 +25,7 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
     }
 };
 
-// `formatAmount` uses a narrow no-break space; Testing Library normalizes DOM
+// `formatAmount` uses no-break spaces; Testing Library normalizes DOM
 // whitespace to plain spaces, so align expected strings the same way.
 const fmt = (eur: number) => formatAmount(eur).replace(/\s/g, " ");
 
@@ -80,6 +80,23 @@ describe("RewardBreakdown", () => {
         // Bounded range + open-ended top tier appear once per audience.
         expect(screen.getAllByText(`0\u2013${fmt(50)}`)).toHaveLength(2);
         expect(screen.getAllByText(`${fmt(50)} and above`)).toHaveLength(2);
+    });
+
+    it("groups the lower bound of a range like the upper one", () => {
+        const referrer = tiered([
+            { minValue: 1000, maxValue: 5000, amount: tokenAmount(50) },
+            { minValue: 12.5, maxValue: 20, amount: tokenAmount(1) },
+            { minValue: 12.999, maxValue: 30, amount: tokenAmount(2) },
+        ]);
+
+        render(<RewardBreakdown referrer={referrer} t={t} />);
+
+        const exact = { normalizer: (text: string) => text };
+        expect(
+            screen.getByText("1\u00a0000–5\u00a0000\u00a0€", exact)
+        ).toBeInTheDocument();
+        expect(screen.getByText("12,5–20\u00a0€", exact)).toBeInTheDocument();
+        expect(screen.getByText("13–30\u00a0€", exact)).toBeInTheDocument();
     });
 
     it("renders a percentage reward with a worked example at the 100 reference basket", () => {
