@@ -3,8 +3,9 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { HistoryGroup } from "@frak-labs/wallet-shared";
+import { formatCurrency, type HistoryGroup } from "@frak-labs/wallet-shared";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component for an history day group with optional per-day totals
@@ -43,10 +44,10 @@ export function HistoryDayGroup<T extends { id: string }>({
 }
 
 function DayTotal({ amount }: { amount: number }) {
-    const formatted = `+${amount.toFixed(2).replace(".", ",")}€`;
+    const { i18n } = useTranslation();
     return (
         <Text variant="caption" color="secondary">
-            {formatted}
+            +{formatCurrency(amount, "EUR", i18n.language)}
         </Text>
     );
 }
