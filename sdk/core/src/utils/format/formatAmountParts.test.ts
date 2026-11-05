@@ -14,7 +14,7 @@ describe("formatAmountParts", () => {
 
     it("keeps the locale group separators in the integer", () => {
         const parts = formatAmountParts(1500);
-        expect(parts.integer.replace(/\s|\u00a0|\u202f/g, " ")).toBe("1 500");
+        expect(parts.integer).toBe("1\u00a0500");
         expect(parts.unit).toBe("€");
     });
 

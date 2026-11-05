@@ -61,6 +61,7 @@ export {
     type FlowOutcome,
     type FlowStartExtras,
     type FreshSdkResult,
+    formatAmountRange,
     formatCurrency,
     getErrorCode,
     getErrorStatus,

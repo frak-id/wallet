@@ -1,6 +1,7 @@
 import type { Currency } from "../../types";
 import { getSupportedCurrency } from "./getSupportedCurrency";
 import { getSupportedLocale } from "./getSupportedLocale";
+import { widenGroupSeparator } from "./widenGroupSeparator";
 
 /**
  * A formatted amount, pre-split into the pieces a display surface styles
@@ -56,7 +57,7 @@ export function formatAmountParts(
         switch (part.type) {
             case "integer":
             case "group":
-                integer += part.value;
+                integer += widenGroupSeparator(part.value);
                 seenInteger = true;
                 break;
             case "decimal":

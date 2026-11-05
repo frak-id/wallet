@@ -1,6 +1,7 @@
 import type { Currency } from "../../types";
 import { getSupportedCurrency } from "./getSupportedCurrency";
 import { getSupportedLocale } from "./getSupportedLocale";
+import { widenGroupSeparator } from "./widenGroupSeparator";
 
 /**
  * Format a numeric amount as a localized currency string
@@ -15,10 +16,12 @@ export function formatAmount(amount: number, currency?: Currency) {
     // Get the supported currency (e.g. "eur")
     const supportedCurrency = getSupportedCurrency(currency);
 
-    return amount.toLocaleString(supportedLocale, {
-        style: "currency",
-        currency: supportedCurrency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-    });
+    return widenGroupSeparator(
+        amount.toLocaleString(supportedLocale, {
+            style: "currency",
+            currency: supportedCurrency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        })
+    );
 }

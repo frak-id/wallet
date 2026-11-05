@@ -142,6 +142,7 @@ export { recoveryHintStorage } from "./storage/recoveryHint";
 // Tauri
 export { getInvoke } from "./tauri";
 export {
+    formatAmountRange,
     formatCurrency,
     widenGroupSeparator,
 } from "./utils/formatCurrency";
