@@ -1,3 +1,4 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { type Ref, useEffect, useRef } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -51,7 +52,7 @@ export function ColorControl({
 
     return (
         <EditField label={label}>
-            <div className={styles.colorRow}>
+            <Inline space="xs" alignY="center" wrap={false}>
                 <FormControl className={styles.colorField}>
                     <Input
                         variant="bare"
@@ -73,7 +74,12 @@ export function ColorControl({
                         }}
                     />
                 </FormControl>
-                <div className={styles.colorActions}>
+                <Inline
+                    space="xs"
+                    alignY="center"
+                    wrap={false}
+                    className={styles.colorActions}
+                >
                     <input
                         type="color"
                         className={styles.colorSwatch}
@@ -108,8 +114,8 @@ export function ColorControl({
                             {t("customize.components.style.none")}
                         </button>
                     )}
-                </div>
-            </div>
+                </Inline>
+            </Inline>
         </EditField>
     );
 }
