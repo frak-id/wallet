@@ -687,6 +687,18 @@ describe("useHostTheme", () => {
             expect(knob(dark, "accent-ink")).toBe("#fff");
         });
 
+        it.each([
+            ["#c212d9", "#fff"],
+            ["#d209ec", "#fff"],
+            ["#16a34a", "#fff"],
+            ["#ff6600", "#000"],
+        ])("inks %s white only while white still reads at 3:1", (hex, ink) => {
+            const root = makeRoot(false);
+            mount({ current: root }, hex);
+
+            expect(knob(root, "accent-ink")).toBe(ink);
+        });
+
         it("sends the figures' text to the text colour when the accent is too light for the page", () => {
             const root = makeRoot(false);
             mount({ current: root }, YELLOW);

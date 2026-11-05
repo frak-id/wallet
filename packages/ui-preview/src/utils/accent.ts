@@ -10,12 +10,9 @@ function luminance(hex: string): number {
     return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
 }
 
-/** Black or white, whichever reads better on `hex`; the pick `<frak-ambassador>` makes. */
+/** White until it drops below 3:1 on `hex`, then black; the pick `<frak-ambassador>` makes. */
 export function accentInk(hex: string): "#000" | "#fff" {
-    const lum = luminance(hex) + 0.05;
-    const againstWhite = 1.05 / lum;
-    const againstBlack = lum / 0.05;
-    return againstBlack > againstWhite ? "#000" : "#fff";
+    return 1.05 / (luminance(hex) + 0.05) >= 3 ? "#fff" : "#000";
 }
 
 /** The two knobs the page's buttons read; `undefined` leaves the stylesheet default. */
