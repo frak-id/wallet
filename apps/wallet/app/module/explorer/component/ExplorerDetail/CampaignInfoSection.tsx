@@ -16,6 +16,7 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
+import { formatAmountRange } from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -351,7 +352,7 @@ function TierRow({
             ? t("explorer.detail.tierAndAbove", {
                   min: formatAmount(tier.minValue),
               })
-            : `${tier.minValue}–${formatAmount(tier.maxValue)}`;
+            : formatAmountRange(tier.minValue, tier.maxValue);
 
     if ("amount" in tier) {
         return (

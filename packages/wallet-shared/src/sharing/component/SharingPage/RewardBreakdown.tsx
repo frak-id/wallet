@@ -6,6 +6,7 @@ import {
     isMatchedItemsBasis,
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
+import { formatAmountRange } from "../../../common/utils/formatCurrency";
 import * as styles from "./sharingPage.css";
 import type { SharingT } from "./types";
 
@@ -113,7 +114,7 @@ function TierRow({
             ? t("sdk.sharingPage.faq.reward.tierAndAbove", {
                   min: formatAmount(tier.minValue),
               })
-            : `${tier.minValue}–${formatAmount(tier.maxValue)}`;
+            : formatAmountRange(tier.minValue, tier.maxValue);
 
     if ("amount" in tier) {
         return (
