@@ -1,13 +1,14 @@
 name: "🔎 PR review"
 
 # One pi agent reviews each non-draft PR. Frak Bot (a GitHub App) posts each
-# finding on the line it cites, and the rest in one summary comment edited in
-# place; every push replaces the previous run's inline comments that nobody
-# answered. Same lighter pi as the dependency report: no extensions, no skills,
-# read-only tools. The trust boundary is the
-# same-repo filter on the job, not the tools: the agent can still read the proxy
-# key from its own env, which is acceptable only because every reviewed author
-# can already read it by editing this workflow in their PR.
+# blocker or major on its line, and the rest in one summary comment edited in
+# place, under a verdict. The summary stores the head it reviewed; the next run
+# reads it with the replies people left, and may add a new minor only on a line
+# changed since. The agent is the lighter pi of the dependency report: no
+# extensions, no skills, read-only tools. The trust boundary is the same-repo
+# filter on the job, not the tools: the agent can still read the proxy key from
+# its own env, which is acceptable only because every reviewed author can
+# already read it by editing this workflow in their PR.
 
 on:
   pull_request:
@@ -85,19 +86,45 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT_LOGIN: ${{ steps.app-token.outputs.app-slug }}[bot]
+          PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           exclude=(':(exclude)bun.lock' ':(exclude)**/Cargo.lock' ':(exclude)**/composer.lock' ':(exclude)**/Package.resolved')
           git diff "${BASE_SHA}...${HEAD_SHA}" -- . "${exclude[@]}" > "${RUNNER_TEMP}/pr.diff"
+
+          # Empty when this PR has no readable earlier review.
+          prev=$(bun scripts/pr-review.ts history --out "${RUNNER_TEMP}/history.md")
+          since=()
+          no_delta=''
+          if [ -n "${prev}" ]; then
+            # Repo is public: no credentials needed. A force-pushed-away head can be gone.
+            git fetch --no-tags --quiet origin "${prev}" || true
+            if git cat-file -e "${prev}^{commit}" 2>/dev/null; then
+              git diff "${prev}" "${HEAD_SHA}" -- . "${exclude[@]}" > "${RUNNER_TEMP}/delta.diff"
+              since=(--since "${RUNNER_TEMP}/delta.diff")
+            else
+              echo "::notice::The last reviewed head ${prev} is not available; no line is marked as new."
+              no_delta="No line is marked, because the last reviewed head is not available: every line counts as changed."
+            fi
+          else
+            echo "::notice::No earlier review state on this PR; reviewing in full."
+          fi
           {
             jq -r '.pull_request | "# \(.title)\n\nBase: \(.base.ref) (\(.base.sha))\nHead: \(.head.ref) (\(.head.sha))\n\n## Description\n\n\(.body // "(none)")\n"' "${GITHUB_EVENT_PATH}"
             echo '## Diff stat'
             echo
             git diff --stat "${BASE_SHA}...${HEAD_SHA}" -- . "${exclude[@]}"
             echo
+            if [ -s "${RUNNER_TEMP}/history.md" ]; then
+              cat "${RUNNER_TEMP}/history.md"
+              [ -z "${no_delta}" ] || printf '\n%s\n' "${no_delta}"
+              echo
+            fi
             echo '## Diff'
             echo
-            bun scripts/pr-review.ts annotate --diff "${RUNNER_TEMP}/pr.diff"
+            bun scripts/pr-review.ts annotate --diff "${RUNNER_TEMP}/pr.diff" "${since[@]}"
           } > "${RUNNER_TEMP}/pr-context.md"
 
       - name: Setup Node

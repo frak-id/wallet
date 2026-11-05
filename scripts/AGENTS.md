@@ -140,9 +140,17 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
 ## The PR review
 
 - **`pr-review.ts` is the deterministic half of `.github/workflows/pr-review.yml`.** `annotate` prefixes
-  each new-side diff line with its file line number, which is the number the agent cites. `post`
-  parses the agent's JSON, posts a finding inline only when all its lines sit in one hunk (GitHub
-  rejects the whole review otherwise), and puts the rest in the summary comment.
+  each new-side diff line with its file line number, which is the number the agent cites; with
+  `--since` it marks with `*` the added lines that are new since the last reviewed head. `post`
+  parses the agent's JSON, posts a blocker or major inline only when all its lines sit in one hunk
+  (GitHub rejects the whole review otherwise), and puts the rest, every minor included, in the
+  summary comment under a verdict it derives from the severities.
+- **The summary comment is the bot's memory.** Its last line is a base64 `pi-pr-review:state`
+  (reviewed head + findings). `history` reads it back, with replies to our inline threads and
+  conversation comments, for the next run. Only comments by people with write access (asked per
+  login from `/collaborators/{login}/permission`) reach the agent: the repo is public and the
+  agent's env holds the proxy key. Do not switch to `author_association`: it depends on the caller,
+  and the App token sees a private org member as `CONTRIBUTOR`.
 - **It posts as Frak Bot, a GitHub App**: `vars.FRAK_BOT_CLIENT_ID` + `secrets.FRAK_BOT_PRIVATE_KEY`.
   Comments are found again by marker and by the App's own login, because an App can only edit or
   delete its own comments. Each run deletes the previous run's inline comments that nobody replied to.
