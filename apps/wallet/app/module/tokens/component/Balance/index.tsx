@@ -10,7 +10,11 @@ import {
     HourglassIcon,
     TransferIcon,
 } from "@frak-labs/design-system/icons";
-import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
+import {
+    formatCurrency,
+    useGetUserBalance,
+    widenGroupSeparator,
+} from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,8 +32,9 @@ function balanceRuns(amount: number, locale: string) {
     for (const part of parts) {
         const decimals = part.type === "decimal" || part.type === "fraction";
         const last = runs.at(-1);
-        if (last?.decimals === decimals) last.text += part.value;
-        else runs.push({ decimals, text: part.value });
+        const text = widenGroupSeparator(part.value);
+        if (last?.decimals === decimals) last.text += text;
+        else runs.push({ decimals, text });
     }
     return runs;
 }

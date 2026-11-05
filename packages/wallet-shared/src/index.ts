@@ -150,6 +150,7 @@ export {
     type WalletMergeMode,
     type WalletMergeStep,
     type WalletModalEventMap,
+    widenGroupSeparator,
 } from "./common";
 export {
     defaultNS,
