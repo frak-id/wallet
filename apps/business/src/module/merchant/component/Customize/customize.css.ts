@@ -126,6 +126,11 @@ export const colorActions = style({
     minWidth: "150px",
 });
 
+const automaticSwatch = {
+    background: `repeating-conic-gradient(${vars.border.default} 0 25%, transparent 0 50%) 50% / 8px 8px !important`,
+    borderStyle: "dashed",
+};
+
 /** The hairline sits on the swatch itself, so a near-white colour stays visible. */
 export const colorSwatch = style({
     width: "32px",
@@ -148,6 +153,9 @@ export const colorSwatch = style({
             borderRadius: alias.cornerRadius.s,
         },
         "&:disabled": { cursor: "not-allowed", opacity: 0.5 },
+        // The native swatch cannot be empty: hide its fallback colour behind a checkerboard.
+        "&[data-automatic]::-webkit-color-swatch": automaticSwatch,
+        "&[data-automatic]::-moz-color-swatch": automaticSwatch,
     },
 });
 

@@ -943,6 +943,12 @@ export default interface Resources {
     },
     "customize": {
       "ambassador": {
+        "accent": {
+          "automatic": "Automatic",
+          "hint": "Leave empty to follow your theme's button colour. The text on the buttons switches between black and white on its own.",
+          "invalid": "Enter a colour as #rrggbb",
+          "label": "Button colour"
+        },
         "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
         "fields": {
           "faq1Answer": "Answer 1",

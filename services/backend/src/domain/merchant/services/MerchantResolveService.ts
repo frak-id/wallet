@@ -110,6 +110,7 @@ function resolveAmbassador(
     const heroImageUrl =
         stored === "none" ? undefined : (stored ?? explorerHeroImageUrl);
     if (heroImageUrl) resolved.heroImageUrl = heroImageUrl;
+    if (ambassador?.accentColor) resolved.accentColor = ambassador.accentColor;
     return Object.keys(resolved).length > 0 ? resolved : undefined;
 }
 

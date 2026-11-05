@@ -248,6 +248,17 @@ describe("MerchantResolveService ambassador settings", () => {
         });
     });
 
+    it("passes the accent colour through unlocalized, with no Explorer image", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { ambassador: { accentColor: "#FFD400" } } },
+            null,
+            "en"
+        );
+        expect(sdkConfig?.components?.ambassador).toEqual({
+            accentColor: "#FFD400",
+        });
+    });
+
     it("keeps the other components next to the ambassador entry", async () => {
         const sdkConfig = await resolveAmbassador(
             { components: { openInApp: { text: "Open" } } },

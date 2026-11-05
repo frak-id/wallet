@@ -2011,6 +2011,12 @@
                 "noExplorerHint": "Votre profil Explorer n’a pas encore d’image principale : la page n’affiche pas de photo.",
                 "customHint": "Affichée dans un cadre 4:5 : choisissez une image où les personnes restent au centre."
             },
+            "accent": {
+                "label": "Couleur des boutons",
+                "automatic": "Automatique",
+                "hint": "Laissez vide pour suivre la couleur des boutons de votre thème. Le texte des boutons passe tout seul du noir au blanc.",
+                "invalid": "Saisissez une couleur au format #rrggbb"
+            },
             "groups": {
                 "hero": "Titre et introduction",
                 "reward": "Textes de la récompense",

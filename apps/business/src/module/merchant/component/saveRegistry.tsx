@@ -40,16 +40,19 @@ export function useCustomizeSection<T extends FieldValues>(
     useEffect(
         () =>
             registerSection(key, async () => {
+                let invalid = false;
+                // Throwing inside onInvalid would skip publishing the field errors.
                 await form.handleSubmit(
                     async (values) => {
                         await onValid(values);
                     },
-                    // Reject so the page-level save surfaces the failure
-                    // instead of silently skipping an invalid section.
                     () => {
-                        throw new Error(`Section "${key}" is invalid`);
+                        invalid = true;
                     }
                 )();
+                // Reject so the page-level save surfaces the failure
+                // instead of silently skipping an invalid section.
+                if (invalid) throw new Error(`Section "${key}" is invalid`);
             }),
         [registerSection, key, form, onValid]
     );

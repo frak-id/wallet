@@ -73,3 +73,29 @@ describe("merchant URL schemas reject script-bearing schemes", () => {
         expect(sdkConfig.Check({ homepageLink: null })).toBe(true);
     });
 });
+
+describe("SdkConfig ambassador accentColor", () => {
+    const check = (accentColor: unknown) =>
+        sdkConfig.Check({ components: { ambassador: { accentColor } } });
+
+    it.each(["#ffd400", "#FFD400"])("accepts %s", (color) => {
+        expect(check(color)).toBe(true);
+    });
+
+    it.each([
+        "ffd400",
+        "#fd0",
+        "#ffd4000",
+        "#ggd400",
+        "red",
+        "url(javascript:alert(1))",
+        "#ffd400; background: red",
+        "",
+    ])("rejects %j", (color) => {
+        expect(check(color)).toBe(false);
+    });
+
+    it("stays optional", () => {
+        expect(sdkConfig.Check({ components: { ambassador: {} } })).toBe(true);
+    });
+});

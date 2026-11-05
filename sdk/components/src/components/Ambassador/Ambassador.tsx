@@ -274,7 +274,10 @@ const DASHBOARD_FIELDS = [
     "faq5Question",
 ] as const;
 
-type AmbassadorPageProps = AmbassadorProps & { faq5Answer?: string };
+type AmbassadorPageProps = AmbassadorProps & {
+    faq5Answer?: string;
+    accentColor?: string;
+};
 
 /**
  * Full-page ambassador: hero, reward, explainer, win-win, referral, store, FAQ;
@@ -289,6 +292,7 @@ export function Ambassador(props: AmbassadorProps) {
     const merged: AmbassadorPageProps = {
         ...props,
         faq5Answer: dashboard?.faq5Answer,
+        accentColor: dashboard?.accentColor,
     };
     // Attribute first, then the merchant's dashboard setting; defaults apply below.
     for (const field of DASHBOARD_FIELDS) {
@@ -362,12 +366,14 @@ function AmbassadorPage({
     attributionBeforeLink: propAttributionBeforeLink,
     attributionLinkText: propAttributionLinkText,
     faq5Answer: dashboardFaq5Answer,
+    accentColor,
 }: AmbassadorPageProps) {
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const lang = useLang();
     const rootRef = useRef<HTMLDivElement>(null);
 
-    useHostTheme(rootRef);
+    // Hidden means no root to paint; the accent lands when the page unhides.
+    useHostTheme(rootRef, isHidden ? undefined : accentColor);
 
     useLightDomStyles(
         "frak-ambassador",
