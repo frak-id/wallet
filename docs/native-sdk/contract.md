@@ -244,8 +244,8 @@ fails**. A fixture nobody has seen fail is a fixture that proves nothing.
 
 ### 4.3 The invisible-character hazard
 
-Currency output carries codepoints that are invisible in a diff: `U+00A0`/`U+202F` (fr-FR thousands
-separators), `U+2212` (minus, not ASCII `-`), `U+200E`/`U+200F` (directional marks).
+Currency output carries codepoints that are invisible in a diff: `U+00A0` (fr-FR thousands and
+symbol separator), `U+2212` (minus, not ASCII `-`), `U+200E`/`U+200F` (directional marks).
 
 - The corpus file is pure ASCII — every codepoint above `U+007F` is escaped as `\uXXXX`.
 - Every expected string is recorded **twice**: as an escaped literal, and as an explicit codepoint
@@ -253,10 +253,9 @@ separators), `U+2212` (minus, not ASCII `-`), `U+200E`/`U+200F` (directional mar
 - **Assert the codepoint array first.** A `U+202F`→`U+00A0` substitution is invisible in a
   literal-only diff and obvious against codepoints.
 - 9 of the 43 pairs are nested, so the corpus walker pairing `X` with `XCodepoints` must recurse.
-- Generated under ICU 74.2 / CLDR 44. Android below roughly API 28 ships pre-ICU-63 CLDR and emits
-  `U+00A0` where the corpus has `U+202F` — an environment difference, not a defect. Exactly 6
-  entries carry a `U+202F`; a mismatch anywhere else is a real finding, and the report should name
-  the runtime ICU/CLDR version.
+- Generated under ICU 74.2 / CLDR 44. ICU groups fr-FR digits with `U+202F` on CLDR ≥ 34, but
+  `formatAmount` and `formatAmountParts` rewrite it to `U+00A0`, which Inter draws wide enough to
+  see (FRA-396). No entry carries a `U+202F`, so one in the output is a real finding.
 - Covered locales are `fr-FR`, `en-US`, `en-GB`, all LTR. No negative amounts and no RTL locales,
   both deliberately.
 
