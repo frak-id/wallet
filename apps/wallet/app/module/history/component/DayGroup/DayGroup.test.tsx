@@ -33,7 +33,7 @@ describe("HistoryDayGroup", () => {
 
     it.each([
         ["en", "+€1,234.50"],
-        ["fr", "+1\u202f234,50\u00a0€"],
+        ["fr", "+1\u00a0234,50\u00a0€"],
     ])("formats the day total for the %s locale", (language, expected) => {
         i18n.language = language;
 

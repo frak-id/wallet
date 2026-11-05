@@ -141,7 +141,10 @@ export { recoveryHintStorage } from "./storage/recoveryHint";
 // Utils
 // Tauri
 export { getInvoke } from "./tauri";
-export { formatCurrency } from "./utils/formatCurrency";
+export {
+    formatCurrency,
+    widenGroupSeparator,
+} from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 export { type MediaSrcSetMode, mediaSrcSet } from "./utils/mediaSrcSet";
 export { openExternalUrl } from "./utils/openExternalUrl";
