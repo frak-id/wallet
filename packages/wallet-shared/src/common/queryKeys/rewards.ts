@@ -6,8 +6,9 @@ import type { Address } from "viem";
 export const rewardsKey = {
     all: ["rewards"] as const,
     histories: () => [...rewardsKey.all, "history"] as const,
+    // "pages" keeps a persisted single-page cache from hydrating into the paged query.
     historyByAddress: (address?: Address) =>
-        [...rewardsKey.histories(), address ?? "no-address"] as const,
+        [...rewardsKey.histories(), "pages", address ?? "no-address"] as const,
     unpaidByAddress: (address?: Address) =>
         [...rewardsKey.all, "unpaid", address ?? "no-address"] as const,
 };
