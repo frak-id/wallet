@@ -1,5 +1,12 @@
-import type { EstimatedReward, SharingPageProduct } from "@frak-labs/core-sdk";
-import type { RewardAmountParts } from "@frak-labs/core-sdk/rewards";
+import type {
+    Currency,
+    EstimatedReward,
+    SharingPageProduct,
+} from "@frak-labs/core-sdk";
+import type {
+    PayoutConversion,
+    RewardAmountParts,
+} from "@frak-labs/core-sdk/rewards";
 import type { Translate } from "../../../types/i18n/translate";
 
 /**
@@ -27,10 +34,14 @@ export type SharingReward =
           minPurchaseAmount?: string;
           isProductScoped?: boolean;
           lockupDurationDays?: number;
+          /** Set when the headline is shown in another fiat than the one it is paid in. */
+          conversion?: PayoutConversion;
           breakdown?: {
               referrer?: EstimatedReward;
               referee?: EstimatedReward;
               minPurchaseValue?: number;
+              /** Display currency of every amount in the breakdown. */
+              currency?: Currency;
           };
           /**
            * Headline amount pre-split into integer / decimals / unit. Absent for a

@@ -63,6 +63,7 @@ export {
     type FreshSdkResult,
     formatAmountRange,
     formatCurrency,
+    formatRewardAmount,
     getErrorCode,
     getErrorStatus,
     getFromLocalStorage,

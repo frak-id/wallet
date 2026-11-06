@@ -1,12 +1,19 @@
-import type { EstimatedReward } from "@frak-labs/core-sdk";
-import { formatAmount } from "@frak-labs/core-sdk";
+import {
+    type Currency,
+    type EstimatedReward,
+    formatAmount,
+    getCurrencyAmountKey,
+} from "@frak-labs/core-sdk";
 import {
     buildPercentageExample,
     buildTierExample,
     isMatchedItemsBasis,
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
-import { formatAmountRange } from "../../../common/utils/formatCurrency";
+import {
+    formatAmountRange,
+    formatRewardAmount,
+} from "../../../common/utils/formatCurrency";
 import * as styles from "./sharingPage.css";
 import type { SharingT } from "./types";
 
@@ -23,11 +30,14 @@ export function RewardBreakdown({
     referrer,
     referee,
     minPurchaseValue,
+    currency,
     t,
 }: {
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
     minPurchaseValue?: number;
+    /** Display currency every amount of the breakdown is shown in; defaults to EUR. */
+    currency?: Currency;
     t: SharingT;
 }) {
     const hasReferrer = hasBreakdown(referrer);
@@ -41,6 +51,7 @@ export function RewardBreakdown({
                     label={t("sdk.sharingPage.faq.reward.referrerLabel")}
                     reward={referrer}
                     minPurchaseValue={minPurchaseValue}
+                    currency={currency}
                     t={t}
                 />
             )}
@@ -49,6 +60,7 @@ export function RewardBreakdown({
                     label={t("sdk.sharingPage.faq.reward.refereeLabel")}
                     reward={referee}
                     minPurchaseValue={minPurchaseValue}
+                    currency={currency}
                     t={t}
                 />
             )}
@@ -68,11 +80,13 @@ function RewardBlock({
     label,
     reward,
     minPurchaseValue,
+    currency,
     t,
 }: {
     label: string;
     reward: EstimatedReward;
     minPurchaseValue?: number;
+    currency?: Currency;
     t: SharingT;
 }) {
     const matchedItemsBasis = isMatchedItemsBasis(reward);
@@ -82,9 +96,10 @@ function RewardBlock({
             {reward.payoutType === "tiered"
                 ? reward.tiers.map((tier) => (
                       <TierRow
-                          key={tierKey(tier)}
+                          key={tierKey(tier, currency)}
                           tier={tier}
                           isMatchedItemsBasis={matchedItemsBasis}
+                          currency={currency}
                           t={t}
                       />
                   ))
@@ -93,6 +108,7 @@ function RewardBlock({
                           reward={reward}
                           minPurchaseValue={minPurchaseValue}
                           isMatchedItemsBasis={matchedItemsBasis}
+                          currency={currency}
                           t={t}
                       />
                   )}
@@ -103,25 +119,30 @@ function RewardBlock({
 function TierRow({
     tier,
     isMatchedItemsBasis,
+    currency,
     t,
 }: {
     tier: RewardTier;
     isMatchedItemsBasis: boolean;
+    currency?: Currency;
     t: SharingT;
 }) {
     const range =
         tier.maxValue == null
             ? t("sdk.sharingPage.faq.reward.tierAndAbove", {
-                  min: formatAmount(tier.minValue),
+                  min: formatAmount(tier.minValue, currency),
               })
-            : formatAmountRange(tier.minValue, tier.maxValue);
+            : formatAmountRange(tier.minValue, tier.maxValue, currency);
 
     if ("amount" in tier) {
         return (
             <div className={styles.rewardRow}>
                 <span>{range}</span>
                 <span className={styles.rewardRowValue}>
-                    {formatAmount(tier.amount.eurAmount)}
+                    {formatRewardAmount(
+                        tier.amount[getCurrencyAmountKey(currency)],
+                        currency
+                    )}
                 </span>
             </div>
         );
@@ -142,7 +163,9 @@ function TierRow({
                         : "sdk.sharingPage.faq.reward.percentOfBasket",
                     { percent: tier.percent }
                 )}
-                {example && <ExampleText example={example} t={t} />}
+                {example && (
+                    <ExampleText example={example} currency={currency} t={t} />
+                )}
             </span>
         </div>
     );
@@ -152,18 +175,20 @@ function PercentageRow({
     reward,
     minPurchaseValue,
     isMatchedItemsBasis,
+    currency,
     t,
 }: {
     reward: Extract<EstimatedReward, { payoutType: "percentage" }>;
     minPurchaseValue?: number;
     isMatchedItemsBasis: boolean;
+    currency?: Currency;
     t: SharingT;
 }) {
     // `buildPercentageExample` assumes a whole-basket reference, wrong for a
     // percent applied only to matched items.
     const example = isMatchedItemsBasis
         ? undefined
-        : buildPercentageExample(reward, minPurchaseValue);
+        : buildPercentageExample(reward, minPurchaseValue, currency);
     return (
         <div className={styles.rewardRow}>
             <span>
@@ -176,25 +201,36 @@ function PercentageRow({
             </span>
             {example && (
                 <span className={styles.rewardRowValue}>
-                    <ExampleText example={example} t={t} />
+                    <ExampleText example={example} currency={currency} t={t} />
                 </span>
             )}
         </div>
     );
 }
 
-function ExampleText({ example, t }: { example: RewardExample; t: SharingT }) {
+function ExampleText({
+    example,
+    currency,
+    t,
+}: {
+    example: RewardExample;
+    currency?: Currency;
+    t: SharingT;
+}) {
     return (
         <span className={styles.rewardExample}>
             {t("sdk.sharingPage.faq.reward.percentExample", {
-                reward: formatAmount(example.reward),
-                basket: formatAmount(example.basket),
+                reward: formatRewardAmount(example.reward, currency),
+                basket: formatAmount(example.basket, currency),
             })}
         </span>
     );
 }
 
-function tierKey(tier: RewardTier): string {
-    const value = "amount" in tier ? tier.amount.eurAmount : tier.percent;
+function tierKey(tier: RewardTier, currency?: Currency): string {
+    const value =
+        "amount" in tier
+            ? tier.amount[getCurrencyAmountKey(currency)]
+            : tier.percent;
     return `${tier.minValue}-${tier.maxValue ?? "inf"}-${value}`;
 }

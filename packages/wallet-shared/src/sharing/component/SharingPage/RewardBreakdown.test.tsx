@@ -233,3 +233,49 @@ describe("RewardBreakdown", () => {
         ).toBeInTheDocument();
     });
 });
+
+describe("RewardBreakdown display currency", () => {
+    const usd = (amount: number) => formatAmount(amount, "usd");
+    const norm = (value: string) => value.replace(/\s/g, " ");
+    const priced = (eur: number, usdValue: number) => ({
+        amount: eur,
+        eurAmount: eur,
+        usdAmount: usdValue,
+        gbpAmount: eur,
+    });
+
+    it("reads tier rewards and formats ranges in the display currency", () => {
+        render(
+            <RewardBreakdown
+                referrer={tiered([
+                    { minValue: 0, maxValue: 50, amount: priced(8, 9) },
+                    { minValue: 50, amount: priced(18, 20) },
+                ])}
+                currency="usd"
+                t={t}
+            />
+        );
+
+        expect(screen.getByText(norm(usd(9)))).toBeInTheDocument();
+        expect(screen.getByText(norm(usd(20)))).toBeInTheDocument();
+        expect(
+            screen.getByText(`${norm(usd(50))} and above`)
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+    });
+
+    it("formats percentage worked examples in the display currency", () => {
+        render(
+            <RewardBreakdown
+                referrer={percentage(10)}
+                minPurchaseValue={150}
+                currency="usd"
+                t={t}
+            />
+        );
+
+        expect(
+            screen.getByText(`e.g. ${norm(usd(15))} for ${norm(usd(150))}`)
+        ).toBeInTheDocument();
+    });
+});

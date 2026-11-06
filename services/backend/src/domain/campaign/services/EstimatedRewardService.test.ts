@@ -1,3 +1,5 @@
+import { currentStablecoins } from "@frak-labs/app-essentials";
+import type { Address } from "viem";
 import { describe, expect, it, vi } from "vitest";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
@@ -35,6 +37,43 @@ function serviceWith(campaigns: CampaignRuleSelect[]) {
     } as unknown as CampaignRuleRepository;
     return new EstimatedRewardService(repository);
 }
+
+describe("EstimatedRewardService.getEstimatedRewards — payoutCurrency", () => {
+    const rewardOn = (token?: string): CampaignRuleDefinition => ({
+        trigger: "purchase",
+        conditions: [],
+        rewards: [
+            {
+                recipient: "referee",
+                type: "token",
+                amountType: "fixed",
+                amount: 10,
+                token: token as Address,
+            },
+        ],
+    });
+
+    it.each([
+        ["eure", currentStablecoins.eure, "eur"],
+        ["usdc", currentStablecoins.usdc, "usd"],
+    ])("derives the payout currency from %s", async (_, token, expected) => {
+        const result = await serviceWith([
+            campaignWithRule(rewardOn(token)),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(result.rewards[0].payoutCurrency).toBe(expected);
+    });
+
+    it("leaves the payout currency out for an unknown token", async () => {
+        const result = await serviceWith([
+            campaignWithRule(
+                rewardOn("0x0000000000000000000000000000000000000001")
+            ),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(result.rewards[0].payoutCurrency).toBeUndefined();
+    });
+});
 
 describe("EstimatedRewardService.getEstimatedRewards — productScope", () => {
     it("round-trips productScope into the estimated item", async () => {

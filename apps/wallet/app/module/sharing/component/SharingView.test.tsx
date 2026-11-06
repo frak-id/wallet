@@ -10,10 +10,11 @@ import { SharingView } from "./SharingView";
 
 const resolvedConfig = vi.fn();
 const resolvedConfigArgs = vi.fn();
+let configPending = false;
 vi.mock("@/module/common/hook/useMerchantResolvedConfig", () => ({
     useMerchantResolvedConfig: (args: unknown) => {
         resolvedConfigArgs(args);
-        return { data: resolvedConfig() };
+        return { data: resolvedConfig(), isPending: configPending };
     },
 }));
 
@@ -32,6 +33,11 @@ vi.mock("@/module/sharing/useSharingIdentity", () => ({
 // The page itself is not under test; capture the resolved copy it is handed.
 let lastTitle: string | undefined;
 let lastT: SharingT | undefined;
+let lastInput:
+    | Parameters<
+          typeof import("@frak-labs/wallet-shared/sharing").useSharingPageController
+      >[0]
+    | undefined;
 vi.mock("@frak-labs/wallet-shared/sharing", async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -44,6 +50,7 @@ vi.mock("@frak-labs/wallet-shared/sharing", async (importOriginal) => {
             input: Parameters<typeof actual.useSharingPageController>[0]
         ) => {
             lastT = input.t;
+            lastInput = input;
             lastTitle = input.t("sharing.title");
             return actual.useSharingPageController(input);
         },
@@ -64,8 +71,8 @@ function wrapper({ children }: { children: ReactNode }) {
 const search = { merchantId } as SharingSearch;
 const navigation = { toInstall: vi.fn(), toWallet: vi.fn() };
 
-function renderView() {
-    return render(<SharingView search={search} navigation={navigation} />, {
+function renderView(viewSearch: SharingSearch = search) {
+    return render(<SharingView search={viewSearch} navigation={navigation} />, {
         wrapper,
     });
 }
@@ -111,6 +118,8 @@ beforeAll(async () => {
 beforeEach(() => {
     lastTitle = undefined;
     lastT = undefined;
+    lastInput = undefined;
+    configPending = false;
     resolvedConfig.mockReset();
     resolvedConfigArgs.mockReset();
 });
@@ -268,5 +277,41 @@ describe("SharingView merchant translations", () => {
         expect(resolvedConfigArgs).toHaveBeenCalledWith(
             expect.objectContaining({ merchantId, lang: "en" })
         );
+    });
+});
+
+describe("SharingView reward currency", () => {
+    it("holds the reward while the merchant config is pending", () => {
+        configPending = true;
+        resolvedConfig.mockReturnValue(undefined);
+        renderView();
+
+        expect(lastInput?.currencyPending).toBe(true);
+        expect(lastInput?.rewardQuery?.currency).toBeUndefined();
+    });
+
+    it("releases the reward once the config settled, with its currency", () => {
+        resolvedConfig.mockReturnValue({ sdkConfig: { currency: "gbp" } });
+        renderView();
+
+        expect(lastInput?.currencyPending).toBe(false);
+        expect(lastInput?.rewardQuery?.currency).toBe("gbp");
+    });
+
+    it("never waits for a config that will not be fetched", () => {
+        configPending = true;
+        renderView({} as SharingSearch);
+
+        expect(lastInput?.currencyPending).toBe(false);
+    });
+
+    it("hands the converted-currency notice a bare supported language", async () => {
+        const previous = i18next.language;
+        await i18next.changeLanguage("en");
+        resolvedConfig.mockReturnValue(null);
+        renderView();
+
+        expect(lastInput?.rewardQuery?.locale).toBe("en");
+        await i18next.changeLanguage(previous);
     });
 });

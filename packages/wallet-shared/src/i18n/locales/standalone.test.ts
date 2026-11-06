@@ -27,6 +27,14 @@ const REQUIRED_KEYS = [
     "sdk.sharingPage.confirmation.cta_noReward",
     "sdk.sharingPage.faq.q6_noReward",
     "sdk.sharingPage.faq.a6_noReward",
+    "sdk.sharingPage.faq.a6Converted",
+    "sdk.sharingPage.conversion.paid",
+    "sdk.sharingPage.conversion.paid_tiered",
+    "sdk.sharingPage.conversion.rate",
+    "sdk.sharingPage.conversion.percentage",
+    "sdk.sharingPage.conversion.currency.eur",
+    "sdk.sharingPage.conversion.currency.usd",
+    "sdk.sharingPage.conversion.currency.gbp",
 ] as const satisfies readonly DefaultTranslationKey[];
 
 async function standaloneInstance(lng: "en" | "fr") {
@@ -66,4 +74,20 @@ describe.each(["en", "fr"] as const)("standalone locale bundle (%s)", (lng) => {
 
         expect(instance.exists("sdk.sharingPage.confirmation.cta")).toBe(true);
     });
+});
+
+describe("standalone locale bundle typography", () => {
+    it.each([
+        "sdk.sharingPage.conversion.paid",
+        "sdk.sharingPage.conversion.paid_tiered",
+    ] as const)(
+        "puts a no-break space before the colon of fr %s",
+        async (key) => {
+            const instance = await standaloneInstance("fr");
+
+            expect(instance.t(key, { payoutCurrency: "euros" })).toContain(
+                "euros\u00a0:"
+            );
+        }
+    );
 });

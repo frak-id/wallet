@@ -1,4 +1,5 @@
-import type { EstimatedReward } from "../types";
+import type { Currency, EstimatedReward } from "../types";
+import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 
 type PercentageReward = Extract<EstimatedReward, { payoutType: "percentage" }>;
 
@@ -36,13 +37,15 @@ export function pickTierBasket(
 
 export function buildPercentageExample(
     reward: PercentageReward,
-    minPurchase: number | undefined
+    minPurchase: number | undefined,
+    currency?: Currency
 ): RewardExample | undefined {
     const basket = pickFlatBasket(minPurchase);
     if (basket <= 0) return undefined;
+    const key = getCurrencyAmountKey(currency);
     let amount = (reward.percent / 100) * basket;
-    if (reward.minAmount) amount = Math.max(amount, reward.minAmount.eurAmount);
-    if (reward.maxAmount) amount = Math.min(amount, reward.maxAmount.eurAmount);
+    if (reward.minAmount) amount = Math.max(amount, reward.minAmount[key]);
+    if (reward.maxAmount) amount = Math.min(amount, reward.maxAmount[key]);
     return { basket, reward: amount };
 }
 

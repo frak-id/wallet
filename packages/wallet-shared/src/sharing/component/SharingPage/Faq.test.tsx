@@ -54,6 +54,32 @@ describe("Faq", () => {
         ).not.toBeInTheDocument();
     });
 
+    it("adds the conversion sentence to the reward answer only when a conversion applies", () => {
+        const { unmount } = render(<Faq reward={readyWithBreakdown} t={t} />);
+        openQuestion("6");
+        expect(
+            screen.queryByText(/sdk\.sharingPage\.faq\.a6Converted/)
+        ).not.toBeInTheDocument();
+        unmount();
+
+        render(
+            <Faq
+                reward={{
+                    ...readyWithBreakdown,
+                    conversion: {
+                        displayCurrency: "gbp",
+                        payoutCurrency: "eur",
+                    },
+                }}
+                t={t}
+            />
+        );
+        openQuestion("6");
+        expect(
+            screen.getByText(/sdk\.sharingPage\.faq\.a6Converted/)
+        ).toBeInTheDocument();
+    });
+
     it("renders no breakdown while the reward is still loading", () => {
         render(<Faq reward={{ status: "loading" }} t={t} />);
         openQuestion("6");

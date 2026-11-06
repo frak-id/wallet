@@ -1,5 +1,5 @@
-import type { EstimatedReward } from "@frak-labs/core-sdk";
-import { formatAmount } from "@frak-labs/core-sdk";
+import type { Currency, EstimatedReward } from "@frak-labs/core-sdk";
+import { formatAmount, getCurrencyAmountKey } from "@frak-labs/core-sdk";
 import {
     buildPercentageExample,
     buildTierExample,
@@ -16,7 +16,10 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
-import { formatAmountRange } from "@frak-labs/wallet-shared";
+import {
+    formatAmountRange,
+    formatRewardAmount,
+} from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -121,6 +124,7 @@ function CampaignInfoCards({
                             }
                             reward={purchase.total}
                             minPurchase={view.minPurchaseAmount}
+                            currency={purchase.totalCurrency}
                         />
                     ) : (
                         <InfoRow
@@ -166,6 +170,7 @@ function CampaignInfoCards({
                         labelKey="explorer.detail.referrerReward"
                         reward={view.referrer}
                         minPurchase={view.minPurchaseAmount}
+                        currency={view.payoutCurrency}
                     />
                 )}
                 {view.referee && (
@@ -173,6 +178,7 @@ function CampaignInfoCards({
                         labelKey="explorer.detail.refereeReward"
                         reward={view.referee}
                         minPurchase={view.minPurchaseAmount}
+                        currency={view.payoutCurrency}
                     />
                 )}
                 <InfoRow
@@ -243,14 +249,22 @@ function RewardRow({
     labelKey,
     reward,
     minPurchase,
+    currency,
 }: {
     labelKey: DefaultTranslationKey;
     reward: EstimatedReward;
     minPurchase: number | undefined;
+    currency?: Currency;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "tiered") {
-        return <TieredRewardBlock labelKey={labelKey} reward={reward} />;
+        return (
+            <TieredRewardBlock
+                labelKey={labelKey}
+                reward={reward}
+                currency={currency}
+            />
+        );
     }
     return (
         <InfoRow
@@ -258,7 +272,13 @@ function RewardRow({
             labelColor="secondary"
             align={reward.payoutType === "percentage" ? "top" : "center"}
             label={t(labelKey)}
-            action={<RewardValue reward={reward} minPurchase={minPurchase} />}
+            action={
+                <RewardValue
+                    reward={reward}
+                    minPurchase={minPurchase}
+                    currency={currency}
+                />
+            }
         />
     );
 }
@@ -266,9 +286,11 @@ function RewardRow({
 function RewardValue({
     reward,
     minPurchase,
+    currency,
 }: {
     reward: FlatReward;
     minPurchase: number | undefined;
+    currency?: Currency;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "fixed") {
@@ -279,7 +301,10 @@ function RewardValue({
                 className={styles.infoValue}
             >
                 <CoinsIcon width={16} height={16} />{" "}
-                {formatAmount(reward.amount.eurAmount)}
+                {formatRewardAmount(
+                    reward.amount[getCurrencyAmountKey(currency)],
+                    currency
+                )}
             </Text>
         );
     }
@@ -288,7 +313,7 @@ function RewardValue({
     const matchedItemsBasis = isMatchedItemsBasis(reward);
     const example = matchedItemsBasis
         ? undefined
-        : buildPercentageExample(reward, minPurchase);
+        : buildPercentageExample(reward, minPurchase, currency);
     return (
         <Stack space="xxs" align="right">
             <Text
@@ -304,7 +329,7 @@ function RewardValue({
                     { percent: reward.percent }
                 )}
             </Text>
-            {example && <ExampleText example={example} />}
+            {example && <ExampleText example={example} currency={currency} />}
         </Stack>
     );
 }
@@ -312,9 +337,11 @@ function RewardValue({
 function TieredRewardBlock({
     labelKey,
     reward,
+    currency,
 }: {
     labelKey: DefaultTranslationKey;
     reward: TieredReward;
+    currency?: Currency;
 }) {
     const { t } = useTranslation();
     const matchedItemsBasis = isMatchedItemsBasis(reward);
@@ -329,9 +356,10 @@ function TieredRewardBlock({
             <Stack space="xs">
                 {reward.tiers.map((tier) => (
                     <TierRow
-                        key={tierKey(tier)}
+                        key={tierKey(tier, currency)}
                         tier={tier}
                         isMatchedItemsBasis={matchedItemsBasis}
+                        currency={currency}
                     />
                 ))}
             </Stack>
@@ -342,17 +370,19 @@ function TieredRewardBlock({
 function TierRow({
     tier,
     isMatchedItemsBasis,
+    currency,
 }: {
     tier: RewardTier;
     isMatchedItemsBasis: boolean;
+    currency?: Currency;
 }) {
     const { t } = useTranslation();
     const range =
         tier.maxValue == null
             ? t("explorer.detail.tierAndAbove", {
-                  min: formatAmount(tier.minValue),
+                  min: formatAmount(tier.minValue, currency),
               })
-            : formatAmountRange(tier.minValue, tier.maxValue);
+            : formatAmountRange(tier.minValue, tier.maxValue, currency);
 
     if ("amount" in tier) {
         return (
@@ -361,7 +391,10 @@ function TierRow({
                     {range}
                 </Text>
                 <Text variant="bodySmall" weight="medium">
-                    {formatAmount(tier.amount.eurAmount)}
+                    {formatRewardAmount(
+                        tier.amount[getCurrencyAmountKey(currency)],
+                        currency
+                    )}
                 </Text>
             </Spread>
         );
@@ -386,25 +419,36 @@ function TierRow({
                         { percent: tier.percent }
                     )}
                 </Text>
-                {example && <ExampleText example={example} />}
+                {example && (
+                    <ExampleText example={example} currency={currency} />
+                )}
             </Stack>
         </Spread>
     );
 }
 
-function ExampleText({ example }: { example: RewardExample }) {
+function ExampleText({
+    example,
+    currency,
+}: {
+    example: RewardExample;
+    currency?: Currency;
+}) {
     const { t } = useTranslation();
     return (
         <Text variant="tiny" color="tertiary">
             {t("explorer.detail.percentExample", {
-                reward: formatAmount(example.reward),
-                basket: formatAmount(example.basket),
+                reward: formatRewardAmount(example.reward, currency),
+                basket: formatAmount(example.basket, currency),
             })}
         </Text>
     );
 }
 
-function tierKey(tier: RewardTier): string {
-    const value = "amount" in tier ? tier.amount.eurAmount : tier.percent;
+function tierKey(tier: RewardTier, currency?: Currency): string {
+    const value =
+        "amount" in tier
+            ? tier.amount[getCurrencyAmountKey(currency)]
+            : tier.percent;
     return `${tier.minValue}-${tier.maxValue ?? "inf"}-${value}`;
 }

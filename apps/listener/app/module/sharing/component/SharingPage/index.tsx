@@ -24,7 +24,7 @@ export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageLi
 
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
-    const { t: rawT } = useListenerTranslation();
+    const { t: rawT, lang } = useListenerTranslation();
     const { sourceUrl, merchantId, installProof, origin } =
         useSafeResolvingContext();
     const defaultAttribution = useStore(
@@ -106,6 +106,7 @@ export function ListenerSharingPage() {
         rewardQuery: {
             currency:
                 currentRequest.configMetadata?.currency ?? backendCurrency,
+            locale: lang,
             targetInteraction: currentRequest.targetInteraction,
             context: currentRequest.i18n?.context,
         },

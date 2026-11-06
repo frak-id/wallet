@@ -70,6 +70,13 @@ describe("buildPercentageExample", () => {
         expect(example?.reward).toBeCloseTo(4.8);
     });
 
+    it("clamps against the caps of the requested currency", () => {
+        const reward = percentage(8, { max: 4.8 });
+        if (reward.maxAmount) reward.maxAmount.usdAmount = 5.5;
+        const example = buildPercentageExample(reward, undefined, "usd");
+        expect(example?.reward).toBeCloseTo(5.5);
+    });
+
     it("uses the minimum purchase as the basket when higher", () => {
         const example = buildPercentageExample(percentage(5), 200);
         expect(example?.basket).toBe(200);

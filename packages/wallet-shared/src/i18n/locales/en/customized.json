@@ -40,6 +40,17 @@
                 "tagline": "You earn a reward every time a friend makes a purchase through your link.",
                 "tagline_noReward": "There's no reward for you on this brand right now, but your friends can still discover it through your link."
             },
+            "conversion": {
+                "paid": "Paid in {{payoutCurrency}}: you'll receive {{payoutAmount}}.",
+                "paid_tiered": "Paid in {{payoutCurrency}}: you'll receive up to {{payoutAmount}}.",
+                "rate": "Shown in {{displayCurrency}} at today's rate ({{rate}}).",
+                "percentage": "Paid in {{payoutCurrency}}, converted at the exchange rate on the day your purchase is confirmed.",
+                "currency": {
+                    "eur": "euros",
+                    "usd": "US dollars",
+                    "gbp": "pounds"
+                }
+            },
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "amount_noReward": "Share what you love",
@@ -91,6 +102,7 @@
                 "q6_noReward": "Why is no amount shown?",
                 "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
                 "a6_noReward": "This brand isn't offering you a reward right now, so there's no amount to show. When a brand does, it can be a fixed amount, a percentage of the purchase, or an amount that varies by tier.",
+                "a6Converted": "Reward amounts are shown in {{displayCurrency}} at the day's exchange rate, but paid in {{payoutCurrency}}.",
                 "reward": {
                     "referrerLabel": "Reward as an ambassador",
                     "refereeLabel": "Reward for your referee",

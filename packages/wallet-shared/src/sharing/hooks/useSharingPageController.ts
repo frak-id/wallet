@@ -71,12 +71,20 @@ export type SharingPageControllerInput = {
     merchant: { name?: string; logoUrl?: string };
     attribution?: AttributionParams | null;
     defaultAttribution?: AttributionDefaults;
-    /** Extra inputs the listener's reward query needs; the wallet has none. */
+    /** Display currency, locale and ranking inputs of the reward query. */
     rewardQuery?: {
         currency?: Currency;
+        /** Language of the converted-currency notice. */
+        locale?: string;
         targetInteraction?: InteractionTypeKey;
         context?: string;
     };
+    /**
+     * The display currency is still being resolved (e.g. the merchant config is
+     * loading): the reward holds its loading or seeded state instead of
+     * rendering in the default currency and flipping.
+     */
+    currencyPending?: boolean;
     /** A host's cached headline, painted until the real query resolves. */
     seedReward?: string;
     /** Per-call overrides for the share title/text/image; highest precedence. */
@@ -153,6 +161,7 @@ export function useSharingPageController({
     attribution,
     defaultAttribution,
     rewardQuery,
+    currencyPending = false,
     seedReward,
     shareTitle,
     shareText,
@@ -197,7 +206,9 @@ export function useSharingPageController({
     // Never issued and a failed first fetch both count as still resolving; an
     // error holding cached data does not, or a refetch blanks a loaded hero.
     const isRewardStillResolving =
-        isRewardPending || (isRewardError && reward === undefined);
+        currencyPending ||
+        isRewardPending ||
+        (isRewardError && reward === undefined);
 
     // Paint the host's cached headline only until the real one settles.
     const estimatedReward = isRewardStillResolving
@@ -435,14 +446,16 @@ export function useSharingPageController({
             minPurchaseAmount: reward.minPurchaseAmount,
             isProductScoped: reward.isProductScoped,
             lockupDurationDays: reward.lockupDurationDays,
+            conversion: reward.conversion,
             breakdown: {
                 referrer: reward.referrerReward,
                 referee: reward.refereeReward,
                 minPurchaseValue: reward.minPurchaseValue,
+                currency: rewardQuery?.currency,
             },
             parts: reward.parts,
         };
-    }, [isRewardStillResolving, seedReward, reward]);
+    }, [isRewardStillResolving, seedReward, reward, rewardQuery?.currency]);
 
     return {
         merchant: { name: appName, logoUrl: merchant.logoUrl },

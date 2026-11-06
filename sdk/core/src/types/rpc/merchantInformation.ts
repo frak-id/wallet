@@ -1,5 +1,6 @@
 import type { Address } from "viem";
 import type { InteractionTypeKey } from "../../constants/interactionTypes";
+import type { Currency } from "../config";
 
 /**
  * The type for the amount of tokens
@@ -144,6 +145,8 @@ export type RuleConditions = RuleCondition[] | ConditionGroup;
 export type MerchantReward = {
     /** Reward token address; falls back to the merchant token when omitted. */
     token?: Address;
+    /** Fiat the reward token is pegged to; absent when the token is unknown. */
+    payoutCurrency?: Currency;
     /** Identifier of the campaign rule this reward originates from. */
     campaignId: string;
     /** Campaign display name. */

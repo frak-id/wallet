@@ -1,4 +1,5 @@
-import type { EstimatedReward } from "@frak-labs/core-sdk";
+import type { Currency, EstimatedReward } from "@frak-labs/core-sdk";
+import { getSupportedCurrency } from "@frak-labs/core-sdk";
 import { formatRewardOrHide } from "@frak-labs/core-sdk/rewards";
 import { useReferralStatus } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
@@ -17,6 +18,8 @@ export type PurchaseOffer = {
     welcomeBonus?: EstimatedReward;
     /** Cashback + bonus as one reward; unset when their shapes can't be added exactly. */
     total?: EstimatedReward;
+    /** Fiat {@link total} is shown in. */
+    totalCurrency?: Currency;
     amount: string;
 };
 
@@ -29,21 +32,36 @@ export type RewardOffer = {
     share?: ShareOffer;
 };
 
+type PricedReward = {
+    reward: EstimatedReward | undefined;
+    currency: Currency | undefined;
+};
+
 function purchaseTotal(
-    cashback: EstimatedReward | undefined,
-    welcomeBonus: EstimatedReward | undefined
-): { total?: EstimatedReward; amount?: string } {
-    if (cashback && welcomeBonus) {
-        const total = addRewards(cashback, welcomeBonus);
+    cashback: PricedReward,
+    welcomeBonus: PricedReward
+): { total?: EstimatedReward; totalCurrency?: Currency; amount?: string } {
+    if (cashback.reward && welcomeBonus.reward) {
+        // Two payouts in different fiats have no single currency to add in.
+        const total =
+            getSupportedCurrency(cashback.currency) ===
+            getSupportedCurrency(welcomeBonus.currency)
+                ? addRewards(cashback.reward, welcomeBonus.reward)
+                : undefined;
         return {
             total,
+            totalCurrency: cashback.currency,
             amount: total
-                ? formatRewardOrHide(total)
-                : `${formatRewardOrHide(cashback)} + ${formatRewardOrHide(welcomeBonus)}`,
+                ? formatRewardOrHide(total, cashback.currency)
+                : `${formatRewardOrHide(cashback.reward, cashback.currency)} + ${formatRewardOrHide(welcomeBonus.reward, welcomeBonus.currency)}`,
         };
     }
-    const single = welcomeBonus ?? cashback;
-    return { total: single, amount: formatRewardOrHide(single) };
+    const single = welcomeBonus.reward ? welcomeBonus : cashback;
+    return {
+        total: single.reward,
+        totalCurrency: single.currency,
+        amount: formatRewardOrHide(single.reward, single.currency),
+    };
 }
 
 /**
@@ -68,16 +86,19 @@ export function buildRewardOffer(
 
     const cashback =
         hasReferrer || !view.isReferralOnly
-            ? keepIfDisplayable(view.referee)
+            ? keepIfDisplayable(view.referee, view.payoutCurrency)
             : undefined;
     const welcomeBonus = isBonusEligible
-        ? keepIfDisplayable(view.welcomeBonus)
+        ? keepIfDisplayable(view.welcomeBonus, view.welcomeBonusCurrency)
         : undefined;
-    const { total, amount } = purchaseTotal(cashback, welcomeBonus);
+    const { total, totalCurrency, amount } = purchaseTotal(
+        { reward: cashback, currency: view.payoutCurrency },
+        { reward: welcomeBonus, currency: view.welcomeBonusCurrency }
+    );
 
     return {
         purchase: amount
-            ? { cashback, welcomeBonus, total, amount }
+            ? { cashback, welcomeBonus, total, totalCurrency, amount }
             : undefined,
         share: view.headlineReferrerReward
             ? { amount: view.headlineReferrerReward }
@@ -86,9 +107,10 @@ export function buildRewardOffer(
 }
 
 function keepIfDisplayable(
-    reward: EstimatedReward | undefined
+    reward: EstimatedReward | undefined,
+    currency: Currency | undefined
 ): EstimatedReward | undefined {
-    return formatRewardOrHide(reward) ? reward : undefined;
+    return formatRewardOrHide(reward, currency) ? reward : undefined;
 }
 
 /**

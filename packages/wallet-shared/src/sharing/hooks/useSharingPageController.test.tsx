@@ -424,6 +424,50 @@ describe("reward view", () => {
         expect(result.current.reward).toEqual({ status: "loading" });
     });
 
+    it("holds the skeleton while the display currency is pending, even with a settled reward", () => {
+        rewardHookReturn = () => ({
+            data: { formatted: "10 EUR" },
+            isPending: false,
+            isError: false,
+        });
+
+        const { result } = setup({}, { currencyPending: true });
+
+        expect(result.current.reward).toEqual({ status: "loading" });
+    });
+
+    it("keeps the seeded headline while the display currency is pending", () => {
+        rewardHookReturn = () => ({
+            data: { formatted: "10 EUR" },
+            isPending: false,
+            isError: false,
+        });
+        const rawT = vi.fn((key: string) => key);
+
+        const { result } = setup(
+            {},
+            { seedReward: "£10", currencyPending: true, t: rawT }
+        );
+
+        expect(result.current.reward).toEqual({ status: "ready" });
+        expect(lastEstimatedReward(rawT)).toBe("£10");
+    });
+
+    it("carries the display currency into the breakdown", () => {
+        rewardHookReturn = () => ({
+            data: { formatted: "£10" },
+            isPending: false,
+            isError: false,
+        });
+
+        const { result } = setup({}, { rewardQuery: { currency: "gbp" } });
+
+        expect(
+            result.current.reward.status === "ready" &&
+                result.current.reward.breakdown?.currency
+        ).toBe("gbp");
+    });
+
     it("uses the seed and skips the skeleton while the query is in flight", () => {
         rewardHookReturn = () => ({
             data: undefined,

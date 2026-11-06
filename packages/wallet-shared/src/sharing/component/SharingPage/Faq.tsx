@@ -7,6 +7,7 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Minus, Plus } from "lucide-react";
+import { conversionCurrencies, readyConversion } from "./ConversionNotice";
 import { RewardBreakdown } from "./RewardBreakdown";
 import * as styles from "./sharingPage.css";
 import { noRewardContext, type SharingReward, type SharingT } from "./types";
@@ -32,6 +33,7 @@ const FAQ_ITEMS = [
 
 export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
     const breakdown = reward.status === "ready" ? reward.breakdown : undefined;
+    const conversion = readyConversion(reward);
     const isEmpty = reward.status === "empty";
     const emptyContext = isEmpty ? noRewardContext : undefined;
     const items = FAQ_ITEMS.filter(
@@ -67,6 +69,15 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                                     `sdk.sharingPage.faq.a${item.id}`,
                                     emptyContext
                                 )}
+                                {"slot" in item && conversion && (
+                                    <>
+                                        {" "}
+                                        {t(
+                                            "sdk.sharingPage.faq.a6Converted",
+                                            conversionCurrencies(conversion, t)
+                                        )}
+                                    </>
+                                )}
                                 {"slot" in item &&
                                     item.slot === "rewardBreakdown" &&
                                     breakdown && (
@@ -76,6 +87,7 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                                             minPurchaseValue={
                                                 breakdown.minPurchaseValue
                                             }
+                                            currency={breakdown.currency}
                                             t={t}
                                         />
                                     )}

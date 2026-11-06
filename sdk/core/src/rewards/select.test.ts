@@ -208,8 +208,10 @@ function campaign(opts: {
     productScope?: RuleConditions;
     expiresAt?: string | null;
     defaultLockupSeconds?: number;
+    payoutCurrency?: Currency;
 }): MerchantReward {
     return {
+        payoutCurrency: opts.payoutCurrency,
         campaignId: opts.id,
         name: opts.id,
         interactionTypeKey: opts.interactionTypeKey ?? "purchase",
@@ -645,6 +647,38 @@ describe("selectBestReward", () => {
         expect(best?.payoutType).toBe("fixed");
         expect(best?.minPurchaseAmount).toBeUndefined();
         expect(best?.lockupDurationDays).toBeUndefined();
+    });
+
+    it("reports the conversion when the campaign pays in another fiat than the display currency", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    payoutCurrency: "usd",
+                }),
+            ],
+            { now: NOW, currency: "gbp", locale: "en" }
+        );
+        expect(best?.conversion).toMatchObject({
+            displayCurrency: "gbp",
+            payoutCurrency: "usd",
+        });
+    });
+
+    it("reports no conversion when the payout currency is the display currency", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    payoutCurrency: "eur",
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.conversion).toBeUndefined();
+        expect(best).not.toHaveProperty("conversion");
     });
 
     it("surfaces the minimum purchase amount when the campaign gates on one", () => {

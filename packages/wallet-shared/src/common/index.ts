@@ -144,6 +144,7 @@ export { getInvoke } from "./tauri";
 export {
     formatAmountRange,
     formatCurrency,
+    formatRewardAmount,
     widenGroupSeparator,
 } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";

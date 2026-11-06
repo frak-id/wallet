@@ -13,6 +13,7 @@ import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 import { formatEstimatedRewardParts, formatRewardOrHide } from "./format";
 import { matchesProductScope } from "./matchesProductScope";
+import { getPayoutConversion, type PayoutConversion } from "./payoutConversion";
 import { getRewardRank } from "./value";
 
 /** Reward side a surface cares about: `referrer` (sharer) or `referee`. */
@@ -37,6 +38,8 @@ export type SelectDisplayCampaignOptions = {
     audience?: RewardAudience;
     /** Products in view; advisory — campaigns matching one rank first. */
     products?: ProductDetails[];
+    /** BCP 47 locale for {@link BestReward.conversion}; defaults to each currency's own locale. */
+    locale?: string;
 };
 
 function isExpired(campaign: MerchantReward, nowMs: number): boolean {
@@ -166,6 +169,8 @@ export type BestReward = {
     payoutType: EstimatedReward["payoutType"];
     /** Minimum purchase gating the reward, formatted (e.g. `"10 €"`). */
     minPurchaseAmount?: string;
+    /** Set when the reward is paid in a different fiat than {@link formatted} is shown in. */
+    conversion?: PayoutConversion;
     /** Whole-day lockup applied before the reward settles. */
     lockupDurationDays?: number;
     /** Raw rewards of the selected campaign, for per-audience breakdowns. */
@@ -212,10 +217,17 @@ export function selectBestReward(
             ? Math.round(lockupSeconds / 86_400)
             : undefined;
 
+    const conversion = getPayoutConversion(reward, {
+        displayCurrency: options.currency,
+        payoutCurrency: selected.campaign.payoutCurrency,
+        locale: options.locale,
+    });
+
     return {
         formatted,
         parts: formatEstimatedRewardParts(reward, options.currency),
         payoutType: reward.payoutType,
+        ...(conversion && { conversion }),
         minPurchaseAmount,
         lockupDurationDays,
         referrerReward: selected.campaign.referrer,

@@ -55,11 +55,14 @@ export function selectFormattedReward({
     targetInteraction,
     context,
     products,
+    locale,
 }: {
     currency?: Currency;
     targetInteraction?: InteractionTypeKey;
     context?: string;
     products?: ProductDetails[];
+    /** Language of the strings in `BestReward.conversion`. */
+    locale?: string;
 }) {
     const audience: RewardAudience =
         context === "referred" ? "referee" : "referrer";
@@ -69,5 +72,6 @@ export function selectFormattedReward({
             targetInteraction,
             audience,
             products,
+            locale,
         });
 }
