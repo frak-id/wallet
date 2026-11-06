@@ -177,7 +177,7 @@ describe("PricingRepository", () => {
     });
 
     describe("pegged stablecoins", () => {
-        it("prices USDe from its 1:1 USD peg plus FX, without CoinGecko", async () => {
+        it("prices USDC from its 1:1 USD peg plus FX, without CoinGecko", async () => {
             mockGetRate.mockImplementation(
                 async ({ from, to }: { from: string; to: string }) => {
                     if (from === "usd" && to === "eur") return 0.86;
@@ -187,7 +187,7 @@ describe("PricingRepository", () => {
             );
 
             const result = await repository.getTokenPrice({
-                token: stablecoins.prod.usde,
+                token: stablecoins.prod.usdc,
             });
 
             expect(result).toEqual({ usd: 1, eur: 0.86, gbp: 0.74 });
@@ -213,7 +213,7 @@ describe("PricingRepository", () => {
 
         it("returns undefined when FX providers are down — never a stale guess", async () => {
             const result = await repository.getTokenPrice({
-                token: stablecoins.prod.gbpe,
+                token: stablecoins.prod.usdc,
             });
 
             expect(result).toBeUndefined();
@@ -224,8 +224,6 @@ describe("PricingRepository", () => {
             mockGetRate.mockResolvedValue(1.1);
             for (const token of [
                 stablecoins.testnet.eure,
-                stablecoins.testnet.gbpe,
-                stablecoins.testnet.usde,
                 stablecoins.testnet.usdc,
             ]) {
                 const result = await repository.getTokenPrice({ token });
@@ -254,7 +252,7 @@ describe("PricingRepository", () => {
             mockGetRate.mockResolvedValue(0.0062);
 
             const result = await repository.convertFiatToTokenAmount({
-                token: stablecoins.prod.usde,
+                token: stablecoins.prod.usdc,
                 fiatAmount: 10_000,
                 currency: "JPY",
             });
@@ -269,7 +267,7 @@ describe("PricingRepository", () => {
 
         it("defers when no FX rate exists for the order currency", async () => {
             const result = await repository.convertFiatToTokenAmount({
-                token: stablecoins.prod.usde,
+                token: stablecoins.prod.usdc,
                 fiatAmount: 100,
                 currency: "XXX",
             });

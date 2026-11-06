@@ -192,9 +192,7 @@ export default interface Resources {
             "defaults": {
               "eure": "Euro (EUR) via Monerium",
               "fallback": "Merchant default",
-              "gbpe": "British Pound (GBP) via Monerium",
-              "usdc": "USD Coin (USDC) via Circle",
-              "usde": "US Dollar (USD) via Monerium"
+              "usdc": "USD Coin (USDC) via Circle"
             },
             "description": "The currency your ambassadors will receive as rewards.",
             "label": "Reward currency (what users earn)",

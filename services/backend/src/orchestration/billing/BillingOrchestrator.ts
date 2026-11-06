@@ -32,8 +32,6 @@ export class DepositNotFoundError extends Error {
  */
 const STABLECOIN_FIAT_LEG: Record<Stablecoin, "eur" | "usd" | "gbp"> = {
     eure: "eur",
-    gbpe: "gbp",
-    usde: "usd",
     usdc: "usd",
 };
 

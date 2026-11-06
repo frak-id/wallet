@@ -18,12 +18,7 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
-import {
-    EurIcon,
-    GbpIcon,
-    UsdcIcon,
-    UsdIcon,
-} from "@frak-labs/design-system/icons";
+import { EurIcon, UsdcIcon } from "@frak-labs/design-system/icons";
 import { type ReactNode, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -53,8 +48,6 @@ type FormMerchant = {
 
 const CURRENCY_ICONS: Record<Stablecoin, ReactNode> = {
     eure: <EurIcon className={styles.currencyIcon} />,
-    gbpe: <GbpIcon className={styles.currencyIcon} />,
-    usde: <UsdIcon className={styles.currencyIcon} />,
     usdc: <UsdcIcon className={styles.currencyIcon} />,
 };
 

@@ -25,18 +25,6 @@ const MOCK_MERCHANT_BANK = {
             allowance: 10000000000n,
         },
         {
-            symbol: "gbpe",
-            address: currentStablecoins.gbpe,
-            balance: 3000000000n,
-            allowance: 8000000000n,
-        },
-        {
-            symbol: "usde",
-            address: currentStablecoins.usde,
-            balance: 0n,
-            allowance: 0n,
-        },
-        {
             symbol: "usdc",
             address: currentStablecoins.usdc,
             balance: 0n,

@@ -34,26 +34,6 @@ export const currencyOptions: readonly CurrencyGroup[] = [
                 providerDescription:
                     "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
             },
-            {
-                value: "gbpe",
-                label: "GBPe",
-                currencySymbol: "GBP",
-                currencyCode: "GBP",
-                locale: "en-GB",
-                provider: "Monerium",
-                providerDescription:
-                    "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-            },
-            {
-                value: "usde",
-                label: "USDe",
-                currencySymbol: "USD",
-                currencyCode: "USD",
-                locale: "en-US",
-                provider: "Monerium",
-                providerDescription:
-                    "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-            },
         ],
     },
     {

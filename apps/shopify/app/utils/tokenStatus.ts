@@ -20,24 +20,6 @@ export const currencyMetadata: Record<Stablecoin, CurrencyMeta> = {
         providerDescription:
             "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
     },
-    gbpe: {
-        label: "GBPe",
-        currencySymbol: "GBP",
-        currencyCode: "GBP",
-        locale: "en-GB",
-        provider: "Monerium",
-        providerDescription:
-            "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-    },
-    usde: {
-        label: "USDe",
-        currencySymbol: "USD",
-        currencyCode: "USD",
-        locale: "en-US",
-        provider: "Monerium",
-        providerDescription:
-            "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-    },
     usdc: {
         label: "USDC",
         currencySymbol: "USDC",
