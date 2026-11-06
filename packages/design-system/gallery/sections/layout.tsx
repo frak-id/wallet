@@ -5,10 +5,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
+import { CheckIcon, WalletIcon } from "@frak-labs/design-system/icons";
 import type { ComponentProps, ReactNode } from "react";
 import { fixtures } from "../fixtures";
 import { Case, Cases } from "../ui";
@@ -311,6 +315,129 @@ export function CardSection() {
                 </Case>
                 <Case name="worst: empty">
                     <Card />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function SpreadSection() {
+    return (
+        <>
+            <Cases title="Direction" layout="stack">
+                <Case name="horizontal">
+                    <Box style={{ width: 280 }}>
+                        <Spread>
+                            <Swatch>start</Swatch>
+                            <Swatch>end</Swatch>
+                        </Spread>
+                    </Box>
+                </Case>
+                <Case name="vertical">
+                    <Box style={{ height: 120 }}>
+                        <Spread direction="vertical" align="top">
+                            <Swatch>top</Swatch>
+                            <Swatch>bottom</Swatch>
+                        </Spread>
+                    </Box>
+                </Case>
+            </Cases>
+            <Cases title="Align" layout="stack">
+                {(["top", "center", "bottom"] as const).map((align) => (
+                    <Case key={align} name={`align ${align}`}>
+                        <Box style={{ width: 280 }}>
+                            <Spread align={align} space="s">
+                                <Swatch>
+                                    tall
+                                    <br />
+                                    item
+                                </Swatch>
+                                <Swatch>{align}</Swatch>
+                            </Spread>
+                        </Box>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Box style={{ width: 280 }}>
+                        <Spread space="s">
+                            <Text>{fixtures.unbreakableEmail}</Text>
+                            <Swatch>end</Swatch>
+                        </Spread>
+                    </Box>
+                </Case>
+                <Case name="worst: long sentence">
+                    <Box style={{ width: 280 }}>
+                        <Spread space="s">
+                            <Text>{fixtures.longSentence}</Text>
+                            <Swatch>end</Swatch>
+                        </Spread>
+                    </Box>
+                </Case>
+                <Case name="worst: one child">
+                    <Box style={{ width: 280 }}>
+                        <Spread>
+                            <Swatch>only</Swatch>
+                        </Spread>
+                    </Box>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function ContentBlockSection() {
+    return (
+        <>
+            <Cases title="Align" layout="stack">
+                {(["center", "left"] as const).map((align) => (
+                    <Case key={align} name={`align ${align}`}>
+                        <Box style={{ width: 280 }} backgroundColor="secondary">
+                            <ContentBlock maxWidth="160px" align={align}>
+                                <Swatch>max 160px</Swatch>
+                            </ContentBlock>
+                        </Box>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <ContentBlock maxWidth="200px">
+                        <Text>{fixtures.unbreakableEmail}</Text>
+                    </ContentBlock>
+                </Case>
+                <Case name="worst: max width wider than parent">
+                    <Box style={{ width: 200 }}>
+                        <ContentBlock maxWidth="600px">
+                            <Text>{fixtures.longSentence}</Text>
+                        </ContentBlock>
+                    </Box>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function IconCircleSection() {
+    return (
+        <>
+            {(["neutral", "action"] as const).map((tone) => (
+                <Cases key={tone} title={`Tone ${tone}`}>
+                    {(["sm", "md", "lg"] as const).map((size) => (
+                        <Case key={size} name={`${tone} ${size}`}>
+                            <IconCircle tone={tone} size={size}>
+                                <WalletIcon width={20} height={20} />
+                            </IconCircle>
+                        </Case>
+                    ))}
+                </Cases>
+            ))}
+            <Cases title="Worst Case">
+                <Case name="worst: oversized icon">
+                    <IconCircle size="sm">
+                        <CheckIcon width={64} height={64} />
+                    </IconCircle>
                 </Case>
             </Cases>
         </>

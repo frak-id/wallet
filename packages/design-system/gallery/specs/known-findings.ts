@@ -1,5 +1,11 @@
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
+const SORT_FOCUS =
+    "the sortable header button's tableButton style sets all: unset, which drops the reset's focus outline, so keyboard focus is invisible";
+const NO_RETURN =
+    "ResponsiveModal is opened from state with no DialogTrigger, so Radix has no trigger to refocus and focus drops to body on close";
+const POPOVER_WIDTH =
+    "popoverContentStyle sets no max-width, so long content widens the popover past the viewport";
 
 /**
  * Findings the gallery surfaces in current component code, keyed
@@ -50,4 +56,24 @@ export const knownFindings: Record<string, string> = {
 
     "overlay:dialog:worst: unbreakable email": `DialogTitle and DialogDescription: ${NO_WRAP}`,
     "overlay:drawer:worst: unbreakable email": `Drawer content: ${NO_WRAP}`,
+    "overflow:spread:worst: unbreakable email": `Spread children keep their min-content: ${NO_WRAP}`,
+    "overflow:content-block:worst: unbreakable email": `ContentBlock does not clip: ${NO_WRAP}`,
+    "overflow:radio-group:worst: unbreakable email": `radio label: ${NO_WRAP}`,
+    "overflow:field-label:worst: unbreakable email": `FieldLabel label and hint: ${NO_WRAP}`,
+    "overflow:field-error:worst: unbreakable email": `FieldError message: ${NO_WRAP}`,
+    "overflow:empty-state:worst: unbreakable email": `EmptyState title and description: ${NO_WRAP}`,
+    "overlay:responsive-modal:default": NO_RETURN,
+    "overlay:responsive-modal:worst: long content": NO_RETURN,
+    "overlay:responsive-modal:worst: unbreakable email": `${NO_RETURN}; content: ${NO_WRAP}`,
+    "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
+    "overlay:popover:worst: unbreakable email": POPOVER_WIDTH,
+    "overlay:popover:worst: long sentence": POPOVER_WIDTH,
+    "focus:data-table:default": SORT_FOCUS,
+    "focus:data-table:clickable rows": SORT_FOCUS,
+    "focus:data-table:sorted by rewards": SORT_FOCUS,
+    "focus:data-table:empty message": SORT_FOCUS,
+    "focus:data-table:empty placeholder row": SORT_FOCUS,
+    "focus:data-table:worst: long cells": SORT_FOCUS,
+    "focus:data-table:worst: long cells, fixed layout": SORT_FOCUS,
+    "focus:data-table:worst: long empty message": SORT_FOCUS,
 };

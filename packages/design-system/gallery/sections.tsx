@@ -6,6 +6,7 @@ export const categories = [
     "Controls",
     "Feedback",
     "Overlays",
+    "Data",
     "Charts",
 ] as const;
 
@@ -86,6 +87,27 @@ export const sections: readonly GallerySection[] = [
         "CardSection"
     ),
     section(
+        "spread",
+        "Spread",
+        "Layout",
+        () => import("./sections/layout"),
+        "SpreadSection"
+    ),
+    section(
+        "content-block",
+        "ContentBlock",
+        "Layout",
+        () => import("./sections/layout"),
+        "ContentBlockSection"
+    ),
+    section(
+        "icon-circle",
+        "IconCircle",
+        "Layout",
+        () => import("./sections/layout"),
+        "IconCircleSection"
+    ),
+    section(
         "button",
         "Button",
         "Controls",
@@ -128,6 +150,27 @@ export const sections: readonly GallerySection[] = [
         "CheckboxSection"
     ),
     section(
+        "radio-group",
+        "RadioGroup",
+        "Controls",
+        () => import("./sections/controls"),
+        "RadioGroupSection"
+    ),
+    section(
+        "field-label",
+        "FieldLabel",
+        "Controls",
+        () => import("./sections/controls"),
+        "FieldLabelSection"
+    ),
+    section(
+        "field-error",
+        "FieldError",
+        "Controls",
+        () => import("./sections/controls"),
+        "FieldErrorSection"
+    ),
+    section(
         "spinner",
         "Spinner",
         "Feedback",
@@ -156,6 +199,20 @@ export const sections: readonly GallerySection[] = [
         "BadgeSection"
     ),
     section(
+        "empty-state",
+        "EmptyState",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "EmptyStateSection"
+    ),
+    section(
+        "alert-message",
+        "AlertMessage",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "AlertMessageSection"
+    ),
+    section(
         "toast-surface",
         "ToastSurface",
         "Feedback",
@@ -182,6 +239,34 @@ export const sections: readonly GallerySection[] = [
         "Overlays",
         () => import("./sections/overlays"),
         "DetailSheetSection"
+    ),
+    section(
+        "responsive-modal",
+        "ResponsiveModal",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "ResponsiveModalSection"
+    ),
+    section(
+        "sheet",
+        "Sheet",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "SheetSection"
+    ),
+    section(
+        "popover",
+        "Popover",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "PopoverSection"
+    ),
+    section(
+        "data-table",
+        "DataTable",
+        "Data",
+        () => import("./sections/data"),
+        "DataTableSection"
     ),
     section(
         "chart-sharing-pie",

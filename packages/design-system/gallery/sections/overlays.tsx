@@ -24,11 +24,26 @@ import {
 } from "@frak-labs/design-system/components/Drawer";
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
+import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import { ShareIcon } from "@frak-labs/design-system/icons";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import { fixtures } from "../fixtures";
 import { heroImage, phoneFrame, toastFrame, toastOffset } from "../gallery.css";
 import { Case, Cases } from "../ui";
@@ -303,6 +318,173 @@ export function ToastSurfaceSection() {
                 <ToastCase
                     name="worst: long sentence"
                     label={fixtures.longSentence}
+                />
+            </Cases>
+        </>
+    );
+}
+
+function ResponsiveModalCase({
+    name,
+    title,
+    body,
+}: {
+    name: string;
+    title: string;
+    body: string;
+}) {
+    const [open, setOpen] = useState(false);
+    return (
+        <Case name={name}>
+            <Button width="auto" onClick={() => setOpen(true)} {...openTrigger}>
+                Open {name}
+            </Button>
+            <ResponsiveModal
+                open={open}
+                onOpenChange={setOpen}
+                title={title}
+                description={body}
+                header={<Text variant="heading4">{title}</Text>}
+            >
+                <Stack space="m">
+                    <Text color="secondary">{body}</Text>
+                    <Button onClick={() => setOpen(false)}>Got it</Button>
+                </Stack>
+            </ResponsiveModal>
+        </Case>
+    );
+}
+
+export function ResponsiveModalSection() {
+    return (
+        <>
+            <Cases title="Default">
+                <ResponsiveModalCase
+                    name="default"
+                    title="Nothing to transfer"
+                    body="Your balance is empty for now."
+                />
+            </Cases>
+            <Cases title="Worst case">
+                <ResponsiveModalCase
+                    name="worst: unbreakable email"
+                    title={fixtures.unbreakableEmail}
+                    body={fixtures.unbreakableEmail}
+                />
+                <ResponsiveModalCase
+                    name="worst: long content"
+                    title={fixtures.longSentence}
+                    body={fixtures.longSentence.repeat(30)}
+                />
+            </Cases>
+        </>
+    );
+}
+
+type SheetContentProps = ComponentProps<typeof SheetContent>;
+
+function SheetPanelCase({
+    name,
+    title,
+    body,
+    ...content
+}: {
+    name: string;
+    title: string;
+    body: string;
+} & Pick<SheetContentProps, "side" | "size">) {
+    return (
+        <Case name={name}>
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button width="auto" {...openTrigger}>
+                        Open {name}
+                    </Button>
+                </SheetTrigger>
+                <SheetContent {...content}>
+                    <SheetHeader>
+                        <SheetTitle>{title}</SheetTitle>
+                        <SheetDescription>{body}</SheetDescription>
+                    </SheetHeader>
+                    <SheetFooter>
+                        <Button>Save</Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
+        </Case>
+    );
+}
+
+export function SheetSection() {
+    return (
+        <>
+            <Cases title="Sides">
+                {(["right", "left", "top", "bottom"] as const).map((side) => (
+                    <SheetPanelCase
+                        key={side}
+                        name={`side ${side}`}
+                        title="Campaign details"
+                        body="Edit the budget and the dates."
+                        side={side}
+                    />
+                ))}
+                <SheetPanelCase
+                    name="size wide"
+                    title="Campaign details"
+                    body="Edit the budget and the dates."
+                    size="wide"
+                />
+            </Cases>
+            <Cases title="Worst case">
+                <SheetPanelCase
+                    name="worst: unbreakable email"
+                    title={fixtures.unbreakableEmail}
+                    body={fixtures.unbreakableEmail}
+                />
+                <SheetPanelCase
+                    name="worst: long content"
+                    title={fixtures.longSentence}
+                    body={fixtures.longSentence.repeat(30)}
+                />
+            </Cases>
+        </>
+    );
+}
+
+function PopoverCase({ name, body }: { name: string; body: string }) {
+    return (
+        <Case name={name}>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button width="auto" variant="secondary" {...openTrigger}>
+                        Open {name}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                    <Stack space="s">
+                        <Text>{body}</Text>
+                        <Button size="small">Apply</Button>
+                    </Stack>
+                </PopoverContent>
+            </Popover>
+        </Case>
+    );
+}
+
+export function PopoverSection() {
+    return (
+        <>
+            <Cases title="Default">
+                <PopoverCase name="default" body="Filter by status." />
+            </Cases>
+            <Cases title="Worst case">
+                <PopoverCase
+                    name="worst: unbreakable email"
+                    body={fixtures.unbreakableEmail}
+                />
+                <PopoverCase
+                    name="worst: long sentence"
+                    body={fixtures.longSentence.repeat(4)}
                 />
             </Cases>
         </>
