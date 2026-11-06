@@ -59,9 +59,16 @@ beforeEach(() => {
 });
 
 // Cleanup Preact Testing Library after each test
-afterEach(() => {
+afterEach(async () => {
     cleanup();
     vi.clearAllMocks();
+    // Imported lazily: a static import would bind the store to this file's mocks, not the test's.
+    const { resetRewardSummaryStore } = await import(
+        "../src/rewards/rewardSummaryStore"
+    );
+    resetRewardSummaryStore();
+    sessionStorage.clear();
+    localStorage.clear();
 });
 
 // Mock @frak-labs/core-sdk actions
@@ -116,6 +123,7 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         getMerchantInformation: vi.fn().mockResolvedValue({
             rewards: [],
         }),
+        getRewardSummary: vi.fn().mockResolvedValue(null),
         modalBuilder: vi.fn(),
         openSso: vi.fn(),
         prepareSso: vi.fn(),

@@ -322,6 +322,87 @@ export const rewardCta = ctaButton;
 
 export const rewardFooter = mutedSmall;
 
+// ─── Your rewards ─────────────────────────────────────────
+
+export const myRewards = style([
+    panel,
+    {
+        display: "grid",
+        gap: "1em",
+        justifyItems: "center",
+        textAlign: "center",
+        padding: "2em 1.75em",
+    },
+]);
+
+export const myRewardsEyebrow = mutedSmall;
+
+export const myRewardsHeading = regionTitle;
+
+export const myRewardsAmount = style([
+    bigFigure,
+    {
+        margin: 0,
+        fontSize: "clamp(3em, 12vw, 5.5em)",
+    },
+]);
+
+export const myRewardsBreakdown = style({
+    display: "grid",
+    gap: "0.4em",
+    width: "100%",
+    maxWidth: "26em",
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+});
+
+export const myRewardsRow = style({
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "1em",
+    margin: 0,
+});
+
+export const myRewardsRowValue = style({ fontWeight: 700 });
+
+export const myRewardsCountdown = style({ margin: 0, fontWeight: 700 });
+
+export const myRewardsNote = mutedSmall;
+
+export const myRewardsActions = style({
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1em 1.5em",
+});
+
+export const myRewardsCta = ctaButton;
+
+export const myRewardsSecondaryCta = style([
+    ctaButton,
+    {
+        backgroundColor: "transparent",
+        color: ACCENT_TEXT,
+        border: tintedBorder(false),
+        selectors: {
+            "&:hover": { opacity: 1, backgroundColor: tint("surface", false) },
+        },
+    },
+]);
+
+export const myRewardsQr = style({
+    display: "grid",
+    justifyItems: "center",
+    gap: "0.5em",
+    margin: 0,
+});
+
+export const myRewardsQrCaption = mutedSmall;
+
+export const myRewardsFooter = mutedSmall;
+
 // ─── Explainer steps ──────────────────────────────────────
 
 export const steps = region;

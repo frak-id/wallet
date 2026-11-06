@@ -39,7 +39,8 @@
     "./dist/buttonWallet.js",
     "./dist/openInApp.js",
     "./dist/postPurchase.js",
-    "./dist/banner.js"
+    "./dist/banner.js",
+    "./dist/rewardReminder.js"
   ],
   "private": false,
   "publishConfig": {
@@ -82,6 +83,11 @@
       "development": "./src/components/Banner/index.ts",
       "import": "./dist/banner.js",
       "types": "./dist/banner.d.ts"
+    },
+    "./rewardReminder": {
+      "development": "./src/components/RewardReminder/index.ts",
+      "import": "./dist/rewardReminder.js",
+      "types": "./dist/rewardReminder.d.ts"
     },
     "./i18n/defaults": {
       "development": "./src/i18n/defaults.ts",

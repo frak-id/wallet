@@ -16,6 +16,9 @@ type ComponentCopy = {
         referrerNoRewardText: string;
         ctaText: string;
         ctaNoRewardText: string;
+        /** Referee without a linked wallet; `claimCtaText` carries `{REWARD}`. */
+        claimCtaText: string;
+        claimCtaNoRewardText: string;
     };
     openInApp: {
         text: string;
@@ -35,6 +38,41 @@ type ComponentCopy = {
         inappDescription: string;
         inappCta: string;
         dismissLabel: string;
+        /** Pending mode: a visitor with an unclaimed reward. Title and CTA carry `{REWARD}`. */
+        pendingTitle: string;
+        pendingDescription: string;
+        /** Used when every pending reward is still locked; carries `{DATE}`. */
+        pendingDescriptionLocked: string;
+        pendingCta: string;
+    };
+    rewardReminder: {
+        /** Carries `{REWARD}` and `{BRAND}`. */
+        title: string;
+        description: string;
+        /** Carries `{REWARD}`. */
+        cta: string;
+        later: string;
+        closeLabel: string;
+        dismissLabel: string;
+        /** Carries `{REWARD}`. */
+        pillLabel: string;
+        countdownToday: string;
+        countdownOneDay: string;
+        /** Carries `{DAYS}`. */
+        countdownDays: string;
+        deadlineToday: string;
+        /** Carries `{DATE}`. */
+        deadlineOneDay: string;
+        /** Carries `{DAYS}` and `{DATE}`. */
+        deadlineDays: string;
+        /** Carries `{DATE}`. */
+        unlockNote: string;
+        /** Used when every pending reward is still locked; carries `{DATE}`. */
+        unlockNoteAll: string;
+        cashbackLabel: string;
+        fromFriendsLabel: string;
+        qrLabel: string;
+        qrCaption: string;
     };
     ambassador: {
         // Every brand mention is a `{BRAND}` token: a literal name ships the
@@ -104,6 +142,26 @@ type ComponentCopy = {
         faq5AnswerAfterLink: string;
         attributionBeforeLink: string;
         attributionLinkText: string;
+        /** "Your rewards" section; `{REWARD}`, `{DAYS}`, `{DATE}` and `{BRAND}` are filled at render. */
+        myRewardsEyebrow: string;
+        myRewardsCashbackLabel: string;
+        myRewardsFriendsLabel: string;
+        myRewardsCountdown: string;
+        myRewardsCountdownOneDay: string;
+        myRewardsCountdownToday: string;
+        myRewardsUnlockNote: string;
+        /** Used when every pending reward is still locked; carries `{DATE}`. */
+        myRewardsUnlockNoteAll: string;
+        myRewardsClaimCta: string;
+        myRewardsShareCta: string;
+        myRewardsLinkedHeading: string;
+        myRewardsReceived: string;
+        myRewardsOnItsWay: string;
+        myRewardsOnItsWayUnlock: string;
+        myRewardsWalletCta: string;
+        myRewardsShareAgainCta: string;
+        /** Store heading while a reward is waiting to be claimed. */
+        storeHeadingClaim: string;
     };
 };
 
@@ -129,6 +187,8 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
                 "Share this with your friends and earn rewards!",
             ctaText: "Share & earn {REWARD}",
             ctaNoRewardText: "Share & earn",
+            claimCtaText: "Claim my {REWARD}",
+            claimCtaNoRewardText: "Claim my cashback",
         },
         openInApp: {
             text: "Open in App",
@@ -148,6 +208,35 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
                 "For a better experience and to earn your rewards, open this page in your default browser.",
             inappCta: "Open browser",
             dismissLabel: "Dismiss",
+            pendingTitle: "You have {REWARD} waiting",
+            pendingDescription: "Create your free Frak wallet to receive it.",
+            pendingDescriptionLocked:
+                "Create your free Frak wallet to receive it. It unlocks on {DATE}.",
+            pendingCta: "Claim my {REWARD}",
+        },
+        rewardReminder: {
+            title: "{REWARD} waiting for you at {BRAND}",
+            description:
+                "Frak is how {BRAND} pays its rewards. Create your free Frak wallet to receive it, no bank details needed.",
+            cta: "Claim my {REWARD}",
+            later: "Later",
+            closeLabel: "Close",
+            dismissLabel: "Dismiss reminder",
+            pillLabel: "{REWARD} to claim, show details",
+            countdownToday: "Expires today",
+            countdownOneDay: "1 day left",
+            countdownDays: "{DAYS} days left",
+            deadlineToday: "Expires today. Unclaimed rewards are lost.",
+            deadlineOneDay:
+                "Expires in 1 day ({DATE}). Unclaimed rewards are lost.",
+            deadlineDays:
+                "Expires in {DAYS} days ({DATE}). Unclaimed rewards are lost.",
+            unlockNote: "Part of it unlocks on {DATE}.",
+            unlockNoteAll: "Unlocks on {DATE}.",
+            cashbackLabel: "Cashback",
+            fromFriendsLabel: "From your friends",
+            qrLabel: "QR code to claim your reward in the Frak wallet",
+            qrCaption: "Scan with your phone to claim",
         },
         ambassador: {
             heroEyebrow: "Ambassador program",
@@ -226,6 +315,23 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             faq5AnswerAfterLink: " never sells any data to third parties.",
             attributionBeforeLink: "Program powered by ",
             attributionLinkText: "Frak",
+            myRewardsEyebrow: "Your rewards",
+            myRewardsCashbackLabel: "Cashback on your orders",
+            myRewardsFriendsLabel: "From your friends' purchases",
+            myRewardsCountdown: "{DAYS} days left to claim it, until {DATE}",
+            myRewardsCountdownOneDay: "1 day left to claim it, until {DATE}",
+            myRewardsCountdownToday: "Expires today, claim it now",
+            myRewardsUnlockNote: "Part of it unlocks on {DATE}",
+            myRewardsUnlockNoteAll: "Unlocks on {DATE}",
+            myRewardsClaimCta: "Claim my {REWARD}",
+            myRewardsShareCta: "Share to earn more",
+            myRewardsLinkedHeading: "Your rewards at {BRAND}",
+            myRewardsReceived: "{REWARD} received",
+            myRewardsOnItsWay: "{REWARD} on its way",
+            myRewardsOnItsWayUnlock: "{REWARD} on its way, unlocking on {DATE}",
+            myRewardsWalletCta: "Open my Frak wallet",
+            myRewardsShareAgainCta: "Share again",
+            storeHeadingClaim: "Claim your {REWARD} in the app",
         },
     },
     fr: {
@@ -242,6 +348,8 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
                 "Partagez avec vos amis et gagnez des récompenses !",
             ctaText: "Partagez et gagnez {REWARD}",
             ctaNoRewardText: "Partagez et gagnez",
+            claimCtaText: "Réclamer {REWARD}",
+            claimCtaNoRewardText: "Réclamer mon cashback",
         },
         openInApp: {
             text: "Ouvrir dans l'app",
@@ -261,6 +369,38 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
                 "Pour une meilleure expérience et pour gagner vos récompenses, ouvrez cette page dans votre navigateur par défaut.",
             inappCta: "Ouvrir le navigateur",
             dismissLabel: "Fermer",
+            pendingTitle: "Votre récompense de {REWARD} vous attend",
+            pendingDescription:
+                "Créez votre wallet Frak gratuit pour la recevoir.",
+            pendingDescriptionLocked:
+                "Créez votre wallet Frak gratuit pour la recevoir. Déblocage le {DATE}.",
+            pendingCta: "Récupérer mes {REWARD}",
+        },
+        rewardReminder: {
+            title: "Votre récompense de {REWARD} vous attend chez {BRAND}",
+            description:
+                "Frak est le moyen par lequel {BRAND} verse ses récompenses. Créez votre wallet Frak gratuit pour la recevoir, sans coordonnées bancaires.",
+            cta: "Récupérer mes {REWARD}",
+            later: "Plus tard",
+            closeLabel: "Fermer",
+            dismissLabel: "Masquer le rappel",
+            pillLabel: "{REWARD} à récupérer, afficher le détail",
+            countdownToday: "Expire aujourd’hui",
+            countdownOneDay: "1 jour restant",
+            countdownDays: "{DAYS} jours restants",
+            deadlineToday:
+                "Expire aujourd’hui. Une récompense non récupérée est perdue.",
+            deadlineOneDay:
+                "Expire dans 1 jour ({DATE}). Une récompense non récupérée est perdue.",
+            deadlineDays:
+                "Expire dans {DAYS} jours ({DATE}). Une récompense non récupérée est perdue.",
+            unlockNote: "Une partie se débloque le {DATE}.",
+            unlockNoteAll: "Se débloque le {DATE}.",
+            cashbackLabel: "Cashback",
+            fromFriendsLabel: "De vos amis",
+            qrLabel:
+                "QR code pour récupérer votre récompense dans le wallet Frak",
+            qrCaption: "Scannez avec votre téléphone pour la récupérer",
         },
         ambassador: {
             heroEyebrow: "Programme ambassadeur",
@@ -341,6 +481,26 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             faq5AnswerAfterLink: " ne vend aucune donnée à des tiers.",
             attributionBeforeLink: "Programme propulsé par ",
             attributionLinkText: "Frak",
+            myRewardsEyebrow: "Vos récompenses",
+            myRewardsCashbackLabel: "Cashback sur vos commandes",
+            myRewardsFriendsLabel: "Issu des achats de vos amis",
+            myRewardsCountdown:
+                "{DAYS} jours restants pour la réclamer, jusqu’au {DATE}",
+            myRewardsCountdownOneDay:
+                "1 jour restant pour la réclamer, jusqu’au {DATE}",
+            myRewardsCountdownToday:
+                "Expire aujourd’hui, réclamez-la maintenant",
+            myRewardsUnlockNote: "Une partie se débloque le {DATE}",
+            myRewardsUnlockNoteAll: "Se débloque le {DATE}",
+            myRewardsClaimCta: "Réclamer {REWARD}",
+            myRewardsShareCta: "Partager pour gagner plus",
+            myRewardsLinkedHeading: "Vos récompenses chez {BRAND}",
+            myRewardsReceived: "{REWARD} reçus",
+            myRewardsOnItsWay: "{REWARD} en route",
+            myRewardsOnItsWayUnlock: "{REWARD} en route, déblocage le {DATE}",
+            myRewardsWalletCta: "Ouvrir mon wallet Frak",
+            myRewardsShareAgainCta: "Partager à nouveau",
+            storeHeadingClaim: "Réclamez {REWARD} dans l’app",
         },
     },
 };

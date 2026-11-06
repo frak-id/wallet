@@ -40,15 +40,20 @@ import {
     referralImage,
     referralTitle,
 } from "./Banner.css";
+import { PendingBanner } from "./PendingBanner";
 import type { BannerProps } from "./types";
+import { usePendingSummary } from "./usePendingSummary";
 
-type BannerMode = "referral" | "inapp";
+type BannerMode = "referral" | "inapp" | "pending";
+
+function toPreviewMode(value: string | undefined): BannerMode {
+    return value === "inapp" || value === "pending" ? value : "referral";
+}
 
 /**
  * Auto-detecting notification banner component.
  *
- * Renders an inline banner on the merchant page with one of two distinct
- * visual styles depending on the detected mode:
+ * Renders an inline banner on the merchant page with one of three modes:
  *
  * - **Referral mode** (white): Shown after a successful referral link
  *   processing. Displays a gift icon, reward copy, and a "Got it" CTA.
@@ -57,7 +62,10 @@ type BannerMode = "referral" | "inapp";
  *   Offers an inline link to redirect to the default browser plus a
  *   close button to dismiss.
  *
- * In-app browser mode takes priority over referral mode.
+ * - **Pending mode** (white): Shown to a visitor with unclaimed rewards and no
+ *   Frak wallet yet; see {@link PendingBanner}.
+ *
+ * Priority: in-app browser, then referral, then pending.
  * Uses Light DOM + vanilla-extract styles from `@frak-labs/design-system`.
  *
  * @group components
@@ -85,6 +93,9 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
+    pendingTitle,
+    pendingDescription,
+    pendingCta,
     imageUrl: propImageUrl,
     preview,
     previewMode,
@@ -92,8 +103,7 @@ export function Banner({
 }: BannerProps) {
     const isPreview = !!preview;
     const lang = useLang();
-    const resolvedPreviewMode: BannerMode =
-        previewMode === "inapp" ? "inapp" : "referral";
+    const resolvedPreviewMode = toPreviewMode(previewMode);
     // HTML attribute consumers (Shopify Liquid, WordPress PHP) pass
     // strings, so allow `"true"` alongside the JSX boolean `true`.
     const isInappRedirectAllowed =
@@ -110,10 +120,16 @@ export function Banner({
     );
 
     const [dismissed, setDismissed] = useState(false);
-    const [mode, setMode] = useState<BannerMode | null>(() => {
+    const [baseMode, setMode] = useState<BannerMode | null>(() => {
         if (isPreview) return resolvedPreviewMode;
         return isInappRedirectAllowed && isInAppBrowser ? "inapp" : null;
     });
+
+    const pending = usePendingSummary(
+        baseMode,
+        !isPreview && isClientReady && shouldRender && !isHidden
+    );
+    const mode: BannerMode | null = baseMode ?? (pending ? "pending" : null);
 
     // Emit a single impression per (mount, mode) pair. A user who sees the
     // referral banner and the in-app banner in the same session produces
@@ -172,14 +188,14 @@ export function Banner({
 
     // Listen for the referral success event (only when not in preview or in-app browser mode)
     useEffect(() => {
-        if (isPreview || mode === "inapp") return;
+        if (isPreview || baseMode === "inapp") return;
 
         const handler = () => setMode("referral");
 
         window.addEventListener(REFERRAL_SUCCESS_EVENT, handler);
         return () =>
             window.removeEventListener(REFERRAL_SUCCESS_EVENT, handler);
-    }, [isPreview, mode]);
+    }, [isPreview, baseMode]);
 
     const handleAction = useCallback(async () => {
         if (isPreview) return;
@@ -298,6 +314,25 @@ export function Banner({
     // Keep literal BEM classes alongside vanilla-extract hashed classes so
     // external tests / merchant selectors targeting `.frak-banner*` keep
     // working while the visual styling is driven by the design system.
+    if (pending) {
+        return (
+            <PendingBanner
+                pending={pending}
+                isPreview={isPreview}
+                isClientReady={isClientReady}
+                placementId={placementId}
+                classname={classname}
+                imageUrl={imageUrl}
+                config={bannerConfig}
+                overrides={{
+                    title: pendingTitle,
+                    description: pendingDescription,
+                    cta: pendingCta,
+                }}
+            />
+        );
+    }
+
     const bannerClass = [
         referral,
         "frak-banner",
