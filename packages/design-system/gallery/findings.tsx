@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo } from "react";
-import { findingList, kind as kindChip } from "./gallery.css";
+import { findingList, findingsSummary, kind as kindChip } from "./gallery.css";
 import { FindingMarkers } from "./markers";
 import { sections } from "./sections";
 import { findingsFor, markersFor } from "./shell";
@@ -45,7 +45,9 @@ export function FindingsDetails({
     const list = findings.get(sectionId) ?? [];
     return (
         <details className={className} key={sectionId} open={open}>
-            <summary>Known findings ({list.length})</summary>
+            <summary className={findingsSummary}>
+                Known findings ({list.length})
+            </summary>
             {list.length === 0 ? (
                 <p>None recorded for this section.</p>
             ) : (

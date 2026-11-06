@@ -25,6 +25,7 @@ import {
     sectionBox,
     shell,
     sidebar,
+    skipLink,
     toolbar,
     toolbarTitle,
 } from "./gallery.css";
@@ -253,8 +254,18 @@ export function Shell() {
             : sections.filter((s) => s.id === state.section);
     return (
         <div className={shell}>
+            {/* A button, not a link: the hash holds the shell state. */}
+            <button
+                type="button"
+                className={skipLink}
+                onClick={() =>
+                    document.getElementById("gallery-canvas")?.focus()
+                }
+            >
+                Skip to components
+            </button>
             <Sidebar state={state} />
-            <div className={main}>
+            <main className={main}>
                 <Toolbar
                     state={state}
                     title={
@@ -265,8 +276,10 @@ export function Shell() {
                 />
                 <section
                     key={state.section}
+                    id="gallery-canvas"
+                    tabIndex={-1}
                     className={canvas}
-                    aria-label="Canvas"
+                    aria-label="Components"
                 >
                     <div
                         className={[
@@ -295,7 +308,7 @@ export function Shell() {
                     </div>
                 </section>
                 <FindingsPanel sectionId={state.section} />
-            </div>
+            </main>
         </div>
     );
 }

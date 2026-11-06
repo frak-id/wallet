@@ -48,10 +48,40 @@ export const page = style({
     padding: "16px",
 });
 
+/** The gallery's own controls get the design system's ring, not the browser's. */
+const focusRing = {
+    ":focus-visible": {
+        outline: `2px solid ${vars.border.focus}`,
+        outlineOffset: "2px",
+    },
+};
+
 export const link = style({
+    ...focusRing,
     color: vars.text.action,
     textDecoration: "none",
     ":hover": { textDecoration: "underline" },
+});
+
+export const skipLink = style({
+    ...focusRing,
+    backgroundColor: vars.surface.background,
+    border: `1px solid ${vars.border.default}`,
+    borderRadius: "6px",
+    color: vars.text.action,
+    cursor: "pointer",
+    font: "inherit",
+    left: "8px",
+    padding: "8px 12px",
+    position: "fixed",
+    top: "-48px",
+    zIndex: 1,
+    ":focus": { top: "8px" },
+});
+
+export const findingsSummary = style({
+    ...focusRing,
+    cursor: "pointer",
 });
 
 export const sectionBox = style({
@@ -104,6 +134,7 @@ export const sidebar = style({
 });
 
 export const search = style({
+    ...focusRing,
     border: `1px solid ${vars.border.default}`,
     borderRadius: "6px",
     boxSizing: "border-box",
@@ -189,6 +220,7 @@ export const group = style({
 });
 
 export const chip = style({
+    ...focusRing,
     background: "none",
     border: `1px solid ${vars.border.default}`,
     borderRadius: "6px",
@@ -213,6 +245,8 @@ export const canvas = style({
     minWidth: 0,
     overflow: "auto",
     padding: "24px",
+    // The skip link's target; it is not a control, so it draws no ring.
+    ":focus": { outline: "none" },
 });
 
 export const frame = style({
