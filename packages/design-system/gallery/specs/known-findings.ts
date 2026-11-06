@@ -1,9 +1,6 @@
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
 
-const DRAWER_FOCUS =
-    "vaul defaults autoFocus to false and cancels Radix's onOpenAutoFocus, so focus stays on the trigger behind the modal";
-
 /**
  * Findings the gallery surfaces in current component code, keyed
  * `<overflow|focus|overlay|pointer>:<section id>:<case name>`; the value is the reason.
@@ -52,9 +49,5 @@ export const knownFindings: Record<string, string> = {
         "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
 
     "overlay:dialog:worst: unbreakable email": `DialogTitle and DialogDescription: ${NO_WRAP}`,
-    "overlay:drawer:default": DRAWER_FOCUS,
-    "overlay:drawer:surface muted": DRAWER_FOCUS,
-    "overlay:drawer:edge to edge": DRAWER_FOCUS,
-    "overlay:drawer:worst: long content": DRAWER_FOCUS,
-    "overlay:drawer:worst: unbreakable email": `${DRAWER_FOCUS}; Drawer content: ${NO_WRAP}`,
+    "overlay:drawer:worst: unbreakable email": `Drawer content: ${NO_WRAP}`,
 };

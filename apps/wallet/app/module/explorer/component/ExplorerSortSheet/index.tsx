@@ -11,7 +11,7 @@ import {
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import {
@@ -42,15 +42,6 @@ export function ExplorerSortSheet({
     useEffect(() => {
         if (open) setPending(applied);
     }, [open, applied]);
-
-    // The trigger button keeps focus while Radix marks #root aria-hidden on
-    // open, which warns "Blocked aria-hidden on a focused element". Blur it on
-    // the open transition to close that gap (mirrors ResponsiveModal).
-    useLayoutEffect(() => {
-        if (!open) return;
-        const active = document.activeElement;
-        if (active instanceof HTMLElement) active.blur();
-    }, [open]);
 
     const handleApply = () => {
         setSort(pending);
