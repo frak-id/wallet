@@ -3,16 +3,20 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
+    FindingsDetails,
+    findingCount,
+    SectionMarkers,
+    totalFindings,
+} from "./findings";
+import {
     canvas,
     categoryHeading,
     chip,
     count,
-    findingList,
     frame,
     frameBg,
     frameFixed,
     group,
-    kind as kindChip,
     link,
     main,
     navLink,
@@ -24,12 +28,9 @@ import {
     toolbar,
     toolbarTitle,
 } from "./gallery.css";
-import { FindingMarkers } from "./markers";
 import { categories, type GallerySection, sections } from "./sections";
 import {
     backgrounds,
-    findingsFor,
-    markersFor,
     parseShell,
     type ShellState,
     serialiseShell,
@@ -37,8 +38,6 @@ import {
 } from "./shell";
 
 const ids = sections.map((s) => s.id);
-const findings = new Map(sections.map((s) => [s.id, findingsFor(s.id)]));
-const total = [...findings.values()].reduce((sum, f) => sum + f.length, 0);
 
 function subscribe(onChange: () => void) {
     window.addEventListener("hashchange", onChange);
@@ -100,7 +99,7 @@ function Sidebar({ state }: { state: ShellState }) {
                             <h2 className={categoryHeading}>{category}</h2>
                             <ul>
                                 {items.map(({ id, title }) => {
-                                    const n = findings.get(id)?.length ?? 0;
+                                    const n = findingCount(id);
                                     return (
                                         <li key={id}>
                                             <a
@@ -206,9 +205,8 @@ function CanvasSection({
     render,
     titled,
 }: GallerySection & { titled: boolean }) {
-    const markers = useMemo(() => markersFor(findings.get(id) ?? []), [id]);
     return (
-        <FindingMarkers.Provider value={markers}>
+        <SectionMarkers sectionId={id}>
             <section
                 className={titled ? sectionBox : undefined}
                 data-gallery-section={id}
@@ -226,7 +224,7 @@ function CanvasSection({
                     <Stack space="xl">{render()}</Stack>
                 </Stack>
             </section>
-        </FindingMarkers.Provider>
+        </SectionMarkers>
     );
 }
 
@@ -234,27 +232,16 @@ function FindingsPanel({ sectionId }: { sectionId: string }) {
     if (sectionId === "all")
         return (
             <div className={panel}>
-                {total} known findings across {sections.length} sections. Select
-                a section to list them.
+                {totalFindings} known findings across {sections.length}{" "}
+                sections. Select a section to list them.
             </div>
         );
-    const list = findings.get(sectionId) ?? [];
     return (
-        <details className={panel} key={sectionId} open={list.length > 0}>
-            <summary>Known findings ({list.length})</summary>
-            {list.length === 0 ? (
-                <p>None recorded for this section.</p>
-            ) : (
-                <ul className={findingList}>
-                    {list.map(({ kind, caseName, reason }) => (
-                        <li key={`${kind}:${caseName}`}>
-                            <span className={kindChip}>{kind}</span>
-                            <strong>{caseName}</strong>: {reason}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </details>
+        <FindingsDetails
+            className={panel}
+            sectionId={sectionId}
+            open={findingCount(sectionId) > 0}
+        />
     );
 }
 

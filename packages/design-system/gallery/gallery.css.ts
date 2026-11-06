@@ -58,6 +58,16 @@ export const sectionBox = style({
     borderTop: `1px solid ${vars.border.subtle}`,
     paddingTop: "40px",
     scrollMarginTop: "16px",
+    // A worst case that overflows scrolls inside its section instead of
+    // panning the whole page; the inset keeps edge focus rings unclipped.
+    overflowX: "auto",
+    paddingInline: "4px",
+    marginInline: "-4px",
+    paddingBottom: "4px",
+});
+
+export const inlineFindings = style({
+    fontSize: "13px",
 });
 
 /** Same height the business overview cards give their charts. */
