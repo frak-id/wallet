@@ -107,6 +107,9 @@ export default defineConfig({
         video: "off",
         trace: "off",
         ignoreHTTPSErrors: true,
+        // Once `/sw.js` claims the page, WebKit sends fetches through it and
+        // past `page.route`, so every mock is bypassed.
+        serviceWorkers: "block",
         actionTimeout: 8_000,
         navigationTimeout: 15_000,
     },
