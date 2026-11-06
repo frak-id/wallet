@@ -22,6 +22,12 @@ function readyClient() {
     window.dispatchEvent(new CustomEvent("frak:client"));
 }
 
+let dispose: (() => void) | undefined;
+
+function start() {
+    dispose = autoMountRewardReminder();
+}
+
 async function flush() {
     await vi.advanceTimersByTimeAsync(10);
 }
@@ -34,6 +40,8 @@ describe("autoMountRewardReminder", () => {
     });
 
     afterEach(() => {
+        dispose?.();
+        dispose = undefined;
         vi.useRealTimers();
         vi.unstubAllGlobals();
         sdkConfigStore.clearCache();
@@ -42,7 +50,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("mounts once the client is ready and the config resolved", async () => {
-        autoMountRewardReminder();
+        start();
         resolveConfig();
         readyClient();
         await flush();
@@ -51,7 +59,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("mounts once even when both signals keep firing", async () => {
-        autoMountRewardReminder();
+        start();
         readyClient();
         resolveConfig();
         resolveConfig();
@@ -62,7 +70,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("waits for the client", async () => {
-        autoMountRewardReminder();
+        start();
         resolveConfig();
         await flush();
 
@@ -70,7 +78,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("waits for the backend config", async () => {
-        autoMountRewardReminder();
+        start();
         readyClient();
         await flush();
 
@@ -78,7 +86,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("loads nothing for a hidden merchant", async () => {
-        autoMountRewardReminder();
+        start();
         resolveConfig({ hidden: true });
         readyClient();
         await flush();
@@ -87,7 +95,7 @@ describe("autoMountRewardReminder", () => {
     });
 
     it("loads nothing when the dashboard disables it", async () => {
-        autoMountRewardReminder();
+        start();
         resolveConfig({ enabled: false });
         readyClient();
         await flush();
@@ -97,7 +105,7 @@ describe("autoMountRewardReminder", () => {
 
     it("loads nothing when the page config disables it", async () => {
         window.FrakSetup.config = { rewardReminder: { enabled: false } };
-        autoMountRewardReminder();
+        start();
         resolveConfig();
         readyClient();
         await flush();
@@ -105,11 +113,36 @@ describe("autoMountRewardReminder", () => {
         expect(mountRewardReminder).not.toHaveBeenCalled();
     });
 
+    it("mounts when a fresh config re-enables what a stale one disabled", async () => {
+        start();
+        resolveConfig({ enabled: false });
+        readyClient();
+        await flush();
+        expect(mountRewardReminder).not.toHaveBeenCalled();
+
+        resolveConfig();
+        await flush();
+
+        expect(mountRewardReminder).toHaveBeenCalledTimes(1);
+    });
+
+    it("mounts when a fresh config unhides a merchant a stale one hid", async () => {
+        start();
+        resolveConfig({ hidden: true });
+        readyClient();
+        await flush();
+
+        resolveConfig();
+        await flush();
+
+        expect(mountRewardReminder).toHaveBeenCalledTimes(1);
+    });
+
     it("prefers an idle slot over a timer", async () => {
         const idle = vi.fn((callback: () => void) => callback());
         vi.stubGlobal("requestIdleCallback", idle);
 
-        autoMountRewardReminder();
+        start();
         resolveConfig();
         readyClient();
         await flush();
