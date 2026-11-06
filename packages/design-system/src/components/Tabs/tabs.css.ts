@@ -55,11 +55,11 @@ export const tabsTrigger = recipe({
         ":focus": {
             outline: "none",
         },
-        // Keyboard-only grey ring, matching the rest of the DS controls.
-        ":focus-visible": {
-            boxShadow: `0 0 0 2px ${vars.border.focus}`,
-        },
         selectors: {
+            // Keyboard-only grey ring; `TabsTrigger` flags focus a pointer caused.
+            "&:focus-visible:not([data-pointer-focus])": {
+                boxShadow: `0 0 0 2px ${vars.border.focus}`,
+            },
             '&:not([data-state="active"]):hover': {
                 color: vars.text.secondary,
             },

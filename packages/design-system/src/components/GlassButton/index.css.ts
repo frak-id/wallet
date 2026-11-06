@@ -15,14 +15,15 @@ export const glassCircle = style({
     padding: 0,
     color: "inherit",
     borderRadius: "9999px",
-    // Transparent when idle so the ring never shifts layout. `:focus-visible`
-    // keeps pointer taps ring-free; the parent form covers the span variant
-    // nested in a focusable `<Back>` wrapper, where the wrapper holds focus.
     outline: "2px solid transparent",
     outlineOffset: 2,
+    // Glass sits on photos and dark heroes as well as light pages, so the ring
+    // pairs the outline with a light band filling the offset gap. The parent
+    // form covers the span variant nested in a focusable `<Back>` wrapper.
     selectors: {
         "&:focus-visible, :focus-visible > &": {
             outlineColor: vars.border.focus,
+            boxShadow: `0 0 0 2px ${vars.surface.background}`,
         },
     },
 });
