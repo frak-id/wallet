@@ -1,3 +1,4 @@
+import { type ApiError, asApiError } from "../api/errors";
 import { crashlytics } from "./crashlytics";
 import type { AppErrorSource } from "./events";
 import { getPlatformInfo } from "./openpanel";
@@ -38,6 +39,18 @@ function toError(err: unknown): Error {
     }
 }
 
+/** Eden builds its message with `value + ""`, so a JSON body reads "[object Object]". */
+function describeApiError(apiError: ApiError, err: unknown): Error {
+    const error = toError(err);
+    const body = apiError.value;
+    if (!body) return error;
+    const message =
+        (typeof body.error === "string" && body.error) ||
+        (typeof body.code === "string" && body.code) ||
+        `HTTP ${apiError.status}`;
+    return new Error(message, { cause: error });
+}
+
 /**
  * Report a runtime error to OpenPanel as an `app_error` event.
  *
@@ -54,7 +67,8 @@ export function recordError(
     err: unknown,
     options: RecordErrorOptions = {}
 ): void {
-    const error = toError(err);
+    const apiError = asApiError(err);
+    const error = apiError ? describeApiError(apiError, err) : toError(err);
     const { source = "manual", context } = options;
 
     // Single source of truth for client-side errors. `console.error` keeps
@@ -73,6 +87,10 @@ export function recordError(
         stack: error.stack?.slice(0, STACK_TRUNCATE_LIMIT),
         release: process.env.APP_VERSION,
         source,
+        ...(apiError && {
+            http_status: apiError.status,
+            ...(apiError.value?.code && { error_code: apiError.value.code }),
+        }),
         ...getPlatformInfo(),
         ...context,
     });
