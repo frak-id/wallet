@@ -105,8 +105,20 @@ describe("IdentityProofService", () => {
             expect(result).toEqual({ valid: false, reason: "expired" });
         });
 
+        it("accepts a proof from a device clock up to 5 min fast", async () => {
+            vi.setSystemTime((mergeFixture.ts - 5 * 60) * 1000);
+            const result = await service.verify({
+                op: "frak-merge-v1",
+                proof: mergeFixture.proof,
+                merchantId: mergeFixture.merchantId,
+                anonymousId: mergeFixture.anonymousId,
+                binding: hexToBytes(mergeFixture.bindingHex),
+            });
+            expect(result).toEqual({ valid: true });
+        });
+
         it("rejects a proof timestamped too far in the future (clock skew)", async () => {
-            vi.setSystemTime((ensureFixture.ts - 61) * 1000);
+            vi.setSystemTime((ensureFixture.ts - 5 * 60 - 1) * 1000);
             const result = await service.verify({
                 op: "frak-ensure-v1",
                 proof: ensureFixture.proof,

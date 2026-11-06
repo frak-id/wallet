@@ -30,8 +30,8 @@ const PROOF_WINDOW_SECONDS: Record<ProofOp, number> = {
     "frak-sso-v1": 10 * 60,
 };
 
-/** Clock-skew allowance for a future-dated `ts`. */
-const MAX_FUTURE_SKEW_SECONDS = 60;
+/** Clock-skew allowance for a future-dated `ts`: a phone clock minutes fast is common. */
+const MAX_FUTURE_SKEW_SECONDS = 5 * 60;
 
 export type ProofCheckParams = {
     op: ProofOp;
