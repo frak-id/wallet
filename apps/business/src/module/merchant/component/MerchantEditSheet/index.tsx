@@ -1,4 +1,5 @@
 import {
+    getStablecoin,
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
@@ -27,7 +28,6 @@ import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDi
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
-import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,
@@ -137,8 +137,7 @@ export function MerchantEditSheet({
             name: merchant.name,
             domain: merchant.domain,
             defaultCurrency:
-                detectStablecoinFromAddress(merchant.defaultRewardToken) ??
-                "eure",
+                getStablecoin(merchant.defaultRewardToken) ?? "eure",
         }),
         [merchant]
     );

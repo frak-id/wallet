@@ -1,5 +1,6 @@
 import type { Currency } from "@frak-labs/core-sdk";
 import { RadioGroup } from "@frak-labs/design-system/components/RadioGroup";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { EurIcon, GbpIcon, UsdIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -54,6 +55,9 @@ export function CurrencyCard() {
                     />
                 ))}
             </RadioGroup>
+            <Text variant="caption" color="tertiary">
+                {t("settings.currency.converted")}
+            </Text>
         </SettingsCard>
     );
 }

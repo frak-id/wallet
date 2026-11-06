@@ -9,17 +9,23 @@ export const stablecoinCurrency = {
     usdc: "usd",
 } as const satisfies Record<Stablecoin, StablecoinCurrency>;
 
-const currencyByAddress = new Map<string, StablecoinCurrency>(
+const stablecoinByAddress = new Map<string, Stablecoin>(
     (Object.keys(stablecoinCurrency) as Stablecoin[]).map((stablecoin) => [
         currentStablecoins[stablecoin].toLowerCase(),
-        stablecoinCurrency[stablecoin],
+        stablecoin,
     ])
 );
+
+/** Stablecoin whose address on the current environment is `tokenAddress`, or `undefined` when unknown. */
+export function getStablecoin(tokenAddress?: string): Stablecoin | undefined {
+    if (!tokenAddress) return undefined;
+    return stablecoinByAddress.get(tokenAddress.toLowerCase());
+}
 
 /** Fiat the token at `tokenAddress` is pegged to on the current environment, or `undefined` when unknown. */
 export function getStablecoinCurrency(
     tokenAddress?: string
 ): StablecoinCurrency | undefined {
-    if (!tokenAddress) return undefined;
-    return currencyByAddress.get(tokenAddress.toLowerCase());
+    const stablecoin = getStablecoin(tokenAddress);
+    return stablecoin ? stablecoinCurrency[stablecoin] : undefined;
 }

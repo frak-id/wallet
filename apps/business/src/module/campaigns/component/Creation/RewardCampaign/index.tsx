@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { RewardDisplayHint } from "@/module/merchant/component/DisplayConversion";
 import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
@@ -33,6 +34,7 @@ export function RewardCampaign() {
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
     const rule = campaignStore((s) => s.draft.rule);
+    const rewardToken = campaignStore((s) => s.draft.rewardToken);
     const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
     const currencyGlyph = useCampaignCurrencyGlyph();
@@ -126,6 +128,12 @@ export function RewardCampaign() {
                                 model={model}
                                 isPurchase={isPurchase}
                             />
+                            {(model === "fixed" || model === "tiered") && (
+                                <RewardDisplayHint
+                                    merchantId={merchantId}
+                                    rewardToken={rewardToken}
+                                />
+                            )}
                         </WizardFieldCard>
 
                         {isScoped && model && model !== "fixed" && (

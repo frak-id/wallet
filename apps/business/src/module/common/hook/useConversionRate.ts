@@ -35,7 +35,7 @@ function conversionRateQueryOptions(token?: Address, isDemoMode?: boolean) {
     };
 }
 
-function useConversionRate({ token }: { token?: Address }) {
+export function useConversionRate({ token }: { token?: Address }) {
     const isDemoMode = useIsDemoMode();
     return useQuery(conversionRateQueryOptions(token, isDemoMode));
 }

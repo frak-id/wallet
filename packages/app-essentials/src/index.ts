@@ -9,6 +9,7 @@ export {
     type FrakChainId,
     frakChainIds,
     getExecutionAbi,
+    getStablecoin,
     getStablecoinCurrency,
     KernelExecuteAbi,
     KernelInitAbi,

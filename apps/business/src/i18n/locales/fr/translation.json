@@ -1352,7 +1352,8 @@
                 "eur": "EUR",
                 "gbp": "GBP",
                 "usd": "USD"
-            }
+            },
+            "converted": "Les montants du tableau de bord sont convertis depuis la devise des récompenses au taux du jour. Les récompenses sont toujours versées dans la devise de leur token : euros (EURe) ou dollars américains (USDC)."
         },
         "language": {
             "title": "Langue",
@@ -1936,8 +1937,7 @@
             },
             "currency": {
                 "label": "Devise d'affichage",
-                "hint": "Devise des montants affichés aux visiteurs. Les récompenses restent versées en {{token}}.",
-                "auto": "Auto"
+                "auto": "Auto (EUR sauf réglage du site)"
             },
             "lang": {
                 "label": "Langue",
@@ -2548,5 +2548,27 @@
             "submit": "Générer",
             "result": "Code d'installation pour {{domain}}"
         }
+    },
+    "displayConversion": {
+        "fiat": {
+            "eur": "euros",
+            "usd": "dollars américains",
+            "gbp": "livres sterling"
+        },
+        "notice": {
+            "withRate": "Les visiteurs voient les récompenses en {{displayFiat}} au taux du jour ({{rate}}), avec une courte note indiquant qu'elles sont versées en {{payoutFiat}} ({{token}}). Une récompense de {{sample}} s'affiche à environ {{converted}}.",
+            "withRate_auto": "Par défaut, les visiteurs voient les récompenses en {{displayFiat}} au taux du jour ({{rate}}), avec une courte note indiquant qu'elles sont versées en {{payoutFiat}} ({{token}}). Une récompense de {{sample}} s'affiche à environ {{converted}}.",
+            "withoutRate": "Les visiteurs voient les récompenses en {{displayFiat}} au taux du jour, avec une courte note indiquant qu'elles sont versées en {{payoutFiat}} ({{token}}).",
+            "withoutRate_auto": "Par défaut, les visiteurs voient les récompenses en {{displayFiat}} au taux du jour, avec une courte note indiquant qu'elles sont versées en {{payoutFiat}} ({{token}}).",
+            "switch": "Afficher les récompenses en {{payoutFiat}}"
+        },
+        "rewardHint": {
+            "withRate": "Les montants sont en {{payoutFiat}} ({{token}}). Les visiteurs les voient en {{displayFiat}} au taux du jour ({{rate}}).",
+            "withRate_auto": "Les montants sont en {{payoutFiat}} ({{token}}). Par défaut, les visiteurs les voient en {{displayFiat}} au taux du jour ({{rate}}).",
+            "withoutRate": "Les montants sont en {{payoutFiat}} ({{token}}). Les visiteurs les voient en {{displayFiat}} au taux du jour.",
+            "withoutRate_auto": "Les montants sont en {{payoutFiat}} ({{token}}). Par défaut, les visiteurs les voient en {{displayFiat}} au taux du jour."
+        },
+        "sameCurrency": "Les récompenses sont versées en {{payoutFiat}} ({{token}}), la devise que voient les visiteurs.",
+        "sameCurrency_auto": "Les récompenses sont versées en {{payoutFiat}} ({{token}}), la devise que voient les visiteurs par défaut."
     }
 }

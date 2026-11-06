@@ -28,6 +28,7 @@ export {
 } from "./chains";
 export { getTransport, getViemClientFromChain } from "./provider";
 export {
+    getStablecoin,
     getStablecoinCurrency,
     type StablecoinCurrency,
     stablecoinCurrency,

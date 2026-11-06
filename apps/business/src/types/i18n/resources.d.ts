@@ -1108,8 +1108,7 @@ export default interface Resources {
       },
       "identity": {
         "currency": {
-          "auto": "Auto",
-          "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
+          "auto": "Auto (EUR unless your site sets one)",
           "label": "Display currency"
         },
         "description": "What your customers see in Frak components.",
@@ -1193,6 +1192,28 @@ export default interface Resources {
         "description": "You don't have any merchant yet. Add one to start running campaigns.",
         "title": "Welcome to Frak"
       }
+    },
+    "displayConversion": {
+      "fiat": {
+        "eur": "euros",
+        "gbp": "pounds",
+        "usd": "US dollars"
+      },
+      "notice": {
+        "switch": "Show rewards in {{payoutFiat}}",
+        "withRate": "Visitors see rewards in {{displayFiat}} at today's rate ({{rate}}), with a short note saying they're paid in {{payoutFiat}} ({{token}}). A {{sample}} reward shows as about {{converted}}.",
+        "withRate_auto": "By default, visitors see rewards in {{displayFiat}} at today's rate ({{rate}}), with a short note saying they're paid in {{payoutFiat}} ({{token}}). A {{sample}} reward shows as about {{converted}}.",
+        "withoutRate": "Visitors see rewards in {{displayFiat}} at today's rate, with a short note saying they're paid in {{payoutFiat}} ({{token}}).",
+        "withoutRate_auto": "By default, visitors see rewards in {{displayFiat}} at today's rate, with a short note saying they're paid in {{payoutFiat}} ({{token}})."
+      },
+      "rewardHint": {
+        "withRate": "Amounts are in {{payoutFiat}} ({{token}}). Visitors see them in {{displayFiat}} at today's rate ({{rate}}).",
+        "withRate_auto": "Amounts are in {{payoutFiat}} ({{token}}). By default, visitors see them in {{displayFiat}} at today's rate ({{rate}}).",
+        "withoutRate": "Amounts are in {{payoutFiat}} ({{token}}). Visitors see them in {{displayFiat}} at today's rate.",
+        "withoutRate_auto": "Amounts are in {{payoutFiat}} ({{token}}). By default, visitors see them in {{displayFiat}} at today's rate."
+      },
+      "sameCurrency": "Rewards are paid in {{payoutFiat}} ({{token}}), the same currency visitors see.",
+      "sameCurrency_auto": "Rewards are paid in {{payoutFiat}} ({{token}}), the same currency visitors see by default."
     },
     "errors": {
       "auth": {
@@ -2377,6 +2398,7 @@ export default interface Resources {
         }
       },
       "currency": {
+        "converted": "Dashboard amounts are converted from the reward currency at today's rate. Rewards are always paid in the fiat of their token: euros (EURe) or US dollars (USDC).",
         "label": "Choose your preferred currency",
         "options": {
           "eur": "EUR",
