@@ -440,6 +440,10 @@ for (const { id, title } of sections) {
                     ).length,
                 FOCUSABLE
             );
+            // A press that focuses nothing must not hide the ring from later keyboard focus.
+            for (const target of await section.locator(FOCUSABLE).all())
+                if (await target.isVisible())
+                    await target.click({ button: "right", force: true });
             await section.locator(`#${id}-title`).focus();
             const found: Finding[] = [];
             let stops = 0;
