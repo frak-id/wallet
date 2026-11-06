@@ -16,7 +16,10 @@ import {
 export function Drawer({
     shouldScaleBackground = true,
     ...props
-}: ComponentProps<typeof DrawerPrimitive.Root>) {
+}: ComponentProps<typeof DrawerPrimitive.Root> & {
+    /** `DrawerContent` always focuses its panel on open, so vaul's option has no effect. */
+    autoFocus?: never;
+}) {
     return (
         <DrawerPrimitive.Root
             shouldScaleBackground={shouldScaleBackground}
@@ -49,6 +52,7 @@ export function DrawerContent({
     hideHandle,
     edgeToEdge,
     surface = "default",
+    onOpenAutoFocus,
     ...props
 }: ComponentPropsWithRef<typeof DrawerPrimitive.Content> & {
     /** Drops the built-in handle — the consumer must then render its own `<DrawerTitle>` for a11y. */
@@ -75,6 +79,15 @@ export function DrawerContent({
                     edgeToEdge && drawerContentWrapperEdgeStyle,
                     className
                 )}
+                // vaul cancels Radix's focus-on-open; take focus on the panel
+                // itself so Tab starts inside without raising a phone keyboard.
+                onOpenAutoFocus={(event) => {
+                    onOpenAutoFocus?.(event);
+                    if (event.defaultPrevented) return;
+                    event.preventDefault();
+                    if (event.currentTarget instanceof HTMLElement)
+                        event.currentTarget.focus({ preventScroll: true });
+                }}
                 {...props}
             >
                 {hideHandle ? (
