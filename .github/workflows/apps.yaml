@@ -556,9 +556,18 @@ jobs:
         timeout-minutes: 5
         run: bun run --cwd apps/wallet test:light:install
       # On PATH, vite-plugin-mkcert uses it instead of downloading it through the
-      # unauthenticated GitHub API.
+      # unauthenticated GitHub API. A pinned release asset, not apt: see the
+      # Chromium step. Upstream publishes no checksums, so the hash is our own.
       - name: "🔐 Install mkcert"
-        run: sudo apt-get install -y --no-install-recommends mkcert
+        timeout-minutes: 2
+        run: |
+          v=v1.4.4
+          sha=6d31c65b03972c6dc4a14ab429f2928300518b26503f58723e532d1b0a3bbb52
+          url=https://github.com/FiloSottile/mkcert/releases/download
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/mkcert" \
+            "$url/$v/mkcert-$v-linux-amd64"
+          echo "$sha  $RUNNER_TEMP/mkcert" | sha256sum -c
+          sudo install -m 0755 "$RUNNER_TEMP/mkcert" /usr/local/bin/mkcert
       - name: "🔨 Build the core SDK"
         run: bun run --cwd sdk/core build
       - name: "🚀 Start the SPA"
