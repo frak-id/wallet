@@ -606,8 +606,6 @@
                     "chooseAnotherDescription": "Remplacer la devise par défaut du marchand pour cette campagne",
                     "defaults": {
                         "eure": "Euro (EUR) via Monerium",
-                        "gbpe": "Livre sterling (GBP) via Monerium",
-                        "usde": "Dollar US (USD) via Monerium",
                         "usdc": "USD Coin (USDC) via Circle",
                         "fallback": "Devise par défaut du marchand"
                     }

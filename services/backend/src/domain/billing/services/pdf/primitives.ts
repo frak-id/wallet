@@ -5,14 +5,12 @@ export { FR_VAT_RATE as VAT_RATE, FRAK_FEE_RATE } from "../../rates";
 
 /**
  * Stablecoin → fiat presentation. Documents are merchant-facing legal papers:
- * they show the fiat equivalent of every amount (EUR/€, GBP/£, USD/$), never
+ * they show the fiat equivalent of every amount (EUR/€, USD/$), never
  * the crypto token symbol or on-chain address. All stablecoins are pegged 1:1
  * to their fiat leg, so a token amount is already its fiat equivalent.
  */
 const FIAT_BY_STABLECOIN: Record<string, { code: string; symbol: string }> = {
     eure: { code: "EUR", symbol: "€" },
-    gbpe: { code: "GBP", symbol: "£" },
-    usde: { code: "USD", symbol: "$" },
     usdc: { code: "USD", symbol: "$" },
 };
 

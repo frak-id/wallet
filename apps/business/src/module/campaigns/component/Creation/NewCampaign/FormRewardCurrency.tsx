@@ -8,12 +8,7 @@ import {
     RadioGroupItem,
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    EurIcon,
-    GbpIcon,
-    UsdcIcon,
-    UsdIcon,
-} from "@frak-labs/design-system/icons";
+import { EurIcon, UsdcIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -25,25 +20,19 @@ import * as styles from "./basics.css";
 
 /** Selectable tokens, in Figma order. Labels are currency codes (no i18n). */
 const TOKENS = [
-    { stablecoin: "gbpe", label: "GBP" },
     { stablecoin: "eure", label: "EUR" },
-    { stablecoin: "usde", label: "USD" },
     { stablecoin: "usdc", label: "USDC" },
 ] as const satisfies ReadonlyArray<{ stablecoin: Stablecoin; label: string }>;
 
 /** Currency glyphs (24px full-colour flag/coin icons). */
 const CURRENCY_ICONS: Partial<Record<Stablecoin, ReactNode>> = {
-    gbpe: <GbpIcon width={24} height={24} />,
     eure: <EurIcon width={24} height={24} />,
-    usde: <UsdIcon width={24} height={24} />,
     usdc: <UsdcIcon width={24} height={24} />,
 };
 
 /** Literal i18n keys for the merchant-default subtitle (typed `t()`). */
 const DEFAULT_LABEL_KEYS = {
     eure: "campaigns.create.basics.currency.defaults.eure",
-    gbpe: "campaigns.create.basics.currency.defaults.gbpe",
-    usde: "campaigns.create.basics.currency.defaults.usde",
     usdc: "campaigns.create.basics.currency.defaults.usdc",
 } as const;
 
