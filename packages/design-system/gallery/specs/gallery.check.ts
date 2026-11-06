@@ -476,6 +476,16 @@ test("the full page renders every registry section", async ({ page }) => {
     expect(errors).toEqual([]);
 });
 
+test("the shell scrolls inside its panes, never the page", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.locator("[data-gallery-case]").first()).toBeVisible();
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollHeight - window.innerHeight
+    );
+    expect(overflow, "px the document scrolls past the shell").toBe(0);
+});
+
 for (const { id, title } of sections) {
     test.describe(`${id}`, () => {
         test("renders without errors in a non-empty box", async ({ page }) => {
