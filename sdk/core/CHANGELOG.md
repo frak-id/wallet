@@ -1,5 +1,13 @@
 # @frak-labs/core-sdk
 
+## 1.5.5
+
+### Patch Changes
+
+- [#371](https://github.com/frak-id/wallet/pull/371) [`23b299b`](https://github.com/frak-id/wallet/commit/23b299b7c37fd9c39e5ba25307cf79145c491e62) Thanks [@srod](https://github.com/srod)! - `<frak-ambassador>` takes its accent colour from the merchant's dashboard setting (`components.ambassador.accentColor`, `#rrggbb`). It outranks the colour sampled from the host theme; a `--frak-amb-accent` the merchant sets in CSS still outranks it. Button text stays white while it reads at 3:1 on the accent and turns black below that, and a light accent on a light page no longer colours the reward figures. Without the setting, nothing changes.
+
+- [#381](https://github.com/frak-id/wallet/pull/381) [`3be24e0`](https://github.com/frak-id/wallet/commit/3be24e0e050d8cb6190b36d308c23bb60dc73afc) Thanks [@srod](https://github.com/srod)! - French amounts of 1 000 € or more now show a visible thousands gap. `formatAmount` and `formatAmountParts` (and the reward strings built on them) separate fr-FR thousands with U+00A0 (no-break space) instead of ICU's U+202F (narrow no-break space), which Inter and similar fonts draw too thin to see. The amount still never wraps. Code that matches these strings exactly must expect U+00A0.
+
 ## 1.5.4
 
 ### Patch Changes
