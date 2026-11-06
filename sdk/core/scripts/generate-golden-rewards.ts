@@ -2,8 +2,8 @@
  * Generates `src/rewards/fixtures/golden-rewards.json` (`bun run
  * fixtures:generate:rewards`), byte-identical on every run: all inputs are
  * hardcoded and "now" is `FIXED_NOW_MS`, so the native ports diff against
- * frozen output. Generated under ICU 74.2 / CLDR 44 — a U+202F vs U+00A0
- * group-separator mismatch is a runtime CLDR difference, not a defect.
+ * frozen output. Generated under ICU 74.2 / CLDR 44; fr-FR group separators
+ * are U+00A0 because `formatAmount` widens ICU's U+202F.
  */
 
 import {
@@ -38,7 +38,7 @@ const FIXED_NOW_ISO = new Date(FIXED_NOW_MS).toISOString();
 
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 
-/** fr-FR mixes U+202F and U+00A0: one label per codepoint makes it readable. */
+/** fr-FR output carries U+00A0: one label per codepoint makes it readable. */
 const codepoints = (value: string): string[] =>
     Array.from(value, (char) => {
         const code = char.codePointAt(0) ?? 0;

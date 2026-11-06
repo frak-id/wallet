@@ -122,7 +122,7 @@
         /// presenter refuses to report a session twice, so both paths can call this.
         private func settle() {
             presented = nil
-            presenter.finish {
+            presenter.finish(.unconditional) {
                 onResult(best ?? .dismissed)
                 best = nil
             }

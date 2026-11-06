@@ -1,0 +1,13 @@
+appId: id.frak.example.android
+name: A test order is sent to Frak
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- tapOn: "Checkout"
+- tapOn: "Complete order"
+- extendedWaitUntil:
+    visible: ".*Order ord_[0-9]+ sent to Frak\\."
+    timeout: 15000

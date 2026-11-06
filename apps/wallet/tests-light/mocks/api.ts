@@ -1,7 +1,12 @@
 import type { Page, Route } from "@playwright/test";
 import { mockAddress } from "./sessions";
 
+const BACKEND_URL = /^https:\/\/backend\.[^/]*frak\.id\//;
+
 export async function mockDefaultApiRoutes(page: Page, baseURL?: string) {
+    // Registered first so every mock below wins (Playwright tries the newest route first).
+    // An unmocked backend read would 401 the mock token and open the re-auth modal.
+    await page.route(BACKEND_URL, (route) => route.abort());
     await Promise.all([
         mockAnalytics(page),
         mockBackendAuth(page),
@@ -182,8 +187,6 @@ async function mockBackendNotifications(page: Page) {
     );
 }
 
-// Authenticated reads every protected page issues. Unmocked they 401 against
-// the mock token, and the session guard answers a 401 with the re-auth modal.
 async function mockBackendSession(page: Page) {
     const json = (body: unknown) => (route: Route) =>
         route.fulfill({

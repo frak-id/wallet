@@ -41,6 +41,35 @@ describe("formValuesToAmbassador", () => {
     });
 });
 
+describe("accent colour", () => {
+    it("saves a valid colour lowercased, and clears it when reset", () => {
+        const values = ambassadorToFormValues(undefined);
+        values.accentColor = "#FFD400";
+        expect(formValuesToAmbassador(values)).toEqual({
+            accentColor: "#ffd400",
+        });
+
+        values.accentColor = "";
+        expect(formValuesToAmbassador(values)).toBeUndefined();
+    });
+
+    it.each(["#fd0", "#ffd40000", "ffd400", "red", "#ggd400"])(
+        "never saves %j",
+        (color) => {
+            const values = ambassadorToFormValues(undefined);
+            values.accentColor = color;
+            expect(formValuesToAmbassador(values)).toBeUndefined();
+        }
+    );
+
+    it("loads the stored colour, or an empty one when automatic", () => {
+        expect(
+            ambassadorToFormValues({ accentColor: "#ffd400" }).accentColor
+        ).toBe("#ffd400");
+        expect(ambassadorToFormValues(undefined).accentColor).toBe("");
+    });
+});
+
 describe("ambassadorToFormValues", () => {
     it("selects the photo mode from the stored value", () => {
         expect(ambassadorToFormValues(undefined).photo).toBe("default");

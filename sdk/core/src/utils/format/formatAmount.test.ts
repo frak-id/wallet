@@ -76,7 +76,7 @@ describe("formatAmount golden fixtures", () => {
 describe("formatAmount", () => {
     it("should format EUR with French locale by default", () => {
         // fr-FR separates the amount from the symbol with U+00A0, not a space.
-        expect(formatAmount(1000, "eur")).toBe("1\u202f000\u00a0\u20ac");
+        expect(formatAmount(1000, "eur")).toBe("1\u00a0000\u00a0\u20ac");
     });
 
     it("should format USD with US locale", () => {
@@ -88,12 +88,12 @@ describe("formatAmount", () => {
     });
 
     it("should format integer amounts without decimal places", () => {
-        expect(formatAmount(1000, "eur")).toBe("1\u202f000\u00a0\u20ac");
+        expect(formatAmount(1000, "eur")).toBe("1\u00a0000\u00a0\u20ac");
         expect(formatAmount(1000, "usd")).toBe("$1,000");
     });
 
     it("should format decimal amounts with up to 2 decimal places", () => {
-        expect(formatAmount(1234.56, "eur")).toBe("1\u202f234,56\u00a0\u20ac");
+        expect(formatAmount(1234.56, "eur")).toBe("1\u00a0234,56\u00a0\u20ac");
     });
 
     it("should handle zero amount", () => {
@@ -101,15 +101,15 @@ describe("formatAmount", () => {
     });
 
     it("should handle large amounts", () => {
-        // Two group separators, both U+202F on CLDR >= 34.
+        // Two group separators, widened from ICU's U+202F to U+00A0.
         expect(formatAmount(1000000, "eur")).toBe(
-            "1\u202f000\u202f000\u00a0\u20ac"
+            "1\u00a0000\u00a0000\u00a0\u20ac"
         );
     });
 
     it("should default to EUR when currency is not provided", () => {
         expect(formatAmount(1000)).toBe(formatAmount(1000, "eur"));
-        expect(formatAmount(1000)).toBe("1\u202f000\u00a0\u20ac");
+        expect(formatAmount(1000)).toBe("1\u00a0000\u00a0\u20ac");
     });
 
     it("should format negative amounts", () => {
@@ -123,10 +123,10 @@ describe("formatAmount", () => {
 
     it("should round amounts with more than 2 decimal places", () => {
         expect(formatAmount(1234.5678, "eur")).toBe(
-            "1\u202f234,57\u00a0\u20ac"
+            "1\u00a0234,57\u00a0\u20ac"
         );
         expect(formatAmount(1234.5612, "eur")).toBe(
-            "1\u202f234,56\u00a0\u20ac"
+            "1\u00a0234,56\u00a0\u20ac"
         );
     });
 
@@ -135,7 +135,7 @@ describe("formatAmount", () => {
     });
 
     it("should use correct locale for each currency", () => {
-        expect(formatAmount(1000, "eur")).toBe("1\u202f000\u00a0\u20ac");
+        expect(formatAmount(1000, "eur")).toBe("1\u00a0000\u00a0\u20ac");
         expect(formatAmount(1000, "usd")).toBe("$1,000");
         expect(formatAmount(1000, "gbp")).toBe("\u00a31,000");
     });

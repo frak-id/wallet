@@ -50,11 +50,20 @@ export function builtInText(copy: AmbassadorCopy, field: AmbassadorTextField) {
     }
 }
 
+const ACCENT_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** The backend accepts exactly six hex digits; shorter notations are not an accent. */
+export function isAccentColor(value: string): boolean {
+    return ACCENT_COLOR.test(value);
+}
+
 export type AmbassadorPhotoMode = "default" | "custom" | "none";
 
 export type AmbassadorFormValues = {
     photo: AmbassadorPhotoMode;
     heroImageUrl: string;
+    /** `#rrggbb`, or empty for the automatic colour. */
+    accentColor: string;
     texts: Record<AmbassadorTextField, LocalizedText>;
 };
 
@@ -65,6 +74,7 @@ export function ambassadorToFormValues(
     return {
         photo: image === "none" ? "none" : image ? "custom" : "default",
         heroImageUrl: image && image !== "none" ? image : "",
+        accentColor: stored?.accentColor ?? "",
         texts: Object.fromEntries(
             TEXT_FIELDS.map((field) => [
                 field,
@@ -86,5 +96,7 @@ export function formValuesToAmbassador(
     const url = values.heroImageUrl.trim();
     if (values.photo === "none") stored.heroImageUrl = "none";
     if (values.photo === "custom" && url) stored.heroImageUrl = url;
+    const accent = values.accentColor.trim();
+    if (isAccentColor(accent)) stored.accentColor = accent.toLowerCase();
     return Object.keys(stored).length > 0 ? stored : undefined;
 }

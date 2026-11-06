@@ -57,8 +57,11 @@ function makeHostButton(parent: HTMLElement, rect: Rect): HTMLElement {
     return btn;
 }
 
-function mount(target: HostThemeTarget) {
-    return renderHook(() => useHostTheme(target));
+function mount(target: HostThemeTarget, accentColor?: string) {
+    return renderHook(
+        (props: { accent?: string }) => useHostTheme(target, props.accent),
+        { initialProps: { accent: accentColor } }
+    );
 }
 
 function knob(el: HTMLElement, name: string): string {
@@ -591,5 +594,223 @@ describe("useHostTheme", () => {
         await settle();
 
         expect(knob(root, "h1-size")).toBe("min(36px, 3.2em)");
+    });
+
+    describe("with a dashboard accent", () => {
+        const YELLOW = "#ffd400";
+        const hostButton = () => {
+            const btn = makeHostButton(document.body, {
+                left: 10,
+                top: 10,
+                width: 200,
+                height: 50,
+            });
+            btn.style.backgroundColor = "rgb(200, 0, 0)";
+            return btn;
+        };
+
+        it("writes before the sampler's delay, and over the sampled button", async () => {
+            const root = makeRoot();
+            hostButton();
+
+            mount({ current: root }, "#b00020");
+            expect(knob(root, "accent")).toBe("#b00020");
+
+            await settle();
+            expect(knob(root, "accent")).toBe("#b00020");
+        });
+
+        it("keeps the dashboard accent when the sampler bails on a moving host", async () => {
+            const root = makeRoot();
+            const btn = hostButton();
+            let reads = 0;
+            Object.defineProperty(btn, "getBoundingClientRect", {
+                configurable: true,
+                value: () => {
+                    reads += 1;
+                    return reads === 1
+                        ? domRect({ left: 10, top: 10, width: 200, height: 50 })
+                        : domRect({
+                              left: -400,
+                              top: 10,
+                              width: 200,
+                              height: 50,
+                          });
+                },
+            });
+
+            mount({ current: root }, "#b00020");
+            await settle();
+
+            expect(reads).toBeGreaterThanOrEqual(2);
+            expect(knob(root, "cta-transform")).toBe("");
+            expect(knob(root, "accent")).toBe("#b00020");
+        });
+
+        it("lets a merchant CSS accent win and samples as if no dashboard accent existed", async () => {
+            document.body.style.setProperty(
+                "--frak-amb-accent",
+                "rgb(1, 2, 3)"
+            );
+            const root = makeRoot();
+            hostButton();
+
+            mount({ current: root }, "#b00020");
+            await settle();
+
+            expect(knob(root, "accent")).toBe("");
+            expect(knob(root, "accent-ink")).not.toBe("#fff");
+            expect(knob(root, "accent-ink")).not.toBe("");
+        });
+
+        it("keeps a merchant's own ink next to the dashboard accent", async () => {
+            document.body.style.setProperty(
+                "--frak-amb-accent-ink",
+                "rgb(9, 9, 9)"
+            );
+            const root = makeRoot(false);
+
+            mount({ current: root }, "#b00020");
+            await settle();
+
+            expect(knob(root, "accent")).toBe("#b00020");
+            expect(knob(root, "accent-ink")).toBe("");
+        });
+
+        it("flips the ink to black on a light accent and to white on a dark one", () => {
+            const light = makeRoot(false);
+            mount({ current: light }, YELLOW);
+            const dark = makeRoot(false);
+            mount({ current: dark }, "#1a1a2e");
+
+            expect(knob(light, "accent-ink")).toBe("#000");
+            expect(knob(dark, "accent-ink")).toBe("#fff");
+        });
+
+        it.each([
+            ["#c212d9", "#fff"],
+            ["#d209ec", "#fff"],
+            ["#16a34a", "#fff"],
+            ["#ff6600", "#000"],
+        ])("inks %s white only while white still reads at 3:1", (hex, ink) => {
+            const root = makeRoot(false);
+            mount({ current: root }, hex);
+
+            expect(knob(root, "accent-ink")).toBe(ink);
+        });
+
+        it("sends the figures' text to the text colour when the accent is too light for the page", () => {
+            const root = makeRoot(false);
+            mount({ current: root }, YELLOW);
+
+            expect(knob(root, "accent")).toBe(YELLOW);
+            expect(knob(root, "accent-text")).toBe("currentColor");
+        });
+
+        it("keeps the figures in a readable dashboard accent", () => {
+            const root = makeRoot(false);
+            mount({ current: root }, "#1a1a2e");
+
+            expect(knob(root, "accent-text")).toBe("");
+        });
+
+        it("judges the figures against the page's backdrop, not white", () => {
+            document.body.style.backgroundColor = "rgb(20, 20, 20)";
+            const root = makeRoot(false);
+            mount({ current: root }, "#1a1a2e");
+
+            expect(knob(root, "accent-text")).toBe("currentColor");
+        });
+
+        it("ignores a value that is not a six-digit hex colour", () => {
+            const root = makeRoot(false);
+            mount({ current: root }, "red; background: url(x)");
+
+            expect(knob(root, "accent")).toBe("");
+        });
+
+        it("replaces a sampled accent when the dashboard accent arrives after the sample", async () => {
+            const root = makeRoot();
+            hostButton();
+            const view = mount({ current: root });
+            await settle();
+            expect(knob(root, "accent")).toBe("rgb(200, 0, 0)");
+
+            view.rerender({ accent: "#b00020" });
+            expect(knob(root, "accent")).toBe("#b00020");
+            await settle();
+            expect(knob(root, "accent")).toBe("#b00020");
+
+            view.rerender({ accent: undefined });
+            await settle();
+            expect(knob(root, "accent")).toBe("rgb(200, 0, 0)");
+        });
+
+        const THEME_KNOBS = ["h1-size", "radius", "cta-radius", "tag-bg"];
+        const themedHost = () => {
+            document.body.style.backgroundColor = "rgb(20, 20, 20)";
+            const root = makeRoot();
+            root.style.color = "rgb(240, 240, 240)";
+            const btn = hostButton();
+            btn.style.borderRadius = "6px";
+            document.body.append(makeHeading("h1", "font-size: 40px", true));
+            const card = document.createElement("div");
+            card.style.cssText =
+                "background-color: rgb(40, 40, 40); border-top-width: 0px; border-top-left-radius: 12px";
+            stubRect(card, { left: 0, top: 200, width: 300, height: 200 });
+            document.body.append(card);
+            return { root, btn };
+        };
+        const themeOf = (root: HTMLElement) =>
+            THEME_KNOBS.map((name) => knob(root, name));
+
+        it("keeps the sampled theme when the accent changes after the sample, even on a host that has since moved", async () => {
+            const { root, btn } = themedHost();
+            const view = mount({ current: root });
+            await settle();
+            const theme = themeOf(root);
+            expect(theme.every((value) => value !== "")).toBe(true);
+
+            Object.defineProperty(btn, "getBoundingClientRect", {
+                configurable: true,
+                value: () =>
+                    domRect({ left: -400, top: 10, width: 200, height: 50 }),
+            });
+            view.rerender({ accent: "#b00020" });
+            await settle();
+
+            expect(knob(root, "accent")).toBe("#b00020");
+            expect(themeOf(root)).toEqual(theme);
+        });
+
+        it("restores the sampled accent when the dashboard accent is cleared", async () => {
+            const { root } = themedHost();
+            const view = mount({ current: root }, "#b00020");
+            await settle();
+            expect(knob(root, "accent")).toBe("#b00020");
+
+            view.rerender({ accent: undefined });
+
+            expect(knob(root, "accent")).toBe("rgb(200, 0, 0)");
+            expect(knob(root, "accent-ink")).not.toBe("#fff");
+            expect(knob(root, "accent-ink")).not.toBe("");
+            expect(themeOf(root).every((value) => value !== "")).toBe(true);
+        });
+
+        it("swaps only the accent knobs when one dashboard accent replaces another", async () => {
+            const { root } = themedHost();
+            const view = mount({ current: root }, YELLOW);
+            await settle();
+            const theme = themeOf(root);
+            expect(knob(root, "accent-ink")).toBe("#000");
+            expect(knob(root, "accent-text")).toBe("");
+
+            view.rerender({ accent: "#1a1a2e" });
+
+            expect(knob(root, "accent")).toBe("#1a1a2e");
+            expect(knob(root, "accent-ink")).toBe("#fff");
+            expect(knob(root, "accent-text")).toBe("currentColor");
+            expect(themeOf(root)).toEqual(theme);
+        });
     });
 });

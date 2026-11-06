@@ -90,6 +90,8 @@ export type ResolvedPlacement = {
             faq5Answer?: string;
             /** Explorer main image when the merchant chose none; absent means no photo. */
             heroImageUrl?: string;
+            /** `#rrggbb` accent for the page's buttons; absent keeps the sampled theme. */
+            accentColor?: string;
         };
     };
     targetInteraction?: string;

@@ -2011,6 +2011,12 @@
                 "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
                 "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle."
             },
+            "accent": {
+                "label": "Button colour",
+                "automatic": "Automatic",
+                "hint": "Leave empty to follow your theme's button colour. The text on the buttons switches between black and white on its own.",
+                "invalid": "Enter a colour as #rrggbb"
+            },
             "groups": {
                 "hero": "Headline and intro",
                 "reward": "Reward wording",

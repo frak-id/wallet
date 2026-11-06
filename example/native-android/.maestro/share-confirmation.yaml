@@ -1,0 +1,30 @@
+appId: id.frak.example.android
+name: After a share, the sheet offers the wallet install and Share again
+---
+# Android cannot see what the user picked, so the chooser opening counts as the share.
+# The install CTA is not tapped: with a wallet on the device it hands this harness's identity to it.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Connected"
+    timeout: 20000
+- tapOn: "Share the store"
+- extendedWaitUntil:
+    visible: "Share with your friends"
+    timeout: 20000
+- tapOn: "SHARE"
+- extendedWaitUntil:
+    visible: ".*https://.*[?&]fCtx=.*"
+    timeout: 10000
+    label: "The chooser carries a link with the referral context"
+- back
+- extendedWaitUntil:
+    visible: "COLLECT MY .*"
+    timeout: 15000
+    label: "The confirmation screen offers the install CTA"
+- takeScreenshot: build/maestro/share-confirmation
+- tapOn: "Share again"
+- extendedWaitUntil:
+    visible: "Share with your friends"
+    timeout: 15000
+    label: "Share again returns to the sharing screen"

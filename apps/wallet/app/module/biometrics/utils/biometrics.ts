@@ -1,11 +1,29 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { recordError } from "@frak-labs/wallet-shared";
+import type { BiometryType } from "@tauri-apps/plugin-biometric";
 
 type BiometricStatus = {
     isAvailable: boolean;
-    biometryType: "faceId" | "touchId" | "fingerprint" | "iris" | null;
+    biometryType: "faceId" | "face" | "touchId" | "fingerprint" | "iris" | null;
     error: string | null;
 };
+
+/** The plugin's numeric enum, mapped by value: importing it would load the plugin eagerly. */
+export function toBiometryType(
+    type: BiometryType,
+    isAndroid: boolean
+): BiometricStatus["biometryType"] {
+    switch (type) {
+        case 1:
+            return isAndroid ? "fingerprint" : "touchId";
+        case 2:
+            return isAndroid ? "face" : "faceId";
+        case 3:
+            return "iris";
+        default:
+            return null;
+    }
+}
 
 type AuthenticateOptions = {
     reason?: string;
@@ -43,9 +61,7 @@ export async function checkBiometricStatus(): Promise<BiometricStatus> {
         const status = await module.checkStatus();
         return {
             isAvailable: status.isAvailable,
-            biometryType:
-                (status.biometryType as unknown as BiometricStatus["biometryType"]) ??
-                null,
+            biometryType: toBiometryType(status.biometryType, IS_ANDROID),
             error: status.error ?? null,
         };
     } catch (error) {
@@ -92,6 +108,8 @@ export function getBiometryTypeLabel(
     switch (biometryType) {
         case "faceId":
             return "Face ID";
+        case "face":
+            return "Face unlock";
         case "touchId":
             return "Touch ID";
         case "fingerprint":

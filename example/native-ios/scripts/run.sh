@@ -9,6 +9,7 @@
 #   bun run native:ios:build        # compile-only typecheck, no simulator needed
 #   bun run native:ios:xcode        # open the generated project in Xcode
 #   bun run native:ios:device       # build + install + launch on a physical iPhone or iPad
+#   bun run --cwd example/native-ios e2e   # Maestro flows in .maestro/, simulator only
 #
 # Simulator selection, in priority order:
 #   1. an already-booted simulator
@@ -96,7 +97,8 @@ boot_simulator() {
 
 	log "Booting simulator $udid"
 	xcrun simctl boot "$udid"
-	open -a Simulator
+	# Xcode 27 renamed Simulator.app to Device Hub.
+	open -a Simulator 2>/dev/null || open -a "Device Hub" 2>/dev/null || true
 	xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || true
 	echo "$udid"
 }
@@ -226,12 +228,9 @@ do_upload() {
 	log "Uploaded. TestFlight processing takes a few minutes."
 }
 
-do_run() {
+install_on_simulator() {
+	local udid="$1"
 	generate_project
-
-	local udid
-	udid="$(boot_simulator)"
-
 	log "Building..."
 	run_xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
 		-sdk iphonesimulator -configuration Debug \
@@ -242,11 +241,18 @@ do_run() {
 
 	log "Installing..."
 	xcrun simctl install "$udid" "$app"
+}
+
+do_run() {
+	local udid
+	udid="$(boot_simulator)"
+	install_on_simulator "$udid"
 
 	log "Launching. Streaming SDK logs (Ctrl-C to stop)..."
-	# --console-pty streams the SDK's print() output; it does not reach the
-	# unified log system, so `log show` would find nothing.
-	xcrun simctl launch --console-pty "$udid" "$BUNDLE_ID"
+	# The SDK logs through os.Logger: DT mode echoes it to the console, and the sharing trace is .debug, dropped unless the subsystem is raised.
+	xcrun simctl spawn "$udid" log config --subsystem id.frak.sdk --mode "level:debug" ||
+		log "Could not raise id.frak.sdk to debug: the sharing trace will be missing."
+	SIMCTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun simctl launch --console-pty --terminate-running-process "$udid" "$BUNDLE_ID"
 }
 
 # Emits "<CoreDevice id>\t<name>\t<UDID>" per connected physical device. devicectl's JSON
@@ -333,10 +339,11 @@ do_device() {
 		die "Install failed. Check that Developer Mode is on and the device is unlocked."
 
 	log "Launching. Streaming SDK logs (Ctrl-C to stop)..."
-	# --console streams the app's stdout, where the SDK's print() output goes.
+	# DT mode echoes the SDK's os.Logger lines to --console, which only carries stdout/stderr.
+	# The .debug sharing trace stays dropped: `log config` cannot reach a device.
 	# First launch of a build signed by a new team needs the profile trusted on-device:
 	# Settings > General > VPN & Device Management.
-	xcrun devicectl device process launch --device "$udid" --console \
+	DEVICECTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun devicectl device process launch --device "$udid" --console \
 		--terminate-existing "$BUNDLE_ID"
 }
 
@@ -354,8 +361,29 @@ do_logs() {
 	fi
 
 	log "Relaunching to stream SDK logs (Ctrl-C to stop)..."
-	xcrun devicectl device process launch --device "$udid" --console \
+	DEVICECTL_CHILD_OS_ACTIVITY_DT_MODE=enable xcrun devicectl device process launch --device "$udid" --console \
 		--terminate-existing "$BUNDLE_ID"
+}
+
+# Simulator only: the flows clear the app's data, and Maestro drives iOS devices only
+# through its cloud.
+do_e2e() {
+	command -v maestro >/dev/null 2>&1 ||
+		die "maestro not found. Install it with: brew install mobile-dev-inc/tap/maestro"
+	local udid
+	udid="$(boot_simulator)"
+	install_on_simulator "$udid"
+
+	log "Running Maestro flows on $udid..."
+	local cap=()
+	# Maestro has no overall timeout and can hang forever when its XCTest driver never starts.
+	# --foreground: in its own process group Maestro is stopped (SIGTTOU) on exit when run from a terminal.
+	command -v timeout >/dev/null 2>&1 && cap=(timeout --foreground "${MAESTRO_TIMEOUT:-900}")
+	cd "$APP_DIR"
+	MAESTRO_CLI_NO_ANALYTICS=1 \
+		MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+		MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-180000}" \
+		${cap[@]+"${cap[@]}"} maestro --device "$udid" test "${@:-$APP_DIR/.maestro}"
 }
 
 do_xcode() {
@@ -385,11 +413,12 @@ build) do_build_only ;;
 archive) do_archive ;;
 upload) shift || true; do_upload "${1:-}" ;;
 logs) do_logs ;;
+e2e) shift && do_e2e "$@" ;;
 xcode) do_xcode ;;
 lint) do_lint ;;
 format) do_format ;;
 *)
-	echo "Usage: $0 {run|device|logs|build|archive|upload|xcode|lint|format}"
+	echo "Usage: $0 {run|device|logs|build|archive|upload|xcode|lint|format|e2e}"
 	echo ""
 	echo "  run     - generate + build + install + launch on a simulator, then stream logs"
 	echo "  device  - same, on a physical iPhone or iPad (needs Developer Mode and a signing team)"
@@ -400,6 +429,7 @@ format) do_format ;;
 	echo "  xcode   - regenerate the project and open it in Xcode"
 	echo "  lint    - swift-format lint (strict), no simulator"
 	echo "  format  - swift-format rewrite in place"
+	echo "  e2e     - build + install, then the Maestro flows in .maestro/ on a simulator"
 	exit 1
 	;;
 esac

@@ -5,7 +5,7 @@ Four categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.
 ## ROUTE HIERARCHY
 
 ```
-/                          → _index.tsx (redirect → /app)
+/                          → _index.tsx (redirect → /app when `shop` is present, else /auth/login)
 /app                       → app.tsx (layout: auth + shop data + onboarding)
   /                        → app._index.tsx (dashboard, uses parent data)
   /ambassador              → app.ambassador.tsx (ambassador page: publish/hide/menu/switch)
@@ -31,24 +31,23 @@ Four categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.
 ### Loader
 
 ```ts
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const context = await authenticate.admin(request);
-  const data = await someService(context);
-  return Response.json(data);
+  return data({ thing: await someService(context) });
 }
 ```
 
 ### Action (intent-based dispatch)
 
 ```ts
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const context = await authenticate.admin(request);
   const formData = await request.formData();
   switch (formData.get("intent")) {
     case "create":
-      return Response.json(await createThing(context));
+      return data(await createThing(context));
     case "delete":
-      return Response.json(await deleteThing(context));
+      return data(await deleteThing(context));
   }
 }
 ```
@@ -62,16 +61,16 @@ export async function action({ request }: Route.ActionArgs) {
 | `auth.*`     | `login(request)`                | Login flow                 |
 | `proxy.*`    | `authenticate.public.appProxy`  | `{ liquid, session? }`     |
 | `webhooks`   | `authenticate.webhook(request)` | `{ shop, topic, payload }` |
-| `purchase`   | None                            | Standalone page            |
+| `purchase`   | None                            | Standalone page (loads Polaris itself, no `AppProvider`) |
 
 ## CONVENTIONS
 
 - **Parallel fetching**: `Promise.all()` in loaders when multiple services needed.
 - **Intent-based actions**: `formData.get("intent")` to dispatch create/delete/save.
 - **Mutations via `useFetcher()`**: All form submissions go through `useFetcher()` in child components.
-- **Return `Response.json()`**: Not plain objects from loaders/actions.
+- **Return `data(...)`** from `react-router` (status/headers when needed); a few API routes return `Response.json()`.
 - **Layout data access**: Child routes use `useRouteLoaderData<typeof loader>("routes/app")` for parent data.
-- **Route types**: `Route.LoaderArgs` / `Route.ActionArgs` from React Router v7 type generation.
+- **Route types**: `LoaderFunctionArgs` / `ActionFunctionArgs` from `react-router`. `react-router typegen` runs in `typecheck`, but no route uses the generated `Route.*` types.
 
 ## ANTI-PATTERNS
 

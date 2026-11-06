@@ -38,6 +38,8 @@ export type MerchantIdentity = {
 const HttpsUrlSchema = (maxLength = 2048) =>
     t.String({ pattern: "^https://", maxLength });
 
+const HexColorSchema = () => t.String({ pattern: "^#[0-9a-fA-F]{6}$" });
+
 export type Platform = "android" | "ios";
 export const PlatformSchema = t.Union([t.Literal("android"), t.Literal("ios")]);
 
@@ -171,6 +173,7 @@ const AmbassadorComponentSchema = t.Object({
     faq5Question: t.Optional(LocalizableStringSchema),
     faq5Answer: t.Optional(LocalizableStringSchema),
     heroImageUrl: t.Optional(t.Union([HttpsUrlSchema(), t.Literal("none")])),
+    accentColor: t.Optional(HexColorSchema()),
 });
 
 // Store-wide components: the ambassador page exists once per store, never per placement.
@@ -276,6 +279,7 @@ const ResolvedComponentsSchema = t.Object({
             faq5Question: t.Optional(t.String()),
             faq5Answer: t.Optional(t.String()),
             heroImageUrl: t.Optional(t.String()),
+            accentColor: t.Optional(t.String()),
         })
     ),
 });

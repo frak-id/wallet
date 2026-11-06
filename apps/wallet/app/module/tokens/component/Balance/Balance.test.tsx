@@ -8,6 +8,7 @@ const mockUseGetPendingRewards = vi.fn();
 const mockUseGetUnpaidRewards = vi.fn();
 const mockNavigate = vi.fn();
 const mockT = vi.fn((key: string) => key);
+let mockLanguage = "en-US";
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
@@ -26,7 +27,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
         t: mockT,
-        i18n: { language: "en-US" },
+        i18n: { language: mockLanguage },
     }),
 }));
 
@@ -41,6 +42,7 @@ vi.mock("@/module/tokens/hook/useGetUnpaidRewards", () => ({
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockLanguage = "en-US";
         modalStore.getState().closeModal();
         mockUseGetPendingRewards.mockReturnValue({
             totalClaimable: 0,
@@ -57,43 +59,59 @@ describe("Balance", () => {
 
         render(<Balance />);
 
-        expect(mockT).toHaveBeenCalledWith("common.rewards");
+        expect(mockT).toHaveBeenCalledWith("wallet.balance.label");
     });
 
-    it("should render integer and decimal parts separately", () => {
+    it("formats the balance for an English locale", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
-                total: { eurAmount: 100.5 },
+                total: { eurAmount: 1234.5 },
             },
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("100")).toBeInTheDocument();
-        expect(screen.getByText(",50")).toBeInTheDocument();
-        expect(screen.getByText("EUR")).toBeInTheDocument();
+        expect(screen.getByText("€1,234")).toBeInTheDocument();
+        expect(screen.getByText(".50")).toBeInTheDocument();
     });
 
-    it("should render 0,00 EUR when userBalance is undefined", () => {
+    it("formats the balance for a French locale", () => {
+        mockLanguage = "fr-FR";
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 1234.5 },
+            },
+        });
+
+        render(<Balance />);
+
+        expect(screen.getByText(/^1\s234$/)).toBeInTheDocument();
+        expect(screen.getByText(",50")).toBeInTheDocument();
+        expect(screen.getByText("€")).toBeInTheDocument();
+    });
+
+    it("should render €0.00 when userBalance is undefined", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: undefined,
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("0")).toBeInTheDocument();
-        expect(screen.getByText(",00")).toBeInTheDocument();
+        expect(screen.getByText(".00").parentElement).toHaveTextContent(
+            "€0.00"
+        );
     });
 
-    it("should render 0,00 EUR when total is undefined", () => {
+    it("should render €0.00 when total is undefined", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: { total: undefined },
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("0")).toBeInTheDocument();
-        expect(screen.getByText(",00")).toBeInTheDocument();
+        expect(screen.getByText(".00").parentElement).toHaveTextContent(
+            "€0.00"
+        );
     });
 
     it("should format balance with 2 decimal places", () => {
@@ -105,8 +123,8 @@ describe("Balance", () => {
 
         render(<Balance />);
 
-        expect(screen.getByText("123")).toBeInTheDocument();
-        expect(screen.getByText(",46")).toBeInTheDocument();
+        expect(screen.getByText("€123")).toBeInTheDocument();
+        expect(screen.getByText(".46")).toBeInTheDocument();
     });
 
     it("should hide amount when eye icon is clicked", () => {
@@ -118,10 +136,10 @@ describe("Balance", () => {
 
         render(<Balance />);
 
-        expect(screen.getByText("100")).toBeInTheDocument();
+        expect(screen.getByText("€100")).toBeInTheDocument();
 
         // Click the EyeOff icon to hide
-        const eyeIcon = screen.getByText("100").closest("div")
+        const eyeIcon = screen.getByText("€100").closest("div")
             ?.parentElement as HTMLElement;
         const svgButton = eyeIcon?.querySelector("svg");
         if (svgButton) {

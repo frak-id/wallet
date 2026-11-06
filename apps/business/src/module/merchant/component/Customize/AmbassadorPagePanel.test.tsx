@@ -124,6 +124,99 @@ describe("AmbassadorPagePanel", () => {
         });
     });
 
+    it("saves a picked accent colour and clears it when reset", async () => {
+        const { save } = renderPanel({
+            components: { ambassador: { accentColor: "#ffd400" } },
+        });
+        const hex = screen.getByTestId("accentColor-hex");
+        expect(hex).toHaveValue("#ffd400");
+
+        fireEvent.change(hex, { target: { value: "#B00020" } });
+        expect((await save())?.ambassador).toEqual({ accentColor: "#b00020" });
+
+        editSdkConfig.mockClear();
+        fireEvent.click(screen.getByTestId("accentColor-clear"));
+        expect((await save())?.ambassador).toBeUndefined();
+    });
+
+    it("keeps an accent colour emptied by hand empty after leaving the field", async () => {
+        const { save } = renderPanel({
+            components: { ambassador: { accentColor: "#ffd400" } },
+        });
+        const hex = screen.getByTestId("accentColor-hex");
+        fireEvent.change(hex, { target: { value: "" } });
+        fireEvent.blur(hex);
+
+        expect(hex).toHaveValue("");
+        expect((await save())?.ambassador).toBeUndefined();
+    });
+
+    it("falls back to automatic, not the cleared colour, when a half-typed accent is abandoned", async () => {
+        const { save } = renderPanel({
+            components: { ambassador: { accentColor: "#ffd400" } },
+        });
+        const hex = screen.getByTestId("accentColor-hex");
+        fireEvent.click(screen.getByTestId("accentColor-clear"));
+        fireEvent.change(hex, { target: { value: "#12" } });
+        fireEvent.blur(hex);
+
+        expect(hex).toHaveValue("");
+        expect((await save())?.ambassador).toBeUndefined();
+    });
+
+    it("shows an empty accent colour as automatic, not black", () => {
+        renderPanel({});
+        expect(screen.getByTestId("accentColor-hex")).toHaveAttribute(
+            "placeholder",
+            "customize.ambassador.accent.automatic"
+        );
+        expect(screen.getByTestId("accentColor-swatch")).toHaveAttribute(
+            "data-automatic"
+        );
+
+        fireEvent.change(screen.getByTestId("accentColor-hex"), {
+            target: { value: "#b00020" },
+        });
+        expect(screen.getByTestId("accentColor-swatch")).not.toHaveAttribute(
+            "data-automatic"
+        );
+    });
+
+    it("refuses to save an accent colour typed as anything but #rrggbb", async () => {
+        const { save } = renderPanel({});
+        fireEvent.change(screen.getByTestId("accentColor-hex"), {
+            target: { value: "#fd0" },
+        });
+
+        await expect(save()).rejects.toThrow();
+        expect(editSdkConfig).not.toHaveBeenCalled();
+    });
+
+    it("tells the merchant which field is wrong when the accent colour is invalid", async () => {
+        const { save } = renderPanel({});
+        const hex = screen.getByTestId("accentColor-hex");
+        fireEvent.change(hex, { target: { value: "#fd0" } });
+
+        await expect(save()).rejects.toThrow();
+        await act(async () => {});
+        expect(
+            await screen.findByText("customize.ambassador.accent.invalid")
+        ).toBeInTheDocument();
+        expect(hex).toHaveAttribute("aria-invalid", "true");
+    });
+
+    it("paints the previews with the unsaved accent colour", () => {
+        const view = renderPanel({});
+        fireEvent.change(screen.getByTestId("accentColor-hex"), {
+            target: { value: "#b00020" },
+        });
+
+        const phone = view.getByTestId("ambassador-phone-scroll");
+        expect(phone.style.getPropertyValue("--frak-amb-accent")).toBe(
+            "#b00020"
+        );
+    });
+
     it("previews the Explorer image by default and nothing once no photo is chosen", () => {
         const { container } = renderPanel({});
         expect(

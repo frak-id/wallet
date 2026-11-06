@@ -15,11 +15,6 @@
         /// The tap-to-content budget lives in `SharingSheetLogic.swift`, beside the retry ladder
         /// it must outlast, so one host-run test can compare the two.
         static let pageLoadDeadline = sharingPageLoadDeadline
-        /// How long an activated document has to report itself alive. Far below
-        /// `pageLoadDeadline`, which is sized for a full load: an activation is the fast path, and
-        /// spending five seconds before recovery even starts would blow the tap-to-content budget.
-        /// Above `FrakSharingSheet`'s 0.4s paint grace and a mounted page's two frames.
-        static let activationDeadline: TimeInterval = 1
         // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in SharingSheetLogic
         // .swift, outside this `#if`, so the ladder has a host-run test.
         nonisolated static let seedTimeout: TimeInterval = 0.04
@@ -61,9 +56,12 @@
         private let sessionId: String
         private let trace: SharingTrace
         private let loadBudget: TimeInterval
+        private let bootBudget: TimeInterval
         /// The document the lent view is already showing, if the warm-up finished. Decided once
         /// at the tap by `SharingPresentation`; re-asking later would race the answer.
         private let activationBaseURL: String?
+        /// When that document finished: one too young to have booted gets the rest of `bootBudget`.
+        private let warmDocumentReadyAt: Date?
 
         // Individually injected, not `() -> FrakClient`. Defaulted lazily since `Frak.initialize`
         // may not have run when this is constructed.
@@ -127,6 +125,7 @@
             sessionId: String,
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
+            warmDocumentReadyAt: Date? = nil,
             install: FrakInstallPresentation = FrakSharingDefaults.install,
             // No default: a defaulted merchant opt-out is one that silently stops being threaded.
             detectInstall: Bool,
@@ -167,12 +166,15 @@
             metadataName: @escaping @Sendable () -> String? = { (try? Frak.client)?.metadataName },
             metadataLang: @escaping @Sendable () -> FrakLanguage? = { (try? Frak.client)?.metadataLang },
             imageCache: SharingImagePreviewCache = SharingImagePreviewCache(),
-            loadBudget: TimeInterval = SharingSheetModel.pageLoadDeadline
+            loadBudget: TimeInterval = SharingSheetModel.pageLoadDeadline,
+            bootBudget: TimeInterval = sharingPageBootBudget
         ) {
             self.sessionId = sessionId
             self.trace = trace
             self.loadBudget = loadBudget
+            self.bootBudget = bootBudget
             self.activationBaseURL = activationBaseURL
+            self.warmDocumentReadyAt = warmDocumentReadyAt
             self.language = language
             self.storeInvite = StoreInvites.make(install)
             self.installProbe = detectInstall ? InstallProbe() : nil
@@ -288,7 +290,24 @@
             // speaking for itself — clears a budget, on the cold path as much as the warm one.
         }
 
+        /// `didFinish` of a full load: the load budget is met, and the page now boots on its own budget.
+        func onDocumentFinished() {
+            onPageReady()
+            guard
+                sharingExpiry(
+                    pageReported: pageReported,
+                    recoveryAttempted: recoveryAttempted,
+                    showingInstallPage: showingInstallPage,
+                    fellBack: fellBack,
+                    closed: closed
+                ) != .doNothing
+            else { return }
+            armActivationWatchdog(budget: bootBudget)
+        }
+
         func onPageVisible() {
+            // A late page under the tier-3 chooser would stack two share UIs; the sheet closes after it.
+            guard !fellBack else { return }
             if page == .loading || page == .documentReady { page = .painted }
         }
 
@@ -523,7 +542,10 @@
                 onPageReady()
                 // After `onPageReady`: it settles the budget it just met, which would cancel a
                 // watchdog armed any earlier.
-                if watch { armActivationWatchdog() }
+                if watch {
+                    let age = warmDocumentReadyAt.map { Date().timeIntervalSince($0) }
+                    armActivationWatchdog(budget: sharingActivationBudget(warmDocumentAge: age, boot: bootBudget))
+                }
             }
         }
 
@@ -531,7 +553,7 @@
         ///
         /// The engine cannot answer this: a reclaimed content process still completes its
         /// navigation, so `didFinish` arrives for a document with no page in it.
-        private func armActivationWatchdog(budget: TimeInterval = activationDeadline) {
+        private func armActivationWatchdog(budget: TimeInterval) {
             // Never two live budgets: an orphan would recover and fall back on its own.
             deadline?.cancel()
             activationArmed = true
@@ -789,6 +811,8 @@
         private func fallBack(to session: SharingSession) async {
             guard !fellBack else { return }
             fellBack = true
+            // Covered again: the skeleton grace may have uncovered a page that is only now arriving.
+            page = .loading
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.

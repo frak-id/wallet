@@ -61,7 +61,7 @@
                 // `finish` first: a surface leaving with a session still live is an outcome the
                 // merchant is owed, and `teardown` alone reports nothing.
                 .onDisappear {
-                    finish()
+                    finish(.unconditional)
                     presenter.teardown()
                 }
                 // The tap. Synchronous, and deliberately not `.task(id:)`, which would run after
@@ -73,10 +73,10 @@
                     if presenting {
                         launch()
                     } else {
-                        finish(onlyIfUnpresented: true)
+                        finish(.bindingCleared)
                     }
                 }
-                .sheet(isPresented: $isPresented, onDismiss: { finish() }) {
+                .sheet(isPresented: $isPresented, onDismiss: { finish(.sheetDismissed) }) {
                     FrakSharingSheetContent(
                         presenter: presenter,
                         heightFraction: configuration.heightFraction
@@ -102,8 +102,8 @@
 
         /// The single exit, whether the sheet closed itself or the user swiped it away. `finish`
         /// never calls this closure more than once, and never for a session that had no sheet.
-        private func finish(onlyIfUnpresented: Bool = false) {
-            presenter.finish(onlyIfUnpresented: onlyIfUnpresented) {
+        private func finish(_ exit: SharingSheetExit) {
+            presenter.finish(exit) {
                 onResult(best ?? .dismissed)
                 best = nil
             }

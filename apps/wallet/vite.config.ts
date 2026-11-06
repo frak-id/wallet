@@ -526,6 +526,11 @@ export default defineConfig(
                 },
             },
             optimizeDeps: {
+                // Imported only by compiled `.css.ts`, which the startup scan misses: found later, they reload the page.
+                include: [
+                    "@vanilla-extract/recipes/createRuntimeFn",
+                    "@frak-labs/design-system > @vanilla-extract/sprinkles/createRuntimeSprinkles",
+                ],
                 exclude: ["react-scan"],
             },
         };

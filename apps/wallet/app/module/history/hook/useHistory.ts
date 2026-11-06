@@ -18,6 +18,10 @@ export function useHistory() {
         isLoading: isRewardsLoading,
         error: rewardsError,
         refetch: refetchRewards,
+        hasNextPage,
+        fetchNextPage,
+        isFetchingNextPage,
+        isFetchNextPageError,
     } = useGetRewardHistory();
 
     const {
@@ -43,5 +47,9 @@ export function useHistory() {
         isLoading: isRewardsLoading || isOrdersLoading,
         error: rewardsError ?? ordersError,
         refetch: () => Promise.all([refetchRewards(), refetchOrders()]),
+        hasNextPage,
+        fetchNextPage,
+        isFetchingNextPage,
+        isFetchNextPageError,
     };
 }

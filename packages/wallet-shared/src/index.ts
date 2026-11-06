@@ -61,6 +61,7 @@ export {
     type FlowOutcome,
     type FlowStartExtras,
     type FreshSdkResult,
+    formatAmountRange,
     formatCurrency,
     getErrorCode,
     getErrorStatus,
@@ -150,6 +151,7 @@ export {
     type WalletMergeMode,
     type WalletMergeStep,
     type WalletModalEventMap,
+    widenGroupSeparator,
 } from "./common";
 export {
     defaultNS,

@@ -1,4 +1,5 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { toastSurfaceTop } from "@frak-labs/design-system/components/ToastSurface/styles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -112,7 +113,7 @@ export const bottomBar = style({
 
 /** Toasts anchored to the shell (not `main`) clear the status bar. */
 export const shellToastTop = style({
-    top: shellContentTop,
+    vars: { [toastSurfaceTop]: shellContentTop },
 });
 
 // Above scrolling content, below the tab bar and sticky page headers.

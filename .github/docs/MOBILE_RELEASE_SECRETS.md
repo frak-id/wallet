@@ -5,7 +5,7 @@ This document provides instructions for setting up the GitHub Secrets required b
 ## Prerequisites
 
 1. **First AAB Manual Upload**: You must manually upload the first Android App Bundle (AAB) to the Google Play Console before the automated upload API works. Automated uploads will fail until this step is completed.
-2. **App Store Connect API Role**: The API key used for iOS releases must have the **App Manager** role or higher.
+2. **App Store Connect API Role**: The API key used for iOS releases must have the **App Manager** role or higher. The same key drafts the App Store version (`scripts/app-store-draft.ts`): creating a version and editing its What's New both need App Manager.
 3. **CI Signing Key & WebAuthn**: If the CI signing key produces a different Android SHA256 fingerprint than local builds, update the fingerprint in `packages/app-essentials/src/webauthn/index.ts` for Digital Asset Links verification.
 
 ## iOS Secrets
@@ -66,8 +66,17 @@ keyPassword=<from secret>
 3. Enable the **Google Play Android Developer API**.
 4. Create a Service Account and generate a JSON key.
 5. In the [Google Play Console](https://play.google.com/console), go to **Users & Permissions**.
-6. Invite the service account email and grant the **Release Manager** role (or minimum required permissions to manage releases).
+6. Invite the service account email and grant the **Release Manager** role (or minimum required permissions to manage releases). Prod builds are drafted on the **production** track as well as internal, so the account needs "Release to production" permission, not only testing tracks.
 7. Add `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` to GitHub Secrets and paste the full JSON key contents.
+
+## Store Notes Secrets
+
+| Secret Name | Description |
+|---|---|
+| `CLIPROXY_API_KEY` | Bearer token for the Anthropic-compatible proxy pi uses to write the store notes. |
+| `CLIPROXY_BASE_URL` | Proxy endpoint, without `/v1`. |
+
+Both are shared with `dependency-report.yml`. The prod `prepare-pr` job preflights them and fails before pi starts when either is empty or rejected.
 
 ## Shared Secrets (Already Configured)
 

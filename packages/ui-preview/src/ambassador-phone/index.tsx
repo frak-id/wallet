@@ -2,6 +2,7 @@ import type { Currency } from "@frak-labs/core-sdk";
 import { useEffect, useRef, useState } from "react";
 import phoneFrame2xUrl from "../explorer-phone/assets/phone-frame@2x.webp";
 import phoneFrameUrl from "../explorer-phone/assets/phone-frame.webp";
+import { accentVars } from "../utils/accent";
 import { replaceAmbassadorVariables, SAMPLE_AMOUNT } from "../utils/variables";
 import * as styles from "./ambassador-phone.css";
 
@@ -72,6 +73,8 @@ export type AmbassadorPhonePreviewProps = {
     shopName: string;
     /** Merchant hero photo; absent collapses the 4:5 frame around the tag. */
     imageUrl?: string;
+    /** `#rrggbb` accent of the buttons; absent keeps the black default. */
+    accentColor?: string;
     focus?: AmbassadorPhoneFocus;
 };
 
@@ -95,6 +98,7 @@ export function AmbassadorPhonePreview({
     currency,
     shopName,
     imageUrl,
+    accentColor,
     focus,
 }: AmbassadorPhonePreviewProps) {
     const [highlightedSlot, setHighlightedSlot] = useState<string | null>(null);
@@ -174,6 +178,7 @@ export function AmbassadorPhonePreview({
             <div
                 ref={scrollRef}
                 className={styles.screen}
+                style={accentVars(accentColor)}
                 data-testid="ambassador-phone-scroll"
             >
                 <div className={styles.notch} />

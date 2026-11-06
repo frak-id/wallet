@@ -13,6 +13,15 @@ const config: KnipConfig = {
             // and the only other source is src/types/vite-env.d.ts.
             project: ["src/**/*.ts"],
         },
+        "example/referral-demo": {
+            // Vite PWA booted by index.html; scripts/ holds the snapshot CLI.
+            entry: ["scripts/*.ts"],
+            project: [
+                "src/**/*.{ts,tsx}",
+                "scripts/**/*.ts",
+                "vite-plugins/**/*.ts",
+            ],
+        },
         "example/wallet-ethcc": {
             // Vite + TanStack Router demo; sources live under app/, the route
             // modules are pulled in through the generated routeTree.

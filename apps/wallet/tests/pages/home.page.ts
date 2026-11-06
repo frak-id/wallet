@@ -11,12 +11,14 @@ export class HomePage {
         await this.page.waitForURL("/wallet");
     }
 
-    // Redesigned home: "Wallet" title + the Rewards card.
+    // Redesigned home: "Wallet" title + the Total balance card.
     async verifyBasicsInformations() {
         await expect(
             this.page.getByRole("heading", { name: "Wallet", level: 1 })
         ).toBeVisible({ timeout: 10_000 });
-        await expect(this.page.getByText("Rewards").first()).toBeVisible();
+        await expect(
+            this.page.getByText("Total balance").first()
+        ).toBeVisible();
     }
 
     // Send page is reached via the Transfer modal; navigate directly here.
@@ -54,15 +56,15 @@ export class HomePage {
         await this.page.waitForURL("/wallet");
     }
 
-    // Match the Rewards integer exactly (loose match also hits the Lifetime
-    // stat) and allow time for the mock-backed refetch to settle from 0.
+    // Match the balance's en-US integer run ("€420") exactly: a loose match also
+    // hits the Lifetime stat. Allow time for the mock-backed refetch to settle from 0.
     async verifyBalanceInformations(amount: number) {
         await expect(
-            this.page.getByText(amount.toString(), { exact: true }).first()
+            this.page.getByText(`€${amount}`, { exact: true }).first()
         ).toBeVisible({ timeout: 15_000 });
     }
 
-    // Rewards-card triggers (open empty-state modals for a fresh/zero wallet).
+    // Balance-card triggers (open empty-state modals for a fresh/zero wallet).
     async clickTransferToBank() {
         await this.page
             .getByRole("button", { name: "Transfer to my bank" })

@@ -1,0 +1,96 @@
+import { defineMessages } from "@/i18n";
+
+export const stageMessages = defineMessages({
+    fr: {
+        "launcher.overline": "Démo interactive",
+        "launcher.title": "Le parrainage, de la story au wallet.",
+        "launcher.lede":
+            "Suivez Léa et Chloé, deux amies, de l'achat à la récompense. Tout est simulé et fonctionne hors-ligne.",
+        "launcher.referrer.label": "Scénario 1",
+        "launcher.referrer.title": "Léa partage",
+        "launcher.referrer.path": "Achat · Story Instagram · Wallet",
+        "launcher.referee.label": "Scénario 2",
+        "launcher.referee.title": "Chloé achète",
+        "launcher.referee.path": "Story · Achat parrainé · Wallet",
+        "launcher.finale": "Voir le résultat final",
+        "launcher.offline": "Prête hors-ligne",
+        "launcher.offlinePending": "Préparation du mode hors-ligne…",
+        "launcher.install":
+            "Pour l'installer : Partager → « Sur l'écran d'accueil »",
+        "launcher.installCta": "Installer la démo",
+        "intro.referrer.overline": "Scénario 1",
+        "intro.referrer.story":
+            "Léa est fan de Maison Lune. Ce soir, elle commande à nouveau son sérum préféré… et va en parler autour d'elle.",
+        "intro.referrer.step1": "Commande sur maisonlune.fr",
+        "intro.referrer.step2": "Partage le produit en story Instagram",
+        "intro.referrer.step3": "Récupère ses gains dans Frak",
+        "intro.referee.overline": "Scénario 2",
+        "intro.referee.story":
+            "Chloé ne connaît pas Maison Lune. Dans le train, elle tombe sur la story de Léa…",
+        "intro.referee.step1": "Découvre la story de Léa",
+        "intro.referee.step2": "Commande avec {reward} à la clé",
+        "intro.referee.step3":
+            "Récupère sa récompense, puis la vire sur son compte",
+        "intro.start": "Commencer",
+        "finale.overline": "Résultat",
+        "finale.title": "Tout le monde est gagnant.",
+        "finale.lede":
+            "Une story, un achat, deux récompenses. Le marchand ne paie qu'à la performance.",
+        "finale.earned": "+{amount}",
+        "finale.merchant.title": "Côté {merchant}",
+        "finale.merchant.customer": "Nouvelle cliente",
+        "finale.merchant.revenue": "Chiffre d'affaires",
+        "finale.merchant.cost": "Récompenses versées",
+        "finale.merchant.roi": "Coût payé uniquement après l'achat",
+        "finale.notification.title": "Chloé a commandé grâce à vous",
+        "finale.notification.body":
+            "Vos {amount} de récompense Maison Lune sont débloqués. Récupérez-les !",
+        "finale.now": "maintenant",
+        "finale.replay": "Rejouer la démo",
+    },
+    en: {
+        "launcher.overline": "Interactive demo",
+        "launcher.title": "Referrals, from story to wallet.",
+        "launcher.lede":
+            "Follow Léa and Chloé, two friends, from purchase to reward. Everything is simulated and runs offline.",
+        "launcher.referrer.label": "Scenario 1",
+        "launcher.referrer.title": "Léa shares",
+        "launcher.referrer.path": "Purchase · Instagram story · Wallet",
+        "launcher.referee.label": "Scenario 2",
+        "launcher.referee.title": "Chloé buys",
+        "launcher.referee.path": "Story · Referred purchase · Wallet",
+        "launcher.finale": "See the final result",
+        "launcher.offline": "Ready offline",
+        "launcher.offlinePending": "Preparing offline mode…",
+        "launcher.install": "To install: Share → “Add to Home Screen”",
+        "launcher.installCta": "Install the demo",
+        "intro.referrer.overline": "Scenario 1",
+        "intro.referrer.story":
+            "Léa loves Maison Lune. Tonight she reorders her favourite serum… and she is going to tell her friends.",
+        "intro.referrer.step1": "Orders on maisonlune.fr",
+        "intro.referrer.step2": "Shares the product in an Instagram story",
+        "intro.referrer.step3": "Collects her earnings in Frak",
+        "intro.referee.overline": "Scenario 2",
+        "intro.referee.story":
+            "Chloé has never heard of Maison Lune. On the train, she comes across Léa's story…",
+        "intro.referee.step1": "Discovers Léa's story",
+        "intro.referee.step2": "Orders and earns {reward}",
+        "intro.referee.step3": "Collects her reward, then sends it to her bank",
+        "intro.start": "Start",
+        "finale.overline": "Result",
+        "finale.title": "Everybody wins.",
+        "finale.lede":
+            "One story, one purchase, two rewards. The merchant only pays for performance.",
+        "finale.earned": "+{amount}",
+        "finale.merchant.title": "{merchant}'s side",
+        "finale.merchant.customer": "New customer",
+        "finale.merchant.revenue": "Revenue",
+        "finale.merchant.cost": "Rewards paid",
+        "finale.merchant.roi": "Paid only after the purchase",
+        "finale.notification.title": "Chloé ordered thanks to you",
+        "finale.notification.body":
+            "Your {amount} Maison Lune reward is unlocked. Collect it now!",
+        "finale.now": "now",
+        "finale.replay": "Replay the demo",
+    },
+});
