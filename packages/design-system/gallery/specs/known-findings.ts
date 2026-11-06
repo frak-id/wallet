@@ -1,7 +1,5 @@
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
-const NO_RETURN =
-    "ResponsiveModal is opened from state with no DialogTrigger, so Radix has no trigger to refocus and focus drops to body on close";
 
 /**
  * Findings the gallery surfaces in current component code, keyed
@@ -58,9 +56,7 @@ export const knownFindings: Record<string, string> = {
     "overflow:field-label:worst: unbreakable email": `FieldLabel label and hint: ${NO_WRAP}`,
     "overflow:field-error:worst: unbreakable email": `FieldError message: ${NO_WRAP}`,
     "overflow:empty-state:worst: unbreakable email": `EmptyState title and description: ${NO_WRAP}`,
-    "overlay:responsive-modal:default": NO_RETURN,
-    "overlay:responsive-modal:worst: long content": NO_RETURN,
-    "overlay:responsive-modal:worst: unbreakable email": `${NO_RETURN}; content: ${NO_WRAP}`,
+    "overlay:responsive-modal:worst: unbreakable email": `ResponsiveModal content: ${NO_WRAP}`,
     "overlay:popover:worst: unbreakable email": `PopoverContent: ${NO_WRAP}`,
     "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
 };
