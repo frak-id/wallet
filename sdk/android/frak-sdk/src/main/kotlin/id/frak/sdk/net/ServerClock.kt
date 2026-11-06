@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The backend's clock, learned from the `Date` header of any response, for stamping identity
- * proofs. The backend rejects a proof more than 60 s in its future, and a merge proof outside a
+ * proofs. The backend rejects a proof more than 5 min in its future, and a merge proof outside a
  * 10-minute window, so an unsynchronised device clock invalidates every signature it makes. The
  * future bound is the tight one: widening the merge window only bought slack on the past side.
  */
@@ -40,7 +40,7 @@ internal class ServerClock(
     }
 
     private companion object {
-        /** Half the tightest server window, so a warning fires well before signatures start failing. */
+        /** Well inside the server's 5 min future bound, so a warning fires before signatures start failing. */
         const val DRIFT_WARN_MILLIS = 30_000L
 
         /** 2025-01-01. Anything below is a broken header, not a clock this SDK should adopt. */
