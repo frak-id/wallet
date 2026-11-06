@@ -355,9 +355,12 @@ function readOverlay(el: Element) {
         problems.push(
             `ends ${Math.round(box.bottom - innerHeight)}px below the viewport`
         );
+    // Visually hidden text (`clip: rect(0 0 0 0)`) is a 1px box on purpose.
+    const clipped = (n: Element) =>
+        getComputedStyle(n).clip === "rect(0px, 0px, 0px, 0px)";
     if (
         [el, ...el.querySelectorAll("*")].some(
-            (n) => n.scrollWidth > n.clientWidth + 1
+            (n) => n.scrollWidth > n.clientWidth + 1 && !clipped(n)
         )
     )
         problems.push("content is wider than its box");
