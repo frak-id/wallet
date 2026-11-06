@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { sections } from "../sections";
+import { type FindingKind, parseFindingKey } from "../shell";
 import { knownFindings } from "./known-findings";
 
 const NARROW = { width: 320, height: 900 };
@@ -74,7 +75,7 @@ async function openSection(page: Page, id: string, { fakeClock = false } = {}) {
 }
 
 /** Fails on a finding not in `known-findings.ts`, and on a listed one that is gone. */
-function expectFindings(kind: string, id: string, found: Finding[]) {
+function expectFindings(kind: FindingKind, id: string, found: Finding[]) {
     const prefix = `${kind}:${id}:`;
     const expected = Object.keys(knownFindings).filter((k) =>
         k.startsWith(prefix)
@@ -372,11 +373,8 @@ function readOverlay(el: Element) {
 test("every known finding names a registry section and a checked kind", () => {
     const ids = new Set(sections.map((s) => s.id));
     const orphans = Object.keys(knownFindings).filter((key) => {
-        const [kind, id] = key.split(":");
-        return (
-            !["overflow", "focus", "overlay", "pointer"].includes(kind) ||
-            !ids.has(id)
-        );
+        const { kind, sectionId } = parseFindingKey(key);
+        return !kind || !ids.has(sectionId);
     });
     expect(orphans).toEqual([]);
 });
