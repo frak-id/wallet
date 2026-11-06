@@ -41,7 +41,7 @@
     "test:light:ui": "playwright test --config playwright.light.config.ts --ui",
     "test:light:pixels": "LIGHT_SNAPSHOTS=1 playwright test --config playwright.light.config.ts",
     "test:light:update": "LIGHT_SNAPSHOTS=1 playwright test --config playwright.light.config.ts --update-snapshots",
-    "test:light:install": "playwright install --with-deps chromium",
+    "test:light:install": "playwright install chromium",
     "tauri": "tauri",
     "tauri:ios:dev": "sst dev ./scripts/tauri-dev.sh ios",
     "tauri:ios:dev:device": "sst dev ./scripts/tauri-dev.sh ios-device",
