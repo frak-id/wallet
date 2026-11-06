@@ -36,14 +36,3 @@ export const amount = style({
 export const heading = style({
     whiteSpace: "pre-line",
 });
-
-export const collectCard = style({
-    position: "relative",
-    padding: alias.spacing.m,
-    borderRadius: alias.cornerRadius.l,
-    background: vars.surface.elevated,
-    textAlign: "center",
-    boxShadow: "0 12px 32px -16px rgba(9, 190, 103, 0.45)",
-    outline: `1.5px solid ${vars.border.success}`,
-    outlineOffset: "-1.5px",
-});

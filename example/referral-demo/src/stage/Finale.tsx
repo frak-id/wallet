@@ -7,7 +7,6 @@ import { campaign, clock } from "@/data/rewards";
 import { useT } from "@/i18n";
 import { useFormatMoney } from "@/i18n/format";
 import { PhoneFrame } from "@/shell/Device";
-import { PushNotification } from "@/shell/PushNotification";
 import type { WalletPhase } from "@/surfaces/contracts";
 import { WalletHome } from "@/surfaces/wallet";
 import * as styles from "./finale.css";
@@ -16,12 +15,12 @@ import { stageMessages } from "./messages";
 const cast: { persona: PersonaId; phase: WalletPhase; amount: number }[] = [
     {
         persona: "lea",
-        phase: "referrer-earned",
+        phase: "referrer-transferred",
         amount: campaign.referrerReward,
     },
     {
         persona: "chloe",
-        phase: "referee-transferred",
+        phase: "referee-earned",
         amount: campaign.refereeReward,
     },
 ];
@@ -35,22 +34,10 @@ function FinalePhone({
     phase: WalletPhase;
     maxScale?: number;
 }) {
-    const t = useT(stageMessages);
-    const money = useFormatMoney();
     return (
         <PhoneFrame tone="dark" time={clock.chloe} maxScale={maxScale}>
             <div className={styles.appScreen}>
                 <WalletHome persona={persona} phase={phase} embedded={true} />
-                {persona === "lea" && (
-                    <PushNotification
-                        delay={1.2}
-                        time={t("finale.now")}
-                        title={t("finale.notification.title")}
-                        body={t("finale.notification.body", {
-                            amount: money(campaign.referrerReward, "reward"),
-                        })}
-                    />
-                )}
             </div>
         </PhoneFrame>
     );

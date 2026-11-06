@@ -24,7 +24,7 @@ const TRANSFER_LANDS_MS = 900;
 const transferRow: Transaction = {
     label: bank.senderName,
     detail: "transfer",
-    amount: campaign.refereeReward,
+    amount: campaign.referrerReward,
     daysAgo: 0,
 };
 
@@ -53,7 +53,7 @@ function AccountCard({ landed }: { landed: boolean }) {
     const t = useT(bankMessages);
     const money = useFormatMoney();
     const balance = useCountUp(
-        landed ? bank.balance + campaign.refereeReward : bank.balance
+        landed ? bank.balance + campaign.referrerReward : bank.balance
     );
 
     return (
@@ -78,7 +78,7 @@ function AccountCard({ landed }: { landed: boolean }) {
                     }
                     transition={{ type: "spring", damping: 18 }}
                 >
-                    +{money(campaign.refereeReward)}
+                    +{money(campaign.referrerReward)}
                 </motion.span>
             </div>
             <span className={styles.cardBalance}>{money(balance)}</span>
@@ -180,7 +180,7 @@ function TabBar() {
     );
 }
 
-/** Chloé's bank, Hélia: the Frak transfer lands on top of her statement and her balance counts up. */
+/** Léa's bank, Hélia: the Frak transfer lands on top of her statement and her balance counts up. */
 export function BankApp({ persona }: BankAppProps) {
     const t = useT(bankMessages);
     const landed = useDelayedFlag(TRANSFER_LANDS_MS);

@@ -191,7 +191,7 @@ function HandoffScreen({ onDone }: { onDone: () => void }) {
     );
 }
 
-/** Chloé's first "transfer to my bank": Monerium's setup over her wallet, verified on the spot. */
+/** Léa's first "transfer to my bank": Monerium's setup over her wallet, verified on the spot. */
 export function CashOutSetup({ persona }: CashOutSetupProps) {
     const t = useT(walletMessages);
     const { next } = useDemoNav();
@@ -203,7 +203,7 @@ export function CashOutSetup({ persona }: CashOutSetupProps) {
             <div className={styles.layer} inert aria-hidden="true">
                 <WalletHome
                     persona={persona}
-                    phase="referee-earned"
+                    phase="referrer-earned"
                     embedded={true}
                     cashOut={true}
                 />

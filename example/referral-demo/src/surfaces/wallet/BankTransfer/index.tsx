@@ -38,8 +38,8 @@ const SIGNING_MS: Partial<Record<Stage, [ms: number, then: Stage]>> = {
 };
 const BANK_PUSH_MS = 1500;
 
-/** Her whole balance: the 5 € she collected. */
-const AMOUNT = campaign.refereeReward;
+/** Her whole balance: the 10 € she collected. */
+const AMOUNT = campaign.referrerReward;
 const MONERIUM_DEFAULT_MEMO = "Frak Wallet offramp";
 
 function AmountScreen({ onContinue }: { onContinue: () => void }) {

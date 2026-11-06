@@ -1,11 +1,11 @@
-import { heroProductId, products } from "./merchant";
+import { orders, orderTotal } from "./merchant";
 
-/** Chloé's bank (fictional), where her Frak earnings land. */
+/** Léa's bank (fictional), where her Frak earnings land. */
 export const bank = {
     name: "Hélia",
     /** Shown masked everywhere but the IBAN field: `FR76 •••• 0143`. */
     iban: "FR76 1695 8000 0143 2177 6420 143",
-    holder: "Chloé Bernard",
+    holder: "Léa Martin",
     /** Current account balance before the Frak transfer arrives. */
     balance: 1248.32,
     /** How Monerium's SEPA payout reads on a statement. */
@@ -17,7 +17,7 @@ export const bankHistory = [
     {
         label: "Maison Lune",
         detail: "card",
-        amount: -products[heroProductId].price,
+        amount: -orderTotal(orders.lea),
         daysAgo: 0,
     },
     { label: "Monoprix", detail: "card", amount: -23.4, daysAgo: 0 },

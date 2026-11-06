@@ -46,17 +46,10 @@ export const info = style({
     minWidth: 0,
 });
 
-export const statusText = recipe({
-    variants: {
-        wrap: {
-            true: { textWrap: "balance" },
-            false: {
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-            },
-        },
-    },
+export const statusText = style({
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
 });
 
 export const amount = style({
@@ -85,7 +78,6 @@ export const badgeInner = recipe({
     },
     variants: {
         status: {
-            waitingFriend: { background: vars.icon.warning },
             settled: { background: vars.icon.secondary },
             bonus: { background: vars.icon.success },
         },

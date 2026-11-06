@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { PersonaId } from "@/data/personas";
+import { clock } from "@/data/rewards";
 import { Finale } from "@/stage/Finale";
 import { Launcher } from "@/stage/Launcher";
 import { PersonaIntro } from "@/stage/PersonaIntro";
@@ -46,6 +47,8 @@ export type StepDef = {
     chrome: Chrome;
     /** Status bar glyph colour: `dark` on light screens, `light` on dark ones. */
     statusBar: "dark" | "light";
+    /** Status bar clock when it differs from the persona's evening (`clock[persona]`). */
+    clock?: string;
     /** `instant` when the screen animates its own entrance (sheets over a backdrop). */
     enter?: "slide" | "fade" | "instant";
     /** Shows the "continue to the next scenario" prompt once the screen settles. */
@@ -145,13 +148,39 @@ const defs: { [K in StepId]: Omit<StepDef, "id"> } = {
         enter: "fade",
         render: () => <PasskeyCreation persona="lea" />,
     },
+    // From here Chloé has already ordered through the story: Léa's 10 € are unlocked.
     "referrer.wallet": {
         persona: "lea",
         chrome: { kind: "app", app: "wallet" },
         statusBar: "dark",
+        clock: clock.chloe,
         enter: "fade",
+        render: () => (
+            <WalletHome persona="lea" phase="referrer-earned" cashOut={true} />
+        ),
+    },
+    "referrer.cashout": {
+        persona: "lea",
+        chrome: { kind: "app", app: "wallet" },
+        statusBar: "dark",
+        clock: clock.chloe,
+        enter: "instant",
+        render: () => <CashOutSetup persona="lea" />,
+    },
+    "referrer.transfer": {
+        persona: "lea",
+        chrome: { kind: "app", app: "wallet" },
+        statusBar: "dark",
+        clock: clock.chloe,
+        render: () => <BankTransfer persona="lea" />,
+    },
+    "referrer.bank": {
+        persona: "lea",
+        chrome: { kind: "app", app: "bank" },
+        statusBar: "dark",
+        clock: clock.chloe,
         final: true,
-        render: () => <WalletHome persona="lea" phase="referrer-pending" />,
+        render: () => <BankApp persona="lea" />,
     },
     "referee.intro": {
         persona: "chloe",
@@ -203,29 +232,8 @@ const defs: { [K in StepId]: Omit<StepDef, "id"> } = {
         chrome: { kind: "safari", url: `${WALLET}/wallet` },
         statusBar: "dark",
         enter: "fade",
-        render: () => (
-            <WalletHome persona="chloe" phase="referee-earned" cashOut={true} />
-        ),
-    },
-    "referee.cashout": {
-        persona: "chloe",
-        chrome: { kind: "safari", url: `${WALLET}/wallet` },
-        statusBar: "dark",
-        enter: "instant",
-        render: () => <CashOutSetup persona="chloe" />,
-    },
-    "referee.transfer": {
-        persona: "chloe",
-        chrome: { kind: "safari", url: `${WALLET}/wallet` },
-        statusBar: "dark",
-        render: () => <BankTransfer persona="chloe" />,
-    },
-    "referee.bank": {
-        persona: "chloe",
-        chrome: { kind: "app", app: "bank" },
-        statusBar: "dark",
         final: true,
-        render: () => <BankApp persona="chloe" />,
+        render: () => <WalletHome persona="chloe" phase="referee-earned" />,
     },
     finale: {
         persona: null,

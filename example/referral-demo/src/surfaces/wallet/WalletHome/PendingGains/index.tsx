@@ -70,25 +70,3 @@ export function PendingGainsSheet({
         </BottomSheet>
     );
 }
-
-/** The same message inline, for a wallet shown without its modals. */
-export function PendingGainsCard({
-    amount,
-    title,
-    ...props
-}: PendingGainsProps & { title: string }) {
-    const money = useFormatMoney();
-    return (
-        <div className={styles.collectCard}>
-            <Stack space="m">
-                <Stack space="xxs" align="center">
-                    <Text variant="caption" color="secondary">
-                        {title}
-                    </Text>
-                    <span className={styles.amount}>+{money(amount)}</span>
-                </Stack>
-                <CollectButton {...props} />
-            </Stack>
-        </div>
-    );
-}

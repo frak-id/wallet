@@ -58,7 +58,7 @@ export function App() {
     const framed = useFramed();
     const wide = useWide();
     const stepId = useDemoStore((s) => s.stepId);
-    const { statusBar: tone, persona } = steps[stepId];
+    const { statusBar: tone, persona, clock: stepClock } = steps[stepId];
     useDirectorShortcuts();
     useDocumentSync();
     useWakeLock();
@@ -86,7 +86,10 @@ export function App() {
                         <div className={styles.phoneSlot}>
                             <PhoneFrame
                                 tone={tone}
-                                time={persona ? clock[persona] : undefined}
+                                time={
+                                    stepClock ??
+                                    (persona ? clock[persona] : undefined)
+                                }
                             >
                                 <StepStage />
                             </PhoneFrame>
