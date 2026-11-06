@@ -29,9 +29,24 @@ name: A referral link launches the stopped wallet on its code entry page
     timeout: 15000
     label: "The link's code fills the code field"
 - takeScreenshot: build/maestro/wallet-referral-link-cold
-# Scoped: on Android an open keyboard shows its own "Back" button.
-- tapOn:
-    text: "Back|Retour"
-    above: "Join the game|Participer au jeu|\
-      Got a referral code\\?|Tu as reçu un code \\?"
-- runFlow: common/wallet-home.yaml
+# Back taps are scoped: on Android an open keyboard shows its own "Back" button.
+- runFlow:
+    when:
+      visible: "Join the game|Participer au jeu"
+    commands:
+      - tapOn:
+          text: "Back|Retour"
+          above: "Join the game|Participer au jeu"
+      - runFlow: common/wallet-home.yaml
+# The redeem page's Back leads to its parent, the referrals page.
+- runFlow:
+    when:
+      visible: "Got a referral code\\?|Tu as reçu un code \\?"
+    commands:
+      - tapOn:
+          text: "Back|Retour"
+          above: "Got a referral code\\?|Tu as reçu un code \\?"
+      - extendedWaitUntil:
+          visible: "Invite your friends to Frak|Invite tes ami·e·s sur Frak"
+          timeout: 10000
+          label: "Back on the referrals page"
