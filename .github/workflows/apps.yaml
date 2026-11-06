@@ -557,7 +557,8 @@ jobs:
         run: bun run --cwd apps/wallet test:light:install
       # On PATH, vite-plugin-mkcert uses it instead of downloading it through the
       # unauthenticated GitHub API. A pinned release asset, not apt: see the
-      # Chromium step. Upstream publishes no checksums, so the hash is our own.
+      # `wallet-pages` Chromium step. Upstream publishes no checksums, so the
+      # hash is our own.
       - name: "🔐 Install mkcert"
         timeout-minutes: 2
         run: |
