@@ -1,35 +1,43 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { HiddenVisually } from "@frak-labs/design-system/components/HiddenVisually";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Input } from "@frak-labs/design-system/components/Input";
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
+    FindingsDetails,
+    findingCount,
+    SectionMarkers,
+    totalFindings,
+} from "./findings";
+import {
     canvas,
     categoryHeading,
-    chip,
-    count,
-    findingList,
     frame,
     frameBg,
     frameFixed,
     group,
-    kind as kindChip,
     link,
     main,
     navLink,
     panel,
-    search,
     sectionBox,
     shell,
     sidebar,
+    skipLink,
     toolbar,
     toolbarTitle,
 } from "./gallery.css";
-import { FindingMarkers } from "./markers";
 import { categories, type GallerySection, sections } from "./sections";
 import {
     backgrounds,
-    findingsFor,
-    markersFor,
     parseShell,
     type ShellState,
     serialiseShell,
@@ -37,8 +45,6 @@ import {
 } from "./shell";
 
 const ids = sections.map((s) => s.id);
-const findings = new Map(sections.map((s) => [s.id, findingsFor(s.id)]));
-const total = [...findings.values()].reduce((sum, f) => sum + f.length, 0);
 
 function subscribe(onChange: () => void) {
     window.addEventListener("hashchange", onChange);
@@ -71,17 +77,13 @@ function Sidebar({ state }: { state: ShellState }) {
                     Design system gallery
                 </Text>
             </Box>
-            <label>
-                <Text as="span" variant="bodySmall" color="secondary">
-                    Filter sections
-                </Text>
-                <input
-                    className={search}
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                />
-            </label>
+            <Input
+                label="Filter sections"
+                type="search"
+                length="big"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+            />
             <nav aria-label="Sections">
                 <a
                     className={navLink}
@@ -97,10 +99,17 @@ function Sidebar({ state }: { state: ShellState }) {
                     if (items.length === 0) return null;
                     return (
                         <section key={category}>
-                            <h2 className={categoryHeading}>{category}</h2>
+                            <Text
+                                as="h2"
+                                variant="overline"
+                                color="secondary"
+                                className={categoryHeading}
+                            >
+                                {category}
+                            </Text>
                             <ul>
                                 {items.map(({ id, title }) => {
-                                    const n = findings.get(id)?.length ?? 0;
+                                    const n = findingCount(id);
                                     return (
                                         <li key={id}>
                                             <a
@@ -112,13 +121,12 @@ function Sidebar({ state }: { state: ShellState }) {
                                             >
                                                 {title}
                                                 {n > 0 && (
-                                                    <span
-                                                        className={count}
-                                                        role="img"
-                                                        aria-label={`${n} known finding${n === 1 ? "" : "s"}`}
-                                                    >
+                                                    <Badge variant="warning">
                                                         {n}
-                                                    </span>
+                                                        <HiddenVisually>
+                                                            {` known finding${n === 1 ? "" : "s"}`}
+                                                        </HiddenVisually>
+                                                    </Badge>
                                                 )}
                                             </a>
                                         </li>
@@ -152,20 +160,36 @@ function Choice<T extends string>({
     onChange: (option: T) => void;
 }) {
     return (
-        <fieldset className={group} aria-labelledby={`${label}-label`}>
-            <span id={`${label}-label`}>{label}</span>
-            {options.map((option) => (
-                <button
-                    key={option}
-                    type="button"
-                    className={chip}
-                    aria-pressed={option === value}
-                    onClick={() => onChange(option)}
-                >
-                    {format(option)}
-                </button>
-            ))}
-        </fieldset>
+        <div className={group}>
+            <Text as="span" variant="bodySmall" color="secondary">
+                {label}
+            </Text>
+            <RadioGroup
+                aria-label={label}
+                orientation="horizontal"
+                value={value}
+                onValueChange={(next) => {
+                    const option = options.find((o) => o === next);
+                    if (option) onChange(option);
+                }}
+            >
+                <Inline space="s" alignY="center">
+                    {options.map((option) => (
+                        <Inline key={option} space="xxs" alignY="center">
+                            <RadioGroupItem
+                                id={`${label}-${option}`}
+                                value={option}
+                            />
+                            <label htmlFor={`${label}-${option}`}>
+                                <Text as="span" variant="bodySmall">
+                                    {format(option)}
+                                </Text>
+                            </label>
+                        </Inline>
+                    ))}
+                </Inline>
+            </RadioGroup>
+        </div>
     );
 }
 
@@ -176,7 +200,9 @@ function Toolbar({ state, title }: { state: ShellState; title: string }) {
     const capitalise = (s: string) => s[0].toUpperCase() + s.slice(1);
     return (
         <div className={toolbar}>
-            <h2 className={toolbarTitle}>{title}</h2>
+            <Text as="h2" variant="heading5" className={toolbarTitle}>
+                {title}
+            </Text>
             <Choice
                 label="Width"
                 options={widths}
@@ -193,7 +219,9 @@ function Toolbar({ state, title }: { state: ShellState; title: string }) {
             />
             {state.section !== "all" && (
                 <a className={link} href={`?only=${state.section}`}>
-                    Open alone
+                    <Text as="span" variant="bodySmall">
+                        Open alone
+                    </Text>
                 </a>
             )}
         </div>
@@ -206,9 +234,8 @@ function CanvasSection({
     render,
     titled,
 }: GallerySection & { titled: boolean }) {
-    const markers = useMemo(() => markersFor(findings.get(id) ?? []), [id]);
     return (
-        <FindingMarkers.Provider value={markers}>
+        <SectionMarkers sectionId={id}>
             <section
                 className={titled ? sectionBox : undefined}
                 data-gallery-section={id}
@@ -226,7 +253,7 @@ function CanvasSection({
                     <Stack space="xl">{render()}</Stack>
                 </Stack>
             </section>
-        </FindingMarkers.Provider>
+        </SectionMarkers>
     );
 }
 
@@ -234,27 +261,16 @@ function FindingsPanel({ sectionId }: { sectionId: string }) {
     if (sectionId === "all")
         return (
             <div className={panel}>
-                {total} known findings across {sections.length} sections. Select
-                a section to list them.
+                {totalFindings} known findings across {sections.length}{" "}
+                sections. Select a section to list them.
             </div>
         );
-    const list = findings.get(sectionId) ?? [];
     return (
-        <details className={panel} key={sectionId} open={list.length > 0}>
-            <summary>Known findings ({list.length})</summary>
-            {list.length === 0 ? (
-                <p>None recorded for this section.</p>
-            ) : (
-                <ul className={findingList}>
-                    {list.map(({ kind, caseName, reason }) => (
-                        <li key={`${kind}:${caseName}`}>
-                            <span className={kindChip}>{kind}</span>
-                            <strong>{caseName}</strong>: {reason}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </details>
+        <FindingsDetails
+            className={panel}
+            sectionId={sectionId}
+            open={findingCount(sectionId) > 0}
+        />
     );
 }
 
@@ -266,8 +282,20 @@ export function Shell() {
             : sections.filter((s) => s.id === state.section);
     return (
         <div className={shell}>
+            {/* A button, not a link: the hash holds the shell state. */}
+            <Button
+                variant="secondary"
+                size="small"
+                width="auto"
+                className={skipLink}
+                onClick={() =>
+                    document.getElementById("gallery-canvas")?.focus()
+                }
+            >
+                Skip to components
+            </Button>
             <Sidebar state={state} />
-            <div className={main}>
+            <main className={main}>
                 <Toolbar
                     state={state}
                     title={
@@ -278,8 +306,10 @@ export function Shell() {
                 />
                 <section
                     key={state.section}
+                    id="gallery-canvas"
+                    tabIndex={-1}
                     className={canvas}
-                    aria-label="Canvas"
+                    aria-label="Components"
                 >
                     <div
                         className={[
@@ -308,7 +338,7 @@ export function Shell() {
                     </div>
                 </section>
                 <FindingsPanel sectionId={state.section} />
-            </div>
+            </main>
         </div>
     );
 }

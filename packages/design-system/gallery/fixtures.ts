@@ -11,6 +11,10 @@ export const fixtures = {
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 } as const;
 
+/** The long sentence `count` times, with the space `String.repeat` would drop. */
+export const longText = (count: number) =>
+    Array.from({ length: count }, () => fixtures.longSentence).join(" ");
+
 export const chartFixtures = {
     revenue: [
         { date: new Date("2026-01-01T00:00:00Z"), actual: 1200 },

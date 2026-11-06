@@ -41,7 +41,9 @@ export function TextSection() {
             <Cases title="Variants">
                 {variants.map((variant) => (
                     <Case key={variant} name={`variant ${variant}`}>
-                        <Text variant={variant}>Frak {variant}</Text>
+                        <Text as="p" variant={variant}>
+                            Frak {variant}
+                        </Text>
                     </Case>
                 ))}
             </Cases>
@@ -67,13 +69,17 @@ export function TextSection() {
                     <Text>{fixtures.longSentence}</Text>
                 </Case>
                 <Case name="worst: one character">
-                    <Text variant="display1">{fixtures.singleChar}</Text>
+                    <Text as="p" variant="display1">
+                        {fixtures.singleChar}
+                    </Text>
                 </Case>
                 <Case name="worst: empty">
                     <Text>{fixtures.empty}</Text>
                 </Case>
                 <Case name="worst: huge number">
-                    <Text variant="heading1">{fixtures.hugeNumber}</Text>
+                    <Text as="p" variant="heading1">
+                        {fixtures.hugeNumber}
+                    </Text>
                 </Case>
                 <Case name="worst: non-Latin and emoji">
                     <Text>{fixtures.nonLatin}</Text>

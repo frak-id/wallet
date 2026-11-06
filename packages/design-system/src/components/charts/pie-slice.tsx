@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { DEFAULT_CHART_ENTER_TRANSITION } from "./animation";
 import {
     PIE_CORNER_RADIUS,
-    PIE_HOVER_OFFSET,
     PIE_INNER_RADIUS,
     PIE_OUTER_RADIUS,
+    sliceOffset,
     usePie,
 } from "./pie-context";
 
@@ -23,20 +23,6 @@ function generateArcPath(
         padAngle,
     });
     return generator({ startAngle, endAngle } as unknown as null) || "";
-}
-
-// Translation offset for a slice to "pop out" along its radial axis
-function getSliceOffset(
-    startAngle: number,
-    endAngle: number
-): { x: number; y: number } {
-    const midAngle = (startAngle + endAngle) / 2;
-    // In d3-shape, 0 radians is at 12 o'clock, angles increase clockwise
-    // So the outward direction is: x = sin(angle), y = -cos(angle)
-    return {
-        x: Math.sin(midAngle) * PIE_HOVER_OFFSET,
-        y: -Math.cos(midAngle) * PIE_HOVER_OFFSET,
-    };
 }
 
 export interface PieSliceProps {
@@ -88,7 +74,7 @@ function AnimatedSlice({
         );
     });
 
-    const offset = getSliceOffset(startAngle, endAngle);
+    const offset = sliceOffset(startAngle, endAngle);
 
     return (
         <motion.path
@@ -101,9 +87,6 @@ function AnimatedSlice({
             initial={false}
             fill={color}
             pointerEvents="none"
-            style={{
-                filter: isHovered ? `drop-shadow(0 0 12px ${color})` : "none",
-            }}
             transition={{
                 opacity: { duration: 0.15 },
                 x: { type: "spring", stiffness: 400, damping: 25 },

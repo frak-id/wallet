@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { sections } from "../sections";
+import { type FindingKind, parseFindingKey } from "../shell";
 import { knownFindings } from "./known-findings";
 
 const NARROW = { width: 320, height: 900 };
@@ -74,7 +75,7 @@ async function openSection(page: Page, id: string, { fakeClock = false } = {}) {
 }
 
 /** Fails on a finding not in `known-findings.ts`, and on a listed one that is gone. */
-function expectFindings(kind: string, id: string, found: Finding[]) {
+function expectFindings(kind: FindingKind, id: string, found: Finding[]) {
     const prefix = `${kind}:${id}:`;
     const expected = Object.keys(knownFindings).filter((k) =>
         k.startsWith(prefix)
@@ -342,6 +343,90 @@ function readPointerRing(el: Element) {
     return focused === idle ? null : `${focused} (idle: ${idle})`;
 }
 
+/**
+ * Runs in the page: text cut off by an `overflow: hidden` box with no ellipsis
+ * or line clamp, or spilling out of a fixed-height box. Horizontal spill is the
+ * overflow test's job.
+ */
+function readClipping(caseEl: Element) {
+    const hides = (v: string) => v === "hidden" || v === "clip";
+    const textRects = (box: Element) => {
+        const rects: DOMRect[] = [];
+        const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+        for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+            if (!t.textContent?.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(t);
+            rects.push(range.getBoundingClientRect());
+        }
+        return rects;
+    };
+    const cutSides = (
+        box: Element,
+        r: DOMRect,
+        horizontal: boolean,
+        vertical: boolean,
+        tolerance: number
+    ) => {
+        const outer = box.getBoundingClientRect();
+        const left = outer.left + box.clientLeft;
+        const top = outer.top + box.clientTop;
+        return Object.entries({
+            left: left - r.left,
+            right: r.right - (left + box.clientWidth),
+            top: top - r.top,
+            bottom: r.bottom - (top + box.clientHeight),
+        })
+            .filter(
+                ([side, px]) =>
+                    px > tolerance &&
+                    (side === "left" || side === "right"
+                        ? horizontal
+                        : vertical)
+            )
+            .map(([side, px]) => `${Math.round(px)}px ${side}`);
+    };
+    const clipMode = (box: Element) => {
+        // SVG text (chart labels) is positioned freely; it has no box to stay in.
+        if (box instanceof SVGElement) return null;
+        const cs = getComputedStyle(box);
+        // Visually hidden text (`clip: rect(0 0 0 0)`) is a 1px box on purpose.
+        if (cs.clip === "rect(0px, 0px, 0px, 0px)") return null;
+        const x = hides(cs.overflowX) && cs.textOverflow !== "ellipsis";
+        const y = hides(cs.overflowY) && cs.webkitLineClamp === "none";
+        if (x || y) return { x, y, tolerance: 1, verb: "cuts its text off" };
+        // Under half a line is fallback-font glyph overshoot, which differs by OS.
+        const halfLine = Number.parseFloat(cs.fontSize) / 2;
+        if (
+            cs.overflowY === "visible" &&
+            box.scrollHeight > box.clientHeight + 1
+        )
+            return {
+                x: false,
+                y: true,
+                tolerance: halfLine,
+                verb: "lets its text spill",
+            };
+        return null;
+    };
+    const cutOff = (box: Element) => {
+        const mode = clipMode(box);
+        if (!mode) return null;
+        for (const r of textRects(box)) {
+            const cut = cutSides(box, r, mode.x, mode.y, mode.tolerance);
+            if (cut.length > 0)
+                return `${box.tagName.toLowerCase()} ${mode.verb} by ${cut.join(", ")}`;
+        }
+        return null;
+    };
+    // Deepest first, so the box that is too small is blamed, not its ancestors.
+    for (const box of [caseEl, ...caseEl.querySelectorAll("*")].reverse()) {
+        const detail = cutOff(box);
+        if (detail) return detail;
+    }
+    return null;
+}
+
 /** Runs in the page: what is wrong with an open overlay in the viewport. */
 function readOverlay(el: Element) {
     const problems: string[] = [];
@@ -372,11 +457,8 @@ function readOverlay(el: Element) {
 test("every known finding names a registry section and a checked kind", () => {
     const ids = new Set(sections.map((s) => s.id));
     const orphans = Object.keys(knownFindings).filter((key) => {
-        const [kind, id] = key.split(":");
-        return (
-            !["overflow", "focus", "overlay", "pointer"].includes(kind) ||
-            !ids.has(id)
-        );
+        const { kind, sectionId } = parseFindingKey(key);
+        return !kind || !ids.has(sectionId);
     });
     expect(orphans).toEqual([]);
 });
@@ -392,6 +474,16 @@ test("the full page renders every registry section", async ({ page }) => {
         ).toBeVisible();
     }
     expect(errors).toEqual([]);
+});
+
+test("the shell scrolls inside its panes, never the page", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.locator("[data-gallery-case]").first()).toBeVisible();
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollHeight - window.innerHeight
+    );
+    expect(overflow, "px the document scrolls past the shell").toBe(0);
 });
 
 for (const { id, title } of sections) {
@@ -432,6 +524,23 @@ for (const { id, title } of sections) {
                 id,
                 found.map((f) => ({ ...f, key: `overflow:${id}:${f.key}` }))
             );
+        });
+
+        test("does not cut text off or spill it at 320px", async ({ page }) => {
+            await page.setViewportSize(NARROW);
+            const section = await openSection(page, id);
+            const found = [];
+            for (const caseEl of await section
+                .locator("[data-gallery-case]")
+                .all()) {
+                const detail = await caseEl.evaluate(readClipping);
+                if (detail)
+                    found.push({
+                        key: `clip:${id}:${await caseEl.getAttribute("data-gallery-case")}`,
+                        detail,
+                    });
+            }
+            expectFindings("clip", id, found);
         });
 
         test("shows a focus indicator on every tab stop", async ({ page }) => {
