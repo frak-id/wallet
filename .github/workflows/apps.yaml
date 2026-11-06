@@ -508,9 +508,11 @@ jobs:
       # `playwright@latest` from the registry, so the browser install and the
       # runner can end up on different versions. Chromium only — the config
       # declares one browser, and the standalone bundle is built by the suite's
-      # own `globalSetup`.
+      # own `globalSetup`. No `--with-deps`: the runner image already has the
+      # shared libraries, and the only apt packages it adds are non-Latin
+      # fallback fonts the specs never render (Inter is self-hosted), fetched
+      # from an Azure mirror that sometimes serves 40 kB/s.
       - name: "🌐 Install Chromium"
-        # Usually ~25 s; a slow apt mirror otherwise stalls the job for 10+ min.
         timeout-minutes: 5
         run: bun run --cwd apps/wallet test:light:install
       # Specs import `@frak-labs/core-sdk/identity`, and Playwright resolves it
@@ -598,7 +600,6 @@ jobs:
         run: bun install --frozen-lockfile
       # Through the workspace, not `bunx`: see `wallet-pages`.
       - name: "🌐 Install Chromium"
-        # Usually ~25 s; a slow apt mirror otherwise stalls the job for 10+ min.
         timeout-minutes: 5
         run: bun run --cwd packages/design-system test:gallery:install
       # The config builds the gallery and serves it; `GALLERY_HOST` widens the

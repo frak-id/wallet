@@ -88,6 +88,6 @@
     "test:gallery": "playwright test",
     "test:gallery:pixels": "GALLERY_SNAPSHOTS=1 playwright test",
     "test:gallery:update": "GALLERY_SNAPSHOTS=1 playwright test --update-snapshots",
-    "test:gallery:install": "playwright install --with-deps chromium"
+    "test:gallery:install": "playwright install chromium"
   }
 }
