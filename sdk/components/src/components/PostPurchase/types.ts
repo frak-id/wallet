@@ -63,6 +63,11 @@ export type PostPurchaseProps = {
      */
     ctaText?: string;
     /**
+     * Override the claim button text shown to a referee without a linked wallet.
+     * Use `{REWARD}` as placeholder for the reward amount.
+     */
+    claimCtaText?: string;
+    /**
      * Override the image displayed on the left of the post-purchase card.
      * Accepts an image URL. Falls back to the built-in gift icon when omitted.
      * The image is constrained to the icon slot via `object-fit: contain`,

@@ -3,6 +3,7 @@ import {
     type TokenMetadata,
     type TokenPrice,
 } from "@backend-infrastructure";
+import type { RewardSummary } from "@frak-labs/core-sdk";
 import Decimal from "decimal.js";
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
@@ -12,6 +13,7 @@ import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
+import { summarizeMerchantRewards } from "../domain/rewards/rewardSummary";
 import type {
     PurchaseAmountMap,
     ReferrerPurchaseMap,
@@ -95,6 +97,37 @@ export class RewardHistoryOrchestrator {
         return { eurAmount: eurAmount.toNumber() };
     }
 
+    /** What an anonymous visitor holds at one merchant: unpaid rewards, and paid ones once linked to a wallet. */
+    async getMerchantRewardSummary(params: {
+        anonymousId: string;
+        merchantId: string;
+    }): Promise<RewardSummary> {
+        const group = await this.identityRepository.findGroupByIdentity({
+            type: "anonymous_fingerprint",
+            value: params.anonymousId,
+            merchantId: params.merchantId,
+        });
+        if (!group) return { linked: false, pending: null, earned: null };
+
+        const [wallet, rows] = await Promise.all([
+            this.identityRepository.getWalletForGroup(group.id),
+            this.assetLogRepository.findSummaryRowsByIdentityGroupAndMerchant(
+                group.id,
+                params.merchantId
+            ),
+        ]);
+        const prices = await this.buildTolerantTokenPriceMap([
+            ...new Set(rows.map((row) => row.tokenAddress)),
+        ]);
+
+        return summarizeMerchantRewards({
+            rows,
+            prices,
+            linked: wallet !== null,
+            now: new Date(),
+        });
+    }
+
     private async buildEnrichmentData(
         assetLogs: DetailedAssetLog[]
     ): Promise<RewardEnrichmentData> {
@@ -175,6 +208,28 @@ export class RewardHistoryOrchestrator {
                 token,
                 price: await this.pricingRepository.getTokenPrice({ token }),
             }))
+        );
+
+        return new Map(results.map(({ token, price }) => [token, price]));
+    }
+
+    private async buildTolerantTokenPriceMap(
+        uniqueTokens: Address[]
+    ): Promise<Map<string, TokenPrice | undefined>> {
+        const results = await Promise.all(
+            uniqueTokens.map(async (token) => {
+                try {
+                    return {
+                        token,
+                        price: await this.pricingRepository.getTokenPrice({
+                            token,
+                        }),
+                    };
+                } catch (err) {
+                    log.warn({ err, token }, "Token price failed, unpriced");
+                    return { token, price: undefined };
+                }
+            })
         );
 
         return new Map(results.map(({ token, price }) => [token, price]));

@@ -52,13 +52,15 @@ class FrakFrontend
     }
 
     /**
-     * `,env:"dev"` and `,domain:"…"` for the config object, only while the
+     * `,rewardReminder:{enabled:false}` once the merchant turns the reminder off,
+     * then `,env:"dev"` and `,domain:"…"` for the config object, only while the
      * matching constant asks for them. The domain is the normalised override;
      * `JSON_HEX_TAG` keeps a `</script>` in it from ending the inline script.
      */
     private static function configOverrides(): string
     {
-        $extra = FrakEnv::isDev() ? ',env:"dev"' : '';
+        $extra = FrakConfig::isRewardReminderEnabled() ? '' : ',rewardReminder:{enabled:false}';
+        $extra .= FrakEnv::isDev() ? ',env:"dev"' : '';
         $domain = FrakUtils::merchantDomainOverride();
         if ($domain === '') {
             return $extra;

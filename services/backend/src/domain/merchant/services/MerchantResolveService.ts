@@ -81,6 +81,30 @@ const AMBASSADOR_TEXT_FIELDS = [
     "faq5Answer",
 ] as const;
 
+type StoredRewardReminder = NonNullable<
+    NonNullable<SdkConfig["components"]>["rewardReminder"]
+>;
+type ResolvedRewardReminder = NonNullable<
+    NonNullable<ResolvedSdkConfig["components"]>["rewardReminder"]
+>;
+
+function resolveRewardReminder(
+    reminder: StoredRewardReminder | undefined,
+    lang: Language
+): ResolvedRewardReminder | undefined {
+    if (!reminder) return undefined;
+    return {
+        ...resolveLocalizableFields(
+            reminder,
+            ["title", "description", "cta"] as const,
+            lang
+        ),
+        ...(reminder.enabled !== undefined && { enabled: reminder.enabled }),
+        ...(reminder.position && { position: reminder.position }),
+        ...(reminder.css && { css: reminder.css }),
+    };
+}
+
 type StoredAmbassador = NonNullable<
     NonNullable<SdkConfig["components"]>["ambassador"]
 >;
@@ -315,6 +339,13 @@ export class MerchantResolveService {
 
         const result = { ...components };
 
+        if (!placementId && result.rewardReminder?.rawCss !== undefined) {
+            result.rewardReminder = {
+                ...result.rewardReminder,
+                css: processRawCss(result.rewardReminder.rawCss),
+            };
+        }
+
         const selectors = [
             ["buttonShare", "frak-button-share"],
             ["buttonWallet", null],
@@ -394,6 +425,10 @@ export class MerchantResolveService {
             lang,
             explorerHeroImageUrl
         );
+        const rewardReminder = resolveRewardReminder(
+            sdkConfig?.components?.rewardReminder,
+            lang
+        );
         // Photo-only, with no `lang`: the page keeps resolving its own language.
         if (!sdkConfig) return ambassador && { components: { ambassador } };
 
@@ -420,10 +455,11 @@ export class MerchantResolveService {
             css: sdkConfig.css ?? undefined,
             ...(mergedTranslations && { translations: mergedTranslations }),
             ...(resolvedPlacements && { placements: resolvedPlacements }),
-            ...((components || ambassador) && {
+            ...((components || ambassador || rewardReminder) && {
                 components: {
                     ...components,
                     ...(ambassador && { ambassador }),
+                    ...(rewardReminder && { rewardReminder }),
                 },
             }),
             ...(sdkConfig.attribution && {
@@ -474,6 +510,7 @@ export class MerchantResolveService {
                             "referrerNoRewardText",
                             "ctaText",
                             "ctaNoRewardText",
+                            "claimCtaText",
                             "badgeText",
                         ] as const,
                         lang
@@ -495,6 +532,9 @@ export class MerchantResolveService {
                             "inappTitle",
                             "inappDescription",
                             "inappCta",
+                            "pendingTitle",
+                            "pendingDescription",
+                            "pendingCta",
                         ] as const,
                         lang
                     ),

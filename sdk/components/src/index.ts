@@ -10,3 +10,5 @@ export * from "./components/OpenInAppButton";
 export type { OpenInAppButtonProps } from "./components/OpenInAppButton/types";
 export * from "./components/PostPurchase";
 export type { PostPurchaseProps } from "./components/PostPurchase/types";
+export * from "./components/RewardReminder";
+export type { RewardReminderProps } from "./components/RewardReminder/types";

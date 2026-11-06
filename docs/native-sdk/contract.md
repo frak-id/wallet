@@ -193,7 +193,7 @@ available.
 
 | Concern | File (under `sdk/core/src/`) | Generator | Entries |
 |---|---|---|---|
-| Identity — signed byte layout | `identity/fixtures/golden-proofs.json` | `scripts/generate-golden-proofs.ts` | 6 |
+| Identity — signed byte layout | `identity/fixtures/golden-proofs.json` | `scripts/generate-golden-proofs.ts` | 7 |
 | FrakContext v2 codec | `context/fixtures/golden-context.json` | `scripts/generate-golden-context.ts` | 32 (11 encode, 21 reject) |
 | Reward selection + currency formatting | `rewards/fixtures/golden-rewards.json` | `scripts/generate-golden-rewards.ts` | 67 across 6 kinds |
 | Share links + inbound `fCtx` | `context/fixtures/golden-sharing-links.json` | `scripts/generate-golden-sharing-links.ts` | 48 (37 build, 11 parse) |

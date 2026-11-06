@@ -36,6 +36,7 @@ $cartflows_active = $wc_active && Frak_Funnel_Compat::is_cartflows_active();
 // Frak_WooCommerce::render_post_purchase_card()).
 $auto_render_banner = (bool) Frak_Settings::get( 'auto_render_banner' );
 $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
+$reward_reminder    = (bool) Frak_Settings::get( 'reward_reminder' );
 // Environment switch (see Frak_Env): drives the dev-mode notice, the Domain
 // rows and every dashboard link below.
 $frak_dev         = Frak_Env::is_dev();
@@ -384,6 +385,27 @@ $dashboard_origin = Frak_Env::dashboard_origin();
 						</td>
 					</tr>
 				<?php endif; ?>
+			</table>
+		</div>
+
+		<!-- Reward Reminder Section -->
+		<div class="frak-section">
+			<h2><?php esc_html_e( 'Reward reminder', 'frak' ); ?></h2>
+			<table class="form-table">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Reward reminder', 'frak' ); ?></th>
+					<td>
+						<label for="frak_reward_reminder">
+							<input type="checkbox" id="frak_reward_reminder"
+								name="frak_reward_reminder" value="1"
+								<?php checked( $reward_reminder ); ?>>
+							<?php esc_html_e( 'Show the reward reminder badge.', 'frak' ); ?>
+						</label>
+						<p class="description">
+							<?php esc_html_e( "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.", 'frak' ); ?>
+						</p>
+					</td>
+				</tr>
 			</table>
 		</div>
 

@@ -18,6 +18,7 @@ import { PlatformSchema } from "../../../domain/merchant/schemas";
 import { MerchantResolveResponseSchema } from "../../schemas";
 import { exploreApi } from "./explorer";
 import { merchantReferralStatusRoute } from "./referralStatus";
+import { merchantRewardsSummaryRoute } from "./rewardsSummary";
 
 const CurrencySchema = t.Union([
     t.Literal("eur"),
@@ -212,4 +213,5 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
         }
     )
     .use(exploreApi)
-    .use(merchantReferralStatusRoute);
+    .use(merchantReferralStatusRoute)
+    .use(merchantRewardsSummaryRoute);

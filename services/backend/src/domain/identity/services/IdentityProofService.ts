@@ -28,6 +28,8 @@ const PROOF_WINDOW_SECONDS: Record<ProofOp, number> = {
     // window is the only thing bounding replay of a captured URL. 10
     // minutes covers a passkey ceremony plus a retry.
     "frak-sso-v1": 10 * 60,
+    // Read-only and re-signed on every fetch, so a short window costs nothing.
+    "frak-rewards-v1": 10 * 60,
 };
 
 /** Clock-skew allowance for a future-dated `ts`: a phone clock minutes fast is common. */
@@ -85,7 +87,15 @@ export class IdentityProofService {
      */
     async verify(params: ProofCheckParams): Promise<ProofVerification> {
         const result = await this.check(params);
+        this.record(params, result);
+        return result;
+    }
 
+    /** Counts and logs one outcome; pairs with `check` for callers that try several ops per request. */
+    record(
+        params: Pick<ProofCheckParams, "op" | "merchantId" | "anonymousId">,
+        result: ProofVerification
+    ): void {
         infraMetrics.identityProofChecked(
             params.op,
             result.valid ? "valid" : "invalid"
@@ -104,8 +114,6 @@ export class IdentityProofService {
                 "Identity proof rejected"
             );
         }
-
-        return result;
     }
 
     /**
@@ -135,7 +143,8 @@ export class IdentityProofService {
         }
     }
 
-    private async check(params: ProofCheckParams): Promise<ProofVerification> {
+    /** `verify` without recording the outcome. */
+    async check(params: ProofCheckParams): Promise<ProofVerification> {
         const envelope = decodeProof(params.proof);
         if (!envelope) {
             return { valid: false, reason: "malformed" };

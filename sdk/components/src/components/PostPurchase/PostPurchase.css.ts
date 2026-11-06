@@ -78,6 +78,33 @@ export const cta = style([
     },
 ]);
 
+const claimLinkState = {
+    color: vars.text.onAction,
+    textDecoration: "none",
+};
+
+export const claimLink = style({
+    textDecoration: "none",
+    selectors: {
+        "&:hover": claimLinkState,
+        "&:visited": claimLinkState,
+        "&:focus-visible": claimLinkState,
+    },
+});
+
+export const ctaSecondary = style({
+    backgroundColor: "transparent",
+    color: vars.text.primary,
+    border: `1px solid ${vars.border.default}`,
+});
+
+export const actions = style({
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+});
+
 export const icon = style({
     margin: "-2px 0",
 });

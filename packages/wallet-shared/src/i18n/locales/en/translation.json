@@ -877,6 +877,11 @@
         "openWallet_noReward": "Open Frak",
         "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}.",
         "installedHeadline_noReward": "You're all set. Open the app to continue.",
+        "pendingTitle": "Your {{ amount }} is waiting\nCopy your reward code",
+        "pendingCodelessTitle": "Your {{ amount }} is waiting",
+        "pendingExpiresToday": "Expires today",
+        "pendingOneDayLeft": "1 day left",
+        "pendingDaysLeft": "{{ days }} days left",
         "dismiss": "Close",
         "referral": {
             "title": "Your referral code",

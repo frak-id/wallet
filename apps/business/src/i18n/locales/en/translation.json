@@ -1995,6 +1995,22 @@
                 }
             }
         },
+        "rewardReminder": {
+            "title": "Reward reminder",
+            "description": "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.",
+            "enabled": "Show the reward reminder",
+            "position": {
+                "label": "Position",
+                "left": "Left",
+                "right": "Right"
+            },
+            "tokensHint": "Placeholders: {REWARD}, {DAYS}, {DATE}, {BRAND}. An empty field keeps the default text.",
+            "fields": {
+                "title": "Title",
+                "description": "Description",
+                "cta": "Button text"
+            }
+        },
         "ambassador": {
             "title": "Ambassador page",
             "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
@@ -2069,8 +2085,10 @@
             },
             "bannerGroups": {
                 "referral": "Referral",
-                "inapp": "In-app"
+                "inapp": "In-app",
+                "pending": "Unclaimed reward"
             },
+            "pendingTokensHint": "Shown to visitors with an unclaimed reward. Placeholders: {REWARD}, {DAYS}, {DATE}.",
             "rewardToken": {
                 "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward.",
                 "copy": "Copy {REWARD}"
@@ -2101,6 +2119,10 @@
                 "inappTitle": "In-app title",
                 "inappDescription": "In-app description",
                 "inappCta": "In-app CTA",
+                "pendingTitle": "Unclaimed reward title",
+                "pendingDescription": "Unclaimed reward description",
+                "pendingCta": "Unclaimed reward CTA",
+                "claimCtaText": "Claim button text",
                 "css": "Component CSS"
             },
             "style": {

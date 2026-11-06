@@ -27,6 +27,7 @@ const {
     mockIsTauri,
     mockResolveMerchant,
     mockEstimatedRewards,
+    mockRewardsSummary,
 } = vi.hoisted(() => ({
     mockEnsurePost: vi.fn(),
     mockGenerateCode: vi.fn(),
@@ -34,6 +35,7 @@ const {
     mockIsTauri: vi.fn(() => false),
     mockResolveMerchant: vi.fn(),
     mockEstimatedRewards: vi.fn(),
+    mockRewardsSummary: vi.fn(),
 }));
 
 // `IS_TAURI` is a build-time literal in the app and a runtime probe under
@@ -62,6 +64,7 @@ vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
             merchant: {
                 resolve: { get: mockResolveMerchant },
                 "estimated-rewards": { get: mockEstimatedRewards },
+                "rewards-summary": { get: mockRewardsSummary },
             },
         },
     },
@@ -104,6 +107,7 @@ vi.mock("@frak-labs/core-sdk", async (importOriginal) => {
 });
 
 mockEstimatedRewards.mockResolvedValue({ data: { rewards: [] } });
+mockRewardsSummary.mockResolvedValue({ data: null, error: { status: 403 } });
 
 /**
  * Every assertion in this file matches raw i18n keys: the setup chain loads no
@@ -1407,5 +1411,169 @@ describe("InstallView — install-code branch, reward headline", () => {
         expect(
             await screen.findByRole("heading", { level: 1 })
         ).toBeInTheDocument();
+    });
+});
+
+describe("InstallView — install-code branch, unclaimed reward", () => {
+    const [fixture] = goldenProofs.fixtures;
+    const fiat = { eurAmount: 12.5, usdAmount: 14, gbpAmount: 10.6 };
+    const none = { eurAmount: 0, usdAmount: 0, gbpAmount: 0 };
+
+    function summary(overrides: Record<string, unknown> = {}) {
+        return {
+            data: {
+                linked: false,
+                pending: {
+                    total: fiat,
+                    cashback: fiat,
+                    fromFriends: none,
+                    count: 2,
+                    lockedCount: 0,
+                    nextUnlockAt: null,
+                    expiresAt: new Date(
+                        Date.now() + 23 * 60 * 60 * 1000
+                    ).toISOString(),
+                },
+                earned: null,
+                ...overrides,
+            },
+            error: null,
+        };
+    }
+
+    function renderInstall(
+        wrapper: React.JSXElementConstructor<{ children: React.ReactNode }>
+    ) {
+        render(
+            <InstallView
+                search={{ m: fixture.merchantId }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper }
+        );
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockResolveMerchant.mockResolvedValue({ data: null });
+        mockGenerateCode.mockResolvedValue({
+            data: {
+                code: "ABCD1234",
+                expiresAt: new Date(Date.now() + 60_000).toISOString(),
+            },
+            error: null,
+        });
+        mockRewardsSummary.mockResolvedValue(summary());
+        sessionStore.getState().clearSession();
+        window.location.hash = `#p=${fixture.proof}`;
+    });
+
+    afterEach(() => {
+        window.location.hash = "";
+    });
+
+    test("shows the visitor's own amount and the days left", async ({
+        queryWrapper,
+    }) => {
+        renderInstall(queryWrapper.wrapper);
+
+        expect(
+            await screen.findByText("installCode.pendingTitle")
+        ).toBeInTheDocument();
+        expect(screen.getByText("installCode.pendingOneDayLeft")).toBeVisible();
+        expect(screen.queryByText("installCode.title")).toBeNull();
+        expect(mockRewardsSummary).toHaveBeenCalledWith({
+            query: { merchantId: fixture.merchantId },
+            headers: {
+                "x-frak-client-id": fixture.anonymousId,
+                "x-frak-proof": fixture.proof,
+            },
+        });
+    });
+
+    test("holds the headline until the summary settles", async ({
+        queryWrapper,
+    }) => {
+        mockRewardsSummary.mockReturnValueOnce(new Promise(() => {}));
+        renderInstall(queryWrapper.wrapper);
+
+        await screen.findByText("installCode.infoTitle");
+        expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    });
+
+    test("releases the headline when the summary request stalls", async ({
+        queryWrapper,
+    }) => {
+        mockRewardsSummary.mockReturnValue(new Promise(() => {}));
+        renderInstall(queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 }, { timeout: 3000 })
+        ).toHaveTextContent("installCode.title");
+    });
+
+    test("keeps the estimate headline for a linked visitor", async ({
+        queryWrapper,
+    }) => {
+        mockRewardsSummary.mockResolvedValue(summary({ linked: true }));
+        renderInstall(queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toHaveTextContent("installCode.title");
+        expect(screen.queryByText("installCode.pendingTitle")).toBeNull();
+    });
+
+    test("keeps the estimate headline when nothing is pending", async ({
+        queryWrapper,
+    }) => {
+        mockRewardsSummary.mockResolvedValue(summary({ pending: null }));
+        renderInstall(queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toHaveTextContent("installCode.title");
+    });
+
+    test("does not ask for a summary without a proof", async ({
+        queryWrapper,
+    }) => {
+        window.location.hash = "";
+        render(
+            <InstallView
+                search={{ m: fixture.merchantId, a: fixture.anonymousId }}
+                navigation={{
+                    toWallet: vi.fn(),
+                    toRegister: vi.fn(),
+                    toCode: vi.fn(),
+                }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toHaveTextContent("installCode.title");
+        expect(mockRewardsSummary).not.toHaveBeenCalled();
+    });
+
+    test("falls back to the estimate when the summary request fails", async ({
+        queryWrapper,
+    }) => {
+        mockRewardsSummary.mockResolvedValue({
+            data: null,
+            error: { status: 500 },
+        });
+        renderInstall(queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toHaveTextContent("installCode.title");
     });
 });

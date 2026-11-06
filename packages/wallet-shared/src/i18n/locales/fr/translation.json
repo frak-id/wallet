@@ -877,6 +877,11 @@
         "openWallet_noReward": "Ouvrir Frak",
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}.",
         "installedHeadline_noReward": "C'est prêt. Ouvre l'app pour continuer.",
+        "pendingTitle": "Tes {{ amount }} t'attendent\nCopie ton code de récompense",
+        "pendingCodelessTitle": "Tes {{ amount }} t'attendent",
+        "pendingExpiresToday": "Expire aujourd'hui",
+        "pendingOneDayLeft": "1 jour restant",
+        "pendingDaysLeft": "{{ days }} jours restants",
         "dismiss": "Fermer",
         "referral": {
             "title": "Ton code de parrainage",

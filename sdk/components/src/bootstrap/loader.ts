@@ -1,6 +1,7 @@
 import { cssSource as sharedBaseCss } from "../styles/sharedBaseCss.css";
 import { styleManager } from "../styles/styleManager";
 import { onDocumentReady } from "../utils/browser/onDocumentReady";
+import { autoMountRewardReminder } from "./autoMountRewardReminder";
 import { initFrakSdk } from "./initFrakSdk";
 
 // The reset rules + theme tokens are injected here once for the whole SDK:
@@ -10,10 +11,11 @@ styleManager.injectBase("shared", sharedBaseCss);
 // Prevent FOUCE: hide undefined custom elements until they're registered
 styleManager.injectBase(
     "fouce",
-    "frak-ambassador:not(:defined), frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined), frak-post-purchase:not(:defined), frak-banner:not(:defined) { display: none !important; }"
+    "frak-ambassador:not(:defined), frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined), frak-post-purchase:not(:defined), frak-banner:not(:defined), frak-reward-reminder:not(:defined) { display: none !important; }"
 );
 
 onDocumentReady(initFrakSdk);
+autoMountRewardReminder();
 
 /**
  * Map of component tag names to their chunk paths.
@@ -39,6 +41,10 @@ const COMPONENTS_MAP = {
         ),
     banner: () =>
         import(/* webpackChunkName: "banner" */ "../components/Banner"),
+    "reward-reminder": () =>
+        import(
+            /* webpackChunkName: "reward-reminder" */ "../components/RewardReminder"
+        ),
 } as const;
 
 const observer = new MutationObserver((mutations) => {

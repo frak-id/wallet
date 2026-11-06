@@ -46,6 +46,23 @@ final class FrakFrontendTest extends TestCase
         $this->assertSame(self::PRODUCTION_HEAD, FrakFrontend::head());
     }
 
+    public function testRewardReminderTurnedOffIsAddedToTheConfig(): void
+    {
+        Configuration::updateValue('FRAK_REWARD_REMINDER', 0);
+
+        $this->assertStringContainsString(
+            'logoUrl:"https://shop.example/logo.png"},rewardReminder:{enabled:false}}});',
+            FrakFrontend::head()
+        );
+    }
+
+    public function testRewardReminderTurnedOnLeavesHeadByteIdentical(): void
+    {
+        Configuration::updateValue('FRAK_REWARD_REMINDER', 1);
+
+        $this->assertSame(self::PRODUCTION_HEAD, FrakFrontend::head());
+    }
+
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function testDevLoadsDevSdkAndAddsEnvToTheConfig(): void

@@ -1,6 +1,7 @@
 import type { ProofOp } from "@frak-labs/core-sdk/identity";
 import goldenProofs from "@frak-labs/core-sdk/identity/fixtures";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { infraMetrics } from "../../../infrastructure/telemetry";
 import { IdentityProofService } from "./IdentityProofService";
 
 vi.mock("@backend-infrastructure", () => ({
@@ -194,6 +195,39 @@ describe("IdentityProofService", () => {
                 binding: hexToBytes(base.bindingHex),
             });
             expect(result).toEqual({ valid: false, reason: "malformed" });
+        });
+    });
+
+    describe("check and record", () => {
+        const base = goldenProofs.fixtures[0];
+        const params = {
+            op: "frak-merge-v1" as const,
+            proof: base.proof,
+            merchantId: base.merchantId,
+            anonymousId: base.anonymousId,
+        };
+
+        beforeEach(() => {
+            vi.mocked(infraMetrics.identityProofChecked).mockClear();
+            vi.setSystemTime(base.ts * 1000);
+        });
+
+        it("check reports the reason without recording an outcome", async () => {
+            await expect(service.check(params)).resolves.toEqual({
+                valid: false,
+                reason: "bad_signature",
+            });
+            expect(infraMetrics.identityProofChecked).not.toHaveBeenCalled();
+        });
+
+        it("record counts exactly one outcome", () => {
+            service.record(params, { valid: false, reason: "expired" });
+
+            expect(infraMetrics.identityProofChecked).toHaveBeenCalledTimes(1);
+            expect(infraMetrics.identityProofChecked).toHaveBeenCalledWith(
+                "frak-merge-v1",
+                "invalid"
+            );
         });
     });
 

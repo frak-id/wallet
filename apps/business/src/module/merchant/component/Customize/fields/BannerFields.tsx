@@ -1,4 +1,5 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Separator } from "@/module/common/component/Separator";
@@ -55,6 +56,32 @@ export function BannerFields({
                     form={form}
                     name="banner.inappCta"
                     label={t("customize.components.fields.inappCta")}
+                    lang={lang}
+                />
+            </FieldGroup>
+
+            <Separator />
+
+            <FieldGroup title={t("customize.components.bannerGroups.pending")}>
+                <Text variant="caption" color="tertiary">
+                    {t("customize.components.pendingTokensHint")}
+                </Text>
+                <WordingTextField
+                    form={form}
+                    name="banner.pendingTitle"
+                    label={t("customize.components.fields.pendingTitle")}
+                    lang={lang}
+                />
+                <WordingTextField
+                    form={form}
+                    name="banner.pendingDescription"
+                    label={t("customize.components.fields.pendingDescription")}
+                    lang={lang}
+                />
+                <WordingTextField
+                    form={form}
+                    name="banner.pendingCta"
+                    label={t("customize.components.fields.pendingCta")}
                     lang={lang}
                 />
             </FieldGroup>

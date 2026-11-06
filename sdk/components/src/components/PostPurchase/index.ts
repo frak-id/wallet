@@ -33,6 +33,7 @@ registerWebComponent(
         "referrerText",
         "refereeText",
         "ctaText",
+        "claimCtaText",
         "products",
         "preview",
         "previewVariant",

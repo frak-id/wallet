@@ -6,6 +6,7 @@ export const SECTION_KEYS = {
     identity: "identity",
     sharing: "default-sharing",
     ambassador: "ambassador-page",
+    rewardReminder: "reward-reminder",
     defaultComponents: "default-components",
 } as const;
 
@@ -14,6 +15,7 @@ const ALWAYS_MOUNTED: Record<string, true> = {
     [SECTION_KEYS.identity]: true,
     [SECTION_KEYS.sharing]: true,
     [SECTION_KEYS.ambassador]: true,
+    [SECTION_KEYS.rewardReminder]: true,
 };
 
 /**
