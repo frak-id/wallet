@@ -34,6 +34,7 @@
     "./common": "./src/common/index.ts",
     "./common/analytics": "./src/common/analytics/index.ts",
     "./common/api/backendClient": "./src/common/api/backendClient.ts",
+    "./common/api/errors": "./src/common/api/errors.ts",
     "./common/component/CodeInput": "./src/common/component/CodeInput/index.tsx",
     "./common/component/ExternalLink": "./src/common/component/ExternalLink/index.tsx",
     "./common/queryKeys/merchant": "./src/common/queryKeys/merchant.ts",
