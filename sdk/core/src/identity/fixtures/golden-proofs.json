@@ -84,6 +84,20 @@
             "canonicalMsgHex": "6672616b2d6d657267652d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0eb181eccfba6c4066baeae4b5f01fb10b9c88d2adb2bf0e5a9c2cc2c60bdedfafcfc8bbe248b9a49cf338d4fe79a57f41000000006b49d200",
             "sigHex": "f388a8534fd89eb7f9b17c7f7f5fa24c7e65350b87b330eae0118f436eb0b5a54195a92cb84851bfda3af96590e69934bb3079afead2172fccbc0ed6ddc471fc",
             "proof": "AQT7fIcCEWh7JyaSDURIGI25Vu8cvQhB3Ksd3Wzgdh2AYyv3JAm-uQu9ke9jSaqARqqbTBh5ItbJQAzbexB0j2kSAAAAAGtJ0gDziKhTT9iet_mxfH9_X6JMfmU1C4ezMOrgEY9DbrC1pUGVqSy4SFG_2jr5ZZDmmTS7MHmv6tIXL8y8DtbdxHH8"
+        },
+        {
+            "description": "keypair 1, frak-rewards-v1, empty binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-rewards-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d726577617264732d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc450000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "b246c0792f9ade094cc03cb0194359f62ae6bbffe57f7af9f5ef8715af90d6d3324735a3e1241899996d142d43f064c28bae29ed7b328ced8182624d843aefaa",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QCyRsB5L5reCUzAPLAZQ1n2Kua7_-V_evn174cVr5DW0zJHNaPhJBiZmW0ULUPwZMKLrintezKM7YGCYk2EOu-q"
         }
     ]
 }
