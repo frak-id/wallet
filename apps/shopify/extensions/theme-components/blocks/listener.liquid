@@ -86,6 +86,9 @@
     },
     domain: window.location.host,
     waitForBackendConfig: false,
+    rewardReminder: {
+      enabled: {% if block.settings.show_reward_reminder == false %}false{% else %}true{% endif %},
+    },
   };
 
   window.FrakSetup = {
@@ -165,6 +168,13 @@
         }
       ],
       "default": "default"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_reward_reminder",
+      "label": "Reward reminder",
+      "default": true,
+      "info": "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it."
     },
     {
       "type": "textarea",

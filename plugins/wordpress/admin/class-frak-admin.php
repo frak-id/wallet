@@ -178,6 +178,7 @@ class Frak_Admin {
 				// `isset()` is the canonical on/off read for a boolean toggle.
 				'auto_render_banner'        => isset( $_POST['frak_auto_render_banner'] ),
 				'auto_render_post_purchase' => isset( $_POST['frak_auto_render_post_purchase'] ),
+				'reward_reminder'           => isset( $_POST['frak_reward_reminder'] ),
 			)
 		);
 

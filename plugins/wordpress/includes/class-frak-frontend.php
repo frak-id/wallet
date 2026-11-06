@@ -184,6 +184,10 @@ class Frak_Frontend {
 			$config['waitForBackendConfig'] = false;
 		}
 
+		if ( ! Frak_Settings::get( 'reward_reminder' ) ) {
+			$config['rewardReminder'] = array( 'enabled' => false );
+		}
+
 		$config      = array_merge( $config, Frak_Env::config_overrides() );
 		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG );
 

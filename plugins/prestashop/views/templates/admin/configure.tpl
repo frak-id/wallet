@@ -157,6 +157,25 @@
         {/if}
     </div>
 
+    <div class="panel">
+        <h3><i class="icon icon-bell"></i> {l s='Reward reminder' mod='frakintegration'}</h3>
+        <div class="form-group">
+            <div class="col-lg-12">
+                <input type="hidden" name="FRAK_REWARD_REMINDER__present" value="1" />
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="checkbox"
+                           name="FRAK_REWARD_REMINDER"
+                           value="1"
+                           {if $reward_reminder_enabled}checked="checked"{/if} />
+                    <strong>{l s='Reward reminder' mod='frakintegration'}</strong>
+                </label>
+                <p class="help-block" style="margin: 4px 0 0 22px;">
+                    {l s='Shows a small badge to shoppers who earned a reward on your store but haven\'t created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.' mod='frakintegration'}
+                </p>
+            </div>
+        </div>
+    </div>
+
     {if !empty($placement_groups)}
         <div class="panel">
             <h3><i class="icon icon-puzzle-piece"></i> {l s='Component Placements' mod='frakintegration'}</h3>

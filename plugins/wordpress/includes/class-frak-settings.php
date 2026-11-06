@@ -74,8 +74,10 @@ class Frak_Settings {
 	 *     at the top of every page (via `wp_body_open`).
 	 *   - `auto_render_post_purchase` — {@see Frak_WooCommerce} emits
 	 *     `<frak-post-purchase>` on the WooCommerce thank-you page.
+	 * `reward_reminder` is on by default: it shows a badge to visitors holding
+	 * unclaimed rewards, and only an explicit opt-out disables it.
 	 * No migration is needed when these keys are added — {@see all()} merges the
-	 * defaults at read time, so installs predating a key resolve to `false`.
+	 * defaults at read time, so installs predating a key resolve to their default.
 	 *
 	 * @var array<string, mixed>
 	 */
@@ -84,6 +86,7 @@ class Frak_Settings {
 		'logo_url'                  => '',
 		'auto_render_banner'        => false,
 		'auto_render_post_purchase' => false,
+		'reward_reminder'           => true,
 	);
 
 	/**
