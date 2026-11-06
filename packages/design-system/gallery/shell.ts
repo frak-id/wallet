@@ -51,6 +51,7 @@ export function serialiseShell(state: ShellState): string {
 
 export const findingKinds = [
     "overflow",
+    "clip",
     "focus",
     "overlay",
     "pointer",

@@ -1,3 +1,5 @@
+const FIXED_HEIGHT =
+    "the large size has a fixed 48px height and a 100% line-height, so a label that wraps spills above and below the button";
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
 
@@ -30,6 +32,10 @@ export const knownFindings: Record<string, string> = {
     "overflow:badge:worst: long sentence": "Badge is nowrap with no truncation",
     "overflow:badge:worst: non-Latin and emoji":
         "Badge is nowrap with no truncation",
+
+    "clip:button:worst: long sentence": `Button: ${FIXED_HEIGHT}`,
+    "clip:empty-state:worst: long sentence": `The action is a large Button: ${FIXED_HEIGHT}`,
+    "clip:card:worst: unbreakable email": `Card clips its content (overflow: hidden, for the rounded corners): ${NO_WRAP}`,
 
     "focus:input:variant bare":
         "inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
