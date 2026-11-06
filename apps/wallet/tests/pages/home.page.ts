@@ -56,11 +56,11 @@ export class HomePage {
         await this.page.waitForURL("/wallet");
     }
 
-    // Match the balance integer exactly (loose match also hits the Lifetime
-    // stat) and allow time for the mock-backed refetch to settle from 0.
+    // Match the balance's en-US integer run ("€420") exactly: a loose match also
+    // hits the Lifetime stat. Allow time for the mock-backed refetch to settle from 0.
     async verifyBalanceInformations(amount: number) {
         await expect(
-            this.page.getByText(amount.toString(), { exact: true }).first()
+            this.page.getByText(`€${amount}`, { exact: true }).first()
         ).toBeVisible({ timeout: 15_000 });
     }
 
