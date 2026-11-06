@@ -215,7 +215,7 @@ function contrast(a: Rgb, b: Rgb) {
     return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The outermost non-inset shadow layer, and whether it is the only visible one with no offset or blur. */
+/** Visible non-inset shadow layers, outermost first, and whether the ring is one layer with no offset or blur. */
 function outerShadow(boxShadow: string) {
     const layers = [
         ...boxShadow.matchAll(
@@ -237,16 +237,21 @@ function outerShadow(boxShadow: string) {
         .sort((a, b) => b.reach - a.reach);
     const ring = layers[0];
     return ring
-        ? { color: ring.color, flush: layers.length === 1 && ring.spreadOnly }
+        ? {
+              colors: layers.map((l) => l.color),
+              flush: layers.length === 1 && ring.spreadOnly,
+          }
         : null;
 }
 
-type Ring = { color: string; background: string[]; flush: boolean };
+/** A two-tone ring passes when any one band reaches the ratio (WCAG technique C40); bands meet the fill only when flush. */
+type Ring = { colors: string[]; background: string[]; flush: boolean };
 
 function findRing(facts: StopFacts): Ring | null {
     const { outline, boxShadow, idle } = facts;
     const background = facts.parentBackground;
     const outlineText = `${outline.style} ${outline.width}px ${outline.color}`;
+    const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (
         outline.width > 0 &&
         outline.style !== "none" &&
@@ -254,18 +259,17 @@ function findRing(facts: StopFacts): Ring | null {
         outlineText !== idle.outline
     )
         return {
-            color: outline.color,
+            colors: [outline.color, ...(shadow ? shadow.colors : [])],
             background,
             flush: outline.offset <= 0,
         };
-    const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (shadow) return { ...shadow, background };
     const wrapper = facts.wrappers.find(
         (w) => w.borderWidth > 0 && w.focusedBorder !== w.idleBorder
     );
     return wrapper
         ? {
-              color: wrapper.focusedBorder,
+              colors: [wrapper.focusedBorder],
               background: wrapper.background,
               flush: false,
           }
@@ -281,10 +285,9 @@ function inspectStop(facts: StopFacts) {
     if (!ring)
         return `no focus indicator (outline ${facts.outline.style} ${facts.outline.width}px, box-shadow ${facts.boxShadow})`;
     const background = resolveBackground(ring.background);
-    const paint = parseColor(ring.color);
-    if (!background || !paint)
-        return `cannot parse ring ${ring.color} or its background`;
-    const ringColor = over(paint, background);
+    const paints = ring.colors.map(parseColor);
+    if (!background || paints.some((p) => !p))
+        return `cannot parse ring ${ring.colors.join(", ")} or its background`;
     const against = [{ name: "background", color: background }];
     if (ring.flush && isVisibleColor(facts.fill)) {
         const fill = resolveBackground([facts.fill, ...ring.background]);
@@ -293,12 +296,16 @@ function inspectStop(facts: StopFacts) {
     const weak = against
         .map(({ name, color }) => ({
             name,
-            ratio: contrast(ringColor, color),
+            ratio: Math.max(
+                ...paints.map((p) =>
+                    p ? contrast(over(p, background), color) : 0
+                )
+            ),
         }))
         .filter(({ ratio }) => ratio < MIN_RING_CONTRAST)
         .map(({ name, ratio }) => `${ratio.toFixed(2)}:1 against the ${name}`);
     if (weak.length > 0)
-        return `ring ${ring.color} needs ${MIN_RING_CONTRAST}:1 but has ${weak.join(" and ")}`;
+        return `ring ${ring.colors.join(" + ")} needs ${MIN_RING_CONTRAST}:1 but has ${weak.join(" and ")}`;
     return null;
 }
 
