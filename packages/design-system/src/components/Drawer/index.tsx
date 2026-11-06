@@ -16,7 +16,10 @@ import {
 export function Drawer({
     shouldScaleBackground = true,
     ...props
-}: ComponentProps<typeof DrawerPrimitive.Root>) {
+}: ComponentProps<typeof DrawerPrimitive.Root> & {
+    /** `DrawerContent` always focuses its panel on open, so vaul's option has no effect. */
+    autoFocus?: never;
+}) {
     return (
         <DrawerPrimitive.Root
             shouldScaleBackground={shouldScaleBackground}
