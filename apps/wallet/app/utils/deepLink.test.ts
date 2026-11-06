@@ -686,6 +686,61 @@ describe("short install deep link — /i", () => {
     });
 });
 
+describe("post-purchase sharing deep link — /sharing", () => {
+    const merchantId = "eec25ff7-a30f-47a5-8adc-02bb56ce0f04";
+    const query = {
+        merchantId,
+        link: "https://harmo-skincare.fr",
+        clientId: "fad18622-e94e-40b6-8ab7-51cd629d642c",
+        appName: "Harmo",
+        products: '[{"title":"Serum"}]',
+        checkoutToken: "checkout-token-1",
+    };
+    const url = `https://wallet.frak.id/sharing?${new URLSearchParams(query)}`;
+
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    async function open() {
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+        openUrlHandler([url]);
+        return navigate;
+    }
+
+    test("logged in: routes to /sharing with the whole query", async () => {
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+        const navigate = await open();
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/sharing",
+            search: query,
+            replace: true,
+        });
+    });
+
+    test("logged out: keeps /sharing and its checkoutToken for after auth", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+        const navigate = await open();
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
+        const navAction = pendingActionsStore
+            .getState()
+            .getValidActions()
+            .find((a) => a.type === "navigation");
+        expect(navAction).toMatchObject({ to: "/sharing", search: query });
+    });
+});
+
 describe("short referral deep link — /r/<code>", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

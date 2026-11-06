@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
+import { useLinkPurchaseIdentity } from "@/module/sharing/hook/useLinkPurchaseIdentity";
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
 import { useActivationParams } from "@/module/sharing/params/fragment";
 import type { SharingSearch } from "@/module/sharing/params/table";
@@ -106,6 +107,12 @@ export function SharingView({
         clientId: paramClientId,
         checkoutToken,
         embedded,
+    });
+
+    useLinkPurchaseIdentity({
+        merchantId,
+        checkoutToken,
+        enabled: !!walletAddress && !embedded,
     });
 
     // Branding falls back to the merchant config unless the caller overrode it. `lang` is
