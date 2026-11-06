@@ -1995,6 +1995,22 @@
                 }
             }
         },
+        "rewardReminder": {
+            "title": "Rappel de récompense",
+            "description": "Affiche un petit badge aux clients qui ont gagné une récompense sur votre boutique sans avoir encore créé leur wallet Frak, avec le montant et le nombre de jours restants avant expiration. Une récompense non réclamée n'est jamais versée. Les autres visiteurs ne le voient pas.",
+            "enabled": "Afficher le rappel de récompense",
+            "position": {
+                "label": "Position",
+                "left": "Gauche",
+                "right": "Droite"
+            },
+            "tokensHint": "Variables : {REWARD}, {DAYS}, {DATE}, {BRAND}. Un champ vide conserve le texte par défaut.",
+            "fields": {
+                "title": "Titre",
+                "description": "Description",
+                "cta": "Texte du bouton"
+            }
+        },
         "ambassador": {
             "title": "Page ambassadeur",
             "description": "La photo et les textes de votre page ambassadeur, sur toutes les plateformes où elle est placée. Un champ vide garde le texte par défaut.",
@@ -2069,8 +2085,10 @@
             },
             "bannerGroups": {
                 "referral": "Parrainage",
-                "inapp": "In-app"
+                "inapp": "In-app",
+                "pending": "Récompense non réclamée"
             },
+            "pendingTokensHint": "Affiché aux visiteurs ayant une récompense non réclamée. Variables : {REWARD}, {DAYS}, {DATE}.",
             "rewardToken": {
                 "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
                 "copy": "Copier {REWARD}"
@@ -2101,6 +2119,10 @@
                 "inappTitle": "Titre in-app",
                 "inappDescription": "Description in-app",
                 "inappCta": "CTA in-app",
+                "pendingTitle": "Titre récompense non réclamée",
+                "pendingDescription": "Description récompense non réclamée",
+                "pendingCta": "CTA récompense non réclamée",
+                "claimCtaText": "Texte du bouton Réclamer",
                 "css": "CSS du composant"
             },
             "style": {

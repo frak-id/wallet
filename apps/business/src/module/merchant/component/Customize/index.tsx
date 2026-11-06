@@ -20,6 +20,7 @@ import { AmbassadorPagePanel } from "./AmbassadorPagePanel";
 import { DefaultCustomization } from "./DefaultCustomization";
 import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
+import { RewardReminderPanel } from "./RewardReminderPanel";
 import { SaveFooter } from "./SaveFooter";
 import { SdkIdentityPanel } from "./SdkIdentityPanel";
 import { SharingWordingPanel } from "./SharingWordingPanel";
@@ -165,6 +166,11 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         explorerHeroImageUrl={
                             merchant?.explorerConfig?.heroImageUrl
                         }
+                    />
+
+                    <RewardReminderPanel
+                        merchantId={merchantId}
+                        sdkConfig={sdkConfig}
                     />
 
                     {selectedTab === "default" ? (

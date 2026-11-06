@@ -474,3 +474,78 @@ describe("MerchantResolveService cache invalidation", () => {
         expect(stillCached?.name).toBe("Original");
     });
 });
+
+describe("MerchantResolveService reward reminder settings", () => {
+    async function resolveComponents(sdkConfig: SdkConfig, lang: "en" | "fr") {
+        const response = await createService(sdkConfig).resolve({
+            domain: "example.com",
+            lang,
+        });
+        return response?.sdkConfig?.components;
+    }
+
+    it("keeps enabled: false through resolve", async () => {
+        const components = await resolveComponents(
+            { components: { rewardReminder: { enabled: false } } },
+            "en"
+        );
+        expect(components?.rewardReminder).toEqual({ enabled: false });
+    });
+
+    it("flattens the reminder texts to the visitor language", async () => {
+        const components = await resolveComponents(
+            {
+                components: {
+                    rewardReminder: {
+                        position: "right",
+                        title: {
+                            en: "Claim {REWARD}",
+                            fr: "Récupérez {REWARD}",
+                        },
+                        cta: "Claim",
+                    },
+                },
+            },
+            "fr"
+        );
+        expect(components?.rewardReminder).toEqual({
+            position: "right",
+            title: "Récupérez {REWARD}",
+            cta: "Claim",
+        });
+    });
+
+    it("flattens the pending banner and claim button texts", async () => {
+        const components = await resolveComponents(
+            {
+                components: {
+                    banner: { pendingTitle: { fr: "En attente" } },
+                    postPurchase: {
+                        claimCtaText: { en: "Claim", fr: "Réclamer" },
+                    },
+                },
+            },
+            "fr"
+        );
+        expect(components?.banner?.pendingTitle).toBe("En attente");
+        expect(components?.postPurchase?.claimCtaText).toBe("Réclamer");
+    });
+
+    it("processes the reminder raw CSS and never sends it raw", async () => {
+        const processed = createService(null).processSdkConfigCss({
+            components: { rewardReminder: { rawCss: "a { color: red; }" } },
+        });
+        const components = await resolveComponents(processed, "en");
+
+        expect(components?.rewardReminder?.css).toContain("red");
+        expect(components?.rewardReminder).not.toHaveProperty("rawCss");
+    });
+
+    it("passes the reminder position through resolve", async () => {
+        const components = await resolveComponents(
+            { components: { rewardReminder: { position: "left" } } },
+            "en"
+        );
+        expect(components?.rewardReminder?.position).toBe("left");
+    });
+});

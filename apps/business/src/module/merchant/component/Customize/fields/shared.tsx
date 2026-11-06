@@ -79,14 +79,18 @@ export type WordingFieldName = Extract<
           | "referrerText"
           | "referrerNoRewardText"
           | "ctaText"
-          | "ctaNoRewardText"}`
+          | "ctaNoRewardText"
+          | "claimCtaText"}`
     | `banner.${
           | "referralTitle"
           | "referralDescription"
           | "referralCta"
           | "inappTitle"
           | "inappDescription"
-          | "inappCta"}`
+          | "inappCta"
+          | "pendingTitle"
+          | "pendingDescription"
+          | "pendingCta"}`
 >;
 
 /** Per-language leaf path, e.g. `banner.referralCta.fr` — resolves to a string. */

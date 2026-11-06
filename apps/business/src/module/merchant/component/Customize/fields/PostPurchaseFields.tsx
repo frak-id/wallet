@@ -55,6 +55,12 @@ export function PostPurchaseFields({
                     label={t("customize.components.fields.refereeNoRewardText")}
                     lang={lang}
                 />
+                <WordingTextField
+                    form={form}
+                    name="postPurchase.claimCtaText"
+                    label={t("customize.components.fields.claimCtaText")}
+                    lang={lang}
+                />
             </FieldGroup>
 
             <Separator />

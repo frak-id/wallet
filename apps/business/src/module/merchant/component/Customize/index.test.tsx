@@ -54,6 +54,7 @@ vi.mock("@/module/merchant/component/MerchantDetailsCard", () => ({
 vi.mock("./SdkIdentityPanel", () => ({ SdkIdentityPanel: () => null }));
 vi.mock("./SharingWordingPanel", () => ({ SharingWordingPanel: () => null }));
 vi.mock("./AmbassadorPagePanel", () => ({ AmbassadorPagePanel: () => null }));
+vi.mock("./RewardReminderPanel", () => ({ RewardReminderPanel: () => null }));
 
 beforeAll(() => {
     Element.prototype.hasPointerCapture ??= () => false;
