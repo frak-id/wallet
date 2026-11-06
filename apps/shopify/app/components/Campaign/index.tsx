@@ -1,11 +1,12 @@
 import type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
-import { type Currency, formatAmount } from "@frak-labs/core-sdk";
+import { formatAmount } from "@frak-labs/core-sdk";
 import type { loader as rootLoader } from "app/routes/app";
 import type { action } from "app/routes/app.campaigns";
 import type {
     CampaignListItem,
     CampaignListResponse,
 } from "app/services.server/backendMerchant";
+import { campaignRewardCurrency } from "app/utils/rewardCurrency";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
@@ -41,9 +42,6 @@ function CampaignTable({
     bankDistributionStatus: DistributionStatus | null;
 }) {
     const { t } = useTranslation();
-    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
-    const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "eur") as Currency;
 
     if (campaigns.length === 0) {
         return (
@@ -82,7 +80,6 @@ function CampaignTable({
                             key={campaign.id}
                             campaign={campaign}
                             bankDistributionStatus={bankDistributionStatus}
-                            currencySymbol={currencySymbol}
                         />
                     ))}
                 </s-table-body>
@@ -155,15 +152,14 @@ function getCampaignActions(
 function CampaignTableRow({
     campaign,
     bankDistributionStatus,
-    currencySymbol,
 }: {
     campaign: CampaignListItem;
     bankDistributionStatus: DistributionStatus | null;
-    currencySymbol: Currency;
 }) {
     const fetcher = useFetcher<typeof action>();
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+    const currency = campaignRewardCurrency(campaign.rewardToken);
 
     const isSubmitting = fetcher.state !== "idle";
     const submittingIntent = fetcher.formData?.get("intent");
@@ -187,11 +183,11 @@ function CampaignTableRow({
             ? new Date(budgetUsage.resetAt).toLocaleDateString()
             : null;
         const label = firstBudget.label ? ` (${firstBudget.label})` : "";
-        const base = `${formatAmount(remaining, currencySymbol)} / ${formatAmount(total, currencySymbol)}${label}`;
+        const base = `${formatAmount(remaining, currency)} / ${formatAmount(total, currency)}${label}`;
         return resetAt
             ? `${base} — ${t("status.campaign.resetAt", { date: resetAt })}`
             : base;
-    }, [firstBudget, budgetUsage, currencySymbol, t]);
+    }, [firstBudget, budgetUsage, currency, t]);
 
     const rewardSummary = useMemo(() => {
         const rewards = campaign.rewards;
@@ -203,7 +199,7 @@ function CampaignTableRow({
                         ? t("status.campaign.referrer")
                         : t("status.campaign.referee");
                 if (r.amountType === "fixed") {
-                    return `${who}: ${formatAmount(r.amount, currencySymbol)}`;
+                    return `${who}: ${formatAmount(r.amount, currency)}`;
                 }
                 if (r.amountType === "percentage") {
                     return `${who}: ${r.percent}%`;
@@ -211,7 +207,7 @@ function CampaignTableRow({
                 return `${who}: ${t("status.campaign.tiered")}`;
             })
             .join(", ");
-    }, [campaign.rewards, currencySymbol, t]);
+    }, [campaign.rewards, currency, t]);
 
     const handleSubmit = useCallback(
         (
