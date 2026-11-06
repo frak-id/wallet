@@ -2,15 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-/**
- * Body wrapper. Vertical padding intentionally omitted — the toolbar
- * already contributes `pb-xs` and the footer owns its own spacing.
- */
-export const bodyStack = style({
-    paddingInline: alias.spacing.m,
-    flexGrow: 1,
-});
-
 export const featureCell = style({
     paddingInline: alias.spacing.m,
     paddingBlock: alias.spacing.s,
