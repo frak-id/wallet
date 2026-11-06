@@ -2,8 +2,6 @@ const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
 const NO_RETURN =
     "ResponsiveModal is opened from state with no DialogTrigger, so Radix has no trigger to refocus and focus drops to body on close";
-const POPOVER_WIDTH =
-    "popoverContentStyle sets no max-width, so long content widens the popover past the viewport";
 
 /**
  * Findings the gallery surfaces in current component code, keyed
@@ -63,7 +61,6 @@ export const knownFindings: Record<string, string> = {
     "overlay:responsive-modal:default": NO_RETURN,
     "overlay:responsive-modal:worst: long content": NO_RETURN,
     "overlay:responsive-modal:worst: unbreakable email": `${NO_RETURN}; content: ${NO_WRAP}`,
+    "overlay:popover:worst: unbreakable email": `PopoverContent: ${NO_WRAP}`,
     "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
-    "overlay:popover:worst: unbreakable email": POPOVER_WIDTH,
-    "overlay:popover:worst: long sentence": POPOVER_WIDTH,
 };
