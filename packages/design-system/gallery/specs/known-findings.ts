@@ -1,7 +1,5 @@
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
-const SORT_FOCUS =
-    "the sortable header button's tableButton style sets all: unset, which drops the reset's focus outline, so keyboard focus is invisible";
 const NO_RETURN =
     "ResponsiveModal is opened from state with no DialogTrigger, so Radix has no trigger to refocus and focus drops to body on close";
 const POPOVER_WIDTH =
@@ -68,12 +66,4 @@ export const knownFindings: Record<string, string> = {
     "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
     "overlay:popover:worst: unbreakable email": POPOVER_WIDTH,
     "overlay:popover:worst: long sentence": POPOVER_WIDTH,
-    "focus:data-table:default": SORT_FOCUS,
-    "focus:data-table:clickable rows": SORT_FOCUS,
-    "focus:data-table:sorted by rewards": SORT_FOCUS,
-    "focus:data-table:empty message": SORT_FOCUS,
-    "focus:data-table:empty placeholder row": SORT_FOCUS,
-    "focus:data-table:worst: long cells": SORT_FOCUS,
-    "focus:data-table:worst: long cells, fixed layout": SORT_FOCUS,
-    "focus:data-table:worst: long empty message": SORT_FOCUS,
 };
