@@ -163,18 +163,17 @@ describe("PieChart", () => {
             Array.from(container.querySelectorAll("text")).map(
                 (text) => text.parentElement?.style.transform
             );
-        expect(labelShifts()).toEqual([
-            "translate(0px, 0px)",
-            "translate(0px, 0px)",
-            "translate(0px, 0px)",
-        ]);
+        const probe = document.createElement("div");
+        probe.style.transform = "translate(0px, 0px)";
+        const atRest = probe.style.transform;
+        expect(labelShifts()).toEqual([atRest, atRest, atRest]);
 
         fireEvent.mouseEnter(hitboxes(container)[1]);
 
         const [first, second, third] = labelShifts();
-        expect(second).not.toBe("translate(0px, 0px)");
-        expect(first).toBe("translate(0px, 0px)");
-        expect(third).toBe("translate(0px, 0px)");
+        expect(second).not.toBe(atRest);
+        expect(first).toBe(atRest);
+        expect(third).toBe(atRest);
     });
 
     it("reflects a hoveredIndex set by the parent without any pointer event", () => {

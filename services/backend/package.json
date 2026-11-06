@@ -60,12 +60,12 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
-    "@swc/core": "^1.16.20",
+    "@swc/core": "^1.16.22",
     "@types/web-push": "^3.6.4",
     "@typescript/native": "catalog:",
     "@vitest/ui": "catalog:",
     "bun-types": "latest",
-    "dependency-cruiser": "^18.7.0",
+    "dependency-cruiser": "^18.7.2",
     "pino-pretty": "^13.2.0",
     "typescript": "catalog:"
   },

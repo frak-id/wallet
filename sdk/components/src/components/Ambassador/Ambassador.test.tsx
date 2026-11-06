@@ -194,6 +194,16 @@ function computed(el: Element | null, prop: string): string {
     return el ? getComputedStyle(el).getPropertyValue(prop) : "<missing>";
 }
 
+/** What `value` resolves to for `prop` beside `el`, in the engine's own serialisation. */
+function resolvedBeside(el: Element | null, prop: string, value: string) {
+    const probe = document.createElement("span");
+    probe.style.setProperty(prop, value);
+    el?.parentElement?.append(probe);
+    const resolved = computed(probe, prop);
+    probe.remove();
+    return resolved;
+}
+
 describe("Ambassador", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -561,7 +571,9 @@ describe("Ambassador", () => {
         expect(document.activeElement).toBe(cta);
 
         expect(computed(cta, "outline-color")).toBe("rgb(0, 0, 0)");
-        expect(computed(cta, "box-shadow")).toContain("2px #fff");
+        expect(computed(cta, "box-shadow")).toBe(
+            "rgb(255, 255, 255) 0px 0px 0px 2px"
+        );
     });
 
     // ─── 2026-09-15 R3: renders fully with no session ───
@@ -1362,25 +1374,20 @@ describe("Ambassador", () => {
             ".frak-ambassador__reward-amount"
         );
         const cta = container.querySelector(".frak-ambassador__hero-cta");
-        expect(computed(amount, "color")).toContain("--frak-amb-accent");
-        expect(computed(amount, "color")).toContain("#111");
-        expect(computed(cta, "background-color")).toContain(
-            "--frak-amb-cta-bg"
-        );
+        expect(computed(amount, "color")).toBe("rgb(17, 17, 17)");
+        expect(computed(cta, "background-color")).toBe("rgb(17, 17, 17)");
 
         if (container instanceof HTMLElement) {
             container.style.setProperty("--frak-amb-accent", "rgb(255,0,0)");
         }
-        expect(
-            getComputedStyle(amount ?? container).getPropertyValue(
-                "--frak-amb-accent"
-            )
-        ).toBe("rgb(255,0,0)");
-        expect(
-            getComputedStyle(cta ?? container).getPropertyValue(
-                "--frak-amb-accent"
-            )
-        ).toBe("rgb(255,0,0)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
+        expect(computed(cta, "background-color")).toBe("rgb(255, 0, 0)");
+
+        if (container instanceof HTMLElement) {
+            container.style.setProperty("--frak-amb-cta-bg", "rgb(0,0,255)");
+        }
+        expect(computed(cta, "background-color")).toBe("rgb(0, 0, 255)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
     });
 
     it("2026-09-15 R16. an unset knob falls back to its documented default", async () => {
@@ -1389,18 +1396,19 @@ describe("Ambassador", () => {
         const { container } = render(<Ambassador />);
 
         const tag = container.querySelector(".frak-ambassador__hero-tag");
-        expect(computed(tag, "background-color")).toContain(
-            "--frak-amb-tag-bg"
-        );
-        expect(computed(tag, "background-color")).toContain("#fff");
+        expect(computed(tag, "background-color")).toBe("rgb(255, 255, 255)");
         const card = container.querySelector(".frak-ambassador__win-win-card");
-        expect(computed(card, "background-color")).toContain(
-            "--frak-amb-surface"
+        expect(computed(card, "background-color")).toBe(
+            resolvedBeside(
+                card,
+                "background-color",
+                "color-mix(in srgb, #111 4%, transparent)"
+            )
         );
-        expect(computed(card, "background-color")).toContain(
-            "rgba(17,17,17,.04)"
-        );
-        expect(computed(card, "border-radius")).toContain("--frak-amb-radius");
+        expect(computed(card, "border-radius")).toBe("12px");
+
+        card?.parentElement?.style.setProperty("--frak-amb-radius", "3px");
+        expect(computed(card, "border-radius")).toBe("3px");
     });
 
     it("2026-09-15 R17. the badge lock does not leak: a merchant class still overrides the hero and card colours", async () => {
@@ -1465,7 +1473,9 @@ describe("Ambassador", () => {
         expect(document.activeElement).toBe(badge);
 
         expect(computed(badge, "outline-color")).toBe("rgb(0, 0, 0)");
-        expect(computed(badge, "box-shadow")).toContain("2px #fff");
+        expect(computed(badge, "box-shadow")).toBe(
+            "rgb(255, 255, 255) 0px 0px 0px 2px"
+        );
     });
 
     it("colours the reward figure through the accent-text knob, falling back to the accent", async () => {
@@ -1476,8 +1486,12 @@ describe("Ambassador", () => {
         const amount = container.querySelector(
             ".frak-ambassador__reward-amount"
         );
-        expect(computed(amount, "color")).toContain("--frak-amb-accent-text");
-        expect(computed(amount, "color")).toContain("--frak-amb-accent,");
+        const root = container.querySelector<HTMLElement>(".frak-ambassador");
+        root?.style.setProperty("--frak-amb-accent", "rgb(255,0,0)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
+
+        root?.style.setProperty("--frak-amb-accent-text", "rgb(0,0,255)");
+        expect(computed(amount, "color")).toBe("rgb(0, 0, 255)");
     });
 
     it("leaves the theme's heading face alone until the root marks a sampled one", async () => {
@@ -1492,12 +1506,8 @@ describe("Ambassador", () => {
         expect(computed(title, "font-family")).toBe("ThemeSerif");
 
         root?.setAttribute("data-frak-amb-font", "h1-family h1-transform");
-        expect(computed(title, "font-family")).toContain(
-            "--frak-amb-h1-family"
-        );
-        expect(computed(title, "text-transform")).toContain(
-            "--frak-amb-h1-transform"
-        );
+        expect(computed(title, "font-family")).toBe("Tomorrow");
+        expect(computed(title, "text-transform")).toBe("uppercase");
     });
 
     it("2026-09-15 R16. a typography knob reaches its consumer and falls back when unset", async () => {
@@ -1506,29 +1516,19 @@ describe("Ambassador", () => {
 
         const title = container.querySelector(".frak-ambassador__hero-title");
         const cta = container.querySelector(".frak-ambassador__hero-cta");
-        expect(computed(title, "font-size")).toContain("--frak-amb-h1-size");
-        expect(computed(title, "font-size")).toContain(
-            "clamp(2em, 4.6vw, 3.2em)"
+        expect(computed(title, "font-size")).toBe(
+            resolvedBeside(title, "font-size", "clamp(2em, 4.6vw, 3.2em)")
         );
-        expect(computed(cta, "font-size")).toContain("--frak-amb-cta-size");
-        expect(computed(cta, "font-size")).toContain("0.9em");
-        expect(computed(cta, "text-transform")).toContain(
-            "--frak-amb-cta-transform"
+        expect(computed(cta, "font-size")).toBe(
+            resolvedBeside(cta, "font-size", "0.9em")
         );
+        expect(computed(cta, "text-transform")).toBe("uppercase");
 
         if (container instanceof HTMLElement) {
             container.style.setProperty("--frak-amb-h1-size", "34px");
             container.style.setProperty("--frak-amb-cta-size", "18px");
         }
-        expect(
-            getComputedStyle(title ?? container).getPropertyValue(
-                "--frak-amb-h1-size"
-            )
-        ).toBe("34px");
-        expect(
-            getComputedStyle(cta ?? container).getPropertyValue(
-                "--frak-amb-cta-size"
-            )
-        ).toBe("18px");
+        expect(computed(title, "font-size")).toBe("34px");
+        expect(computed(cta, "font-size")).toBe("18px");
     });
 });

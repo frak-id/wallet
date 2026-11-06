@@ -44,6 +44,15 @@ function OpenedFromState() {
     );
 }
 
+/** jsdom resolves the drawer's closing animation but never runs it, so end it as a browser would. */
+function endCloseAnimation(el: HTMLElement) {
+    const event = new Event("animationend", { bubbles: true });
+    Object.defineProperty(event, "animationName", {
+        value: getComputedStyle(el).animationName,
+    });
+    fireEvent(el, event);
+}
+
 describe("ResponsiveModal", () => {
     afterEach(() => {
         useMediaQuery.mockReset();
@@ -82,6 +91,8 @@ describe("ResponsiveModal", () => {
             fireEvent.click(
                 await screen.findByRole("button", { name: "Done" })
             );
+            const closing = screen.queryByRole("dialog", { hidden: true });
+            if (closing) endCloseAnimation(closing);
             await waitFor(() => expect(opener).toHaveFocus());
         }
     );
