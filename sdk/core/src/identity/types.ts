@@ -20,7 +20,8 @@ export type ProofOp =
     | "frak-merge-v1"
     | "frak-ensure-v1"
     | "frak-install-v1"
-    | "frak-sso-v1";
+    | "frak-sso-v1"
+    | "frak-rewards-v1";
 
 /**
  * Decoded wire envelope. `pk` and `sig` are raw bytes here — the

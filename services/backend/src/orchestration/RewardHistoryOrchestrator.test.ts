@@ -77,3 +77,118 @@ describe("RewardHistoryOrchestrator.getUnpaidTotal", () => {
         });
     });
 });
+
+describe("RewardHistoryOrchestrator.getMerchantRewardSummary", () => {
+    const params = { anonymousId: "anon-1", merchantId: "merchant-1" };
+
+    function makeSummaryOrchestrator(opts: {
+        group: { id: string } | null;
+        wallet?: string | null;
+        rows?: unknown[];
+        getTokenPrice?: ReturnType<typeof vi.fn>;
+    }) {
+        const findSummaryRowsByIdentityGroupAndMerchant = vi
+            .fn()
+            .mockResolvedValue(opts.rows ?? []);
+        const findGroupByIdentity = vi.fn().mockResolvedValue(opts.group);
+        const orchestrator = new RewardHistoryOrchestrator(
+            { findSummaryRowsByIdentityGroupAndMerchant } as never,
+            {
+                findGroupByIdentity,
+                getWalletForGroup: vi.fn().mockResolvedValue(opts.wallet),
+            } as never,
+            {} as never,
+            {} as never,
+            {
+                getTokenPrice:
+                    opts.getTokenPrice ??
+                    vi.fn().mockResolvedValue({ eur: 1, usd: 1, gbp: 1 }),
+            } as never,
+            {} as never,
+            {} as never,
+            {} as never
+        );
+        return {
+            orchestrator,
+            findGroupByIdentity,
+            findSummaryRowsByIdentityGroupAndMerchant,
+        };
+    }
+
+    const row = (status: string) => ({
+        status,
+        amount: "2",
+        tokenAddress: EURE,
+        recipientType: "referee",
+        availableAt: null,
+        held: false,
+        expiresAt: null,
+    });
+
+    it("answers an empty unlinked summary for an unknown identity", async () => {
+        const { orchestrator, findGroupByIdentity, ...repos } =
+            makeSummaryOrchestrator({ group: null });
+
+        await expect(
+            orchestrator.getMerchantRewardSummary(params)
+        ).resolves.toEqual({ linked: false, pending: null, earned: null });
+        expect(findGroupByIdentity).toHaveBeenCalledWith({
+            type: "anonymous_fingerprint",
+            value: "anon-1",
+            merchantId: "merchant-1",
+        });
+        expect(
+            repos.findSummaryRowsByIdentityGroupAndMerchant
+        ).not.toHaveBeenCalled();
+    });
+
+    it("reports pending rewards of an unlinked group", async () => {
+        const { orchestrator, findSummaryRowsByIdentityGroupAndMerchant } =
+            makeSummaryOrchestrator({
+                group: { id: "group-1" },
+                wallet: null,
+                rows: [row("pending"), row("settled")],
+            });
+
+        const summary = await orchestrator.getMerchantRewardSummary(params);
+
+        expect(summary.linked).toBe(false);
+        expect(summary.pending?.total.eurAmount).toBe(2);
+        expect(summary.earned).toBeNull();
+        expect(findSummaryRowsByIdentityGroupAndMerchant).toHaveBeenCalledWith(
+            "group-1",
+            "merchant-1"
+        );
+    });
+
+    it("reports earned rewards once the group has a wallet", async () => {
+        const { orchestrator, findSummaryRowsByIdentityGroupAndMerchant } =
+            makeSummaryOrchestrator({
+                group: { id: "group-1" },
+                wallet: WALLET,
+                rows: [row("settled")],
+            });
+
+        const summary = await orchestrator.getMerchantRewardSummary(params);
+
+        expect(summary.linked).toBe(true);
+        expect(summary.earned?.total.eurAmount).toBe(2);
+        expect(findSummaryRowsByIdentityGroupAndMerchant).toHaveBeenCalledWith(
+            "group-1",
+            "merchant-1"
+        );
+    });
+
+    it("treats a token whose price lookup fails as unpriced", async () => {
+        const { orchestrator } = makeSummaryOrchestrator({
+            group: { id: "group-1" },
+            wallet: null,
+            rows: [row("pending")],
+            getTokenPrice: vi.fn().mockRejectedValue(new Error("down")),
+        });
+
+        await expect(
+            orchestrator.getMerchantRewardSummary(params)
+        ).resolves.toEqual({ linked: false, pending: null, earned: null });
+    });
+});
