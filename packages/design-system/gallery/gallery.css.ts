@@ -94,6 +94,10 @@ export const sectionBox = style({
     paddingInline: "4px",
     marginInline: "-4px",
     paddingBottom: "4px",
+    selectors: {
+        // The rule separates sections; the first one has nothing above it.
+        "&:first-child": { borderTop: "none", paddingTop: 0 },
+    },
 });
 
 export const inlineFindings = style({

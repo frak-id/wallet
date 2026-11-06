@@ -10,7 +10,7 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import type { ComponentProps } from "react";
-import { fixtures } from "../fixtures";
+import { fixtures, longText } from "../fixtures";
 import { Case, Cases } from "../ui";
 
 type NoticeProps = ComponentProps<typeof Notice>;
@@ -196,7 +196,7 @@ export function EmptyStateSection() {
                 <Case name="worst: long sentence">
                     <EmptyState
                         title={fixtures.longSentence}
-                        description={fixtures.longSentence.repeat(3)}
+                        description={longText(3)}
                         action={{ label: fixtures.longSentence, onClick: noop }}
                     />
                 </Case>
@@ -269,7 +269,7 @@ export function AlertMessageSection() {
                         tone="neutral"
                         icon={<InfoIcon width={24} height={24} />}
                         title={fixtures.longSentence}
-                        description={fixtures.longSentence.repeat(3)}
+                        description={longText(3)}
                     />
                 </Case>
                 <Case name="worst: non-Latin and emoji">
