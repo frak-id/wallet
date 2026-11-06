@@ -4,6 +4,19 @@ import { knownFindings } from "./known-findings";
 
 const NARROW = { width: 320, height: 900 };
 const MAX_TAB_STOPS = 300;
+const FOCUSABLE = [
+    "button:enabled",
+    "input:enabled",
+    "select:enabled",
+    "textarea:enabled",
+    "a[href]",
+    "[tabindex]",
+]
+    .map((sel) => `${sel}:not([tabindex="-1"])`)
+    .join(",");
+// Browsers show focus on a clicked text field by design: it is where typing goes.
+const TEXT_ENTRY =
+    'input:not([type="checkbox"], [type="radio"]), textarea, [contenteditable]';
 // Charts ignore `prefers-reduced-motion`; the longest enter animation is a
 // ~1.1s tween plus under half a second of stagger.
 const CHART_SETTLE_MS = 2_000;
@@ -309,6 +322,26 @@ function inspectStop(facts: StopFacts) {
     return null;
 }
 
+/** Runs in the page: the ring a pointer press left on `el`, or null when there is none. */
+function readPointerRing(el: Element) {
+    if (!(el instanceof HTMLElement) || el !== document.activeElement)
+        return null;
+    const paint = () => {
+        const cs = getComputedStyle(el);
+        const outline =
+            cs.outlineStyle === "none" ||
+            Number.parseFloat(cs.outlineWidth) === 0 ||
+            /rgba\(.*,\s*0\)|transparent/.test(cs.outlineColor)
+                ? "none"
+                : `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}`;
+        return `outline ${outline}, box-shadow ${cs.boxShadow}`;
+    };
+    const focused = paint();
+    el.blur();
+    const idle = paint();
+    return focused === idle ? null : `${focused} (idle: ${idle})`;
+}
+
 /** Runs in the page: what is wrong with an open overlay in the viewport. */
 function readOverlay(el: Element) {
     const problems: string[] = [];
@@ -337,7 +370,10 @@ test("every known finding names a registry section and a checked kind", () => {
     const ids = new Set(sections.map((s) => s.id));
     const orphans = Object.keys(knownFindings).filter((key) => {
         const [kind, id] = key.split(":");
-        return !["overflow", "focus", "overlay"].includes(kind) || !ids.has(id);
+        return (
+            !["overflow", "focus", "overlay", "pointer"].includes(kind) ||
+            !ids.has(id)
+        );
     });
     expect(orphans).toEqual([]);
 });
@@ -398,21 +434,11 @@ for (const { id, title } of sections) {
         test("shows a focus indicator on every tab stop", async ({ page }) => {
             const section = await openSection(page, id);
             const focusables = await section.evaluate(
-                (root) =>
-                    [
-                        ...root.querySelectorAll(
-                            [
-                                "button:enabled",
-                                "input:enabled",
-                                "select:enabled",
-                                "textarea:enabled",
-                                "a[href]",
-                                "[tabindex]",
-                            ]
-                                .map((sel) => `${sel}:not([tabindex="-1"])`)
-                                .join(",")
-                        ),
-                    ].filter((el) => el.checkVisibility()).length
+                (root, focusable) =>
+                    [...root.querySelectorAll(focusable)].filter((el) =>
+                        el.checkVisibility()
+                    ).length,
+                FOCUSABLE
             );
             await section.locator(`#${id}-title`).focus();
             const found: Finding[] = [];
@@ -488,6 +514,52 @@ for (const { id, title } of sections) {
             }
             expectFindings("overlay", id, found);
             expect(errors).toEqual([]);
+        });
+
+        test("shows no focus ring after a pointer press", async ({ page }) => {
+            const section = await openSection(page, id);
+            const targets = section.locator(FOCUSABLE);
+            const count = await targets.count();
+            const found: Finding[] = [];
+            for (let i = 0; i < count; i++) {
+                const target = await targets.nth(i).elementHandle();
+                if (
+                    !target ||
+                    (await target.evaluate(
+                        (el, textEntry) =>
+                            !el.checkVisibility() || el.matches(textEntry),
+                        TEXT_ENTRY
+                    ))
+                )
+                    continue;
+                await target.scrollIntoViewIfNeeded();
+                const box = await target.boundingBox();
+                if (!box) continue;
+                await page.mouse.click(
+                    box.x + box.width / 2,
+                    box.y + box.height / 2
+                );
+                const ring = await target.evaluate(readPointerRing);
+                if (ring) {
+                    const caseName = await target.evaluate(
+                        (el) =>
+                            el
+                                .closest("[data-gallery-case]")
+                                ?.getAttribute("data-gallery-case") ??
+                            "<section>"
+                    );
+                    found.push({
+                        key: `pointer:${id}:${caseName}`,
+                        detail: ring,
+                    });
+                }
+                const popup = page.locator('[role="dialog"], [role="listbox"]');
+                if ((await popup.count()) > 0) {
+                    await page.keyboard.press("Escape");
+                    await expect(popup).toHaveCount(0);
+                }
+            }
+            expectFindings("pointer", id, found);
         });
 
         test("matches its screenshot", async ({ page }, testInfo) => {

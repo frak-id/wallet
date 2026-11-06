@@ -1,6 +1,6 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
-import type { ComponentPropsWithRef } from "react";
+import { type ComponentPropsWithRef, useState } from "react";
 import { tabsContent, tabsList, tabsTrigger } from "./tabs.css";
 
 type ListVariants = NonNullable<RecipeVariants<typeof tabsList>>;
@@ -47,13 +47,32 @@ function TabsTrigger({
     className,
     variant,
     fullWidth,
+    onPointerDown,
+    onKeyDown,
+    onBlur,
     ...props
 }: ComponentPropsWithRef<typeof TabsPrimitive.Trigger> & TriggerVariants) {
+    // Radix focuses the trigger from code on mousedown, which browsers report
+    // as `:focus-visible`; this flag keeps the ring for keyboard focus only.
+    const [pointerFocus, setPointerFocus] = useState(false);
     const base = tabsTrigger({ variant, fullWidth });
     return (
         <TabsPrimitive.Trigger
             ref={ref}
             className={className ? `${base} ${className}` : base}
+            data-pointer-focus={pointerFocus || undefined}
+            onPointerDown={(event) => {
+                setPointerFocus(true);
+                onPointerDown?.(event);
+            }}
+            onKeyDown={(event) => {
+                setPointerFocus(false);
+                onKeyDown?.(event);
+            }}
+            onBlur={(event) => {
+                setPointerFocus(false);
+                onBlur?.(event);
+            }}
             {...props}
         />
     );

@@ -6,7 +6,7 @@ const DRAWER_FOCUS =
 
 /**
  * Findings the gallery surfaces in current component code, keyed
- * `<overflow|focus|overlay>:<section id>:<case name>`; the value is the reason.
+ * `<overflow|focus|overlay|pointer>:<section id>:<case name>`; the value is the reason.
  * The spec asserts each still occurs: fix the component and the entry fails
  * until it is deleted, which is the signal that the bug is gone.
  */
