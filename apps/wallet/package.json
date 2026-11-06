@@ -82,7 +82,7 @@
     "i18next": "catalog:",
     "i18next-browser-languagedetector": "catalog:",
     "idb-keyval": "catalog:",
-    "jose": "^6.2.14",
+    "jose": "^6.2.15",
     "lucide-react": "catalog:",
     "ox": "catalog:",
     "permissionless": "catalog:",
