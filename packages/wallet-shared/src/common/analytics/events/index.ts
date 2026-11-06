@@ -12,6 +12,7 @@ import type { MoneriumEventMap } from "./monerium";
 import type { NotificationEventMap } from "./notification";
 import type { OnboardingEventMap } from "./onboarding";
 import type { PairingEventMap } from "./pairing";
+import type { RampEventMap } from "./ramp";
 import type { SharingEventMap } from "./sharing";
 import type { TokensEventMap } from "./tokens";
 import type { ListenerTxEventMap } from "./transaction";
@@ -71,6 +72,11 @@ export type {
     PairingEventMap,
     PairingMode,
 } from "./pairing";
+export type {
+    RampEventMap,
+    RampOfframpSource,
+    RampSendRejection,
+} from "./ramp";
 export type { SharingEventMap, SharingSource } from "./sharing";
 export type { TokensEventMap, TokensSendAmountBucket } from "./tokens";
 export type { ListenerTxEventMap } from "./transaction";
@@ -92,6 +98,7 @@ export type EventMap = AuthEventMap &
     TokensEventMap &
     InstallEventMap &
     MoneriumEventMap &
+    RampEventMap &
     DeepLinkEventMap &
     DiagnosticsEventMap &
     WalletMergeEventMap &

@@ -77,12 +77,14 @@ RUN --mount=type=secret,id=DRPC_API_KEY \
     --mount=type=secret,id=VAPID_PUBLIC_KEY \
     --mount=type=secret,id=OPEN_PANEL_WALLET_CLIENT_ID \
     --mount=type=secret,id=ANDROID_SHA256_FINGERPRINT \
+    --mount=type=secret,id=RAMP_HOST_API_KEY \
     export DRPC_API_KEY=$(cat /run/secrets/DRPC_API_KEY) && \
     export PIMLICO_API_KEY=$(cat /run/secrets/PIMLICO_API_KEY) && \
     export NEXUS_RPC_SECRET=$(cat /run/secrets/NEXUS_RPC_SECRET) && \
     export VAPID_PUBLIC_KEY=$(cat /run/secrets/VAPID_PUBLIC_KEY) && \
     export OPEN_PANEL_WALLET_CLIENT_ID=$(cat /run/secrets/OPEN_PANEL_WALLET_CLIENT_ID) && \
     export ANDROID_SHA256_FINGERPRINT=$(cat /run/secrets/ANDROID_SHA256_FINGERPRINT) && \
+    export RAMP_HOST_API_KEY=$(cat /run/secrets/RAMP_HOST_API_KEY 2>/dev/null || true) && \
     bun run build
 
 # Parallel gzip pre-compression — one process per CPU instead of serial -exec.

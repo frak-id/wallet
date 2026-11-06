@@ -129,6 +129,9 @@ export async function getDefineProps({
         "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
             getSstResource("ANDROID_SHA256_FINGERPRINT")
         ),
+        "process.env.RAMP_HOST_API_KEY": JSON.stringify(
+            getSstResource("RAMP_HOST_API_KEY")
+        ),
     };
 }
 

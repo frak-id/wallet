@@ -21,6 +21,7 @@ export type AppErrorSource =
     | "monerium_callback"
     | "monerium_api"
     | "monerium_store_rehydrate"
+    | "ramp_offramp"
     | "recovery"
     | "sso"
     | "notifications"

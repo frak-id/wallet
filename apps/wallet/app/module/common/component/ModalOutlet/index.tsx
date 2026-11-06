@@ -27,6 +27,11 @@ const MoneriumBankFlow = lazy(() =>
         default: m.MoneriumBankFlow,
     }))
 );
+const RampOfframpFlow = lazy(() =>
+    import("@/module/ramp/component/RampOfframpFlow").then((m) => ({
+        default: m.RampOfframpFlow,
+    }))
+);
 const Keypass = lazy(() =>
     import("@/module/onboarding/component/Keypass").then((m) => ({
         default: m.Keypass,
@@ -192,6 +197,18 @@ function renderModal(
                 >
                     {({ handleClose }) => (
                         <MoneriumBankFlow onClose={handleClose} />
+                    )}
+                </DetailOverlay>
+            );
+        case "rampOfframpFlow":
+            return (
+                <DetailOverlay
+                    onClose={closeModal}
+                    swipeToClose={swipeToClose}
+                    labelKey="wallet.modal.rampOfframpFlow.ariaLabel"
+                >
+                    {({ handleClose }) => (
+                        <RampOfframpFlow onClose={handleClose} />
                     )}
                 </DetailOverlay>
             );

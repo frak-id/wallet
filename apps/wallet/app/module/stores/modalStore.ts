@@ -44,6 +44,7 @@ type ModalState =
           actionLabel?: string;
       }
     | { id: "moneriumBankFlow" }
+    | { id: "rampOfframpFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrderDto }
     | { id: "rewardDetail"; item: RewardHistoryItem }
     | { id: "gameResult"; result: GameResult }

@@ -14,6 +14,7 @@ import {
     openPanelApiUrl,
     openPanelWalletClientId,
     pimlicoApiKey,
+    rampHostApiKey,
     vapidPublicKey,
     walletUrl,
 } from "../config";
@@ -40,6 +41,7 @@ export const walletEnv = {
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
+    RAMP_HOST_API_KEY: rampHostApiKey.value,
 };
 
 let imageRefs = {
@@ -74,6 +76,7 @@ if (!$dev) {
             VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
             OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
             ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
+            RAMP_HOST_API_KEY: walletEnv.RAMP_HOST_API_KEY,
         },
         platforms: ["linux/amd64"],
         push: true,

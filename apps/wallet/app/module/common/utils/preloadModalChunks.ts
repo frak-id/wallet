@@ -1,3 +1,5 @@
+import { isRampEnabled } from "@/module/ramp/utils/rampConfig";
+
 /**
  * Pre-warm the module graph for modal-only lazy chunks during browser idle time.
  *
@@ -31,6 +33,7 @@ function preloadModalChunks() {
     void import("@/module/explorer/component/ExplorerDetail");
     void import("@/module/referral/component/EditReferralCodeSheet");
     void import("@/module/monerium/component/MoneriumBankFlow");
+    if (isRampEnabled) void import("@/module/ramp/component/RampOfframpFlow");
 }
 
 /**

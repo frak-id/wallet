@@ -77,6 +77,8 @@ export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
+// Empty until Ramp issues a key: the wallet hides its Ramp cash-out entry without it.
+export const rampHostApiKey = new sst.Secret("RAMP_HOST_API_KEY", "");
 export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 export const platformAdminWallets = new sst.Secret("PLATFORM_ADMIN_WALLETS");
 export const fcmServiceAccount = new sst.Secret("FCM_SERVICE_ACCOUNT_JSON");

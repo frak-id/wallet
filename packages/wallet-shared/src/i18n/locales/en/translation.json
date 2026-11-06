@@ -437,7 +437,9 @@
             "bankAccount": "Bank account",
             "bankAccountDescription": "Add an IBAN",
             "wallet": "Wallet",
-            "walletDescription": "Transfer to a crypto wallet"
+            "walletDescription": "Transfer to a crypto wallet",
+            "ramp": "Bank account via Ramp",
+            "rampDescription": "Cash out in EUR, GBP or USD to your own account"
         },
         "activateNotifications": "Turn on notifs to track your earnings in real time.",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
@@ -804,6 +806,9 @@
             },
             "moneriumCallback": {
                 "ariaLabel": "Connecting your bank account"
+            },
+            "rampOfframpFlow": {
+                "ariaLabel": "Cash out with Ramp"
             }
         },
         "modalError": {
@@ -1613,6 +1618,55 @@
                 "cta": "Restart now"
             },
             "dismiss": "Later"
+        }
+    },
+    "ramp": {
+        "flow": {
+            "amount": {
+                "title": "Amount to cash out",
+                "descriptionEure": "Your EURe is converted to USDC, then Ramp pays it out to your bank account in your currency.",
+                "descriptionUsdc": "Ramp buys your USDC and pays it out to your bank account in your currency.",
+                "balance": "Balance: {{amount}} {{token}}",
+                "max": "Max",
+                "minimum": "Minimum {{amount}}",
+                "insufficientBalance": "Insufficient balance",
+                "continue": "Continue"
+            },
+            "swap": {
+                "title": "Convert to USDC",
+                "description": "Ramp only buys USDC. We convert your EURe through CoW Swap first, close to the market rate. If you stop after this step, the USDC stays in your wallet.",
+                "pending": "Converting… This usually takes less than a minute, keep this screen open.",
+                "youConvert": "You convert",
+                "youGet": "You get about",
+                "atLeast": "At least",
+                "quoteLoading": "Getting a rate…",
+                "cta": "Convert",
+                "errors": {
+                    "noLiquidity": "No conversion is available for this amount right now. Try again in a few minutes.",
+                    "expired": "The conversion didn't go through in time. Your EURe is still in your wallet.",
+                    "generic": "The conversion failed. Your EURe is still in your wallet."
+                }
+            },
+            "send": {
+                "errors": {
+                    "unsupportedAsset": "Frak Wallet can only send USDC on Arbitrum.",
+                    "invalidAddress": "Ramp sent an invalid deposit address. Nothing was sent.",
+                    "invalidAmount": "Ramp asked for an invalid amount. Nothing was sent.",
+                    "insufficientBalance": "You don't have enough USDC for this sale. Nothing was sent.",
+                    "cancelled": "Sending cancelled.",
+                    "generic": "The transfer failed. Nothing was sent."
+                }
+            },
+            "widget": {
+                "done": "Done"
+            },
+            "success": {
+                "title": "Your cash-out is on its way",
+                "description": "Ramp received your USDC and will pay {{amount}} to your bank account. Ramp emails you when the transfer is sent.",
+                "descriptionNoSale": "Ramp received your USDC and will pay it to your bank account. Ramp emails you when the transfer is sent.",
+                "cta": "Done"
+            },
+            "updateRequired": "Update Frak Wallet to cash out with Ramp."
         }
     }
 }

@@ -12,6 +12,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { isRampEnabled } from "@/module/ramp/utils/rampConfig";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -77,6 +78,11 @@ export function TransferModal({ onClose }: TransferModalProps) {
         modalStore.getState().openModal({ id: "moneriumBankFlow" });
     };
 
+    const handleRampClick = () => {
+        onClose();
+        modalStore.getState().openModal({ id: "rampOfframpFlow" });
+    };
+
     const handleWalletClick = () => {
         onClose();
         navigate({ to: "/tokens/send" });
@@ -125,6 +131,16 @@ export function TransferModal({ onClose }: TransferModalProps) {
                         )}
                         onClick={handleBankClick}
                     />
+                    {isRampEnabled ? (
+                        <OptionRow
+                            icon={<BankIcon width={24} height={24} />}
+                            title={t("wallet.transferModal.ramp")}
+                            description={t(
+                                "wallet.transferModal.rampDescription"
+                            )}
+                            onClick={handleRampClick}
+                        />
+                    ) : null}
                     <OptionRow
                         icon={<WalletIcon width={24} height={24} />}
                         title={t("wallet.transferModal.wallet")}

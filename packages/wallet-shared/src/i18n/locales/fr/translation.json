@@ -437,7 +437,9 @@
             "bankAccount": "Compte bancaire",
             "bankAccountDescription": "Ajouter un IBAN",
             "wallet": "Wallet",
-            "walletDescription": "Transférer vers un crypto wallet"
+            "walletDescription": "Transférer vers un crypto wallet",
+            "ramp": "Compte bancaire via Ramp",
+            "rampDescription": "Retire en EUR, GBP ou USD sur ton propre compte"
         },
         "activateNotifications": "Active tes notifs pour suivre tes gains en temps réel.",
         "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",
@@ -804,6 +806,9 @@
             },
             "moneriumCallback": {
                 "ariaLabel": "Connexion de votre compte bancaire"
+            },
+            "rampOfframpFlow": {
+                "ariaLabel": "Retirer avec Ramp"
             }
         },
         "modalError": {
@@ -1613,6 +1618,55 @@
                 "cta": "Redémarrer"
             },
             "dismiss": "Plus tard"
+        }
+    },
+    "ramp": {
+        "flow": {
+            "amount": {
+                "title": "Montant à retirer",
+                "descriptionEure": "Tes EURe sont convertis en USDC, puis Ramp les verse sur ton compte bancaire dans ta devise.",
+                "descriptionUsdc": "Ramp achète tes USDC et les verse sur ton compte bancaire dans ta devise.",
+                "balance": "Solde : {{amount}} {{token}}",
+                "max": "Max",
+                "minimum": "Minimum {{amount}}",
+                "insufficientBalance": "Solde insuffisant",
+                "continue": "Continuer"
+            },
+            "swap": {
+                "title": "Convertir en USDC",
+                "description": "Ramp n'achète que des USDC. On convertit d'abord tes EURe via CoW Swap, au prix du marché à peu de chose près. Si tu t'arrêtes après cette étape, les USDC restent dans ton wallet.",
+                "pending": "Conversion en cours… Ça prend en général moins d'une minute, garde cet écran ouvert.",
+                "youConvert": "Tu convertis",
+                "youGet": "Tu reçois environ",
+                "atLeast": "Au minimum",
+                "quoteLoading": "Calcul du taux…",
+                "cta": "Convertir",
+                "errors": {
+                    "noLiquidity": "Aucune conversion n'est possible pour ce montant pour le moment. Réessaie dans quelques minutes.",
+                    "expired": "La conversion n'a pas abouti à temps. Tes EURe sont toujours dans ton wallet.",
+                    "generic": "La conversion a échoué. Tes EURe sont toujours dans ton wallet."
+                }
+            },
+            "send": {
+                "errors": {
+                    "unsupportedAsset": "Frak Wallet ne peut envoyer que des USDC sur Arbitrum.",
+                    "invalidAddress": "Ramp a transmis une adresse de dépôt invalide. Rien n'a été envoyé.",
+                    "invalidAmount": "Ramp a demandé un montant invalide. Rien n'a été envoyé.",
+                    "insufficientBalance": "Tu n'as pas assez d'USDC pour cette vente. Rien n'a été envoyé.",
+                    "cancelled": "Envoi annulé.",
+                    "generic": "Le transfert a échoué. Rien n'a été envoyé."
+                }
+            },
+            "widget": {
+                "done": "Terminé"
+            },
+            "success": {
+                "title": "Ton retrait est en route",
+                "description": "Ramp a reçu tes USDC et versera {{amount}} sur ton compte bancaire. Ramp t'envoie un e-mail quand le virement part.",
+                "descriptionNoSale": "Ramp a reçu tes USDC et les versera sur ton compte bancaire. Ramp t'envoie un e-mail quand le virement part.",
+                "cta": "Terminé"
+            },
+            "updateRequired": "Mets à jour Frak Wallet pour retirer avec Ramp."
         }
     }
 }
