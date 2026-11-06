@@ -6,9 +6,10 @@ report_skipped_branches() {
 	local log="$1/maestro.log"
 	[ -f "$log" ] || return 0
 	awk -v status="$2" '
-		/ Running flow / { sub(/.* Running flow /, ""); flow = $0; next }
-		/onCommandFinished: Run .* when ".*" is (not )?visible SKIPPED$/ {
-			sub(/.*onCommandFinished: /, ""); sub(/ SKIPPED$/, "")
+		/ Running flow / { sub(/.* Running flow /, ""); sub(/\.\.\.$/, ""); flow = $0; next }
+		# A suite run logs it from onCommandFinished, a single-flow run from runCommands.
+		/\] [^ ]+: Run .* when ".*" is (not )?visible SKIPPED$/ {
+			sub(/^[^]]*\] [^ ]+: /, ""); sub(/ SKIPPED$/, "")
 			skipped[++n] = "  " flow ": " $0
 		}
 		END {
