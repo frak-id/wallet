@@ -26,6 +26,10 @@ export const popoverContentStyle = style({
     // Above modal/sheet content (zIndex.modal + 1) so popovers opened from
     // within a Sheet/Dialog render on top instead of behind it.
     zIndex: zIndex.popover,
+    // Radix measures the room left between the anchor and the viewport edge.
+    maxWidth: "var(--radix-popover-content-available-width)",
+    maxHeight: "var(--radix-popover-content-available-height)",
+    overflowY: "auto",
     borderRadius: alias.cornerRadius.m,
     backgroundColor: vars.surface.background,
     boxShadow: "0 4px 16px 0 rgba(115, 115, 115, 0.2)",

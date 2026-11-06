@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ResponsiveModal } from "./index";
@@ -18,6 +20,27 @@ function renderModal() {
         >
             <p>Modal body</p>
         </ResponsiveModal>
+    );
+}
+
+function OpenedFromState() {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <button type="button" onClick={() => setOpen(true)}>
+                Open
+            </button>
+            <ResponsiveModal
+                open={open}
+                onOpenChange={setOpen}
+                title="Accessible title"
+                description="Accessible description"
+            >
+                <button type="button" onClick={() => setOpen(false)}>
+                    Done
+                </button>
+            </ResponsiveModal>
+        </>
     );
 }
 
@@ -43,4 +66,23 @@ describe("ResponsiveModal", () => {
         expect(screen.getByText("Accessible title")).toBeInTheDocument();
         expect(screen.getByText("Accessible description")).toBeInTheDocument();
     });
+
+    it.each([
+        ["Dialog", true],
+        ["Drawer", false],
+    ])(
+        "should return focus to the opener when the %s closes",
+        async (_, isDesktop) => {
+            useMediaQuery.mockReturnValue(isDesktop);
+            const user = userEvent.setup();
+            render(<OpenedFromState />);
+            const opener = screen.getByRole("button", { name: "Open" });
+            await user.click(opener);
+            // A pointer click inside vaul's sheet calls setPointerCapture, which jsdom lacks.
+            fireEvent.click(
+                await screen.findByRole("button", { name: "Done" })
+            );
+            await waitFor(() => expect(opener).toHaveFocus());
+        }
+    );
 });

@@ -1,6 +1,13 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import {
     Select,
     SelectContent,
@@ -15,6 +22,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { InfoIcon } from "@frak-labs/design-system/icons";
 import type { ComponentProps } from "react";
 import { fixtures } from "../fixtures";
@@ -471,6 +479,186 @@ export function CheckboxSection() {
             <Cases title="Sizes">
                 <Case name="size l">
                     <Checkbox aria-label="large" size="l" defaultChecked />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+function Radios({
+    name,
+    labels,
+    size,
+    ...group
+}: {
+    name: string;
+    labels: readonly string[];
+    size?: "m" | "l";
+} & ComponentProps<typeof RadioGroup>) {
+    return (
+        <RadioGroup aria-label={name} {...group}>
+            {labels.map((label) => (
+                <Inline key={label} space="xs" alignY="center">
+                    <RadioGroupItem
+                        id={`${name}-${label}`}
+                        value={label}
+                        size={size}
+                    />
+                    <label htmlFor={`${name}-${label}`}>
+                        <Text as="span">{label}</Text>
+                    </label>
+                </Inline>
+            ))}
+        </RadioGroup>
+    );
+}
+
+const radioLabels = ["Daily", "Weekly", "Monthly"] as const;
+
+export function RadioGroupSection() {
+    return (
+        <>
+            <Cases title="States">
+                <Case name="none selected">
+                    <Radios name="none selected" labels={radioLabels} />
+                </Case>
+                <Case name="selected">
+                    <Radios
+                        name="selected"
+                        labels={radioLabels}
+                        defaultValue="Weekly"
+                    />
+                </Case>
+                <Case name="disabled">
+                    <Radios
+                        name="disabled"
+                        labels={radioLabels}
+                        defaultValue="Daily"
+                        disabled
+                    />
+                </Case>
+                <Case name="size l">
+                    <Radios
+                        name="size l"
+                        labels={radioLabels}
+                        defaultValue="Monthly"
+                        size="l"
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Radios
+                        name="worst email"
+                        labels={[fixtures.unbreakableEmail, "Other"]}
+                        defaultValue="Other"
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <Radios
+                        name="worst sentence"
+                        labels={[fixtures.longSentence, "Other"]}
+                    />
+                </Case>
+                <Case name="worst: one option">
+                    <Radios name="worst one" labels={["Only"]} />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function FieldLabelSection() {
+    return (
+        <>
+            <Cases title="Parts">
+                <Case name="label and hint">
+                    <FieldLabel
+                        label="IBAN"
+                        hint="We never share it."
+                        htmlFor="field-label-iban"
+                    >
+                        <Input id="field-label-iban" />
+                    </FieldLabel>
+                </Case>
+                <Case name="label only">
+                    <FieldLabel label="Name" htmlFor="field-label-name">
+                        <Input id="field-label-name" />
+                    </FieldLabel>
+                </Case>
+                <Case name="hint only">
+                    <FieldLabel hint="Optional" htmlFor="field-label-hint">
+                        <Input id="field-label-hint" aria-label="Nickname" />
+                    </FieldLabel>
+                </Case>
+            </Cases>
+            <Cases title="Reserved lines">
+                <Case name="reserve 2 lines">
+                    <Inline space="s" alignY="bottom">
+                        <FieldLabel
+                            label="Short"
+                            reserveLabelLines={2}
+                            htmlFor="field-label-short"
+                        >
+                            <Input id="field-label-short" length="small" />
+                        </FieldLabel>
+                        <FieldLabel
+                            label="A label long enough to wrap"
+                            reserveLabelLines={2}
+                            htmlFor="field-label-long"
+                        >
+                            <Input id="field-label-long" length="small" />
+                        </FieldLabel>
+                    </Inline>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <FieldLabel
+                        label={fixtures.unbreakableEmail}
+                        hint={fixtures.unbreakableEmail}
+                        htmlFor="field-label-worst-email"
+                    >
+                        <Input id="field-label-worst-email" />
+                    </FieldLabel>
+                </Case>
+                <Case name="worst: long sentence">
+                    <FieldLabel
+                        label={fixtures.longSentence}
+                        hint={fixtures.longSentence}
+                        htmlFor="field-label-worst-sentence"
+                    >
+                        <Input id="field-label-worst-sentence" />
+                    </FieldLabel>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function FieldErrorSection() {
+    return (
+        <>
+            <Cases title="Roles">
+                <Case name="status">
+                    <FieldError>Enter a valid IBAN.</FieldError>
+                </Case>
+                <Case name="alert">
+                    <FieldError role="alert">This code has expired.</FieldError>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <FieldError>{fixtures.unbreakableEmail}</FieldError>
+                </Case>
+                <Case name="worst: long sentence">
+                    <FieldError>{fixtures.longSentence}</FieldError>
+                </Case>
+                <Case name="worst: one character">
+                    <FieldError>{fixtures.singleChar}</FieldError>
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <FieldError>{fixtures.nonLatin}</FieldError>
                 </Case>
             </Cases>
         </>

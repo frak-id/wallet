@@ -50,4 +50,13 @@ export const knownFindings: Record<string, string> = {
 
     "overlay:dialog:worst: unbreakable email": `DialogTitle and DialogDescription: ${NO_WRAP}`,
     "overlay:drawer:worst: unbreakable email": `Drawer content: ${NO_WRAP}`,
+    "overflow:spread:worst: unbreakable email": `Spread children keep their min-content: ${NO_WRAP}`,
+    "overflow:content-block:worst: unbreakable email": `ContentBlock does not clip: ${NO_WRAP}`,
+    "overflow:radio-group:worst: unbreakable email": `radio label: ${NO_WRAP}`,
+    "overflow:field-label:worst: unbreakable email": `FieldLabel label and hint: ${NO_WRAP}`,
+    "overflow:field-error:worst: unbreakable email": `FieldError message: ${NO_WRAP}`,
+    "overflow:empty-state:worst: unbreakable email": `EmptyState title and description: ${NO_WRAP}`,
+    "overlay:responsive-modal:worst: unbreakable email": `ResponsiveModal content: ${NO_WRAP}`,
+    "overlay:popover:worst: unbreakable email": `PopoverContent: ${NO_WRAP}`,
+    "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
 };
