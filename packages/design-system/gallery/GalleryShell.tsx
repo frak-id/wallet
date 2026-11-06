@@ -1,4 +1,13 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { HiddenVisually } from "@frak-labs/design-system/components/HiddenVisually";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Input } from "@frak-labs/design-system/components/Input";
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo, useState, useSyncExternalStore } from "react";
@@ -11,8 +20,6 @@ import {
 import {
     canvas,
     categoryHeading,
-    chip,
-    count,
     frame,
     frameBg,
     frameFixed,
@@ -21,7 +28,6 @@ import {
     main,
     navLink,
     panel,
-    search,
     sectionBox,
     shell,
     sidebar,
@@ -71,17 +77,13 @@ function Sidebar({ state }: { state: ShellState }) {
                     Design system gallery
                 </Text>
             </Box>
-            <label>
-                <Text as="span" variant="bodySmall" color="secondary">
-                    Filter sections
-                </Text>
-                <input
-                    className={search}
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                />
-            </label>
+            <Input
+                label="Filter sections"
+                type="search"
+                length="big"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+            />
             <nav aria-label="Sections">
                 <a
                     className={navLink}
@@ -97,7 +99,14 @@ function Sidebar({ state }: { state: ShellState }) {
                     if (items.length === 0) return null;
                     return (
                         <section key={category}>
-                            <h2 className={categoryHeading}>{category}</h2>
+                            <Text
+                                as="h2"
+                                variant="overline"
+                                color="secondary"
+                                className={categoryHeading}
+                            >
+                                {category}
+                            </Text>
                             <ul>
                                 {items.map(({ id, title }) => {
                                     const n = findingCount(id);
@@ -112,13 +121,12 @@ function Sidebar({ state }: { state: ShellState }) {
                                             >
                                                 {title}
                                                 {n > 0 && (
-                                                    <span
-                                                        className={count}
-                                                        role="img"
-                                                        aria-label={`${n} known finding${n === 1 ? "" : "s"}`}
-                                                    >
+                                                    <Badge variant="warning">
                                                         {n}
-                                                    </span>
+                                                        <HiddenVisually>
+                                                            {` known finding${n === 1 ? "" : "s"}`}
+                                                        </HiddenVisually>
+                                                    </Badge>
                                                 )}
                                             </a>
                                         </li>
@@ -152,20 +160,36 @@ function Choice<T extends string>({
     onChange: (option: T) => void;
 }) {
     return (
-        <fieldset className={group} aria-labelledby={`${label}-label`}>
-            <span id={`${label}-label`}>{label}</span>
-            {options.map((option) => (
-                <button
-                    key={option}
-                    type="button"
-                    className={chip}
-                    aria-pressed={option === value}
-                    onClick={() => onChange(option)}
-                >
-                    {format(option)}
-                </button>
-            ))}
-        </fieldset>
+        <div className={group}>
+            <Text as="span" variant="bodySmall" color="secondary">
+                {label}
+            </Text>
+            <RadioGroup
+                aria-label={label}
+                orientation="horizontal"
+                value={value}
+                onValueChange={(next) => {
+                    const option = options.find((o) => o === next);
+                    if (option) onChange(option);
+                }}
+            >
+                <Inline space="s" alignY="center">
+                    {options.map((option) => (
+                        <Inline key={option} space="xxs" alignY="center">
+                            <RadioGroupItem
+                                id={`${label}-${option}`}
+                                value={option}
+                            />
+                            <label htmlFor={`${label}-${option}`}>
+                                <Text as="span" variant="bodySmall">
+                                    {format(option)}
+                                </Text>
+                            </label>
+                        </Inline>
+                    ))}
+                </Inline>
+            </RadioGroup>
+        </div>
     );
 }
 
@@ -176,7 +200,9 @@ function Toolbar({ state, title }: { state: ShellState; title: string }) {
     const capitalise = (s: string) => s[0].toUpperCase() + s.slice(1);
     return (
         <div className={toolbar}>
-            <h2 className={toolbarTitle}>{title}</h2>
+            <Text as="h2" variant="heading5" className={toolbarTitle}>
+                {title}
+            </Text>
             <Choice
                 label="Width"
                 options={widths}
@@ -193,7 +219,9 @@ function Toolbar({ state, title }: { state: ShellState; title: string }) {
             />
             {state.section !== "all" && (
                 <a className={link} href={`?only=${state.section}`}>
-                    Open alone
+                    <Text as="span" variant="bodySmall">
+                        Open alone
+                    </Text>
                 </a>
             )}
         </div>
@@ -255,15 +283,17 @@ export function Shell() {
     return (
         <div className={shell}>
             {/* A button, not a link: the hash holds the shell state. */}
-            <button
-                type="button"
+            <Button
+                variant="secondary"
+                size="small"
+                width="auto"
                 className={skipLink}
                 onClick={() =>
                     document.getElementById("gallery-canvas")?.focus()
                 }
             >
                 Skip to components
-            </button>
+            </Button>
             <Sidebar state={state} />
             <main className={main}>
                 <Toolbar

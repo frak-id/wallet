@@ -1,5 +1,6 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { type ReactNode, useMemo } from "react";
-import { findingList, findingsSummary, kind as kindChip } from "./gallery.css";
+import { findingList, findingsSummary, kindBadge } from "./gallery.css";
 import { FindingMarkers } from "./markers";
 import { sections } from "./sections";
 import { findingsFor, markersFor } from "./shell";
@@ -54,7 +55,7 @@ export function FindingsDetails({
                 <ul className={findingList}>
                     {list.map(({ kind, caseName, reason }) => (
                         <li key={`${kind}:${caseName}`}>
-                            <span className={kindChip}>{kind}</span>
+                            <Badge className={kindBadge}>{kind}</Badge>
                             <strong>{caseName}</strong>: {reason}
                         </li>
                     ))}

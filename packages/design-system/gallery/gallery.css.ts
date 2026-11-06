@@ -1,6 +1,7 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
 import { toastSurfaceTop } from "@frak-labs/design-system/components/ToastSurface/styles";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import {
     globalFontFace,
     globalStyle,
@@ -45,7 +46,7 @@ globalStyle("html body", {
 export const page = style({
     maxWidth: "1200px",
     marginInline: "auto",
-    padding: "16px",
+    padding: alias.spacing.m,
 });
 
 /** The gallery's own controls get the design system's ring, not the browser's. */
@@ -63,20 +64,13 @@ export const link = style({
     ":hover": { textDecoration: "underline" },
 });
 
+/** Placement only: the Button draws itself. */
 export const skipLink = style({
-    ...focusRing,
-    backgroundColor: vars.surface.background,
-    border: `1px solid ${vars.border.default}`,
-    borderRadius: "6px",
-    color: vars.text.action,
-    cursor: "pointer",
-    font: "inherit",
-    left: "8px",
-    padding: "8px 12px",
+    left: alias.spacing.xs,
     position: "fixed",
-    top: "-48px",
+    top: "-64px",
     zIndex: 1,
-    ":focus": { top: "8px" },
+    ":focus": { top: alias.spacing.xs },
 });
 
 export const findingsSummary = style({
@@ -86,14 +80,14 @@ export const findingsSummary = style({
 
 export const sectionBox = style({
     borderTop: `1px solid ${vars.border.subtle}`,
-    paddingTop: "40px",
-    scrollMarginTop: "16px",
+    paddingTop: alias.spacing.xl,
+    scrollMarginTop: alias.spacing.m,
     // A worst case that overflows scrolls inside its section instead of
     // panning the whole page; the inset keeps edge focus rings unclipped.
     overflowX: "auto",
-    paddingInline: "4px",
-    marginInline: "-4px",
-    paddingBottom: "4px",
+    paddingInline: alias.spacing.xxs,
+    marginInline: `calc(-1 * ${alias.spacing.xxs})`,
+    paddingBottom: alias.spacing.xxs,
     selectors: {
         // The rule separates sections; the first one has nothing above it.
         "&:first-child": { borderTop: "none", paddingTop: 0 },
@@ -101,7 +95,7 @@ export const sectionBox = style({
 });
 
 export const inlineFindings = style({
-    fontSize: "13px",
+    fontSize: fontSize.s,
 });
 
 /** Same height the business overview cards give their charts. */
@@ -131,44 +125,28 @@ export const sidebar = style({
     borderRightWidth: "1px",
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: alias.spacing.m,
     minHeight: 0,
     overflowY: "auto",
-    padding: "16px",
-});
-
-export const search = style({
-    ...focusRing,
-    border: `1px solid ${vars.border.default}`,
-    borderRadius: "6px",
-    boxSizing: "border-box",
-    color: vars.text.primary,
-    font: "inherit",
-    fontSize: "14px",
-    marginTop: "4px",
-    padding: "6px 8px",
-    width: "100%",
+    padding: alias.spacing.m,
+    // Contains HiddenVisually's absolute text, which otherwise grows the page.
+    position: "relative",
 });
 
 export const categoryHeading = style({
-    color: vars.text.secondary,
-    fontSize: "12px",
-    fontWeight: 600,
-    letterSpacing: "0.04em",
-    margin: "12px 0 4px",
-    textTransform: "uppercase",
+    margin: `${alias.spacing.s} 0 ${alias.spacing.xxs}`,
 });
 
 export const navLink = style([
     link,
     {
         alignItems: "center",
-        borderRadius: "6px",
+        borderRadius: alias.cornerRadius.s,
         display: "flex",
-        fontSize: "14px",
-        gap: "8px",
+        fontSize: fontSize.s,
+        gap: alias.spacing.xs,
         justifyContent: "space-between",
-        padding: "4px 8px",
+        padding: `${alias.spacing.xxs} ${alias.spacing.xs}`,
         selectors: {
             '&[aria-current="page"]': {
                 backgroundColor: vars.surface.secondary,
@@ -177,17 +155,6 @@ export const navLink = style([
         },
     },
 ]);
-
-export const count = style({
-    backgroundColor: vars.surface.warning,
-    borderRadius: "999px",
-    color: vars.text.warning,
-    fontSize: "12px",
-    fontWeight: 600,
-    minWidth: "20px",
-    padding: "0 6px",
-    textAlign: "center",
-});
 
 export const main = style({
     display: "grid",
@@ -202,45 +169,18 @@ export const toolbar = style({
     borderBottomWidth: "1px",
     display: "flex",
     flexWrap: "wrap",
-    gap: "8px 24px",
-    padding: "8px 16px",
+    gap: `${alias.spacing.xs} ${alias.spacing.l}`,
+    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
 });
 
 export const toolbarTitle = style({
     flexGrow: 1,
-    fontSize: "16px",
-    fontWeight: 600,
 });
 
 export const group = style({
     alignItems: "center",
-    border: 0,
     display: "flex",
-    fontSize: "13px",
-    gap: "4px",
-    margin: 0,
-    minInlineSize: 0,
-    padding: 0,
-});
-
-export const chip = style({
-    ...focusRing,
-    background: "none",
-    border: `1px solid ${vars.border.default}`,
-    borderRadius: "6px",
-    color: vars.text.primary,
-    cursor: "pointer",
-    font: "inherit",
-    fontSize: "13px",
-    padding: "4px 10px",
-    selectors: {
-        '&[aria-pressed="true"]': {
-            backgroundColor: vars.surface.secondary,
-            borderColor: vars.text.action,
-            color: vars.text.action,
-            fontWeight: 600,
-        },
-    },
+    gap: alias.spacing.xs,
 });
 
 export const canvas = style({
@@ -248,7 +188,8 @@ export const canvas = style({
     minHeight: 0,
     minWidth: 0,
     overflow: "auto",
-    padding: "24px",
+    padding: alias.spacing.l,
+    position: "relative",
     // The skip link's target; it is not a control, so it draws no ring.
     ":focus": { outline: "none" },
 });
@@ -256,7 +197,7 @@ export const canvas = style({
 export const frame = style({
     border: "1px solid transparent",
     boxSizing: "border-box",
-    padding: "15px",
+    padding: `calc(${alias.spacing.m} - 1px)`,
 });
 
 export const frameFixed = style({ borderColor: vars.text.tertiary });
@@ -269,41 +210,28 @@ export const frameBg = styleVariants({
 export const panel = style({
     ...chrome,
     borderTopWidth: "1px",
-    fontSize: "13px",
+    fontSize: fontSize.s,
     maxHeight: "30dvh",
     overflowY: "auto",
-    padding: "8px 16px",
+    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
 });
 
 export const findingList = style({
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
-    marginTop: "8px",
+    gap: alias.spacing.xs,
+    marginTop: alias.spacing.xs,
 });
 
-export const kind = style({
-    backgroundColor: vars.surface.muted,
-    borderRadius: "4px",
-    fontSize: "12px",
-    fontWeight: 600,
-    marginRight: "8px",
-    padding: "1px 6px",
+/** Placement only: the Badge draws itself. */
+export const kindBadge = style({
+    marginRight: alias.spacing.xs,
 });
-
-export const marker = style([
-    kind,
-    {
-        backgroundColor: vars.surface.warning,
-        color: vars.text.warning,
-        marginRight: 0,
-    },
-]);
 
 /** A phone viewport: the transform contains the sheet's `position: fixed` actions. */
 export const phoneFrame = style({
     border: `1px solid ${vars.border.default}`,
-    borderRadius: "24px",
+    borderRadius: alias.cornerRadius.xl,
     height: "520px",
     maxWidth: "100%",
     overflowY: "auto",
