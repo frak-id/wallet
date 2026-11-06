@@ -309,11 +309,35 @@ function inspectStop(facts: StopFacts) {
     return null;
 }
 
+/** Runs in the page: what is wrong with an open overlay in the viewport. */
+function readOverlay(el: Element) {
+    const problems: string[] = [];
+    const box = el.getBoundingClientRect();
+    const { innerWidth, innerHeight } = window;
+    if (box.left < 0 || box.right > innerWidth)
+        problems.push(
+            `spans ${Math.round(box.left)}..${Math.round(box.right)}px of a ${innerWidth}px viewport`
+        );
+    if (box.bottom > innerHeight + 1)
+        problems.push(
+            `ends ${Math.round(box.bottom - innerHeight)}px below the viewport`
+        );
+    if (
+        [el, ...el.querySelectorAll("*")].some(
+            (n) => n.scrollWidth > n.clientWidth + 1
+        )
+    )
+        problems.push("content is wider than its box");
+    if (!el.contains(document.activeElement))
+        problems.push("focus did not move into it");
+    return problems;
+}
+
 test("every known finding names a registry section and a checked kind", () => {
     const ids = new Set(sections.map((s) => s.id));
     const orphans = Object.keys(knownFindings).filter((key) => {
         const [kind, id] = key.split(":");
-        return !(kind === "overflow" || kind === "focus") || !ids.has(id);
+        return !["overflow", "focus", "overlay"].includes(kind) || !ids.has(id);
     });
     expect(orphans).toEqual([]);
 });
@@ -413,6 +437,57 @@ for (const { id, title } of sections) {
                     `${focusables} focusable elements but Tab reached none`
                 ).toBeGreaterThan(0);
             expectFindings("focus", id, found);
+        });
+
+        test("opens every overlay inside a 320px viewport", async ({
+            page,
+        }) => {
+            const errors = trackErrors(page);
+            await page.setViewportSize(NARROW);
+            const section = await openSection(page, id);
+            const triggers = section.locator("[data-gallery-open]");
+            const count = await triggers.count();
+            test.skip(count === 0, "no overlay in this section");
+            const found: Finding[] = [];
+            for (let i = 0; i < count; i++) {
+                const trigger = triggers.nth(i);
+                const caseName = await trigger.evaluate(
+                    (el) =>
+                        el
+                            .closest("[data-gallery-case]")
+                            ?.getAttribute("data-gallery-case") ?? "<section>"
+                );
+                const report = (detail: string) =>
+                    found.push({ key: `overlay:${id}:${caseName}`, detail });
+                await trigger.focus();
+                await page.keyboard.press("Enter");
+                const dialog = page.getByRole("dialog");
+                await expect(dialog, `${caseName} did not open`).toBeVisible();
+                for (const problem of await dialog.evaluate(readOverlay))
+                    report(problem);
+                await page.keyboard.press("Escape");
+                await expect(
+                    dialog,
+                    `${caseName} did not close on Escape`
+                ).toHaveCount(0);
+                const returned = await expect
+                    .poll(
+                        () =>
+                            trigger.evaluate(
+                                (el) => el === document.activeElement
+                            ),
+                        { timeout: 1_000 }
+                    )
+                    .toBe(true)
+                    .then(
+                        () => true,
+                        () => false
+                    );
+                if (!returned)
+                    report("focus did not return to its trigger on close");
+            }
+            expectFindings("overlay", id, found);
+            expect(errors).toEqual([]);
         });
 
         test("matches its screenshot", async ({ page }, testInfo) => {

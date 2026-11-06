@@ -5,6 +5,7 @@ export const categories = [
     "Layout",
     "Controls",
     "Feedback",
+    "Overlays",
     "Charts",
 ] as const;
 
@@ -153,6 +154,34 @@ export const sections: readonly GallerySection[] = [
         "Feedback",
         () => import("./sections/feedback"),
         "BadgeSection"
+    ),
+    section(
+        "toast-surface",
+        "ToastSurface",
+        "Feedback",
+        () => import("./sections/overlays"),
+        "ToastSurfaceSection"
+    ),
+    section(
+        "dialog",
+        "Dialog",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "DialogSection"
+    ),
+    section(
+        "drawer",
+        "Drawer",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "DrawerSection"
+    ),
+    section(
+        "detail-sheet",
+        "DetailSheet",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "DetailSheetSection"
     ),
     section(
         "chart-sharing-pie",

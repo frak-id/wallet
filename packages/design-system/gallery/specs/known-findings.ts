@@ -1,9 +1,12 @@
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
 
+const DRAWER_FOCUS =
+    "vaul defaults autoFocus to false and cancels Radix's onOpenAutoFocus, so focus stays on the trigger behind the modal";
+
 /**
  * Findings the gallery surfaces in current component code, keyed
- * `<overflow|focus>:<section id>:<case name>`; the value is the reason.
+ * `<overflow|focus|overlay>:<section id>:<case name>`; the value is the reason.
  * The spec asserts each still occurs: fix the component and the entry fails
  * until it is deleted, which is the signal that the bug is gone.
  */
@@ -43,4 +46,15 @@ export const knownFindings: Record<string, string> = {
         "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
     "focus:tabs:panel":
         "TabsContent is a tabindex=0 panel and tabsContent sets outline: none, so focus is invisible",
+    "overflow:toast-surface:worst: unbreakable email":
+        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
+    "overflow:toast-surface:worst: long sentence":
+        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
+
+    "overlay:dialog:worst: unbreakable email": `DialogTitle and DialogDescription: ${NO_WRAP}`,
+    "overlay:drawer:default": DRAWER_FOCUS,
+    "overlay:drawer:surface muted": DRAWER_FOCUS,
+    "overlay:drawer:edge to edge": DRAWER_FOCUS,
+    "overlay:drawer:worst: long content": DRAWER_FOCUS,
+    "overlay:drawer:worst: unbreakable email": `${DRAWER_FOCUS}; Drawer content: ${NO_WRAP}`,
 };

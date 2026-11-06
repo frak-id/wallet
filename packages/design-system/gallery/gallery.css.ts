@@ -1,4 +1,5 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { toastSurfaceTop } from "@frak-labs/design-system/components/ToastSurface/styles";
 import { vars } from "@frak-labs/design-system/theme";
 import {
     globalFontFace,
@@ -250,3 +251,33 @@ export const marker = style([
         marginRight: 0,
     },
 ]);
+
+/** A phone viewport: the transform contains the sheet's `position: fixed` actions. */
+export const phoneFrame = style({
+    border: `1px solid ${vars.border.default}`,
+    borderRadius: "24px",
+    height: "520px",
+    maxWidth: "100%",
+    overflowY: "auto",
+    transform: "translateZ(0)",
+    width: "320px",
+});
+
+export const heroImage = style({
+    background: `linear-gradient(135deg, ${vars.surface.primary}, ${vars.text.success})`,
+    height: "100%",
+});
+
+/** ToastSurface anchors to the nearest positioned ancestor. */
+export const toastFrame = style({
+    backgroundColor: vars.surface.background2,
+    border: `1px solid ${vars.border.subtle}`,
+    height: "96px",
+    maxWidth: "100%",
+    position: "relative",
+    width: "360px",
+});
+
+export const toastOffset = style({
+    vars: { [toastSurfaceTop]: "32px" },
+});
