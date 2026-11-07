@@ -236,6 +236,7 @@ describe("RewardBreakdown", () => {
 
 describe("RewardBreakdown display currency", () => {
     const usd = (amount: number) => formatAmount(amount, "usd");
+    const eur = (amount: number) => formatAmount(amount, "eur");
     const norm = (value: string) => value.replace(/\s/g, " ");
     const priced = (eur: number, usdValue: number) => ({
         amount: eur,
@@ -244,7 +245,7 @@ describe("RewardBreakdown display currency", () => {
         gbpAmount: eur,
     });
 
-    it("reads tier rewards and formats ranges in the display currency", () => {
+    it("reads amounts in the display currency and thresholds in the payout currency", () => {
         render(
             <RewardBreakdown
                 referrer={tiered([
@@ -252,16 +253,47 @@ describe("RewardBreakdown display currency", () => {
                     { minValue: 50, amount: priced(18, 20) },
                 ])}
                 currency="usd"
+                payoutCurrency="eur"
                 t={t}
             />
         );
 
         expect(screen.getByText(norm(usd(9)))).toBeInTheDocument();
         expect(screen.getByText(norm(usd(20)))).toBeInTheDocument();
+        expect(screen.getByText(`0\u2013${norm(eur(50))}`)).toBeInTheDocument();
+        expect(
+            screen.getByText(`${norm(eur(50))} and above`)
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/\$50/)).not.toBeInTheDocument();
+    });
+
+    it("falls back to the display currency for thresholds without a payout currency", () => {
+        render(
+            <RewardBreakdown
+                referrer={tiered([{ minValue: 50, amount: priced(18, 20) }])}
+                currency="usd"
+                t={t}
+            />
+        );
+
         expect(
             screen.getByText(`${norm(usd(50))} and above`)
         ).toBeInTheDocument();
-        expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+    });
+
+    it("formats percent-tier worked examples in the payout currency", () => {
+        render(
+            <RewardBreakdown
+                referrer={tiered([{ minValue: 0, maxValue: 100, percent: 5 }])}
+                currency="usd"
+                payoutCurrency="eur"
+                t={t}
+            />
+        );
+
+        expect(
+            screen.getByText(`e.g. ${norm(eur(5))} for ${norm(eur(100))}`)
+        ).toBeInTheDocument();
     });
 
     it("formats percentage worked examples in the display currency", () => {

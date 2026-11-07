@@ -88,6 +88,9 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                                                 breakdown.minPurchaseValue
                                             }
                                             currency={breakdown.currency}
+                                            payoutCurrency={
+                                                conversion?.payoutCurrency
+                                            }
                                             t={t}
                                         />
                                     )}

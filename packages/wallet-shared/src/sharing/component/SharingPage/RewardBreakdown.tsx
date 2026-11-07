@@ -31,6 +31,7 @@ export function RewardBreakdown({
     referee,
     minPurchaseValue,
     currency,
+    payoutCurrency,
     t,
 }: {
     referrer?: EstimatedReward;
@@ -38,6 +39,8 @@ export function RewardBreakdown({
     minPurchaseValue?: number;
     /** Display currency every amount of the breakdown is shown in; defaults to EUR. */
     currency?: Currency;
+    /** Fiat tier thresholds are paid in; defaults to `currency`. */
+    payoutCurrency?: Currency;
     t: SharingT;
 }) {
     const hasReferrer = hasBreakdown(referrer);
@@ -52,6 +55,7 @@ export function RewardBreakdown({
                     reward={referrer}
                     minPurchaseValue={minPurchaseValue}
                     currency={currency}
+                    payoutCurrency={payoutCurrency}
                     t={t}
                 />
             )}
@@ -61,6 +65,7 @@ export function RewardBreakdown({
                     reward={referee}
                     minPurchaseValue={minPurchaseValue}
                     currency={currency}
+                    payoutCurrency={payoutCurrency}
                     t={t}
                 />
             )}
@@ -81,12 +86,14 @@ function RewardBlock({
     reward,
     minPurchaseValue,
     currency,
+    payoutCurrency,
     t,
 }: {
     label: string;
     reward: EstimatedReward;
     minPurchaseValue?: number;
     currency?: Currency;
+    payoutCurrency?: Currency;
     t: SharingT;
 }) {
     const matchedItemsBasis = isMatchedItemsBasis(reward);
@@ -100,6 +107,7 @@ function RewardBlock({
                           tier={tier}
                           isMatchedItemsBasis={matchedItemsBasis}
                           currency={currency}
+                          payoutCurrency={payoutCurrency}
                           t={t}
                       />
                   ))
@@ -120,19 +128,27 @@ function TierRow({
     tier,
     isMatchedItemsBasis,
     currency,
+    payoutCurrency,
     t,
 }: {
     tier: RewardTier;
     isMatchedItemsBasis: boolean;
     currency?: Currency;
+    payoutCurrency?: Currency;
     t: SharingT;
 }) {
+    // Thresholds are token-denominated, so they read in the payout currency.
+    const thresholdCurrency = payoutCurrency ?? currency;
     const range =
         tier.maxValue == null
             ? t("sdk.sharingPage.faq.reward.tierAndAbove", {
-                  min: formatAmount(tier.minValue, currency),
+                  min: formatAmount(tier.minValue, thresholdCurrency),
               })
-            : formatAmountRange(tier.minValue, tier.maxValue, currency);
+            : formatAmountRange(
+                  tier.minValue,
+                  tier.maxValue,
+                  thresholdCurrency
+              );
 
     if ("amount" in tier) {
         return (
@@ -164,7 +180,11 @@ function TierRow({
                     { percent: tier.percent }
                 )}
                 {example && (
-                    <ExampleText example={example} currency={currency} t={t} />
+                    <ExampleText
+                        example={example}
+                        currency={thresholdCurrency}
+                        t={t}
+                    />
                 )}
             </span>
         </div>
