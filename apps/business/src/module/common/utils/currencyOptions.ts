@@ -1,5 +1,7 @@
-import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
-import type { Currency } from "@frak-labs/core-sdk";
+import {
+    getStablecoinCurrency,
+    type Stablecoin,
+} from "@frak-labs/app-essentials";
 import { formatUnits, maxUint256 } from "viem";
 import { getNumberFormat } from "./intlCache";
 
@@ -30,26 +32,6 @@ export const currencyOptions: readonly CurrencyGroup[] = [
                 currencySymbol: "EUR",
                 currencyCode: "EUR",
                 locale: "fr-FR",
-                provider: "Monerium",
-                providerDescription:
-                    "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-            },
-            {
-                value: "gbpe",
-                label: "GBPe",
-                currencySymbol: "GBP",
-                currencyCode: "GBP",
-                locale: "en-GB",
-                provider: "Monerium",
-                providerDescription:
-                    "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
-            },
-            {
-                value: "usde",
-                label: "USDe",
-                currencySymbol: "USD",
-                currencyCode: "USD",
-                locale: "en-US",
                 provider: "Monerium",
                 providerDescription:
                     "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
@@ -105,22 +87,6 @@ export function formatTokenBalance(
     }).format(numeric);
 }
 
-/**
- * Resolve a token address to its Currency code (e.g. "eur", "usd", "gbp")
- */
-function tokenAddressToCurrency(
-    tokenAddress: string | undefined
-): Currency | undefined {
-    if (!tokenAddress) return undefined;
-    for (const [key, address] of Object.entries(currentStablecoins)) {
-        if (address.toLowerCase() === tokenAddress.toLowerCase()) {
-            const meta = currencyMetadata[key as Stablecoin];
-            return meta?.currencyCode.toLowerCase() as Currency;
-        }
-    }
-    return undefined;
-}
-
 /** Monetary glyph per ISO currency code (USDC shares the USD "$" glyph). */
 const CURRENCY_GLYPHS: Record<string, string> = {
     eur: "€",
@@ -136,6 +102,6 @@ const CURRENCY_GLYPHS: Record<string, string> = {
 export function tokenAddressToCurrencyGlyph(
     tokenAddress: string | undefined
 ): string {
-    const currency = tokenAddressToCurrency(tokenAddress);
+    const currency = getStablecoinCurrency(tokenAddress);
     return (currency && CURRENCY_GLYPHS[currency]) || "€";
 }

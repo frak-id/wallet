@@ -23,6 +23,7 @@ export function useFormattedEstimatedReward({
     targetInteraction,
     context,
     products,
+    locale,
 }: {
     merchantId?: string;
     currency?: Currency;
@@ -34,6 +35,7 @@ export function useFormattedEstimatedReward({
      * `select`.
      */
     products?: ProductDetails[];
+    locale?: string;
 }) {
     return useQuery({
         ...estimatedRewardsQueryOptions(merchantId),
@@ -42,6 +44,7 @@ export function useFormattedEstimatedReward({
             targetInteraction,
             context,
             products,
+            locale,
         }),
     });
 }

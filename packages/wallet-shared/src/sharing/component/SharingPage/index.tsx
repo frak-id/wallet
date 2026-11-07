@@ -5,6 +5,7 @@ import { ExternalLink } from "../../../common/component/ExternalLink";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
 import { useOverlayBehaviour } from "../useOverlayBehaviour";
+import { ConversionNotice } from "./ConversionNotice";
 import { Faq } from "./Faq";
 import { Footer } from "./Footer";
 import { PageHeader } from "./PageHeader";
@@ -103,6 +104,8 @@ export function SharingPage({
 
                 <main className={styles.main}>
                     <RewardCard merchant={merchant} reward={reward} t={t} />
+
+                    <ConversionNotice reward={reward} t={t} />
 
                     <section className={styles.rewardCard}>
                         <Text as="h2" variant="heading2">

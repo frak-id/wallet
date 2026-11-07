@@ -387,7 +387,13 @@
             "declined": "Refusé",
             "expired": "Expiré",
             "waitingConfirmation": "En attente de votre confirmation",
-            "pending": "En attente"
+            "pending": "En attente",
+            "conversionNotice": "Vous payez en {{shopFiat}} via Shopify. Votre budget de récompenses est détenu et versé en {{rewardFiat}} ({{token}}).",
+            "fiat": {
+                "eur": "euros",
+                "usd": "dollars américains",
+                "gbp": "livres sterling"
+            }
         }
     },
     "customizations": {

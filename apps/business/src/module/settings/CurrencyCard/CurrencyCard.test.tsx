@@ -35,6 +35,13 @@ describe("CurrencyCard", () => {
         expect(screen.getAllByRole("radio")).toHaveLength(3);
     });
 
+    it("explains that dashboard amounts are converted", () => {
+        render(<CurrencyCard />);
+        expect(
+            screen.getByText("settings.currency.converted")
+        ).toBeInTheDocument();
+    });
+
     it("stores the picked currency", () => {
         render(<CurrencyCard />);
         fireEvent.click(screen.getByRole("radio", { name: /gbp/i }));

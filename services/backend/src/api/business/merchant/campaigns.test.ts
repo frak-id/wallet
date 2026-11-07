@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Elysia } from "elysia";
 import { describe, expect, it } from "vitest";
-import { merchantCampaignsRoutes, toMerchantRule } from "./campaigns";
+import {
+    merchantCampaignsRoutes,
+    resolveRewardToken,
+    toMerchantRule,
+} from "./campaigns";
 
 const ROUTE_START = /^\s*\.(get|post|put|patch|delete|all|head|options)\(/;
 const GUARD = /^\s*requireMerchantAccess:\s*true,$/m;
@@ -89,5 +93,34 @@ describe("toMerchantRule", () => {
         );
 
         expect(rule).not.toHaveProperty("holdUntilReleased");
+    });
+});
+
+describe("resolveRewardToken", () => {
+    const eure = "0x0000000000000000000000000000000000000001";
+    const usdc = "0x0000000000000000000000000000000000000002";
+    const rule = (token?: `0x${string}`) => ({
+        trigger: "purchase" as const,
+        conditions: [],
+        rewards: [
+            {
+                recipient: "referrer" as const,
+                amountType: "fixed" as const,
+                amount: 1,
+                token,
+            },
+        ],
+    });
+
+    it("prefers the rule's own reward token", () => {
+        expect(resolveRewardToken(rule(usdc), eure)).toBe(usdc);
+    });
+
+    it("falls back to the merchant default when the rule has no token", () => {
+        expect(resolveRewardToken(rule(), eure)).toBe(eure);
+    });
+
+    it("is undefined without a rule token or merchant default", () => {
+        expect(resolveRewardToken(rule(), null)).toBeUndefined();
     });
 });

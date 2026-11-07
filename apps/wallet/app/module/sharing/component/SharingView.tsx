@@ -18,6 +18,7 @@ import { useLinkPurchaseIdentity } from "@/module/sharing/hook/useLinkPurchaseId
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
 import { useActivationParams } from "@/module/sharing/params/fragment";
 import type { SharingSearch } from "@/module/sharing/params/table";
+import { uiLanguage } from "@/module/sharing/utils/uiLanguage";
 
 /**
  * How this surface leaves the page. The SPA route hands over TanStack Router
@@ -118,10 +119,11 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it. `lang` is
     // the page's own: the backend flattens the merchant's tiered overrides to one language,
     // and without it a French device gets the `en` share copy under a French page.
-    const { data: config } = useMerchantResolvedConfig({
-        merchantId,
-        lang: i18n.resolvedLanguage ?? i18n.language,
-    });
+    const { data: config, isPending: isConfigPending } =
+        useMerchantResolvedConfig({
+            merchantId,
+            lang: i18n.resolvedLanguage ?? i18n.language,
+        });
 
     // A merchant's overrides are resolved here rather than merged into i18next. Merging needs a
     // per-merchant instance, and `cloneInstance({ forkResourceStore: true })` does not give one:
@@ -179,6 +181,11 @@ export function SharingView({
             logoUrl: logoUrl ?? config?.sdkConfig?.logoUrl ?? undefined,
         },
         defaultAttribution: config?.sdkConfig?.attribution ?? undefined,
+        rewardQuery: {
+            currency: config?.sdkConfig?.currency,
+            locale: uiLanguage(i18n),
+        },
+        currencyPending: !!merchantId && isConfigPending,
         seedReward,
         shareTitle,
         shareText,

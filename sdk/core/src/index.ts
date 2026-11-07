@@ -129,6 +129,7 @@ export {
     getCurrencyAmountKey,
     getQueryParamCaseInsensitive,
     getSupportedCurrency,
+    getSupportedLocale,
     isInAppBrowser,
     isInstagramBrowser,
     isIOS,

@@ -276,8 +276,16 @@ const EstimatedRewardSchema = t.Union([
 ]);
 export type EstimatedReward = Static<typeof EstimatedRewardSchema>;
 
+const PayoutCurrencySchema = t.Union([
+    t.Literal("eur"),
+    t.Literal("usd"),
+    t.Literal("gbp"),
+]);
+
 const EstimatedRewardItemSchema = t.Object({
     token: t.Optional(t.Address()),
+    // Fiat the reward token is pegged to; absent for a token with no known peg.
+    payoutCurrency: t.Optional(PayoutCurrencySchema),
     campaignId: t.String(),
     name: t.String(),
     interactionTypeKey: t.String(),
@@ -308,6 +316,15 @@ const ProductDetailsSchema = t.Object({
     totalPrice: t.Optional(t.Number()),
 });
 
+// Mirrors `PayoutConversion` (sdk/core/src/rewards/payoutConversion.ts).
+const PayoutConversionSchema = t.Object({
+    displayCurrency: PayoutCurrencySchema,
+    payoutCurrency: PayoutCurrencySchema,
+    rate: t.Optional(t.Number()),
+    formattedRate: t.Optional(t.String()),
+    payoutAmount: t.Optional(t.String()),
+});
+
 // Mirrors `BestReward` (sdk/core/src/rewards/select.ts), minus `campaignId`
 // which the native SDK has no use for.
 const BestRewardSchema = t.Object({
@@ -317,6 +334,7 @@ const BestRewardSchema = t.Object({
         PercentageEstimatedRewardSchema.properties.payoutType,
         TieredEstimatedRewardSchema.properties.payoutType,
     ]),
+    conversion: t.Optional(PayoutConversionSchema),
     minPurchaseAmount: t.Optional(t.String()),
     lockupDurationDays: t.Optional(t.Number()),
     referrerReward: t.Optional(EstimatedRewardSchema),

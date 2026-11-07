@@ -1,4 +1,5 @@
 import { pricingRepository, type TokenPrice } from "@backend-infrastructure";
+import { getStablecoinCurrency } from "@frak-labs/app-essentials/blockchain";
 import type { Address } from "viem";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
@@ -84,6 +85,7 @@ export class EstimatedRewardService {
 
         return {
             token: campaignToken,
+            payoutCurrency: getStablecoinCurrency(campaignToken),
             campaignId: campaign.id,
             name: campaign.name,
             interactionTypeKey: trigger,

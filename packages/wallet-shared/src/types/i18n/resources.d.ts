@@ -269,6 +269,17 @@ export default interface Resources {
           "title": "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}.",
           "title_noReward": "Thank you for sharing!"
         },
+        "conversion": {
+          "currency": {
+            "eur": "euros",
+            "gbp": "pounds",
+            "usd": "US dollars"
+          },
+          "paid": "Paid in {{payoutCurrency}}: you'll receive {{payoutAmount}}.",
+          "paid_tiered": "Paid in {{payoutCurrency}}: you'll receive up to {{payoutAmount}}.",
+          "percentage": "Paid in {{payoutCurrency}}, converted at the exchange rate on the day your purchase is confirmed.",
+          "rate": "Shown in {{displayCurrency}} at today's rate ({{rate}})."
+        },
         "dismiss": "Later",
         "faq": {
           "a1": "Anyone can become an ambassador by sharing products through their unique link.",
@@ -277,6 +288,7 @@ export default interface Resources {
           "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
           "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
           "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
+          "a6Converted": "Reward amounts are shown in {{displayCurrency}} at the day's exchange rate, but paid in {{payoutCurrency}}.",
           "a6_noReward": "This brand isn't offering you a reward right now, so there's no amount to show. When a brand does, it can be a fixed amount, a percentage of the purchase, or an amount that varies by tier.",
           "q1": "Who can become an \"ambassador\"?",
           "q2": "How much can I earn?",

@@ -27,6 +27,12 @@ export {
     frakChainIds,
 } from "./chains";
 export { getTransport, getViemClientFromChain } from "./provider";
+export {
+    getStablecoin,
+    getStablecoinCurrency,
+    type StablecoinCurrency,
+    stablecoinCurrency,
+} from "./stablecoinCurrency";
 export { getErpcTransport } from "./transport/erpc-transport";
 // Actions
 export { KernelWallet } from "./wallet";

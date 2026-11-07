@@ -1,4 +1,8 @@
-import { stablecoins } from "@frak-labs/app-essentials/blockchain";
+import {
+    type Stablecoin,
+    stablecoinCurrency,
+    stablecoins,
+} from "@frak-labs/app-essentials/blockchain";
 import { Mutex } from "async-mutex";
 import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -21,21 +25,20 @@ function isTokenPriceCurrency(currency: string): currency is PegCurrency {
 }
 
 /**
- * Tokens redeemable 1:1 for a fiat currency (Monerium e-money tokens + USDC).
- * Priced at exactly 1 unit of their peg — no market data needed; other fiat
- * legs go through ECB FX rates. Both environments are mapped so testnet
- * tokens price correctly too (several are not listed on CoinGecko at all).
+ * Every payout stablecoin on both environments, each priced at exactly 1 unit
+ * of its peg (`stablecoinCurrency`): no market data needed, other fiat legs go
+ * through ECB FX rates. Testnet tokens are included since several are not
+ * listed on CoinGecko at all.
  */
 const PEGGED_TOKENS: ReadonlyArray<readonly [Address, PegCurrency]> = [
-    [stablecoins.prod.eure, "eur"],
-    [stablecoins.testnet.eure, "eur"],
-    [stablecoins.prod.gbpe, "gbp"],
-    [stablecoins.testnet.gbpe, "gbp"],
-    [stablecoins.prod.usde, "usd"],
-    [stablecoins.testnet.usde, "usd"],
-    [stablecoins.prod.usdc, "usd"],
-    [stablecoins.testnet.usdc, "usd"],
-];
+    stablecoins.prod,
+    stablecoins.testnet,
+].flatMap((addresses) =>
+    (Object.keys(stablecoinCurrency) as Stablecoin[]).map(
+        (stablecoin) =>
+            [addresses[stablecoin], stablecoinCurrency[stablecoin]] as const
+    )
+);
 
 function pegCurrencyOf(token: Address): PegCurrency | undefined {
     return PEGGED_TOKENS.find(([address]) =>

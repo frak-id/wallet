@@ -5,20 +5,25 @@ import { authenticate } from "app/shopify.server";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
-import { getMerchantBankStatus } from "../services.server/backendMerchant";
+import {
+    getMerchantBankStatus,
+    getMerchantRewardToken,
+} from "../services.server/backendMerchant";
 import { getCurrentPurchases } from "../services.server/purchase";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
-    const [currentPurchases, bankStatus] = await Promise.all([
+    const [currentPurchases, bankStatus, rewardToken] = await Promise.all([
         getCurrentPurchases(context),
         getMerchantBankStatus(context, request),
+        getMerchantRewardToken(context, request),
     ]);
-    return data({ currentPurchases, bankStatus });
+    return data({ currentPurchases, bankStatus, rewardToken });
 };
 
 export default function FundingPage() {
-    const { currentPurchases, bankStatus } = useLoaderData<typeof loader>();
+    const { currentPurchases, bankStatus, rewardToken } =
+        useLoaderData<typeof loader>();
     const { t } = useTranslation();
 
     return (
@@ -31,6 +36,7 @@ export default function FundingPage() {
                         <PurchaseStatus
                             bankStatus={bankStatus}
                             currentPurchases={currentPurchases}
+                            rewardToken={rewardToken}
                         />
                     </>
                 )}

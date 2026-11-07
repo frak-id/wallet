@@ -1,4 +1,5 @@
 import type {
+    Currency,
     EstimatedReward,
     MerchantReward,
     RuleConditions,
@@ -39,6 +40,8 @@ export type CampaignView = {
     status: "live" | "upcoming";
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
+    /** Fiat the campaign pays in; every reward amount is shown in it. */
+    payoutCurrency?: Currency;
     headlineReferrerReward?: string;
     formattedStartDate?: string;
     formattedEndDate?: string;
@@ -54,6 +57,8 @@ export type CampaignView = {
     isReferralOnly: boolean;
     /** Referrer share of the purchase campaign: what the Frak welcome bonus pays. */
     welcomeBonus?: EstimatedReward;
+    /** Fiat the campaign behind {@link welcomeBonus} pays in; may differ from {@link payoutCurrency}. */
+    welcomeBonusCurrency?: Currency;
 };
 
 const REFERRAL_FIELD = "attribution.referrerIdentityGroupId";
@@ -99,11 +104,17 @@ export function buildCampaignView(
         ? new Date(campaign.expiresAt)
         : undefined;
 
+    const bonusCampaign = purchaseCampaign(campaign, rewards, now);
+
     return {
         status,
         referrer: campaign.referrer,
         referee: campaign.referee,
-        headlineReferrerReward: formatRewardOrHide(campaign.referrer),
+        payoutCurrency: campaign.payoutCurrency,
+        headlineReferrerReward: formatRewardOrHide(
+            campaign.referrer,
+            campaign.payoutCurrency
+        ),
         formattedStartDate: startsAt ? formatDate(startsAt, locale) : undefined,
         formattedEndDate: endDate ? formatDate(endDate, locale) : undefined,
         daysRemaining: endDate ? getDaysRemaining(endDate, now) : undefined,
@@ -112,11 +123,12 @@ export function buildCampaignView(
         minPurchaseAmount,
         minPurchaseDisplay:
             minPurchaseAmount != null && minPurchaseAmount > 0
-                ? formatAmount(minPurchaseAmount)
+                ? formatAmount(minPurchaseAmount, campaign.payoutCurrency)
                 : undefined,
         hasProductScope: campaign.productScope != null,
         isReferralOnly: isReferralOnly(campaign.conditions),
-        welcomeBonus: purchaseCampaign(campaign, rewards, now)?.referrer,
+        welcomeBonus: bonusCampaign?.referrer,
+        welcomeBonusCurrency: bonusCampaign?.payoutCurrency,
     };
 }
 

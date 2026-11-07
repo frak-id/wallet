@@ -123,6 +123,41 @@ describe("buildRewardOffer", () => {
         });
     });
 
+    test("keeps each payout in its own currency when the bonus campaign pays in another fiat", () => {
+        const offer = buildRewardOffer(
+            buildCampaignView(
+                [
+                    {
+                        campaignId: "signup",
+                        name: "Signup",
+                        interactionTypeKey: "referral",
+                        conditions: [],
+                        referrer: fixed(20),
+                        referee: fixed(4),
+                        payoutCurrency: "eur",
+                    },
+                    {
+                        campaignId: "purchase",
+                        name: "Purchase",
+                        interactionTypeKey: "purchase",
+                        conditions: [],
+                        referrer: fixed(5),
+                        referee: fixed(4),
+                        payoutCurrency: "usd",
+                    },
+                ],
+                "en",
+                now
+            ),
+            frak,
+            "m1"
+        );
+        expect(offer.purchase?.total).toBeUndefined();
+        expect(offer.purchase?.amount).toBe(
+            `${formatAmount(4, "eur")} + ${formatAmount(5, "usd")}`
+        );
+    });
+
     test("sums two percentages into one", () => {
         const offer = buildRewardOffer(
             view({

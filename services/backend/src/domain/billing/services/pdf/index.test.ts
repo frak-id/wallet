@@ -359,9 +359,9 @@ describe("groupRewards currency grouping (B9 recap input)", () => {
     });
 
     it("recapTotalsByCurrency falls back to a single zero row when there are no rewards", () => {
-        const perCurrency = recapTotalsByCurrency([], false, "gbpe");
+        const perCurrency = recapTotalsByCurrency([], false, "usdc");
         expect(perCurrency).toHaveLength(1);
-        expect(perCurrency[0].currency).toBe("gbpe");
+        expect(perCurrency[0].currency).toBe("usdc");
         expect(perCurrency[0].totalTtc.toFixed(2)).toBe("0.00");
     });
 });

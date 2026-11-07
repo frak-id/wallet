@@ -9,6 +9,8 @@ export {
     type FrakChainId,
     frakChainIds,
     getExecutionAbi,
+    getStablecoin,
+    getStablecoinCurrency,
     KernelExecuteAbi,
     KernelInitAbi,
     KernelWallet,
@@ -16,6 +18,8 @@ export {
     multiWebAuthNValidatorV2Abi,
     rewarderHubAbi,
     type Stablecoin,
+    type StablecoinCurrency,
+    stablecoinCurrency,
     stablecoins,
 } from "./blockchain";
 

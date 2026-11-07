@@ -7,14 +7,17 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import type { PurchaseTable } from "../../../db/schema/purchaseTable";
+import type { RewardTokenInfo } from "../../utils/rewardCurrency";
 import { ExternalButton, ExternalLink } from "../ui/ExternalLink";
 
 export function PurchaseStatus({
     bankStatus,
     currentPurchases,
+    rewardToken,
 }: {
     bankStatus: BankStatus;
     currentPurchases: PurchaseTable["$inferSelect"][];
+    rewardToken: RewardTokenInfo | null;
 }) {
     const { t } = useTranslation();
 
@@ -30,7 +33,10 @@ export function PurchaseStatus({
                         <s-text tone="neutral">
                             {t("status.purchase.twoStepNotice")}
                         </s-text>
-                        <CreatePurchase bankAddress={bankStatus.bankAddress} />
+                        <CreatePurchase
+                            bankAddress={bankStatus.bankAddress}
+                            rewardToken={rewardToken}
+                        />
                     </>
                 )}
 
@@ -118,11 +124,18 @@ function ActivePurchases({
  * Component to fund the merchant bank via Shopify app purchase.
  * Uses the single bank address from the backend BankStatus.
  */
-function CreatePurchase({ bankAddress }: { bankAddress: string }) {
+function CreatePurchase({
+    bankAddress,
+    rewardToken,
+}: {
+    bankAddress: string;
+    rewardToken: RewardTokenInfo | null;
+}) {
     const [amount, setAmount] = useState("");
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const [error, setError] = useState<string | null>(null);
     const { t } = useTranslation();
+    const shopCurrency = rootData?.shop.preferredCurrency ?? "eur";
 
     const {
         data: confirmationUrl,
@@ -165,7 +178,7 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
                     min={0}
                     step={0.5}
                     disabled={isLoading || !!confirmationUrl}
-                    suffix={rootData?.shop.preferredCurrency ?? "EUR"}
+                    suffix={shopCurrency.toUpperCase()}
                 />
                 <s-button
                     onClick={() => handleSubmit()}
@@ -176,6 +189,18 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
                     {t("status.purchase.fundBank")}
                 </s-button>
             </s-stack>
+
+            {rewardToken && rewardToken.currency !== shopCurrency && (
+                <s-banner tone="info">
+                    {t("status.purchase.conversionNotice", {
+                        shopFiat: t(`status.purchase.fiat.${shopCurrency}`),
+                        rewardFiat: t(
+                            `status.purchase.fiat.${rewardToken.currency}`
+                        ),
+                        token: rewardToken.label,
+                    })}
+                </s-banner>
+            )}
 
             {error && <s-text tone="critical">{error}</s-text>}
 

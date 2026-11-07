@@ -1,4 +1,5 @@
 import {
+    getStablecoin,
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
@@ -18,12 +19,7 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
-import {
-    EurIcon,
-    GbpIcon,
-    UsdcIcon,
-    UsdIcon,
-} from "@frak-labs/design-system/icons";
+import { EurIcon, UsdcIcon } from "@frak-labs/design-system/icons";
 import { type ReactNode, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -32,7 +28,6 @@ import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDi
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
-import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,
@@ -53,8 +48,6 @@ type FormMerchant = {
 
 const CURRENCY_ICONS: Record<Stablecoin, ReactNode> = {
     eure: <EurIcon className={styles.currencyIcon} />,
-    gbpe: <GbpIcon className={styles.currencyIcon} />,
-    usde: <UsdIcon className={styles.currencyIcon} />,
     usdc: <UsdcIcon className={styles.currencyIcon} />,
 };
 
@@ -144,8 +137,7 @@ export function MerchantEditSheet({
             name: merchant.name,
             domain: merchant.domain,
             defaultCurrency:
-                detectStablecoinFromAddress(merchant.defaultRewardToken) ??
-                "eure",
+                getStablecoin(merchant.defaultRewardToken) ?? "eure",
         }),
         [merchant]
     );

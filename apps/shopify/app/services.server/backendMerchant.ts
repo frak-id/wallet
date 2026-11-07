@@ -10,6 +10,7 @@ import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank"
 import { LRUCache } from "lru-cache";
 import type { AuthenticatedContext } from "../types/context";
 import { backendApi } from "../utils/backendApi";
+import { type RewardTokenInfo, rewardTokenInfo } from "../utils/rewardCurrency";
 import { levelForStatus, log } from "./logger";
 import { resolveMerchantId } from "./merchant";
 import { getRequestId } from "./requestId";
@@ -73,6 +74,11 @@ const campaignsCache = new LRUCache<string, CampaignListResponse>({
 });
 
 const bankStatusCache = new LRUCache<string, BankStatus>({
+    max: 512,
+    ttl: 5_000,
+});
+
+const rewardTokenCache = new LRUCache<string, RewardTokenInfo>({
     max: 512,
     ttl: 5_000,
 });
@@ -488,6 +494,45 @@ export async function getMerchantExplorerSettings(
         };
     } catch (error) {
         log.error({ err: error, merchantId }, "merchant detail fetch error");
+        return null;
+    }
+}
+
+/**
+ * Fiat and ticker of the merchant's default reward token, i.e. what the bank holds.
+ */
+export async function getMerchantRewardToken(
+    context: AuthenticatedContext,
+    request: Request
+): Promise<RewardTokenInfo | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    const cached = rewardTokenCache.get(merchantId);
+    if (cached) {
+        return cached;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .get({
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "merchant reward token fetch failed"
+            );
+            return null;
+        }
+        const info = rewardTokenInfo(data.defaultRewardToken);
+        rewardTokenCache.set(merchantId, info);
+        return info;
+    } catch (error) {
+        log.error({ err: error, merchantId }, "merchant reward token error");
         return null;
     }
 }

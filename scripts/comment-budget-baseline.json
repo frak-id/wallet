@@ -254,7 +254,6 @@
     "packages/app-essentials/src/webauthn/mergeConsent.ts": 2,
     "packages/design-system/src/components/AlertMessage/alertMessage.css.ts": 2,
     "packages/design-system/src/components/Input/Input.test.tsx": 2,
-    "packages/design-system/src/components/ResponsiveModal/index.tsx": 2,
     "packages/design-system/src/components/TextArea/TextArea.test.tsx": 2,
     "packages/design-system/src/hooks/useResponsiveValue.ts": 1,
     "packages/design-system/src/hostSheet.test.ts": 1,

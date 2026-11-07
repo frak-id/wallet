@@ -41,6 +41,17 @@
                 "tagline": "Vous recevez une récompense à chaque fois qu'un proche achète via votre lien.",
                 "tagline_noReward": "Pas de récompense pour vous chez cette marque pour le moment, mais vos proches peuvent la découvrir grâce à votre lien."
             },
+            "conversion": {
+                "paid": "Versé en {{payoutCurrency}} : vous recevrez {{payoutAmount}}.",
+                "paid_tiered": "Versé en {{payoutCurrency}} : vous recevrez jusqu'à {{payoutAmount}}.",
+                "rate": "Affiché en {{displayCurrency}} au taux du jour ({{rate}}).",
+                "percentage": "Versé en {{payoutCurrency}}, converti au taux de change du jour où votre achat est confirmé.",
+                "currency": {
+                    "eur": "euros",
+                    "usd": "dollars américains",
+                    "gbp": "livres sterling"
+                }
+            },
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "amount_noReward": "Partagez vos coups de cœur",
@@ -92,6 +103,7 @@
                 "q6_noReward": "Pourquoi aucun montant n'est affiché ?",
                 "a6": "Le montant affiché correspond à la récompense maximale possible. Selon la marque, votre récompense peut être un montant fixe, un pourcentage de l'achat, ou varier selon des paliers en fonction du montant de la commande.",
                 "a6_noReward": "Cette marque ne vous propose pas de récompense pour le moment, il n'y a donc aucun montant à afficher. Quand une marque en propose une, il peut s'agir d'un montant fixe, d'un pourcentage de l'achat ou d'un montant variable selon des paliers.",
+                "a6Converted": "Les montants sont affichés en {{displayCurrency}} au taux de change du jour, mais versés en {{payoutCurrency}}.",
                 "reward": {
                     "referrerLabel": "Récompense en tant que parrain",
                     "refereeLabel": "Récompense en tant que filleul",

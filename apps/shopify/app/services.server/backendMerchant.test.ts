@@ -1,9 +1,11 @@
+import { currentStablecoins } from "@frak-labs/app-essentials";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
 import {
     getFrakWebhookStatus,
     getMerchantBankStatus,
     getMerchantCampaigns,
+    getMerchantRewardToken,
     setupFrakWebhook,
 } from "./backendMerchant";
 
@@ -589,5 +591,59 @@ describe("getFrakWebhookStatus", () => {
         expect(mockGet).toHaveBeenCalledWith({
             headers: { "X-Shopify-Session-Token": "wh-param-token" },
         });
+    });
+});
+
+describe("getMerchantRewardToken", () => {
+    const mockContext = {} as AuthenticatedContext;
+    const request = makeRequest("https://test.myshopify.com/app");
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("reads the fiat and ticker of the merchant default token", async () => {
+        const mockGet = vi.fn().mockResolvedValue({
+            data: { defaultRewardToken: currentStablecoins.usdc },
+            error: null,
+        });
+        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-token");
+        vi.mocked(backendApi.business.merchant).mockReturnValue({
+            get: mockGet,
+        } as any);
+
+        expect(await getMerchantRewardToken(mockContext, request)).toEqual({
+            currency: "usd",
+            label: "USDC",
+        });
+    });
+
+    it("serves a repeated read from the cache", async () => {
+        const mockGet = vi.fn().mockResolvedValue({
+            data: { defaultRewardToken: currentStablecoins.eure },
+            error: null,
+        });
+        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-cached");
+        vi.mocked(backendApi.business.merchant).mockReturnValue({
+            get: mockGet,
+        } as any);
+
+        await getMerchantRewardToken(mockContext, request);
+        await getMerchantRewardToken(mockContext, request);
+
+        expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+
+    it("is null without a merchant or when the backend fails", async () => {
+        vi.mocked(resolveMerchantId).mockResolvedValueOnce(null);
+        expect(await getMerchantRewardToken(mockContext, request)).toBeNull();
+
+        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-failing");
+        vi.mocked(backendApi.business.merchant).mockReturnValue({
+            get: vi
+                .fn()
+                .mockResolvedValue({ data: null, error: { status: 500 } }),
+        } as any);
+        expect(await getMerchantRewardToken(mockContext, request)).toBeNull();
     });
 });

@@ -1,8 +1,8 @@
+import { getStablecoin } from "@frak-labs/app-essentials";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useTranslation } from "react-i18next";
 import { EditCard } from "@/module/common/component/EditCard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
-import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import {
     DetailCell,
     DetailCells,
@@ -23,8 +23,7 @@ export function MerchantDetailsCard({ merchantId }: { merchantId: string }) {
 
     if (!merchant) return null;
 
-    const stablecoin =
-        detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure";
+    const stablecoin = getStablecoin(merchant.defaultRewardToken) ?? "eure";
     const currency = currencyMetadata[stablecoin];
 
     return (

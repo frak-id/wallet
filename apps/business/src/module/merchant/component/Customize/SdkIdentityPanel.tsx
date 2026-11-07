@@ -1,5 +1,6 @@
 import { isValidUrl, normalizeUrl } from "@frak-labs/app-essentials";
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import type { Currency } from "@frak-labs/core-sdk";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
 import {
@@ -13,13 +14,16 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { currencyMetadata } from "@/module/common/utils/currencyOptions";
-import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField, FormItem } from "@/module/forms/Form";
+import {
+    DisplayCurrencyNotice,
+    useFiatName,
+} from "@/module/merchant/component/DisplayConversion";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
+import { useDisplayConversion } from "@/module/merchant/hook/useDisplayConversion";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
@@ -40,11 +44,7 @@ export function SdkIdentityPanel({
 }) {
     const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
-    const rewardToken = merchant
-        ? currencyMetadata[
-              detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure"
-          ]?.label
-        : undefined;
+    const fiatName = useFiatName();
     const { mutateAsync: editSdkConfig, isSuccess: isSuccessUpdate } =
         useMerchantUpdate({ merchantId, target: "sdk-config" });
 
@@ -91,6 +91,17 @@ export function SdkIdentityPanel({
             });
         },
         [editSdkConfig, form]
+    );
+
+    const currency = useWatch({ control: form.control, name: "currency" });
+    const conversion = useDisplayConversion({
+        merchantId,
+        displayCurrency: currency,
+    });
+    const switchToPayoutCurrency = useCallback(
+        (payoutCurrency: Currency) =>
+            form.setValue("currency", payoutCurrency, { shouldDirty: true }),
+        [form]
     );
 
     useCustomizeSection(SECTION_KEYS.identity, form, onSubmit);
@@ -195,9 +206,20 @@ export function SdkIdentityPanel({
                         render={({ field }) => (
                             <EditField
                                 label={t("customize.identity.currency.label")}
-                                hint={t("customize.identity.currency.hint", {
-                                    token: rewardToken ?? "",
-                                })}
+                                hint={
+                                    conversion.isReady &&
+                                    !conversion.isConverted
+                                        ? t("displayConversion.sameCurrency", {
+                                              payoutFiat: fiatName(
+                                                  conversion.payoutCurrency
+                                              ),
+                                              token: conversion.tokenLabel,
+                                              context: conversion.isAuto
+                                                  ? "auto"
+                                                  : undefined,
+                                          })
+                                        : undefined
+                                }
                             >
                                 <Select
                                     value={field.value || AUTO}
@@ -228,6 +250,10 @@ export function SdkIdentityPanel({
                                 </Select>
                             </EditField>
                         )}
+                    />
+                    <DisplayCurrencyNotice
+                        conversion={conversion}
+                        onUsePayoutCurrency={switchToPayoutCurrency}
                     />
                     <FormField
                         control={form.control}
