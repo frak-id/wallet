@@ -85,6 +85,7 @@ export {
     isExpired,
     isInIframe,
     isPermanentHttpError,
+    isProdStage,
     isTransientHttpError,
     isWebAuthNSupported,
     type ListenerMiscEventMap,

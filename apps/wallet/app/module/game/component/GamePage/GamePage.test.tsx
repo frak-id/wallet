@@ -3,21 +3,23 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameHistory, navigate, trackEvent } = vi.hoisted(() => ({
-    navigate: vi.fn(),
-    trackEvent: vi.fn(),
-    currentGame: {
-        data: undefined as unknown,
-        isError: false,
-        refetch: vi.fn(() => Promise.resolve()),
-    },
-    gameHistory: {
-        data: [] as unknown[],
-        isLoading: false,
-        isError: false,
-        refetch: vi.fn(() => Promise.resolve()),
-    },
-}));
+const { currentGame, gameHistory, navigate, trackEvent, maybeAskForReview } =
+    vi.hoisted(() => ({
+        navigate: vi.fn(),
+        trackEvent: vi.fn(),
+        maybeAskForReview: vi.fn(),
+        currentGame: {
+            data: undefined as unknown,
+            isError: false,
+            refetch: vi.fn(() => Promise.resolve()),
+        },
+        gameHistory: {
+            data: [] as unknown[],
+            isLoading: false,
+            isError: false,
+            refetch: vi.fn(() => Promise.resolve()),
+        },
+    }));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
@@ -47,6 +49,9 @@ vi.mock("react-i18next", () => ({
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
     trackEvent,
+}));
+vi.mock("@/module/common/utils/maybeAskForReview", () => ({
+    maybeAskForReview,
 }));
 vi.mock("@/module/common/component/Back", () => ({ Back: () => null }));
 vi.mock("@/module/instagram/hook/useInstagramLink", () => ({
@@ -119,6 +124,7 @@ describe("GamePage", () => {
         gameHistory.isError = false;
         currentGame.isError = false;
         navigate.mockClear();
+        maybeAskForReview.mockClear();
         gameSeenStore.setState({ seen: {} });
         modalStore.getState().dismissAll();
     });
@@ -345,6 +351,18 @@ describe("GamePage", () => {
         ).toEqual([
             ["game_progress_shown", { tickets_gained: 3, unlocked: false }],
         ]);
+    });
+
+    it("asks for a store review only once tickets were earned since the last visit", () => {
+        currentGame.data = player(4, true);
+        const first = render(<GamePage />);
+        expect(maybeAskForReview).not.toHaveBeenCalled();
+        first.unmount();
+
+        currentGame.data = player(7, true);
+        render(<GamePage />);
+
+        expect(maybeAskForReview).toHaveBeenCalledWith("game_tickets");
     });
 
     it("shows the gains once the refetch lands, and the unlock when the tickets start to count", () => {

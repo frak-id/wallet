@@ -22,6 +22,7 @@ import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
+import { registerAppLaunch } from "@/module/common/utils/maybeAskForReview";
 import { initNativeGlass } from "@/module/native-glass/bridge";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
@@ -197,6 +198,8 @@ async function main() {
             </I18nextProvider>
         );
     });
+
+    if (IS_TAURI) registerAppLaunch();
 
     // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
     if (IS_TAURI) {

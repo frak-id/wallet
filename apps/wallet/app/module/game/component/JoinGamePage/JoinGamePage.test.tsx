@@ -7,10 +7,12 @@ const {
     gameHistory,
     navigate,
     refetchQueries,
+    maybeAskForReview,
     redeemResult,
     trackEvent,
 } = vi.hoisted(() => ({
     trackEvent: vi.fn(),
+    maybeAskForReview: vi.fn(),
     navigate: vi.fn(),
     refetchQueries: vi.fn(() => Promise.resolve()),
     redeemResult: { current: { kind: "frak" } as RedeemResult },
@@ -29,6 +31,9 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
     trackEvent,
+}));
+vi.mock("@/module/common/utils/maybeAskForReview", () => ({
+    maybeAskForReview,
 }));
 vi.mock("@tanstack/react-query", () => ({
     useQueryClient: () => ({ refetchQueries }),
@@ -116,6 +121,7 @@ describe("JoinGamePage", () => {
         navigate.mockClear();
         refetchQueries.mockClear();
         trackEvent.mockClear();
+        maybeAskForReview.mockClear();
         currentGame.data = undefined;
         currentGame.isLoading = false;
         gameHistory.data = [];
@@ -271,5 +277,26 @@ describe("JoinGamePage", () => {
             replace: true,
         });
         expect(screen.queryByText(/reward-/)).not.toBeInTheDocument();
+    });
+
+    it("asks for a review once a game is joined", () => {
+        redeemResult.current = { kind: "frak", game };
+        render(<JoinGamePage initialCode="FRAK26" />);
+
+        fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
+
+        expect(maybeAskForReview).toHaveBeenCalledExactlyOnceWith(
+            "game_joined"
+        );
+    });
+
+    it("does not ask for a review for a friend's code or a rejected code", () => {
+        redeemResult.current = { kind: "user" };
+        render(<JoinGamePage initialCode="LOLA10" />);
+
+        fireEvent.click(screen.getByRole("button", { name: /LOLA10/ }));
+        fireEvent.click(screen.getByRole("button", { name: "fail" }));
+
+        expect(maybeAskForReview).not.toHaveBeenCalled();
     });
 });

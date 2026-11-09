@@ -4,7 +4,9 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { maybeAskForReview } from "@/module/common/utils/maybeAskForReview";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { celebrationAmount } from "@/module/game/styles/celebration.css";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
@@ -24,6 +26,7 @@ export function GameWinModal({
     const gameId = result.game.id;
     const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
     useConfettiBurst();
+    useEffect(() => () => maybeAskForReview("game_win"), []);
 
     const seePrize = () => {
         trackEvent("game_win_screen_closed", {

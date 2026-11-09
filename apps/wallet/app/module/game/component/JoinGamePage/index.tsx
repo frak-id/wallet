@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
+import { maybeAskForReview } from "@/module/common/utils/maybeAskForReview";
 import {
     DeckBadge,
     HeroCard,
@@ -79,6 +80,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
             outcome: result.game ? "joined" : "referrer_set",
         });
         if (result.game) {
+            maybeAskForReview("game_joined");
             // Refetch, not invalidate: nothing observes the query here, and /game bounces back on a stale non-participant.
             const refetched = queryClient.refetchQueries({
                 queryKey: currentGameKeys.all,
