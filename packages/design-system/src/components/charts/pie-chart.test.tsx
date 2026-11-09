@@ -179,11 +179,12 @@ describe("PieChart", () => {
     it("keeps a slice that fills the whole circle in place on hover", async () => {
         const whole = [{ label: "Only", value: 5, color: "rgb(1, 1, 1)" }];
         const { container } = render(<ControlledPie data={whole} />);
+        const label = container.querySelector("text")?.parentElement;
+        const atRest = label?.style.transform;
 
         fireEvent.mouseEnter(hitboxes(container)[0]);
 
-        const label = container.querySelector("text")?.parentElement;
-        expect(label?.style.transform).toBe("translate(0px, 0px)");
+        expect(label?.style.transform).toBe(atRest);
         await new Promise((settle) => setTimeout(settle, 300));
         const slice = container.querySelector('path[fill="rgb(1, 1, 1)"]');
         expect(slice?.getAttribute("style") ?? "").not.toMatch(/translate/);
