@@ -141,6 +141,10 @@ class FrakInstaller
                 );
                 return true;
             },
+            'seed reward reminder' => static function (): bool {
+                FrakConfig::setRewardReminderEnabled(true);
+                return true;
+            },
             // Async webhook infrastructure: queue table + key/value cache table.
             // `sql/install.php` provisions both via `CREATE TABLE IF NOT EXISTS`.
             // Schema must be in place before any order status transition can
@@ -232,6 +236,7 @@ class FrakInstaller
                 Configuration::deleteByName(FrakConfig::WEBHOOK_SECRET);
                 Configuration::deleteByName('FRAK_SETTINGS_VERSION');
                 Configuration::deleteByName(FrakConfig::CRON_TOKEN);
+                Configuration::deleteByName(FrakConfig::REWARD_REMINDER);
                 FrakPlacementRegistry::clearAll();
                 return true;
             },

@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Reward reminder setting.** Settings → Frak gains a *Reward reminder* checkbox, on by default. It controls the small badge shown to shoppers who earned a reward on the store but have not created their Frak wallet yet. Turning it off adds `rewardReminder: { enabled: false }` to the `window.FrakSetup` config.
+
 ## [1.2.0] - 2026-10-06
 
 ### Added

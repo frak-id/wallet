@@ -155,6 +155,12 @@ async function main() {
             bindingHex: mergeBindingHex,
             ts: 1_800_000_000,
         }),
+        buildFixture({
+            description: "keypair 1, frak-rewards-v1, empty binding",
+            privkeyHex: key1,
+            op: "frak-rewards-v1",
+            merchantId: MERCHANT_ID,
+        }),
     ]);
 
     const output = {

@@ -4,6 +4,7 @@ export { ensureIdentity } from "./ensureIdentity";
 export { getInstallUrl } from "./getInstallUrl";
 export { getMerchantInformation } from "./getMerchantInformation";
 export { getMergeToken } from "./getMergeToken";
+export { getRewardSummary } from "./getRewardSummary";
 export { getUserReferralStatus } from "./getUserReferralStatus";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";

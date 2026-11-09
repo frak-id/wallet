@@ -52,6 +52,8 @@ export type ResolvedPlacement = {
             referrerNoRewardText?: string;
             ctaText?: string;
             ctaNoRewardText?: string;
+            /** Referee without a linked wallet: the claim button. Supports `{REWARD}`. */
+            claimCtaText?: string;
             /** Custom illustration URL replacing the built-in gift icon. */
             imageUrl?: string;
             css?: string;
@@ -63,8 +65,23 @@ export type ResolvedPlacement = {
             inappTitle?: string;
             inappDescription?: string;
             inappCta?: string;
+            /** Pending mode: a visitor with an unclaimed reward. Supports `{REWARD}`, `{DAYS}`, `{DATE}`. */
+            pendingTitle?: string;
+            pendingDescription?: string;
+            pendingCta?: string;
             /** Custom illustration URL replacing the built-in gift icon. */
             imageUrl?: string;
+            css?: string;
+        };
+        /** Store-wide only: the auto-mounted `<frak-reward-reminder>` never reads a placement's entry. */
+        rewardReminder?: {
+            /** `false` hides it for every visitor, whatever the SDK config says. */
+            enabled?: boolean;
+            position?: "left" | "right";
+            /** Supports `{REWARD}`, `{DAYS}`, `{DATE}`, `{BRAND}`. */
+            title?: string;
+            description?: string;
+            cta?: string;
             css?: string;
         };
         /** Store-wide only: `<frak-ambassador>` never reads a placement's entry. */

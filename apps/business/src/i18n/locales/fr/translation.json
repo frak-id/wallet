@@ -1099,9 +1099,9 @@
                 },
                 "limits": {
                     "title": "Limites et délais",
-                    "pendingExpiration": "Délai pour réclamer la récompense",
-                    "pendingExpirationValue_one": "{{count}} jour pour réclamer",
-                    "pendingExpirationValue_other": "{{count}} jours pour réclamer",
+                    "pendingExpiration": "Délai pour récupérer la récompense",
+                    "pendingExpirationValue_one": "{{count}} jour pour la récupérer",
+                    "pendingExpirationValue_other": "{{count}} jours pour la récupérer",
                     "lockup": "Blocage de la récompense",
                     "lockupValue": "{{duration}} avant règlement",
                     "lockupNone": "Aucun blocage",
@@ -1993,6 +1993,22 @@
                 }
             }
         },
+        "rewardReminder": {
+            "title": "Rappel de récompense",
+            "description": "Affiche un petit badge aux clients qui ont gagné une récompense sur votre boutique sans avoir encore créé leur wallet Frak, avec le montant et le nombre de jours restants avant expiration. Une récompense non récupérée n'est jamais versée. Les autres visiteurs ne le voient pas.",
+            "enabled": "Afficher le rappel de récompense",
+            "position": {
+                "label": "Position",
+                "left": "Gauche",
+                "right": "Droite"
+            },
+            "tokensHint": "Variables : {REWARD}, {DAYS}, {DATE}, {BRAND}. Un champ vide conserve le texte par défaut.",
+            "fields": {
+                "title": "Titre",
+                "description": "Description",
+                "cta": "Texte du bouton"
+            }
+        },
         "ambassador": {
             "title": "Page ambassadeur",
             "description": "La photo et les textes de votre page ambassadeur, sur toutes les plateformes où elle est placée. Un champ vide garde le texte par défaut.",
@@ -2067,8 +2083,10 @@
             },
             "bannerGroups": {
                 "referral": "Parrainage",
-                "inapp": "In-app"
+                "inapp": "In-app",
+                "pending": "Récompense non récupérée"
             },
+            "pendingTokensHint": "Affiché aux visiteurs ayant une récompense non récupérée. Variables : {REWARD}, {DAYS}, {DATE}.",
             "rewardToken": {
                 "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
                 "copy": "Copier {REWARD}"
@@ -2099,6 +2117,10 @@
                 "inappTitle": "Titre in-app",
                 "inappDescription": "Description in-app",
                 "inappCta": "CTA in-app",
+                "pendingTitle": "Titre récompense non récupérée",
+                "pendingDescription": "Description récompense non récupérée",
+                "pendingCta": "CTA récompense non récupérée",
+                "claimCtaText": "Texte du bouton Récupérer",
                 "css": "CSS du composant"
             },
             "style": {

@@ -96,6 +96,7 @@ export type PostPurchaseFormValues = {
     referrerNoRewardText: LocalizedText;
     ctaText: LocalizedText;
     ctaNoRewardText: LocalizedText;
+    claimCtaText: LocalizedText;
     imageUrl: string;
     css: string;
 };
@@ -107,6 +108,9 @@ export type BannerFormValues = {
     inappTitle: LocalizedText;
     inappDescription: LocalizedText;
     inappCta: LocalizedText;
+    pendingTitle: LocalizedText;
+    pendingDescription: LocalizedText;
+    pendingCta: LocalizedText;
     imageUrl: string;
     css: string;
 };
@@ -122,6 +126,16 @@ export const SHARING_TRANSLATION_KEYS = {
 export type SharingWordingFormValues = {
     title: LocalizedText;
     text: LocalizedText;
+};
+
+// Store-wide, so its own form rather than a `ComponentType`. `enabled` is
+// the switch as shown: an unset stored value reads back as on.
+export type RewardReminderFormValues = {
+    enabled: boolean;
+    position: "left" | "right";
+    title: LocalizedText;
+    description: LocalizedText;
+    cta: LocalizedText;
 };
 
 export type ComponentSettingsFormValues = {

@@ -30,6 +30,11 @@ export type {
     ResolvedSdkConfig,
     SdkResolvedConfig,
 } from "./resolvedConfig";
+export type {
+    FiatAmounts,
+    PendingRewardSummary,
+    RewardSummary,
+} from "./rewardSummary";
 export type { IFrameRpcSchema } from "./rpc";
 // Modal related
 export type {

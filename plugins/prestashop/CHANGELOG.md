@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Reward reminder setting.** Settings gains a *Reward reminder* checkbox, on by default (`FRAK_REWARD_REMINDER`, unset on shops predating it counts as on, so no upgrade script). It controls the small badge shown to shoppers who earned a reward on the shop but have not created their Frak wallet yet. Turning it off adds `rewardReminder:{enabled:false}` to the `window.FrakSetup` config.
+
 ## [1.1.0] - 2026-10-06
 
 Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new version is above the installed one, and without it upgraded shops print the CMS tags as text. Wait for a components release that serves `<frak-ambassador>` from `sdk.frak.id` before releasing.

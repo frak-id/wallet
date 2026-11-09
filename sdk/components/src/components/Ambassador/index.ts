@@ -80,6 +80,12 @@ const observedAttributes = [
     "faq5AnswerAfterLink",
     "attributionBeforeLink",
     "attributionLinkText",
+    "myRewardsEyebrow",
+    "myRewardsLinkedHeading",
+    "myRewardsClaimCtaLabel",
+    "myRewardsShareCtaLabel",
+    "myRewardsWalletCtaLabel",
+    "myRewardsShareAgainCtaLabel",
 ] as const satisfies readonly (keyof AmbassadorProps)[];
 
 // Fails typecheck, naming the prop, when a prop is missing from the list above.

@@ -96,6 +96,24 @@ export const referralCta = style([
     },
 ]);
 
+export const pendingCta = style([referralCta, { textDecoration: "none" }]);
+
+export const pendingBody = style({ paddingRight: "24px" });
+
+export const pendingClose = style([
+    buttonReset,
+    {
+        position: "absolute",
+        top: alias.spacing.xs,
+        right: alias.spacing.xs,
+        width: "24px",
+        height: "24px",
+        fontSize: "18px",
+        lineHeight: "24px",
+        color: "#979797",
+    },
+]);
+
 export const frakLogo = style({
     position: "absolute",
     right: alias.spacing.m,

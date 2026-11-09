@@ -50,6 +50,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'shop_name' => $brand['name'],
             'logo_url' => $brand['logoUrl'],
             'webhook_secret' => $webhook_secret,
+            'reward_reminder_enabled' => FrakConfig::isRewardReminderEnabled(),
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
             'webhook_secret_configured' => !empty($webhook_secret),
             'cron_url' => $this->buildCronUrl(),
@@ -236,6 +237,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
         if (Tools::isSubmit('submitFrakSettings')) {
             $this->processBrandFields();
             $this->processWebhookSecret();
+            $this->processRewardReminder();
             $this->processPlacements();
         }
 
@@ -309,6 +311,14 @@ class AdminFrakIntegrationController extends ModuleAdminController
             case FrakLogoUploader::ERROR_MOVE_FAILED:
             default:
                 return $this->module->l('Failed to upload logo file');
+        }
+    }
+
+    /** Unchecked boxes are not submitted, so the hidden `__present` marker says the field was on the form. */
+    private function processRewardReminder(): void
+    {
+        if (Tools::getIsset(FrakConfig::REWARD_REMINDER . '__present')) {
+            FrakConfig::setRewardReminderEnabled((bool) Tools::getValue(FrakConfig::REWARD_REMINDER));
         }
     }
 

@@ -115,6 +115,16 @@ export type FrakWalletSdkConfig = {
      * Default: ["sharing"]
      */
     preload?: ListenerPreloadOption[];
+    /**
+     * Floating reminder shown only to a visitor who earned a reward here and has not
+     * linked a Frak wallet yet. On unless this or the merchant dashboard turns it off.
+     */
+    rewardReminder?: {
+        /** @defaultValue true */
+        enabled?: boolean;
+        /** @defaultValue "left" */
+        position?: "left" | "right";
+    };
 };
 
 /**

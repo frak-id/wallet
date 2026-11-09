@@ -1000,12 +1000,14 @@ export default interface Resources {
         "banner": "Banner",
         "bannerGroups": {
           "inapp": "In-app",
+          "pending": "Unclaimed reward",
           "referral": "Referral"
         },
         "buttonShare": "Share button",
         "description": "Placements are component variants for a specific spot on your site.",
         "fields": {
           "badgeText": "Badge text",
+          "claimCtaText": "Claim button text",
           "css": "Component CSS",
           "ctaNoRewardText": "CTA text (no reward)",
           "ctaText": "CTA text",
@@ -1013,6 +1015,9 @@ export default interface Resources {
           "inappDescription": "In-app description",
           "inappTitle": "In-app title",
           "noRewardText": "Button text (no reward)",
+          "pendingCta": "Unclaimed reward CTA",
+          "pendingDescription": "Unclaimed reward description",
+          "pendingTitle": "Unclaimed reward title",
           "refereeNoRewardText": "Referee message (no reward)",
           "refereeText": "Referee message",
           "referralCta": "Referral CTA",
@@ -1027,6 +1032,7 @@ export default interface Resources {
           "hint": "Paste an image URL or upload one below.",
           "label": "Illustration"
         },
+        "pendingTokensHint": "Shown to visitors with an unclaimed reward. Placeholders: {REWARD}, {DAYS}, {DATE}.",
         "postPurchase": "Post Purchase",
         "postPurchaseGroups": {
           "referee": "Referee message",
@@ -1167,6 +1173,22 @@ export default interface Resources {
         "label": "Placement"
       },
       "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront.",
+      "rewardReminder": {
+        "description": "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.",
+        "enabled": "Show the reward reminder",
+        "fields": {
+          "cta": "Button text",
+          "description": "Description",
+          "title": "Title"
+        },
+        "position": {
+          "label": "Position",
+          "left": "Left",
+          "right": "Right"
+        },
+        "title": "Reward reminder",
+        "tokensHint": "Placeholders: {REWARD}, {DAYS}, {DATE}, {BRAND}. An empty field keeps the default text."
+      },
       "save": "Save",
       "sharing": {
         "description": "The title and text shown when a visitor shares through their phone or messaging app.",

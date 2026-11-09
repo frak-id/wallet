@@ -39,6 +39,9 @@ class FrakConfig
     /** Set while the created page is inactive because the module was disabled. */
     public const AMBASSADOR_HIDDEN_BY_DISABLE = 'FRAK_AMBASSADOR_HIDDEN_BY_DISABLE';
 
+    /** `0` hides the reward reminder badge; unset (shops predating the toggle) counts as on. */
+    public const REWARD_REMINDER = 'FRAK_REWARD_REMINDER';
+
     /**
      * Brand bundle: shop name (with `PS_SHOP_NAME` fallback) + logo URL.
      * Single batched lookup so the front-office head + the admin renderer
@@ -135,6 +138,16 @@ class FrakConfig
     public static function clearAmbassadorHiddenByDisable(): void
     {
         Configuration::deleteByName(self::AMBASSADOR_HIDDEN_BY_DISABLE);
+    }
+
+    public static function isRewardReminderEnabled(): bool
+    {
+        return (string) Configuration::get(self::REWARD_REMINDER) !== '0';
+    }
+
+    public static function setRewardReminderEnabled(bool $enabled): void
+    {
+        Configuration::updateValue(self::REWARD_REMINDER, $enabled ? 1 : 0);
     }
 
     public static function setShopName(string $value): void

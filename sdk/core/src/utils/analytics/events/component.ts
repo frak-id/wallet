@@ -4,7 +4,16 @@ type ButtonBaseProps = {
     has_reward?: boolean;
 };
 
-type BannerVariant = "referral" | "inapp";
+type BannerVariant = "referral" | "inapp" | "pending";
+/** Where an unclaimed-reward reminder was shown. */
+type RewardReminderSurface = "pill" | "banner" | "ambassador" | "post_purchase";
+type RewardReminderBaseProps = {
+    surface: RewardReminderSurface;
+    placement?: string;
+    /** Whole days shown in the countdown, already capped on WebKit. */
+    days_left?: number;
+    locked: boolean;
+};
 type BannerOutcome = "clicked" | "dismissed";
 type PostPurchaseVariant = "referrer" | "referee";
 /**
@@ -70,7 +79,15 @@ export type SdkComponentEventMap = {
     post_purchase_clicked: {
         placement?: string;
         variant: PostPurchaseVariant;
+        /** `claim` links the wallet to collect a pending reward; absent means share. */
+        action?: "claim" | "share";
     };
+
+    // Unclaimed-reward reminder: one funnel across every surface that shows it.
+    reward_reminder_impression: RewardReminderBaseProps;
+    reward_reminder_opened: RewardReminderBaseProps;
+    reward_reminder_claim_clicked: RewardReminderBaseProps;
+    reward_reminder_dismissed: RewardReminderBaseProps;
 
     // Ambassador page — its share CTAs report as `entry_point: "ambassador"`
     // on the listener's `sharing_page_opened`.
