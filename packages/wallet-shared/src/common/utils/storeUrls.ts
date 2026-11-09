@@ -1,6 +1,6 @@
 import { IS_ANDROID, IS_IOS } from "@frak-labs/app-essentials/utils/platform";
 
-const isProdStage =
+export const isProdStage =
     process.env.STAGE === "prod" || process.env.STAGE === "production";
 
 export const STORE_PACKAGE_ID = isProdStage
@@ -16,7 +16,7 @@ export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${S
 
 export function getRateAppUrl(): string | null {
     if (!isProdStage) return null;
-    if (IS_IOS) return APP_STORE_URL;
+    if (IS_IOS) return `${APP_STORE_URL}?action=write-review`;
     if (IS_ANDROID) return PLAY_STORE_URL;
     return null;
 }

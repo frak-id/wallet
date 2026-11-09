@@ -158,6 +158,7 @@ export {
 export {
     APP_STORE_URL,
     getRateAppUrl,
+    isProdStage,
     PLAY_STORE_URL,
     STORE_PACKAGE_ID,
 } from "./utils/storeUrls";
