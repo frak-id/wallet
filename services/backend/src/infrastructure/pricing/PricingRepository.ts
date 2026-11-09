@@ -29,10 +29,6 @@ function isTokenPriceCurrency(currency: string): currency is PegCurrency {
 const PEGGED_TOKENS: ReadonlyArray<readonly [Address, PegCurrency]> = [
     [stablecoins.prod.eure, "eur"],
     [stablecoins.testnet.eure, "eur"],
-    [stablecoins.prod.gbpe, "gbp"],
-    [stablecoins.testnet.gbpe, "gbp"],
-    [stablecoins.prod.usde, "usd"],
-    [stablecoins.testnet.usde, "usd"],
     [stablecoins.prod.usdc, "usd"],
     [stablecoins.testnet.usdc, "usd"],
 ];

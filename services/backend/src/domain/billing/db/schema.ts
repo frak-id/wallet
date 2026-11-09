@@ -58,7 +58,7 @@ export const billingDocumentsTable = pgTable(
         periodStart: timestamp("period_start"), // monthly_bill only
         periodEnd: timestamp("period_end"), // monthly_bill only
 
-        // Stablecoin the campaign bank holds (eure/gbpe/usde/usdc).
+        // Stablecoin the campaign bank holds (eure/usdc).
         currency: text("currency").$type<Stablecoin>().notNull(),
 
         // Amount deposited/withdrawn (gross) and what reaches/leaves the bank (net).

@@ -606,8 +606,6 @@
                     "chooseAnotherDescription": "Override the merchant default for this campaign",
                     "defaults": {
                         "eure": "Euro (EUR) via Monerium",
-                        "gbpe": "British Pound (GBP) via Monerium",
-                        "usde": "US Dollar (USD) via Monerium",
                         "usdc": "USD Coin (USDC) via Circle",
                         "fallback": "Merchant default"
                     }

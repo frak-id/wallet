@@ -6,24 +6,17 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
-import {
-    EurIcon,
-    GbpIcon,
-    UsdcIcon,
-    UsdIcon,
-} from "@frak-labs/design-system/icons";
+import { EurIcon, UsdcIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import * as styles from "./merchantWizard.css";
 
 /** Selectable currencies, in Figma order. */
-const CURRENCIES = ["eure", "gbpe", "usde", "usdc"] as const;
+const CURRENCIES = ["eure", "usdc"] as const;
 
 /** 24px full-colour flag/coin icon per currency. */
 const CURRENCY_ICONS: Record<Stablecoin, ReactNode> = {
     eure: <EurIcon width={24} height={24} />,
-    gbpe: <GbpIcon width={24} height={24} />,
-    usde: <UsdIcon width={24} height={24} />,
     usdc: <UsdcIcon width={24} height={24} />,
 };
 

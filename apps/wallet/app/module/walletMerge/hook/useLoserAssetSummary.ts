@@ -18,9 +18,7 @@ const STABLECOIN_IDS = Object.keys(currentStablecoins) as Stablecoin[];
 
 const STABLECOIN_SYMBOL: Record<Stablecoin, string> = {
     usdc: "USDC",
-    usde: "USDe",
     eure: "EURe",
-    gbpe: "GBPe",
 };
 
 export type LoserAssetSummaryEntry = {

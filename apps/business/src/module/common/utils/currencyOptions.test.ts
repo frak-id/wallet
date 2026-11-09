@@ -15,12 +15,10 @@ describe("currencyOptions", () => {
             expect(currencyOptions[1].group).toBe("Circle");
         });
 
-        it("should have Monerium group with 3 options (eure, gbpe, usde)", () => {
+        it("should have Monerium group with 1 option (eure)", () => {
             const moneyiumGroup = currencyOptions[0];
-            expect(moneyiumGroup.options).toHaveLength(3);
+            expect(moneyiumGroup.options).toHaveLength(1);
             expect(moneyiumGroup.options[0].value).toBe("eure");
-            expect(moneyiumGroup.options[1].value).toBe("gbpe");
-            expect(moneyiumGroup.options[2].value).toBe("usde");
         });
 
         it("should have Circle group with 1 option (usdc)", () => {
@@ -66,24 +64,12 @@ describe("currencyMetadata", () => {
     describe("lookup structure", () => {
         it("should have entry for each stablecoin", () => {
             expect(currencyMetadata).toHaveProperty("eure");
-            expect(currencyMetadata).toHaveProperty("gbpe");
-            expect(currencyMetadata).toHaveProperty("usde");
             expect(currencyMetadata).toHaveProperty("usdc");
         });
 
         it("should map eure to EUR currency", () => {
             expect(currencyMetadata.eure.currencyCode).toBe("EUR");
             expect(currencyMetadata.eure.locale).toBe("fr-FR");
-        });
-
-        it("should map gbpe to GBP currency", () => {
-            expect(currencyMetadata.gbpe.currencyCode).toBe("GBP");
-            expect(currencyMetadata.gbpe.locale).toBe("en-GB");
-        });
-
-        it("should map usde to USD currency", () => {
-            expect(currencyMetadata.usde.currencyCode).toBe("USD");
-            expect(currencyMetadata.usde.locale).toBe("en-US");
         });
 
         it("should map usdc to USD currency", () => {
@@ -93,8 +79,6 @@ describe("currencyMetadata", () => {
 
         it("should have correct provider for each stablecoin", () => {
             expect(currencyMetadata.eure.provider).toBe("Monerium");
-            expect(currencyMetadata.gbpe.provider).toBe("Monerium");
-            expect(currencyMetadata.usde.provider).toBe("Monerium");
             expect(currencyMetadata.usdc.provider).toBe("Circle");
         });
     });
@@ -110,18 +94,6 @@ describe("formatTokenBalance", () => {
 
         it("should format usdc balance with USD symbol", () => {
             const result = formatTokenBalance(1000000n, "usdc", 6);
-            expect(result).toContain("$");
-            expect(result).toContain("1");
-        });
-
-        it("should format gbpe balance with GBP symbol", () => {
-            const result = formatTokenBalance(1000000n, "gbpe", 6);
-            expect(result).toContain("£");
-            expect(result).toContain("1");
-        });
-
-        it("should format usde balance with USD symbol", () => {
-            const result = formatTokenBalance(1000000n, "usde", 6);
             expect(result).toContain("$");
             expect(result).toContain("1");
         });
@@ -173,13 +145,6 @@ describe("formatTokenBalance", () => {
             expect(result).toMatch(/1[.,\s]/);
         });
 
-        it("should use en-GB locale for gbpe", () => {
-            const result = formatTokenBalance(1234567n, "gbpe", 6);
-            expect(result).toContain("£");
-            // British locale uses comma for thousands
-            expect(result).toMatch(/1[.,\s]/);
-        });
-
         it("should use en-US locale for usdc", () => {
             const result = formatTokenBalance(1234567n, "usdc", 6);
             expect(result).toContain("$");
@@ -215,18 +180,15 @@ describe("formatTokenBalance", () => {
 describe("tokenAddressToCurrencyGlyph", () => {
     it("resolves each stablecoin address to its glyph", () => {
         expect(tokenAddressToCurrencyGlyph(currentStablecoins.eure)).toBe("€");
-        expect(tokenAddressToCurrencyGlyph(currentStablecoins.gbpe)).toBe("£");
-        expect(tokenAddressToCurrencyGlyph(currentStablecoins.usde)).toBe("$");
-        // USDC is USD-denominated, so it shares the "$" glyph.
         expect(tokenAddressToCurrencyGlyph(currentStablecoins.usdc)).toBe("$");
     });
 
     it("is case-insensitive on the address", () => {
         expect(
             tokenAddressToCurrencyGlyph(
-                currentStablecoins.gbpe.toUpperCase() as `0x${string}`
+                currentStablecoins.eure.toUpperCase() as `0x${string}`
             )
-        ).toBe("£");
+        ).toBe("€");
     });
 
     it("falls back to € for an unknown or missing token", () => {
