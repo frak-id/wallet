@@ -45,6 +45,7 @@ agent that writes the report issue.
 | `check-shopify-api-version.ts` | `api_version` in each extension's `shopify.extension.toml` | `@shopify/ui-extensions` ships one release line per API version, pinned in `apps/shopify/package.json` (the installed one; bun ignores the nested `extensions/*` workspaces) and in the extension's own `package.json`. A toml bump alone typechecks and deploys fine against the old line's types |
 | `check-es-version.ts` | `BROWSER_TARGET_ECMA` | The only layer that sees what actually ships — `lib` cannot reject an ambient augmentation and `skipLibCheck` hides dependency `.d.ts` |
 | `check-comments.ts` | `comment-budget-baseline.json` | A file may only ever get better. Pay some down, then `bun run lint:comments -- --update-baseline` |
+| `check-android-r8-keeps.ts` | The Firebase registrars in the merged release manifest | Not in `bun run lint`: it reads a release build's R8 `seeds.txt`, so only the `wallet-android` CI job runs it. Firebase instantiates each registrar by reflection, and `android.r8.strictFullModeForKeepRules=true` drops their no-arg constructors with a clean build and a crash at startup |
 | `store-notes.ts check` | `apps/wallet/store/whatsnew/whatsnew-{en-US,fr-FR}` | r0adkll uploads every `whatsnew-*` file as is, so an extra locale, markdown, or a file over Play's 500 characters (counted raw, trailing newline included) fails the Play upload only after the AAB is built |
 
 ## The mobile store release

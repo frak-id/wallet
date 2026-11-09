@@ -33,6 +33,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       wallet: ${{ steps.filter.outputs.wallet }}
       walletRust: ${{ steps.filter.outputs.walletRust }}
+      walletAndroid: ${{ steps.filter.outputs.walletAndroid }}
       business: ${{ steps.filter.outputs.business }}
       appsSmall: ${{ steps.filter.outputs.appsSmall }}
       packages: ${{ steps.filter.outputs.packages }}
@@ -106,6 +107,17 @@ jobs:
               - '.github/workflows/apps.yaml'
             walletRust:
               - 'apps/wallet/src-tauri/**'
+              - '.github/workflows/apps.yaml'
+            # The Cargo files pick the Tauri and plugin versions whose Android
+            # libraries Gradle compiles in; the CLI patches the project from
+            # `tauri.conf.json` on every build.
+            walletAndroid:
+              - 'apps/wallet/src-tauri/gen/android/**'
+              - 'apps/wallet/src-tauri/plugins/*/android/**'
+              - 'apps/wallet/src-tauri/tauri.conf.json'
+              - 'apps/wallet/src-tauri/Cargo.toml'
+              - 'apps/wallet/src-tauri/Cargo.lock'
+              - 'scripts/check-android-r8-keeps.ts'
               - '.github/workflows/apps.yaml'
             wallet:
               - 'apps/wallet/**'
@@ -292,6 +304,89 @@ jobs:
         run: |
           mkdir -p ../dist && echo "<!doctype html>" > ../dist/index.html
           cargo test --locked --lib -p app -p tauri-plugin-frak-updater
+
+  # The Gradle release build of `tauri-mobile-release.yml`, minus frontend,
+  # secrets and upload: that workflow cuts a real release, so without this job
+  # a `gen/android` or plugin change is first built while shipping. The CLI
+  # builds Rust too because its build scripts write the Gradle includes.
+  wallet-android:
+    name: "🤖 Wallet · Android release build"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.walletAndroid == 'true'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "☕ Setup Java 17"
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: "📱 Setup Android SDK"
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+      - name: "🐘 Setup Gradle"
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+          build-root-directory: apps/wallet/src-tauri/gen/android
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
+          validate-wrappers: true
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          # Same pin as RUST_TOOLCHAIN in tauri-mobile-release.yml.
+          toolchain: "1.98.1"
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: apps/wallet/src-tauri
+          prefix-key: "v1-rust-android"
+          cache-on-failure: true
+      # Throwaway stand-ins for the release secrets: Gradle needs a keystore to
+      # sign and a `google-services.json` matching the package, not real ones.
+      - name: "🔑 Write CI stand-ins"
+        working-directory: apps/wallet
+        run: |
+          mkdir -p dist && echo "<!doctype html>" > dist/index.html
+          cd src-tauri/gen/android
+          keytool -genkeypair -keystore upload-keystore.jks -alias upload -storepass ci-only \
+            -keypass ci-only -keyalg RSA -validity 1 -dname CN=ci -noprompt
+          cat > key.properties <<'EOF'
+          storeFile=../upload-keystore.jks
+          storePassword=ci-only
+          keyAlias=upload
+          keyPassword=ci-only
+          EOF
+          cat > app/google-services.json <<'EOF'
+          {
+            "project_info": { "project_number": "0", "project_id": "frak-ci" },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:0:android:0",
+                "android_client_info": { "package_name": "id.frak.wallet" }
+              },
+              "api_key": [{ "current_key": "ci" }]
+            }],
+            "configuration_version": "1"
+          }
+          EOF
+      # One ABI, and an unoptimised Rust library: the job proves the Kotlin, the
+      # Gradle wiring and R8, not the shipped `.so`.
+      - name: "🏗️ Build (assembleUniversalRelease, arm64)"
+        run: >
+          bun run --cwd apps/wallet tauri android build
+          --target aarch64 --apk --ci
+          --config '{"build":{"beforeBuildCommand":null}}'
+        env:
+          CARGO_PROFILE_RELEASE_LTO: "false"
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "256"
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: "0"
+      - name: "🔎 R8 kept the Firebase registrars"
+        run: bun scripts/check-android-r8-keeps.ts
 
   # ── Business ────────────────────────────────────────────
   business:
