@@ -17,7 +17,7 @@ describe("translation parity", () => {
     });
 });
 
-function collectTexts(obj: unknown, prefix = ""): Array<[string, string]> {
+function collectTexts(obj: unknown, prefix = ""): [string, string][] {
     if (typeof obj === "string") return [[prefix, obj]];
     if (typeof obj !== "object" || obj === null) return [];
     return Object.entries(obj).flatMap(([key, value]) =>
