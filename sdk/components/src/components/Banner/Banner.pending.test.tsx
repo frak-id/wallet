@@ -98,6 +98,8 @@ describe("Banner pending mode", () => {
     const userAgent = vi.spyOn(window.navigator, "userAgent", "get");
 
     beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(2026, 10, 7, 12));
         userAgent.mockReturnValue(CHROME_UA);
         coreSdkMock.isInAppBrowser = false;
         sdkConfigStore.setConfig({
@@ -116,6 +118,7 @@ describe("Banner pending mode", () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         sdkConfigStore.clearCache();
         window.__frakSdkConfig = undefined;
     });
@@ -138,10 +141,15 @@ describe("Banner pending mode", () => {
         expect(cta).toHaveAttribute("href", INSTALL_URL);
     });
 
-    it("words a half-day deadline as 1 day left", () => {
+    it.each([
+        [6, "Expires today."],
+        [18, "1 day left."],
+    ])("words a deadline %i hours away as %s", (hours, label) => {
         serveSummary(
             pendingRewards({
-                expiresAt: new Date(Date.now() + 0.5 * DAY).toISOString(),
+                expiresAt: new Date(
+                    Date.now() + hours * 3600_000
+                ).toISOString(),
             })
         );
 
@@ -149,7 +157,7 @@ describe("Banner pending mode", () => {
 
         expect(
             container.querySelector(".frak-banner__description")
-        ).toHaveTextContent("1 day left.");
+        ).toHaveTextContent(label);
     });
 
     it("stays away once the deadline has passed", () => {

@@ -4,6 +4,9 @@ import { getRewardCountdown, isStorageCappedBrowser } from "./countdown";
 const NOW = Date.parse("2026-11-07T12:00:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 const inDays = (days: number) => new Date(NOW + days * DAY).toISOString();
+const localIso = (day: number, hour: number) =>
+    new Date(2026, 10, day, hour).toISOString();
+const LOCAL_NOON = new Date(2026, 10, 7, 12).getTime();
 
 const SAFARI_MAC =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15";
@@ -33,13 +36,24 @@ describe("isStorageCappedBrowser", () => {
 });
 
 describe("getRewardCountdown", () => {
-    it("counts whole days left, rounded up", () => {
-        const countdown = getRewardCountdown(inDays(27.2), {
-            now: NOW,
-            capped: false,
-        });
-        expect(countdown?.days).toBe(28);
-        expect(countdown?.date.toISOString()).toBe(inDays(27.2));
+    it("counts calendar days to the deadline's date, whatever its hour", () => {
+        for (const hour of [1, 12, 23]) {
+            const deadline = localIso(30, hour);
+            const countdown = getRewardCountdown(deadline, {
+                now: LOCAL_NOON,
+                capped: false,
+            });
+            expect(countdown?.days).toBe(23);
+            expect(countdown?.date.toISOString()).toBe(deadline);
+        }
+    });
+
+    it("reads 0 on the deadline's own day and 1 on the day before", () => {
+        const days = (deadline: string) =>
+            getRewardCountdown(deadline, { now: LOCAL_NOON, capped: false })
+                ?.days;
+        expect(days(localIso(7, 18))).toBe(0);
+        expect(days(localIso(8, 13))).toBe(1);
     });
 
     it("reports 0 once the deadline has passed", () => {

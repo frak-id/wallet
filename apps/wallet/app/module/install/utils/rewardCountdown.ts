@@ -14,8 +14,17 @@ function isStorageCappedBrowser(): boolean {
     );
 }
 
+/** Days between local calendar dates, so the count agrees with the date shown beside it. */
+function calendarDaysUntil(deadline: number, now: number): number {
+    const dayOf = (ms: number) => {
+        const date = new Date(ms);
+        return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+    return Math.max(0, Math.round((dayOf(deadline) - dayOf(now)) / DAY_MS));
+}
+
 /**
- * Whole days left before unclaimed rewards expire, or `undefined` for no countdown.
+ * Calendar days left before unclaimed rewards expire (0 on the last day), or `undefined` for no countdown.
  * Capped at 7 on WebKit, where no deadline still means 7.
  */
 export function getRewardDaysLeft(
@@ -24,7 +33,7 @@ export function getRewardDaysLeft(
 ): number | undefined {
     const deadline = expiresAt ? Date.parse(expiresAt) : Number.NaN;
     const days = Number.isFinite(deadline)
-        ? Math.max(0, Math.ceil((deadline - now) / DAY_MS))
+        ? calendarDaysUntil(deadline, now)
         : undefined;
 
     if (!isStorageCappedBrowser()) return days;

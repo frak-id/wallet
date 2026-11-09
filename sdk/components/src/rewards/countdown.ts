@@ -19,8 +19,17 @@ export function isStorageCappedBrowser(
     );
 }
 
+/** Days between local calendar dates, so the count agrees with the date shown beside it. */
+function calendarDaysUntil(deadline: number, now: number): number {
+    const dayOf = (ms: number) => {
+        const date = new Date(ms);
+        return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+    return Math.max(0, Math.round((dayOf(deadline) - dayOf(now)) / DAY_MS));
+}
+
 export type RewardCountdown = {
-    /** Whole days left, rounded up; 0 once the deadline has passed. */
+    /** Calendar days to the deadline's date: 0 on its last day and once it has passed. */
     days: number;
     /** The day the countdown points at, for `{DATE}`. */
     date: Date;
@@ -40,9 +49,7 @@ export function getRewardCountdown(
 ): RewardCountdown | undefined {
     const deadline = expiresAt ? Date.parse(expiresAt) : Number.NaN;
     const hasDeadline = Number.isFinite(deadline);
-    const days = hasDeadline
-        ? Math.max(0, Math.ceil((deadline - now) / DAY_MS))
-        : undefined;
+    const days = hasDeadline ? calendarDaysUntil(deadline, now) : undefined;
 
     if (!capped) {
         return days === undefined

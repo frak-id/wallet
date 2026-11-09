@@ -129,6 +129,8 @@ describe("RewardReminder", () => {
     const userAgent = vi.spyOn(window.navigator, "userAgent", "get");
 
     beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(2026, 10, 7, 12));
         userAgent.mockReturnValue(CHROME_UA);
         setClientReady();
         setBackendConfig();
@@ -138,6 +140,7 @@ describe("RewardReminder", () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         for (const unregister of inlineRegistrations.splice(0)) unregister();
         sdkConfigStore.clearCache();
         window.__frakSdkConfig = undefined;
@@ -452,7 +455,7 @@ describe("RewardReminder", () => {
             open();
 
             expect(screen.getByRole("dialog")).toHaveTextContent(
-                /Expires in 11 days \(.+\)\. Unclaimed rewards are lost\./
+                /Expires in 10 days \(.+\)\. Unclaimed rewards are lost\./
             );
         });
 
@@ -572,7 +575,7 @@ describe("RewardReminder", () => {
                     ([, event]) => event === "reward_reminder_impression"
                 );
             expect(impressions).toHaveLength(1);
-            expect(impressions[0][2]).toEqual(surfaceProps(11));
+            expect(impressions[0][2]).toEqual(surfaceProps(10));
         });
 
         it("reports opened, claim clicked and dismissed", async () => {
@@ -599,7 +602,7 @@ describe("RewardReminder", () => {
                 expect(calls).toContainEqual([
                     window.FrakSetup.client,
                     event,
-                    surfaceProps(11),
+                    surfaceProps(10),
                 ]);
             }
         });

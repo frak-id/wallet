@@ -1572,6 +1572,17 @@ describe("Ambassador", () => {
     });
 
     describe("your rewards", () => {
+        beforeEach(() => {
+            const todayAtNoon = new Date();
+            todayAtNoon.setHours(12, 0, 0, 0);
+            vi.useFakeTimers({ toFake: ["Date"] });
+            vi.setSystemTime(todayAtNoon);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         const sectionOrder = (container: Element) =>
             Array.from(
                 container.querySelectorAll(".frak-ambassador > section")
@@ -1629,7 +1640,7 @@ describe("Ambassador", () => {
             ).toHaveLength(1);
             expect(
                 text(container, ".frak-ambassador__my-rewards-countdown")
-            ).toMatch(/^1 day left to claim it, until /);
+            ).toBe("Expires today, claim it now");
         });
 
         it("notes the unlock date when part of the reward is locked", () => {
