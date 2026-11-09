@@ -72,10 +72,10 @@ is set to `dwarf-with-dsym` for both debug and release in
 
 ### Android
 
-`android/build.gradle.kts` pulls `firebase-bom:33.5.1` and links:
+`android/build.gradle.kts` pulls `firebase-bom:35.1.0` and links:
 
-- `firebase-messaging-ktx` — FCM.
-- `firebase-crashlytics-ktx` — JVM crash handler + custom keys / logs / recordError.
+- `firebase-messaging` — FCM.
+- `firebase-crashlytics` — JVM crash handler + custom keys / logs / recordError.
 - `firebase-crashlytics-ndk` — native (Rust / C / C++) signal handler.
 
 Root `gen/android/build.gradle.kts` adds the Crashlytics Gradle plugin

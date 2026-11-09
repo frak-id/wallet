@@ -49,7 +49,7 @@ const missing = registrars.filter((fqcn) => {
 
 if (missing.length > 0) {
     die(
-        `R8 did not keep the no-arg constructor of:\n${missing.map((c) => `   ${c}`).join("\n")}\nFirebase cannot instantiate them at startup. Check \`android.r8.strictFullModeForKeepRules\` and the keep rules.`
+        `R8 did not keep the no-arg constructor of:\n${missing.map((c) => `   ${c}`).join("\n")}\nFirebase cannot instantiate them at startup. In R8's strict full mode a keep rule must name the constructor (\`<init>()\` or \`{ *; }\`).`
     );
 }
 console.log(
