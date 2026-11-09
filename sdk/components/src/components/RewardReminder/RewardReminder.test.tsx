@@ -38,8 +38,19 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
 
 vi.mock("@/hooks/useClientReady", () => ({ useClientReady: vi.fn() }));
 vi.mock("@/hooks/useRewardSummary", () => ({ useRewardSummary: vi.fn() }));
+const qrState = vi.hoisted(() => ({
+    wide: true,
+    grid: null as boolean[][] | null,
+}));
+
 vi.mock("../Ambassador/InstallQr", () => ({
-    InstallQr: () => <div data-testid="install-qr" />,
+    useInstallQr: (url?: string) => ({
+        wide: qrState.wide,
+        grid: qrState.wide && url ? qrState.grid : null,
+    }),
+    QrSvg: (props: { label: string; class?: string }) => (
+        <svg role="img" aria-label={props.label} class={props.class} />
+    ),
 }));
 
 const inlineRegistrations: Array<() => void> = [];
@@ -137,6 +148,8 @@ describe("RewardReminder", () => {
         serveSummary(pendingRewards());
         vi.mocked(getInstallUrl).mockResolvedValue(INSTALL_URL);
         vi.mocked(coreSdk.isMobile).mockReturnValue(false);
+        qrState.wide = true;
+        qrState.grid = null;
     });
 
     afterEach(() => {
@@ -319,15 +332,15 @@ describe("RewardReminder", () => {
             expect(screen.queryByRole("dialog")).toBeNull();
         });
 
-        it("opens a dialog labelled by its title, with the default copy", () => {
+        it("opens a dialog labelled by its eyebrow and amount, with the default copy", () => {
             render(<RewardReminder />);
             open();
 
             const dialog = screen.getByRole("dialog", {
-                name: "12.5 eur waiting for you at Harmo",
+                name: "Waiting for you at Harmo 12.5 eur",
             });
             expect(dialog).toHaveTextContent(
-                "Frak is how Harmo pays its rewards."
+                "Free with the Frak app, no bank details needed"
             );
             expect(
                 screen.getByRole("button", { expanded: true })
@@ -401,22 +414,64 @@ describe("RewardReminder", () => {
             );
         });
 
-        it("shows the QR on desktop only", () => {
-            const { unmount } = render(<RewardReminder />);
-            open();
-            expect(screen.getByTestId("install-qr")).toBeInTheDocument();
-            unmount();
+        describe("QR", () => {
+            const QR_NAME = "QR code to claim your reward in the Frak wallet";
+            const qrButton = () =>
+                screen.queryByRole("button", { name: QR_NAME });
 
-            vi.mocked(coreSdk.isMobile).mockReturnValue(true);
-            render(<RewardReminder />);
-            open();
-            expect(screen.queryByTestId("install-qr")).toBeNull();
+            beforeEach(() => {
+                qrState.grid = [[true]];
+            });
+
+            it("starts small and enlarges on click, then shrinks back", async () => {
+                render(<RewardReminder />);
+                open();
+
+                await waitFor(() =>
+                    expect(qrButton()).toHaveAttribute("aria-expanded", "false")
+                );
+                expect(screen.getByRole("dialog")).toHaveTextContent(
+                    "On a computer? Click to enlarge"
+                );
+
+                fireEvent.click(qrButton() as HTMLElement);
+                expect(qrButton()).toHaveAttribute("aria-expanded", "true");
+                expect(screen.getByRole("dialog")).toHaveTextContent(
+                    "Scan with your phone to claim"
+                );
+
+                fireEvent.click(qrButton() as HTMLElement);
+                expect(qrButton()).toHaveAttribute("aria-expanded", "false");
+            });
+
+            it.each([
+                [
+                    "on a phone",
+                    () => vi.mocked(coreSdk.isMobile).mockReturnValue(true),
+                ],
+                [
+                    "in a narrow window",
+                    () => {
+                        qrState.wide = false;
+                    },
+                ],
+            ])("is left out %s", async (_, arrange) => {
+                arrange();
+                render(<RewardReminder />);
+                open();
+
+                await screen.findByRole("link", { name: /Claim my/ });
+                expect(qrButton()).toBeNull();
+                expect(
+                    screen.getByRole("button", { name: "Later" })
+                ).toBeInTheDocument();
+            });
         });
 
-        it("lists the breakdown only when both sources are non-zero", () => {
+        it("sums the breakdown up in one line only when both sources are non-zero", () => {
             const { unmount } = render(<RewardReminder />);
             open();
-            expect(screen.queryByText("Cashback")).toBeNull();
+            expect(screen.queryByText(/cashback/)).toBeNull();
             unmount();
 
             serveSummary(
@@ -427,8 +482,9 @@ describe("RewardReminder", () => {
             );
             render(<RewardReminder />);
             open();
-            expect(screen.getByText("Cashback")).toBeInTheDocument();
-            expect(screen.getByText("From your friends")).toBeInTheDocument();
+            expect(
+                screen.getByText("10 eur cashback · 2.5 eur from friends")
+            ).toBeInTheDocument();
         });
 
         it.each([
@@ -450,12 +506,31 @@ describe("RewardReminder", () => {
             ).toHaveTextContent(label);
         });
 
-        it("states the deadline and that unclaimed rewards are lost", () => {
+        it("counts the days left in a tile and states the deadline", () => {
             render(<RewardReminder />);
             open();
 
+            const dialog = screen.getByRole("dialog");
+            expect(screen.getByText("10").parentElement).toHaveTextContent(
+                "10 days left"
+            );
+            expect(dialog).toHaveTextContent(/Lost if not claimed by .+\./);
+        });
+
+        it("reads Last day in the tile on the expiry date", () => {
+            serveSummary(
+                pendingRewards({
+                    expiresAt: new Date(2026, 10, 7, 18).toISOString(),
+                })
+            );
+            render(<RewardReminder />);
+            open();
+
+            expect(screen.getByText("Last").parentElement).toHaveTextContent(
+                "Last day"
+            );
             expect(screen.getByRole("dialog")).toHaveTextContent(
-                /Expires in 10 days \(.+\)\. Unclaimed rewards are lost\./
+                "Lost if not claimed today."
             );
         });
 
@@ -510,7 +585,7 @@ describe("RewardReminder", () => {
             open();
 
             expect(
-                screen.getByRole("dialog", { name: "Attribute Harmo" })
+                screen.getByRole("dialog", { name: "Attribute Harmo 12.5 eur" })
             ).toBeInTheDocument();
             expect(
                 await screen.findByRole("link", { name: "Dashboard cta" })

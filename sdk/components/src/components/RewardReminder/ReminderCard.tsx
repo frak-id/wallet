@@ -5,6 +5,7 @@ import {
     sdkConfigStore,
 } from "@frak-labs/core-sdk";
 import type { Ref } from "preact";
+import { useId, useState } from "preact/hooks";
 import { componentDefaults } from "@/i18n/defaults";
 import type { RewardCountdown } from "@/rewards/countdown";
 import {
@@ -14,23 +15,37 @@ import {
     pickFiat,
     resolveRewardCurrency,
 } from "@/rewards/format";
-import { InstallQr } from "../Ambassador/InstallQr";
+import { QrSvg, useInstallQr } from "../Ambassador/InstallQr";
+import { GiftIcon } from "../icons/GiftIcon";
 import {
-    actions,
+    amount,
     breakdown,
-    breakdownRow,
     card,
     cardHeader,
     close,
     cta,
     deadline,
     deadlineUrgent,
-    description,
+    eyebrow,
+    eyebrowIcon,
+    footer,
+    footerQr,
+    footerQrExpanded,
+    free,
+    head,
     later,
-    qr,
-    qrCaption,
-    title,
-    unlock,
+    qrButton,
+    qrButtonExpanded,
+    qrHint,
+    qrHintExpanded,
+    qrImage,
+    qrImageExpanded,
+    qrPlaceholder,
+    tile,
+    tileNumber,
+    tileUnit,
+    tileUrgent,
+    tileWord,
 } from "./RewardReminder.css";
 
 export const URGENT_FROM_DAYS = 3;
@@ -51,6 +66,9 @@ type ReminderCardProps = {
     onClaim: (event: MouseEvent) => void;
     onLater: () => void;
 };
+
+const classes = (...names: Array<string | false>) =>
+    names.filter(Boolean).join(" ");
 
 function readBrand(): string {
     return (
@@ -86,6 +104,93 @@ function unlockNoteText(
     return fillReminderText(template, { date: formatRewardDate(date, lang) });
 }
 
+function breakdownText(
+    pending: PendingRewardSummary,
+    copy: Copy
+): string | undefined {
+    const currency = resolveRewardCurrency();
+    if (
+        pickFiat(pending.cashback, currency) === 0 ||
+        pickFiat(pending.fromFriends, currency) === 0
+    ) {
+        return undefined;
+    }
+    return [
+        fillReminderText(copy.breakdownCashback, {
+            reward: formatFiat(pending.cashback, currency),
+        }),
+        fillReminderText(copy.breakdownFromFriends, {
+            reward: formatFiat(pending.fromFriends, currency),
+        }),
+    ].join(" · ");
+}
+
+function DayTile({ days, copy }: { days: number; copy: Copy }) {
+    const urgent = days <= URGENT_FROM_DAYS;
+    return (
+        <p class={classes(tile, urgent && tileUrgent)}>
+            {days <= 0 ? (
+                <>
+                    <span class={tileWord}>{copy.tileLastDay}</span>{" "}
+                    <span class={tileUnit}>{copy.tileLastDayUnit}</span>
+                </>
+            ) : (
+                <>
+                    <span class={tileNumber}>{days}</span>{" "}
+                    <span class={tileUnit}>
+                        {days === 1 ? copy.tileOneDay : copy.tileDays}
+                    </span>
+                </>
+            )}
+        </p>
+    );
+}
+
+type FooterProps = {
+    copy: Copy;
+    installUrl: string | undefined;
+    onLater: () => void;
+};
+
+/** Desktop gets a small QR that a click enlarges to a scannable size; phones only get Later. */
+function CardFooter({ copy, installUrl, onLater }: FooterProps) {
+    const desktop = !isMobile();
+    const { wide, grid } = useInstallQr(desktop ? installUrl : undefined);
+    const [expanded, setExpanded] = useState(false);
+    const laterButton = (
+        <button type="button" class={later} onClick={onLater}>
+            {copy.later}
+        </button>
+    );
+    if (!desktop || !wide || !installUrl) {
+        return <div class={footer}>{laterButton}</div>;
+    }
+    return (
+        <div class={classes(footer, footerQr, expanded && footerQrExpanded)}>
+            {grid ? (
+                <button
+                    type="button"
+                    class={classes(qrButton, expanded && qrButtonExpanded)}
+                    aria-expanded={expanded}
+                    onClick={() => setExpanded((open) => !open)}
+                >
+                    <QrSvg
+                        grid={grid}
+                        label={copy.qrLabel}
+                        class={classes(qrImage, expanded && qrImageExpanded)}
+                    />
+                </button>
+            ) : (
+                <span class={qrPlaceholder} aria-hidden="true" />
+            )}
+            <p class={classes(qrHint, expanded && qrHintExpanded)}>
+                {expanded ? copy.qrCaption : copy.qrHint}
+            </p>
+            {laterButton}
+        </div>
+    );
+}
+
 type ClaimAnchorProps = Pick<
     ReminderCardProps,
     "installUrl" | "isPreview" | "onClaim"
@@ -114,7 +219,7 @@ function ClaimAnchor({
     );
 }
 
-/** The expanded half of the reminder: amount breakdown, deadline, claim link and, on desktop, the install QR. */
+/** The expanded half of the reminder: amount, days left, claim link and, on desktop, an enlargeable install QR. */
 export function ReminderCard({
     id,
     titleId,
@@ -129,19 +234,24 @@ export function ReminderCard({
     onClaim,
     onLater,
 }: ReminderCardProps) {
+    const amountId = useId();
     const copy = componentDefaults[lang].rewardReminder;
-    const currency = resolveRewardCurrency();
     const days = countdown?.days;
     const values = {
-        reward: formatFiat(pending.total, currency),
+        reward: formatFiat(pending.total, resolveRewardCurrency()),
         days,
         date: countdown ? formatRewardDate(countdown.date, lang) : undefined,
         brand: readBrand(),
     };
-    const unlockText = unlockNoteText(pending, copy, lang);
-    const showBreakdown =
-        pickFiat(pending.cashback, currency) !== 0 &&
-        pickFiat(pending.fromFriends, currency) !== 0;
+    const split = breakdownText(pending, copy);
+    const deadlineLine = [
+        days === undefined
+            ? undefined
+            : fillReminderText(deadlineTemplate(days, copy), values),
+        unlockNoteText(pending, copy, lang),
+    ]
+        .filter(Boolean)
+        .join(" ");
     const urgent = days !== undefined && days <= URGENT_FROM_DAYS;
     return (
         <div
@@ -149,11 +259,12 @@ export function ReminderCard({
             id={id}
             class={card}
             role="dialog"
-            aria-labelledby={titleId}
+            aria-labelledby={`${titleId} ${amountId}`}
             tabIndex={-1}
         >
             <div class={cardHeader}>
-                <p id={titleId} class={title}>
+                <p id={titleId} class={eyebrow}>
+                    <GiftIcon class={eyebrowIcon} ink="#111827" />
                     {fillReminderText(texts.title || copy.title, values)}
                 </p>
                 <button
@@ -165,51 +276,34 @@ export function ReminderCard({
                     ×
                 </button>
             </div>
-            {showBreakdown && (
-                <ul class={breakdown}>
-                    <li class={breakdownRow}>
-                        <span>{copy.cashbackLabel}</span>
-                        <span>{formatFiat(pending.cashback, currency)}</span>
-                    </li>
-                    <li class={breakdownRow}>
-                        <span>{copy.fromFriendsLabel}</span>
-                        <span>{formatFiat(pending.fromFriends, currency)}</span>
-                    </li>
-                </ul>
+            <div class={head}>
+                <div>
+                    <p id={amountId} class={amount}>
+                        {values.reward}
+                    </p>
+                    {split && <p class={breakdown}>{split}</p>}
+                </div>
+                {days !== undefined && <DayTile days={days} copy={copy} />}
+            </div>
+            {deadlineLine && (
+                <p class={classes(deadline, urgent && deadlineUrgent)}>
+                    {deadlineLine}
+                </p>
             )}
-            <p class={description}>
+            <ClaimAnchor
+                installUrl={installUrl}
+                isPreview={isPreview}
+                onClaim={onClaim}
+            >
+                {fillReminderText(texts.cta || copy.cta, values)}
+            </ClaimAnchor>
+            <p class={free}>
                 {fillReminderText(
                     texts.description || copy.description,
                     values
                 )}
             </p>
-            {days !== undefined && (
-                <p class={urgent ? `${deadline} ${deadlineUrgent}` : deadline}>
-                    {fillReminderText(deadlineTemplate(days, copy), values)}
-                </p>
-            )}
-            {unlockText && <p class={unlock}>{unlockText}</p>}
-            <div class={actions}>
-                <ClaimAnchor
-                    installUrl={installUrl}
-                    isPreview={isPreview}
-                    onClaim={onClaim}
-                >
-                    {fillReminderText(texts.cta || copy.cta, values)}
-                </ClaimAnchor>
-                <button type="button" class={later} onClick={onLater}>
-                    {copy.later}
-                </button>
-            </div>
-            {!isMobile() && (
-                <InstallQr
-                    url={installUrl}
-                    label={copy.qrLabel}
-                    caption={copy.qrCaption}
-                    class={qr}
-                    captionClass={qrCaption}
-                />
-            )}
+            <CardFooter copy={copy} installUrl={installUrl} onLater={onLater} />
         </div>
     );
 }
