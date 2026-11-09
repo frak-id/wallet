@@ -33,4 +33,16 @@ describe("fillReminderText", () => {
     it("empties a placeholder without a value", () => {
         expect(fillReminderText("{DAYS} days", {})).toBe(" days");
     });
+
+    it.each([
+        ["Se débloque le {DATE}.", "14 nov.", "Se débloque le 14 nov."],
+        ["Se débloque le {DATE}.", "14 mai", "Se débloque le 14 mai."],
+        ["Unlocks on {DATE}.", "14 Nov", "Unlocks on 14 Nov."],
+        ["Expire le {DATE} !", "14 nov.", "Expire le 14 nov. !"],
+    ])(
+        "keeps one period after a date: %s with %s",
+        (template, date, filled) => {
+            expect(fillReminderText(template, { date })).toBe(filled);
+        }
+    );
 });
