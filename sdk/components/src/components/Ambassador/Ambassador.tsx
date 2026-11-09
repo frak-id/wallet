@@ -731,7 +731,6 @@ function AmbassadorPage({
         installUrl,
         footer: texts.rewardFooterCaption,
         qrLabel: texts.storeQrLabel,
-        qrCaption: texts.storeQrCaption,
     };
 
     return (

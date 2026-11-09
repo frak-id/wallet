@@ -335,6 +335,74 @@ export const myRewards = style([
     },
 ]);
 
+export const myRewardsWithStub = style({
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "stretch",
+    gap: 0,
+    padding: 0,
+    textAlign: "start",
+    overflow: "hidden",
+});
+
+export const myRewardsMain = style({
+    // 999:1 against the stub: side by side the main column takes the slack; wrapped, the stub fills its row.
+    flex: "999 1 24em",
+    display: "grid",
+    gap: "0.9em",
+    justifyItems: "start",
+    alignContent: "center",
+    minWidth: 0,
+    padding: "2.25em 2.5em",
+});
+
+const NOTCH = "0.75em";
+const notch = (at: string) =>
+    `radial-gradient(circle ${NOTCH} at ${at}, transparent 97%, #000 100%)`;
+
+/** Desktop tear-off stub; its notches are masked out so they show whatever sits behind, theme or not. */
+export const myRewardsStub = style({
+    flex: "1 0 auto",
+    display: "grid",
+    justifyItems: "center",
+    alignContent: "center",
+    gap: "0.75em",
+    padding: "2em 1.75em",
+    backgroundColor: "#fff",
+    color: "#111",
+    textAlign: "center",
+    borderLeft: "2px dashed rgba(17,17,17,.22)",
+    WebkitMaskImage: `${notch("0 0")}, ${notch("0 100%")}`,
+    WebkitMaskSize: "100% 51%",
+    WebkitMaskPosition: "top, bottom",
+    WebkitMaskRepeat: "no-repeat",
+    maskImage: `${notch("0 0")}, ${notch("0 100%")}`,
+    maskSize: "100% 51%",
+    maskPosition: "top, bottom",
+    maskRepeat: "no-repeat",
+});
+
+export const myRewardsStubHeading = style({
+    margin: 0,
+    fontWeight: 700,
+    fontSize: "1.05em",
+});
+
+export const myRewardsStubQr = style({ display: "block" });
+
+export const myRewardsStubQrPlaceholder = style({
+    width: "200px",
+    height: "200px",
+    backgroundColor: "#f3f4f6",
+});
+
+export const myRewardsStubCaption = style({
+    margin: 0,
+    maxWidth: "14em",
+    fontSize: "0.85em",
+    color: "#555",
+});
+
 export const myRewardsEyebrow = mutedSmall;
 
 export const myRewardsHeading = regionTitle;
@@ -378,6 +446,11 @@ export const myRewardsActions = style({
     gap: "1em 1.5em",
 });
 
+export const myRewardsActionsStart = style({
+    justifyContent: "flex-start",
+    gap: "0.75em",
+});
+
 export const myRewardsCta = ctaButton;
 
 export const myRewardsSecondaryCta = style([
@@ -391,15 +464,6 @@ export const myRewardsSecondaryCta = style([
         },
     },
 ]);
-
-export const myRewardsQr = style({
-    display: "grid",
-    justifyItems: "center",
-    gap: "0.5em",
-    margin: 0,
-});
-
-export const myRewardsQrCaption = mutedSmall;
 
 export const myRewardsFooter = mutedSmall;
 

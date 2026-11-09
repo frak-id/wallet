@@ -171,6 +171,9 @@ type ComponentCopy = {
         myRewardsOnItsWayUnlock: string;
         myRewardsWalletCta: string;
         myRewardsShareAgainCta: string;
+        /** Desktop stub beside the claim block. */
+        myRewardsQrHeading: string;
+        myRewardsQrCaption: string;
         /** Store heading while a reward is waiting to be claimed. */
         storeHeadingClaim: string;
     };
@@ -344,6 +347,9 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             myRewardsOnItsWayUnlock: "{REWARD} on its way, unlocking on {DATE}",
             myRewardsWalletCta: "Open my Frak wallet",
             myRewardsShareAgainCta: "Share again",
+            myRewardsQrHeading: "On your computer?",
+            myRewardsQrCaption:
+                "Scan with your phone to claim it in the Frak app.",
             storeHeadingClaim: "Claim your {REWARD} in the app",
         },
     },
@@ -515,6 +521,9 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             myRewardsOnItsWayUnlock: "{REWARD} en route, déblocage le {DATE}",
             myRewardsWalletCta: "Ouvrir mon wallet Frak",
             myRewardsShareAgainCta: "Partager à nouveau",
+            myRewardsQrHeading: "Sur ordinateur ?",
+            myRewardsQrCaption:
+                "Scannez avec votre téléphone pour la réclamer dans l’app Frak.",
             storeHeadingClaim: "Réclamez {REWARD} dans l’app",
         },
     },

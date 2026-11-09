@@ -20,6 +20,7 @@ import {
 import {
     myRewards,
     myRewardsActions,
+    myRewardsActionsStart,
     myRewardsAmount,
     myRewardsBreakdown,
     myRewardsCountdown,
@@ -27,15 +28,20 @@ import {
     myRewardsEyebrow,
     myRewardsFooter,
     myRewardsHeading,
+    myRewardsMain,
     myRewardsNote,
-    myRewardsQr,
-    myRewardsQrCaption,
     myRewardsRow,
     myRewardsRowValue,
     myRewardsSecondaryCta,
+    myRewardsStub,
+    myRewardsStubCaption,
+    myRewardsStubHeading,
+    myRewardsStubQr,
+    myRewardsStubQrPlaceholder,
+    myRewardsWithStub,
 } from "./Ambassador.css";
 import { Figure } from "./Figure";
-import { InstallQr } from "./InstallQr";
+import { QrSvg, useInstallQr } from "./InstallQr";
 import type { AmbassadorProps } from "./types";
 
 export type MyRewardsOverrides = Pick<
@@ -99,8 +105,29 @@ type ClaimRewardsProps = SectionProps & {
     installUrl: string | undefined;
     footer: string;
     qrLabel: string;
-    qrCaption: string;
 };
+
+function ClaimStub({
+    copy,
+    grid,
+    qrLabel,
+}: {
+    copy: AmbassadorCopy;
+    grid: boolean[][] | null;
+    qrLabel: string;
+}) {
+    return (
+        <div class={`${myRewardsStub} frak-ambassador__my-rewards-stub`}>
+            <p class={myRewardsStubHeading}>{copy.myRewardsQrHeading}</p>
+            {grid ? (
+                <QrSvg grid={grid} label={qrLabel} class={myRewardsStubQr} />
+            ) : (
+                <span class={myRewardsStubQrPlaceholder} aria-hidden="true" />
+            )}
+            <p class={myRewardsStubCaption}>{copy.myRewardsQrCaption}</p>
+        </div>
+    );
+}
 
 export function ClaimRewards({
     summary,
@@ -112,9 +139,11 @@ export function ClaimRewards({
     onShare,
     footer,
     qrLabel,
-    qrCaption,
     isDesktop,
 }: ClaimRewardsProps & { isDesktop: boolean }) {
+    const { wide, grid } = useInstallQr(isDesktop ? installUrl : undefined);
+    // Reserved from first paint so the block does not jump to two columns when the QR lands.
+    const withStub = isDesktop && wide;
     const { pending } = summary;
     const copy = componentDefaults[lang].ambassador;
     const currency = resolveRewardCurrency();
@@ -152,11 +181,8 @@ export function ClaimRewards({
     ] as const;
     const countdownLine = countdownText(copy, countdown, lang);
 
-    return (
-        <section
-            aria-labelledby={eyebrowId}
-            class={`${myRewards} frak-ambassador__my-rewards frak-ambassador__my-rewards--claim`}
-        >
+    const content = (
+        <>
             <p
                 id={eyebrowId}
                 class={`${myRewardsEyebrow} frak-ambassador__my-rewards-eyebrow`}
@@ -203,7 +229,7 @@ export function ClaimRewards({
                 </p>
             ) : null}
             <div
-                class={`${myRewardsActions} frak-ambassador__my-rewards-actions`}
+                class={`${myRewardsActions}${withStub ? ` ${myRewardsActionsStart}` : ""} frak-ambassador__my-rewards-actions`}
             >
                 <a
                     class={`${myRewardsCta} frak-ambassador__my-rewards-cta`}
@@ -230,30 +256,42 @@ export function ClaimRewards({
                         { reward: total, brand }
                     )}
                 </a>
-                {isDesktop ? (
-                    <InstallQr
-                        url={installUrl}
-                        label={qrLabel}
-                        caption={qrCaption}
-                        class={`${myRewardsQr} frak-ambassador__my-rewards-qr`}
-                        captionClass={myRewardsQrCaption}
-                    />
-                ) : null}
+                <button
+                    type="button"
+                    class={`${myRewardsSecondaryCta} frak-ambassador__my-rewards-share`}
+                    disabled={!isClientReady}
+                    onClick={onShare}
+                >
+                    {fillReminderText(
+                        overrides.myRewardsShareCtaLabel ??
+                            copy.myRewardsShareCta,
+                        { brand }
+                    )}
+                </button>
             </div>
-            <button
-                type="button"
-                class={`${myRewardsSecondaryCta} frak-ambassador__my-rewards-share`}
-                disabled={!isClientReady}
-                onClick={onShare}
-            >
-                {fillReminderText(
-                    overrides.myRewardsShareCtaLabel ?? copy.myRewardsShareCta,
-                    { brand }
-                )}
-            </button>
             <p class={`${myRewardsFooter} frak-ambassador__my-rewards-footer`}>
                 {footer}
             </p>
+        </>
+    );
+
+    return (
+        <section
+            aria-labelledby={eyebrowId}
+            class={`${myRewards}${withStub ? ` ${myRewardsWithStub}` : ""} frak-ambassador__my-rewards frak-ambassador__my-rewards--claim`}
+        >
+            {withStub ? (
+                <>
+                    <div
+                        class={`${myRewardsMain} frak-ambassador__my-rewards-main`}
+                    >
+                        {content}
+                    </div>
+                    <ClaimStub copy={copy} grid={grid} qrLabel={qrLabel} />
+                </>
+            ) : (
+                content
+            )}
         </section>
     );
 }

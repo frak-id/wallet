@@ -1754,17 +1754,23 @@ describe("Ambassador", () => {
             );
         });
 
-        it("draws the install QR beside the claim button on desktop only", async () => {
+        it("draws the install QR in a stub beside the claim block on desktop only", async () => {
             setSummary(PENDING_SUMMARY);
             setWideScreen(true);
             const desktop = render(<Ambassador />);
+            const stub = () =>
+                desktop.container.querySelector(
+                    ".frak-ambassador__my-rewards-stub"
+                );
+            expect(stub()).toHaveTextContent("On your computer?");
             await waitFor(() =>
-                expect(
-                    desktop.container.querySelector(
-                        ".frak-ambassador__my-rewards-qr"
-                    )
-                ).not.toBeNull()
+                expect(stub()?.querySelector("svg[role=img]")).not.toBeNull()
             );
+            expect(
+                desktop.container.querySelector(
+                    ".frak-ambassador__my-rewards-main .frak-ambassador__my-rewards-share"
+                )
+            ).not.toBeNull();
             cleanup();
 
             isMobile.mockReturnValue(true);
@@ -1778,7 +1784,7 @@ describe("Ambassador", () => {
             );
             expect(
                 mobile.container.querySelector(
-                    ".frak-ambassador__my-rewards-qr"
+                    ".frak-ambassador__my-rewards-stub"
                 )
             ).toBeNull();
         });
