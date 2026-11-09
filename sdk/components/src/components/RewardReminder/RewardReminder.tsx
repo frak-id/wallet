@@ -171,7 +171,7 @@ export function RewardReminder({
                         aria-label={pillLabel}
                         onClick={onPillClick}
                     >
-                        <GiftIcon class={icon} />
+                        <GiftIcon class={icon} ink="#fff" />
                         <span class={pillAmount}>{reward}</span>
                         {countdownLabel && (
                             <span class={pillCountdown}>{countdownLabel}</span>

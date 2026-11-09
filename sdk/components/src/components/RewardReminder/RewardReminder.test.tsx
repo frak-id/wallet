@@ -152,6 +152,17 @@ describe("RewardReminder", () => {
             expect(pill).toHaveTextContent(/days? left/);
         });
 
+        it("draws the gift in a light stroke on the dark pill", () => {
+            render(<RewardReminder />);
+
+            const strokes = Array.from(
+                pillButton()?.querySelectorAll("svg [stroke]") ?? [],
+                (node) => node.getAttribute("stroke")
+            );
+            expect(strokes.length).toBeGreaterThan(0);
+            expect(new Set(strokes)).toEqual(new Set(["#fff"]));
+        });
+
         it.each([
             [
                 "the client is not ready",
