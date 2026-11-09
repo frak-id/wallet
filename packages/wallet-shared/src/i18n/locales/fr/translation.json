@@ -45,8 +45,8 @@
         "at": "à",
         "accountId": "Porte-monnaie",
         "authenticator": "Authentificateur",
-        "claim": "Réclamer",
-        "claimed": "réclamé",
+        "claim": "Récupérer",
+        "claimed": "récupéré",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
@@ -490,7 +490,7 @@
             "required": "Le mot de passe est requis"
         },
         "pendingReferral": {
-            "success": "Vous avez réclamé votre récompense avec succès !",
+            "success": "Vous avez récupéré votre récompense avec succès !",
             "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
             "title": "Récompense de parrainage en attente"
         },

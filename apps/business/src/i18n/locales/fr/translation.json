@@ -1101,9 +1101,9 @@
                 },
                 "limits": {
                     "title": "Limites et délais",
-                    "pendingExpiration": "Délai pour réclamer la récompense",
-                    "pendingExpirationValue_one": "{{count}} jour pour réclamer",
-                    "pendingExpirationValue_other": "{{count}} jours pour réclamer",
+                    "pendingExpiration": "Délai pour récupérer la récompense",
+                    "pendingExpirationValue_one": "{{count}} jour pour la récupérer",
+                    "pendingExpirationValue_other": "{{count}} jours pour la récupérer",
                     "lockup": "Blocage de la récompense",
                     "lockupValue": "{{duration}} avant règlement",
                     "lockupNone": "Aucun blocage",
