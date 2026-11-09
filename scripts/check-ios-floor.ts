@@ -67,6 +67,7 @@ const SITES: Site[] = [
         "frak-webauthn",
         "install-referrer",
         "recovery-hint",
+        "store-review",
     ].map((name) => ({
         file: `apps/wallet/src-tauri/plugins/tauri-plugin-${name}/ios/Package.swift`,
         pattern: /\.iOS\(\.v([0-9]+)\)/g,
