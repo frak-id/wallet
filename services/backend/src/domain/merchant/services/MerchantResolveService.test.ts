@@ -521,14 +521,14 @@ describe("MerchantResolveService reward reminder settings", () => {
                 components: {
                     banner: { pendingTitle: { fr: "En attente" } },
                     postPurchase: {
-                        claimCtaText: { en: "Claim", fr: "Réclamer" },
+                        claimCtaText: { en: "Claim", fr: "Récupérer" },
                     },
                 },
             },
             "fr"
         );
         expect(components?.banner?.pendingTitle).toBe("En attente");
-        expect(components?.postPurchase?.claimCtaText).toBe("Réclamer");
+        expect(components?.postPurchase?.claimCtaText).toBe("Récupérer");
     });
 
     it("processes the reminder raw CSS and never sends it raw", async () => {

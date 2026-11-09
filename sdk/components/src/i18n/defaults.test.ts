@@ -19,15 +19,36 @@ describe("reminder copy", () => {
         expect(offenders).toEqual([]);
     });
 
-    it("uses the same verb to claim in the pill, the card and the banner", () => {
+    it("uses the same verb to claim in the pill, the card, the banner, the ambassador and the post-purchase card", () => {
         const { fr, en } = {
             fr: componentDefaults.fr,
             en: componentDefaults.en,
         };
         expect(fr.rewardReminder.pillLabel).toContain("récupérer");
-        expect(fr.rewardReminder.cta).toMatch(/^Récupérer/);
-        expect(fr.banner.pendingCta).toMatch(/^Récupérer/);
+        for (const cta of [
+            fr.rewardReminder.cta,
+            fr.banner.pendingCta,
+            fr.ambassador.myRewardsClaimCta,
+            fr.postPurchase.claimCtaText,
+            fr.postPurchase.claimCtaNoRewardText,
+        ]) {
+            expect(cta).toMatch(/^Récupérer/);
+        }
         expect(en.rewardReminder.pillLabel).toContain("claim");
+    });
+
+    it("never asks to réclamer a reward in French", () => {
+        const blocks = {
+            ...Object.fromEntries(reminderBlocks),
+            postPurchase: componentDefaults.fr.postPurchase,
+            ambassador: componentDefaults.fr.ambassador,
+        };
+        const offenders = Object.entries(blocks).flatMap(([block, texts]) =>
+            Object.entries(texts)
+                .filter(([, text]) => /réclam/i.test(text))
+                .map(([key]) => `${block}.${key}`)
+        );
+        expect(offenders).toEqual([]);
     });
 
     it("keeps French apostrophes typographic in the reminder copy", () => {

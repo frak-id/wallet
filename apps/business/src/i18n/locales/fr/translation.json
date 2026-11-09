@@ -1997,7 +1997,7 @@
         },
         "rewardReminder": {
             "title": "Rappel de récompense",
-            "description": "Affiche un petit badge aux clients qui ont gagné une récompense sur votre boutique sans avoir encore créé leur wallet Frak, avec le montant et le nombre de jours restants avant expiration. Une récompense non réclamée n'est jamais versée. Les autres visiteurs ne le voient pas.",
+            "description": "Affiche un petit badge aux clients qui ont gagné une récompense sur votre boutique sans avoir encore créé leur wallet Frak, avec le montant et le nombre de jours restants avant expiration. Une récompense non récupérée n'est jamais versée. Les autres visiteurs ne le voient pas.",
             "enabled": "Afficher le rappel de récompense",
             "position": {
                 "label": "Position",
@@ -2086,9 +2086,9 @@
             "bannerGroups": {
                 "referral": "Parrainage",
                 "inapp": "In-app",
-                "pending": "Récompense non réclamée"
+                "pending": "Récompense non récupérée"
             },
-            "pendingTokensHint": "Affiché aux visiteurs ayant une récompense non réclamée. Variables : {REWARD}, {DAYS}, {DATE}.",
+            "pendingTokensHint": "Affiché aux visiteurs ayant une récompense non récupérée. Variables : {REWARD}, {DAYS}, {DATE}.",
             "rewardToken": {
                 "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
                 "copy": "Copier {REWARD}"
@@ -2119,10 +2119,10 @@
                 "inappTitle": "Titre in-app",
                 "inappDescription": "Description in-app",
                 "inappCta": "CTA in-app",
-                "pendingTitle": "Titre récompense non réclamée",
-                "pendingDescription": "Description récompense non réclamée",
-                "pendingCta": "CTA récompense non réclamée",
-                "claimCtaText": "Texte du bouton Réclamer",
+                "pendingTitle": "Titre récompense non récupérée",
+                "pendingDescription": "Description récompense non récupérée",
+                "pendingCta": "CTA récompense non récupérée",
+                "claimCtaText": "Texte du bouton Récupérer",
                 "css": "CSS du composant"
             },
             "style": {

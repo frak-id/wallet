@@ -367,8 +367,8 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
                 "Partagez avec vos amis et gagnez des récompenses !",
             ctaText: "Partagez et gagnez {REWARD}",
             ctaNoRewardText: "Partagez et gagnez",
-            claimCtaText: "Réclamer {REWARD}",
-            claimCtaNoRewardText: "Réclamer mon cashback",
+            claimCtaText: "Récupérer mes {REWARD}",
+            claimCtaNoRewardText: "Récupérer mon cashback",
         },
         openInApp: {
             text: "Ouvrir dans l'app",
@@ -506,14 +506,14 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             myRewardsCashbackLabel: "Cashback sur vos commandes",
             myRewardsFriendsLabel: "Issu des achats de vos amis",
             myRewardsCountdown:
-                "{DAYS} jours restants pour la réclamer, jusqu’au {DATE}",
+                "{DAYS} jours restants pour la récupérer, jusqu’au {DATE}",
             myRewardsCountdownOneDay:
-                "1 jour restant pour la réclamer, jusqu’au {DATE}",
+                "1 jour restant pour la récupérer, jusqu’au {DATE}",
             myRewardsCountdownToday:
-                "Expire aujourd’hui, réclamez-la maintenant",
+                "Expire aujourd’hui, récupérez-la maintenant",
             myRewardsUnlockNote: "Une partie se débloque le {DATE}",
             myRewardsUnlockNoteAll: "Se débloque le {DATE}",
-            myRewardsClaimCta: "Réclamer {REWARD}",
+            myRewardsClaimCta: "Récupérer mes {REWARD}",
             myRewardsShareCta: "Partager pour gagner plus",
             myRewardsLinkedHeading: "Vos récompenses chez {BRAND}",
             myRewardsReceived: "{REWARD} reçus",
@@ -523,8 +523,8 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             myRewardsShareAgainCta: "Partager à nouveau",
             myRewardsQrHeading: "Sur ordinateur ?",
             myRewardsQrCaption:
-                "Scannez avec votre téléphone pour la réclamer dans l’app Frak.",
-            storeHeadingClaim: "Réclamez {REWARD} dans l’app",
+                "Scannez avec votre téléphone pour la récupérer dans l’app Frak.",
+            storeHeadingClaim: "Récupérez vos {REWARD} dans l’app",
         },
     },
 };
