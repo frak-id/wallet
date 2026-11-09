@@ -52,7 +52,7 @@ const SITES: Site[] = [
         why: "pins the floor against the Tauri CLI's own 14.0 default on `tauri ios init`",
     },
     {
-        file: ".github/workflows/tauri-mobile-release.yml",
+        file: "apps/wallet/scripts/prewarm-swiftpm.sh",
         pattern: /platforms:\s*\[\.iOS\(\.v([0-9]+)\)/g,
         values: 1,
         why: "a stale floor in the pre-warm stub poisons the shared SwiftPM artifact cache",
