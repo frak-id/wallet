@@ -185,7 +185,9 @@ export function InlineSection() {
             <Cases title="Vertical Alignment">
                 <Case name="alignY baseline">
                     <Inline space="s" alignY="baseline">
-                        <Text variant="display">Big</Text>
+                        <Text as="span" variant="display">
+                            Big
+                        </Text>
                         <Text variant="tiny">tiny</Text>
                     </Inline>
                 </Case>

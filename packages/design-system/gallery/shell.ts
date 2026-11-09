@@ -49,11 +49,29 @@ export function serialiseShell(state: ShellState): string {
     return `#${params}`;
 }
 
+export const findingKinds = [
+    "overflow",
+    "clip",
+    "focus",
+    "overlay",
+    "pointer",
+] as const;
+export type FindingKind = (typeof findingKinds)[number];
+
 export type Finding = {
-    kind: "overflow" | "focus";
+    kind: FindingKind;
     caseName: string;
     reason: string;
 };
+
+export function parseFindingKey(key: string) {
+    const [kind, sectionId, ...rest] = key.split(":");
+    return {
+        kind: findingKinds.find((k) => k === kind),
+        sectionId,
+        caseName: rest.join(":"),
+    };
+}
 
 /** Keys are `<kind>:<section id>:<case name>`; case names contain colons too. */
 export function findingsFor(
@@ -61,10 +79,9 @@ export function findingsFor(
     findings: Record<string, string> = knownFindings
 ): Finding[] {
     return Object.entries(findings).flatMap(([key, reason]) => {
-        const [kind, id, ...rest] = key.split(":");
-        if (id !== sectionId || (kind !== "overflow" && kind !== "focus"))
-            return [];
-        return [{ kind, caseName: rest.join(":"), reason }];
+        const { kind, sectionId: id, caseName } = parseFindingKey(key);
+        if (id !== sectionId || !kind) return [];
+        return [{ kind, caseName, reason }];
     });
 }
 

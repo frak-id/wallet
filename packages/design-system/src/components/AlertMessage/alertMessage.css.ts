@@ -133,6 +133,7 @@ export const steps = style({
     lineHeight: "22px",
     fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.primary,
+    wordBreak: "break-word",
 });
 
 /** Bottom action row — indented to align under the text column (icon + gap). */
@@ -152,6 +153,7 @@ export const action = style({
     fontFamily: brand.typography.fontFamily.inter,
     fontSize: "14px",
     fontWeight: brand.typography.fontWeight.semiBold,
+    wordBreak: "break-word",
     selectors: {
         "&:focus-visible": {
             outline: `2px solid ${vars.border.focus}`,

@@ -44,7 +44,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import { ShareIcon } from "@frak-labs/design-system/icons";
 import { type ComponentProps, useState } from "react";
-import { fixtures } from "../fixtures";
+import { fixtures, longText } from "../fixtures";
 import { heroImage, phoneFrame, toastFrame, toastOffset } from "../gallery.css";
 import { Case, Cases } from "../ui";
 
@@ -114,7 +114,7 @@ export function DialogSection() {
                 <DialogCase
                     name="worst: long sentence"
                     title={fixtures.longSentence}
-                    body={fixtures.longSentence.repeat(4)}
+                    body={longText(4)}
                 />
             </Cases>
         </>
@@ -188,7 +188,7 @@ export function DrawerSection() {
                 <DrawerCase
                     name="worst: long content"
                     title={fixtures.longSentence}
-                    body={fixtures.longSentence.repeat(30)}
+                    body={longText(30)}
                 />
             </Cases>
         </>
@@ -374,7 +374,7 @@ export function ResponsiveModalSection() {
                 <ResponsiveModalCase
                     name="worst: long content"
                     title={fixtures.longSentence}
-                    body={fixtures.longSentence.repeat(30)}
+                    body={longText(30)}
                 />
             </Cases>
         </>
@@ -444,7 +444,7 @@ export function SheetSection() {
                 <SheetPanelCase
                     name="worst: long content"
                     title={fixtures.longSentence}
-                    body={fixtures.longSentence.repeat(30)}
+                    body={longText(30)}
                 />
             </Cases>
         </>
@@ -482,10 +482,7 @@ export function PopoverSection() {
                     name="worst: unbreakable email"
                     body={fixtures.unbreakableEmail}
                 />
-                <PopoverCase
-                    name="worst: long sentence"
-                    body={fixtures.longSentence.repeat(4)}
-                />
+                <PopoverCase name="worst: long sentence" body={longText(4)} />
             </Cases>
         </>
     );
