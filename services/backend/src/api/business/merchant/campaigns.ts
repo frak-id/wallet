@@ -139,22 +139,37 @@ export async function getCampaignForMerchant(
     return campaign;
 }
 
-function toListItem(campaign: {
-    id: string;
-    name: string;
-    status: CampaignStatus;
-    rule: CampaignRuleDefinition;
-    budgetConfig: BudgetConfig | null;
-    budgetUsed: BudgetUsed | null;
-    expiresAt: Date | null;
-    publishedAt: Date | null;
-    createdAt: Date;
-}): Omit<CampaignListItem, "stats"> {
+export function resolveRewardToken(
+    rule: CampaignRuleDefinition,
+    defaultRewardToken: Address | null
+): Address | undefined {
+    return (
+        rule.rewards?.find((reward) => reward.token)?.token ??
+        defaultRewardToken ??
+        undefined
+    );
+}
+
+function toListItem(
+    campaign: {
+        id: string;
+        name: string;
+        status: CampaignStatus;
+        rule: CampaignRuleDefinition;
+        budgetConfig: BudgetConfig | null;
+        budgetUsed: BudgetUsed | null;
+        expiresAt: Date | null;
+        publishedAt: Date | null;
+        createdAt: Date;
+    },
+    defaultRewardToken: Address | null
+): Omit<CampaignListItem, "stats"> {
     return {
         id: campaign.id,
         name: campaign.name,
         status: campaign.status,
         rewards: (campaign.rule.rewards ?? []).map(toRewardSummary),
+        rewardToken: resolveRewardToken(campaign.rule, defaultRewardToken),
         budgetConfig: Array.isArray(campaign.budgetConfig)
             ? campaign.budgetConfig
             : null,
@@ -181,7 +196,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 ? (query.status.split(",") as CampaignStatus[])
                 : undefined;
 
-            const [campaigns, bankStatus, stats] = await Promise.all([
+            const [campaigns, bankStatus, stats, merchant] = await Promise.all([
                 CampaignContext.services.management.getByMerchant(
                     merchantId,
                     statusFilter
@@ -192,6 +207,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 OrchestrationContext.orchestrators.campaignStats.getStatsForMerchant(
                     merchantId
                 ),
+                MerchantContext.repositories.merchant.findById(merchantId),
             ]);
 
             let bankDistributionStatus: DistributionStatus = "not_deployed";
@@ -214,7 +230,10 @@ export const merchantCampaignsRoutes = new Elysia({
             return {
                 bankDistributionStatus,
                 campaigns: campaigns.map((campaign) => ({
-                    ...toListItem(campaign),
+                    ...toListItem(
+                        campaign,
+                        merchant?.defaultRewardToken ?? null
+                    ),
                     stats: statsById.get(campaign.id) ?? null,
                 })),
             };
