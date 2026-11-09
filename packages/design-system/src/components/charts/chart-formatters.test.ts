@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    getCompactFmt,
     getIntFmt,
     getShortDateFmt,
     getWeekdayDateFmt,
@@ -27,6 +28,7 @@ describe("chart formatters", () => {
 
     it("reuses one formatter per locale", () => {
         expect(getIntFmt("en-GB")).toBe(getIntFmt("en-GB"));
+        expect(getCompactFmt("en-GB")).toBe(getCompactFmt("en-GB"));
         expect(getShortDateFmt("en-GB")).toBe(getShortDateFmt("en-GB"));
         expect(getWeekdayDateFmt("en-GB")).toBe(getWeekdayDateFmt("en-GB"));
     });

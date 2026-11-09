@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChartStable } from "./chart-context";
+import { getCompactFmt } from "./chart-formatters";
 import * as styles from "./charts.css";
 
 export interface NumericYAxisProps {
     /** Explicit tick values; those outside the data's range are dropped. Falls back to the scale's own ticks. */
     ticks?: number[];
-    /** Formats each tick value into its label. */
+    /** Formats each tick value into its label. Defaults to compact notation in the chart's locale. */
     formatter?: (value: number) => string;
 }
 
@@ -15,11 +16,10 @@ export interface NumericYAxisProps {
  * the right chart margin (portaled into the container) so it escapes the area
  * chart's left-to-right reveal clip.
  */
-export function NumericYAxis({
-    ticks,
-    formatter = (v) => `${v}`,
-}: NumericYAxisProps) {
-    const { containerRef, yScale, margin } = useChartStable();
+export function NumericYAxis({ ticks, formatter }: NumericYAxisProps) {
+    const { containerRef, yScale, margin, locale } = useChartStable();
+    const format =
+        formatter ?? ((v: number) => getCompactFmt(locale).format(v));
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -56,7 +56,7 @@ export function NumericYAxis({
                         right: 4,
                     }}
                 >
-                    {formatter(value)}
+                    {format(value)}
                 </span>
             ))}
         </div>,
