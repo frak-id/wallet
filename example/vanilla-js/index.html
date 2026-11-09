@@ -6,6 +6,8 @@
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <%- sdkPreconnect %>
+    <!-- Before the SDK: section 9 can answer its reward-summary request with a sample visitor. -->
+    <script src="/reward-demo.js"></script>
     <script>
         const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -195,6 +197,10 @@
         }
         .test-section .test-section__button--alt:hover {
             background: #BF360C;
+        }
+        .test-section .test-section__button[aria-pressed="true"] {
+            background: #2E7D32;
+            box-shadow: 0 0 0 2px #A5D6A7;
         }
         .component-row {
             display: flex;
@@ -507,6 +513,74 @@
         Share button, store badges (plus a QR code from 768px) and an FAQ. It
         fills the viewport, so it gets its own route instead of sitting inline
         here.
+    </p>
+    <div class="component-row">
+        <a class="test-section__button" href="/ambassador.html">Open the ambassador page</a>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 9: Unclaimed-reward reminder        -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">9. Unclaimed-Reward Reminder</h2>
+    <p class="test-section__text">
+        A visitor who earned rewards here but has no Frak wallet sees how much
+        is waiting and how many days are left: a floating pill the SDK mounts on
+        its own (bottom-left), the banner's pending mode, a "Your rewards" block
+        on the ambassador page, and a Claim button on the post-purchase card.
+        Every claim link opens the wallet's <code>/install</code> page.
+    </p>
+    <p class="test-section__note">
+        Nobody on the dev stage has unclaimed rewards yet, so pick a sample
+        visitor: the page then answers the SDK's reward-summary request with it
+        (<code>public/reward-demo.js</code>) and everything else is real, signed
+        claim link and QR code included. The claim link opens the real
+        <code>/install</code>, which asks the real backend and so shows the
+        merchant's estimate instead of the sample amount.
+    </p>
+    <div>
+        <button type="button" class="test-section__button" data-reward-demo="waiting">14,5 € waiting, 30 days left</button>
+        <button type="button" class="test-section__button" data-reward-demo="partlyLocked">Part still locked</button>
+        <button type="button" class="test-section__button" data-reward-demo="lastDay">Last day</button>
+        <button type="button" class="test-section__button" data-reward-demo="linked">Wallet already linked</button>
+        <button type="button" class="test-section__button test-section__button--alt" data-reward-demo="off">Off (real data)</button>
+    </div>
+    <div class="status-box">
+        <div id="reward-demo-status" class="info">Off: the components read this visitor's real rewards.</div>
+    </div>
+
+    <h3 class="test-section__subtitle">Floating pill</h3>
+    <p class="test-section__text">
+        Bottom-left of this page once a sample visitor is on (none for "Wallet
+        already linked": a linked visitor is paid without claiming). Click it to
+        open the card; on desktop, click its small QR code to enlarge it.
+        Dismissing it lasts for the tab; picking a scenario again brings it back.
+    </p>
+
+    <h3 class="test-section__subtitle">Banner, pending mode (preview)</h3>
+    <p class="test-section__note">
+        A live banner in pending mode takes the pill's place, so this one is a
+        preview with sample data.
+    </p>
+    <div class="component-row">
+        <frak-banner preview="true" preview-mode="pending"></frak-banner>
+    </div>
+
+    <h3 class="test-section__subtitle">Post-purchase card, referee (preview)</h3>
+    <p class="test-section__note">
+        Live, the Claim button appears for a referred buyer whose wallet is not
+        linked yet.
+    </p>
+    <div class="component-row">
+        <frak-post-purchase preview="true" preview-variant="referee"></frak-post-purchase>
+    </div>
+
+    <h3 class="test-section__subtitle">Ambassador "Your rewards"</h3>
+    <p class="test-section__text">
+        Uses the same sample visitor: the claim block above the hero (with the
+        QR code in a tear-off stub on desktop), or the recap below it for
+        "Wallet already linked".
     </p>
     <div class="component-row">
         <a class="test-section__button" href="/ambassador.html">Open the ambassador page</a>
