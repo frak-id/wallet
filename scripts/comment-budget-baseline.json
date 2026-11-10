@@ -346,7 +346,6 @@
     "packages/wallet-shared/src/sharing/component/SharingPage/types.ts": 1,
     "packages/wallet-shared/src/sharing/component/useOverlayBehaviour.test.tsx": 2,
     "packages/wallet-shared/src/sharing/component/useOverlayBehaviour.ts": 1,
-    "packages/wallet-shared/src/sharing/hooks/useShareLink.ts": 4,
     "packages/wallet-shared/src/sharing/hooks/useSharingPageController.ts": 1,
     "packages/wallet-shared/src/stores/authenticationStore.test.ts": 1,
     "packages/wallet-shared/src/stores/authenticationStore.ts": 6,
