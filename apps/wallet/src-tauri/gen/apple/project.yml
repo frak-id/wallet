@@ -44,6 +44,7 @@ targets:
       path: app_iOS/Info.plist
       properties:
         LSRequiresIPhoneOS: true
+        FirebaseMessagingInstallationIdEnabled: true
         # UIRequiresFullScreen disables iPad multitasking (Slide Over/Split View),
         # which exempts the app from Apple's "all 4 orientations required on iPad" rule.
         # Frak Wallet is portrait-only by design, so we opt out of multitasking.

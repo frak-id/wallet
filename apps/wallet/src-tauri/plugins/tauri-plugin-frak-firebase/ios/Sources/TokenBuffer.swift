@@ -2,9 +2,9 @@ import Foundation
 
 /// Thread-safe in-memory buffer for the latest FCM token.
 ///
-/// Solves the cold-start race condition where `MessagingDelegate.didReceiveRegistrationToken`
+/// Solves the cold-start race condition where `MessagingDelegate.didReceiveRegistration`
 /// fires before JS event listeners are attached. The `getToken` command reads from this buffer
-/// as a fallback when `Messaging.messaging().token` fails.
+/// as a fallback when `Messaging.messaging().register` fails.
 ///
 /// Vendored verbatim from `srod/tauri-plugin-fcm` (commit b9d4d186).
 final class TokenBuffer {
