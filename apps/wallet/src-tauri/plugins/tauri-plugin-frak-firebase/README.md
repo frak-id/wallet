@@ -61,8 +61,8 @@ source) and links:
 - `FirebaseMessaging` — FCM push notifications.
 - `FirebaseCrashlytics` — crash reporting + non-fatal recording.
 
-**The host `gen/apple/Podfile` is deliberately empty of Firebase pods.**
-Linking Firebase via both SPM and CocoaPods produces duplicate symbols and
+**The host app links Firebase through SwiftPM only; there is no Podfile.**
+Linking it via both SPM and CocoaPods produces duplicate symbols and
 silently breaks Crashlytics' crash-handler registration.
 
 **dSYM upload** runs in CI (`.github/workflows/tauri-mobile-release.yml`)
