@@ -92,7 +92,6 @@ describe("initKeyboardInset", () => {
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
         document.documentElement.style.removeProperty("--viewport-height");
-        document.documentElement.style.removeProperty("--keyboard-open");
     });
 
     function flushRaf() {
@@ -152,43 +151,6 @@ describe("initKeyboardInset", () => {
         expect(
             document.documentElement.style.getPropertyValue("--viewport-height")
         ).toBe("800px");
-    });
-
-    test("flags --keyboard-open when the viewport shrinks past the threshold", () => {
-        const vv = installViewport(800);
-
-        cleanup = initKeyboardInset();
-
-        expect(
-            document.documentElement.style.getPropertyValue("--keyboard-open")
-        ).toBe("0");
-
-        vv.height = 500;
-        vv.dispatch("resize");
-        flushRaf();
-        expect(
-            document.documentElement.style.getPropertyValue("--keyboard-open")
-        ).toBe("1");
-
-        vv.height = 800;
-        vv.dispatch("resize");
-        flushRaf();
-        expect(
-            document.documentElement.style.getPropertyValue("--keyboard-open")
-        ).toBe("0");
-    });
-
-    test("ignores sub-threshold shrinkage (toolbar jitter)", () => {
-        const vv = installViewport(800);
-
-        cleanup = initKeyboardInset();
-
-        vv.height = 740;
-        vv.dispatch("resize");
-        flushRaf();
-        expect(
-            document.documentElement.style.getPropertyValue("--keyboard-open")
-        ).toBe("0");
     });
 
     test("coalesces multiple events into a single rAF callback", () => {
@@ -291,6 +253,36 @@ describe("initKeyboardInset", () => {
         expect(scrollBy).toHaveBeenCalledTimes(1);
     });
 
+    test("ignores sub-threshold shrinkage (toolbar jitter)", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(293);
+        field.focus();
+
+        vv.height = 567;
+        vv.dispatch("resize");
+        flushRaf();
+
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    test("stops revealing fields once the keyboard closes", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(293);
+        vv.height = 407;
+        vv.dispatch("resize");
+        flushRaf();
+        vv.height = 667;
+        vv.dispatch("resize");
+        flushRaf();
+
+        field.focus();
+        flushRaf();
+
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
     test("ignores focus while the keyboard is closed", () => {
         installViewport(667);
         cleanup = initKeyboardInset();
@@ -313,9 +305,6 @@ describe("initKeyboardInset", () => {
         expect(vv.listeners.get("scroll")?.size ?? 0).toBe(0);
         expect(
             document.documentElement.style.getPropertyValue("--viewport-height")
-        ).toBe("");
-        expect(
-            document.documentElement.style.getPropertyValue("--keyboard-open")
         ).toBe("");
     });
 });

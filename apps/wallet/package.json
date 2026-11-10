@@ -76,7 +76,6 @@
     "@tauri-apps/plugin-biometric": "^2.5.0",
     "@tauri-apps/plugin-clipboard-manager": "catalog:",
     "@tauri-apps/plugin-deep-link": "^2.6.3",
-    "@tauri-apps/plugin-fs": "^2.7.1",
     "@tauri-apps/plugin-opener": "^2.7.2",
     "canvas-confetti": "catalog:",
     "i18next": "catalog:",
@@ -94,7 +93,6 @@
     "react-i18next": "catalog:",
     "remix-utils": "catalog:",
     "sonner": "catalog:",
-    "tauri-plugin-safe-area-insets": "^0.1.0",
     "viem": "catalog:",
     "wagmi": "catalog:",
     "zustand": "catalog:"

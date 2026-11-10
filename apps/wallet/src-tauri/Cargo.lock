@@ -83,14 +83,11 @@ dependencies = [
  "tauri-plugin-frak-share",
  "tauri-plugin-frak-updater",
  "tauri-plugin-frak-webauthn",
- "tauri-plugin-fs",
  "tauri-plugin-install-referrer",
  "tauri-plugin-log",
  "tauri-plugin-opener",
  "tauri-plugin-ota-updater",
  "tauri-plugin-recovery-hint",
- "tauri-plugin-safe-area-insets",
- "tauri-plugin-share",
  "tauri-plugin-store-review",
 ]
 
@@ -2489,7 +2486,6 @@ checksum = "e3e0adef53c21f888deb4fa59fc59f7eb17404926ee8a6f59f5df0fd7f9f3272"
 dependencies = [
  "bitflags 2.13.1",
  "block2",
- "libc",
  "objc2",
  "objc2-core-foundation",
 ]
@@ -4086,30 +4082,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-fs"
-version = "2.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d58eb1d4984e535f47a642ffec09a2da6f5c18a12b5902d12126cb7626d628b"
-dependencies = [
- "anyhow",
- "dunce",
- "glob",
- "log",
- "objc2-foundation",
- "percent-encoding",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "serde_repr",
- "tauri",
- "tauri-plugin",
- "tauri-utils",
- "thiserror 2.0.19",
- "toml 1.1.3+spec-1.1.0",
- "url",
-]
-
-[[package]]
 name = "tauri-plugin-install-referrer"
 version = "0.1.0"
 dependencies = [
@@ -4190,30 +4162,6 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
-]
-
-[[package]]
-name = "tauri-plugin-safe-area-insets"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "653b425316a0e9563995286eb5b0fa44490583486b7a0925859b33ec5be07f0e"
-dependencies = [
- "serde",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.19",
-]
-
-[[package]]
-name = "tauri-plugin-share"
-version = "2.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "737d8d06876c9a40af11cbcfe48988e653a1193ab149e739a48ca6cda26bf4b6"
-dependencies = [
- "serde",
- "tauri",
- "tauri-plugin",
- "thiserror 1.0.69",
 ]
 
 [[package]]

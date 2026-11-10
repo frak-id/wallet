@@ -199,8 +199,6 @@ The app is configured with Digital Asset Links for WebAuthn verification:
 
 Android-specific Tauri plugins:
 - `tauri-plugin-webauthn`: Native WebAuthn support
-- `tauri-plugin-share`: File sharing (used for recovery file downloads)
-- `tauri-plugin-fs`: File system access
 - `tauri-plugin-recovery-hint`: Persistent recovery hint via Block Store (survives uninstall)
 
 #### Build Configuration

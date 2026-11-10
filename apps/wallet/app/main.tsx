@@ -27,7 +27,6 @@ import { initNativeGlass } from "@/module/native-glass/bridge";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
-import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -131,7 +130,7 @@ declare module "@tanstack/react-router" {
 async function main() {
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
-        await Promise.all([initSafeAreaInsets(), initNativeGlass()]);
+        await initNativeGlass();
         initKeyboardInset();
         const firstLoadSettled = new Promise<void>((resolve) => {
             const unsubscribe = router.subscribe("onResolved", () => {

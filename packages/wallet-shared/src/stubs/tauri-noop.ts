@@ -49,10 +49,3 @@ export const openPath = tauriUnavailable;
 // `@tauri-apps/plugin-biometric`
 export const checkStatus = tauriUnavailable;
 export const authenticate = tauriUnavailable;
-
-// `@tauri-apps/plugin-fs`
-export const writeTextFile = tauriUnavailable;
-export const BaseDirectory = {} as never;
-
-// `tauri-plugin-safe-area-insets`
-export const getInsets = tauriUnavailable;
