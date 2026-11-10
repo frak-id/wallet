@@ -1,77 +1,24 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { recordError, trackEvent } from "../../common/analytics";
 import type { SharingSource } from "../../common/analytics/events";
-import { getInvoke } from "../../common/tauri";
 import { sharingKey } from "../queryKeys";
-
-type TauriShareResponse = { shared: boolean };
-
-type TauriSharePayload = {
-    url: string;
-    text?: string;
-    title?: string;
-    imageUrl?: string;
-};
-
-/**
- * Invoke the native share sheet provided by the `tauri-plugin-frak-share`
- * plugin. Runs Intent.ACTION_SEND on Android and UIActivityViewController on
- * iOS so shared links go through the OS chooser instead of the (unavailable)
- * web Share API inside Tauri's WebView.
- *
- * `url`, `text`, `title` and `imageUrl` are passed as separate fields so the
- * native layer can:
- *   - hand the URL to iOS as a typed `URL` activity item (Messages / Mail /
- *     Safari render a link card instead of parsing the URL out of free-form text),
- *   - attach `LPLinkMetadata` with the optional `imageUrl` for the rich
- *     preview header on iOS 13+,
- *   - populate `EXTRA_TITLE` + a FileProvider-backed `ClipData` thumbnail on
- *     Android 10+ so the chooser shows a branded preview tile.
- */
-async function invokeTauriShare(payload: TauriSharePayload): Promise<boolean> {
-    const invoke = await getInvoke();
-    const response = await invoke<TauriShareResponse>(
-        "plugin:frak-share|share_text",
-        payload
-    );
-    // iOS returns the real `completed` flag; Android resolves as soon as the
-    // chooser is presented (always true). Either way this indicates no error.
-    return response?.shared ?? true;
-}
+import { canShareNatively, shareNatively } from "../utils/shareNatively";
 
 export type ShareLinkData = {
     title?: string;
     text?: string;
-    /**
-     * Optional remote image URL (brand logo, product shot, hero image).
-     * Used by the native plugin to populate the rich preview shown above
-     * the activity grid (iOS `LPLinkMetadata.iconProvider`, Android
-     * `ClipData` preview tile). Ignored on web — `navigator.share` does
-     * not expose a standardised preview image field.
-     */
+    /** Preview thumbnail (brand logo, product shot); only the native Tauri sheet renders it. */
     imageUrl?: string;
 };
 
 /**
- * Hook to trigger the native Web Share API.
+ * Shares `link` through the OS share sheet (see `shareNatively`).
  *
- * Fires `sharing_link_started` with `{source, merchant_id, link}` as soon as
- * the share intent is confirmed (link present + platform can share), and
- * `sharing_link_shared` with the same payload on successful completion.
- * Comparing the two yields the OS chooser completion rate.
- *
- * `onShared` runs after the analytics event and is the integration point for
- * the listener's `useTrackSharing` backend interaction — keeps transport
- * concerns out of this hook.
- *
- * Inside a Tauri WebView (iOS / Android app shells) `navigator.share` is not
- * available, so the hook routes through the custom `frak-share` plugin which
- * opens the OS-level share sheet.
+ * Fires `sharing_link_started` once the sheet opens and `sharing_link_shared` on completion,
+ * both with `{source, merchant_id, link}`; `onShared` runs after the latter.
  *
  * @param link - The link to share (null disables sharing)
- * @param shareData - Title/text/imageUrl metadata for the share dialog.
- *                   `imageUrl` only affects the native (Tauri) flow.
+ * @param shareData - Title/text/imageUrl metadata for the share dialog
  * @param options - `source` is required; optional `merchantId`, `onShared`, and standard mutation callbacks.
  */
 export function useShareLink(
@@ -85,13 +32,7 @@ export function useShareLink(
         onShared?: () => void;
     } & MutationOptions
 ) {
-    // `frak-share` only ships iOS (UIActivityViewController) and Android
-    // (Intent.ACTION_SEND) handlers, so gate the Tauri path on those two
-    // platforms instead of the generic `isTauri()` check.
-    const canShare =
-        IS_TAURI ||
-        (typeof navigator !== "undefined" &&
-            typeof navigator.share === "function");
+    const canShare = canShareNatively();
 
     const { source, merchantId, native, onShared, ...mutationOptions } =
         options;
@@ -100,13 +41,9 @@ export function useShareLink(
         ...mutationOptions,
         mutationKey: sharingKey.trigger(source, link),
         mutationFn: async () => {
-            if (!link) return;
+            if (!(link && canShare)) return;
 
-            // If we can't share, early exit
-            if (!canShare) return;
-
-            // Emit before opening the OS share sheet so we capture intent
-            // even when the user dismisses the chooser without completing.
+            // Before the sheet opens, so a dismissed chooser still counts as intent.
             trackEvent("sharing_link_started", {
                 source,
                 merchant_id: merchantId,
@@ -114,63 +51,31 @@ export function useShareLink(
                 native,
             });
 
-            // Tauri (iOS / Android) routes through the native plugin because
-            // `navigator.share` is not exposed inside the Tauri WebView.
-            if (IS_TAURI) {
-                try {
-                    const shared = await invokeTauriShare({
-                        url: link,
-                        // Keep `text` and `url` as separate fields so the
-                        // native layer can render a proper URL preview
-                        // instead of parsing it out of concatenated text.
-                        text: shareData.text,
-                        title: shareData.title,
-                        imageUrl: shareData.imageUrl,
-                    });
-                    if (!shared) return;
-                    trackEvent("sharing_link_shared", {
-                        source,
-                        merchant_id: merchantId,
-                        link,
-                        native,
-                    });
-                    onShared?.();
-                    return true;
-                } catch (err) {
-                    // A dismissed sheet resolves `shared: false`, so a rejection is a real failure.
-                    recordError(err, {
-                        source: "sharing",
-                        context: {
-                            sharing_source: source,
-                            merchant_id: merchantId,
-                        },
-                    });
-                    return;
-                }
-            }
-
-            const data = {
-                title: shareData.title,
-                text: shareData.text,
-                url: link,
-            };
-
-            if (!navigator.canShare(data)) return;
-
-            // Try to share the link
+            let shared: boolean;
             try {
-                await navigator.share(data);
-                trackEvent("sharing_link_shared", {
-                    source,
-                    merchant_id: merchantId,
-                    link,
-                    native,
-                });
-                onShared?.();
-                return true;
+                // `url` stays apart from `text` so iOS renders a link card instead of parsing free text.
+                shared = await shareNatively({ ...shareData, url: link });
             } catch (err) {
-                console.warn(err);
+                // A dismissed sheet resolves `false`, so a rejection is a real failure.
+                recordError(err, {
+                    source: "sharing",
+                    context: {
+                        sharing_source: source,
+                        merchant_id: merchantId,
+                    },
+                });
+                return;
             }
+            if (!shared) return;
+
+            trackEvent("sharing_link_shared", {
+                source,
+                merchant_id: merchantId,
+                link,
+                native,
+            });
+            onShared?.();
+            return true;
         },
     });
     return { ...mutation, canShare };

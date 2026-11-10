@@ -148,6 +148,10 @@
             }
         },
         {
+            "includes": ["apps/wallet/**", "packages/wallet-shared/**"],
+            "plugins": ["./scripts/biome/no-navigator-share.grit"]
+        },
+        {
             "includes": ["packages/test-foundation/**"],
             "linter": {
                 "rules": {

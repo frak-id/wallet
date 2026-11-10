@@ -35,3 +35,5 @@ export {
 } from "./utils/confirmation";
 export { sanitizeShareImage } from "./utils/sanitizeShareImage";
 export { SHARE_BUDGET, truncateForShare } from "./utils/shareBudget";
+export type { NativeSharePayload } from "./utils/shareNatively";
+export { canShareNatively, shareNatively } from "./utils/shareNatively";

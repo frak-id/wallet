@@ -1,11 +1,22 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { trackEvent, copy, navigate, game } = vi.hoisted(() => ({
+const {
+    trackEvent,
+    recordError,
+    copy,
+    navigate,
+    game,
+    canShareNatively,
+    shareNatively,
+} = vi.hoisted(() => ({
     trackEvent: vi.fn(),
+    recordError: vi.fn(),
     copy: vi.fn(),
     navigate: vi.fn(),
     game: { data: undefined as unknown },
+    canShareNatively: vi.fn(),
+    shareNatively: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
@@ -17,6 +28,9 @@ vi.mock("react-i18next", () => ({
 }));
 vi.mock("@frak-labs/wallet-shared", () => ({
     trackEvent,
+    recordError,
+    canShareNatively,
+    shareNatively,
     useCopyToClipboardWithState: () => ({ copied: false, copy }),
     useReferralStatus: () => ({
         data: { ownedCode: { code: "STORY1", createdAt: "2026-10-20" } },
@@ -43,9 +57,7 @@ describe("ShareReferralCodePage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         game.data = undefined;
-    });
-    afterEach(() => {
-        Reflect.deleteProperty(navigator, "share");
+        canShareNatively.mockReturnValue(true);
     });
 
     it("explains how a friend counts in the game to a player in it", () => {
@@ -86,9 +98,25 @@ describe("ShareReferralCodePage", () => {
         );
     });
 
+    it("shares the text alone through the native share primitive", async () => {
+        shareNatively.mockResolvedValue(true);
+        render(<ShareReferralCodePage />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /wallet.referral.share.shareCta/,
+            })
+        );
+
+        await waitFor(() =>
+            expect(shareNatively).toHaveBeenCalledExactlyOnceWith({
+                text: "wallet.referral.share.shareText",
+            })
+        );
+    });
+
     it("tracks started then shared once the sheet resolves", async () => {
-        const share = vi.fn().mockResolvedValue(undefined);
-        Object.assign(navigator, { share });
+        shareNatively.mockResolvedValue(true);
         render(<ShareReferralCodePage />);
 
         fireEvent.click(
@@ -111,10 +139,7 @@ describe("ShareReferralCodePage", () => {
     });
 
     it("tracks started but not shared when the sheet is dismissed", async () => {
-        const share = vi
-            .fn()
-            .mockRejectedValue(new DOMException("", "AbortError"));
-        Object.assign(navigator, { share });
+        shareNatively.mockResolvedValue(false);
         render(<ShareReferralCodePage />);
 
         fireEvent.click(
@@ -123,7 +148,7 @@ describe("ShareReferralCodePage", () => {
             })
         );
 
-        await waitFor(() => expect(share).toHaveBeenCalled());
+        await waitFor(() => expect(shareNatively).toHaveBeenCalled());
         await Promise.resolve();
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "sharing_link_started",
@@ -132,7 +157,31 @@ describe("ShareReferralCodePage", () => {
         expect(copy).not.toHaveBeenCalled();
     });
 
-    it("copies the share text and tracks a copy without navigator.share", () => {
+    it("reports a share sheet the native plugin failed to open", async () => {
+        const failure = "A share sheet is already open";
+        shareNatively.mockRejectedValue(failure);
+        render(<ShareReferralCodePage />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /wallet.referral.share.shareCta/,
+            })
+        );
+
+        await waitFor(() =>
+            expect(recordError).toHaveBeenCalledWith(failure, {
+                source: "sharing",
+                context: { sharing_source: "referral_code" },
+            })
+        );
+        expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+            "sharing_link_started",
+            SOURCE
+        );
+    });
+
+    it("copies the share text and tracks a copy where nothing can share", () => {
+        canShareNatively.mockReturnValue(false);
         render(<ShareReferralCodePage />);
 
         fireEvent.click(
