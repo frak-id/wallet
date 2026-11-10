@@ -214,7 +214,7 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.1.15",
+      "version": "1.1.16",
       "dependencies": {
         "@crabnebula/plugin-ota-updater": "^2.0.1",
         "@frak-labs/app-essentials": "workspace:*",
