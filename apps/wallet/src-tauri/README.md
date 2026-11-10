@@ -203,7 +203,7 @@ Android-specific Tauri plugins:
 
 #### Build Configuration
 
-- **Min SDK**: 28 (Android 9.0)
+- **Min SDK**: 29 (Android 10): Android 9 cannot get a WebView recent enough to report `env(safe-area-inset-*)`
 - **Target SDK**: 36
 - **Package**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev), driven by the `FRAK_VARIANT=dev` env var (legacy `-PappVariant=dev` Gradle property still honored)
 
