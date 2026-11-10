@@ -93,7 +93,6 @@
     "react-i18next": "catalog:",
     "remix-utils": "catalog:",
     "sonner": "catalog:",
-    "tauri-plugin-safe-area-insets": "^0.1.0",
     "viem": "catalog:",
     "wagmi": "catalog:",
     "zustand": "catalog:"

@@ -2,9 +2,9 @@
 /**
  * Keeps safe-area insets in `.css.ts` on the `safeArea` token, not raw `env()`.
  *
- * Bare `env(safe-area-inset-*)` returns 0 on the Android Tauri WebView, which
- * draws edge-to-edge without populating the CSS values, so a site spelling it
- * by hand clips content behind the nav bar.
+ * The token reads the `--safe-area-inset-*` variables seeded in
+ * `reset-globals.css.ts`, so every site follows that one definition instead of
+ * spelling `env(safe-area-inset-*)` by hand.
  */
 import { readFileSync } from "node:fs";
 import { glob } from "node:fs/promises";

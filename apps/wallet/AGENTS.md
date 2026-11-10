@@ -17,7 +17,7 @@ E2E_ONBOARDING=1 bun run e2e:ios   # First onboards a NEW dev wallet (new passke
 ```
 
 ## Key Files
-- `app/main.tsx` — Tauri bootstrap + safe area handling
+- `app/main.tsx` — Tauri bootstrap (safe-area insets come from the `env()` seed in `packages/design-system/src/reset-globals.css.ts`)
 - `app/service-worker.ts` — critical for offline + pairing; `bun run build:sw` emits it
 - `app/routes/__root.tsx` — global layout · `app/routes/_wallet/_protected/` — guarded routes
 - `app/module/` — one directory per feature

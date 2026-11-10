@@ -263,9 +263,8 @@ run_android() {
     # The dev server is started by this script (not by Tauri's beforeDevCommand,
     # which is disabled below via `-c {beforeDevCommand:""}`). Vite bakes the
     # platform flags from env at build time: `__IS_TAURI__` from TAURI_CLI_RUNNING
-    # and `__IS_ANDROID__` from TAURI_ENV_PLATFORM. Without TAURI_ENV_PLATFORM the
-    # bundle gets IS_ANDROID=false, so `initSafeAreaInsets()` early-returns and the
-    # nav-bar inset never reaches CSS. Export both before `start_dev_server`.
+    # and `__IS_ANDROID__` from TAURI_ENV_PLATFORM. Export both before
+    # `start_dev_server`.
     export TAURI_CLI_RUNNING=1
     export TAURI_ENV_PLATFORM=android
     # Match the sst pane environment for one-off `sst dev` runs: mobile

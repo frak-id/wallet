@@ -250,7 +250,6 @@
         "react-i18next": "catalog:",
         "remix-utils": "catalog:",
         "sonner": "catalog:",
-        "tauri-plugin-safe-area-insets": "^0.1.0",
         "viem": "catalog:",
         "wagmi": "catalog:",
         "zustand": "catalog:",
@@ -3131,8 +3130,6 @@
     "tagged-tag": ["tagged-tag@1.0.0", "", {}, "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="],
 
     "tapable": ["tapable@2.3.3", "", {}, "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="],
-
-    "tauri-plugin-safe-area-insets": ["tauri-plugin-safe-area-insets@0.1.0", "", { "dependencies": { "@tauri-apps/api": ">=2.0.0-beta.6" } }, "sha512-NhtxSQdU7+laTJiO4WZFlTB1CBzRlNE5EuHflGAGXS55fiwOkkaWztfNishFQO+eZtb9i5jLHX3Yho48lnqcRQ=="],
 
     "tauri-plugin-webauthn-api": ["tauri-plugin-webauthn-api@0.2.0", "", { "dependencies": { "@simplewebauthn/types": "^12.0.0", "@tauri-apps/api": ">=2.0.0-beta.6" } }, "sha512-muSGFCLiIRKpwW7MSpxT8kRZi3b6qYb4r7jUZbkJY6/DvB8C9gxFX/YkVstnX3M/mtbZWKVFGp/W0PuyDCf2Dg=="],
 
