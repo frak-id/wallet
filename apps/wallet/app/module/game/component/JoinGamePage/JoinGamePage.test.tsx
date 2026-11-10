@@ -226,7 +226,7 @@ describe("JoinGamePage", () => {
         });
     });
 
-    it("pre-fills the code and shows the confetti screen once the game is joined", () => {
+    it("pre-fills the code and shows the confetti screen once the game is joined", async () => {
         redeemResult.current = { kind: "frak", game, gameReward: 1 };
         render(<JoinGamePage initialCode="FRAK26" />);
 
@@ -237,10 +237,15 @@ describe("JoinGamePage", () => {
         });
 
         fireEvent.click(screen.getByText(/reward-1/));
-        expect(navigate).toHaveBeenCalledWith({ to: "/game", replace: true });
+        await waitFor(() =>
+            expect(navigate).toHaveBeenCalledWith({
+                to: "/game",
+                replace: true,
+            })
+        );
     });
 
-    it("goes to the game page once the game is refetched when joining without a reward", async () => {
+    it("shows the confetti screen for a join without a reward, then goes to the game page once refetched", async () => {
         let refetchDone = () => {};
         refetchQueries.mockReturnValueOnce(
             new Promise<void>((resolve) => {
@@ -251,6 +256,7 @@ describe("JoinGamePage", () => {
         render(<JoinGamePage initialCode="FRAK26" />);
 
         fireEvent.click(screen.getByRole("button", { name: /FRAK26/ }));
+        fireEvent.click(screen.getByText(/reward-0 game-prize/));
         expect(navigate).not.toHaveBeenCalled();
 
         refetchDone();
@@ -263,7 +269,6 @@ describe("JoinGamePage", () => {
         expect(refetchQueries).toHaveBeenCalledWith({
             queryKey: ["game", "current"],
         });
-        expect(screen.queryByText(/reward-/)).not.toBeInTheDocument();
     });
 
     it("hands a friend's code back to the referral page", () => {

@@ -60,7 +60,10 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
     const queryClient = useQueryClient();
     const current = useCurrentGame();
     const history = useGameHistory();
-    const [joined, setJoined] = useState<RedeemResult | null>(null);
+    const [joined, setJoined] = useState<{
+        result: RedeemResult;
+        refetched: Promise<void>;
+    } | null>(null);
     // A shared friend's code lands here too, from a player already in the game.
     const openGame =
         current.data?.game && !current.data.me.participating
@@ -75,7 +78,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
         trackEvent("game_code_entry_viewed", { prefilled: !!initialCode });
     }, [initialCode, hasGame]);
 
-    const handleRedeemed = async (result: RedeemResult) => {
+    const handleRedeemed = (result: RedeemResult) => {
         trackEvent("game_code_submitted", {
             outcome: result.game ? "joined" : "referrer_set",
         });
@@ -85,12 +88,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
             const refetched = queryClient.refetchQueries({
                 queryKey: currentGameKeys.all,
             });
-            if (gameRewardOf(result) > 0) {
-                setJoined(result);
-                return;
-            }
-            await refetched;
-            navigate({ to: "/game", replace: true });
+            setJoined({ result, refetched });
             return;
         }
         // A friend's code became the referrer: the referral page shows it as before.
@@ -100,9 +98,12 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
     if (joined) {
         return (
             <GameReward
-                reward={gameRewardOf(joined)}
-                game={joined.game}
-                onContinue={() => navigate({ to: "/game", replace: true })}
+                reward={gameRewardOf(joined.result)}
+                game={joined.result.game}
+                onContinue={async () => {
+                    await joined.refetched;
+                    navigate({ to: "/game", replace: true });
+                }}
             />
         );
     }
