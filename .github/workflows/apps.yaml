@@ -820,6 +820,8 @@ jobs:
   ios-sdk:
     name: "🍏 iOS SDK · Lint, build & test"
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.ios == 'true'
     steps:
@@ -862,6 +864,8 @@ jobs:
   wallet-ios:
     name: "🍎 Wallet · iOS release build"
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.walletIos == 'true'
     timeout-minutes: 45
