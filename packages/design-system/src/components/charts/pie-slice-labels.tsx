@@ -1,7 +1,7 @@
 import {
-    PIE_HOVER_OFFSET,
     PIE_INNER_RADIUS,
     PIE_OUTER_RADIUS,
+    sliceOffset,
     usePie,
 } from "./pie-context";
 
@@ -33,8 +33,9 @@ export function PieSliceLabels() {
                 // Follow the slice's translate-on-hover so the label rides with it.
                 const isHovered = hoveredIndex === arc.index;
                 const isFaded = hoveredIndex !== null && !isHovered;
-                const dx = isHovered ? Math.sin(mid) * PIE_HOVER_OFFSET : 0;
-                const dy = isHovered ? -Math.cos(mid) * PIE_HOVER_OFFSET : 0;
+                const offset = sliceOffset(arc.startAngle, arc.endAngle);
+                const dx = isHovered ? offset.x : 0;
+                const dy = isHovered ? offset.y : 0;
                 return (
                     // Transform on a wrapping <g> (not <text>) — more robust
                     // across browsers (Safari) for animating SVG transforms.

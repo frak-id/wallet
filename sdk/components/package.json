@@ -39,7 +39,8 @@
     "./dist/buttonWallet.js",
     "./dist/openInApp.js",
     "./dist/postPurchase.js",
-    "./dist/banner.js"
+    "./dist/banner.js",
+    "./dist/rewardReminder.js"
   ],
   "private": false,
   "publishConfig": {
@@ -83,6 +84,11 @@
       "import": "./dist/banner.js",
       "types": "./dist/banner.d.ts"
     },
+    "./rewardReminder": {
+      "development": "./src/components/RewardReminder/index.ts",
+      "import": "./dist/rewardReminder.js",
+      "types": "./dist/rewardReminder.d.ts"
+    },
     "./i18n/defaults": {
       "development": "./src/i18n/defaults.ts",
       "production": "./src/i18n/defaults.ts",
@@ -115,7 +121,7 @@
     "qr": "catalog:"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "catalog:",

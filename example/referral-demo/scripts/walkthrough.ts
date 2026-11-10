@@ -177,6 +177,28 @@ const script: {
     },
     {
         step: "referrer.wallet",
+        taps: [
+            (ui) => button(ui, wallet["pendingGains.confirm"]),
+            (ui) => button(ui, wallet["balance.transfer"]),
+        ],
+    },
+    {
+        step: "referrer.cashout",
+        taps: [
+            (ui) => button(ui, wallet["bankFlow.info.cta"]),
+            (ui) => button(ui, wallet["bankFlow.success.cta"]),
+        ],
+    },
+    {
+        step: "referrer.transfer",
+        taps: [
+            (ui) => button(ui, wallet["bankFlow.amount.continue"], true),
+            (ui) => button(ui, wallet["bankFlow.recap.confirm"]),
+            (ui) => button(ui, bank.name),
+        ],
+    },
+    {
+        step: "referrer.bank",
         taps: [(ui) => button(ui, shell["continue.referrer"])],
     },
     {
@@ -222,27 +244,8 @@ const script: {
         step: "referee.wallet",
         taps: [
             (ui) => button(ui, wallet["pendingGains.confirm"]),
-            (ui) => button(ui, wallet["balance.transfer"]),
+            (ui) => button(ui, shell["continue.referee"]),
         ],
-    },
-    {
-        step: "referee.cashout",
-        taps: [
-            (ui) => button(ui, wallet["bankFlow.info.cta"]),
-            (ui) => button(ui, wallet["bankFlow.success.cta"]),
-        ],
-    },
-    {
-        step: "referee.transfer",
-        taps: [
-            (ui) => button(ui, wallet["bankFlow.amount.continue"], true),
-            (ui) => button(ui, wallet["bankFlow.recap.confirm"]),
-            (ui) => button(ui, bank.name),
-        ],
-    },
-    {
-        step: "referee.bank",
-        taps: [(ui) => button(ui, shell["continue.referee"])],
     },
     { step: "finale", taps: [] },
 ];

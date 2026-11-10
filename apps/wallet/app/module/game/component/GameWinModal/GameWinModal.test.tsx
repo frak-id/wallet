@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, trackEvent, confetti } = vi.hoisted(() => ({
-    navigate: vi.fn(),
-    trackEvent: vi.fn(),
-    confetti: vi.fn(),
-}));
+const { navigate, trackEvent, confetti, maybeAskForReview } = vi.hoisted(
+    () => ({
+        navigate: vi.fn(),
+        trackEvent: vi.fn(),
+        confetti: vi.fn(),
+        maybeAskForReview: vi.fn(),
+    })
+);
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
 vi.mock("react-i18next", () => ({
@@ -15,6 +18,9 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 vi.mock("@frak-labs/wallet-shared", () => ({ trackEvent }));
+vi.mock("@/module/common/utils/maybeAskForReview", () => ({
+    maybeAskForReview,
+}));
 vi.mock("@/module/game/hook/useConfettiBurst", () => ({
     useConfettiBurst: confetti,
 }));
@@ -30,6 +36,7 @@ describe("GameWinModal", () => {
         navigate.mockClear();
         trackEvent.mockClear();
         confetti.mockClear();
+        maybeAskForReview.mockClear();
         modalStore.setState({
             modal: { id: "gameWin", result: win },
             stack: [],
@@ -56,6 +63,17 @@ describe("GameWinModal", () => {
             game_id: "g1",
             action: "close",
         });
+    });
+
+    it("asks for a store review once the win screen is gone, however it closed", () => {
+        const { unmount } = render(
+            <GameWinModal result={win} onClose={vi.fn()} />
+        );
+        expect(maybeAskForReview).not.toHaveBeenCalled();
+
+        unmount();
+
+        expect(maybeAskForReview).toHaveBeenCalledExactlyOnceWith("game_win");
     });
 
     it("takes the winner to their history to see the prize", () => {

@@ -786,6 +786,11 @@ export default interface Resources {
       "openWallet": "Open Frak & claim {{estimatedReward}}",
       "openWalletCta": "Open my wallet",
       "openWallet_noReward": "Open Frak",
+      "pendingCodelessTitle": "Your {{amount}} is waiting",
+      "pendingDaysLeft": "{{days}} days left",
+      "pendingExpiresToday": "Expires today",
+      "pendingOneDayLeft": "1 day left",
+      "pendingTitle": "Your {{amount}} is waiting\nCopy your reward code",
       "processing": "Setting up your wallet...",
       "processingDone": "Your wallet is ready",
       "referral": {

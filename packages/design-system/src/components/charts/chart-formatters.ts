@@ -30,6 +30,18 @@ export function getWeekdayDateFmt(locale: string): Intl.DateTimeFormat {
 
 const numberFmtCache = new Map<string, Intl.NumberFormat>();
 
+const compactFmtCache = new Map<string, Intl.NumberFormat>();
+
+/** `1.2K`, `10T`: compact notation for axis ticks. Locale-aware, cached per locale. */
+export function getCompactFmt(locale: string): Intl.NumberFormat {
+    let fmt = compactFmtCache.get(locale);
+    if (!fmt) {
+        fmt = new Intl.NumberFormat(locale, { notation: "compact" });
+        compactFmtCache.set(locale, fmt);
+    }
+    return fmt;
+}
+
 /** Integer formatter (grouping separators). Locale-aware, cached per locale. */
 export function getIntFmt(locale: string): Intl.NumberFormat {
     let fmt = numberFmtCache.get(locale);

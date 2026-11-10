@@ -214,6 +214,7 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         // code is surfaced in `message` (4 digits, so the JS `[5xxxx]` GPS-code
         // regex can never mistake it) for analytics + debugging.
         let type: String
+        var detail = "[\(code)] \(error.localizedDescription)"
         switch code {
         case 1001 where wasPreferImmediate:
             // .canceled under preferImmediatelyAvailableCredentials — Apple's
@@ -237,9 +238,10 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
             return
         default: // .failed / .unknown / .invalidResponse / .notHandled / …
             type = "UnknownError"
+            detail = authorizationErrorDetail(error)
         }
 
-        invoke.reject(webauthnError(type, "[\(code)] \(error.localizedDescription)"))
+        invoke.reject(webauthnError(type, detail))
     }
 
     /// Unified `{ type, message }` reject envelope the JS bridge classifies on,

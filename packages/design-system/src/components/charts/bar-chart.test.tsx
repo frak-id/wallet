@@ -140,7 +140,7 @@ describe("BarChart", () => {
         );
     });
 
-    it("falls back to the scale's own ticks, printed as plain numbers", async () => {
+    it("falls back to the scale's own ticks, in compact notation", async () => {
         const { container } = render(
             <BarChart data={data} margin={margin}>
                 <Bar dataKey="value" fill={BAR_FILL} />
@@ -152,7 +152,37 @@ describe("BarChart", () => {
             expect(textsOf(container, styles.yTickLabel)).toEqual([
                 "0",
                 "500",
-                "1000",
+                "1K",
+            ])
+        );
+    });
+
+    it("keeps a very large value's ticks short", async () => {
+        const { container } = render(
+            <BarChart data={[{ label: "Jan", value: 1e13 }]} margin={margin}>
+                <Bar dataKey="value" fill={BAR_FILL} />
+                <NumericYAxis />
+            </BarChart>
+        );
+
+        await waitFor(() =>
+            expect(textsOf(container, styles.yTickLabel)).toContain("10T")
+        );
+    });
+
+    it("writes the default ticks in the chart's locale", async () => {
+        const { container } = render(
+            <BarChart data={data} locale="fr-FR" margin={margin}>
+                <Bar dataKey="value" fill={BAR_FILL} />
+                <NumericYAxis />
+            </BarChart>
+        );
+
+        await waitFor(() =>
+            expect(textsOf(container, styles.yTickLabel)).toEqual([
+                "0",
+                "500",
+                "1\u00a0k",
             ])
         );
     });

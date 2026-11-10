@@ -11,11 +11,8 @@ import { useT } from "@/i18n";
 import { useFormatMoney } from "@/i18n/format";
 import { walletMessages } from "../../messages";
 
-/**
- * `live`: the referrer's story is out and her reward waits on a friend.
- * `turn`: the referee is invited to start referring in turn.
- */
-export function ShareNudge({ variant }: { variant: "live" | "turn" }) {
+/** The referee is invited to start referring in turn. */
+export function ShareNudge() {
     const t = useT(walletMessages);
     const money = useFormatMoney();
     return (
@@ -27,10 +24,10 @@ export function ShareNudge({ variant }: { variant: "live" | "turn" }) {
                     </IconCircle>
                     <Stack space="xxs">
                         <Text variant="body" weight="semiBold">
-                            {t(`nudge.${variant}.title`)}
+                            {t("nudge.turn.title")}
                         </Text>
                         <Text variant="bodySmall" color="secondary">
-                            {t(`nudge.${variant}.description`, {
+                            {t("nudge.turn.description", {
                                 amount: money(
                                     campaign.referrerReward,
                                     "reward"
@@ -41,7 +38,7 @@ export function ShareNudge({ variant }: { variant: "live" | "turn" }) {
                     </Stack>
                 </Inline>
                 <Button variant="secondary" size="small">
-                    {t(`nudge.${variant}.cta`)}
+                    {t("nudge.turn.cta")}
                 </Button>
             </Stack>
         </Card>

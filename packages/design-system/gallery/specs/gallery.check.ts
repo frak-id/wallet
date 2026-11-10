@@ -1,9 +1,23 @@
 import { expect, type Page, test } from "@playwright/test";
 import { sections } from "../sections";
+import { type FindingKind, parseFindingKey } from "../shell";
 import { knownFindings } from "./known-findings";
 
 const NARROW = { width: 320, height: 900 };
 const MAX_TAB_STOPS = 300;
+const FOCUSABLE = [
+    "button:enabled",
+    "input:enabled",
+    "select:enabled",
+    "textarea:enabled",
+    "a[href]",
+    "[tabindex]",
+]
+    .map((sel) => `${sel}:not([tabindex="-1"])`)
+    .join(",");
+// Browsers show focus on a clicked text field by design: it is where typing goes.
+const TEXT_ENTRY =
+    'input:not([type="checkbox"], [type="radio"]), textarea, [contenteditable]';
 // Charts ignore `prefers-reduced-motion`; the longest enter animation is a
 // ~1.1s tween plus under half a second of stagger.
 const CHART_SETTLE_MS = 2_000;
@@ -61,7 +75,7 @@ async function openSection(page: Page, id: string, { fakeClock = false } = {}) {
 }
 
 /** Fails on a finding not in `known-findings.ts`, and on a listed one that is gone. */
-function expectFindings(kind: string, id: string, found: Finding[]) {
+function expectFindings(kind: FindingKind, id: string, found: Finding[]) {
     const prefix = `${kind}:${id}:`;
     const expected = Object.keys(knownFindings).filter((k) =>
         k.startsWith(prefix)
@@ -215,7 +229,7 @@ function contrast(a: Rgb, b: Rgb) {
     return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The outermost non-inset shadow layer, and whether it is the only visible one with no offset or blur. */
+/** Visible non-inset shadow layers, outermost first, and whether the ring is one layer with no offset or blur. */
 function outerShadow(boxShadow: string) {
     const layers = [
         ...boxShadow.matchAll(
@@ -237,16 +251,21 @@ function outerShadow(boxShadow: string) {
         .sort((a, b) => b.reach - a.reach);
     const ring = layers[0];
     return ring
-        ? { color: ring.color, flush: layers.length === 1 && ring.spreadOnly }
+        ? {
+              colors: layers.map((l) => l.color),
+              flush: layers.length === 1 && ring.spreadOnly,
+          }
         : null;
 }
 
-type Ring = { color: string; background: string[]; flush: boolean };
+/** A two-tone ring passes when any one band reaches the ratio (WCAG technique C40); bands meet the fill only when flush. */
+type Ring = { colors: string[]; background: string[]; flush: boolean };
 
 function findRing(facts: StopFacts): Ring | null {
     const { outline, boxShadow, idle } = facts;
     const background = facts.parentBackground;
     const outlineText = `${outline.style} ${outline.width}px ${outline.color}`;
+    const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (
         outline.width > 0 &&
         outline.style !== "none" &&
@@ -254,18 +273,17 @@ function findRing(facts: StopFacts): Ring | null {
         outlineText !== idle.outline
     )
         return {
-            color: outline.color,
+            colors: [outline.color, ...(shadow ? shadow.colors : [])],
             background,
             flush: outline.offset <= 0,
         };
-    const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (shadow) return { ...shadow, background };
     const wrapper = facts.wrappers.find(
         (w) => w.borderWidth > 0 && w.focusedBorder !== w.idleBorder
     );
     return wrapper
         ? {
-              color: wrapper.focusedBorder,
+              colors: [wrapper.focusedBorder],
               background: wrapper.background,
               flush: false,
           }
@@ -281,10 +299,9 @@ function inspectStop(facts: StopFacts) {
     if (!ring)
         return `no focus indicator (outline ${facts.outline.style} ${facts.outline.width}px, box-shadow ${facts.boxShadow})`;
     const background = resolveBackground(ring.background);
-    const paint = parseColor(ring.color);
-    if (!background || !paint)
-        return `cannot parse ring ${ring.color} or its background`;
-    const ringColor = over(paint, background);
+    const paints = ring.colors.map(parseColor);
+    if (!background || paints.some((p) => !p))
+        return `cannot parse ring ${ring.colors.join(", ")} or its background`;
     const against = [{ name: "background", color: background }];
     if (ring.flush && isVisibleColor(facts.fill)) {
         const fill = resolveBackground([facts.fill, ...ring.background]);
@@ -293,20 +310,155 @@ function inspectStop(facts: StopFacts) {
     const weak = against
         .map(({ name, color }) => ({
             name,
-            ratio: contrast(ringColor, color),
+            ratio: Math.max(
+                ...paints.map((p) =>
+                    p ? contrast(over(p, background), color) : 0
+                )
+            ),
         }))
         .filter(({ ratio }) => ratio < MIN_RING_CONTRAST)
         .map(({ name, ratio }) => `${ratio.toFixed(2)}:1 against the ${name}`);
     if (weak.length > 0)
-        return `ring ${ring.color} needs ${MIN_RING_CONTRAST}:1 but has ${weak.join(" and ")}`;
+        return `ring ${ring.colors.join(" + ")} needs ${MIN_RING_CONTRAST}:1 but has ${weak.join(" and ")}`;
     return null;
+}
+
+/** Runs in the page: the ring a pointer press left on `el`, or null when there is none. */
+function readPointerRing(el: Element) {
+    if (!(el instanceof HTMLElement) || el !== document.activeElement)
+        return null;
+    const paint = () => {
+        const cs = getComputedStyle(el);
+        const outline =
+            cs.outlineStyle === "none" ||
+            Number.parseFloat(cs.outlineWidth) === 0 ||
+            /rgba\(.*,\s*0\)|transparent/.test(cs.outlineColor)
+                ? "none"
+                : `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}`;
+        return `outline ${outline}, box-shadow ${cs.boxShadow}`;
+    };
+    const focused = paint();
+    el.blur();
+    const idle = paint();
+    return focused === idle ? null : `${focused} (idle: ${idle})`;
+}
+
+/**
+ * Runs in the page: text cut off by an `overflow: hidden` box with no ellipsis
+ * or line clamp, or spilling out of a fixed-height box. Horizontal spill is the
+ * overflow test's job.
+ */
+function readClipping(caseEl: Element) {
+    const hides = (v: string) => v === "hidden" || v === "clip";
+    const textRects = (box: Element) => {
+        const rects: DOMRect[] = [];
+        const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+        for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+            if (!t.textContent?.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(t);
+            rects.push(range.getBoundingClientRect());
+        }
+        return rects;
+    };
+    const cutSides = (
+        box: Element,
+        r: DOMRect,
+        horizontal: boolean,
+        vertical: boolean,
+        tolerance: number
+    ) => {
+        const outer = box.getBoundingClientRect();
+        const left = outer.left + box.clientLeft;
+        const top = outer.top + box.clientTop;
+        return Object.entries({
+            left: left - r.left,
+            right: r.right - (left + box.clientWidth),
+            top: top - r.top,
+            bottom: r.bottom - (top + box.clientHeight),
+        })
+            .filter(
+                ([side, px]) =>
+                    px > tolerance &&
+                    (side === "left" || side === "right"
+                        ? horizontal
+                        : vertical)
+            )
+            .map(([side, px]) => `${Math.round(px)}px ${side}`);
+    };
+    const clipMode = (box: Element) => {
+        // SVG text (chart labels) is positioned freely; it has no box to stay in.
+        if (box instanceof SVGElement) return null;
+        const cs = getComputedStyle(box);
+        // Visually hidden text (`clip: rect(0 0 0 0)`) is a 1px box on purpose.
+        if (cs.clip === "rect(0px, 0px, 0px, 0px)") return null;
+        const x = hides(cs.overflowX) && cs.textOverflow !== "ellipsis";
+        const y = hides(cs.overflowY) && cs.webkitLineClamp === "none";
+        if (x || y) return { x, y, tolerance: 1, verb: "cuts its text off" };
+        // Under half a line is fallback-font glyph overshoot, which differs by OS.
+        const halfLine = Number.parseFloat(cs.fontSize) / 2;
+        if (
+            cs.overflowY === "visible" &&
+            box.scrollHeight > box.clientHeight + 1
+        )
+            return {
+                x: false,
+                y: true,
+                tolerance: halfLine,
+                verb: "lets its text spill",
+            };
+        return null;
+    };
+    const cutOff = (box: Element) => {
+        const mode = clipMode(box);
+        if (!mode) return null;
+        for (const r of textRects(box)) {
+            const cut = cutSides(box, r, mode.x, mode.y, mode.tolerance);
+            if (cut.length > 0)
+                return `${box.tagName.toLowerCase()} ${mode.verb} by ${cut.join(", ")}`;
+        }
+        return null;
+    };
+    // Deepest first, so the box that is too small is blamed, not its ancestors.
+    for (const box of [caseEl, ...caseEl.querySelectorAll("*")].reverse()) {
+        const detail = cutOff(box);
+        if (detail) return detail;
+    }
+    return null;
+}
+
+/** Runs in the page: what is wrong with an open overlay in the viewport. */
+function readOverlay(el: Element) {
+    const problems: string[] = [];
+    const box = el.getBoundingClientRect();
+    const { innerWidth, innerHeight } = window;
+    if (box.left < 0 || box.right > innerWidth)
+        problems.push(
+            `spans ${Math.round(box.left)}..${Math.round(box.right)}px of a ${innerWidth}px viewport`
+        );
+    if (box.bottom > innerHeight + 1)
+        problems.push(
+            `ends ${Math.round(box.bottom - innerHeight)}px below the viewport`
+        );
+    // Visually hidden text (`clip: rect(0 0 0 0)`) is a 1px box on purpose.
+    const clipped = (n: Element) =>
+        getComputedStyle(n).clip === "rect(0px, 0px, 0px, 0px)";
+    if (
+        [el, ...el.querySelectorAll("*")].some(
+            (n) => n.scrollWidth > n.clientWidth + 1 && !clipped(n)
+        )
+    )
+        problems.push("content is wider than its box");
+    if (!el.contains(document.activeElement))
+        problems.push("focus did not move into it");
+    return problems;
 }
 
 test("every known finding names a registry section and a checked kind", () => {
     const ids = new Set(sections.map((s) => s.id));
     const orphans = Object.keys(knownFindings).filter((key) => {
-        const [kind, id] = key.split(":");
-        return !(kind === "overflow" || kind === "focus") || !ids.has(id);
+        const { kind, sectionId } = parseFindingKey(key);
+        return !kind || !ids.has(sectionId);
     });
     expect(orphans).toEqual([]);
 });
@@ -322,6 +474,16 @@ test("the full page renders every registry section", async ({ page }) => {
         ).toBeVisible();
     }
     expect(errors).toEqual([]);
+});
+
+test("the shell scrolls inside its panes, never the page", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.locator("[data-gallery-case]").first()).toBeVisible();
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollHeight - window.innerHeight
+    );
+    expect(overflow, "px the document scrolls past the shell").toBe(0);
 });
 
 for (const { id, title } of sections) {
@@ -364,25 +526,36 @@ for (const { id, title } of sections) {
             );
         });
 
+        test("does not cut text off or spill it at 320px", async ({ page }) => {
+            await page.setViewportSize(NARROW);
+            const section = await openSection(page, id);
+            const found = [];
+            for (const caseEl of await section
+                .locator("[data-gallery-case]")
+                .all()) {
+                const detail = await caseEl.evaluate(readClipping);
+                if (detail)
+                    found.push({
+                        key: `clip:${id}:${await caseEl.getAttribute("data-gallery-case")}`,
+                        detail,
+                    });
+            }
+            expectFindings("clip", id, found);
+        });
+
         test("shows a focus indicator on every tab stop", async ({ page }) => {
             const section = await openSection(page, id);
             const focusables = await section.evaluate(
-                (root) =>
-                    [
-                        ...root.querySelectorAll(
-                            [
-                                "button:enabled",
-                                "input:enabled",
-                                "select:enabled",
-                                "textarea:enabled",
-                                "a[href]",
-                                "[tabindex]",
-                            ]
-                                .map((sel) => `${sel}:not([tabindex="-1"])`)
-                                .join(",")
-                        ),
-                    ].filter((el) => el.checkVisibility()).length
+                (root, focusable) =>
+                    [...root.querySelectorAll(focusable)].filter((el) =>
+                        el.checkVisibility()
+                    ).length,
+                FOCUSABLE
             );
+            // A press that focuses nothing must not hide the ring from later keyboard focus.
+            for (const target of await section.locator(FOCUSABLE).all())
+                if (await target.isVisible())
+                    await target.click({ button: "right", force: true });
             await section.locator(`#${id}-title`).focus();
             const found: Finding[] = [];
             let stops = 0;
@@ -406,6 +579,103 @@ for (const { id, title } of sections) {
                     `${focusables} focusable elements but Tab reached none`
                 ).toBeGreaterThan(0);
             expectFindings("focus", id, found);
+        });
+
+        test("opens every overlay inside a 320px viewport", async ({
+            page,
+        }) => {
+            const errors = trackErrors(page);
+            await page.setViewportSize(NARROW);
+            const section = await openSection(page, id);
+            const triggers = section.locator("[data-gallery-open]");
+            const count = await triggers.count();
+            test.skip(count === 0, "no overlay in this section");
+            const found: Finding[] = [];
+            for (let i = 0; i < count; i++) {
+                const trigger = triggers.nth(i);
+                const caseName = await trigger.evaluate(
+                    (el) =>
+                        el
+                            .closest("[data-gallery-case]")
+                            ?.getAttribute("data-gallery-case") ?? "<section>"
+                );
+                const report = (detail: string) =>
+                    found.push({ key: `overlay:${id}:${caseName}`, detail });
+                await trigger.focus();
+                await page.keyboard.press("Enter");
+                const dialog = page.getByRole("dialog");
+                await expect(dialog, `${caseName} did not open`).toBeVisible();
+                for (const problem of await dialog.evaluate(readOverlay))
+                    report(problem);
+                await page.keyboard.press("Escape");
+                await expect(
+                    dialog,
+                    `${caseName} did not close on Escape`
+                ).toHaveCount(0);
+                const returned = await expect
+                    .poll(
+                        () =>
+                            trigger.evaluate(
+                                (el) => el === document.activeElement
+                            ),
+                        { timeout: 1_000 }
+                    )
+                    .toBe(true)
+                    .then(
+                        () => true,
+                        () => false
+                    );
+                if (!returned)
+                    report("focus did not return to its trigger on close");
+            }
+            expectFindings("overlay", id, found);
+            expect(errors).toEqual([]);
+        });
+
+        test("shows no focus ring after a pointer press", async ({ page }) => {
+            const section = await openSection(page, id);
+            const targets = section.locator(FOCUSABLE);
+            const count = await targets.count();
+            const found: Finding[] = [];
+            for (let i = 0; i < count; i++) {
+                const target = await targets.nth(i).elementHandle();
+                if (
+                    !target ||
+                    (await target.evaluate(
+                        (el, textEntry) =>
+                            !el.checkVisibility() || el.matches(textEntry),
+                        TEXT_ENTRY
+                    ))
+                )
+                    continue;
+                await target.scrollIntoViewIfNeeded();
+                const box = await target.boundingBox();
+                if (!box) continue;
+                await page.mouse.click(
+                    box.x + box.width / 2,
+                    box.y + box.height / 2
+                );
+                const ring = await target.evaluate(readPointerRing);
+                if (ring) {
+                    const caseName = await target.evaluate(
+                        (el) =>
+                            el
+                                .closest("[data-gallery-case]")
+                                ?.getAttribute("data-gallery-case") ??
+                            "<section>"
+                    );
+                    found.push({
+                        key: `pointer:${id}:${caseName}`,
+                        detail: ring,
+                    });
+                }
+                const popup = page.locator('[role="dialog"], [role="listbox"]');
+                if ((await popup.count()) > 0) {
+                    await page.keyboard.press("Escape");
+                    await expect(popup).toHaveCount(0);
+                }
+            }
+            expectFindings("pointer", id, found);
         });
 
         test("matches its screenshot", async ({ page }, testInfo) => {

@@ -133,7 +133,7 @@ function EntriesTable({
         });
         return {
             formatDate: (iso: string) => dateFmt.format(new Date(iso)),
-            // Stablecoin currencies (eure/gbpe/usde/usdc) aren't ISO-4217 codes,
+            // Stablecoin currencies (eure/usdc) aren't ISO-4217 codes,
             // so `Intl.NumberFormat({ style: "currency" })` can't be used here.
             formatAmount: (amount: number | null, currency: string) =>
                 amount === null

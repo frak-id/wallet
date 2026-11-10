@@ -91,21 +91,13 @@ export const walletMessages = defineMessages({
         "balance.pending": "En attente",
         "balance.lifetime": "Depuis le début",
         "history.title": "Historique des gains",
-        "history.referral": "Parrainage",
         "history.referralOf": "Parrainage · {name}",
         "history.welcomeBonus": "Cadeau de parrainage",
-        "history.status.waitingFriend":
-            "Débloqué dès qu'une amie commande via votre lien",
         "history.status.settled": "À collecter",
-        "nudge.live.title": "Votre story est en ligne",
-        "nudge.live.description":
-            "Chaque amie qui commande via votre lien vous rapporte {amount}.",
-        "nudge.live.cta": "Partager à nouveau",
         "nudge.turn.title": "À votre tour de recommander",
         "nudge.turn.description":
             "Partagez {merchant} et gagnez {amount} pour chaque amie qui commande.",
         "nudge.turn.cta": "Partager",
-        "collect.title": "{name} a commandé grâce à vous",
         "pendingGains.subtitle": "Gains en attente",
         "pendingGains.heading": "Bonne nouvelle !\nDe l'argent vous attend.",
         "pendingGains.description":
@@ -254,21 +246,13 @@ export const walletMessages = defineMessages({
         "balance.pending": "Pending",
         "balance.lifetime": "Lifetime",
         "history.title": "Earnings history",
-        "history.referral": "Referral",
         "history.referralOf": "Referral · {name}",
         "history.welcomeBonus": "Referral gift",
-        "history.status.waitingFriend":
-            "Unlocks when a friend orders through your link",
         "history.status.settled": "To collect",
-        "nudge.live.title": "Your story is live",
-        "nudge.live.description":
-            "Every friend who orders through your link earns you {amount}.",
-        "nudge.live.cta": "Share again",
         "nudge.turn.title": "Your turn to recommend",
         "nudge.turn.description":
             "Share {merchant} and earn {amount} for every friend who orders.",
         "nudge.turn.cta": "Share",
-        "collect.title": "{name} ordered thanks to you",
         "pendingGains.subtitle": "Pending earnings",
         "pendingGains.heading": "Great news!\nMoney is waiting for you.",
         "pendingGains.description":

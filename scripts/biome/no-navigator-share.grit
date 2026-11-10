@@ -1,0 +1,5 @@
+language js
+
+`navigator.share($data)` as $call where {
+    register_diagnostic(span=$call, message="Use shareNatively() from @frak-labs/wallet-shared: inside Tauri, WebKit presents navigator.share from tao's window, which iOS 26 clips into the bottom-right corner.")
+}

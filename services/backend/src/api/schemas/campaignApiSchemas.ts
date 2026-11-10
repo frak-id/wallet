@@ -66,6 +66,8 @@ export const CampaignListItemSchema = t.Object({
     name: t.String(),
     status: CampaignStatusSchema,
     rewards: t.Array(CampaignListRewardSchema),
+    // Token the rewards and budget are denominated in: the rule's own, else the merchant default.
+    rewardToken: t.Optional(t.Hex()),
     budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
     budgetUsed: t.Union([
         t.Record(

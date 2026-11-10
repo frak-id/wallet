@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "tauri-plugin-frak-firebase",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v11),
         .iOS(.v16),
     ],
     products: [
@@ -16,19 +16,15 @@ let package = Package(
     ],
     dependencies: [
         .package(name: "Tauri", path: "../.tauri/tauri-api"),
-        // Single firebase-ios-sdk dependency for FCM + Crashlytics. Replaces
-        // the two separate clones the FCM + Crashlytics plugins used to pull
-        // independently. Keep the version pin in sync with the SwiftPM
-        // pre-warm step in .github/workflows/tauri-mobile-release.yml.
-        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.13.0"),
+        // Single firebase-ios-sdk dependency for FCM + Crashlytics.
+        // apps/wallet/scripts/prewarm-swiftpm.sh parses this line's `from:` pin.
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "13.1.1"),
     ],
     targets: [
-        // Tiny Objective-C target that bridges @try/@catch into Swift so the
-        // plugin can downgrade FirebaseApp.configure() NSException crashes
-        // (missing GoogleService-Info.plist, malformed plist, bundle-id
-        // mismatch, double-configure) into soft failures. Pure Swift cannot
-        // catch NSException; mixed-language inside a single SwiftPM target
-        // is unsupported, so we declare two targets and depend.
+        // Objective-C @try/@catch bridge, so a FirebaseApp.configure()
+        // NSException (missing or malformed GoogleService-Info.plist, bundle-id
+        // mismatch, double-configure) becomes a soft failure. Swift cannot catch
+        // NSException, and SwiftPM forbids mixed languages in one target.
         .target(
             name: "FrakObjCExceptionCatcher",
             path: "Sources/FrakObjCExceptionCatcher",

@@ -23,14 +23,14 @@ export const stageMessages = defineMessages({
             "Léa est fan de Maison Lune. Ce soir, elle commande à nouveau son sérum préféré… et va en parler autour d'elle.",
         "intro.referrer.step1": "Commande sur maisonlune.fr",
         "intro.referrer.step2": "Partage le produit en story Instagram",
-        "intro.referrer.step3": "Récupère ses gains dans Frak",
+        "intro.referrer.step3":
+            "Récupère ses gains dans Frak, puis les vire sur son compte",
         "intro.referee.overline": "Scénario 2",
         "intro.referee.story":
             "Chloé ne connaît pas Maison Lune. Dans le train, elle tombe sur la story de Léa…",
         "intro.referee.step1": "Découvre la story de Léa",
         "intro.referee.step2": "Commande avec {reward} à la clé",
-        "intro.referee.step3":
-            "Récupère sa récompense, puis la vire sur son compte",
+        "intro.referee.step3": "Récupère sa récompense, sans app à installer",
         "intro.start": "Commencer",
         "finale.overline": "Résultat",
         "finale.title": "Tout le monde est gagnant.",
@@ -42,10 +42,6 @@ export const stageMessages = defineMessages({
         "finale.merchant.revenue": "Chiffre d'affaires",
         "finale.merchant.cost": "Récompenses versées",
         "finale.merchant.roi": "Coût payé uniquement après l'achat",
-        "finale.notification.title": "Chloé a commandé grâce à vous",
-        "finale.notification.body":
-            "Vos {amount} de récompense Maison Lune sont débloqués. Récupérez-les !",
-        "finale.now": "maintenant",
         "finale.replay": "Rejouer la démo",
     },
     en: {
@@ -69,13 +65,14 @@ export const stageMessages = defineMessages({
             "Léa loves Maison Lune. Tonight she reorders her favourite serum… and she is going to tell her friends.",
         "intro.referrer.step1": "Orders on maisonlune.fr",
         "intro.referrer.step2": "Shares the product in an Instagram story",
-        "intro.referrer.step3": "Collects her earnings in Frak",
+        "intro.referrer.step3":
+            "Collects her earnings in Frak, then sends them to her bank",
         "intro.referee.overline": "Scenario 2",
         "intro.referee.story":
             "Chloé has never heard of Maison Lune. On the train, she comes across Léa's story…",
         "intro.referee.step1": "Discovers Léa's story",
         "intro.referee.step2": "Orders and earns {reward}",
-        "intro.referee.step3": "Collects her reward, then sends it to her bank",
+        "intro.referee.step3": "Collects her reward, no app to install",
         "intro.start": "Start",
         "finale.overline": "Result",
         "finale.title": "Everybody wins.",
@@ -87,10 +84,6 @@ export const stageMessages = defineMessages({
         "finale.merchant.revenue": "Revenue",
         "finale.merchant.cost": "Rewards paid",
         "finale.merchant.roi": "Paid only after the purchase",
-        "finale.notification.title": "Chloé ordered thanks to you",
-        "finale.notification.body":
-            "Your {amount} Maison Lune reward is unlocked. Collect it now!",
-        "finale.now": "now",
         "finale.replay": "Replay the demo",
     },
 });

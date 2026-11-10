@@ -91,6 +91,7 @@ dependencies = [
  "tauri-plugin-recovery-hint",
  "tauri-plugin-safe-area-insets",
  "tauri-plugin-share",
+ "tauri-plugin-store-review",
 ]
 
 [[package]]
@@ -4213,6 +4214,15 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "tauri-plugin-store-review"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

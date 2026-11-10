@@ -7,23 +7,10 @@ const QUIET_ZONE = 4;
 // Crisp on-screen render with no logo overlay: 7% recovery suffices and saves one QR version (57 vs 61 modules).
 const ECC = "low";
 // 200px clears the ~180px scan floor for a realistic ~240-char install URL.
-const QR_SIZE = 200;
+export const QR_SIZE = 200;
 
-type InstallQrProps = {
-    url?: string;
-    label: string;
-    caption: string;
-    class?: string;
-    captionClass?: string;
-};
-
-export function InstallQr({
-    url,
-    label,
-    caption,
-    class: className,
-    captionClass,
-}: InstallQrProps) {
+/** Whether the viewport is wide enough for a QR, and its module grid once the lazy encoder has run. */
+export function useInstallQr(url: string | undefined) {
     const [query] = useState(readWideQuery);
     const [wide, setWide] = useState(() => query?.matches ?? false);
     const [grid, setGrid] = useState<boolean[][] | null>(null);
@@ -51,23 +38,54 @@ export function InstallQr({
         };
     }, [wide, url]);
 
-    if (!wide || !url || !grid) return null;
+    return { wide, grid: wide && url ? grid : null };
+}
 
+type QrSvgProps = {
+    grid: boolean[][];
+    label: string;
+    class?: string;
+};
+
+export function QrSvg({ grid, label, class: className }: QrSvgProps) {
     const edge = grid.length;
     return (
+        <svg
+            class={className}
+            width={QR_SIZE}
+            height={QR_SIZE}
+            viewBox={`0 0 ${edge} ${edge}`}
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label={label}
+            focusable="false"
+        >
+            <rect width={edge} height={edge} fill="#fff" />
+            <path d={modulesPath(grid)} fill="#000" />
+        </svg>
+    );
+}
+
+type InstallQrProps = {
+    url?: string;
+    label: string;
+    caption: string;
+    class?: string;
+    captionClass?: string;
+};
+
+export function InstallQr({
+    url,
+    label,
+    caption,
+    class: className,
+    captionClass,
+}: InstallQrProps) {
+    const { grid } = useInstallQr(url);
+    if (!grid) return null;
+    return (
         <figure class={className}>
-            <svg
-                width={QR_SIZE}
-                height={QR_SIZE}
-                viewBox={`0 0 ${edge} ${edge}`}
-                xmlns="http://www.w3.org/2000/svg"
-                role="img"
-                aria-label={label}
-                focusable="false"
-            >
-                <rect width={edge} height={edge} fill="#fff" />
-                <path d={modulesPath(grid)} fill="#000" />
-            </svg>
+            <QrSvg grid={grid} label={label} />
             <figcaption class={captionClass}>{caption}</figcaption>
         </figure>
     );

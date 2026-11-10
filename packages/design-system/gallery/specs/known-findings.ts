@@ -1,13 +1,11 @@
+const FIXED_HEIGHT =
+    "the large size has a fixed 48px height and a 100% line-height, so a label that wraps spills above and below the button";
 const NO_WRAP =
     "a string with no break opportunity cannot shrink below its width, and nothing here wraps, clips or ellipsizes it";
 
-const FOCUS_TOKEN =
-    "the ring is border.focus (grey400, #a3a3a3), 2.41:1 on the page background where WCAG 1.4.11 asks for 3:1";
-const FOCUS_FLUSH = `${FOCUS_TOKEN}, and it sits flush on a fill that is no better`;
-
 /**
  * Findings the gallery surfaces in current component code, keyed
- * `<overflow|focus>:<section id>:<case name>`; the value is the reason.
+ * `<overflow|focus|overlay|pointer>:<section id>:<case name>`; the value is the reason.
  * The spec asserts each still occurs: fix the component and the entry fails
  * until it is deleted, which is the signal that the bug is gone.
  */
@@ -35,6 +33,10 @@ export const knownFindings: Record<string, string> = {
     "overflow:badge:worst: non-Latin and emoji":
         "Badge is nowrap with no truncation",
 
+    "clip:button:worst: long sentence": `Button: ${FIXED_HEIGHT}`,
+    "clip:empty-state:worst: long sentence": `The action is a large Button: ${FIXED_HEIGHT}`,
+    "clip:card:worst: unbreakable email": `Card clips its content (overflow: hidden, for the rounded corners): ${NO_WRAP}`,
+
     "focus:input:variant bare":
         "inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
     "focus:input:error bare":
@@ -47,46 +49,20 @@ export const knownFindings: Record<string, string> = {
         "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
     "focus:tabs:panel":
         "TabsContent is a tabindex=0 panel and tabsContent sets outline: none, so focus is invisible",
+    "overflow:toast-surface:worst: unbreakable email":
+        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
+    "overflow:toast-surface:worst: long sentence":
+        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
 
-    "focus:button:variant primary": FOCUS_TOKEN,
-    "focus:button:variant secondary": FOCUS_TOKEN,
-    "focus:button:variant ghost": FOCUS_TOKEN,
-    "focus:button:variant destructive": FOCUS_TOKEN,
-    "focus:button:variant filter": FOCUS_TOKEN,
-    "focus:button:size small": FOCUS_TOKEN,
-    "focus:button:size medium": FOCUS_TOKEN,
-    "focus:button:size large": FOCUS_TOKEN,
-    "focus:button:size none": FOCUS_TOKEN,
-    "focus:button:size filter": FOCUS_TOKEN,
-    "focus:button:width full in 200px": FOCUS_TOKEN,
-    "focus:button:font size xl": FOCUS_TOKEN,
-    "focus:button:icons": FOCUS_TOKEN,
-    "focus:button:as link": FOCUS_TOKEN,
-    "focus:button:as link disabled": FOCUS_TOKEN,
-    "focus:button:worst: unbreakable email": FOCUS_TOKEN,
-    "focus:button:worst: long sentence": FOCUS_TOKEN,
-    "focus:button:worst: one character": FOCUS_TOKEN,
-    "focus:button:worst: huge number": FOCUS_TOKEN,
-    "focus:button:worst: non-Latin and emoji": FOCUS_TOKEN,
-    "focus:checkbox:unchecked": FOCUS_TOKEN,
-    "focus:checkbox:checked": FOCUS_TOKEN,
-    "focus:checkbox:indeterminate": FOCUS_TOKEN,
-    "focus:checkbox:size l": FOCUS_TOKEN,
-
-    "focus:select:default": FOCUS_FLUSH,
-    "focus:select:length medium": FOCUS_FLUSH,
-    "focus:select:length big": FOCUS_FLUSH,
-    "focus:select:bare elevated": FOCUS_FLUSH,
-    "focus:select:bare muted": FOCUS_FLUSH,
-    "focus:select:placeholder": FOCUS_FLUSH,
-    "focus:select:worst: unbreakable email selected": FOCUS_FLUSH,
-    "focus:select:worst: non-Latin and emoji selected": FOCUS_FLUSH,
-    "focus:tabs:segmented": FOCUS_FLUSH,
-    "focus:tabs:navigation": FOCUS_FLUSH,
-    "focus:tabs:segmented full width in 280px": FOCUS_FLUSH,
-    "focus:tabs:navigation full width in 280px": FOCUS_FLUSH,
-    "focus:tabs:disabled trigger": FOCUS_FLUSH,
-    "focus:tabs:worst: five long labels": FOCUS_FLUSH,
-    "focus:switch:off": FOCUS_FLUSH,
-    "focus:switch:on": FOCUS_FLUSH,
+    "overlay:dialog:worst: unbreakable email": `DialogTitle and DialogDescription: ${NO_WRAP}`,
+    "overlay:drawer:worst: unbreakable email": `Drawer content: ${NO_WRAP}`,
+    "overflow:spread:worst: unbreakable email": `Spread children keep their min-content: ${NO_WRAP}`,
+    "overflow:content-block:worst: unbreakable email": `ContentBlock does not clip: ${NO_WRAP}`,
+    "overflow:radio-group:worst: unbreakable email": `radio label: ${NO_WRAP}`,
+    "overflow:field-label:worst: unbreakable email": `FieldLabel label and hint: ${NO_WRAP}`,
+    "overflow:field-error:worst: unbreakable email": `FieldError message: ${NO_WRAP}`,
+    "overflow:empty-state:worst: unbreakable email": `EmptyState title and description: ${NO_WRAP}`,
+    "overlay:responsive-modal:worst: unbreakable email": `ResponsiveModal content: ${NO_WRAP}`,
+    "overlay:popover:worst: unbreakable email": `PopoverContent: ${NO_WRAP}`,
+    "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
 };

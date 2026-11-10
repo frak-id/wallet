@@ -42,6 +42,11 @@ export const tableButton = style({
     cursor: "pointer",
     width: "100%",
     height: "100%",
+    // `all: unset` also drops the reset's focus outline.
+    borderRadius: alias.cornerRadius.xs,
+    ":focus-visible": {
+        boxShadow: `0 0 0 2px ${vars.border.focus}`,
+    },
 });
 
 export const tableButtonEnd = style({

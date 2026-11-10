@@ -10,6 +10,9 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    canShareNatively,
+    recordError,
+    shareNatively,
     trackEvent,
     useCopyToClipboardWithState,
     useReferralStatus,
@@ -105,25 +108,25 @@ export function ShareReferralCodePage() {
         const shareText = t("wallet.referral.share.shareText", {
             code: ownedCode.code,
         });
-        // Pass `text` only — combining `title` + `text` makes macOS Safari
-        // treat them as two share items ("2 Images") with auto-rendered
-        // previews instead of a plain text share.
-        if (navigator.share) {
-            // Swallow rejections (the user dismissing the share sheet
-            // throws AbortError); falling through to `copy()` here would
-            // re-fire the "copied" toast they didn't ask for.
-            trackEvent("sharing_link_started", { source: "referral_code" });
-            await navigator.share({ text: shareText }).then(
-                () =>
-                    trackEvent("sharing_link_shared", {
-                        source: "referral_code",
-                    }),
-                () => {}
-            );
+        if (!canShareNatively()) {
+            copy(shareText);
+            trackEvent("sharing_link_copied", { source: "referral_code" });
             return;
         }
-        copy(shareText);
-        trackEvent("sharing_link_copied", { source: "referral_code" });
+        trackEvent("sharing_link_started", { source: "referral_code" });
+        // `text` only: with a `title` too, macOS Safari shares two items ("2 Images").
+        const shared = await shareNatively({ text: shareText }).catch(
+            (err: unknown) => {
+                recordError(err, {
+                    source: "sharing",
+                    context: { sharing_source: "referral_code" },
+                });
+                return false;
+            }
+        );
+        if (shared) {
+            trackEvent("sharing_link_shared", { source: "referral_code" });
+        }
     };
 
     return (

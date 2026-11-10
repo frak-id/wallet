@@ -1,6 +1,6 @@
 /**
- * Dependency-free LEAF module on purpose: `src/index.ts` needs this value for
- * CORS `exposeHeaders`, and reaching it through the `@backend-infrastructure`
+ * Dependency-free LEAF module on purpose: `macro/cors.ts` needs this value for
+ * `exposeHeaders`, and `src/index.ts` reaching it through the `@backend-infrastructure`
  * barrel creates a runtime cycle (entry → barrel → macro/session →
  * external/jwt) that degrades `JwtContext.wallet.verify` to the untyped JWT
  * fallback. Import via the `macro/authError` sub-path, never the barrel.

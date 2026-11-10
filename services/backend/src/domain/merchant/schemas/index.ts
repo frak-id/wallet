@@ -125,6 +125,7 @@ const PostPurchaseComponentSchema = t.Object({
     referrerNoRewardText: t.Optional(LocalizableStringSchema),
     ctaText: t.Optional(LocalizableStringSchema),
     ctaNoRewardText: t.Optional(LocalizableStringSchema),
+    claimCtaText: t.Optional(LocalizableStringSchema),
     // Custom illustration replacing the built-in gift icon (icon media URL).
     imageUrl: t.Optional(HttpsUrlSchema()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
@@ -138,6 +139,9 @@ const BannerComponentSchema = t.Object({
     inappTitle: t.Optional(LocalizableStringSchema),
     inappDescription: t.Optional(LocalizableStringSchema),
     inappCta: t.Optional(LocalizableStringSchema),
+    pendingTitle: t.Optional(LocalizableStringSchema),
+    pendingDescription: t.Optional(LocalizableStringSchema),
+    pendingCta: t.Optional(LocalizableStringSchema),
     // Custom illustration replacing the built-in gift icon (icon media URL).
     imageUrl: t.Optional(HttpsUrlSchema()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
@@ -176,10 +180,22 @@ const AmbassadorComponentSchema = t.Object({
     accentColor: t.Optional(HexColorSchema()),
 });
 
-// Store-wide components: the ambassador page exists once per store, never per placement.
+// `enabled` unset means on; only an explicit `false` hides the reminder.
+const RewardReminderComponentSchema = t.Object({
+    enabled: t.Optional(t.Boolean()),
+    position: t.Optional(t.Union([t.Literal("right"), t.Literal("left")])),
+    title: t.Optional(LocalizableStringSchema),
+    description: t.Optional(LocalizableStringSchema),
+    cta: t.Optional(LocalizableStringSchema),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
+// Store-wide components: the ambassador page and the reward reminder exist once per store, never per placement.
 const SdkComponentsSchema = t.Object({
     ...PlacementComponentsSchema.properties,
     ambassador: t.Optional(AmbassadorComponentSchema),
+    rewardReminder: t.Optional(RewardReminderComponentSchema),
 });
 
 export const PlacementSchema = t.Object({
@@ -242,6 +258,7 @@ const ResolvedComponentsSchema = t.Object({
             referrerNoRewardText: t.Optional(t.String()),
             ctaText: t.Optional(t.String()),
             ctaNoRewardText: t.Optional(t.String()),
+            claimCtaText: t.Optional(t.String()),
             imageUrl: t.Optional(t.String()),
             css: t.Optional(t.String()),
         })
@@ -254,7 +271,22 @@ const ResolvedComponentsSchema = t.Object({
             inappTitle: t.Optional(t.String()),
             inappDescription: t.Optional(t.String()),
             inappCta: t.Optional(t.String()),
+            pendingTitle: t.Optional(t.String()),
+            pendingDescription: t.Optional(t.String()),
+            pendingCta: t.Optional(t.String()),
             imageUrl: t.Optional(t.String()),
+            css: t.Optional(t.String()),
+        })
+    ),
+    rewardReminder: t.Optional(
+        t.Object({
+            enabled: t.Optional(t.Boolean()),
+            position: t.Optional(
+                t.Union([t.Literal("right"), t.Literal("left")])
+            ),
+            title: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            cta: t.Optional(t.String()),
             css: t.Optional(t.String()),
         })
     ),

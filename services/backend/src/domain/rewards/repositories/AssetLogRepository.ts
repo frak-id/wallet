@@ -29,6 +29,7 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../db/schema";
+import type { MerchantRewardRow } from "../rewardSummary";
 import { LIVE_ASSET_STATUSES } from "../schemas";
 import type {
     AssetStatus,
@@ -781,6 +782,43 @@ export class AssetLogRepository {
             .groupBy(assetLogsTable.tokenAddress) as Promise<
             Array<{ tokenAddress: Address; total: string }>
         >;
+    }
+
+    /** The group's token rewards at one merchant that are unpaid or already settled. */
+    async findSummaryRowsByIdentityGroupAndMerchant(
+        identityGroupId: string,
+        merchantId: string
+    ): Promise<MerchantRewardRow[]> {
+        const rows = await db
+            .select({
+                status: assetLogsTable.status,
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                recipientType: assetLogsTable.recipientType,
+                availableAt: assetLogsTable.availableAt,
+                held: sql<boolean>`(${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL)`.mapWith(
+                    Boolean
+                ),
+                expiresAt: assetLogsTable.expiresAt,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "bank_depleted",
+                        "settled",
+                    ])
+                )
+            );
+        return rows.flatMap(({ tokenAddress, ...row }) =>
+            tokenAddress ? [{ ...row, tokenAddress }] : []
+        );
     }
 
     async countByIdentityGroup(identityGroupId: string): Promise<number> {

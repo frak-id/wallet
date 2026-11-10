@@ -251,6 +251,7 @@ export default defineConfig([
             openInApp: "./src/components/OpenInAppButton/index.ts",
             postPurchase: "./src/components/PostPurchase/index.ts",
             banner: "./src/components/Banner/index.ts",
+            rewardReminder: "./src/components/RewardReminder/index.ts",
             "i18n/defaults": "./src/i18n/defaults.ts",
         },
         format: ["esm"],

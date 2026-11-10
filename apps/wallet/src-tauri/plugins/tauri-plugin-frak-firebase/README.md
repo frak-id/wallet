@@ -50,7 +50,7 @@ The native plugin reads, reports, and deletes that file on the next launch.
 
 ### iOS
 
-`ios/Package.swift` depends on `firebase-ios-sdk` from `12.13.0` (single
+`ios/Package.swift` depends on `firebase-ios-sdk` from `13.1.1` (single
 source) and links:
 
 - `FirebaseCore` — owned by this plugin, the sole caller of `FirebaseApp.configure()`,
@@ -61,8 +61,8 @@ source) and links:
 - `FirebaseMessaging` — FCM push notifications.
 - `FirebaseCrashlytics` — crash reporting + non-fatal recording.
 
-**The host `gen/apple/Podfile` is deliberately empty of Firebase pods.**
-Linking Firebase via both SPM and CocoaPods produces duplicate symbols and
+**The host app links Firebase through SwiftPM only; there is no Podfile.**
+Linking it via both SPM and CocoaPods produces duplicate symbols and
 silently breaks Crashlytics' crash-handler registration.
 
 **dSYM upload** runs in CI (`.github/workflows/tauri-mobile-release.yml`)
@@ -72,10 +72,10 @@ is set to `dwarf-with-dsym` for both debug and release in
 
 ### Android
 
-`android/build.gradle.kts` pulls `firebase-bom:33.5.1` and links:
+`android/build.gradle.kts` pulls `firebase-bom:35.1.0` and links:
 
-- `firebase-messaging-ktx` — FCM.
-- `firebase-crashlytics-ktx` — JVM crash handler + custom keys / logs / recordError.
+- `firebase-messaging` — FCM.
+- `firebase-crashlytics` — JVM crash handler + custom keys / logs / recordError.
 - `firebase-crashlytics-ndk` — native (Rust / C / C++) signal handler.
 
 Root `gen/android/build.gradle.kts` adds the Crashlytics Gradle plugin

@@ -35,6 +35,8 @@ import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
+import type { InstallPendingReward } from "@/module/install/hook/useInstallRewardSummary";
+import { useInstallRewardSummary } from "@/module/install/hook/useInstallRewardSummary";
 import type { InstallSearch } from "@/module/install/params";
 import {
     buildInstallProcessingEnsureAction,
@@ -198,6 +200,7 @@ function merchantInfoQueryOptions(merchantId?: string) {
             return {
                 name: data.name,
                 logoUrl: data.sdkConfig?.logoUrl,
+                currency: data.sdkConfig?.currency ?? undefined,
             };
         },
         enabled: !!merchantId,
@@ -375,13 +378,24 @@ function InstallCodeHero({
     codeless,
     rewardLoading,
     merchantName,
+    pendingReward,
 }: {
     t: Translate;
     installed: boolean;
     codeless: boolean;
     rewardLoading: boolean;
     merchantName?: string;
+    pendingReward?: InstallPendingReward;
 }) {
+    const countdown = pendingReward && daysLeftLabel(t, pendingReward.daysLeft);
+    const titleKey = pendingReward
+        ? codeless
+            ? "installCode.pendingCodelessTitle"
+            : "installCode.pendingTitle"
+        : codeless
+          ? "installCode.codelessTitle"
+          : "installCode.title";
+
     // Waits out the fetch so the headline never flips from neutral to rewarded.
     const headlineSkeleton = rewardLoading ? (
         <Text variant="heading2" className={styles.title}>
@@ -423,11 +437,12 @@ function InstallCodeHero({
         <>
             {headlineSkeleton ?? (
                 <Text as="h1" variant="heading2" className={styles.title}>
-                    {t(
-                        codeless
-                            ? "installCode.codelessTitle"
-                            : "installCode.title"
-                    )}
+                    {t(titleKey, { amount: pendingReward?.amount })}
+                </Text>
+            )}
+            {countdown && (
+                <Text variant="bodySmall" weight="medium" color="action">
+                    {countdown}
                 </Text>
             )}
             <Text variant="bodySmall" color="secondary">
@@ -439,6 +454,13 @@ function InstallCodeHero({
             </Text>
         </>
     );
+}
+
+function daysLeftLabel(t: Translate, days: number | undefined) {
+    if (days === undefined) return undefined;
+    if (days === 0) return t("installCode.pendingExpiresToday");
+    if (days === 1) return t("installCode.pendingOneDayLeft");
+    return t("installCode.pendingDaysLeft", { days });
 }
 
 function InstallCodeInfoCard({ t }: { t: Translate }) {
@@ -485,15 +507,26 @@ function InstallCodeView({
     const { t: rawT } = useTranslation();
     const [showCodeAfterInstall, setShowCodeAfterInstall] = useState(false);
 
-    const { data: merchantInfo } = useQuery(
+    const { data: merchantInfo, isLoading: isMerchantLoading } = useQuery(
         merchantInfoQueryOptions(merchantId)
     );
 
     // `isLoading` is pending *and* fetching: no merchant or a failed fetch is
     // settled, so the headline never waits on a request that will not come.
     const { data: reward, isLoading: isRewardLoading } =
-        useFormattedEstimatedReward({ merchantId });
-    const estimatedReward = reward?.formatted;
+        useFormattedEstimatedReward({
+            merchantId,
+            currency: merchantInfo?.currency,
+        });
+    const { pendingReward, isLoading: isSummaryLoading } =
+        useInstallRewardSummary({
+            merchantId,
+            anonymousId,
+            proof,
+            currency: merchantInfo?.currency,
+            currencyLoading: isMerchantLoading,
+        });
+    const estimatedReward = pendingReward?.amount ?? reward?.formatted;
 
     const t = useCallback<Translate>(
         (key, options) =>
@@ -647,7 +680,8 @@ function InstallCodeView({
                     t={t}
                     installed={installed}
                     codeless={codeless}
-                    rewardLoading={isRewardLoading}
+                    rewardLoading={isRewardLoading || isSummaryLoading}
+                    pendingReward={pendingReward}
                     merchantName={merchantInfo?.name}
                 />
             }

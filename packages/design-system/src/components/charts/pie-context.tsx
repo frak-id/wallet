@@ -8,6 +8,22 @@ export const PIE_OUTER_RADIUS = PIE_CENTER - PIE_HOVER_OFFSET;
 export const PIE_CORNER_RADIUS = 2;
 export const PIE_PAD_ANGLE = 0.02;
 
+/**
+ * How far a hovered slice moves out along its middle angle (0 is 12 o'clock,
+ * clockwise). A slice that fills the circle has no outward side and stays put.
+ */
+export function sliceOffset(
+    startAngle: number,
+    endAngle: number
+): { x: number; y: number } {
+    if (endAngle - startAngle >= 2 * Math.PI - 1e-6) return { x: 0, y: 0 };
+    const mid = (startAngle + endAngle) / 2;
+    return {
+        x: Math.sin(mid) * PIE_HOVER_OFFSET,
+        y: -Math.cos(mid) * PIE_HOVER_OFFSET,
+    };
+}
+
 export interface PieData {
     /** Display label for the slice */
     label: string;

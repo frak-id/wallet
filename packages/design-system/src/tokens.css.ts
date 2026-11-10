@@ -219,7 +219,7 @@ export const semanticLight = {
     },
     border: {
         subtle: brand.colors.neutral.grey200,
-        focus: brand.colors.neutral.grey400,
+        focus: brand.colors.neutral.grey500,
         error: brand.colors.error[600],
         success: brand.colors.success[600],
         warning: brand.colors.warning[600],

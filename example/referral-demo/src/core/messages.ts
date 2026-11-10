@@ -45,12 +45,21 @@ export const stepMessages = defineMessages({
         "referrer.passkey.title": "Création par passkey",
         "referrer.passkey.note":
             "Le compte est créé avec Face ID grâce aux passkeys. Dix secondes, zéro formulaire.",
-        "referrer.wallet.title": "Gains en attente",
+        "referrer.wallet.title": "Gains débloqués",
         "referrer.wallet.note":
-            "Les 10 € de Léa apparaissent en attente : ils seront débloqués dès qu'une amie achète grâce à sa story.",
+            "Deux heures plus tard, Chloé a commandé grâce à la story : les 10 € de Léa sont débloqués. Elle les collecte… puis veut les envoyer sur son compte.",
+        "referrer.cashout.title": "Vers son compte bancaire",
+        "referrer.cashout.note":
+            "Premier virement : Monerium, partenaire financier régulé, vérifie l'identité de Léa. Validé en direct ici ; en vrai, de quelques minutes à quelques jours.",
+        "referrer.transfer.title": "Virement",
+        "referrer.transfer.note":
+            "IBAN déjà enregistré pendant la vérification : montant, récap, Face ID. C'est parti.",
+        "referrer.bank.title": "Sur son compte",
+        "referrer.bank.note":
+            "Les 10 € arrivent sur le compte de Léa, juste au-dessus de sa commande Maison Lune : la récompense, c'est de l'argent réel.",
         "referee.intro.title": "Chloé, amie de Léa",
         "referee.intro.note":
-            "Chloé ne connaît pas Maison Lune. Elle tombe sur la story de Léa en scrollant Instagram.",
+            "Retour sur l'achat qui a débloqué les 10 € de Léa : Chloé ne connaît pas Maison Lune, elle tombe sur sa story en scrollant Instagram.",
         "referee.feed.title": "Fil Instagram",
         "referee.feed.note":
             "La story de Léa apparaît en tête du fil de Chloé, comme n'importe quelle story.",
@@ -71,16 +80,7 @@ export const stepMessages = defineMessages({
             "Le lien s'ouvre dans Safari, sans app à installer : Face ID, et le porte-monnaie web est prêt.",
         "referee.wallet.title": "Wallet de Chloé",
         "referee.wallet.note":
-            "Les 5 € de Chloé sont dans son porte-monnaie. Elle les collecte… puis veut les envoyer sur son compte.",
-        "referee.cashout.title": "Vers son compte bancaire",
-        "referee.cashout.note":
-            "Premier virement : Monerium, partenaire financier régulé, vérifie l'identité de Chloé. Validé en direct ici ; en vrai, de quelques minutes à quelques jours.",
-        "referee.transfer.title": "Virement",
-        "referee.transfer.note":
-            "IBAN déjà enregistré pendant la vérification : montant, récap, Face ID. C'est parti.",
-        "referee.bank.title": "Sur son compte",
-        "referee.bank.note":
-            "Les 5 € arrivent sur le compte de Chloé, juste au-dessus de sa commande Maison Lune : la récompense, c'est de l'argent réel.",
+            "Les 5 € de Chloé sont dans son porte-monnaie web. Elle les collecte, et peut à son tour recommander Maison Lune.",
         "finale.title": "Tout le monde gagne",
         "finale.note":
             "Léa touche 10 €, Chloé 5 €, et Maison Lune gagne une nouvelle cliente, payée uniquement à la performance.",
@@ -128,12 +128,21 @@ export const stepMessages = defineMessages({
         "referrer.passkey.title": "Passkey sign-up",
         "referrer.passkey.note":
             "The account is created with Face ID thanks to passkeys. Ten seconds, zero forms.",
-        "referrer.wallet.title": "Pending earnings",
+        "referrer.wallet.title": "Earnings unlocked",
         "referrer.wallet.note":
-            "Léa's €10 shows as pending: it unlocks as soon as a friend buys through her story.",
+            "Two hours later, Chloé has ordered through the story: Léa's €10 is unlocked. She collects it… then wants it in her bank account.",
+        "referrer.cashout.title": "To her bank account",
+        "referrer.cashout.note":
+            "First transfer: Monerium, a regulated financial partner, checks Léa's identity. Approved on the spot here; in real life, anywhere from minutes to a few days.",
+        "referrer.transfer.title": "Transfer",
+        "referrer.transfer.note":
+            "IBAN already saved during the check: amount, summary, Face ID. Done.",
+        "referrer.bank.title": "In her account",
+        "referrer.bank.note":
+            "The €10 lands in Léa's account, right above her Maison Lune order: the reward is real money.",
         "referee.intro.title": "Chloé, Léa's friend",
         "referee.intro.note":
-            "Chloé has never heard of Maison Lune. She comes across Léa's story while scrolling Instagram.",
+            "Back to the purchase that unlocked Léa's €10: Chloé has never heard of Maison Lune and comes across the story while scrolling Instagram.",
         "referee.feed.title": "Instagram feed",
         "referee.feed.note":
             "Léa's story sits at the top of Chloé's feed, like any other story.",
@@ -154,16 +163,7 @@ export const stepMessages = defineMessages({
             "The link opens in Safari, no app to install: Face ID, and the web wallet is ready.",
         "referee.wallet.title": "Chloé's wallet",
         "referee.wallet.note":
-            "Chloé's €5 is in her wallet. She collects it… then wants it in her bank account.",
-        "referee.cashout.title": "To her bank account",
-        "referee.cashout.note":
-            "First transfer: Monerium, a regulated financial partner, checks Chloé's identity. Approved on the spot here; in real life, anywhere from minutes to a few days.",
-        "referee.transfer.title": "Transfer",
-        "referee.transfer.note":
-            "IBAN already saved during the check: amount, summary, Face ID. Done.",
-        "referee.bank.title": "In her account",
-        "referee.bank.note":
-            "The €5 lands in Chloé's account, right above her Maison Lune order: the reward is real money.",
+            "Chloé's €5 is in her web wallet. She collects it, and can now recommend Maison Lune in turn.",
         "finale.title": "Everybody wins",
         "finale.note":
             "Léa earns €10, Chloé €5, and Maison Lune wins a new customer, paid for on performance only.",

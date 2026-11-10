@@ -10,6 +10,10 @@ export {
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
 export { InteractionLogRepository } from "./repositories/InteractionLogRepository";
 export {
+    type MerchantRewardRow,
+    summarizeMerchantRewards,
+} from "./rewardSummary";
+export {
     type AssetLogRecipientType,
     AssetLogRecipientTypeSchema,
     type AssetStatus,

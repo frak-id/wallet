@@ -93,7 +93,7 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
     echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-FROM nginx:1.31.6-alpine
+FROM nginx:1.31.8-alpine
 COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
 COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf
 # `include`d by nginx.conf from every block that declares an

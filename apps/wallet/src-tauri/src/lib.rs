@@ -55,6 +55,7 @@ pub fn run() {
             // other mobile plugin so it can capture their setup crashes.
             .plugin(tauri_plugin_app_settings::init())
             .plugin(tauri_plugin_install_referrer::init())
+            .plugin(tauri_plugin_store_review::init())
             .plugin(tauri_plugin_frak_webauthn::init())
             .plugin(tauri_plugin_frak_share::init())
             .plugin(tauri_plugin_clipboard_manager::init())

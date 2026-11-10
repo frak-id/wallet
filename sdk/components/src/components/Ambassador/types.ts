@@ -95,7 +95,10 @@ export type AmbassadorProps = {
     referralLede?: string;
     /** Override the referral block's share-button label. */
     referralCtaLabel?: string;
-    /** Override the store block heading. */
+    /**
+     * Override the store block heading. While a reward waits to be claimed it
+     * defaults to "Claim your {REWARD} in the app"; the block is hidden for linked visitors.
+     */
     storeHeading?: string;
     /** Override the store block lede under the heading. */
     storeLede?: string;
@@ -137,4 +140,16 @@ export type AmbassadorProps = {
     attributionBeforeLink?: string;
     /** Override the attribution anchor's text. */
     attributionLinkText?: string;
+    /** Override the eyebrow of the "Your rewards" section shown to a visitor with an unclaimed reward. */
+    myRewardsEyebrow?: string;
+    /** Override the heading of the section shown to a linked visitor. Use `{BRAND}` for the merchant name. */
+    myRewardsLinkedHeading?: string;
+    /** Override the claim button label. `{REWARD}` marks the pending amount. */
+    myRewardsClaimCtaLabel?: string;
+    /** Override the share button label under the claim button. */
+    myRewardsShareCtaLabel?: string;
+    /** Override the label of the button opening the Frak wallet, shown to a linked visitor. */
+    myRewardsWalletCtaLabel?: string;
+    /** Override the share button label shown to a linked visitor. */
+    myRewardsShareAgainCtaLabel?: string;
 };

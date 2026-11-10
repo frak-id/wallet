@@ -358,6 +358,8 @@ jobs:
     name: "🍎 iOS"
     needs: [validate, prepare]
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     # See `prepare`.
     cache-mode: write
 
@@ -442,7 +444,7 @@ jobs:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             ~/Library/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.resolved', 'apps/wallet/src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.swift', 'apps/wallet/src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-spm-
 
       - name: "👥 Configure AWS Credentials"
@@ -469,49 +471,10 @@ jobs:
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
 
-      # `swift-rs` runs `swift build` from each plugin's build.rs in parallel under cargo,
-      # racing over the global SwiftPM artifact cache. Pre-resolving with a standalone stub
-      # package serializes the Firebase binary-artifact downloads (FirebaseAnalytics.zip,
-      # grpcpp.zip, etc.) so the subsequent parallel `swift build` invocations all hit a warm
-      # cache instead of failing with `already exists in file system`.
-      #
-      # The stub avoids depending on the merged frak-firebase plugin's Package.swift
-      # directly, which references `../.tauri/tauri-api` — that path is only materialized
-      # during `cargo build`. The SPM artifact cache is keyed by binary-target URL (global,
-      # shared), so any resolve that fetches the same URLs warms the same slots.
-      #
-      # Keep the firebase-ios-sdk pin in sync with `plugins/tauri-plugin-frak-firebase/ios/Package.swift`.
-      # See: https://github.com/firebase/firebase-ios-sdk/issues/14821
+      # swift-rs builds every plugin's Swift package in parallel and races over
+      # a cold SwiftPM cache; the script resolves Firebase once first.
       - name: "🔥 Pre-warm SwiftPM artifact cache"
-        run: |
-          PREWARM_DIR="$RUNNER_TEMP/spm-prewarm"
-          mkdir -p "$PREWARM_DIR/Sources/Prewarm"
-          cat > "$PREWARM_DIR/Package.swift" <<'EOF'
-          // swift-tools-version:5.7
-          import PackageDescription
-          let package = Package(
-              name: "Prewarm",
-              platforms: [.iOS(.v16), .macOS(.v10_15)],
-              products: [.library(name: "Prewarm", targets: ["Prewarm"])],
-              dependencies: [
-                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.13.0"),
-              ],
-              targets: [
-                  .target(
-                      name: "Prewarm",
-                      dependencies: [
-                          .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
-                          .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
-                          .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
-                          .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
-                      ]
-                  )
-              ]
-          )
-          EOF
-          echo '// stub' > "$PREWARM_DIR/Sources/Prewarm/Stub.swift"
-          cd "$PREWARM_DIR"
-          swift package resolve
+        run: bash apps/wallet/scripts/prewarm-swiftpm.sh
 
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
@@ -590,7 +553,7 @@ jobs:
           done
 
       # apple-actions/upload-testflight-build@v4 uses iTMSTransporter which was removed in Xcode 14+.
-      # xcrun altool is the supported replacement on macos-15 (Xcode 16.4).
+      # xcrun altool is the supported replacement.
       - name: "🚀 Upload to TestFlight"
         run: |
           if [ "$STAGE" = "dev" ]; then
@@ -658,7 +621,7 @@ jobs:
           name: sdk-dist
 
       - name: "☕ Setup Java 17"
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: "17"
@@ -887,7 +850,7 @@ jobs:
           git push origin "app-${VERSION}"
 
       - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: "app-${{ needs.validate.outputs.version }}"
           name: "Frak Wallet ${{ needs.validate.outputs.version }}"

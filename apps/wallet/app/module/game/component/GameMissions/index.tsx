@@ -13,7 +13,7 @@ import {
     type Mission,
     type MissionText,
     missionsDone,
-    nextMissionOf,
+    missionsToDo,
 } from "@/module/game/utils/gameMissions";
 
 function textOf(
@@ -58,7 +58,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     );
 }
 
-/** How far the player is through the ways to earn tickets, and the one step to do now. */
+/** How far the player is through the ways to earn tickets, and the ones left to do. */
 export function GameMissions({
     missions,
     gameId,
@@ -68,7 +68,7 @@ export function GameMissions({
 }) {
     const { t } = useTranslation();
     const done = missionsDone(missions);
-    const next = nextMissionOf(missions);
+    const toDo = missionsToDo(missions);
 
     return (
         <Stack space="xs">
@@ -83,12 +83,18 @@ export function GameMissions({
             </Inline>
             <ProgressBar
                 value={(done / missions.length) * 100}
-                tone={next ? "primary" : "success"}
+                tone={toDo.length > 0 ? "primary" : "success"}
                 label={t("game.page.missions.title")}
             />
-            {next ? (
+            {toDo.length > 0 ? (
                 <Card padding="none">
-                    <MissionRow mission={next} gameId={gameId} />
+                    {toDo.map((mission) => (
+                        <MissionRow
+                            key={mission.id}
+                            mission={mission}
+                            gameId={gameId}
+                        />
+                    ))}
                 </Card>
             ) : (
                 <Text variant="bodySmall" color="secondary">

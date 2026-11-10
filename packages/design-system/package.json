@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@testing-library/user-event": "catalog:",
@@ -88,6 +88,6 @@
     "test:gallery": "playwright test",
     "test:gallery:pixels": "GALLERY_SNAPSHOTS=1 playwright test",
     "test:gallery:update": "GALLERY_SNAPSHOTS=1 playwright test --update-snapshots",
-    "test:gallery:install": "playwright install --with-deps chromium"
+    "test:gallery:install": "playwright install chromium"
   }
 }

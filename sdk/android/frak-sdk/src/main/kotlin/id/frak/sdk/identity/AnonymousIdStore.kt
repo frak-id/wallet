@@ -76,7 +76,7 @@ internal class AnonymousIdStore(
 
     /**
      * Never throws; callers must treat proofs as always-optional. [ts] is the server's clock when
-     * one has ever answered, not the device's: the backend rejects a proof more than 60 s in its
+     * one has ever answered, not the device's: the backend rejects a proof more than 5 min in its
      * future, and that rejection is not retryable.
      */
     suspend fun signProof(

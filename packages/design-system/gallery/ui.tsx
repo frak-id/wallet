@@ -1,8 +1,9 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { HiddenVisually } from "@frak-labs/design-system/components/HiddenVisually";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useContext } from "react";
-import { marker } from "./gallery.css";
 import { FindingMarkers } from "./markers";
 
 /**
@@ -41,13 +42,10 @@ export function Case({
             {kinds ? (
                 <Box display="flex" gap="xs" alignItems="center">
                     {label}
-                    <span
-                        className={marker}
-                        role="img"
-                        aria-label={`known ${kinds.join(" and ")} finding`}
-                    >
+                    <Badge variant="warning">
                         {kinds.join(" · ")}
-                    </span>
+                        <HiddenVisually> known finding</HiddenVisually>
+                    </Badge>
                 </Box>
             ) : (
                 label

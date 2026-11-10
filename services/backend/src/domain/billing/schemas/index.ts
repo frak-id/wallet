@@ -8,12 +8,7 @@ export const BillingDocumentKindSchema = t.Union([
 ]);
 export type BillingDocumentKind = Static<typeof BillingDocumentKindSchema>;
 
-export const StablecoinSchema = t.Union([
-    t.Literal("eure"),
-    t.Literal("gbpe"),
-    t.Literal("usde"),
-    t.Literal("usdc"),
-]);
+export const StablecoinSchema = t.Union([t.Literal("eure"), t.Literal("usdc")]);
 
 /**
  * `details` jsonb shape, explicitly typed per `kind`. VAT/fee breakdown

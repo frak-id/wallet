@@ -111,7 +111,7 @@ export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
         fr: {
             title: "Vous avez été invité à gagner {REWARD}",
             description:
-                "Finalisez votre achat et réclamez votre récompense avec Frak.",
+                "Finalisez votre achat et récupérez votre récompense avec Frak.",
         },
     },
     {

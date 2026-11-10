@@ -15,6 +15,9 @@ export const STEP_IDS = [
     "referrer.onboarding",
     "referrer.passkey",
     "referrer.wallet",
+    "referrer.cashout",
+    "referrer.transfer",
+    "referrer.bank",
     "referee.intro",
     "referee.feed",
     "referee.story",
@@ -23,9 +26,6 @@ export const STEP_IDS = [
     "referee.thankYou",
     "referee.claim",
     "referee.wallet",
-    "referee.cashout",
-    "referee.transfer",
-    "referee.bank",
     "finale",
 ] as const;
 

@@ -18,8 +18,6 @@ import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
-    amountUnit,
-    amountWords,
     cssSource,
     faq,
     faqAnswer,
@@ -66,15 +64,6 @@ import {
     stepsLede,
     stepsTitle,
     stepTitle,
-    store,
-    storeBadge,
-    storeBadgeArt,
-    storeBadges,
-    storeBody,
-    storeLede,
-    storeQr,
-    storeQrCaption,
-    storeTitle,
     winWin,
     winWinCard,
     winWinCardAmount,
@@ -84,8 +73,14 @@ import {
     winWinLede,
     winWinTitle,
 } from "./Ambassador.css";
-import { InstallQr } from "./InstallQr";
-import { AppStoreBadgeArt, PlayStoreBadgeArt } from "./storeBadges";
+import { Figure } from "./Figure";
+import {
+    claimStoreHeading,
+    type MyRewardsOverrides,
+    MyRewardsSlot,
+    useMyRewards,
+} from "./MyRewards";
+import { StoreSection } from "./Store";
 import type { AmbassadorProps } from "./types";
 
 type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
@@ -104,34 +99,6 @@ function resolveBrandName(): string {
             .querySelector('meta[property="og:site_name"]')
             ?.getAttribute("content") ||
         window.location.hostname.replace(/^www\./, "")
-    );
-}
-
-const FIGURE = /^(\D*?)(\d[\d\s.,\u00A0\u202F]*?)(\D*)$/;
-
-/** Draws the currency of a formatted amount smaller; wording without a figure passes through. */
-function Figure({ amount }: { amount: string }) {
-    const parts = FIGURE.exec(amount);
-    if (!parts) {
-        return (
-            <span class={`${amountWords} frak-ambassador__amount-words`}>
-                {amount}
-            </span>
-        );
-    }
-    const [, before, figure, after] = parts;
-    const unit = (text: string) =>
-        text ? (
-            <small class={`${amountUnit} frak-ambassador__amount-unit`}>
-                {text}
-            </small>
-        ) : null;
-    return (
-        <>
-            {unit(before)}
-            {figure}
-            {unit(after)}
-        </>
     );
 }
 
@@ -365,6 +332,12 @@ function AmbassadorPage({
     faq5AnswerAfterLink: propFaq5AnswerAfterLink,
     attributionBeforeLink: propAttributionBeforeLink,
     attributionLinkText: propAttributionLinkText,
+    myRewardsEyebrow,
+    myRewardsLinkedHeading,
+    myRewardsClaimCtaLabel,
+    myRewardsShareCtaLabel,
+    myRewardsWalletCtaLabel,
+    myRewardsShareAgainCtaLabel,
     faq5Answer: dashboardFaq5Answer,
     accentColor,
 }: AmbassadorPageProps) {
@@ -391,6 +364,16 @@ function AmbassadorPage({
         undefined,
         "referee"
     );
+
+    const { summary, claimReward } = useMyRewards(isClientReady);
+    const myRewardsOverrides: MyRewardsOverrides = {
+        myRewardsEyebrow,
+        myRewardsLinkedHeading,
+        myRewardsClaimCtaLabel,
+        myRewardsShareCtaLabel,
+        myRewardsWalletCtaLabel,
+        myRewardsShareAgainCtaLabel,
+    };
 
     const [installUrl, setInstallUrl] = useState<string | undefined>(undefined);
     // A merchant image URL can go stale; a collapsed frame beats a broken icon.
@@ -425,8 +408,6 @@ function AmbassadorPage({
     }, [isClientReady]);
 
     const brand = resolveBrandName();
-    // An anchor without href has no link role: keep it focusable and announced until the link lands.
-    const inert = installUrl === undefined;
 
     const texts = useMemo(() => {
         const defaults = componentDefaults[lang].ambassador;
@@ -606,7 +587,13 @@ function AmbassadorPage({
                 propReferralCtaLabel,
                 defaults.referralCtaLabel
             ),
-            storeHeading: resolve(propStoreHeading, defaults.storeHeading),
+            storeHeading:
+                claimStoreHeading(
+                    defaults,
+                    propStoreHeading,
+                    claimReward,
+                    brand
+                ) ?? resolve(propStoreHeading, defaults.storeHeading),
             storeLede: resolve(propStoreLede, defaults.storeLede),
             storeAppBadgeAriaLabel: resolve(
                 propStoreAppBadgeAriaLabel,
@@ -661,6 +648,7 @@ function AmbassadorPage({
         refereeReward,
         hasRefereeReward,
         brand,
+        claimReward,
         propHeroTitle,
         propHeroEyebrow,
         propHeroLede,
@@ -733,8 +721,21 @@ function AmbassadorPage({
         .filter(Boolean)
         .join(" ");
 
+    const myRewardsProps = {
+        summary,
+        lang,
+        brand,
+        overrides: myRewardsOverrides,
+        isClientReady,
+        onShare: handleShare,
+        installUrl,
+        footer: texts.rewardFooterCaption,
+        qrLabel: texts.storeQrLabel,
+    };
+
     return (
         <div ref={rootRef} class={rootClass} lang={lang}>
+            <MyRewardsSlot placement="above" {...myRewardsProps} />
             <section class={`${hero} frak-ambassador__hero`}>
                 <div class={`${heroBody} frak-ambassador__hero-body`}>
                     <p class={`${heroEyebrow} frak-ambassador__hero-eyebrow`}>
@@ -798,6 +799,8 @@ function AmbassadorPage({
                     </div>
                 </div>
             </section>
+
+            <MyRewardsSlot placement="below" {...myRewardsProps} />
 
             <section class={`${rewardRegion} frak-ambassador__reward`}>
                 <p class={`${rewardEyebrow} frak-ambassador__reward-eyebrow`}>
@@ -937,51 +940,18 @@ function AmbassadorPage({
                 </button>
             </section>
 
-            <section class={`${store} frak-ambassador__store`}>
-                <div class={`${storeBody} frak-ambassador__store-body`}>
-                    <h2 class={`${storeTitle} frak-ambassador__store-title`}>
-                        {texts.storeHeading}
-                    </h2>
-                    <p class={`${storeLede} frak-ambassador__store-lede`}>
-                        {texts.storeLede}
-                    </p>
-                    <div class={`${storeBadges} frak-ambassador__store-badges`}>
-                        <a
-                            class={`${storeBadge} frak-ambassador__store-badge frak-ambassador__store-badge--app`}
-                            aria-label={texts.storeAppBadgeAriaLabel}
-                            href={installUrl}
-                            role={inert ? "link" : undefined}
-                            tabIndex={inert ? 0 : undefined}
-                            aria-disabled={inert ? "true" : undefined}
-                        >
-                            <AppStoreBadgeArt
-                                lang={lang}
-                                class={`${storeBadgeArt} frak-ambassador__store-badge-art`}
-                            />
-                        </a>
-                        <a
-                            class={`${storeBadge} frak-ambassador__store-badge frak-ambassador__store-badge--play`}
-                            aria-label={texts.storePlayBadgeAriaLabel}
-                            href={installUrl}
-                            role={inert ? "link" : undefined}
-                            tabIndex={inert ? 0 : undefined}
-                            aria-disabled={inert ? "true" : undefined}
-                        >
-                            <PlayStoreBadgeArt
-                                lang={lang}
-                                class={`${storeBadgeArt} frak-ambassador__store-badge-art`}
-                            />
-                        </a>
-                    </div>
-                </div>
-                <InstallQr
-                    url={installUrl}
-                    label={texts.storeQrLabel}
-                    caption={texts.storeQrCaption}
-                    class={`${storeQr} frak-ambassador__store-qr`}
-                    captionClass={`${storeQrCaption} frak-ambassador__store-qr-caption`}
+            {summary?.linked ? null : (
+                <StoreSection
+                    lang={lang}
+                    installUrl={installUrl}
+                    heading={texts.storeHeading}
+                    lede={texts.storeLede}
+                    appBadgeAriaLabel={texts.storeAppBadgeAriaLabel}
+                    playBadgeAriaLabel={texts.storePlayBadgeAriaLabel}
+                    qrLabel={texts.storeQrLabel}
+                    qrCaption={texts.storeQrCaption}
                 />
-            </section>
+            )}
 
             <section class={`${faq} frak-ambassador__faq`}>
                 <h2 class={`${faqTitle} frak-ambassador__faq-title`}>

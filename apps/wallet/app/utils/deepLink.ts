@@ -26,6 +26,8 @@ type DeepLinkParams = {
     p?: string;
     /** Referral code carried by an `/install?ref=` deep link. */
     ref?: string;
+    /** The whole query, for routes that own their own search validation. */
+    query?: Record<string, string>;
 };
 
 function extractSearchParams(
@@ -176,7 +178,8 @@ function buildParams(
             ? pathId.toLowerCase()
             : params.id;
     const p = params.p ?? extractProofFragment(hash);
-    return { action: normalizedAction, ...params, id, p };
+    const query = Object.fromEntries(searchParams);
+    return { action: normalizedAction, ...params, id, p, query };
 }
 
 type NavigateFn = (options: {
@@ -312,6 +315,8 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     pairing: resolvePairRoute,
     install: resolveInstallRoute,
     i: resolveInstallRoute,
+    // Shopify's post-purchase card; `/sharing`'s `validateSearch` keeps only its own keys.
+    sharing: (params) => ({ to: "/sharing", search: params.query }),
     r: (params) => {
         const code = parseReferralCode(params.id);
         return code ? resolveReferralCodeRoute(code) : { to: "/wallet" };

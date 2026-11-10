@@ -15,7 +15,7 @@ export const switchRoot = style({
     transition: `all ${transition.base} ${easing.default}`,
 
     ":focus-visible": {
-        boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        boxShadow: `0 0 0 2px ${vars.surface.background}, 0 0 0 4px ${vars.border.focus}`,
     },
 
     selectors: {

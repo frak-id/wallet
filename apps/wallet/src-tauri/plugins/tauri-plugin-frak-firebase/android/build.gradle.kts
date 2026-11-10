@@ -28,13 +28,13 @@ dependencies {
     // Single Firebase BoM pinning FCM + Crashlytics + NDK Crashlytics to the
     // same internal Firebase version. Bumping this single coordinate keeps
     // the surface coherent across the FCM and Crashlytics halves of this plugin.
-    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
 
     // FCM — push notifications token + topic + send.
-    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-messaging")
 
     // Java/Kotlin uncaught-exception handler + custom keys/logs/recordError.
-    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-crashlytics")
 
     // Native (C/C++/Rust) signal handler. Captures SIGABRT/SIGSEGV from the
     // Tauri Rust binary; symbols are best-effort until ./gradlew

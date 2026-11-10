@@ -16,6 +16,16 @@ import type { InstagramTokenService } from "./InstagramTokenService";
 export const CHECK_COOLDOWN_MS = 30 * 1000;
 const RECHECK_CONCURRENCY = 5;
 
+/** Only a DM carrying a live code gets one: the inbox is also the brand's, so other DMs get no bot reply. */
+export const INSTAGRAM_REPLIES = {
+    following:
+        "C'est bon, ton Instagram est connecté à Frak ✅ Tu suis @frak_fr : tes tickets comptent au tirage. Tu peux retourner sur l'app Frak, tout est prêt. Bonne chance !",
+    notFollowing:
+        "Ton Instagram est connecté à Frak ✅ Dernière étape : abonne-toi à @frak_fr, puis retourne sur l'app Frak et appuie sur « Vérifier à nouveau » pour que tes tickets comptent au tirage.",
+    alreadyLinked:
+        "Ce compte Instagram est déjà connecté à un autre compte Frak. Envoie ton code depuis le compte Instagram que tu veux connecter.",
+} as const;
+
 /** Meta could not answer for reasons unrelated to the player: never read it as "not following". */
 export class InstagramUnavailableError extends Error {
     constructor(reason: string) {
@@ -61,7 +71,14 @@ export class InstagramVerificationService {
                 username: lookup.username,
                 follows: lookup.follows,
             });
-            return linked ? "linked" : "no_code";
+            if (!linked) return "no_code";
+            await this.reply(
+                igsid,
+                linked.follows
+                    ? INSTAGRAM_REPLIES.following
+                    : INSTAGRAM_REPLIES.notFollowing
+            );
+            return "linked";
         } catch (error) {
             if (
                 error instanceof HttpError &&
@@ -71,9 +88,20 @@ export class InstagramVerificationService {
                     { identityGroupId: match.identityGroupId },
                     "Instagram code sent from an account linked to another wallet"
                 );
+                await this.reply(igsid, INSTAGRAM_REPLIES.alreadyLinked);
                 return "already_linked";
             }
             throw error;
+        }
+    }
+
+    /** Never throws: a failed delivery would make Meta replay a DM whose code is already burned. */
+    private async reply(igsid: string, text: string): Promise<void> {
+        try {
+            const token = await this.tokens.current();
+            if (token) await this.graph.sendTextMessage(igsid, text, token);
+        } catch (err) {
+            log.warn({ err }, "Instagram reply not sent");
         }
     }
 

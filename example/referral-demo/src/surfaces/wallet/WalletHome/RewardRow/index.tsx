@@ -6,7 +6,6 @@ import {
     ClockHandsIcon,
     GiftIcon,
     HourglassIcon,
-    LockIcon,
 } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
 import { AnimatePresence, motion } from "motion/react";
@@ -33,12 +32,6 @@ function TagBadge({ tag }: { tag: RewardTag }) {
                     {t("history.referralOf", { name: tag.name })}
                 </Badge>
             );
-        case "referral":
-            return (
-                <Badge variant="info" size="small">
-                    {t("history.referral")}
-                </Badge>
-            );
     }
 }
 
@@ -63,11 +56,14 @@ function StatusBadge({
         );
     }
     if (status === "consumed") return null;
-    const Icon = status === "settled" ? ClockHandsIcon : LockIcon;
     return (
         <span className={styles.badge}>
             <span className={styles.badgeInner({ status })}>
-                <Icon color={vars.surface.background} width={12} height={12} />
+                <ClockHandsIcon
+                    color={vars.surface.background}
+                    width={12}
+                    height={12}
+                />
             </span>
         </span>
     );
@@ -80,15 +76,11 @@ function DisplayAmount({
     amount: string;
     status: RewardStatus;
 }) {
-    const Icon =
-        status === "settled"
-            ? HourglassIcon
-            : status === "waitingFriend"
-              ? LockIcon
-              : undefined;
     return (
         <Inline space="xxs" alignY="center" wrap={false}>
-            {Icon && <Icon color={vars.text.secondary} />}
+            {status === "settled" && (
+                <HourglassIcon color={vars.text.secondary} />
+            )}
             <Text
                 variant="bodySmall"
                 color={status === "consumed" ? "success" : "disabled"}
@@ -162,14 +154,8 @@ export function RewardRow({
                             {status !== "consumed" && (
                                 <Text
                                     variant="bodySmall"
-                                    color={
-                                        status === "waitingFriend"
-                                            ? "warning"
-                                            : "secondary"
-                                    }
-                                    className={styles.statusText({
-                                        wrap: status === "waitingFriend",
-                                    })}
+                                    color="secondary"
+                                    className={styles.statusText}
                                 >
                                     {t(`history.status.${status}`)}
                                 </Text>

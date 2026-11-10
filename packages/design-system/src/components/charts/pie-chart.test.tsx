@@ -163,18 +163,31 @@ describe("PieChart", () => {
             Array.from(container.querySelectorAll("text")).map(
                 (text) => text.parentElement?.style.transform
             );
-        expect(labelShifts()).toEqual([
-            "translate(0px, 0px)",
-            "translate(0px, 0px)",
-            "translate(0px, 0px)",
-        ]);
+        const probe = document.createElement("div");
+        probe.style.transform = "translate(0px, 0px)";
+        const atRest = probe.style.transform;
+        expect(labelShifts()).toEqual([atRest, atRest, atRest]);
 
         fireEvent.mouseEnter(hitboxes(container)[1]);
 
         const [first, second, third] = labelShifts();
-        expect(second).not.toBe("translate(0px, 0px)");
-        expect(first).toBe("translate(0px, 0px)");
-        expect(third).toBe("translate(0px, 0px)");
+        expect(second).not.toBe(atRest);
+        expect(first).toBe(atRest);
+        expect(third).toBe(atRest);
+    });
+
+    it("keeps a slice that fills the whole circle in place on hover", async () => {
+        const whole = [{ label: "Only", value: 5, color: "rgb(1, 1, 1)" }];
+        const { container } = render(<ControlledPie data={whole} />);
+        const label = container.querySelector("text")?.parentElement;
+        const atRest = label?.style.transform;
+
+        fireEvent.mouseEnter(hitboxes(container)[0]);
+
+        expect(label?.style.transform).toBe(atRest);
+        await new Promise((settle) => setTimeout(settle, 300));
+        const slice = container.querySelector('path[fill="rgb(1, 1, 1)"]');
+        expect(slice?.getAttribute("style") ?? "").not.toMatch(/translate/);
     });
 
     it("reflects a hoveredIndex set by the parent without any pointer event", () => {

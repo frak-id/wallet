@@ -340,7 +340,7 @@ async function isVerifiedViaShopify(
 const CURRENCY_TO_STABLECOIN: Record<"usd" | "eur" | "gbp", Stablecoin> = {
     usd: "usdc",
     eur: "eure",
-    gbp: "gbpe",
+    gbp: "eure",
 };
 
 type ShopifySessionRegistration = {

@@ -304,6 +304,22 @@ describe("classifyWebauthnError — iOS envelope", () => {
         expect(isReportableWebauthnError(err)).toBe(true);
     });
 
+    it("keeps a 1004 carrying underlying-error detail a reported, retryable unknown", () => {
+        const err = nativeError(
+            JSON.stringify({
+                type: "UnknownError",
+                message:
+                    "[1004] The operation couldn't be completed. (com.apple.AuthenticationServices.AuthorizationError error 1004.); underlying=ASCAuthorizationErrorDomain#6; deviceOwnerAuth=passcodeNotSet",
+            })
+        );
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("unknown");
+        expect(result.retryable).toBe(true);
+        expect(result.gpsCode).toBeUndefined();
+        expect(result.message).toContain("[1004]");
+        expect(isReportableWebauthnError(err)).toBe(true);
+    });
+
     it("classifies a bare-string fatal precondition reject as unknown", () => {
         // Early native guards (missing options, no window) keep rejecting bare
         // strings — the JS bridge treats those as opaque.

@@ -1,4 +1,4 @@
-import { type ReactNode, useLayoutEffect } from "react";
+import { type ReactNode, useRef } from "react";
 import { tablet } from "../../breakpoints";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { visuallyHidden } from "../../reset.css";
@@ -39,23 +39,26 @@ export function ResponsiveModal({
     children,
 }: ResponsiveModalProps) {
     const isDesktop = useMediaQuery(`(min-width: ${tablet}px)`);
-
-    // Radix applies `aria-hidden` to dialog siblings before its FocusScope
-    // moves focus into the modal. If the trigger that opened the modal
-    // still holds focus during that window, browsers emit:
-    //   "Blocked aria-hidden on an element because its descendant retained focus".
-    // Blurring the active element on the open transition closes the gap
-    // for every consumer (controlled or uncontrolled).
-    useLayoutEffect(() => {
-        if (!open) return;
-        const active = document.activeElement;
-        if (active instanceof HTMLElement) active.blur();
-    }, [open]);
+    // Opened from state, so Radix has no trigger to refocus on close.
+    const returnFocusTo = useRef<HTMLElement | null>(null);
+    const focusHandlers = {
+        onOpenAutoFocus: () => {
+            const active = document.activeElement;
+            returnFocusTo.current =
+                active instanceof HTMLElement ? active : null;
+        },
+        onCloseAutoFocus: (event: Event) => {
+            const target = returnFocusTo.current;
+            if (!target?.isConnected) return;
+            event.preventDefault();
+            target.focus();
+        },
+    };
 
     if (isDesktop) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent>
+                <DialogContent {...focusHandlers}>
                     {header && (
                         <div className={responsiveModalHeaderStyle}>
                             {header}
@@ -80,7 +83,7 @@ export function ResponsiveModal({
             shouldScaleBackground={false}
             modal={true}
         >
-            <DrawerContent hideHandle={true}>
+            <DrawerContent hideHandle={true} {...focusHandlers}>
                 {header && (
                     <DrawerHeader className={responsiveModalHeaderStyle}>
                         {header}

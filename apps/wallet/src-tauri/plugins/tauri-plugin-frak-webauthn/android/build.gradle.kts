@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 36
     namespace = "id.frak.webauthn"
     defaultConfig {
         minSdk = 28
@@ -25,4 +25,5 @@ dependencies {
     implementation(project(":tauri-android"))
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

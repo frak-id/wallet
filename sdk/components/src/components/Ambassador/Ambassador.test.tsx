@@ -1,3 +1,4 @@
+import type { FiatAmounts, RewardSummary } from "@frak-labs/core-sdk";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/preact";
 import { render as renderUnflushed } from "preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,10 +48,46 @@ vi.mock("@frak-labs/core-sdk/actions", () => ({
 }));
 
 const trackEvent = vi.fn();
-vi.mock("@frak-labs/core-sdk", () => ({
-    sdkConfigStore: {},
+const isMobile = vi.fn(() => false);
+vi.mock("@frak-labs/core-sdk", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@frak-labs/core-sdk")>()),
+    sdkConfigStore: { getConfig: () => ({ currency: "eur" }) },
     trackEvent: (...args: unknown[]) => trackEvent(...args),
+    isMobile: () => isMobile(),
+    getEnvironment: () => ({
+        wallet: "https://wallet.frak.id",
+        backend: "https://backend.frak.id",
+    }),
 }));
+
+const rewardSummaryState = vi.fn<() => { summary: RewardSummary | null }>(
+    () => ({ summary: null })
+);
+vi.mock("@/hooks/useRewardSummary", () => ({
+    useRewardSummary: () => rewardSummaryState(),
+}));
+function setSummary(summary: RewardSummary | null) {
+    rewardSummaryState.mockReturnValue({ summary });
+}
+
+const amounts = (eur: number): FiatAmounts => ({
+    eurAmount: eur,
+    usdAmount: eur,
+    gbpAmount: eur,
+});
+const PENDING_SUMMARY: RewardSummary = {
+    linked: false,
+    earned: null,
+    pending: {
+        total: amounts(12),
+        cashback: amounts(8),
+        fromFriends: amounts(4),
+        count: 2,
+        lockedCount: 0,
+        nextUnlockAt: null,
+        expiresAt: new Date(Date.now() + 5 * 86_400_000).toISOString(),
+    },
+};
 
 const globalComponents = vi.fn<() => { ambassador?: Record<string, string> }>(
     () => ({})
@@ -194,6 +231,16 @@ function computed(el: Element | null, prop: string): string {
     return el ? getComputedStyle(el).getPropertyValue(prop) : "<missing>";
 }
 
+/** What `value` resolves to for `prop` beside `el`, in the engine's own serialisation. */
+function resolvedBeside(el: Element | null, prop: string, value: string) {
+    const probe = document.createElement("span");
+    probe.style.setProperty(prop, value);
+    el?.parentElement?.append(probe);
+    const resolved = computed(probe, prop);
+    probe.remove();
+    return resolved;
+}
+
 describe("Ambassador", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -206,6 +253,8 @@ describe("Ambassador", () => {
         vi.mocked(useLangHook.useLang).mockReturnValue("en");
         setRefereeReward(undefined, false);
         setWideScreen(false);
+        setSummary(null);
+        isMobile.mockReturnValue(false);
         getInstallUrl.mockResolvedValue(INSTALL_URL);
         globalComponents.mockReturnValue({});
         window.FrakSetup = {
@@ -561,7 +610,9 @@ describe("Ambassador", () => {
         expect(document.activeElement).toBe(cta);
 
         expect(computed(cta, "outline-color")).toBe("rgb(0, 0, 0)");
-        expect(computed(cta, "box-shadow")).toContain("2px #fff");
+        expect(computed(cta, "box-shadow")).toBe(
+            "rgb(255, 255, 255) 0px 0px 0px 2px"
+        );
     });
 
     // ─── 2026-09-15 R3: renders fully with no session ───
@@ -1362,25 +1413,20 @@ describe("Ambassador", () => {
             ".frak-ambassador__reward-amount"
         );
         const cta = container.querySelector(".frak-ambassador__hero-cta");
-        expect(computed(amount, "color")).toContain("--frak-amb-accent");
-        expect(computed(amount, "color")).toContain("#111");
-        expect(computed(cta, "background-color")).toContain(
-            "--frak-amb-cta-bg"
-        );
+        expect(computed(amount, "color")).toBe("rgb(17, 17, 17)");
+        expect(computed(cta, "background-color")).toBe("rgb(17, 17, 17)");
 
         if (container instanceof HTMLElement) {
             container.style.setProperty("--frak-amb-accent", "rgb(255,0,0)");
         }
-        expect(
-            getComputedStyle(amount ?? container).getPropertyValue(
-                "--frak-amb-accent"
-            )
-        ).toBe("rgb(255,0,0)");
-        expect(
-            getComputedStyle(cta ?? container).getPropertyValue(
-                "--frak-amb-accent"
-            )
-        ).toBe("rgb(255,0,0)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
+        expect(computed(cta, "background-color")).toBe("rgb(255, 0, 0)");
+
+        if (container instanceof HTMLElement) {
+            container.style.setProperty("--frak-amb-cta-bg", "rgb(0,0,255)");
+        }
+        expect(computed(cta, "background-color")).toBe("rgb(0, 0, 255)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
     });
 
     it("2026-09-15 R16. an unset knob falls back to its documented default", async () => {
@@ -1389,18 +1435,19 @@ describe("Ambassador", () => {
         const { container } = render(<Ambassador />);
 
         const tag = container.querySelector(".frak-ambassador__hero-tag");
-        expect(computed(tag, "background-color")).toContain(
-            "--frak-amb-tag-bg"
-        );
-        expect(computed(tag, "background-color")).toContain("#fff");
+        expect(computed(tag, "background-color")).toBe("rgb(255, 255, 255)");
         const card = container.querySelector(".frak-ambassador__win-win-card");
-        expect(computed(card, "background-color")).toContain(
-            "--frak-amb-surface"
+        expect(computed(card, "background-color")).toBe(
+            resolvedBeside(
+                card,
+                "background-color",
+                "color-mix(in srgb, #111 4%, transparent)"
+            )
         );
-        expect(computed(card, "background-color")).toContain(
-            "rgba(17,17,17,.04)"
-        );
-        expect(computed(card, "border-radius")).toContain("--frak-amb-radius");
+        expect(computed(card, "border-radius")).toBe("12px");
+
+        card?.parentElement?.style.setProperty("--frak-amb-radius", "3px");
+        expect(computed(card, "border-radius")).toBe("3px");
     });
 
     it("2026-09-15 R17. the badge lock does not leak: a merchant class still overrides the hero and card colours", async () => {
@@ -1465,7 +1512,9 @@ describe("Ambassador", () => {
         expect(document.activeElement).toBe(badge);
 
         expect(computed(badge, "outline-color")).toBe("rgb(0, 0, 0)");
-        expect(computed(badge, "box-shadow")).toContain("2px #fff");
+        expect(computed(badge, "box-shadow")).toBe(
+            "rgb(255, 255, 255) 0px 0px 0px 2px"
+        );
     });
 
     it("colours the reward figure through the accent-text knob, falling back to the accent", async () => {
@@ -1476,8 +1525,12 @@ describe("Ambassador", () => {
         const amount = container.querySelector(
             ".frak-ambassador__reward-amount"
         );
-        expect(computed(amount, "color")).toContain("--frak-amb-accent-text");
-        expect(computed(amount, "color")).toContain("--frak-amb-accent,");
+        const root = container.querySelector<HTMLElement>(".frak-ambassador");
+        root?.style.setProperty("--frak-amb-accent", "rgb(255,0,0)");
+        expect(computed(amount, "color")).toBe("rgb(255, 0, 0)");
+
+        root?.style.setProperty("--frak-amb-accent-text", "rgb(0,0,255)");
+        expect(computed(amount, "color")).toBe("rgb(0, 0, 255)");
     });
 
     it("leaves the theme's heading face alone until the root marks a sampled one", async () => {
@@ -1492,12 +1545,8 @@ describe("Ambassador", () => {
         expect(computed(title, "font-family")).toBe("ThemeSerif");
 
         root?.setAttribute("data-frak-amb-font", "h1-family h1-transform");
-        expect(computed(title, "font-family")).toContain(
-            "--frak-amb-h1-family"
-        );
-        expect(computed(title, "text-transform")).toContain(
-            "--frak-amb-h1-transform"
-        );
+        expect(computed(title, "font-family")).toBe("Tomorrow");
+        expect(computed(title, "text-transform")).toBe("uppercase");
     });
 
     it("2026-09-15 R16. a typography knob reaches its consumer and falls back when unset", async () => {
@@ -1506,29 +1555,320 @@ describe("Ambassador", () => {
 
         const title = container.querySelector(".frak-ambassador__hero-title");
         const cta = container.querySelector(".frak-ambassador__hero-cta");
-        expect(computed(title, "font-size")).toContain("--frak-amb-h1-size");
-        expect(computed(title, "font-size")).toContain(
-            "clamp(2em, 4.6vw, 3.2em)"
+        expect(computed(title, "font-size")).toBe(
+            resolvedBeside(title, "font-size", "clamp(2em, 4.6vw, 3.2em)")
         );
-        expect(computed(cta, "font-size")).toContain("--frak-amb-cta-size");
-        expect(computed(cta, "font-size")).toContain("0.9em");
-        expect(computed(cta, "text-transform")).toContain(
-            "--frak-amb-cta-transform"
+        expect(computed(cta, "font-size")).toBe(
+            resolvedBeside(cta, "font-size", "0.9em")
         );
+        expect(computed(cta, "text-transform")).toBe("uppercase");
 
         if (container instanceof HTMLElement) {
             container.style.setProperty("--frak-amb-h1-size", "34px");
             container.style.setProperty("--frak-amb-cta-size", "18px");
         }
-        expect(
-            getComputedStyle(title ?? container).getPropertyValue(
-                "--frak-amb-h1-size"
-            )
-        ).toBe("34px");
-        expect(
-            getComputedStyle(cta ?? container).getPropertyValue(
-                "--frak-amb-cta-size"
-            )
-        ).toBe("18px");
+        expect(computed(title, "font-size")).toBe("34px");
+        expect(computed(cta, "font-size")).toBe("18px");
+    });
+
+    describe("your rewards", () => {
+        beforeEach(() => {
+            const todayAtNoon = new Date();
+            todayAtNoon.setHours(12, 0, 0, 0);
+            vi.useFakeTimers({ toFake: ["Date"] });
+            vi.setSystemTime(todayAtNoon);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        const sectionOrder = (container: Element) =>
+            Array.from(
+                container.querySelectorAll(".frak-ambassador > section")
+            ).map((section) => section.className);
+
+        it("puts the claim section above the hero for an unlinked visitor with pending rewards", async () => {
+            setSummary(PENDING_SUMMARY);
+            const { container } = render(<Ambassador />);
+            const sections = sectionOrder(container);
+            expect(sections[0]).toContain("frak-ambassador__my-rewards");
+            expect(sections[1]).toContain("frak-ambassador__hero");
+            expect(
+                text(container, ".frak-ambassador__my-rewards-eyebrow")
+            ).toBe("Your rewards");
+            expect(
+                text(container, ".frak-ambassador__my-rewards-amount")
+            ).toContain("12");
+            const rows = container.querySelectorAll(
+                ".frak-ambassador__my-rewards-row"
+            );
+            expect(Array.from(rows, (row) => row.textContent)).toEqual([
+                expect.stringContaining("Cashback on your orders"),
+                expect.stringContaining("From your friends' purchases"),
+            ]);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-countdown")
+            ).toMatch(/^5 days left to claim it, until /);
+            await waitFor(() =>
+                expect(
+                    container.querySelector(".frak-ambassador__my-rewards-cta")
+                ).toHaveAttribute("href", INSTALL_URL)
+            );
+            expect(
+                text(container, ".frak-ambassador__my-rewards-cta")
+            ).toContain("Claim my");
+            expect(
+                text(container, ".frak-ambassador__my-rewards-footer")
+            ).toContain("no bank details");
+        });
+
+        it("omits a zero breakdown row and words the last day", () => {
+            setSummary({
+                ...PENDING_SUMMARY,
+                pending: {
+                    ...(PENDING_SUMMARY.pending as NonNullable<
+                        RewardSummary["pending"]
+                    >),
+                    cashback: amounts(0),
+                    expiresAt: new Date(Date.now() + 1000).toISOString(),
+                },
+            });
+            const { container } = render(<Ambassador />);
+            expect(
+                container.querySelectorAll(".frak-ambassador__my-rewards-row")
+            ).toHaveLength(1);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-countdown")
+            ).toBe("Expires today, claim it now");
+        });
+
+        it("notes the unlock date when part of the reward is locked", () => {
+            setSummary({
+                ...PENDING_SUMMARY,
+                pending: {
+                    ...(PENDING_SUMMARY.pending as NonNullable<
+                        RewardSummary["pending"]
+                    >),
+                    lockedCount: 1,
+                    nextUnlockAt: "2030-01-05T00:00:00.000Z",
+                },
+            });
+            const { container } = render(<Ambassador />);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-unlock")
+            ).toContain("Part of it unlocks on");
+        });
+
+        it("says the whole reward unlocks on the date when every reward is locked", () => {
+            setSummary({
+                ...PENDING_SUMMARY,
+                pending: {
+                    ...(PENDING_SUMMARY.pending as NonNullable<
+                        RewardSummary["pending"]
+                    >),
+                    lockedCount: 2,
+                    nextUnlockAt: "2030-01-05T00:00:00.000Z",
+                },
+            });
+            const { container } = render(<Ambassador />);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-unlock")
+            ).toMatch(/^Unlocks on /);
+        });
+
+        it("shows the linked recap below the hero with a wallet link", () => {
+            setSummary({
+                linked: true,
+                earned: { total: amounts(30) },
+                pending: {
+                    ...(PENDING_SUMMARY.pending as NonNullable<
+                        RewardSummary["pending"]
+                    >),
+                },
+            });
+            const { container } = render(<Ambassador />);
+            const sections = sectionOrder(container);
+            expect(sections[0]).toContain("frak-ambassador__hero");
+            expect(sections[1]).toContain("frak-ambassador__my-rewards");
+            expect(
+                text(container, ".frak-ambassador__my-rewards-heading")
+            ).toBe(`Your rewards at ${BRAND}`);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-earned")
+            ).toContain("received");
+            expect(
+                text(container, ".frak-ambassador__my-rewards-pending")
+            ).toContain("on its way");
+            expect(
+                container.querySelector(".frak-ambassador__my-rewards-cta")
+            ).toHaveAttribute("href", "https://wallet.frak.id/wallet");
+            expect(
+                container.querySelector(".frak-ambassador__my-rewards-qr")
+            ).toBeNull();
+        });
+
+        it.each([
+            ["no summary", null],
+            [
+                "an unlinked visitor with nothing pending",
+                { linked: false, earned: null, pending: null },
+            ],
+            [
+                "a linked visitor with nothing earned or pending",
+                { linked: true, earned: null, pending: null },
+            ],
+        ] as const)("renders no section for %s", (_label, summary) => {
+            setSummary(summary);
+            const { container } = render(<Ambassador />);
+            expect(
+                container.querySelector(".frak-ambassador__my-rewards")
+            ).toBeNull();
+        });
+
+        it("hides the store section for a linked visitor", () => {
+            setSummary({ linked: true, earned: null, pending: null });
+            const { container } = render(<Ambassador />);
+            expect(
+                container.querySelector(".frak-ambassador__store")
+            ).toBeNull();
+        });
+
+        it("keeps the store section for a visitor with nothing to claim", () => {
+            const { container } = render(<Ambassador />);
+            expect(text(container, ".frak-ambassador__store-title")).toBe(
+                "Track your earnings in real time"
+            );
+        });
+
+        it("sells the claim in the store heading unless the merchant wrote one", () => {
+            setSummary(PENDING_SUMMARY);
+            const { container, rerender } = render(<Ambassador />);
+            expect(text(container, ".frak-ambassador__store-title")).toMatch(
+                /^Claim your .*12.* in the app$/
+            );
+
+            rerender(<Ambassador storeHeading="Our app" />);
+            expect(text(container, ".frak-ambassador__store-title")).toBe(
+                "Our app"
+            );
+        });
+
+        it("draws the install QR in a stub beside the claim block on desktop only", async () => {
+            setSummary(PENDING_SUMMARY);
+            setWideScreen(true);
+            const desktop = render(<Ambassador />);
+            const stub = () =>
+                desktop.container.querySelector(
+                    ".frak-ambassador__my-rewards-stub"
+                );
+            expect(stub()).toHaveTextContent("On your computer?");
+            await waitFor(() =>
+                expect(stub()?.querySelector("svg[role=img]")).not.toBeNull()
+            );
+            expect(
+                desktop.container.querySelector(
+                    ".frak-ambassador__my-rewards-main .frak-ambassador__my-rewards-share"
+                )
+            ).not.toBeNull();
+            cleanup();
+
+            isMobile.mockReturnValue(true);
+            const mobile = render(<Ambassador />);
+            await waitFor(() =>
+                expect(
+                    mobile.container.querySelector(
+                        ".frak-ambassador__my-rewards-cta"
+                    )
+                ).toHaveAttribute("href", INSTALL_URL)
+            );
+            expect(
+                mobile.container.querySelector(
+                    ".frak-ambassador__my-rewards-stub"
+                )
+            ).toBeNull();
+        });
+
+        it("reports the impression once and the claim click on the ambassador surface", async () => {
+            setSummary(PENDING_SUMMARY);
+            const { container, rerender } = render(<Ambassador />);
+            rerender(<Ambassador />);
+            const impressions = trackEvent.mock.calls.filter(
+                ([, name]) => name === "reward_reminder_impression"
+            );
+            expect(impressions).toHaveLength(1);
+            expect(impressions[0][2]).toEqual({
+                surface: "ambassador",
+                days_left: expect.any(Number),
+                locked: false,
+            });
+
+            const cta = container.querySelector(
+                ".frak-ambassador__my-rewards-cta"
+            );
+            await waitFor(() =>
+                expect(cta).toHaveAttribute("href", INSTALL_URL)
+            );
+            if (cta) fireEvent.click(cta);
+            expect(trackEvent).toHaveBeenCalledWith(
+                undefined,
+                "reward_reminder_claim_clicked",
+                expect.objectContaining({ surface: "ambassador" })
+            );
+        });
+
+        it("neither navigates nor reports a claim click while the install link is missing", async () => {
+            getInstallUrl.mockResolvedValue(undefined);
+            setSummary(PENDING_SUMMARY);
+            const { container } = render(<Ambassador />);
+            await waitFor(() => expect(getInstallUrl).toHaveBeenCalled());
+            const cta = container.querySelector(
+                ".frak-ambassador__my-rewards-cta"
+            );
+
+            const proceeded = cta ? fireEvent.click(cta) : true;
+
+            expect(proceeded).toBe(false);
+            expect(trackEvent).not.toHaveBeenCalledWith(
+                undefined,
+                "reward_reminder_claim_clicked",
+                expect.anything()
+            );
+        });
+
+        it("names the claim section after its eyebrow", () => {
+            setSummary(PENDING_SUMMARY);
+            const { container } = render(<Ambassador />);
+            const section = container.querySelector(
+                ".frak-ambassador__my-rewards--claim"
+            );
+            const eyebrow = container.querySelector(
+                ".frak-ambassador__my-rewards-eyebrow"
+            );
+
+            expect(eyebrow?.id).toBeTruthy();
+            expect(section?.getAttribute("aria-labelledby")).toBe(eyebrow?.id);
+        });
+
+        it("opens the sharing page from the secondary share button", () => {
+            setSummary(PENDING_SUMMARY);
+            const { container } = render(<Ambassador />);
+            const share = container.querySelector(
+                ".frak-ambassador__my-rewards-share"
+            );
+            if (share) fireEvent.click(share);
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "ambassador"
+            );
+        });
+
+        it("translates the section to French", () => {
+            vi.mocked(useLangHook.useLang).mockReturnValue("fr");
+            setSummary(PENDING_SUMMARY);
+            const { container } = render(<Ambassador />);
+            expect(
+                text(container, ".frak-ambassador__my-rewards-eyebrow")
+            ).toBe("Vos récompenses");
+        });
     });
 });

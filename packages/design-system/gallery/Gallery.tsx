@@ -4,8 +4,9 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useSyncExternalStore } from "react";
+import { FindingsDetails, findingCount, SectionMarkers } from "./findings";
 import { Shell } from "./GalleryShell";
-import { link, page, sectionBox } from "./gallery.css";
+import { inlineFindings, link, page, sectionBox } from "./gallery.css";
 import { sections } from "./sections";
 
 /** `?only=<id>` renders one section so a spec can isolate its errors. */
@@ -57,38 +58,49 @@ function StackedPage() {
             <Box as="main" paddingY="l">
                 <Stack space="xxl">
                     {visible.map(({ id, title, render }) => (
-                        <section
-                            key={id}
-                            id={id}
-                            className={sectionBox}
-                            data-gallery-section={id}
-                            aria-labelledby={`${id}-title`}
-                        >
-                            <Stack space="l">
-                                <Inline space="m" alignY="baseline">
-                                    <Box
-                                        as="h2"
-                                        id={`${id}-title`}
-                                        tabIndex={-1}
-                                    >
-                                        <Text as="span" variant="heading3">
-                                            {title}
-                                        </Text>
-                                    </Box>
-                                    {!only && (
-                                        <a
-                                            className={link}
-                                            href={`?only=${id}`}
+                        <SectionMarkers key={id} sectionId={id}>
+                            <section
+                                id={id}
+                                className={sectionBox}
+                                data-gallery-section={id}
+                                aria-labelledby={`${id}-title`}
+                            >
+                                <Stack space="l">
+                                    <Inline space="m" alignY="baseline">
+                                        <Box
+                                            as="h2"
+                                            id={`${id}-title`}
+                                            tabIndex={-1}
                                         >
-                                            <Text as="span" variant="bodySmall">
-                                                Open alone
+                                            <Text as="span" variant="heading3">
+                                                {title}
                                             </Text>
-                                        </a>
+                                        </Box>
+                                        {!only && (
+                                            <a
+                                                className={link}
+                                                href={`?only=${id}`}
+                                            >
+                                                <Text
+                                                    as="span"
+                                                    variant="bodySmall"
+                                                >
+                                                    Open alone
+                                                </Text>
+                                            </a>
+                                        )}
+                                    </Inline>
+                                    {findingCount(id) > 0 && (
+                                        <FindingsDetails
+                                            className={inlineFindings}
+                                            sectionId={id}
+                                            open={Boolean(only)}
+                                        />
                                     )}
-                                </Inline>
-                                <Stack space="xl">{render()}</Stack>
-                            </Stack>
-                        </section>
+                                    <Stack space="xl">{render()}</Stack>
+                                </Stack>
+                            </section>
+                        </SectionMarkers>
                     ))}
                 </Stack>
             </Box>

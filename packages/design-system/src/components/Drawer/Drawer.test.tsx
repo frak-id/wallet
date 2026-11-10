@@ -19,6 +19,16 @@ describe("Drawer", () => {
         expect(screen.getByText("Open drawer")).toBeInTheDocument();
     });
 
+    it("rejects vaul's autoFocus, which DrawerContent overrides", () => {
+        render(
+            // @ts-expect-error autoFocus would be silently ignored
+            <Drawer autoFocus>
+                <DrawerTrigger>Open drawer</DrawerTrigger>
+            </Drawer>
+        );
+        expect(screen.getByText("Open drawer")).toBeInTheDocument();
+    });
+
     it("should render content, title and description when controlled open", async () => {
         render(
             <Drawer open>

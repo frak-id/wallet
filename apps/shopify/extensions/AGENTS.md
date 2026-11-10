@@ -57,7 +57,7 @@ checkout-post-purchase
 
 **listener.liquid** is the critical block — without it, no Frak SDK loads. Config comes from:
 
-- Block settings (logo, modal language, custom JS)
+- Block settings (logo, modal language, custom JS, `show_reward_reminder` checkbox — emits `rewardReminder.enabled`)
 - Shop metafields (`frak.appearance`, `frak.modal_i18n`, `frak.merchant_id`)
 - The generated `frak:stage` region (wallet / backend / SDK origins)
 - Shop object (name, logo, locale)

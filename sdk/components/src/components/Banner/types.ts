@@ -51,6 +51,18 @@ export type BannerProps = {
      */
     inappCta?: string;
     /**
+     * Override the pending banner title. Supports `{REWARD}`, `{DAYS}`, `{DATE}`.
+     */
+    pendingTitle?: string;
+    /**
+     * Override the pending banner description. Supports the same placeholders.
+     */
+    pendingDescription?: string;
+    /**
+     * Override the pending banner CTA text. Supports the same placeholders.
+     */
+    pendingCta?: string;
+    /**
      * Override the image displayed on the left of the referral banner.
      * Accepts an image URL. Falls back to the built-in gift icon when omitted.
      * The image is constrained to the icon slot via `object-fit: contain`,
@@ -63,10 +75,10 @@ export type BannerProps = {
      */
     preview?: string;
     /**
-     * Which banner variant to preview: "referral" or "inapp".
+     * Which banner variant to preview: "referral", "inapp" or "pending".
      * Only used when {@link preview} is set. Defaults to "referral".
      */
-    previewMode?: "referral" | "inapp";
+    previewMode?: "referral" | "inapp" | "pending";
     /**
      * When `true` (default `false`), the banner is allowed to switch to
      * in-app browser mode (Instagram / Facebook WebView) and prompt the

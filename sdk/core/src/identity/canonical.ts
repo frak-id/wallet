@@ -29,6 +29,7 @@
  *                    - `frak-ensure-v1`  → 32 zero bytes
  *                    - `frak-install-v1` → 32 zero bytes
  *                    - `frak-sso-v1`     → 32 zero bytes (none)
+ *                    - `frak-rewards-v1` → 32 zero bytes (read-only)
  *   ts          := 8-byte unsigned big-endian, Unix SECONDS.
  *
  * Wire envelope, 138 bytes before encoding:

@@ -11,6 +11,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
+import { maybeAskForReview } from "@/module/common/utils/maybeAskForReview";
 import { GameHero } from "@/module/game/component/GameHero";
 import { GameMissions } from "@/module/game/component/GameMissions";
 import { PastGames } from "@/module/game/component/GameResult";
@@ -127,6 +128,10 @@ export function GamePage() {
             unlocked: gains.unlocked,
         });
     }, [gains]);
+
+    useEffect(() => {
+        if (gains.total > 0) maybeAskForReview("game_tickets");
+    }, [gains.total]);
 
     // The code screen lists past games too; only a draw waiting on the user keeps them here.
     if (top.kind === "join" && !pending) {

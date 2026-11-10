@@ -1,9 +1,16 @@
+import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
 import { Badge } from "@frak-labs/design-system/components/Badge";
+import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import {
+    ExclamationTriangleIcon,
+    InfoIcon,
+    WalletIcon,
+} from "@frak-labs/design-system/icons";
 import type { ComponentProps } from "react";
-import { fixtures } from "../fixtures";
+import { fixtures, longText } from "../fixtures";
 import { Case, Cases } from "../ui";
 
 type NoticeProps = ComponentProps<typeof Notice>;
@@ -151,6 +158,126 @@ export function BadgeSection() {
                 </Case>
                 <Case name="worst: empty">
                     <Badge>{fixtures.empty}</Badge>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+const noop = () => {};
+
+export function EmptyStateSection() {
+    return (
+        <>
+            <Cases title="Parts" layout="stack">
+                <Case name="title only">
+                    <EmptyState title="No rewards yet" />
+                </Case>
+                <Case name="icon, description and action">
+                    <EmptyState
+                        icon={<WalletIcon width={32} height={32} />}
+                        title="No rewards yet"
+                        description="Share a product to start earning."
+                        action={{ label: "Explore brands", onClick: noop }}
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <EmptyState
+                        title={fixtures.unbreakableEmail}
+                        description={fixtures.unbreakableEmail}
+                        action={{
+                            label: fixtures.unbreakableEmail,
+                            onClick: noop,
+                        }}
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <EmptyState
+                        title={fixtures.longSentence}
+                        description={longText(3)}
+                        action={{ label: fixtures.longSentence, onClick: noop }}
+                    />
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <EmptyState
+                        title={fixtures.nonLatin}
+                        description={fixtures.nonLatin}
+                    />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+const alertTones = ["neutral", "warning", "danger"] as const;
+
+export function AlertMessageSection() {
+    return (
+        <>
+            <Cases title="Tones" layout="stack">
+                {alertTones.map((tone) => (
+                    <Case key={tone} name={tone}>
+                        <AlertMessage
+                            tone={tone}
+                            icon={<InfoIcon width={24} height={24} />}
+                            title="Transfer pending"
+                            description="It usually takes a few minutes."
+                        />
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Options" layout="stack">
+                <Case name="steps, action and dismiss">
+                    <AlertMessage
+                        tone="warning"
+                        icon={
+                            <ExclamationTriangleIcon width={24} height={24} />
+                        }
+                        title="Passkey not found"
+                        description="Try one of these:"
+                        steps={[
+                            "Unlock your phone",
+                            "Turn on iCloud Keychain",
+                            "Retry from this device",
+                        ]}
+                        action={{ label: "Try again", onClick: noop }}
+                        onDismiss={noop}
+                        dismissLabel="Dismiss"
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <AlertMessage
+                        tone="danger"
+                        icon={<InfoIcon width={24} height={24} />}
+                        title={fixtures.unbreakableEmail}
+                        description={fixtures.unbreakableEmail}
+                        steps={[fixtures.unbreakableEmail]}
+                        action={{
+                            label: fixtures.unbreakableEmail,
+                            onClick: noop,
+                        }}
+                        onDismiss={noop}
+                        dismissLabel="Dismiss"
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <AlertMessage
+                        tone="neutral"
+                        icon={<InfoIcon width={24} height={24} />}
+                        title={fixtures.longSentence}
+                        description={longText(3)}
+                    />
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <AlertMessage
+                        tone="warning"
+                        icon={<InfoIcon width={24} height={24} />}
+                        title={fixtures.nonLatin}
+                    />
                 </Case>
             </Cases>
         </>

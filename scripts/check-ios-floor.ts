@@ -3,7 +3,7 @@
  * Gates every file declaring the wallet's iOS deployment floor against one source of truth.
  * Run: `bun run check:ios-floor`.
  *
- * The floor is mirrored across six file kinds because no single one of them is read by every
+ * The floor is mirrored across five file kinds because no single one of them is read by every
  * consumer: xcodegen reads project.yml, Xcode reads the committed pbxproj, SwiftPM reads each
  * plugin manifest, and the Tauri CLI reads tauri.conf.json when it regenerates the project. A
  * partial bump links and runs — it only surfaces as an always-true availability branch nobody
@@ -40,19 +40,13 @@ const SITES: Site[] = [
         why: "the committed project is what CI actually builds, debug and release",
     },
     {
-        file: "apps/wallet/src-tauri/gen/apple/Podfile",
-        pattern: /^platform :ios, '([0-9]+\.[0-9]+)'$/gm,
-        values: 1,
-        why: "generated scaffolding, kept aligned so a regeneration diff stays empty",
-    },
-    {
         file: "apps/wallet/src-tauri/tauri.conf.json",
         pattern: /"minimumSystemVersion":\s*"([0-9]+\.[0-9]+)"/g,
         values: 1,
         why: "pins the floor against the Tauri CLI's own 14.0 default on `tauri ios init`",
     },
     {
-        file: ".github/workflows/tauri-mobile-release.yml",
+        file: "apps/wallet/scripts/prewarm-swiftpm.sh",
         pattern: /platforms:\s*\[\.iOS\(\.v([0-9]+)\)/g,
         values: 1,
         why: "a stale floor in the pre-warm stub poisons the shared SwiftPM artifact cache",
@@ -67,6 +61,7 @@ const SITES: Site[] = [
         "frak-webauthn",
         "install-referrer",
         "recovery-hint",
+        "store-review",
     ].map((name) => ({
         file: `apps/wallet/src-tauri/plugins/tauri-plugin-${name}/ios/Package.swift`,
         pattern: /\.iOS\(\.v([0-9]+)\)/g,
