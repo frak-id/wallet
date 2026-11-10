@@ -2,6 +2,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
+        <meta-data
+            android:name="firebase_messaging_installation_id_enabled"
+            android:value="true" />
         <service
             android:name=".FrakFirebaseMessagingService"
             android:exported="false">

@@ -35,6 +35,7 @@ let package = Package(
                 .byName(name: "Tauri"),
                 .byName(name: "FrakObjCExceptionCatcher"),
                 .product(name: "FirebaseCore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseInstallations", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
             ],

@@ -14,7 +14,7 @@ import com.google.firebase.messaging.RemoteMessage
  */
 class FrakFirebaseMessagingService : FirebaseMessagingService() {
 
-    override fun onNewToken(token: String) {
+    override fun onRegistered(token: String) {
         val plugin = FrakFirebasePlugin.instance
         if (plugin != null) {
             plugin.trigger("token-refresh", JSObject().put("token", token))

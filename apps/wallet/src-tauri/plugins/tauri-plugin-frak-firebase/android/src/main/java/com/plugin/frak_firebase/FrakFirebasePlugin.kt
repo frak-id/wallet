@@ -20,6 +20,7 @@ import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.messaging.FirebaseMessaging
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -170,25 +171,27 @@ class FrakFirebasePlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun getToken(invoke: Invoke) {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val ret = JSObject()
-                ret.put("token", task.result)
-                invoke.resolve(ret)
-            } else {
-                // Fallback: check SharedPreferences for token buffered during cold start.
-                val prefs = activity.getSharedPreferences(PREFS_NAME, Activity.MODE_PRIVATE)
-                val buffered = prefs.getString("fcm_token", null)
-                if (buffered != null) {
-                    prefs.edit().remove("fcm_token").apply()
+        FirebaseMessaging.getInstance().register()
+            .onSuccessTask { FirebaseInstallations.getInstance().id }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
                     val ret = JSObject()
-                    ret.put("token", buffered)
+                    ret.put("token", task.result)
                     invoke.resolve(ret)
                 } else {
-                    invoke.reject(task.exception?.message ?: "Failed to get FCM token")
+                    // Fallback: check SharedPreferences for token buffered during cold start.
+                    val prefs = activity.getSharedPreferences(PREFS_NAME, Activity.MODE_PRIVATE)
+                    val buffered = prefs.getString("fcm_token", null)
+                    if (buffered != null) {
+                        prefs.edit().remove("fcm_token").apply()
+                        val ret = JSObject()
+                        ret.put("token", buffered)
+                        invoke.resolve(ret)
+                    } else {
+                        invoke.reject(task.exception?.message ?: "Failed to get FCM token")
+                    }
                 }
             }
-        }
     }
 
     @Command
@@ -264,13 +267,16 @@ class FrakFirebasePlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun deleteToken(invoke: Invoke) {
-        FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                invoke.resolve()
-            } else {
-                invoke.reject(task.exception?.message ?: "Failed to delete FCM token")
+        // unregister() keeps the FID, so a later register() would revive the logged-out wallet's backend row.
+        FirebaseMessaging.getInstance().unregister()
+            .onSuccessTask { FirebaseInstallations.getInstance().delete() }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    invoke.resolve()
+                } else {
+                    invoke.reject(task.exception?.message ?: "Failed to delete FCM token")
+                }
             }
-        }
     }
 
     @Command

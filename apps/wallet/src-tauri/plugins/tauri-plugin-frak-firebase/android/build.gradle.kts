@@ -32,6 +32,7 @@ dependencies {
 
     // FCM — push notifications token + topic + send.
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-installations")
 
     // Java/Kotlin uncaught-exception handler + custom keys/logs/recordError.
     implementation("com.google.firebase:firebase-crashlytics")
