@@ -18,15 +18,6 @@ allprojects {
     }
 }
 
-// tauri-plugin-share 2.0.5 and tauri-plugin-safe-area-insets 0.1.0 pin compileSdk 34, which AGP 9's AAR metadata check rejects.
-subprojects {
-    afterEvaluate {
-        extensions.findByType<com.android.build.api.dsl.LibraryExtension>()?.apply {
-            if ((compileSdk ?: 0) < 36) compileSdk = 36
-        }
-    }
-}
-
 tasks.register("clean").configure {
     delete("build")
 }
