@@ -64,13 +64,6 @@ pub fn run() {
             .plugin(tauri_plugin_frak_glass::init());
     }
 
-    #[cfg(target_os = "android")]
-    {
-        builder = builder
-            .plugin(tauri_plugin_share::init())
-            .plugin(tauri_plugin_fs::init());
-    }
-
     builder
         .setup(|app| {
             if cfg!(debug_assertions) {

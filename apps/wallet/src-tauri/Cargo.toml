@@ -43,11 +43,6 @@ tauri-plugin-ota-updater = { version = "2.1.0", default-features = false, featur
     "rustls-tls",
 ] }
 
-# Android-only: share + fs plugins for file sharing (needed for recovery file download)
-[target.'cfg(target_os = "android")'.dependencies]
-tauri-plugin-share = "2.0.5"
-tauri-plugin-fs = "2.5.1"
-
 # iOS-only: raw WKWebView messaging for the edge-swipe back gesture, which
 # wry leaves off and Tauri exposes no config for.
 [target.'cfg(target_os = "ios")'.dependencies]
