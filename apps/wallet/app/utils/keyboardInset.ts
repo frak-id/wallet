@@ -2,7 +2,7 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 
 /**
  * Mirror `window.visualViewport.height` into a `--viewport-height` CSS variable
- * (plus `--keyboard-open`) so the shell shrinks when the soft keyboard opens.
+ * so the shell shrinks when the soft keyboard opens.
  * Tauri-only: on iOS WKWebView `dvh` ignores the keyboard, and on edge-to-edge
  * Android `adjustResize` is often not honored, so `dvh` stays at full height.
  * Returns a cleanup that detaches the listeners.
@@ -66,7 +66,6 @@ export function initKeyboardInset(): () => void {
         keyboardOpen = baseline - vv.height > KEYBOARD_THRESHOLD_PX;
         const root = document.documentElement.style;
         root.setProperty("--viewport-height", `${vv.height}px`);
-        root.setProperty("--keyboard-open", keyboardOpen ? "1" : "0");
         pinScroll();
         if (keyboardOpen) revealFocusedField();
     };
@@ -99,6 +98,5 @@ export function initKeyboardInset(): () => void {
         window.removeEventListener("scroll", pinScroll);
         document.removeEventListener("focusin", onFocusIn);
         document.documentElement.style.removeProperty("--viewport-height");
-        document.documentElement.style.removeProperty("--keyboard-open");
     };
 }
