@@ -4,3 +4,6 @@
 
 # Kotlin/Gradle daemon caches not covered by Tauri's gen/android/.gitignore
 **/.kotlin/
+
+# SwiftPM rewrites these on every build; CI resolves at build time
+/plugins/*/ios/Package.resolved

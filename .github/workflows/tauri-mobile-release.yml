@@ -442,7 +442,7 @@ jobs:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             ~/Library/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.resolved', 'apps/wallet/src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.swift', 'apps/wallet/src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-spm-
 
       - name: "👥 Configure AWS Credentials"
