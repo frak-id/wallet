@@ -80,6 +80,51 @@ describe("InstagramGraphClient.lookupProfile", () => {
     });
 });
 
+describe("InstagramGraphClient.sendTextMessage", () => {
+    afterEach(() => {
+        fetchMock.mockReset();
+        vi.unstubAllGlobals();
+    });
+
+    it("posts the text to the sender's thread, with the token in a header only", async () => {
+        vi.stubGlobal("fetch", fetchMock);
+        answer(200, { recipient_id: "igsid", message_id: "mid" });
+
+        await expect(
+            client.sendTextMessage("igsid", "C'est bon", "secret")
+        ).resolves.toBe(true);
+        const [url, init] = fetchMock.mock.calls[0] ?? [];
+        expect(url).toBe("https://graph.test/v26.0/me/messages");
+        expect(init.method).toBe("POST");
+        expect(init.headers).toEqual({
+            Authorization: "Bearer secret",
+            "Content-Type": "application/json",
+        });
+        expect(JSON.parse(init.body)).toEqual({
+            recipient: { id: "igsid" },
+            message: { text: "C'est bon" },
+        });
+    });
+
+    it("returns false when Meta refuses", async () => {
+        vi.stubGlobal("fetch", fetchMock);
+        answer(400, { error: { code: 10, message: "outside window" } });
+
+        await expect(client.sendTextMessage("igsid", "hi", "t")).resolves.toBe(
+            false
+        );
+    });
+
+    it("returns false when Meta cannot be reached", async () => {
+        vi.stubGlobal("fetch", fetchMock);
+        fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
+
+        await expect(client.sendTextMessage("igsid", "hi", "t")).resolves.toBe(
+            false
+        );
+    });
+});
+
 describe("InstagramGraphClient.refreshToken", () => {
     afterEach(() => {
         fetchMock.mockReset();

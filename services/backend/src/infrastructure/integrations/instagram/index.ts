@@ -65,6 +65,47 @@ export class InstagramGraphClient {
             : { kind: "gone", code };
     }
 
+    /** A DM from the connected account; Meta only accepts it within 24 h of the player's last message. */
+    async sendTextMessage(
+        igsid: string,
+        text: string,
+        token: string
+    ): Promise<boolean> {
+        const response = await fetch(
+            `${this.baseUrl}/${INSTAGRAM_GRAPH_VERSION}/me/messages`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    recipient: { id: igsid },
+                    message: { text },
+                }),
+                signal: AbortSignal.timeout(TIMEOUT_MS),
+            }
+        ).catch((err: unknown) => {
+            log.warn({ err }, "Instagram message send unreachable");
+            return null;
+        });
+        if (!response) return false;
+        if (response.ok) return true;
+
+        const body = (await response
+            .json()
+            .catch(() => null)) as GraphError | null;
+        log.warn(
+            {
+                status: response.status,
+                code: body?.error?.code,
+                message: body?.error?.message,
+            },
+            "Instagram message send failed"
+        );
+        return false;
+    }
+
     /** A new 60-day token; Meta only renews a token at least 24 h old. Never log the URL. */
     async refreshToken(
         token: string
