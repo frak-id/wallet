@@ -236,6 +236,105 @@ describe("useVersionGate hard floor", () => {
     });
 });
 
+describe("useVersionGate floor refresh", () => {
+    beforeEach(({ queryWrapper }: WalletTestFixtures) => {
+        queryWrapper.client.clear();
+        stageOtaUpdateMock.mockReset().mockResolvedValue({
+            status: "up_to_date",
+        });
+        checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);
+        listenToNativeUpdateStatusMock.mockReset().mockResolvedValue(null);
+        isAndroidMock.mockReset().mockReturnValue(true);
+        isIosMock.mockReset().mockReturnValue(false);
+        isTauriMock.mockReset().mockReturnValue(true);
+        backendVersionGetMock.mockReset();
+        vi.stubEnv("APP_VERSION", "1.0.98");
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+        focusManager.setFocused(undefined);
+    });
+
+    const seedFloor = (client: QueryClient, floor: string) =>
+        client.setQueryData(
+            versionKey.minSupported,
+            { ios: "0.0.0", android: floor },
+            { updatedAt: Date.now() }
+        );
+
+    const leaveAndReturn = () =>
+        act(() => {
+            focusManager.setFocused(false);
+            focusManager.setFocused(true);
+        });
+
+    test("a blocked app with a fresh saved floor asks the backend on launch and unblocks once the floor is lowered", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        seedFloor(queryWrapper.client, "1.0.99");
+        setAndroidFloor("0.0.0");
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        expect(result.current.kind).toBe("hard_update");
+        await waitFor(() => expect(result.current.kind).toBe("idle"));
+        expect(backendVersionGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("a blocked app asks the backend again each time it returns to the foreground", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        seedFloor(queryWrapper.client, "1.0.99");
+        setAndroidFloor("1.0.99");
+
+        renderHook(() => useVersionGate(), { wrapper: queryWrapper.wrapper });
+        await waitFor(() =>
+            expect(backendVersionGetMock).toHaveBeenCalledTimes(1)
+        );
+
+        leaveAndReturn();
+
+        await waitFor(() =>
+            expect(backendVersionGetMock).toHaveBeenCalledTimes(2)
+        );
+    });
+
+    test("an app above the floor reuses its fresh saved floor on launch and on foreground", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        seedFloor(queryWrapper.client, "1.0.98");
+        setAndroidFloor("1.0.98");
+
+        renderHook(() => useVersionGate(), { wrapper: queryWrapper.wrapper });
+        await waitFor(() =>
+            expect(
+                queryWrapper.client.getQueryData(versionKey.nativeStatus)
+            ).toBeDefined()
+        );
+        leaveAndReturn();
+        await act(() => Promise.resolve());
+
+        expect(backendVersionGetMock).not.toHaveBeenCalled();
+    });
+
+    test("the floor request bypasses the WebView HTTP cache", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("0.0.0");
+
+        renderHook(() => useVersionGate(), { wrapper: queryWrapper.wrapper });
+
+        await waitFor(() =>
+            expect(backendVersionGetMock).toHaveBeenCalledWith({
+                fetch: { cache: "no-store" },
+            })
+        );
+    });
+});
+
 describe("useVersionGate OTA", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();

@@ -34,7 +34,7 @@ Measured on staging, 2026-10-08:
 
 ## Rollback
 
-Delete the variable (or set it back to `0.0.0`), run step 2 again on the same branch, and check the endpoint reports `0.0.0`. Measured: ~3 min 15 s to the endpoint, then the same 5-minute cache before each app clears.
+Delete the variable (or set it back to `0.0.0`), run step 2 again on the same branch, and check the endpoint reports `0.0.0`. Measured: ~3 min 15 s to the endpoint. A blocked app re-checks on every launch and return to the foreground, bypassing its caches, so it clears on its next launch or foreground after the endpoint reports the lowered floor.
 
 ## Limits
 
