@@ -2,6 +2,7 @@ import { HttpError } from "@backend-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InstagramLinkSelect } from "../db/schema";
 import {
+    INSTAGRAM_REPLIES,
     InstagramUnavailableError,
     InstagramVerificationService,
 } from "./InstagramVerificationService";
@@ -53,6 +54,7 @@ function setup() {
             username: "player",
             follows: true,
         }),
+        sendTextMessage: vi.fn().mockResolvedValue(true),
     };
     const service = new InstagramVerificationService(
         links as never,
@@ -177,6 +179,62 @@ describe("InstagramVerificationService.handleMessage", () => {
 
         expect(outcome).toBe("profile_gone");
         expect(linkService.linkWithCode).not.toHaveBeenCalled();
+        expect(graph.sendTextMessage).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ["following", true, INSTAGRAM_REPLIES.following],
+        ["not following", false, INSTAGRAM_REPLIES.notFollowing],
+    ])("replies to a linked sender who is %s", async (_name, follows, text) => {
+        const { pending, linkService, graph, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
+        linkService.linkWithCode.mockResolvedValue({ follows });
+
+        await service.handleMessage({ igsid: IGSID, text: "K7Q2PX" });
+
+        expect(graph.sendTextMessage).toHaveBeenCalledExactlyOnceWith(
+            IGSID,
+            text,
+            "token"
+        );
+    });
+
+    it("tells the sender their account belongs to another wallet", async () => {
+        const { pending, linkService, graph, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
+        linkService.linkWithCode.mockRejectedValue(
+            HttpError.conflict("INSTAGRAM_ALREADY_LINKED", "taken")
+        );
+
+        await service.handleMessage({ igsid: IGSID, text: "K7Q2PX" });
+
+        expect(graph.sendTextMessage).toHaveBeenCalledExactlyOnceWith(
+            IGSID,
+            INSTAGRAM_REPLIES.alreadyLinked,
+            "token"
+        );
+    });
+
+    it("never replies to a DM without a live code, replays included", async () => {
+        const { pending, graph, service } = setup();
+        pending.findByCodes.mockResolvedValueOnce([CODE]).mockResolvedValue([]);
+
+        await service.handleMessage({ igsid: IGSID, text: "K7Q2PX" });
+        await service.handleMessage({ igsid: IGSID, text: "K7Q2PX" });
+        await service.handleMessage({ igsid: IGSID, text: "Coucou" });
+
+        expect(graph.sendTextMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it("still reports the link when the reply fails", async () => {
+        const { pending, linkService, graph, service } = setup();
+        pending.findByCodes.mockResolvedValue([CODE]);
+        linkService.linkWithCode.mockResolvedValue({ follows: true });
+        graph.sendTextMessage.mockRejectedValue(new Error("boom"));
+
+        await expect(
+            service.handleMessage({ igsid: IGSID, text: "K7Q2PX" })
+        ).resolves.toBe("linked");
     });
 });
 
