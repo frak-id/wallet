@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "com.plugin.store_review"
     defaultConfig {
         minSdk = 28

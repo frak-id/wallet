@@ -41,14 +41,14 @@ apply(plugin = "com.google.gms.google-services")
 apply(plugin = "com.google.firebase.crashlytics")
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "29.0.14206865"
     namespace = "id.frak.wallet"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "id.frak.wallet"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
 
