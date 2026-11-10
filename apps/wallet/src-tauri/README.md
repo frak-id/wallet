@@ -36,7 +36,7 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
 ### Android Development
 
 - **Android Studio**: Latest version
-- **Android SDK**: API level 28 (minimum), 36 (target)
+- **Android SDK**: API level 29 (minimum), 37 (target)
 - **Java Development Kit (JDK)**: Version 8 or later
 - **Android NDK**: Required for Rust compilation
 - **Environment Variables**:
@@ -204,7 +204,7 @@ Android-specific Tauri plugins:
 #### Build Configuration
 
 - **Min SDK**: 29 (Android 10): Android 9 cannot get a WebView recent enough to report `env(safe-area-inset-*)`
-- **Target SDK**: 36
+- **Target SDK**: 37 (Android 17)
 - **Package**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev), driven by the `FRAK_VARIANT=dev` env var (legacy `-PappVariant=dev` Gradle property still honored)
 
 ## Deep Linking
