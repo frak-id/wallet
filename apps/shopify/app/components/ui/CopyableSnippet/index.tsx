@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./CopyableSnippet.css";
 
@@ -34,11 +34,16 @@ export function CopyableSnippet({
             () => {
                 setError(false);
                 setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
             },
             () => setError(true)
         );
     }
+
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
 
     return (
         <div className={styles.wrapper}>
