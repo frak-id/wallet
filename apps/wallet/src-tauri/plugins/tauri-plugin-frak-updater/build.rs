@@ -3,6 +3,8 @@ const COMMANDS: &[&str] = &[
     "start_soft_update",
     "complete_soft_update",
     "open_store",
+    "register_listener",
+    "remove_listener",
 ];
 
 fn main() {
