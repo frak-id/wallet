@@ -50,7 +50,7 @@ The native plugin reads, reports, and deletes that file on the next launch.
 
 ### iOS
 
-`ios/Package.swift` depends on `firebase-ios-sdk` from `12.13.0` (single
+`ios/Package.swift` depends on `firebase-ios-sdk` from `13.1.1` (single
 source) and links:
 
 - `FirebaseCore` — owned by this plugin, the sole caller of `FirebaseApp.configure()`,

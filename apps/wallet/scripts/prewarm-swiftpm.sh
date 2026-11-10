@@ -21,7 +21,7 @@ cat > "$dir/Package.swift" <<EOF
 import PackageDescription
 let package = Package(
     name: "Prewarm",
-    platforms: [.iOS(.v16), .macOS(.v10_15)],
+    platforms: [.iOS(.v16), .macOS(.v11)],
     products: [.library(name: "Prewarm", targets: ["Prewarm"])],
     dependencies: [
         .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "$version"),
@@ -32,8 +32,6 @@ let package = Package(
             dependencies: [
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
                 .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
             ]
         )
     ]
