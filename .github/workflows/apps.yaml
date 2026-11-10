@@ -820,6 +820,8 @@ jobs:
   ios-sdk:
     name: "🍏 iOS SDK · Lint, build & test"
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.ios == 'true'
     steps:
@@ -862,6 +864,8 @@ jobs:
   wallet-ios:
     name: "🍎 Wallet · iOS release build"
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.walletIos == 'true'
     timeout-minutes: 45
@@ -891,7 +895,7 @@ jobs:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             ~/Library/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.resolved', 'apps/wallet/src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.swift', 'apps/wallet/src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-spm-
       # A placeholder is enough to compile and link; nothing here talks to Firebase.
       - name: "🔑 Write CI stand-ins"

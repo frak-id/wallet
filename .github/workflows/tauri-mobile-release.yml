@@ -358,6 +358,8 @@ jobs:
     name: "🍎 iOS"
     needs: [validate, prepare]
     runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     # See `prepare`.
     cache-mode: write
 
@@ -442,7 +444,7 @@ jobs:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             ~/Library/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.resolved', 'apps/wallet/src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.swift', 'apps/wallet/src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-spm-
 
       - name: "👥 Configure AWS Credentials"
@@ -551,7 +553,7 @@ jobs:
           done
 
       # apple-actions/upload-testflight-build@v4 uses iTMSTransporter which was removed in Xcode 14+.
-      # xcrun altool is the supported replacement on macos-15 (Xcode 16.4).
+      # xcrun altool is the supported replacement.
       - name: "🚀 Upload to TestFlight"
         run: |
           if [ "$STAGE" = "dev" ]; then

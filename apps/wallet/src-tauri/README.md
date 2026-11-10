@@ -20,7 +20,6 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
 - **macOS**: Required for iOS development
 - **Xcode**: Latest version with iOS SDK
 - **Xcode Command Line Tools**: `xcode-select --install`
-- **CocoaPods**: `sudo gem install cocoapods`
 - **Apple Developer Account**: For code signing (Team ID: `57DZ6Z2235`)
 - **iOS Simulator**: Available devices can be listed with `xcrun simctl list devices`
 - **iOS deployment target**: 16.0 (minimum). Passkeys are the only way into the
