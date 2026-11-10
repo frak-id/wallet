@@ -211,7 +211,7 @@ describe("GamePage", () => {
         expect(screen.queryByText("game.page.hero.pending:4")).toBeNull();
     });
 
-    it("shows how many missions are done and only the step to do now", () => {
+    it("shows how many missions are done and only the ones left to do", () => {
         currentGame.data = player(4, true);
         const { container } = render(<GamePage />);
 
@@ -237,6 +237,22 @@ describe("GamePage", () => {
         expect(
             container.querySelector('a[href="/profile/instagram"]')
         ).toBeNull();
+    });
+
+    it("keeps the purchase step in view while no invited friend has joined", () => {
+        currentGame.data = player(1, true);
+        render(<GamePage />);
+
+        expect(
+            screen.getByRole("link", {
+                name: /game.page.missions.friend.title/,
+            })
+        ).toHaveAttribute("href", "/profile/referral/share");
+        expect(
+            screen.getByRole("link", {
+                name: /game.page.missions.purchase.title/,
+            })
+        ).toHaveAttribute("href", "/explorer");
     });
 
     it("says every mission is done, with no step left to show", () => {
