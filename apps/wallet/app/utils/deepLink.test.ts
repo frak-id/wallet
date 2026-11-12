@@ -741,6 +741,42 @@ describe("post-purchase sharing deep link — /sharing", () => {
     });
 });
 
+describe("draw record deep link — /draw", () => {
+    const query = {
+        game: "5b0a6c1e-6a52-4b1c-9d3e-0f6f2d9a7c11",
+        pid: "ab12cd34",
+    };
+    const url = `https://wallet.frak.id/draw?${new URLSearchParams(query)}`;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    test.each([
+        ["logged in", { token: "valid-token" }],
+        ["logged out", null],
+    ])(
+        "%s: routes to /draw with the whole query, no sign-in",
+        async (_, session) => {
+            getSafeSessionMock.mockReturnValue(session);
+            const navigate = vi.fn();
+            await initDeepLinks(navigate);
+            if (!openUrlHandler)
+                throw new Error("Expected openUrlHandler to be set");
+            openUrlHandler([url]);
+
+            expect(navigate).toHaveBeenCalledWith({
+                to: "/draw",
+                search: query,
+                replace: true,
+            });
+        }
+    );
+});
+
 describe("short referral deep link — /r/<code>", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

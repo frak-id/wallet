@@ -716,6 +716,91 @@ export default interface Resources {
         "title": "You won the Frak Game!"
       }
     },
+    "gameDraw": {
+      "error": {
+        "description": "Check your connection, then try again.",
+        "retry": "Try again",
+        "title": "Could not load the draw"
+      },
+      "how": {
+        "freeze": "When the game ends, we freeze the list of tickets and publish its fingerprint.",
+        "random": "A public random number (drand) is chosen in advance. It is emitted later: nobody knows it before, not even Frak.",
+        "rank": "That number ranks the participants: the more tickets you have, the better your chance of being ahead.",
+        "title": "How the draw works",
+        "winner": "The first in the ranking wins if they have connected their Instagram and follow @frak_fr; if not, they have 24 h to do so. A player can also be rejected (fraud, not eligible…). Either way, it goes to the next one."
+      },
+      "invalid": {
+        "description": "This link does not lead to a draw. Open it from your game result.",
+        "title": "Invalid draw link"
+      },
+      "links": {
+        "drand": "See the random number at drand",
+        "raw": "See the raw data"
+      },
+      "loading": "Loading the draw…",
+      "me": {
+        "ahead_one": "The player ranked before you was rejected.",
+        "ahead_other": "The {{count}} players ranked before you were rejected.",
+        "chance": "Your chances",
+        "copied": "Copied",
+        "copyLabel": "Copy your full id",
+        "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
+        "pid": "Your id",
+        "rank": "Your place in the ranking",
+        "rankValue": "#{{rank}}",
+        "rejected": "You were drawn, but you were rejected.",
+        "tickets": "Your tickets",
+        "title": "You in the draw",
+        "won": "You won!"
+      },
+      "notDrawn": {
+        "description": "The list of tickets is not frozen yet. Come back after the game ends.",
+        "title": "No draw yet"
+      },
+      "phase": {
+        "checking": "The draw has happened. We are checking the winner.",
+        "confirmed": "The winner is confirmed.",
+        "drawing": "The draw is in progress. The result arrives in a few minutes.",
+        "noWinner": "No winner for this game.",
+        "scheduled": "The draw takes place on {{date}}."
+      },
+      "rejection": {
+        "introConfirmed_one": "{{count}} player drawn before the winner was rejected.",
+        "introConfirmed_other": "{{count}} players drawn before the winner were rejected.",
+        "introNoWinner_one": "{{count}} drawn player was rejected.",
+        "introNoWinner_other": "{{count}} drawn players were rejected.",
+        "introPending_one": "{{count}} drawn player has been rejected so far.",
+        "introPending_other": "{{count}} drawn players have been rejected so far.",
+        "label": "#{{rank}} · {{pid}}",
+        "labelYou": "#{{rank}} · {{pid}} (you)",
+        "reason": {
+          "fraud": "Fraud",
+          "ineligible": "Not eligible",
+          "not_following_at_review": "No longer following @frak_fr",
+          "not_verified_in_time": "Instagram not certified in time",
+          "unreachable": "Unreachable"
+        },
+        "self": "Rejected",
+        "title": "Rejected players"
+      },
+      "summary": {
+        "frozenAt": "List frozen on",
+        "participants": "Participants",
+        "payout": "Prize",
+        "payoutPaid": "Paid",
+        "payoutPending": "Being paid",
+        "random": "Random number (drand)",
+        "randomAt": "Emitted on",
+        "randomDue": "Due on",
+        "randomRound": "Round {{round}}",
+        "title": "The draw in numbers",
+        "totalTickets": "Tickets in the draw",
+        "winner": "Winner",
+        "winnerNobody": "Nobody",
+        "winnerNone": "Not known yet"
+      },
+      "title": "Frak Game draw"
+    },
     "instagram": {
       "certify": {
         "checkAgain": "Check again",
