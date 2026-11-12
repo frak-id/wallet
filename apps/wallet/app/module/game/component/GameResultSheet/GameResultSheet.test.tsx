@@ -1,10 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { navigate, openExternalUrl } = vi.hoisted(() => ({
-    navigate: vi.fn(),
-    openExternalUrl: vi.fn(),
-}));
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => navigate,
@@ -15,10 +12,6 @@ vi.mock("react-i18next", () => ({
         t: (key: string) => key,
         i18n: { language: "fr-FR" },
     }),
-}));
-vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
-    ...(await importOriginal<typeof import("@frak-labs/wallet-shared")>()),
-    openExternalUrl,
 }));
 
 import { modalStore } from "@/module/stores/modalStore";
@@ -44,7 +37,6 @@ const won = gameResult({
 describe("GameResultSheet", () => {
     beforeEach(() => {
         navigate.mockClear();
-        openExternalUrl.mockClear();
         modalStore.getState().dismissAll();
     });
 
@@ -81,7 +73,8 @@ describe("GameResultSheet", () => {
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("offers the curious a way to the public draw record, with their id", () => {
+    it("opens the readable draw page for the curious, closing the sheet first", () => {
+        modalStore.getState().openModal({ id: "gameResult", result: won });
         render(
             <GameResultSheet
                 result={{ ...won, pid: "ab12cd34" }}
@@ -94,9 +87,11 @@ describe("GameResultSheet", () => {
             screen.getByRole("button", { name: /game.result.verify.link/ })
         );
 
-        expect(openExternalUrl).toHaveBeenCalledWith(
-            expect.stringMatching(/\/common\/game\/g1\/draw$/)
-        );
+        expect(modalStore.getState().modal).toBeNull();
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/draw",
+            search: { game: "g1", pid: "ab12cd34" },
+        });
     });
 
     it("hides the draw check while the player is not in the public list", () => {

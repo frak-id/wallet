@@ -200,6 +200,7 @@ const publicActions = new Set([
     "install",
     "i",
     "r",
+    "draw",
 ]);
 
 function handleDeepLinkAction(
@@ -317,6 +318,8 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     i: resolveInstallRoute,
     // Shopify's post-purchase card; `/sharing`'s `validateSearch` keeps only its own keys.
     sharing: (params) => ({ to: "/sharing", search: params.query }),
+    // The public draw record: readable logged out, so it is a public action.
+    draw: (params) => ({ to: "/draw", search: params.query }),
     r: (params) => {
         const code = parseReferralCode(params.id);
         return code ? resolveReferralCodeRoute(code) : { to: "/wallet" };
