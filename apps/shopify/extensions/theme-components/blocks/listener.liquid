@@ -32,11 +32,11 @@
   type="text/javascript"
 >
   // Precompute a few stuff
-  const lang = '{{ block.settings.modal_lng }}' === 'default' ? undefined : '{{ block.settings.modal_lng }}';
+  const lang = {{ block.settings.modal_lng | default: '' | json }} === 'default' ? undefined : {{ block.settings.modal_lng | default: '' | json }};
 
   // Get the logo URL
   {% assign appearance_metafield = shop.metafields.frak.appearance %}
-  let logoUrl = '{{ block.settings.logo.src }}';
+  let logoUrl = {{ block.settings.logo.src | default: '' | json }};
   if (!logoUrl.startsWith('cdn.shopify.com')) {
     logoUrl = `https://${Shopify.shop}/cdn/shop/${logoUrl}`;
   }
@@ -71,7 +71,7 @@
     },
     metadata: {
       // Your app name (will be displayed on some modals and in the SSO)
-      name: '{{ shop.name }}',
+      name: {{ shop.name | json }},
       // You can also setup custom styles here
       lang,
       logoUrl,
@@ -81,7 +81,7 @@
       {% endif %}
     },
     customizations: {
-      css: "{{ 'customizations.css' | asset_url }}",
+      css: {{ 'customizations.css' | asset_url | json }},
       i18n: customI18n,
     },
     domain: window.location.host,
@@ -132,7 +132,7 @@
   // Inject custom JavaScript
   try {
     const script = document.createElement('script');
-    script.textContent = `{{ block.settings.custom_javascript }}`;
+    script.textContent = {{ block.settings.custom_javascript | default: '' | json }};
     document.head.appendChild(script);
   } catch (error) {
     console.error('Failed to inject JavaScript:', error.message);

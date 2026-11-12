@@ -26,17 +26,17 @@
 {% assign inapp_cta = block.settings.inapp_cta | default: frak_i18n.banner_inapp_cta | default: inapp_cta_fallback %}
 
 <frak-banner
-  classname="{{ custom_class }}"
-  {% if block.settings.interaction != 'default' and block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
-  {% if referral_title != blank %}referral-title="{{ referral_title }}"{% endif %}
-  {% if referral_description != blank %}referral-description="{{ referral_description }}"{% endif %}
-  {% if referral_cta != blank %}referral-cta="{{ referral_cta }}"{% endif %}
-  {% if inapp_title != blank %}inapp-title="{{ inapp_title }}"{% endif %}
-  {% if inapp_description != blank %}inapp-description="{{ inapp_description }}"{% endif %}
-  {% if inapp_cta != blank %}inapp-cta="{{ inapp_cta }}"{% endif %}
-  {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url | image_url: width: 200 }}"{% endif %}
+  classname="{{ custom_class | escape }}"
+  {% if block.settings.interaction != 'default' and block.settings.interaction != blank %}interaction="{{ block.settings.interaction | escape }}"{% endif %}
+  {% if referral_title != blank %}referral-title="{{ referral_title | escape }}"{% endif %}
+  {% if referral_description != blank %}referral-description="{{ referral_description | escape }}"{% endif %}
+  {% if referral_cta != blank %}referral-cta="{{ referral_cta | escape }}"{% endif %}
+  {% if inapp_title != blank %}inapp-title="{{ inapp_title | escape }}"{% endif %}
+  {% if inapp_description != blank %}inapp-description="{{ inapp_description | escape }}"{% endif %}
+  {% if inapp_cta != blank %}inapp-cta="{{ inapp_cta | escape }}"{% endif %}
+  {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url | image_url: width: 200 | escape }}"{% endif %}
   {% if block.settings.allow_inapp_redirect %}allow-inapp-redirect="true"{% endif %}
-  {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
+  {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode | escape }}"{% endif %}
 ></frak-banner>
 
 {% style %}
