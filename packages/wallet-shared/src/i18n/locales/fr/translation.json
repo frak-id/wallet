@@ -980,7 +980,7 @@
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "2 tickets par ami inscrit avec ton code qui a connecté son Instagram, et 2 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque."
+                    "description": "2 tickets par ami qui s'inscrit avec ton code, connecte son Instagram et suit @frak_fr, et 2 par ami qui a un porte-monnaie Frak et ouvre ton partage d'une marque."
                 },
                 "purchase": {
                     "title": "Achète chez une marque partenaire",

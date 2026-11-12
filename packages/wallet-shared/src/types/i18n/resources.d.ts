@@ -1113,7 +1113,7 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "2 tickets per friend who signs up with your code and connects their Instagram, and 2 per friend with a Frak wallet who opens your share of a brand.",
+            "description": "2 tickets per friend who signs up with your code, connects their Instagram and follows @frak_fr, and 2 per friend with a Frak wallet who opens your share of a brand.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"

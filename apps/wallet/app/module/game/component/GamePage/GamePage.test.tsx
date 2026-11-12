@@ -257,7 +257,7 @@ describe("GamePage", () => {
 
     it("says every mission is done, with no step left to show", () => {
         const data = player(7, true);
-        data.me.ticketsBySource.referredSignup = 1;
+        data.me.ticketsBySource.referredSignup = 2;
         currentGame.data = data;
         const { container } = render(<GamePage />);
 

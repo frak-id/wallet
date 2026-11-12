@@ -46,8 +46,8 @@ const buyer = {
     identityGroupId: "11111111-1111-4111-8111-111111111111",
     wallet: "0xb0b0000000000000000000000000000000000b0b",
     joinedAt: new Date("2026-10-30T10:00:00Z"),
-    tickets: { ...NO_TICKETS, join: 1, instagramCertified: 2, purchase: 6 },
-    totalTickets: 9,
+    tickets: { ...NO_TICKETS, join: 1, instagramCertified: 1, purchase: 6 },
+    totalTickets: 8,
     eligible: true,
     drawTickets: null,
     discarded: null,
@@ -87,7 +87,7 @@ describe("PlayersTable", () => {
 
         expect(
             screen.getByText(
-                "1 internal.tickets.join · 2 internal.tickets.instagramCertified · 6 internal.tickets.purchase"
+                "1 internal.tickets.join · 1 internal.tickets.instagramCertified · 6 internal.tickets.purchase"
             )
         ).toBeInTheDocument();
         expect(screen.getByText("@bob")).toBeInTheDocument();

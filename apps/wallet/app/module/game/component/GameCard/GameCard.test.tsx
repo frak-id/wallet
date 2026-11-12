@@ -311,15 +311,15 @@ describe("GameCard", () => {
         ],
         [
             "an eligible player",
-            player("certified", true, { instagramCertified: 2 }),
+            player("certified", true, { instagramCertified: 1 }),
             /game.page.missions.friend.title/,
         ],
         [
             "a player with every mission done",
             player("certified", true, {
-                instagramCertified: 2,
+                instagramCertified: 1,
                 purchase: 3,
-                referredSignup: 1,
+                referredSignup: 2,
             }),
             /game.card.statusAllDone/,
         ],
@@ -344,7 +344,7 @@ describe("GameCard", () => {
         currentGame.data = {
             game: openGame,
             me: player("certified", true, {
-                instagramCertified: 2,
+                instagramCertified: 1,
                 purchase: 6,
             }),
         };
@@ -357,7 +357,7 @@ describe("GameCard", () => {
                 d1: {
                     ticketsBySource: {
                         ...SOURCES,
-                        instagramCertified: 2,
+                        instagramCertified: 1,
                         purchase: 3,
                     },
                     eligible: true,
