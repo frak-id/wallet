@@ -69,7 +69,7 @@ export const inputWrapper = recipe({
         },
         length: {
             small: { width: "160px" },
-            medium: { width: "320px" },
+            medium: { width: "320px", maxWidth: "100%" },
             big: { width: "100%" },
         },
         tone: {

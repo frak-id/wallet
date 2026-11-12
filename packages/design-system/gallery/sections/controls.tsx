@@ -198,10 +198,8 @@ export function InputSection() {
             </Cases>
             <Cases title="Lengths">
                 {(["small", "medium", "big"] as const).map((length) => (
-                    <Case key={length} name={`length ${length}`}>
-                        <div>
-                            <Input aria-label={length} length={length} />
-                        </div>
+                    <Case key={length} name={`length ${length}`} fill>
+                        <Input aria-label={length} length={length} />
                     </Case>
                 ))}
             </Cases>
@@ -287,12 +285,10 @@ export function SelectSection() {
                 </Case>
             </Cases>
             <Cases title="Lengths">
-                <Case name="length medium">
-                    <div>
-                        <Pick label="medium" length="medium" />
-                    </div>
+                <Case name="length medium" fill>
+                    <Pick label="medium" length="medium" />
                 </Case>
-                <Case name="length big">
+                <Case name="length big" fill>
                     <Pick label="big" length="big" />
                 </Case>
             </Cases>
