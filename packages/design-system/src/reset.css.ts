@@ -25,8 +25,8 @@ export const base = style({
     fontSize: "100%",
     font: "inherit",
     verticalAlign: "baseline",
-    // `anywhere`, not `break-word`: only it lowers min-content so flex/grid items can shrink
-    overflowWrap: "anywhere",
+    // `break-word`, not `anywhere`: `anywhere` lets flex rows and table columns shrink below a whole word
+    overflowWrap: "break-word",
     WebkitTapHighlightColor: "transparent",
 });
 

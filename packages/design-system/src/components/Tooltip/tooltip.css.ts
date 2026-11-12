@@ -18,7 +18,7 @@ export const tooltipContent = style({
     fontSize: fontSize.xs,
     lineHeight: 1.4,
     maxWidth: "200px",
-    overflowWrap: "anywhere",
+    overflowWrap: "break-word",
     boxShadow: shadow.elevated,
     zIndex: zIndex.popover,
     userSelect: "none",
