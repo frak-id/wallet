@@ -47,6 +47,8 @@ export const knownFindings: Record<string, string> = {
         "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
     "focus:input:error soft":
         "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
+    "focus:input:error default":
+        "the error compound pins the :focus-within border to the error color, and the wrapper's overflow: hidden clips the field's outline, so focus is invisible",
     "focus:tabs:panel":
         "TabsContent is a tabindex=0 panel and tabsContent sets outline: none, so focus is invisible",
     "overflow:toast-surface:worst: unbreakable email":
@@ -76,6 +78,8 @@ export const knownFindings: Record<string, string> = {
         "TimeInput is an Input: inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
     "focus:time-input:variant soft":
         "TimeInput is an Input: inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
+    "focus:time-input:error":
+        "TimeInput is an Input: the error compound pins the :focus-within border to the error color, and the wrapper's overflow: hidden clips the field's outline, so focus is invisible",
     "overflow:stepper:worst: unbreakable email": `step title and description: ${NO_WRAP}`,
     "overflow:status-banner:worst: unbreakable email": `StatusBanner text: ${NO_WRAP}`,
     "overflow:banner-stack:worst: unbreakable email": `the StatusBanner inside: ${NO_WRAP}`,
