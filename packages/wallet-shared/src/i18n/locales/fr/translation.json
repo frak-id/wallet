@@ -1213,6 +1213,69 @@
             "close": "Fermer"
         }
     },
+    "gameDraw": {
+        "title": "Tirage du Jeu Frak",
+        "phase": {
+            "scheduled": "Le tirage aura lieu le {{date}}.",
+            "checking": "Le tirage a eu lieu. On vérifie le gagnant.",
+            "confirmed": "Le gagnant est confirmé.",
+            "noWinner": "Pas de gagnant pour ce jeu."
+        },
+        "me": {
+            "title": "Toi dans le tirage",
+            "tickets": "Tes tickets",
+            "chance": "Tes chances",
+            "rank": "Ta place dans le classement",
+            "rankValue": "n° {{rank}}",
+            "won": "Tu as gagné !",
+            "notFound": "Ton identifiant n'est pas dans ce tirage. Soit tu n'as pas joué, soit tes tickets n'ont pas été comptés.",
+            "pid": "Ton identifiant",
+            "copy": "Copier",
+            "copied": "Copié",
+            "copyLabel": "Copier ton identifiant complet"
+        },
+        "summary": {
+            "title": "Le tirage en chiffres",
+            "participants": "Participants",
+            "totalTickets": "Tickets dans le tirage",
+            "frozenAt": "Liste figée le",
+            "random": "Nombre aléatoire (drand)",
+            "randomRound": "Tour {{round}}",
+            "randomAt": "Émis le",
+            "randomDue": "Attendu le",
+            "winner": "Gagnant",
+            "winnerNone": "Pas encore connu",
+            "winnerNobody": "Aucun",
+            "payout": "Gain",
+            "payoutPaid": "Versé",
+            "payoutPending": "En cours de versement"
+        },
+        "how": {
+            "title": "Comment fonctionne le tirage",
+            "freeze": "À la fin du jeu, on fige la liste des tickets et on publie son empreinte.",
+            "random": "Un nombre aléatoire public (drand) est choisi à l'avance. Il est émis plus tard : personne ne le connaît avant, pas même Frak.",
+            "rank": "Ce nombre classe les participants : plus tu as de tickets, plus tu as de chances d'être devant.",
+            "winner": "Le premier du classement gagne s'il a connecté son Instagram et suit @frak_fr. Sinon, il a 24 h pour le faire, puis c'est au suivant."
+        },
+        "links": {
+            "raw": "Voir les données brutes",
+            "drand": "Voir le nombre aléatoire chez drand"
+        },
+        "loading": "Chargement du tirage…",
+        "notDrawn": {
+            "title": "Pas encore de tirage",
+            "description": "La liste des tickets n'est pas encore figée. Reviens après la fin du jeu."
+        },
+        "error": {
+            "title": "Impossible de charger le tirage",
+            "description": "Vérifie ta connexion, puis réessaie.",
+            "retry": "Réessayer"
+        },
+        "invalid": {
+            "title": "Lien de tirage invalide",
+            "description": "Ce lien ne mène à aucun tirage. Ouvre-le depuis le résultat de ton jeu."
+        }
+    },
     "instagram": {
         "title": "Ton Instagram",
         "error": "Impossible de charger ton compte Instagram.",

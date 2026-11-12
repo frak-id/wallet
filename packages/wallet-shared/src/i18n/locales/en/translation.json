@@ -1213,6 +1213,69 @@
             "close": "Close"
         }
     },
+    "gameDraw": {
+        "title": "Frak Game draw",
+        "phase": {
+            "scheduled": "The draw takes place on {{date}}.",
+            "checking": "The draw has happened. We are checking the winner.",
+            "confirmed": "The winner is confirmed.",
+            "noWinner": "No winner for this game."
+        },
+        "me": {
+            "title": "You in the draw",
+            "tickets": "Your tickets",
+            "chance": "Your chances",
+            "rank": "Your place in the ranking",
+            "rankValue": "#{{rank}}",
+            "won": "You won!",
+            "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
+            "pid": "Your id",
+            "copy": "Copy",
+            "copied": "Copied",
+            "copyLabel": "Copy your full id"
+        },
+        "summary": {
+            "title": "The draw in numbers",
+            "participants": "Participants",
+            "totalTickets": "Tickets in the draw",
+            "frozenAt": "List frozen on",
+            "random": "Random number (drand)",
+            "randomRound": "Round {{round}}",
+            "randomAt": "Emitted on",
+            "randomDue": "Due on",
+            "winner": "Winner",
+            "winnerNone": "Not known yet",
+            "winnerNobody": "Nobody",
+            "payout": "Prize",
+            "payoutPaid": "Paid",
+            "payoutPending": "Being paid"
+        },
+        "how": {
+            "title": "How the draw works",
+            "freeze": "When the game ends, we freeze the list of tickets and publish its fingerprint.",
+            "random": "A public random number (drand) is chosen in advance. It is emitted later: nobody knows it before, not even Frak.",
+            "rank": "That number ranks the participants: the more tickets you have, the better your chance of being ahead.",
+            "winner": "The first in the ranking wins if they have connected their Instagram and follow @frak_fr. If not, they have 24 h to do so, then it goes to the next one."
+        },
+        "links": {
+            "raw": "See the raw data",
+            "drand": "See the random number at drand"
+        },
+        "loading": "Loading the draw…",
+        "notDrawn": {
+            "title": "No draw yet",
+            "description": "The list of tickets is not frozen yet. Come back after the game ends."
+        },
+        "error": {
+            "title": "Could not load the draw",
+            "description": "Check your connection, then try again.",
+            "retry": "Try again"
+        },
+        "invalid": {
+            "title": "Invalid draw link",
+            "description": "This link does not lead to a draw. Open it from your game result."
+        }
+    },
     "instagram": {
         "title": "Your Instagram",
         "error": "Couldn't load your Instagram account.",
