@@ -12,7 +12,7 @@ export const wrapperBorder = style({
 export const wrapper = style([
     wrapperBorder,
     {
-        overflow: "hidden",
+        overflowX: "auto",
         width: "100%",
     },
 ]);
