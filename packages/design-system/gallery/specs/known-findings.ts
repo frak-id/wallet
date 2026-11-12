@@ -37,18 +37,6 @@ export const knownFindings: Record<string, string> = {
     "clip:empty-state:worst: long sentence": `The action is a large Button: ${FIXED_HEIGHT}`,
     "clip:card:worst: unbreakable email": `Card clips its content (overflow: hidden, for the rounded corners): ${NO_WRAP}`,
 
-    "focus:input:variant bare":
-        "inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
-    "focus:input:error bare":
-        "inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
-    "focus:input:bare tone muted":
-        "inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
-    "focus:input:variant soft":
-        "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
-    "focus:input:error soft":
-        "inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
-    "focus:input:error default":
-        "the error compound pins the :focus-within border to the error color, and the wrapper's overflow: hidden clips the field's outline, so focus is invisible",
     "focus:tabs:panel":
         "TabsContent is a tabindex=0 panel and tabsContent sets outline: none, so focus is invisible",
     "overflow:toast-surface:worst: unbreakable email":
@@ -71,15 +59,7 @@ export const knownFindings: Record<string, string> = {
     "overflow:accordion:worst: unbreakable email": `Accordion trigger and content: ${NO_WRAP}`,
     "clip:accordion:worst: unbreakable email": `AccordionContent clips (overflow: hidden, for the open/close animation): ${NO_WRAP}`,
     "overflow:text-area:worst: one-character label, unbreakable hint": `FieldLabel hint: ${NO_WRAP}`,
-    "focus:text-area:error":
-        "the textarea sets outline: none and relies on the wrapper's :focus-within border, which wrapperError keeps at the error color, so focus is invisible",
     "overflow:time-input:worst: long label and unbreakable hint": `FieldLabel hint: ${NO_WRAP}`,
-    "focus:time-input:variant bare":
-        "TimeInput is an Input: inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
-    "focus:time-input:variant soft":
-        "TimeInput is an Input: inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
-    "focus:time-input:error":
-        "TimeInput is an Input: the error compound pins the :focus-within border to the error color, and the wrapper's overflow: hidden clips the field's outline, so focus is invisible",
     "overflow:stepper:worst: unbreakable email": `step title and description: ${NO_WRAP}`,
     "overflow:status-banner:worst: unbreakable email": `StatusBanner text: ${NO_WRAP}`,
     "overflow:banner-stack:worst: unbreakable email": `the StatusBanner inside: ${NO_WRAP}`,

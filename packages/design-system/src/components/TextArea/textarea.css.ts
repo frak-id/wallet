@@ -3,6 +3,9 @@ import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, transition } from "../../tokens.css";
 
+// The error border does not change on focus, so the ring carries it.
+const focusRing = { boxShadow: `0 0 0 2px ${vars.border.focus}` };
+
 const wrapperBase = style({
     display: "flex",
     alignItems: "flex-start",
@@ -24,6 +27,7 @@ const wrapperBase = style({
             backgroundColor: vars.surface.error,
             borderColor: vars.border.error,
         },
+        '&:has(textarea[aria-invalid="true"]:focus-visible)': focusRing,
     },
 });
 
@@ -33,6 +37,7 @@ const wrapperError = style({
         "&:focus-within": {
             borderColor: vars.border.error,
         },
+        "&:has(:focus-visible)": focusRing,
     },
 });
 
@@ -69,7 +74,7 @@ const fieldBase = style({
         "&:disabled": {
             cursor: "not-allowed",
         },
-        // Focus is indicated by the wrapper border (:focus-within).
+        // Focus is shown on the wrapper: its border, or a ring in the error state.
         "&:focus": {
             outline: "none",
         },
