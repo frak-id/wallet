@@ -1,7 +1,7 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
 import { type ComponentPropsWithRef, useRef, useState } from "react";
-import { tabsContent, tabsList, tabsTrigger } from "./tabs.css";
+import { tabsContent, tabsList, tabsRoot, tabsTrigger } from "./tabs.css";
 
 type ListVariants = NonNullable<RecipeVariants<typeof tabsList>>;
 type TriggerVariants = NonNullable<RecipeVariants<typeof tabsTrigger>>;
@@ -12,7 +12,19 @@ type TriggerVariants = NonNullable<RecipeVariants<typeof tabsTrigger>>;
  * Accepts `value` / `defaultValue` / `onValueChange` for controlled or
  * uncontrolled usage. Mirrors the shadcn / Radix `<Tabs>` API.
  */
-const Tabs = TabsPrimitive.Root;
+function Tabs({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof TabsPrimitive.Root>) {
+    return (
+        <TabsPrimitive.Root
+            ref={ref}
+            className={className ? `${tabsRoot} ${className}` : tabsRoot}
+            {...props}
+        />
+    );
+}
 
 /**
  * Container for `TabsTrigger` elements. Renders with `role="tablist"`.

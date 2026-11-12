@@ -24,8 +24,6 @@ export const knownFindings: Record<string, string> = {
     "overflow:select:length medium":
         'length="medium" is a fixed 320px, wider than the 288px a 320px viewport leaves after page padding',
     "overflow:select:worst: unbreakable email selected": `SelectValue in the trigger does not truncate: ${NO_WRAP}`,
-    "overflow:tabs:worst: five long labels":
-        "triggers are nowrap and TabsList neither scrolls nor wraps, so the list grows past the viewport",
     "overflow:notice:worst: unbreakable email": `Notice content (minWidth 0) lets the text spill out of the tinted box: ${NO_WRAP}`,
     "overflow:badge:worst: unbreakable email":
         "Badge is nowrap with no truncation",

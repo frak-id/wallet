@@ -431,6 +431,19 @@ export function TabsSection() {
                         ]}
                     />
                 </Case>
+                <Case name="worst: navigation with six labels">
+                    <Segments
+                        variant="navigation"
+                        labels={[
+                            "Overview",
+                            "Members",
+                            "Campaigns",
+                            "Integrations",
+                            "Notifications",
+                            "Billing",
+                        ]}
+                    />
+                </Case>
             </Cases>
         </>
     );
