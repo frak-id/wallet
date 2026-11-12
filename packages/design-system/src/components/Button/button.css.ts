@@ -119,11 +119,15 @@ export const button = recipe({
                 fontWeight: 600,
             },
             large: {
-                // Fixed height so a 24px icon doesn't inflate the button.
-                height: "48px",
-                paddingBlock: 0,
+                // A floor, not a height: a 24px icon fits without inflating it, a wrapped label grows it.
+                minHeight: "48px",
+                paddingBlock: alias.spacing.xs,
                 paddingInline: alias.spacing.l,
+                // Half the one-line height: a full radius turns a wrapped button into a lozenge.
+                borderRadius: alias.cornerRadius.xl,
                 fontSize: fontSize.m,
+                lineHeight: "22px",
+                textAlign: "center",
                 fontWeight: 600,
             },
             none: {
@@ -152,6 +156,13 @@ export const button = recipe({
             xl: { fontSize: fontSize.xl },
         },
     },
+    compoundVariants: [
+        // The large radius would otherwise override the filter chip's own.
+        {
+            variants: { variant: "filter", size: "large" },
+            style: { borderRadius: alias.cornerRadius.m },
+        },
+    ],
     defaultVariants: {
         variant: "primary",
         size: "large",
