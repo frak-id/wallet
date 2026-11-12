@@ -1,6 +1,7 @@
 import type {
     GameResult,
     GameSummary,
+    PublicDraw,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
 
 export function gameSummary(overrides: Partial<GameSummary> = {}): GameSummary {
@@ -40,5 +41,35 @@ export function gameResult(
         participants: 30,
         confirmedAt: null,
         ...rest,
+    };
+}
+
+export function publicDraw(overrides: Partial<PublicDraw> = {}): PublicDraw {
+    return {
+        gameId: "5b0a6c1e-6a52-4b1c-9d3e-0f6f2d9a7c11",
+        algorithm: "frak-draw-v2",
+        status: "drawn",
+        frozenAt: new Date("2026-10-10T19:00:00Z"),
+        snapshotRoot: "ab".repeat(32),
+        totalTickets: 80,
+        participants: 3,
+        discardedParticipants: 1,
+        entries: [
+            { pid: "a1".repeat(16), tickets: 20 },
+            { pid: "b2".repeat(16), tickets: 10 },
+            { pid: "c3".repeat(16), tickets: 50 },
+        ],
+        drand: {
+            chainHash: "52db9ba7".repeat(8),
+            round: 1234,
+            roundTime: new Date("2026-10-10T19:10:00Z"),
+            signature: "cd".repeat(48),
+            randomness: "ef".repeat(32),
+        },
+        candidates: ["c3".repeat(16), "a1".repeat(16)],
+        rejections: [],
+        winnerPid: null,
+        payoutTxHash: null,
+        ...overrides,
     };
 }
