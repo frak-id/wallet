@@ -15,6 +15,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
+import {
+    Stepper,
+    type StepperProps,
+} from "@frak-labs/design-system/components/Stepper";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import {
     Tabs,
@@ -23,9 +27,11 @@ import {
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { TextArea } from "@frak-labs/design-system/components/TextArea";
+import { TimeInput } from "@frak-labs/design-system/components/TimeInput";
 import { InfoIcon } from "@frak-labs/design-system/icons";
 import type { ComponentProps } from "react";
-import { fixtures } from "../fixtures";
+import { fixtures, longText } from "../fixtures";
 import { Case, Cases } from "../ui";
 
 type ButtonVariant = NonNullable<ComponentProps<typeof Button>["variant"]>;
@@ -659,6 +665,226 @@ export function FieldErrorSection() {
                 </Case>
                 <Case name="worst: non-Latin and emoji">
                     <FieldError>{fixtures.nonLatin}</FieldError>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+type TextAreaProps = ComponentProps<typeof TextArea>;
+
+const textAreaLengths: NonNullable<TextAreaProps["length"]>[] = [
+    "small",
+    "medium",
+    "big",
+];
+
+export function TextAreaSection() {
+    return (
+        <>
+            <Cases title="Lengths">
+                {textAreaLengths.map((length) => (
+                    <Case key={length} name={`length ${length}`}>
+                        <TextArea
+                            aria-label={length}
+                            length={length}
+                            placeholder={length}
+                        />
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="States">
+                <Case name="error">
+                    <TextArea aria-label="error" defaultValue="invalid" error />
+                </Case>
+                <Case name="disabled">
+                    <TextArea
+                        aria-label="disabled"
+                        defaultValue="disabled"
+                        disabled
+                    />
+                </Case>
+                <Case name="resize none">
+                    <TextArea
+                        aria-label="resize none"
+                        defaultValue="Fixed size"
+                        resize="none"
+                    />
+                </Case>
+                <Case name="label and hint">
+                    <TextArea
+                        label="Message"
+                        hint="Shown to your customers"
+                        placeholder="Write something"
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email value">
+                    <TextArea
+                        aria-label="email"
+                        defaultValue={fixtures.unbreakableEmail}
+                    />
+                </Case>
+                <Case name="worst: long value">
+                    <TextArea aria-label="long" defaultValue={longText(6)} />
+                </Case>
+                <Case name="worst: long placeholder">
+                    <TextArea
+                        aria-label="placeholder"
+                        placeholder={fixtures.longSentence}
+                    />
+                </Case>
+                <Case name="worst: non-Latin and emoji value">
+                    <TextArea
+                        aria-label="non-Latin"
+                        defaultValue={fixtures.nonLatin}
+                    />
+                </Case>
+                <Case name="worst: one-character label, unbreakable hint">
+                    <TextArea
+                        label={fixtures.singleChar}
+                        hint={fixtures.unbreakableEmail}
+                    />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function TimeInputSection() {
+    return (
+        <>
+            <Cases title="Variants">
+                {inputVariants.map((variant) => (
+                    <Case key={variant} name={`variant ${variant}`}>
+                        <TimeInput
+                            variant={variant}
+                            aria-label={variant}
+                            defaultValue="09:30"
+                        />
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="States">
+                <Case name="empty">
+                    <TimeInput aria-label="empty" />
+                </Case>
+                <Case name="error">
+                    <TimeInput aria-label="error" defaultValue="25:00" error />
+                </Case>
+                <Case name="disabled">
+                    <TimeInput
+                        aria-label="disabled"
+                        defaultValue="18:45"
+                        disabled
+                    />
+                </Case>
+                <Case name="label and hint">
+                    <TimeInput
+                        label="Send at"
+                        hint="Your local time"
+                        defaultValue="08:00"
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: long label and unbreakable hint">
+                    <TimeInput
+                        label={fixtures.longSentence}
+                        hint={fixtures.unbreakableEmail}
+                    />
+                </Case>
+                <Case name="worst: one-character label">
+                    <TimeInput label={fixtures.singleChar} />
+                </Case>
+                <Case name="worst: non-Latin and emoji label">
+                    <TimeInput
+                        label={fixtures.nonLatin}
+                        hint={fixtures.nonLatin}
+                    />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+const checkoutSteps: StepperProps["steps"] = [
+    { title: "Account", description: "Create your wallet" },
+    { title: "Connect", description: "Link your store" },
+    { title: "Rewards" },
+    { title: "Launch", description: "Go live" },
+];
+
+// Clicks must not move the active step: the spec presses every tab stop in turn.
+function StepperDemo({
+    steps = checkoutSteps,
+    initial,
+}: {
+    steps?: StepperProps["steps"];
+    initial: number;
+}) {
+    return (
+        <Stepper steps={steps} activeStep={initial} onStepClick={() => {}} />
+    );
+}
+
+export function StepperSection() {
+    return (
+        <>
+            <Cases title="Progress" layout="stack">
+                <Case name="first step active">
+                    <StepperDemo initial={0} />
+                </Case>
+                <Case name="middle step, completed steps clickable">
+                    <StepperDemo initial={2} />
+                </Case>
+                <Case name="all completed">
+                    <StepperDemo initial={checkoutSteps.length} />
+                </Case>
+                <Case name="read-only">
+                    <Stepper steps={checkoutSteps} activeStep={1} />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <StepperDemo
+                        initial={1}
+                        steps={[
+                            {
+                                title: fixtures.unbreakableEmail,
+                                description: fixtures.unbreakableEmail,
+                            },
+                            {
+                                title: fixtures.hugeNumber,
+                                description: fixtures.hugeNumber,
+                            },
+                        ]}
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <StepperDemo
+                        initial={1}
+                        steps={[
+                            {
+                                title: fixtures.longSentence,
+                                description: longText(3),
+                            },
+                            { title: `${fixtures.longSentence} Again` },
+                        ]}
+                    />
+                </Case>
+                <Case name="worst: one character and non-Latin">
+                    <StepperDemo
+                        initial={1}
+                        steps={[
+                            { title: fixtures.singleChar },
+                            {
+                                title: fixtures.nonLatin,
+                                description: fixtures.nonLatin,
+                            },
+                        ]}
+                    />
                 </Case>
             </Cases>
         </>

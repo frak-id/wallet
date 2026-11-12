@@ -65,4 +65,22 @@ export const knownFindings: Record<string, string> = {
     "overlay:responsive-modal:worst: unbreakable email": `ResponsiveModal content: ${NO_WRAP}`,
     "overlay:popover:worst: unbreakable email": `PopoverContent: ${NO_WRAP}`,
     "overlay:sheet:worst: unbreakable email": `SheetTitle and SheetDescription: ${NO_WRAP}`,
+    "overflow:columns:worst: unbreakable email": `Column (minWidth 0) lets its text spill: ${NO_WRAP}`,
+    "overflow:accordion:worst: unbreakable email": `Accordion trigger and content: ${NO_WRAP}`,
+    "clip:accordion:worst: unbreakable email": `AccordionContent clips (overflow: hidden, for the open/close animation): ${NO_WRAP}`,
+    "overflow:text-area:worst: one-character label, unbreakable hint": `FieldLabel hint: ${NO_WRAP}`,
+    "focus:text-area:error":
+        "the textarea sets outline: none and relies on the wrapper's :focus-within border, which wrapperError keeps at the error color, so focus is invisible",
+    "overflow:time-input:worst: long label and unbreakable hint": `FieldLabel hint: ${NO_WRAP}`,
+    "focus:time-input:variant bare":
+        "TimeInput is an Input: inputField sets outline: none and the bare wrapper has no :focus-within style, so focus is invisible",
+    "focus:time-input:variant soft":
+        "TimeInput is an Input: inputField sets outline: none and the soft wrapper has no :focus-within style, so focus is invisible",
+    "overflow:stepper:worst: unbreakable email": `step title and description: ${NO_WRAP}`,
+    "overflow:status-banner:worst: unbreakable email": `StatusBanner text: ${NO_WRAP}`,
+    "overflow:banner-stack:worst: unbreakable email": `the StatusBanner inside: ${NO_WRAP}`,
+    "overlay:alert-dialog:worst: unbreakable email": `AlertDialogTitle and AlertDialogDescription: ${NO_WRAP}`,
+    "clip:table:worst: long cells": `the Table wrapper clips (overflow: hidden, for the rounded border) instead of scrolling: ${NO_WRAP}`,
+    "clip:table:worst: long cells, hugging columns": `the Table wrapper clips (overflow: hidden, for the rounded border) instead of scrolling: ${NO_WRAP}`,
+    "overflow:stat-card:worst: unbreakable email": `StatCard: ${NO_WRAP}`,
 };

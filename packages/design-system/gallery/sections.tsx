@@ -108,6 +108,20 @@ export const sections: readonly GallerySection[] = [
         "IconCircleSection"
     ),
     section(
+        "columns",
+        "Columns",
+        "Layout",
+        () => import("./sections/layout"),
+        "ColumnsSection"
+    ),
+    section(
+        "accordion",
+        "Accordion",
+        "Layout",
+        () => import("./sections/layout"),
+        "AccordionSection"
+    ),
+    section(
         "button",
         "Button",
         "Controls",
@@ -171,6 +185,27 @@ export const sections: readonly GallerySection[] = [
         "FieldErrorSection"
     ),
     section(
+        "text-area",
+        "TextArea",
+        "Controls",
+        () => import("./sections/controls"),
+        "TextAreaSection"
+    ),
+    section(
+        "time-input",
+        "TimeInput",
+        "Controls",
+        () => import("./sections/controls"),
+        "TimeInputSection"
+    ),
+    section(
+        "stepper",
+        "Stepper",
+        "Controls",
+        () => import("./sections/controls"),
+        "StepperSection"
+    ),
+    section(
         "spinner",
         "Spinner",
         "Feedback",
@@ -211,6 +246,55 @@ export const sections: readonly GallerySection[] = [
         "Feedback",
         () => import("./sections/feedback"),
         "AlertMessageSection"
+    ),
+    section(
+        "progress-bar",
+        "ProgressBar",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "ProgressBarSection"
+    ),
+    section(
+        "numbered-circle",
+        "NumberedCircle",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "NumberedCircleSection"
+    ),
+    section(
+        "avatar",
+        "Avatar",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "AvatarSection"
+    ),
+    section(
+        "delta-indicator",
+        "DeltaIndicator",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "DeltaIndicatorSection"
+    ),
+    section(
+        "status-banner",
+        "StatusBanner",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "StatusBannerSection"
+    ),
+    section(
+        "banner-stack",
+        "BannerStack",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "BannerStackSection"
+    ),
+    section(
+        "in-app-banner",
+        "InAppBanner",
+        "Feedback",
+        () => import("./sections/feedback"),
+        "InAppBannerSection"
     ),
     section(
         "toast-surface",
@@ -262,11 +346,32 @@ export const sections: readonly GallerySection[] = [
         "PopoverSection"
     ),
     section(
+        "alert-dialog",
+        "AlertDialog",
+        "Overlays",
+        () => import("./sections/overlays"),
+        "AlertDialogSection"
+    ),
+    section(
         "data-table",
         "DataTable",
         "Data",
         () => import("./sections/data"),
         "DataTableSection"
+    ),
+    section(
+        "table",
+        "Table",
+        "Data",
+        () => import("./sections/data"),
+        "TableSection"
+    ),
+    section(
+        "stat-card",
+        "StatCard",
+        "Data",
+        () => import("./sections/data"),
+        "StatCardSection"
     ),
     section(
         "chart-sharing-pie",

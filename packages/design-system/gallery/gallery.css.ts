@@ -257,3 +257,13 @@ export const toastFrame = style({
 export const toastOffset = style({
     vars: { [toastSurfaceTop]: "32px" },
 });
+
+/** BannerStack is absolutely positioned, so it needs a sized, positioned parent. */
+export const bannerFrame = style({
+    backgroundColor: vars.surface.background2,
+    border: `1px solid ${vars.border.subtle}`,
+    height: "400px",
+    maxWidth: "100%",
+    position: "relative",
+    width: "360px",
+});
