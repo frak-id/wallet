@@ -27,6 +27,7 @@ export const dialogContent = recipe({
         maxWidth: "480px",
         maxHeight: "85vh",
         overflowY: "auto",
+        overflowWrap: "anywhere",
         animationName: fadeScaleIn,
         animationDuration: transition.base,
         animationTimingFunction: easing.smooth,

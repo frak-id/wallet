@@ -11,6 +11,7 @@ export const numberedCircle = recipe({
         fontVariantNumeric: "tabular-nums",
         fontWeight: 600,
         lineHeight: 1,
+        whiteSpace: "nowrap",
         borderWidth: 2,
         borderStyle: "solid",
     },

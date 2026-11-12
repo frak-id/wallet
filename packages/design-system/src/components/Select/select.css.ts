@@ -75,6 +75,13 @@ export const selectStyles = {
     triggerBare,
     triggerBareMuted,
 
+    value: style({
+        minWidth: 0,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    }),
+
     icon: style({
         color: vars.icon.secondary,
         flexShrink: 0,

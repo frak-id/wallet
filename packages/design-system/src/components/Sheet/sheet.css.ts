@@ -50,6 +50,8 @@ export const sheetContent = recipe({
         width: "100vw",
         maxWidth: "100vw",
         overflowY: "auto",
+        // Portaled outside any Box, so it does not inherit the reset's wrapping
+        overflowWrap: "anywhere",
         animationDuration: transition.base,
         animationTimingFunction: easing.smooth,
         selectors: {

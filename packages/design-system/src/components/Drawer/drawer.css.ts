@@ -27,6 +27,7 @@ export const drawerContentWrapperStyle = style({
     marginTop: alias.spacing.l,
     display: "flex",
     flexDirection: "column",
+    overflowWrap: "anywhere",
     margin: `0 ${alias.spacing.m}`,
     marginBottom: `max(${alias.spacing.m}, ${safeArea.bottom})`,
     // The panel takes focus on open only as Tab's starting point.
