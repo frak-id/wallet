@@ -112,13 +112,17 @@ type StopFacts = {
 };
 
 /** Runs in the page: reads what the element Tab just focused looks like. */
-function readFocus(sectionId: string): StopFacts | "left" {
+function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
     const root = document.querySelector(
         `[data-gallery-section="${sectionId}"]`
     );
     const el = document.activeElement;
     if (!root || !(el instanceof HTMLElement) || !root.contains(el))
         return "left";
+    // A multi-segment field (time, date) is one element with several stops, and
+    // refocusing it below would jump back to its first segment.
+    if ("galleryInspected" in el.dataset) return "repeat";
+    el.dataset.galleryInspected = "";
 
     const backgroundStack = (from: Element | null) => {
         const stack: string[] = [];
@@ -173,6 +177,25 @@ function readFocus(sectionId: string): StopFacts | "left" {
             background: backgroundStack(n),
         })),
     };
+}
+
+/** Tabs from the section title until focus leaves it, inspecting each stop. */
+async function tabThrough(page: Page, id: string) {
+    const found: Finding[] = [];
+    let stops = 0;
+    for (; stops < MAX_TAB_STOPS; stops++) {
+        await page.keyboard.press("Tab");
+        const facts = await page.evaluate(readFocus, id);
+        if (facts === "left") break;
+        if (facts === "repeat") continue;
+        const problem = inspectStop(facts);
+        if (problem)
+            found.push({
+                key: `focus:${id}:${facts.caseName}`,
+                detail: `${facts.who}: ${problem}`,
+            });
+    }
+    return { stops, found };
 }
 
 type Rgb = { r: number; g: number; b: number; a: number };
@@ -354,7 +377,9 @@ function readClipping(caseEl: Element) {
         const rects: DOMRect[] = [];
         const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
         for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-            if (!t.textContent?.trim()) continue;
+            // A textarea's value is a text node the browser does not lay out.
+            if (!t.textContent?.trim() || t.parentElement?.closest("textarea"))
+                continue;
             const range = document.createRange();
             range.selectNodeContents(t);
             rects.push(range.getBoundingClientRect());
@@ -557,19 +582,7 @@ for (const { id, title } of sections) {
                 if (await target.isVisible())
                     await target.click({ button: "right", force: true });
             await section.locator(`#${id}-title`).focus();
-            const found: Finding[] = [];
-            let stops = 0;
-            for (; stops < MAX_TAB_STOPS; stops++) {
-                await page.keyboard.press("Tab");
-                const facts = await page.evaluate(readFocus, id);
-                if (facts === "left") break;
-                const problem = inspectStop(facts);
-                if (problem)
-                    found.push({
-                        key: `focus:${id}:${facts.caseName}`,
-                        detail: `${facts.who}: ${problem}`,
-                    });
-            }
+            const { stops, found } = await tabThrough(page, id);
             expect(stops, "tab order never left the section").toBeLessThan(
                 MAX_TAB_STOPS
             );
@@ -603,7 +616,9 @@ for (const { id, title } of sections) {
                     found.push({ key: `overlay:${id}:${caseName}`, detail });
                 await trigger.focus();
                 await page.keyboard.press("Enter");
-                const dialog = page.getByRole("dialog");
+                const dialog = page
+                    .getByRole("dialog")
+                    .or(page.getByRole("alertdialog"));
                 await expect(dialog, `${caseName} did not open`).toBeVisible();
                 for (const problem of await dialog.evaluate(readOverlay))
                     report(problem);
@@ -669,7 +684,9 @@ for (const { id, title } of sections) {
                         detail: ring,
                     });
                 }
-                const popup = page.locator('[role="dialog"], [role="listbox"]');
+                const popup = page.locator(
+                    '[role="dialog"], [role="alertdialog"], [role="listbox"]'
+                );
                 if ((await popup.count()) > 0) {
                     await page.keyboard.press("Escape");
                     await expect(popup).toHaveCount(0);

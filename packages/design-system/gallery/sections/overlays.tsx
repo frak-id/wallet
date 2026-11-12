@@ -1,3 +1,12 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@frak-labs/design-system/components/AlertDialog";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
 import {
@@ -483,6 +492,81 @@ export function PopoverSection() {
                     body={fixtures.unbreakableEmail}
                 />
                 <PopoverCase name="worst: long sentence" body={longText(4)} />
+            </Cases>
+        </>
+    );
+}
+
+function AlertDialogCase({
+    name,
+    title,
+    body,
+    action = "Delete",
+}: {
+    name: string;
+    title: string;
+    body: string;
+    action?: string;
+}) {
+    return (
+        <Case name={name}>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button width="auto" variant="destructive" {...openTrigger}>
+                        Open {name}
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <Stack space="m">
+                        <Stack space="xs">
+                            <AlertDialogTitle>{title}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {body}
+                            </AlertDialogDescription>
+                        </Stack>
+                        <Stack space="xs">
+                            <AlertDialogAction asChild>
+                                <Button variant="destructive">{action}</Button>
+                            </AlertDialogAction>
+                            <AlertDialogCancel asChild>
+                                <Button variant="secondary">Cancel</Button>
+                            </AlertDialogCancel>
+                        </Stack>
+                    </Stack>
+                </AlertDialogContent>
+            </AlertDialog>
+        </Case>
+    );
+}
+
+export function AlertDialogSection() {
+    return (
+        <>
+            <Cases title="Default">
+                <AlertDialogCase
+                    name="default"
+                    title="Delete this campaign?"
+                    body="This cannot be undone."
+                />
+            </Cases>
+            <Cases title="Worst case">
+                <AlertDialogCase
+                    name="worst: unbreakable email"
+                    title={fixtures.unbreakableEmail}
+                    body={fixtures.unbreakableEmail}
+                    action={fixtures.unbreakableEmail}
+                />
+                <AlertDialogCase
+                    name="worst: long sentence"
+                    title={fixtures.longSentence}
+                    body={longText(4)}
+                    action={fixtures.longSentence}
+                />
+                <AlertDialogCase
+                    name="worst: non-Latin and emoji"
+                    title={fixtures.nonLatin}
+                    body={fixtures.nonLatin}
+                />
             </Cases>
         </>
     );

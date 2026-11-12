@@ -1,3 +1,9 @@
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@frak-labs/design-system/components/Accordion";
 import { Box } from "@frak-labs/design-system/components/Box";
 import {
     Card,
@@ -5,6 +11,8 @@ import {
     CardHeader,
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
 import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -14,7 +22,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { CheckIcon, WalletIcon } from "@frak-labs/design-system/icons";
 import type { ComponentProps, ReactNode } from "react";
-import { fixtures } from "../fixtures";
+import { fixtures, longText } from "../fixtures";
 import { Case, Cases } from "../ui";
 
 type Space = ComponentProps<typeof Stack>["space"];
@@ -440,6 +448,248 @@ export function IconCircleSection() {
                     <IconCircle size="sm">
                         <CheckIcon width={64} height={64} />
                     </IconCircle>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+function Fill({ children }: { children: ReactNode }) {
+    return <div style={{ width: "100%" }}>{children}</div>;
+}
+
+type ColumnsProps = ComponentProps<typeof Columns>;
+type ColumnWidth = NonNullable<ComponentProps<typeof Column>["width"]>;
+
+const widthRows: ColumnWidth[][] = [
+    ["1/2", "1/2"],
+    ["1/3", "2/3"],
+    ["1/4", "3/4"],
+    ["1/5", "2/5", "3/5"],
+    ["content", "1/2"],
+];
+
+export function ColumnsSection() {
+    return (
+        <>
+            <Cases title="Widths" layout="stack">
+                {widthRows.map((row) => (
+                    <Case
+                        key={row.join(" ")}
+                        name={`widths ${row.join(" + ")}`}
+                    >
+                        <Fill>
+                            <Columns space="s">
+                                {row.map((width) => (
+                                    <Column key={width} width={width}>
+                                        <Swatch>{width}</Swatch>
+                                    </Column>
+                                ))}
+                            </Columns>
+                        </Fill>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Spacing" layout="stack">
+                {(["none", "xs", "xl"] as ColumnsProps["space"][]).map(
+                    (space) => (
+                        <Case
+                            key={String(space)}
+                            name={`space ${String(space)}`}
+                        >
+                            <Fill>
+                                <Columns space={space}>
+                                    <Column>
+                                        <Swatch>1</Swatch>
+                                    </Column>
+                                    <Column>
+                                        <Swatch>2</Swatch>
+                                    </Column>
+                                    <Column>
+                                        <Swatch>3</Swatch>
+                                    </Column>
+                                </Columns>
+                            </Fill>
+                        </Case>
+                    )
+                )}
+            </Cases>
+            <Cases title="Vertical Alignment" layout="stack">
+                {(["top", "center", "bottom"] as const).map((alignY) => (
+                    <Case key={alignY} name={`alignY ${alignY}`}>
+                        <Fill>
+                            <Columns space="s" alignY={alignY}>
+                                <Column>
+                                    <Swatch>short</Swatch>
+                                </Column>
+                                <Column>
+                                    <Swatch>
+                                        <Box style={{ height: 64 }}>tall</Box>
+                                    </Swatch>
+                                </Column>
+                            </Columns>
+                        </Fill>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Fill>
+                        <Columns space="s">
+                            <Column>
+                                <Text>{fixtures.unbreakableEmail}</Text>
+                            </Column>
+                            <Column>
+                                <Text>{fixtures.singleChar}</Text>
+                            </Column>
+                        </Columns>
+                    </Fill>
+                </Case>
+                <Case name="worst: long sentence in two columns">
+                    <Fill>
+                        <Columns space="s">
+                            {[0, 1].map((index) => (
+                                <Column key={index}>
+                                    <Text>{fixtures.longSentence}</Text>
+                                </Column>
+                            ))}
+                        </Columns>
+                    </Fill>
+                </Case>
+                <Case name="worst: non-Latin and emoji beside content width">
+                    <Fill>
+                        <Columns space="s">
+                            <Column width="content">
+                                <Text>{fixtures.singleChar}</Text>
+                            </Column>
+                            <Column>
+                                <Text>{fixtures.nonLatin}</Text>
+                            </Column>
+                        </Columns>
+                    </Fill>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+function FaqItems({ titles }: { titles: string[] }) {
+    return titles.map((title, index) => (
+        <AccordionItem key={title} value={`item-${index}`}>
+            <AccordionTrigger>{title}</AccordionTrigger>
+            <AccordionContent>
+                <Text color="secondary">Answer for {title}</Text>
+            </AccordionContent>
+        </AccordionItem>
+    ));
+}
+
+const faqTitles = [
+    "How do rewards work?",
+    "When do I get paid?",
+    "Is it free?",
+];
+
+export function AccordionSection() {
+    return (
+        <>
+            <Cases title="Types" layout="stack">
+                <Case name="single collapsible, first open">
+                    <Fill>
+                        <Accordion
+                            type="single"
+                            collapsible
+                            defaultValue="item-0"
+                        >
+                            <FaqItems titles={faqTitles} />
+                        </Accordion>
+                    </Fill>
+                </Case>
+                <Case name="multiple, two open">
+                    <Fill>
+                        <Accordion
+                            type="multiple"
+                            defaultValue={["item-0", "item-2"]}
+                        >
+                            <FaqItems titles={faqTitles} />
+                        </Accordion>
+                    </Fill>
+                </Case>
+            </Cases>
+            <Cases title="States" layout="stack">
+                <Case name="disabled item">
+                    <Fill>
+                        <Accordion type="single" collapsible>
+                            <AccordionItem value="open">
+                                <AccordionTrigger>Available</AccordionTrigger>
+                                <AccordionContent>Content</AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="locked" disabled>
+                                <AccordionTrigger>Locked</AccordionTrigger>
+                                <AccordionContent>Content</AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Fill>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Fill>
+                        <Accordion
+                            type="single"
+                            collapsible
+                            defaultValue="item-0"
+                        >
+                            <AccordionItem value="item-0">
+                                <AccordionTrigger>
+                                    {fixtures.unbreakableEmail}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Text>{fixtures.unbreakableEmail}</Text>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Fill>
+                </Case>
+                <Case name="worst: long sentence">
+                    <Fill>
+                        <Accordion
+                            type="single"
+                            collapsible
+                            defaultValue="item-0"
+                        >
+                            <AccordionItem value="item-0">
+                                <AccordionTrigger>
+                                    {fixtures.longSentence}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Text>{longText(4)}</Text>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Fill>
+                </Case>
+                <Case name="worst: one character and non-Latin">
+                    <Fill>
+                        <Accordion type="multiple" defaultValue={["a", "b"]}>
+                            <AccordionItem value="a">
+                                <AccordionTrigger>
+                                    {fixtures.singleChar}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Text>{fixtures.singleChar}</Text>
+                                </AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="b">
+                                <AccordionTrigger>
+                                    {fixtures.nonLatin}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Text>{fixtures.nonLatin}</Text>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Fill>
                 </Case>
             </Cases>
         </>
