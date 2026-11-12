@@ -3,12 +3,18 @@ import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias } from "../../tokens.css";
 
+// Lets the root shrink inside a flex row, so the list's maxWidth tracks the space actually there.
+export const tabsRoot = style({
+    minWidth: 0,
+});
+
 export const tabsList = recipe({
     base: {
         display: "inline-flex",
         alignItems: "center",
         alignSelf: "flex-start",
         width: "fit-content",
+        maxWidth: "100%",
     },
     variants: {
         variant: {
@@ -17,11 +23,15 @@ export const tabsList = recipe({
                 padding: "2px",
                 borderRadius: "10px",
                 backgroundColor: vars.surface.muted,
+                // Scrolls when too wide; the 2px padding keeps the trigger focus ring inside the clip.
+                overflowX: "auto",
             },
             // Trackless navigation bar — active tab is a floating white pill
             // (Figma "Tabs - Navigation bar").
             navigation: {
                 gap: "0",
+                // Wraps when too wide: a scroll clip would cut the trigger focus ring, which has no padding to sit in.
+                flexWrap: "wrap",
             },
         },
         // Opt-in: stretch the list to fill its container so triggers can split
