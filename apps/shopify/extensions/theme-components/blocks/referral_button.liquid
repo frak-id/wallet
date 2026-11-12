@@ -25,10 +25,10 @@
 {% assign no_reward_text = block.settings.no_reward_text | default: frak_i18n.button_share_no_reward_text | default: no_reward_text_fallback %}
 
 <frak-button-share
-  text="{{ button_text }}"
-  classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
-  {% if no_reward_text != blank %}no-reward-text="{{ no_reward_text }}"{% endif %}
-  {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
+  text="{{ button_text | escape }}"
+  classname="button {{ button_class | escape }} {{ full_width_class | escape }} {{ custom_class | escape }}"
+  {% if no_reward_text != blank %}no-reward-text="{{ no_reward_text | escape }}"{% endif %}
+  {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction | escape }}"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true"{% endif %}
 ></frak-button-share>
 
