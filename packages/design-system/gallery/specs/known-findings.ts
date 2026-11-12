@@ -64,7 +64,5 @@ export const knownFindings: Record<string, string> = {
     "overflow:status-banner:worst: unbreakable email": `StatusBanner text: ${NO_WRAP}`,
     "overflow:banner-stack:worst: unbreakable email": `the StatusBanner inside: ${NO_WRAP}`,
     "overlay:alert-dialog:worst: unbreakable email": `AlertDialogTitle and AlertDialogDescription: ${NO_WRAP}`,
-    "clip:table:worst: long cells": `the Table wrapper clips (overflow: hidden, for the rounded border) instead of scrolling: ${NO_WRAP}`,
-    "clip:table:worst: long cells, hugging columns": `the Table wrapper clips (overflow: hidden, for the rounded border) instead of scrolling: ${NO_WRAP}`,
     "overflow:stat-card:worst: unbreakable email": `StatCard: ${NO_WRAP}`,
 };
