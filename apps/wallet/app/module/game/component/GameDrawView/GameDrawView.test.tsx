@@ -4,7 +4,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { publicDraw } from "@/tests/gameFixtures";
+import {
+    publicDraw,
+    REJECTED_DRAW_FRAUD,
+    REJECTED_DRAW_WINNER,
+    rejectedPublicDraw,
+} from "@/tests/gameFixtures";
 import { GameDrawView } from "./index";
 
 const { getDraw } = vi.hoisted(() => ({ getDraw: vi.fn() }));
@@ -185,6 +190,49 @@ describe("GameDrawView", () => {
         expect(screen.getByText("Aucun")).toBeInTheDocument();
     });
 
+    it("lists the rejected candidates with their reason and rank", async () => {
+        respondWith(rejectedPublicDraw());
+        renderView({ gameId: GAME });
+
+        expect(
+            await screen.findByRole("heading", { name: "Joueurs écartés" })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                "3 joueurs tirés au sort avant le gagnant ont été écartés."
+            )
+        ).toBeInTheDocument();
+        expect(screen.getByText("n° 1 · 54b3f3…3e50")).toBeInTheDocument();
+        expect(screen.getByText("Fraude")).toBeInTheDocument();
+        expect(screen.getByText("n° 2 · aded22…e0ae")).toBeInTheDocument();
+        expect(screen.getByText("Injoignable")).toBeInTheDocument();
+        expect(screen.getByText("n° 3 · f10a5d…cce9")).toBeInTheDocument();
+        expect(screen.getByText("Non éligible")).toBeInTheDocument();
+    });
+
+    it("words the rejections without assuming a winner until one is confirmed", async () => {
+        respondWith({
+            ...rejectedPublicDraw(),
+            status: "drawn",
+            winnerPid: null,
+        });
+        renderView({ gameId: GAME });
+
+        expect(
+            await screen.findByText(
+                "3 joueurs tirés au sort ont été écartés pour l'instant."
+            )
+        ).toBeInTheDocument();
+    });
+
+    it("has no rejections section when nobody was passed over", async () => {
+        respondWith(publicDraw());
+        renderView({ gameId: GAME });
+
+        await screen.findByText("Le tirage en chiffres");
+        expect(screen.queryByText("Joueurs écartés")).toBeNull();
+    });
+
     it("links the raw record and the drand round, both safely external", async () => {
         respondWith(publicDraw());
         renderView({ gameId: GAME });
@@ -232,6 +280,65 @@ describe("GameDrawView", () => {
             expect(
                 await screen.findByText("Tu as gagné !")
             ).toBeInTheDocument();
+        });
+
+        it("tells a winner how many players ranked ahead were rejected", async () => {
+            respondWith(rejectedPublicDraw());
+            renderView({ gameId: GAME, pid: REJECTED_DRAW_WINNER });
+
+            expect(
+                await screen.findByText("Tu as gagné !")
+            ).toBeInTheDocument();
+            expect(screen.getByText("n° 4")).toBeInTheDocument();
+            expect(
+                screen.getByText(
+                    "Les 3 joueurs classés avant toi ont été écartés."
+                )
+            ).toBeInTheDocument();
+            expect(screen.queryByText(/\(toi\)/)).toBeNull();
+        });
+
+        it("uses the singular when one player ranked ahead", async () => {
+            const draw = rejectedPublicDraw();
+            respondWith({
+                ...draw,
+                candidates: draw.candidates.slice(2),
+                rejections: draw.rejections.slice(2),
+            });
+            renderView({ gameId: GAME, pid: REJECTED_DRAW_WINNER });
+
+            expect(
+                await screen.findByText(
+                    "Le joueur classé avant toi a été écarté."
+                )
+            ).toBeInTheDocument();
+        });
+
+        it("does not mention the ranking line to a winner at rank 1", async () => {
+            respondWith(publicDraw({ status: "confirmed", winnerPid: C }));
+            renderView({ gameId: GAME, pid: C });
+
+            await screen.findByText("Tu as gagné !");
+            expect(screen.queryByText(/classés? avant toi/)).toBeNull();
+        });
+
+        it("tells a rejected player they were rejected, not why", async () => {
+            respondWith(rejectedPublicDraw());
+            renderView({ gameId: GAME, pid: REJECTED_DRAW_FRAUD });
+
+            expect(
+                await screen.findByText(
+                    "Tu as été tiré au sort, mais tu as été écarté."
+                )
+            ).toBeInTheDocument();
+            expect(screen.queryByText("Tu as gagné !")).toBeNull();
+            expect(
+                screen.getByText("n° 1 · 54b3f3…3e50 (toi)")
+            ).toBeInTheDocument();
+            expect(screen.getByText("Écarté")).toBeInTheDocument();
+            expect(screen.queryByText("Fraude")).toBeNull();
+            expect(screen.getByText("Injoignable")).toBeInTheDocument();
+            expect(screen.getByText("Non éligible")).toBeInTheDocument();
         });
 
         it("says plainly when the pid is not in the draw", async () => {

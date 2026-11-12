@@ -1,4 +1,5 @@
 import type {
+    DrawRejectionReason,
     DrawStatus,
     PublicDraw,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
@@ -34,7 +35,17 @@ export type DrawMe =
           /** 1-based place in the ranked candidates, null when not among them. */
           candidateRank: number | null;
           isWinner: boolean;
+          /** The asked pid was passed over; the page never says why. */
+          rejected: boolean;
       };
+
+export type DrawRejection = {
+    /** 1-based place the pid held in the ranked candidates. */
+    rank: number;
+    pid: string;
+    short: string;
+    reason: DrawRejectionReason;
+};
 
 export type DrawSummary = {
     phase: DrawPhase;
@@ -50,6 +61,8 @@ export type DrawSummary = {
     };
     winner: { pid: string; short: string } | null;
     payout: DrawPayout;
+    /** Candidates passed over, in ranking order. */
+    rejections: DrawRejection[];
     /** Absent when no pid was asked about. */
     me?: DrawMe;
 };
@@ -76,8 +89,18 @@ function meOf(draw: PublicDraw, pid: string): DrawMe {
         share: draw.totalTickets > 0 ? entry.tickets / draw.totalTickets : 0,
         candidateRank: rank === -1 ? null : rank + 1,
         isWinner: draw.winnerPid === pid,
+        rejected: draw.rejections.some((r) => r.pid === pid),
     };
 }
+
+/** Rejections pass over the candidates in order, so the i-th one held rank i + 1. */
+const rejectionsOf = (draw: PublicDraw): DrawRejection[] =>
+    draw.rejections.map(({ pid, reason }, i) => ({
+        rank: i + 1,
+        pid,
+        short: shortPid(pid),
+        reason,
+    }));
 
 /**
  * The draw record as a page reads it. Dates are rebuilt with `new Date`: the
@@ -108,6 +131,7 @@ export function summarizeDraw(
             ? { pid: draw.winnerPid, short: shortPid(draw.winnerPid) }
             : null,
         payout: payoutOf(draw),
+        rejections: rejectionsOf(draw),
         ...(pid ? { me: meOf(draw, pid) } : {}),
     };
 }

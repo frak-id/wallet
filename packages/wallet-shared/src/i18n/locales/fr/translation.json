@@ -1229,6 +1229,9 @@
             "rank": "Ta place dans le classement",
             "rankValue": "n° {{rank}}",
             "won": "Tu as gagné !",
+            "rejected": "Tu as été tiré au sort, mais tu as été écarté.",
+            "ahead_one": "Le joueur classé avant toi a été écarté.",
+            "ahead_other": "Les {{count}} joueurs classés avant toi ont été écartés.",
             "notFound": "Ton identifiant n'est pas dans ce tirage. Soit tu n'as pas joué, soit tes tickets n'ont pas été comptés.",
             "pid": "Ton identifiant",
             "copied": "Copié",
@@ -1255,7 +1258,26 @@
             "freeze": "À la fin du jeu, on fige la liste des tickets et on publie son empreinte.",
             "random": "Un nombre aléatoire public (drand) est choisi à l'avance. Il est émis plus tard : personne ne le connaît avant, pas même Frak.",
             "rank": "Ce nombre classe les participants : plus tu as de tickets, plus tu as de chances d'être devant.",
-            "winner": "Le premier du classement gagne s'il a connecté son Instagram et suit @frak_fr. Sinon, il a 24 h pour le faire, puis c'est au suivant."
+            "winner": "Le premier du classement gagne s'il a connecté son Instagram et suit @frak_fr ; sinon, il a 24 h pour le faire. Un joueur peut aussi être écarté (fraude, non éligible…). Dans les deux cas, c'est au suivant."
+        },
+        "rejection": {
+            "title": "Joueurs écartés",
+            "introConfirmed_one": "{{count}} joueur tiré au sort avant le gagnant a été écarté.",
+            "introConfirmed_other": "{{count}} joueurs tirés au sort avant le gagnant ont été écartés.",
+            "introPending_one": "{{count}} joueur tiré au sort a été écarté pour l'instant.",
+            "introPending_other": "{{count}} joueurs tirés au sort ont été écartés pour l'instant.",
+            "introNoWinner_one": "{{count}} joueur tiré au sort a été écarté.",
+            "introNoWinner_other": "{{count}} joueurs tirés au sort ont été écartés.",
+            "label": "n° {{rank}} · {{pid}}",
+            "labelYou": "n° {{rank}} · {{pid}} (toi)",
+            "self": "Écarté",
+            "reason": {
+                "not_verified_in_time": "Instagram pas certifié à temps",
+                "not_following_at_review": "Ne suivait plus @frak_fr",
+                "fraud": "Fraude",
+                "unreachable": "Injoignable",
+                "ineligible": "Non éligible"
+            }
         },
         "links": {
             "raw": "Voir les données brutes",

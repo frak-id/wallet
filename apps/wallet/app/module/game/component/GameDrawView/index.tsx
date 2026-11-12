@@ -1,3 +1,4 @@
+import type { DrawRejectionReason } from "@frak-labs/backend-elysia/domain/game/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
@@ -18,6 +19,7 @@ import { useGameDraw } from "@/module/game/hook/useGameDraw";
 import {
     type DrawMe,
     type DrawPhase,
+    type DrawRejection,
     type DrawSummary,
     shortPid,
     summarizeDraw,
@@ -36,6 +38,16 @@ const PHASE = {
     confirmed: { label: "gameDraw.phase.confirmed", tone: "success" },
     noWinner: { label: "gameDraw.phase.noWinner", tone: "neutral" },
 } as const satisfies Record<DrawPhase, unknown>;
+
+/** Every reason a candidate can be passed over: a new one fails to compile until worded. */
+const REASON = {
+    not_verified_in_time: "gameDraw.rejection.reason.not_verified_in_time",
+    not_following_at_review:
+        "gameDraw.rejection.reason.not_following_at_review",
+    fraud: "gameDraw.rejection.reason.fraud",
+    unreachable: "gameDraw.rejection.reason.unreachable",
+    ineligible: "gameDraw.rejection.reason.ineligible",
+} as const satisfies Record<DrawRejectionReason, string>;
 
 const drandUrl = ({ chainHash, round }: DrawSummary["drand"]) =>
     `https://api.drand.sh/${chainHash}/public/${round}`;
@@ -107,6 +119,9 @@ function DrawRecord({ gameId, pid }: { gameId: string; pid?: string }) {
             <PhaseLine summary={summary} />
             {summary.me && pid && <MeCard me={summary.me} pid={pid} />}
             <SummaryCard summary={summary} />
+            {summary.rejections.length > 0 && (
+                <RejectionsCard summary={summary} pid={pid} />
+            )}
             <HowItWorks />
             <Links gameId={gameId} summary={summary} />
         </>
@@ -160,10 +175,16 @@ function MeCard({ me, pid }: { me: DrawMe; pid: string }) {
                 </Text>
                 {me.found ? (
                     <>
-                        {me.isWinner && (
-                            <Notice tone="success">
-                                {t("gameDraw.me.won")}
+                        {me.rejected ? (
+                            <Notice tone="warning">
+                                {t("gameDraw.me.rejected")}
                             </Notice>
+                        ) : (
+                            me.isWinner && (
+                                <Notice tone="success">
+                                    {t("gameDraw.me.won")}
+                                </Notice>
+                            )
                         )}
                         <Row
                             label={t("gameDraw.me.tickets")}
@@ -181,6 +202,15 @@ function MeCard({ me, pid }: { me: DrawMe; pid: string }) {
                                 })}
                             />
                         )}
+                        {me.isWinner &&
+                            me.candidateRank !== null &&
+                            me.candidateRank > 1 && (
+                                <Text variant="bodySmall" color="secondary">
+                                    {t("gameDraw.me.ahead", {
+                                        count: me.candidateRank - 1,
+                                    })}
+                                </Text>
+                            )}
                     </>
                 ) : (
                     <Text color="secondary">{t("gameDraw.me.notFound")}</Text>
@@ -282,6 +312,62 @@ function SummaryCard({ summary }: { summary: DrawSummary }) {
                         value={t(payout)}
                     />
                 )}
+            </Stack>
+        </Card>
+    );
+}
+
+function introKey(phase: DrawPhase) {
+    switch (phase) {
+        case "confirmed":
+            return "gameDraw.rejection.introConfirmed";
+        case "noWinner":
+            return "gameDraw.rejection.introNoWinner";
+        default:
+            return "gameDraw.rejection.introPending";
+    }
+}
+
+function RejectionsCard({
+    summary,
+    pid,
+}: {
+    summary: DrawSummary;
+    pid?: string;
+}) {
+    const { t } = useTranslation();
+    const label = (r: DrawRejection) =>
+        t(
+            r.pid === pid
+                ? "gameDraw.rejection.labelYou"
+                : "gameDraw.rejection.label",
+            {
+                rank: r.rank,
+                pid: r.short,
+            }
+        );
+    return (
+        <Card>
+            <Stack space="s">
+                <Text variant="heading4" as="h2">
+                    {t("gameDraw.rejection.title")}
+                </Text>
+                <Text color="secondary">
+                    {t(introKey(summary.phase), {
+                        count: summary.rejections.length,
+                    })}
+                </Text>
+                {summary.rejections.map((r) => (
+                    <Row
+                        key={r.pid}
+                        label={label(r)}
+                        value={t(
+                            r.pid === pid
+                                ? "gameDraw.rejection.self"
+                                : REASON[r.reason]
+                        )}
+                    />
+                ))}
             </Stack>
         </Card>
     );

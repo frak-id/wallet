@@ -1229,6 +1229,9 @@
             "rank": "Your place in the ranking",
             "rankValue": "#{{rank}}",
             "won": "You won!",
+            "rejected": "You were drawn, but you were rejected.",
+            "ahead_one": "The player ranked before you was rejected.",
+            "ahead_other": "The {{count}} players ranked before you were rejected.",
             "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
             "pid": "Your id",
             "copied": "Copied",
@@ -1255,7 +1258,26 @@
             "freeze": "When the game ends, we freeze the list of tickets and publish its fingerprint.",
             "random": "A public random number (drand) is chosen in advance. It is emitted later: nobody knows it before, not even Frak.",
             "rank": "That number ranks the participants: the more tickets you have, the better your chance of being ahead.",
-            "winner": "The first in the ranking wins if they have connected their Instagram and follow @frak_fr. If not, they have 24 h to do so, then it goes to the next one."
+            "winner": "The first in the ranking wins if they have connected their Instagram and follow @frak_fr; if not, they have 24 h to do so. A player can also be rejected (fraud, not eligible…). Either way, it goes to the next one."
+        },
+        "rejection": {
+            "title": "Rejected players",
+            "introConfirmed_one": "{{count}} player drawn before the winner was rejected.",
+            "introConfirmed_other": "{{count}} players drawn before the winner were rejected.",
+            "introPending_one": "{{count}} drawn player has been rejected so far.",
+            "introPending_other": "{{count}} drawn players have been rejected so far.",
+            "introNoWinner_one": "{{count}} drawn player was rejected.",
+            "introNoWinner_other": "{{count}} drawn players were rejected.",
+            "label": "#{{rank}} · {{pid}}",
+            "labelYou": "#{{rank}} · {{pid}} (you)",
+            "self": "Rejected",
+            "reason": {
+                "not_verified_in_time": "Instagram not certified in time",
+                "not_following_at_review": "No longer following @frak_fr",
+                "fraud": "Fraud",
+                "unreachable": "Unreachable",
+                "ineligible": "Not eligible"
+            }
         },
         "links": {
             "raw": "See the raw data",

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { publicDraw } from "@/tests/gameFixtures";
+import {
+    publicDraw,
+    REJECTED_DRAW_FRAUD,
+    REJECTED_DRAW_WINNER,
+    rejectedPublicDraw,
+} from "@/tests/gameFixtures";
 import { shortPid, summarizeDraw } from "./drawSummary";
 
 const A = "a1".repeat(16);
@@ -135,6 +140,35 @@ describe("summarizeDraw", () => {
         );
     });
 
+    describe("rejections", () => {
+        it("is empty when nobody was passed over", () => {
+            expect(summarizeDraw(publicDraw()).rejections).toEqual([]);
+        });
+
+        it("ranks each rejection by its place among the candidates", () => {
+            expect(summarizeDraw(rejectedPublicDraw()).rejections).toEqual([
+                {
+                    rank: 1,
+                    pid: REJECTED_DRAW_FRAUD,
+                    short: "54b3f3…3e50",
+                    reason: "fraud",
+                },
+                {
+                    rank: 2,
+                    pid: "aded22cf6440a7fc2ac928c2e0c3e0ae",
+                    short: "aded22…e0ae",
+                    reason: "unreachable",
+                },
+                {
+                    rank: 3,
+                    pid: "f10a5da60119a4c56d13371f5bffcce9",
+                    short: "f10a5d…cce9",
+                    reason: "ineligible",
+                },
+            ]);
+        });
+    });
+
     describe("me", () => {
         it("is absent without a pid", () => {
             expect(summarizeDraw(publicDraw()).me).toBeUndefined();
@@ -153,6 +187,7 @@ describe("summarizeDraw", () => {
                 share: 10 / 80,
                 candidateRank: null,
                 isWinner: false,
+                rejected: false,
             });
         });
 
@@ -171,6 +206,26 @@ describe("summarizeDraw", () => {
                     C
                 ).me
             ).toMatchObject({ candidateRank: 1, isWinner: true });
+        });
+
+        it("flags a passed-over player as rejected, without the reason", () => {
+            expect(
+                summarizeDraw(rejectedPublicDraw(), REJECTED_DRAW_FRAUD).me
+            ).toMatchObject({
+                candidateRank: 1,
+                isWinner: false,
+                rejected: true,
+            });
+        });
+
+        it("ranks a winner behind the rejected candidates", () => {
+            expect(
+                summarizeDraw(rejectedPublicDraw(), REJECTED_DRAW_WINNER).me
+            ).toMatchObject({
+                candidateRank: 4,
+                isWinner: true,
+                rejected: false,
+            });
         });
 
         it("does not divide by zero on an empty draw", () => {

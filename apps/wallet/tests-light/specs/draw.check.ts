@@ -1,4 +1,9 @@
 import type { Page } from "@playwright/test";
+import {
+    REJECTED_DRAW_FRAUD,
+    REJECTED_DRAW_WINNER,
+    rejectedPublicDraw,
+} from "../../tests/gameFixtures";
 import { expect, test } from "../fixtures";
 
 /** Checks for the wallet `/draw` route: the public record of a game's draw. */
@@ -93,6 +98,47 @@ test.describe("Draw page", () => {
         await expect(card.last()).toContainText("25 %");
         await expect(card.last()).toContainText("n° 2");
         await expect(card.last()).toContainText("a1a1a1…a1a1");
+    });
+
+    test("explains the candidates passed over before the winner", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 375, height: 812 });
+        await mockDraw(page, 200, rejectedPublicDraw());
+        await page.goto(drawUrl({ game: GAME_ID, pid: REJECTED_DRAW_WINNER }));
+
+        await expect(page.getByText("Tu as gagné !")).toBeVisible();
+        await expect(
+            page.getByText("Les 3 joueurs classés avant toi ont été écartés.")
+        ).toBeVisible();
+        await expect(
+            page.getByRole("heading", { name: "Joueurs écartés" })
+        ).toBeVisible();
+        for (const reason of ["Fraude", "Injoignable", "Non éligible"]) {
+            await expect(page.getByText(reason, { exact: true })).toBeVisible();
+        }
+
+        const overflow = await page.evaluate(
+            () => document.documentElement.scrollWidth > window.innerWidth
+        );
+        expect(overflow).toBe(false);
+    });
+
+    test("tells a rejected player they were rejected, not why", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 375, height: 812 });
+        await mockDraw(page, 200, rejectedPublicDraw());
+        await page.goto(drawUrl({ game: GAME_ID, pid: REJECTED_DRAW_FRAUD }));
+
+        await expect(
+            page.getByText("Tu as été tiré au sort, mais tu as été écarté.")
+        ).toBeVisible();
+        await expect(page.getByText("Écarté", { exact: true })).toBeVisible();
+        await expect(page.getByText("Fraude", { exact: true })).toHaveCount(0);
+        await expect(
+            page.getByText("Injoignable", { exact: true })
+        ).toBeVisible();
     });
 
     test("says so when the pid is not in the draw", async ({ page }) => {
