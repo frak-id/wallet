@@ -97,6 +97,9 @@ type Wrapper = {
     idleBorder: string;
     borderWidth: number;
     background: string[];
+    focusedShadow: string;
+    idleShadow: string;
+    outerBackground: string[];
 };
 
 type StopFacts = {
@@ -104,6 +107,7 @@ type StopFacts = {
     who: string;
     focusVisible: boolean;
     outline: { width: number; style: string; color: string; offset: number };
+    outlineClipped: boolean;
     boxShadow: string;
     idle: { outline: string; boxShadow: string };
     parentBackground: string[];
@@ -138,6 +142,7 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
     for (let n = el.parentElement; n && n !== root; n = n.parentElement)
         chain.push(n);
     const borders = () => chain.map((n) => getComputedStyle(n).borderColor);
+    const shadows = () => chain.map((n) => getComputedStyle(n).boxShadow);
 
     const cs = getComputedStyle(el);
     const outline = {
@@ -146,11 +151,32 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
         color: cs.outlineColor,
         offset: Number.parseFloat(cs.outlineOffset),
     };
+    const reach = Math.max(outline.width + outline.offset, 0);
+    const own = el.getBoundingClientRect();
+    // An outline drawn outside the element is cut by any ancestor that clips overflow.
+    const outlineClipped = chain.some((n) => {
+        const style = getComputedStyle(n);
+        if (
+            ![style.overflowX, style.overflowY].some(
+                (v) => v === "hidden" || v === "clip"
+            )
+        )
+            return false;
+        const box = n.getBoundingClientRect();
+        return (
+            own.left - reach < box.left ||
+            own.top - reach < box.top ||
+            own.right + reach > box.right ||
+            own.bottom + reach > box.bottom
+        );
+    });
     const { boxShadow } = cs;
     const focusVisible = el.matches(":focus-visible");
     const focusedBorders = borders();
+    const focusedShadows = shadows();
     el.blur();
     const idleBorders = borders();
+    const idleShadows = shadows();
     const idleStyle = getComputedStyle(el);
     const idle = {
         outline: `${idleStyle.outlineStyle} ${Number.parseFloat(idleStyle.outlineWidth)}px ${idleStyle.outlineColor}`,
@@ -166,6 +192,7 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
         who: `<${el.tagName.toLowerCase()}> "${el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30) ?? ""}"`,
         focusVisible,
         outline,
+        outlineClipped,
         boxShadow,
         idle,
         parentBackground: backgroundStack(el.parentElement),
@@ -175,6 +202,9 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
             idleBorder: idleBorders[i],
             borderWidth: Number.parseFloat(getComputedStyle(n).borderTopWidth),
             background: backgroundStack(n),
+            focusedShadow: focusedShadows[i],
+            idleShadow: idleShadows[i],
+            outerBackground: backgroundStack(n.parentElement),
         })),
     };
 }
@@ -290,6 +320,7 @@ function findRing(facts: StopFacts): Ring | null {
     const outlineText = `${outline.style} ${outline.width}px ${outline.color}`;
     const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (
+        !facts.outlineClipped &&
         outline.width > 0 &&
         outline.style !== "none" &&
         isVisibleColor(outline.color) &&
@@ -301,6 +332,12 @@ function findRing(facts: StopFacts): Ring | null {
             flush: outline.offset <= 0,
         };
     if (shadow) return { ...shadow, background };
+    for (const w of facts.wrappers) {
+        const ring =
+            w.focusedShadow !== w.idleShadow && outerShadow(w.focusedShadow);
+        if (ring)
+            return { ...ring, background: w.outerBackground, flush: false };
+    }
     const wrapper = facts.wrappers.find(
         (w) => w.borderWidth > 0 && w.focusedBorder !== w.idleBorder
     );
