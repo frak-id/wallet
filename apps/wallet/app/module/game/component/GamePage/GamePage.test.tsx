@@ -228,7 +228,7 @@ describe("GamePage", () => {
             })
         ).toHaveAttribute("href", "/profile/referral/share");
         expect(
-            screen.getByText("game.page.missions.rewardPerFriend:1")
+            screen.getByText("game.page.missions.rewardPerFriend:2")
         ).toBeInTheDocument();
         expect(
             screen.queryByText("game.page.missions.instagram.certified.title")
@@ -286,10 +286,10 @@ describe("GamePage", () => {
             name: /game.page.missions.instagram.none.title/,
         });
         expect(gate).toHaveAttribute("href", "/profile/instagram");
-        expect(gate).toHaveTextContent("game.page.missions.reward:2");
+        expect(gate).toHaveTextContent("game.page.missions.reward:1");
     });
 
-    it("offers a declared player the +2 to certify, their tickets already counting", () => {
+    it("offers a declared player the +1 to certify, their tickets already counting", () => {
         currentGame.data = player(1, true, "declared");
         render(<GamePage />);
 
@@ -298,7 +298,7 @@ describe("GamePage", () => {
             name: /game.page.missions.instagram.declared.title/,
         });
         expect(certify).toHaveAttribute("href", "/profile/instagram");
-        expect(certify).toHaveTextContent("game.page.missions.reward:2");
+        expect(certify).toHaveTextContent("game.page.missions.reward:1");
     });
 
     it("tells a certified non-follower to follow again", () => {

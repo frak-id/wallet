@@ -363,7 +363,7 @@
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code",
-                "gameHint": "Jeu Frak : 1 ticket par ami inscrit avec ton code, une fois son Instagram connecté et @frak_fr suivi."
+                "gameHint": "Jeu Frak : 2 tickets par ami inscrit avec ton code, une fois son Instagram connecté et @frak_fr suivi."
             },
             "edit": {
                 "title": "Modifier mon code",
@@ -980,7 +980,7 @@
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "1 ticket par ami inscrit avec ton code qui a connecté son Instagram, et 1 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque."
+                    "description": "2 tickets par ami inscrit avec ton code qui a connecté son Instagram, et 2 par ami avec un porte-monnaie Frak qui ouvre ton partage d'une marque."
                 },
                 "purchase": {
                     "title": "Achète chez une marque partenaire",
@@ -988,7 +988,7 @@
                 },
                 "follow": {
                     "title": "Active tes tickets avec Instagram",
-                    "description": "Suis <igLink>@frak_fr</igLink>, puis indique ton @ : tes tickets comptent au tirage. Connecte ton compte pour 2 tickets de plus. Tiré au sort sans l'avoir connecté ? Tu as 24 h pour le faire, sinon un autre gagnant est tiré."
+                    "description": "Suis <igLink>@frak_fr</igLink>, puis indique ton @ : tes tickets comptent au tirage. Connecte ton compte pour 1 ticket de plus. Tiré au sort sans l'avoir connecté ? Tu as 24 h pour le faire, sinon un autre gagnant est tiré."
                 }
             },
             "bonus": {
@@ -1091,7 +1091,8 @@
                     },
                     "declared": {
                         "title": "Connecter ton Instagram",
-                        "hint": "Tes tickets comptent. Connecte-le pour {{amount}} tickets de plus, sinon tu devras le faire en 24 h si tu es tiré au sort."
+                        "hint_one": "Tes tickets comptent. Connecte-le pour {{count}} ticket de plus, sinon tu devras le faire en 24 h si tu es tiré au sort.",
+                        "hint_other": "Tes tickets comptent. Connecte-le pour {{count}} tickets de plus, sinon tu devras le faire en 24 h si tu es tiré au sort."
                     },
                     "notFollowing": {
                         "title": "Suivre à nouveau @frak_fr",
@@ -1220,7 +1221,7 @@
         "mobileOnly": "Ouvre cette page sur ton téléphone : les messages Instagram ne s'ouvrent que dans l'app Instagram.",
         "certify": {
             "title": "Connecte ton Instagram",
-            "perks": "+2 tickets à chaque jeu, et ton gain de bienvenue débloqué.",
+            "perks": "+1 ticket à chaque jeu, et ton gain de bienvenue débloqué.",
             "codeLabel": "Ton code",
             "copy": "Copier le code",
             "copied": "Copié",
@@ -1252,7 +1253,7 @@
         },
         "linked": {
             "badge": "Connecté",
-            "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 2 tickets de plus à chaque jeu.",
+            "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 1 ticket de plus à chaque jeu.",
             "notFollowing": "Dernière étape : abonne-toi à @frak_fr pour que tes tickets comptent.",
             "follow": "S'abonner à @frak_fr",
             "checkAgain": "Vérifier à nouveau",

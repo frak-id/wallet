@@ -70,7 +70,7 @@ function instagramOf({ instagram, eligible }: Me): Mission {
             title: "game.page.missions.instagram.declared.title",
             hint: {
                 key: "game.page.missions.instagram.declared.hint",
-                values: { amount: reward },
+                values: { count: reward },
             },
         };
     }

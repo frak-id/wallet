@@ -588,7 +588,8 @@ export default interface Resources {
               "title": "Instagram connected"
             },
             "declared": {
-              "hint": "Your tickets count. Connect it for {{amount}} more tickets, or you'll have to do it within 24 h if you're drawn.",
+              "hint_one": "Your tickets count. Connect it for {{count}} more ticket, or you'll have to do it within 24 h if you're drawn.",
+              "hint_other": "Your tickets count. Connect it for {{count}} more tickets, or you'll have to do it within 24 h if you're drawn.",
               "title": "Connect your Instagram"
             },
             "none": {
@@ -726,7 +727,7 @@ export default interface Resources {
         "hint": "The button copies your code and opens the chat with @frak_fr: paste it and send it.",
         "notYet": "Nothing yet. Check that you sent {{code}} to @frak_fr.",
         "open": "Send my code on Instagram",
-        "perks": "+2 tickets in every game, and your welcome reward unlocked.",
+        "perks": "+1 ticket in every game, and your welcome reward unlocked.",
         "title": "Connect your Instagram",
         "unavailable": "Connecting isn't available yet. Add your @ for now.",
         "waiting": "Checking for your message…"
@@ -752,7 +753,7 @@ export default interface Resources {
       "linked": {
         "badge": "Connected",
         "checkAgain": "Check again",
-        "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets in every game.",
+        "counting": "You follow @frak_fr: your tickets count in the draw, with 1 more ticket in every game.",
         "done": "Done",
         "follow": "Follow @frak_fr",
         "notFollowing": "Last step: follow @frak_fr so your tickets count.",
@@ -1022,12 +1023,12 @@ export default interface Resources {
         "rules": {
           "description": "Collect tickets: a random draw picks the winner when the game ends.",
           "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 2 more tickets. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn.",
+            "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 1 more ticket. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn.",
             "title": "Activate your tickets with Instagram"
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "1 ticket per friend who signs up with your code and connects their Instagram, and 1 per friend with a Frak wallet who opens your share of a brand.",
+            "description": "2 tickets per friend who signs up with your code and connects their Instagram, and 2 per friend with a Frak wallet who opens your share of a brand.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
@@ -1802,7 +1803,7 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
-          "gameHint": "Frak Game: 1 ticket per friend who signs up with your code, once they connect their Instagram and follow @frak_fr.",
+          "gameHint": "Frak Game: 2 tickets per friend who signs up with your code, once they connect their Instagram and follow @frak_fr.",
           "modifyCta": "Modify my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",

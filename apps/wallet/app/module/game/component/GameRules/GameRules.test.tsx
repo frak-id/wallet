@@ -66,10 +66,10 @@ describe("GameRules", () => {
             screen.getByText("onboarding.game.bonus.pending")
         ).toBeInTheDocument();
         expect(
-            screen.getByText('game.page.missions.reward {"count":2}')
+            screen.getByText('game.page.missions.reward {"count":1}')
         ).toBeInTheDocument();
         expect(
-            screen.getByText('game.page.missions.rewardPerFriend {"count":1}')
+            screen.getByText('game.page.missions.rewardPerFriend {"count":2}')
         ).toBeInTheDocument();
         expect(
             screen.getByText("onboarding.game.rules.purchase.title")
