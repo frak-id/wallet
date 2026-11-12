@@ -111,6 +111,12 @@ export const tabsTrigger = recipe({
     },
 });
 
+// Radix makes the panel a tab stop, so keyboard users can reach panels with nothing focusable inside.
 export const tabsContent = style({
     outline: "none",
+    selectors: {
+        "&:focus-visible": {
+            boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        },
+    },
 });
