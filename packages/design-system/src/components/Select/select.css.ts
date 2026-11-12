@@ -44,7 +44,7 @@ const triggerBase = style({
 export const triggerLength = recipe({
     variants: {
         length: {
-            medium: { width: "320px" },
+            medium: { width: "320px", maxWidth: "100%" },
             big: { width: "100%" },
         },
     },
