@@ -12,17 +12,7 @@ export const knownFindings: Record<string, string> = {
         'length="medium" is a fixed 320px, wider than the 288px a 320px viewport leaves after page padding',
     "overflow:select:length medium":
         'length="medium" is a fixed 320px, wider than the 288px a 320px viewport leaves after page padding',
-    "overflow:badge:worst: unbreakable email":
-        "Badge is nowrap with no truncation",
-    "overflow:badge:worst: long sentence": "Badge is nowrap with no truncation",
-    "overflow:badge:worst: non-Latin and emoji":
-        "Badge is nowrap with no truncation",
 
     "clip:button:worst: long sentence": `Button: ${FIXED_HEIGHT}`,
     "clip:empty-state:worst: long sentence": `The action is a large Button: ${FIXED_HEIGHT}`,
-
-    "overflow:toast-surface:worst: unbreakable email":
-        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
-    "overflow:toast-surface:worst: long sentence":
-        "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
 };

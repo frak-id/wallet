@@ -1,11 +1,22 @@
+import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias } from "../../tokens.css";
+
+export const badgeLabel = style({
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    // Glyphs are taller than a tight line-height: grow the clip box, not the layout
+    paddingBlock: "0.2em",
+    marginBlock: "-0.2em",
+});
 
 export const badgeVariants = recipe({
     base: {
         display: "inline-flex",
         alignItems: "center",
+        maxWidth: "100%",
         borderRadius: alias.cornerRadius.full,
         fontWeight: 600,
         whiteSpace: "nowrap" as const,
