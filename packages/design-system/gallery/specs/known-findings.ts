@@ -37,8 +37,6 @@ export const knownFindings: Record<string, string> = {
     "clip:empty-state:worst: long sentence": `The action is a large Button: ${FIXED_HEIGHT}`,
     "clip:card:worst: unbreakable email": `Card clips its content (overflow: hidden, for the rounded corners): ${NO_WRAP}`,
 
-    "focus:tabs:panel":
-        "TabsContent is a tabindex=0 panel and tabsContent sets outline: none, so focus is invisible",
     "overflow:toast-surface:worst: unbreakable email":
         "ConfirmationTooltip lays its label out with Inline wrap={false}, so the pill never wraps",
     "overflow:toast-surface:worst: long sentence":
