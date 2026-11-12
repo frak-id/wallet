@@ -50,7 +50,7 @@ export function SelectTrigger({
 
     return (
         <SelectPrimitive.Trigger ref={ref} className={combined} {...props}>
-            {children}
+            <span className={selectStyles.value}>{children}</span>
             <SelectPrimitive.Icon asChild>
                 <ChevronDownIcon
                     width={24}
