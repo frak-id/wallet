@@ -1217,6 +1217,7 @@
         "title": "Frak Game draw",
         "phase": {
             "scheduled": "The draw takes place on {{date}}.",
+            "drawing": "The draw is in progress. The result arrives in a few minutes.",
             "checking": "The draw has happened. We are checking the winner.",
             "confirmed": "The winner is confirmed.",
             "noWinner": "No winner for this game."
@@ -1230,7 +1231,6 @@
             "won": "You won!",
             "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
             "pid": "Your id",
-            "copy": "Copy",
             "copied": "Copied",
             "copyLabel": "Copy your full id"
         },

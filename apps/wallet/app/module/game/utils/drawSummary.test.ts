@@ -46,6 +46,40 @@ describe("summarizeDraw", () => {
         expect(summary.drand.published).toBe(true);
     });
 
+    it("reads a frozen draw whose round time has passed as being drawn", () => {
+        const summary = summarizeDraw(
+            publicDraw({
+                status: "frozen",
+                drand: {
+                    ...publicDraw().drand,
+                    signature: null,
+                    randomness: null,
+                },
+            }),
+            undefined,
+            new Date("2026-10-10T19:10:01Z")
+        );
+
+        expect(summary.phase).toBe("drawing");
+    });
+
+    it("keeps a frozen draw scheduled while its round time is ahead", () => {
+        const summary = summarizeDraw(
+            publicDraw({
+                status: "frozen",
+                drand: {
+                    ...publicDraw().drand,
+                    signature: null,
+                    randomness: null,
+                },
+            }),
+            undefined,
+            new Date("2026-10-10T19:09:59Z")
+        );
+
+        expect(summary.phase).toBe("scheduled");
+    });
+
     it("reads a drawn draw as the winner being checked", () => {
         const summary = summarizeDraw(publicDraw({ status: "drawn" }));
 

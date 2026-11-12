@@ -4,7 +4,12 @@ import type {
 } from "@frak-labs/backend-elysia/domain/game/schemas";
 
 /** What the public record says about the draw, in the order a reader cares. */
-export type DrawPhase = "scheduled" | "checking" | "confirmed" | "noWinner";
+export type DrawPhase =
+    | "scheduled"
+    | "drawing"
+    | "checking"
+    | "confirmed"
+    | "noWinner";
 
 /** Keyed by the backend's status, so a new status fails to compile until placed. */
 const PHASE = {
@@ -84,8 +89,12 @@ export function summarizeDraw(
     now: Date = new Date()
 ): DrawSummary {
     const roundTime = new Date(draw.drand.roundTime);
+    const published = draw.drand.signature !== null || roundTime <= now;
     return {
-        phase: PHASE[draw.status],
+        phase:
+            draw.status === "frozen" && published
+                ? "drawing"
+                : PHASE[draw.status],
         participants: draw.participants,
         totalTickets: draw.totalTickets,
         frozenAt: new Date(draw.frozenAt),
@@ -93,7 +102,7 @@ export function summarizeDraw(
             chainHash: draw.drand.chainHash,
             round: draw.drand.round,
             roundTime,
-            published: draw.drand.signature !== null || roundTime <= now,
+            published,
         },
         winner: draw.winnerPid
             ? { pid: draw.winnerPid, short: shortPid(draw.winnerPid) }

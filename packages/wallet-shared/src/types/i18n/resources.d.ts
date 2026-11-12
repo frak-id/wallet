@@ -740,7 +740,6 @@ export default interface Resources {
       "me": {
         "chance": "Your chances",
         "copied": "Copied",
-        "copy": "Copy",
         "copyLabel": "Copy your full id",
         "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
         "pid": "Your id",
@@ -757,6 +756,7 @@ export default interface Resources {
       "phase": {
         "checking": "The draw has happened. We are checking the winner.",
         "confirmed": "The winner is confirmed.",
+        "drawing": "The draw is in progress. The result arrives in a few minutes.",
         "noWinner": "No winner for this game.",
         "scheduled": "The draw takes place on {{date}}."
       },

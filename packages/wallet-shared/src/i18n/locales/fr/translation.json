@@ -1217,6 +1217,7 @@
         "title": "Tirage du Jeu Frak",
         "phase": {
             "scheduled": "Le tirage aura lieu le {{date}}.",
+            "drawing": "Le tirage est en cours. Le résultat arrive dans quelques minutes.",
             "checking": "Le tirage a eu lieu. On vérifie le gagnant.",
             "confirmed": "Le gagnant est confirmé.",
             "noWinner": "Pas de gagnant pour ce jeu."
@@ -1230,7 +1231,6 @@
             "won": "Tu as gagné !",
             "notFound": "Ton identifiant n'est pas dans ce tirage. Soit tu n'as pas joué, soit tes tickets n'ont pas été comptés.",
             "pid": "Ton identifiant",
-            "copy": "Copier",
             "copied": "Copié",
             "copyLabel": "Copier ton identifiant complet"
         },
