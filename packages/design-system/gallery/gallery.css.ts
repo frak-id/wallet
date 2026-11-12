@@ -248,7 +248,7 @@ export const heroImage = style({
 export const toastFrame = style({
     backgroundColor: vars.surface.background2,
     border: `1px solid ${vars.border.subtle}`,
-    height: "96px",
+    height: "144px",
     maxWidth: "100%",
     position: "relative",
     width: "360px",
