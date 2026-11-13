@@ -9,6 +9,7 @@ export const periodRow = style({
     display: "flex",
     gap: alias.spacing.m,
     alignItems: "center",
+    flexWrap: "wrap",
     width: "100%",
     selectors: {
         "&&": {
@@ -19,8 +20,7 @@ export const periodRow = style({
 
 export const periodOption = style({
     display: "flex",
-    flex: 1,
-    minWidth: 0,
+    flex: "1 1 auto",
     alignItems: "center",
     gap: alias.spacing.m,
     padding: alias.spacing.m,
@@ -107,6 +107,7 @@ export const scheduleRow = style({
     display: "flex",
     gap: alias.spacing.m,
     alignItems: "flex-start",
+    flexWrap: "wrap",
     width: "100%",
     selectors: {
         "&&": {
@@ -117,8 +118,7 @@ export const scheduleRow = style({
 
 export const scheduleOption = style({
     display: "flex",
-    flex: 1,
-    minWidth: 0,
+    flex: "1 1 160px",
     gap: alias.spacing.m,
     alignItems: "center",
     padding: `${alias.spacing.m} ${alias.spacing.m} ${alias.spacing.m} 0`,
