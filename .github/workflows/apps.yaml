@@ -149,6 +149,7 @@ jobs:
               - 'packages/design-system/**'
               - 'packages/app-essentials/**'
               - 'packages/ui-preview/**'
+              - 'packages/dev-tooling/**'
               - 'sdk/core/**'
               - 'sdk/react/**'
               - 'sdk/components/**'
@@ -168,6 +169,7 @@ jobs:
               - 'packages/rpc/**'
               - 'packages/ui-preview/**'
               - 'packages/test-foundation/**'
+              - 'packages/dev-tooling/**'
               - 'sdk/core/**'
               - 'sdk/react/**'
               - 'bun.lock'
@@ -185,7 +187,9 @@ jobs:
               - '.github/workflows/apps.yaml'
             # Filtered on what the gate scripts read, not on where they live.
             # `check:safe-area` walks every `.css.ts` under apps/packages/sdk/
-            # example; the three deep-link/floor checks read `src-tauri`.
+            # example; the deep-link/floor checks read `src-tauri`;
+            # `check:bun-version` reads the `apps/*` and `services/*` Dockerfiles;
+            # the comment budget scans every root in `scripts/check-comments.ts`.
             #
             # No `!` entries: in paths-filter a negation is a rule matching
             # everything outside that path, not an exclusion from the includes
@@ -199,6 +203,10 @@ jobs:
               - 'sdk/components/**'
               - 'sdk/legacy/**'
               - 'example/**'
+              - 'sdk/android/**'
+              - 'sdk/ios/**'
+              - 'services/**'
+              - 'infra/**'
               - 'scripts/**'
               - 'package.json'
               - '.github/workflows/tauri-mobile-release.yml'
@@ -462,11 +470,13 @@ jobs:
           --project scripts-unit
 
   # ── Repo-wide gates ─────────────────────────────────────
-  # The four `check:*` scripts inside `bun run lint`, each guarding an invariant
-  # that regressed silently before it existed.
+  # The `check:*` scripts inside `bun run lint` and the comment budget, each
+  # guarding an invariant that regressed silently before it existed.
   #
   # Not `bun run lint`: that re-runs `check:i18n-types` and `check:publishable`,
-  # which the Types and SDK jobs own. One step per gate attributes the failure.
+  # which the Types and SDK jobs own, and `check:store-notes`, which runs in
+  # `tauri-mobile-release.yml` where the notes ship. One step per gate attributes
+  # the failure.
   gates:
     name: "🚧 Repo gates"
     runs-on: ubuntu-latest
@@ -490,10 +500,19 @@ jobs:
       # `.css.ts` must go through the design-system token.
       - name: "📐 Safe-area token"
         run: bun run check:safe-area
-      # No TypeScript comment budget here: `check-comments.ts` defaults to the Kotlin
-      # and Swift roots (gated in the native jobs below) because biome owns the TS
-      # tree, and pointing it at TS surfaces hundreds of pre-existing findings with no
-      # baseline behind them. Gating that needs a paydown first, not a CI step.
+      # The committed theme block and post-purchase module must hold the prod
+      # origins: `shopify app deploy` uploads the working tree.
+      - name: "🛍️ Shopify stage artifacts"
+        run: bun run check:shopify-stage
+      - name: "🛍️ Shopify extension API version"
+        run: bun run check:shopify-api-version
+      # setup-bun reads `packageManager`; the seven Dockerfiles pin their own Bun.
+      - name: "🍞 Bun version pins"
+        run: bun run check:bun-version
+      # Per-file ceiling in `scripts/comment-budget-baseline.json`: a file may only
+      # get better. No arguments, so it scans every default root.
+      - name: "💬 Comment budget"
+        run: bun run lint:comments
 
   # ── Infra ───────────────────────────────────────────────
   # `infra/` has no `package.json`, so `bun run --filter '*' typecheck` cannot reach
@@ -563,9 +582,13 @@ jobs:
       - name: "🔎 Generated i18n types drift"
         run: bun run check:i18n-types
 
-  # ── Listener ────────────────────────────────────────────
-  listener-eager-budget:
-    name: "📏 Listener · Eager bundle budget"
+  # ── App production builds ───────────────────────────────
+  # `assertBundleEsVersion` (every app) and `assertEagerBundleBudget` (listener,
+  # wallet standalone pages) are vite plugins, so only a production build runs
+  # them. Each app builds only when its own filter fired. No secrets needed: every
+  # build passes with all build-time values unset.
+  app-builds:
+    name: "📏 Apps · Production builds & bundle gates"
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.ts == 'true'
@@ -577,18 +600,28 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
-      # The listener imports `@frak-labs/core-sdk` / `@frak-labs/frame-connector`
-      # from their built `dist/`, so the SDK must be built before the app build
-      # can resolve them (mirrors the deploy workflow).
+      # The apps import `@frak-labs/core-sdk` / `@frak-labs/frame-connector`
+      # from their built `dist/`, so the SDK must be built first (mirrors the
+      # Dockerfiles).
       - name: "🔨 Build the SDK"
         run: bun run build:sdk
-      # The `assert-eager-bundle-budget` writeBundle plugin (apps/listener/
-      # vite.config.ts) fails the build when the eager boot JS — the entry
-      # <script> plus its <link rel=modulepreload> set — exceeds 32 KB gz, so a
-      # lazy chunk leaking into the eager path trips the budget here instead of
-      # shipping on every iframe boot.
-      - name: "📏 Build listener & assert eager budget"
+      # Fails above 32 KB gz of eager boot JS: the entry <script> plus its
+      # <link rel=modulepreload> set, loaded on every merchant iframe boot.
+      - name: "📏 Listener"
         run: bun run --cwd apps/listener build
+      # SPA, service worker and the standalone /sharing + /install pages. The
+      # standalone half repeats what `wallet-pages` builds; the SPA and the
+      # service worker are built nowhere else before deploy.
+      - name: "👛 Wallet"
+        if: needs.changes.outputs.wallet == 'true'
+        run: bun run --cwd apps/wallet build
+      # Its eager budget is warn-only (`enforce: false`); the ES floor check is not.
+      - name: "📊 Business"
+        if: needs.changes.outputs.business == 'true'
+        run: bun run --cwd apps/business build
+      - name: "🛍️ Shopify"
+        if: needs.changes.outputs.appsSmall == 'true'
+        run: bun run --cwd apps/shopify build
 
   # ── Wallet standalone pages ─────────────────────────────
   # `/sharing` and `/install` are what the iOS and Android SDKs render inside their
@@ -793,8 +826,8 @@ jobs:
       - name: "📏 Lint (ktlint)"
         run: bun run --cwd sdk/android lint
 
-      # Kotlin sits outside biome; the budget's own gate for it lives here
-      # (Swift runs in the ios-sdk job, which this job's filter can skip).
+      # Kotlin sits outside biome. `gates` scans these roots too; this step repeats
+      # them so a Kotlin budget failure shows up in the SDK job.
       - name: "🗒️ Comment budget (Kotlin)"
         run: bun run lint:comments -- sdk/android/frak-sdk/src sdk/android/frak-sdk-ui/src example/native-android/app/src
 
@@ -841,8 +874,8 @@ jobs:
       - name: "📏 Lint (swift-format, strict)"
         run: bun run --cwd sdk/ios lint
 
-      # Swift is outside biome, and the android job — the other budget site —
-      # does not run on an iOS-only change, so the Swift roots are gated here.
+      # Swift sits outside biome. `gates` scans these roots too; this step repeats
+      # them so a Swift budget failure shows up in the SDK job.
       - name: "🗒️ Comment budget (Swift)"
         run: bun run lint:comments -- sdk/ios/Sources sdk/ios/Tests sdk/ios/Package.swift example/native-ios/Sources example/native-ios/Package.swift
 
