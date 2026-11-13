@@ -459,7 +459,9 @@ function readClipping(caseEl: Element) {
         if (x || y) return { x, y, tolerance: 1, verb: "cuts its text off" };
         // Under half a line is fallback-font glyph overshoot, which differs by OS.
         const halfLine = Number.parseFloat(cs.fontSize) / 2;
+        // An inline box has no height to spill out of; Firefox still gives it a scrollHeight.
         if (
+            cs.display !== "inline" &&
             cs.overflowY === "visible" &&
             box.scrollHeight > box.clientHeight + 1
         )
