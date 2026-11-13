@@ -8,7 +8,7 @@ import { createIframe, getSupportedCurrency } from "../utils";
  * Return when the FrakClient is ready (setup and communication estbalished with the wallet)
  *
  * @param config - The configuration to use for the Frak Wallet SDK
- * @returns a Promise with the Frak Client
+ * @returns a Promise with the Frak Client, or `undefined` if the wallet iframe has not connected after the 30 s handshake deadline (the client is then detached and the hidden iframe stays on the page)
  *
  * @example
  * const frakConfig: FrakWalletSdkConfig = {
@@ -42,13 +42,13 @@ export async function setupClient({
         iframe,
     });
 
-    await client.waitForSetup;
-
-    const waitForConnection = await client.waitForConnection;
-    if (!waitForConnection) {
+    if (!(await client.waitForConnection)) {
         console.error("Failed to connect to client");
+        await client.destroy({ detachOnly: true });
         return;
     }
+
+    await client.waitForSetup;
 
     return client;
 }

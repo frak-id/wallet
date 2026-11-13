@@ -1,4 +1,4 @@
-import { FrakRpcError } from "./error";
+import { FrakRpcError, RpcErrorCodes } from "./error";
 import type {
     ExtractedParametersFromRpc,
     ExtractedSpecificParametersFromRpc,
@@ -9,6 +9,7 @@ import type {
 import type {
     LifecycleHandler,
     LifecycleMessage,
+    RpcError,
     RpcMessage,
     RpcMiddleware,
     RpcMiddlewareContext,
@@ -102,11 +103,18 @@ export type RpcClient<
      * Used for methods with ResponseType: "stream"
      * Returns an unsubscribe function
      *
+     * `onError` is called once, and the stream closes, when the request cannot
+     * be sent (a throwing `onRequest` middleware), the wallet answers with an
+     * error, or an `onResponse` middleware throws. Wallet errors arrive as a
+     * `FrakRpcError`. It is not called after unsubscribing.
+     *
      * @example
      * ```ts
-     * const unsubscribe = client.listen('frak_listenToWalletStatus', (status) => {
-     *   console.log('Status:', status)
-     * })
+     * const unsubscribe = client.listen(
+     *   { method: 'frak_listenToWalletStatus' },
+     *   (status) => console.log('Status:', status),
+     *   (error) => console.error('Stream failed:', error)
+     * )
      *
      * // Later, unsubscribe
      * unsubscribe()
@@ -114,7 +122,8 @@ export type RpcClient<
      */
     listen: <TMethod extends ExtractMethod<TSchema>>(
         args: ExtractedSpecificParametersFromRpc<TSchema, TMethod>,
-        callback: (result: ExtractReturnType<TSchema, TMethod>) => void
+        callback: (result: ExtractReturnType<TSchema, TMethod>) => void,
+        onError?: (error: unknown) => void
     ) => () => void;
 
     /**
@@ -134,6 +143,10 @@ export type RpcClient<
      */
     cleanup: () => void;
 };
+
+function toFrakRpcError(error: RpcError): FrakRpcError<unknown> {
+    return new FrakRpcError(error.code, error.message, error.data);
+}
 
 /**
  * Channel callback function type
@@ -167,9 +180,11 @@ type ChannelCallback = (response: RpcResponse) => void;
  * const result = await client.request('frak_sendInteraction', [productId, interaction])
  *
  * // Listener
- * const unsubscribe = client.listen('frak_listenToWalletStatus', (status) => {
- *   console.log('Wallet status:', status)
- * })
+ * const unsubscribe = client.listen(
+ *   { method: 'frak_listenToWalletStatus' },
+ *   (status) => console.log('Wallet status:', status),
+ *   (error) => console.error('Listener failed:', error)
+ * )
  * ```
  */
 export function createRpcClient<
@@ -347,7 +362,15 @@ export function createRpcClient<
             );
         } catch (error) {
             console.error("[RPC Client] Middleware error on response:", error);
-            return;
+            processedResponse = {
+                error: {
+                    code: RpcErrorCodes.internalError,
+                    message:
+                        error instanceof Error
+                            ? error.message
+                            : "Response middleware failed",
+                },
+            };
         }
 
         // Find and call the callback for this channel
@@ -397,13 +420,7 @@ export function createRpcClient<
         // Create callback that resolves/rejects the deferred and closes the channel
         const callback = (response: RpcResponse) => {
             if (response.error) {
-                deferred.reject(
-                    new FrakRpcError(
-                        response.error.code,
-                        response.error.message,
-                        response.error.data
-                    )
-                );
+                deferred.reject(toFrakRpcError(response.error));
             } else {
                 deferred.resolve(
                     response.result as ExtractReturnType<TSchema, TMethod>
@@ -435,9 +452,11 @@ export function createRpcClient<
      */
     function listen<TMethod extends ExtractMethod<TSchema>>(
         args: ExtractedParametersFromRpc<TSchema>,
-        callback: (result: ExtractReturnType<TSchema, TMethod>) => void
+        callback: (result: ExtractReturnType<TSchema, TMethod>) => void,
+        onError?: (error: unknown) => void
     ): () => void {
         const id = generateId();
+        let closed = false;
 
         // Create callback that calls user's callback for each response
         const channelCallback = (response: RpcResponse) => {
@@ -445,6 +464,7 @@ export function createRpcClient<
                 console.error("[RPC Client] Listener error:", response.error);
                 // Close channel on error
                 activeChannels.delete(id);
+                onError?.(toFrakRpcError(response.error));
             } else {
                 // Call user's callback with the result
                 callback(
@@ -467,10 +487,12 @@ export function createRpcClient<
                 error
             );
             activeChannels.delete(id);
+            if (!closed) onError?.(error);
         });
 
         // Return unsubscribe function that closes the channel
         return () => {
+            closed = true;
             activeChannels.delete(id);
         };
     }

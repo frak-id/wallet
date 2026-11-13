@@ -95,6 +95,14 @@ export async function createIFrameFrakClient({
         );
     }
 
+    // Resolves false at the handshake deadline.
+    const waitForConnection = Promise.race([
+        lifecycleManager.isConnected,
+        new Promise<false>((resolve) =>
+            setTimeout(() => resolve(false), HANDSHAKE_TIMEOUT_MS)
+        ),
+    ]);
+
     const rpcClient = createRpcClient<IFrameRpcSchema, FrakLifecycleEvent>({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
@@ -102,7 +110,17 @@ export async function createIFrameFrakClient({
         middleware: [
             {
                 async onRequest(_message, ctx) {
-                    const isConnected = await lifecycleManager.isConnected;
+                    if (!iframe.isConnected) {
+                        throw new FrakRpcError(
+                            RpcErrorCodes.clientNotConnected,
+                            "The Frak iframe was removed from the page"
+                        );
+                    }
+                    // Raced again so a late `connected` still serves later requests.
+                    const isConnected = await Promise.race([
+                        lifecycleManager.isConnected,
+                        waitForConnection,
+                    ]);
                     if (!isConnected) {
                         throw new FrakRpcError(
                             RpcErrorCodes.clientNotConnected,
@@ -127,7 +145,7 @@ export async function createIFrameFrakClient({
         },
     });
 
-    const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
+    const stopHeartbeat = setupHeartbeat(rpcClient, waitForConnection);
 
     // Assigned by `postConnectionSetup`, which runs after `destroy` is built.
     let stopFreshnessRepush: (() => void) | undefined;
@@ -235,7 +253,7 @@ export async function createIFrameFrakClient({
 
     return {
         config,
-        waitForConnection: lifecycleManager.isConnected,
+        waitForConnection,
         waitForSetup,
         request: rpcClient.request,
         listenerRequest: rpcClient.listen,
@@ -244,14 +262,13 @@ export async function createIFrameFrakClient({
     };
 }
 
-/** Ping until the iframe answers, then stop; returns the teardown. */
+/** Ping until the iframe answers or the handshake deadline passes; returns the teardown. */
 function setupHeartbeat(
     rpcClient: SdkRpcClient,
-    lifecycleManager: IframeLifecycleManager
+    waitForConnection: Promise<boolean>
 ) {
     const HEARTBEAT_INTERVAL = 250; // Fallback discovery ping until we are connected
     let heartbeatInterval: NodeJS.Timeout;
-    let timeoutId: NodeJS.Timeout;
 
     const sendHeartbeat = () =>
         rpcClient.sendLifecycle({
@@ -262,18 +279,13 @@ function setupHeartbeat(
         sendHeartbeat();
         heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
-        timeoutId = setTimeout(stopHeartbeat, HANDSHAKE_TIMEOUT_MS);
-
-        await lifecycleManager.isConnected;
+        await waitForConnection;
         stopHeartbeat();
     }
 
     function stopHeartbeat() {
         if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
-        }
-        if (timeoutId) {
-            clearTimeout(timeoutId);
         }
     }
 

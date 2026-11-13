@@ -206,7 +206,7 @@ describe("setupClient", () => {
             await expect(connectionPromise).resolves.toBe(true);
         });
 
-        test("should return undefined when connection fails", async () => {
+        test("returns undefined and detaches the client when the handshake times out", async () => {
             const { setupClient } = await import("./setupClient");
             const { createIframe } = await import("../utils");
             const { createIFrameFrakClient } = await import(
@@ -215,8 +215,9 @@ describe("setupClient", () => {
 
             const mockIframe = document.createElement("iframe");
             const mockClient = {
-                waitForSetup: Promise.resolve(),
+                waitForSetup: new Promise<void>(() => {}),
                 waitForConnection: Promise.resolve(false),
+                destroy: vi.fn(async () => {}),
             };
 
             vi.mocked(createIframe).mockResolvedValue(mockIframe);
@@ -233,6 +234,9 @@ describe("setupClient", () => {
             const result = await setupClient({ config });
 
             expect(result).toBeUndefined();
+            expect(mockClient.destroy).toHaveBeenCalledExactlyOnceWith({
+                detachOnly: true,
+            });
         });
 
         test("should return client when setup successful", async () => {
