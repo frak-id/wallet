@@ -129,11 +129,12 @@ export async function createIFrameFrakClient({
     // not exist yet at that point.
     let destroyed = false;
 
-    const destroy = async () => {
+    const destroy = async (options?: { detachOnly?: boolean }) => {
         destroyed = true;
         stopHeartbeat();
         stopFreshnessRepush?.();
         rpcClient.cleanup();
+        if (options?.detachOnly) return;
         iframe.remove();
         clearAllCache();
         sdkConfigStore.clearCache();

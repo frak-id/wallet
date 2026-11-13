@@ -23,9 +23,9 @@ export type IFrameTransport = {
      */
     listenerRequest: RpcClient<IFrameRpcSchema, LifecycleMessage>["listen"];
     /**
-     * Tear down the iframe transport
+     * Tear down the iframe transport; `detachOnly` keeps the iframe and the cached merchant config, for callers that own the iframe
      */
-    destroy: () => Promise<void>;
+    destroy: (options?: { detachOnly?: boolean }) => Promise<void>;
 };
 
 /**
