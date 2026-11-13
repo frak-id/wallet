@@ -3,7 +3,7 @@ import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 type PasswordInputProps = {
     value: string;
@@ -36,12 +36,14 @@ export function PasswordInput({
     error,
 }: PasswordInputProps) {
     const [visible, setVisible] = useState(false);
+    const id = useId();
 
     return (
         <Stack space="xs">
             {label ? (
                 <Text
                     as="label"
+                    htmlFor={id}
                     variant="bodySmall"
                     weight="medium"
                     color="secondary"
@@ -50,6 +52,8 @@ export function PasswordInput({
                 </Text>
             ) : null}
             <Input
+                id={id}
+                aria-describedby={hint ? `${id}-hint` : undefined}
                 type={visible ? "text" : "password"}
                 variant="bare"
                 tone="muted"
@@ -74,7 +78,7 @@ export function PasswordInput({
                 }
             />
             {hint ? (
-                <Text variant="caption" color="tertiary">
+                <Text id={`${id}-hint`} variant="caption" color="tertiary">
                     {hint}
                 </Text>
             ) : null}
