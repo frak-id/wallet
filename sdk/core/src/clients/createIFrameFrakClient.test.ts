@@ -331,6 +331,74 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         }
     });
 
+    test("destroy({ detachOnly }) stops the client but keeps the iframe and the cached config", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe,
+        });
+        vi.mocked(sdkConfigStore.reset).mockClear();
+        await client.destroy({ detachOnly: true });
+
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+        expect(iframe.isConnected).toBe(true);
+        expect(sdkConfigStore.clearCache).not.toHaveBeenCalled();
+        expect(sdkConfigStore.reset).not.toHaveBeenCalled();
+    });
+
+    test("a client whose iframe left the DOM detaches instead of handling lifecycle events", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { createIFrameLifecycleManager } = await import(
+            "./transports/iframeLifecycleManager"
+        );
+        const iframe = makeIframe();
+        await createIFrameFrakClient({ config: baseConfig(), iframe });
+        const { lifecycleHandlers } =
+            vi.mocked(createRpcClient).mock.calls[0][0];
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        const { handleEvent } = vi.mocked(createIFrameLifecycleManager).mock
+            .results[0].value;
+        const event = { iframeLifecycle: "show" } as const;
+        const context = { origin: "https://wallet.frak.id", source: null };
+
+        lifecycleHandlers?.iframeLifecycle?.(event, context);
+        expect(handleEvent).toHaveBeenCalledTimes(1);
+
+        iframe.remove();
+        lifecycleHandlers?.iframeLifecycle?.(event, context);
+        expect(handleEvent).toHaveBeenCalledTimes(1);
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    test("destroy() still removes the iframe and clears the cached config", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe,
+        });
+        vi.mocked(sdkConfigStore.reset).mockClear();
+        await client.destroy();
+
+        expect(iframe.isConnected).toBe(false);
+        expect(sdkConfigStore.clearCache).toHaveBeenCalledTimes(1);
+        expect(sdkConfigStore.reset).toHaveBeenCalledTimes(1);
+    });
+
     test("removes the freshness listener when destroy wins the race against setup", async () => {
         const addSpy = vi.spyOn(document, "addEventListener");
         const removeSpy = vi.spyOn(document, "removeEventListener");
