@@ -16,15 +16,16 @@ usage() {
     cat <<'EOF'
 Usage:
   verify-business.sh doctor
-  verify-business.sh flow <flow.mjs> [--logged-out] [--locale en-US|fr-FR] [--width N] [--welcome] [--evidence DIR]
+  verify-business.sh flow <flow.mjs> [--logged-out] [--locale en-US|fr-FR] [--width N] [--welcome] [--webkit] [--evidence DIR]
 
 flow  starts apps/business with vite dev on a free port, opens /demo (demo mode:
       seeded demo session, data from apps/business/src/mock/*.json), runs the
-      flow in headless Chromium (visible with VERIFY_HEADED=1; Desktop Chrome,
-      1280 wide, en-US by default) with every off-origin request blocked, then
-      stops the server.
+      flow in headless Chromium (visible with VERIFY_HEADED=1; 1280 wide, en-US
+      by default) with every off-origin request blocked, then stops the server.
       --logged-out  skip /demo; the flow starts on /login with no session.
       --welcome     keep the "new dashboard" announcement; it is dismissed by default.
+      --webkit      run in Playwright's WebKit (Desktop Safari profile, screenshots
+                    at 2x) instead of Chromium (Desktop Chrome profile).
 Evidence goes to a NEW directory (default .pi/verify-evidence/<utc>-business-<label>);
 an existing directory is refused. verdict.txt is written last.
 EOF
@@ -73,6 +74,9 @@ doctor() {
     exe=$(cd "$PLAYWRIGHT_HOME" && node -p 'require("@playwright/test").chromium.executablePath()' 2>/dev/null || true)
     [ -n "$exe" ] && [ -e "$exe" ] && say ok "chromium for playwright $pw" \
         || say FAIL "chromium missing for playwright $pw: (cd apps/wallet && bunx playwright install chromium)"
+    exe=$(cd "$PLAYWRIGHT_HOME" && node -p 'require("@playwright/test").webkit.executablePath()' 2>/dev/null || true)
+    [ -n "$exe" ] && [ -e "$exe" ] && say ok "webkit for playwright $pw (--webkit)" \
+        || say warn "webkit missing for playwright $pw, only --webkit needs it: (cd apps/wallet && bunx playwright install webkit)"
     [ -f "$BUSINESS/src/routes/demo.tsx" ] && say ok "demo route present (src/routes/demo.tsx)" || say FAIL "apps/business/src/routes/demo.tsx missing: demo mode is gone, flows cannot log in"
     [ -f "$BUSINESS/src/mock/campaigns.json" ] && say ok "demo data present (src/mock/*.json)" || say FAIL "apps/business/src/mock/campaigns.json missing"
     return $ok
@@ -105,7 +109,7 @@ start_server() { # $1 = port
 }
 
 cmd_flow() {
-    local flow=${1:-} evidence="" auth=demo locale=en-US width=1280 welcome=0
+    local flow=${1:-} evidence="" auth=demo locale=en-US width=1280 welcome=0 browser=chromium
     [ -n "$flow" ] || { usage; exit 2; }
     shift
     while [ $# -gt 0 ]; do
@@ -114,6 +118,7 @@ cmd_flow() {
         --locale) locale=$2; shift ;;
         --width) width=$2; shift ;;
         --welcome) welcome=1 ;;
+        --webkit) browser=webkit ;;
         --evidence) evidence=$2; shift ;;
         *) die "unknown flow option: $1" ;;
         esac
@@ -126,7 +131,7 @@ cmd_flow() {
     start_server "$(free_port)"
     local rc=0
     BUSINESS_URL="$URL" PLAYWRIGHT_HOME="$PLAYWRIGHT_HOME" EVIDENCE_DIR="$EVIDENCE" VERIFY_AUTH="$auth" \
-        VERIFY_LOCALE="$locale" VERIFY_WIDTH="$width" VERIFY_WELCOME="$welcome" \
+        VERIFY_LOCALE="$locale" VERIFY_WIDTH="$width" VERIFY_WELCOME="$welcome" VERIFY_BROWSER="$browser" \
         node --no-warnings "$SCRIPT_DIR/drive.mjs" "$flow" || rc=$?
     [ -f "$EVIDENCE/verdict.txt" ] || echo "FAIL driver exited $rc without a verdict" >"$EVIDENCE/verdict.txt"
     cat "$EVIDENCE/verdict.txt"
