@@ -1,7 +1,7 @@
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { maxValidUntil } from "@/module/recovery-setup/utils/recoveryDates";
 
@@ -37,6 +37,7 @@ export function ValidityDateFields({
     errorMessage,
 }: ValidityDateFieldsProps) {
     const { t } = useTranslation();
+    const id = useId();
     const today = useMemo(() => toDateInputValue(new Date()), []);
     const maxDate = useMemo(
         () => toDateInputValue(new Date(maxValidUntil() * 1000)),
@@ -48,6 +49,7 @@ export function ValidityDateFields({
             <Stack space="xs">
                 <Text
                     as="label"
+                    htmlFor={`${id}-start`}
                     variant="bodySmall"
                     weight="medium"
                     color="secondary"
@@ -55,6 +57,8 @@ export function ValidityDateFields({
                     {t("wallet.recoverySetup.password.startLabel")}
                 </Text>
                 <Input
+                    id={`${id}-start`}
+                    aria-describedby={`${id}-start-help`}
                     type="date"
                     variant="bare"
                     tone="muted"
@@ -64,7 +68,11 @@ export function ValidityDateFields({
                     value={startDate}
                     onChange={(event) => onStartChange(event.target.value)}
                 />
-                <Text variant="caption" color="tertiary">
+                <Text
+                    id={`${id}-start-help`}
+                    variant="caption"
+                    color="tertiary"
+                >
                     {t("wallet.recoverySetup.password.startHelp")}
                 </Text>
             </Stack>
@@ -72,6 +80,7 @@ export function ValidityDateFields({
             <Stack space="xs">
                 <Text
                     as="label"
+                    htmlFor={`${id}-end`}
                     variant="bodySmall"
                     weight="medium"
                     color="secondary"
@@ -79,6 +88,8 @@ export function ValidityDateFields({
                     {t("wallet.recoverySetup.password.endLabel")}
                 </Text>
                 <Input
+                    id={`${id}-end`}
+                    aria-describedby={`${id}-end-help`}
                     type="date"
                     variant="bare"
                     tone="muted"
@@ -88,7 +99,7 @@ export function ValidityDateFields({
                     value={endDate}
                     onChange={(event) => onEndChange(event.target.value)}
                 />
-                <Text variant="caption" color="tertiary">
+                <Text id={`${id}-end-help`} variant="caption" color="tertiary">
                     {t("wallet.recoverySetup.password.endHelp")}
                 </Text>
             </Stack>
