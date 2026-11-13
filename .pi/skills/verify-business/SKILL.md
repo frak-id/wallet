@@ -1,6 +1,6 @@
 ---
 name: verify-business
-description: Drive the Frak merchant dashboard (apps/business) the way a merchant does and capture proof — merchants, campaign list and detail sheet, the campaign creation wizard, settings — in headless Chromium against an instance the harness starts and tears down itself, logged in through the app's built-in demo mode with every off-origin request blocked. Includes a layout audit that fails when a word breaks mid-word. Use to prove a business UI change works at desktop or phone width, reproduce a UI bug, or collect screenshots/ARIA evidence; no SST stack, backend or account needed.
+description: Drive the Frak merchant dashboard (apps/business) the way a merchant does and capture proof — merchants, campaign list and detail sheet, the campaign creation wizard, settings — in headless Chromium or WebKit against an instance the harness starts and tears down itself, logged in through the app's built-in demo mode with every off-origin request blocked. Includes a layout audit that fails when a word breaks mid-word. Use to prove a business UI change works at desktop or phone width, reproduce a UI bug, or collect screenshots/ARIA evidence; no SST stack, backend or account needed.
 ---
 
 # Verify the Frak business dashboard
@@ -25,18 +25,18 @@ Run first, and whenever anything looks off. Read-only.
 .pi/skills/verify-business/scripts/verify-business.sh doctor
 ```
 
-Every line must be `ok` (exit 0). It checks bun, `vite` in `apps/business`, `@playwright/test` and its Chromium (borrowed from `apps/wallet`: business has no Playwright of its own), and that the demo route and demo data still exist. A missing browser is fixed with `(cd apps/wallet && bunx playwright install chromium)`.
+No line may be `FAIL` (exit 0). It checks bun, `vite` in `apps/business`, `@playwright/test` and its Chromium (borrowed from `apps/wallet`: business has no Playwright of its own), and that the demo route and demo data still exist. A missing browser is fixed with `(cd apps/wallet && bunx playwright install chromium)`. A missing WebKit is only a `warn`, since only `--webkit` needs it: `(cd apps/wallet && bunx playwright install webkit)`.
 
 Each `flow` run also does an instance doctor before driving: the listening port's process group must be the server it just launched, and the served `<title>` must be `Frak Business Hub | Manage Your Web3 Products`. Otherwise it refuses and exits 2. The result is in `instance.txt` (URL, server pid, commit, dirty file count).
 
 ## Launch + drive
 
 ```bash
-.pi/skills/verify-business/scripts/verify-business.sh flow <flow.mjs> [--logged-out] [--locale en-US|fr-FR] [--width N] [--welcome] [--evidence DIR]
+.pi/skills/verify-business/scripts/verify-business.sh flow <flow.mjs> [--logged-out] [--locale en-US|fr-FR] [--width N] [--welcome] [--webkit] [--evidence DIR]
 ```
 
 - Launch: `bun x vite dev --host 127.0.0.1 --port <free> --strictPort` in `apps/business`; ready = `GET /` answers (first boot ~10 s). Blocks until the flow ends; there is no long-lived instance to attach to.
-- Browser: Desktop Chrome, 1280×900, `en-US`. `--width 390` (or any width) checks a phone or tablet layout; the sidebar collapses to icons below 768px. `--locale fr-FR` renders the app in French. Headless unless `VERIFY_HEADED=1`.
+- Browser: Desktop Chrome, 1280×900, `en-US`. `--width 390` (or any width) checks a phone or tablet layout; the sidebar collapses to icons below 768px. `--locale fr-FR` renders the app in French. `--webkit` runs Playwright's WebKit with the Desktop Safari profile, whose screenshots are 2× (2560px wide at 1280): the engine inside Safari at its current version, not real Safari and not the Safari 15.4 floor. Headless unless `VERIFY_HEADED=1`.
 - The "new dashboard" announcement is dismissed before load (`business_welcomePopup_v1` in localStorage) because it covers every page; `--welcome` keeps it.
 - A flow is an ES module exporting one async function. It gets `{ page, context, url, merchantId, step, expect }`: a Playwright page already on the demo dashboard (or `/login`), the instance URL, the demo merchant id, `step(name)` which writes `NN-name.png` (full page, scrolled to the top first) + `NN-name.aria.yml` + a `steps.log` line, and Playwright's `expect`. Throwing anything = FAIL.
 

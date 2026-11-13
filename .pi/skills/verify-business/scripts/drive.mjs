@@ -1,4 +1,4 @@
-// Runs one flow module against BUSINESS_URL in Chromium (headless unless VERIFY_HEADED=1); called by verify-business.sh, not directly.
+// Runs one flow module against BUSINESS_URL in Chromium or WebKit (headless unless VERIFY_HEADED=1); called by verify-business.sh, not directly.
 import { appendFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -9,6 +9,7 @@ const {
     PLAYWRIGHT_HOME,
     EVIDENCE_DIR,
     VERIFY_AUTH,
+    VERIFY_BROWSER,
     VERIFY_LOCALE,
     VERIFY_WIDTH,
     VERIFY_WELCOME,
@@ -21,18 +22,19 @@ if (!BUSINESS_URL || !PLAYWRIGHT_HOME || !EVIDENCE_DIR || !flowPath) {
 
 const MERCHANT_ID = "11111111-1111-1111-1111-111111111111";
 const require = createRequire(join(PLAYWRIGHT_HOME, "package.json"));
-const { chromium, devices, expect } = require("@playwright/test");
+const { chromium, webkit, devices, expect } = require("@playwright/test");
+const onWebkit = VERIFY_BROWSER === "webkit";
 const flow = (await import(pathToFileURL(flowPath).href)).default;
 
 const out = (name) => join(EVIDENCE_DIR, name);
 const log = (file, line) => appendFileSync(out(file), `${line}\n`);
 const appOrigin = new URL(BUSINESS_URL).origin;
 
-const browser = await chromium.launch({
+const browser = await (onWebkit ? webkit : chromium).launch({
     headless: process.env.VERIFY_HEADED !== "1",
 });
 const context = await browser.newContext({
-    ...devices["Desktop Chrome"],
+    ...devices[onWebkit ? "Desktop Safari" : "Desktop Chrome"],
     viewport: { width: Number(VERIFY_WIDTH), height: 900 },
     baseURL: BUSINESS_URL,
     locale: VERIFY_LOCALE,
@@ -77,12 +79,16 @@ async function step(name) {
     log("steps.log", `${base} ${page.url()}`);
 }
 
-const label = `${flowPath} on ${BUSINESS_URL} (${VERIFY_WIDTH}px, ${VERIFY_LOCALE}, auth=${VERIFY_AUTH})`;
+const label = `${flowPath} on ${BUSINESS_URL} (${onWebkit ? "webkit" : "chromium"}, ${VERIFY_WIDTH}px, ${VERIFY_LOCALE}, auth=${VERIFY_AUTH})`;
 let code = 0;
 try {
     if (VERIFY_AUTH === "demo") {
         await page.goto("/demo");
         await page.waitForURL(/\/m\/[^/]+\/dashboard$/);
+        // WebKit reports the URL before the router's last navigation settles, and a flow's first page.goto would interrupt it.
+        await page
+            .getByRole("heading", { level: 1, includeHidden: true })
+            .waitFor();
     } else {
         await page.goto("/login");
     }

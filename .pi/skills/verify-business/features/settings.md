@@ -12,7 +12,7 @@ The account page: wallet address, login methods, two-factor authentication, acti
 
 ## How to get to it (user POV)
 
-- Header `link "demo"` (shown only in demo mode).
+- Header `link "demo"` (shown only in demo mode, and only from 768px up).
 - The account button in the header (`button "E-Commerce Store"`) opens a `dialog` with `link "Settings"` and `button "Log out"`.
 
 ## Driving it with verify-business.sh
@@ -27,6 +27,7 @@ Preconditions:
 
 ## Gotchas
 
+- Below 768px the header has no `link "demo"`, so `flows/settings.mjs` fails at `--width 390` in every browser. At phone width open Settings through `button "E-Commerce Store"` → `link "Settings"`.
 - Login methods, two-factor status, active sessions and billing documents come from `/business/auth/*` and billing endpoints that demo mode does not mock; the harness blocks them, so those blocks stay empty or show a spinner. That is the harness, not a bug.
 - Turning the demo switch off clears the session and lands on `/login`; every later step of the flow runs logged out.
 - The language choice is stored as `i18nextLng` in localStorage and holds for the rest of the run.
