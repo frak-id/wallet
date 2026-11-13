@@ -185,7 +185,9 @@ jobs:
               - '.github/workflows/apps.yaml'
             # Filtered on what the gate scripts read, not on where they live.
             # `check:safe-area` walks every `.css.ts` under apps/packages/sdk/
-            # example; the three deep-link/floor checks read `src-tauri`.
+            # example; the deep-link/floor checks read `src-tauri`;
+            # `check:bun-version` reads the `apps/*` and `services/*` Dockerfiles;
+            # the comment budget scans every root in `scripts/check-comments.ts`.
             #
             # No `!` entries: in paths-filter a negation is a rule matching
             # everything outside that path, not an exclusion from the includes
@@ -199,6 +201,10 @@ jobs:
               - 'sdk/components/**'
               - 'sdk/legacy/**'
               - 'example/**'
+              - 'sdk/android/**'
+              - 'sdk/ios/**'
+              - 'services/**'
+              - 'infra/**'
               - 'scripts/**'
               - 'package.json'
               - '.github/workflows/tauri-mobile-release.yml'
@@ -462,11 +468,13 @@ jobs:
           --project scripts-unit
 
   # ── Repo-wide gates ─────────────────────────────────────
-  # The four `check:*` scripts inside `bun run lint`, each guarding an invariant
-  # that regressed silently before it existed.
+  # The `check:*` scripts inside `bun run lint` and the comment budget, each
+  # guarding an invariant that regressed silently before it existed.
   #
   # Not `bun run lint`: that re-runs `check:i18n-types` and `check:publishable`,
-  # which the Types and SDK jobs own. One step per gate attributes the failure.
+  # which the Types and SDK jobs own, and `check:store-notes`, which runs in
+  # `tauri-mobile-release.yml` where the notes ship. One step per gate attributes
+  # the failure.
   gates:
     name: "🚧 Repo gates"
     runs-on: ubuntu-latest
@@ -490,10 +498,19 @@ jobs:
       # `.css.ts` must go through the design-system token.
       - name: "📐 Safe-area token"
         run: bun run check:safe-area
-      # No TypeScript comment budget here: `check-comments.ts` defaults to the Kotlin
-      # and Swift roots (gated in the native jobs below) because biome owns the TS
-      # tree, and pointing it at TS surfaces hundreds of pre-existing findings with no
-      # baseline behind them. Gating that needs a paydown first, not a CI step.
+      # The committed theme block and post-purchase module must hold the prod
+      # origins: `shopify app deploy` uploads the working tree.
+      - name: "🛍️ Shopify stage artifacts"
+        run: bun run check:shopify-stage
+      - name: "🛍️ Shopify extension API version"
+        run: bun run check:shopify-api-version
+      # setup-bun reads `packageManager`; the seven Dockerfiles pin their own Bun.
+      - name: "🍞 Bun version pins"
+        run: bun run check:bun-version
+      # Per-file ceiling in `scripts/comment-budget-baseline.json`: a file may only
+      # get better. No arguments, so it scans every default root.
+      - name: "💬 Comment budget"
+        run: bun run lint:comments
 
   # ── Infra ───────────────────────────────────────────────
   # `infra/` has no `package.json`, so `bun run --filter '*' typecheck` cannot reach
@@ -807,8 +824,8 @@ jobs:
       - name: "📏 Lint (ktlint)"
         run: bun run --cwd sdk/android lint
 
-      # Kotlin sits outside biome; the budget's own gate for it lives here
-      # (Swift runs in the ios-sdk job, which this job's filter can skip).
+      # Kotlin sits outside biome. `gates` scans these roots too; this step repeats
+      # them so a Kotlin budget failure shows up in the SDK job.
       - name: "🗒️ Comment budget (Kotlin)"
         run: bun run lint:comments -- sdk/android/frak-sdk/src sdk/android/frak-sdk-ui/src example/native-android/app/src
 
@@ -855,8 +872,8 @@ jobs:
       - name: "📏 Lint (swift-format, strict)"
         run: bun run --cwd sdk/ios lint
 
-      # Swift is outside biome, and the android job — the other budget site —
-      # does not run on an iOS-only change, so the Swift roots are gated here.
+      # Swift sits outside biome. `gates` scans these roots too; this step repeats
+      # them so a Swift budget failure shows up in the SDK job.
       - name: "🗒️ Comment budget (Swift)"
         run: bun run lint:comments -- sdk/ios/Sources sdk/ios/Tests sdk/ios/Package.swift example/native-ios/Sources example/native-ios/Package.swift
 
