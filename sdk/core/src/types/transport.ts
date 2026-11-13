@@ -7,7 +7,7 @@ import type { IFrameRpcSchema } from "./rpc";
  */
 export type IFrameTransport = {
     /**
-     * Wait for the connection to be established
+     * Wait for the connection to be established; resolves `false` if the wallet iframe has not connected after the 30 s handshake deadline
      */
     waitForConnection: Promise<boolean>;
     /**
@@ -19,7 +19,7 @@ export type IFrameTransport = {
      */
     request: RpcClient<IFrameRpcSchema, LifecycleMessage>["request"];
     /**
-     * Stream the responses of a request via the iframe transport
+     * Stream the responses of a request via the iframe transport; `onError` receives the failure that ends the stream
      */
     listenerRequest: RpcClient<IFrameRpcSchema, LifecycleMessage>["listen"];
     /**

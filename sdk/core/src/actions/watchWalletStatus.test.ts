@@ -5,13 +5,17 @@ vi.mock("@frak-labs/frame-connector", () => ({
     Deferred: class {
         promise: Promise<any>;
         resolve: (value: any) => void;
+        reject: (reason?: unknown) => void;
 
         constructor() {
             let resolveFunc: (value: any) => void;
-            this.promise = new Promise((resolve) => {
+            let rejectFunc: (reason?: unknown) => void;
+            this.promise = new Promise((resolve, reject) => {
                 resolveFunc = resolve;
+                rejectFunc = reject;
             });
             this.resolve = resolveFunc!;
+            this.reject = rejectFunc!;
         }
     },
 }));
@@ -374,6 +378,37 @@ describe("watchWalletStatus", () => {
             ).toHaveBeenCalledWith({
                 wallet: "0x2222222222222222222222222222222222222222",
             });
+        });
+
+        it("rejects when the listener fails before the first status", async () => {
+            const failure = new Error("not connected");
+            const mockClient = {
+                config: { metadata: { name: "Test" } },
+                listenerRequest: vi.fn((_params, _callback, onError) => {
+                    setTimeout(() => onError(failure), 0);
+                }),
+            } as unknown as FrakClient;
+
+            await expect(watchWalletStatus(mockClient, vi.fn())).rejects.toBe(
+                failure
+            );
+        });
+
+        it("keeps the first status when the listener fails afterwards", async () => {
+            const status: WalletStatusReturnType = { key: "not-connected" };
+            const mockClient = {
+                config: { metadata: { name: "Test" } },
+                listenerRequest: vi.fn((_params, callback, onError) => {
+                    setTimeout(() => {
+                        callback(status);
+                        onError(new Error("late failure"));
+                    }, 0);
+                }),
+            } as unknown as FrakClient;
+
+            await expect(
+                watchWalletStatus(mockClient, vi.fn())
+            ).resolves.toEqual(status);
         });
     });
 });

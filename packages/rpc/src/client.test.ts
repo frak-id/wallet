@@ -2,7 +2,7 @@ import type { Mock } from "vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RpcClient, RpcClientConfig } from "./client";
 import { createRpcClient } from "./client";
-import { FrakRpcError } from "./error";
+import { FrakRpcError, RpcErrorCodes } from "./error";
 import type { RpcSchemaEntry } from "./rpc-schema";
 import type {
     LifecycleMessage,
@@ -294,6 +294,31 @@ describe("createRpcClient", () => {
         expect(seen).toEqual([{ result: payload }]);
     });
 
+    it("rejects a request when onResponse middleware throws", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        const { client, emitter } = setup({
+            middleware: [
+                {
+                    onResponse: () => {
+                        throw new Error("bad payload");
+                    },
+                },
+            ],
+        });
+
+        const result = client.request({
+            method: "frak_ping",
+            params: { name: "a" },
+        });
+        const [message] = await sentMessages(emitter);
+        respond(WALLET_ORIGIN, message.id, { result: "raw" });
+
+        await expect(result).rejects.toMatchObject({
+            code: RpcErrorCodes.internalError,
+            message: "bad payload",
+        });
+    });
+
     it("delivers every stream result until unsubscribed", async () => {
         const { client, emitter } = setup();
         const received: number[] = [];
@@ -329,6 +354,121 @@ describe("createRpcClient", () => {
         await settledOrPending(new Promise(() => {}));
 
         expect(received).toEqual([]);
+    });
+
+    it("reports a stream that cannot be sent to onError", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        const failure = new FrakRpcError(
+            RpcErrorCodes.clientNotConnected,
+            "not connected"
+        );
+        const { client, emitter } = setup({
+            middleware: [
+                {
+                    onRequest: () => {
+                        throw failure;
+                    },
+                },
+            ],
+        });
+        const onError = vi.fn();
+
+        client.listen({ method: "frak_watch" }, vi.fn(), onError);
+
+        await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(emitter.postMessage).not.toHaveBeenCalled();
+    });
+
+    it("reports a wallet error response to onError", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        const { client, emitter } = setup();
+        const onError = vi.fn();
+
+        client.listen({ method: "frak_watch" }, vi.fn(), onError);
+        const [message] = await sentMessages(emitter);
+        respond(WALLET_ORIGIN, message.id, {
+            error: { code: -32603, message: "boom", data: { a: 1 } },
+        });
+
+        await vi.waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+        const [error] = onError.mock.calls[0];
+        expect(error).toBeInstanceOf(FrakRpcError);
+        expect(error).toMatchObject({
+            code: -32603,
+            message: "boom",
+            data: { a: 1 },
+        });
+    });
+
+    it("reports a throwing onResponse middleware to onError", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        const { client, emitter } = setup({
+            middleware: [
+                {
+                    onResponse: () => {
+                        throw new Error("bad payload");
+                    },
+                },
+            ],
+        });
+        const onError = vi.fn();
+
+        client.listen({ method: "frak_watch" }, vi.fn(), onError);
+        const [message] = await sentMessages(emitter);
+        respond(WALLET_ORIGIN, message.id, { result: 1 });
+
+        await vi.waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+        expect(onError.mock.calls[0][0]).toMatchObject({
+            code: RpcErrorCodes.internalError,
+            message: "bad payload",
+        });
+    });
+
+    it("does not call onError after unsubscribing", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        let fail!: () => void;
+        const { client } = setup({
+            middleware: [
+                {
+                    onRequest: () =>
+                        new Promise((_, reject) => {
+                            fail = () => reject(new Error("too late"));
+                        }),
+                },
+            ],
+        });
+        const onError = vi.fn();
+
+        const unsubscribe = client.listen(
+            { method: "frak_watch" },
+            vi.fn(),
+            onError
+        );
+        await vi.waitFor(() => expect(fail).toBeDefined());
+        unsubscribe();
+        fail();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("does not call onError while results arrive", async () => {
+        const { client, emitter } = setup();
+        const received: number[] = [];
+        const onError = vi.fn();
+
+        client.listen(
+            { method: "frak_watch" },
+            (value) => received.push(value),
+            onError
+        );
+        const [message] = await sentMessages(emitter);
+        respond(WALLET_ORIGIN, message.id, { result: 1 });
+        respond(WALLET_ORIGIN, message.id, { result: 2 });
+        await vi.waitFor(() => expect(received).toEqual([1, 2]));
+
+        expect(onError).not.toHaveBeenCalled();
     });
 
     it("routes lifecycle messages to their handler and never to a channel", async () => {
