@@ -3,8 +3,13 @@ import { vars } from "../../theme.css";
 import { alias, fontSize, transition } from "../../tokens.css";
 
 // For wrappers whose border cannot change on focus: none, or pinned to the error color.
+// WebKit focuses a time or date field's inner segment: the input never matches :focus-visible,
+// and :has(input:focus) stays matched after blur, so those fields use :focus-within.
 const focusRing = {
-    "&:has(:focus-visible)": { boxShadow: `0 0 0 2px ${vars.border.focus}` },
+    "&:has(:focus-visible), &:focus-within:has(input:is([type=time], [type=date], [type=datetime-local]))":
+        {
+            boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        },
 };
 
 export const inputWrapper = recipe({

@@ -171,7 +171,10 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
         );
     });
     const { boxShadow } = cs;
-    const focusVisible = el.matches(":focus-visible");
+    // WebKit focuses a time or date field's inner segment, so the input never matches :focus-visible.
+    const focusVisible = el.matches(
+        ':focus-visible, input:is([type="time"], [type="date"], [type="datetime-local"])'
+    );
     const focusedBorders = borders();
     const focusedShadows = shadows();
     el.blur();
