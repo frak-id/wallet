@@ -12,7 +12,7 @@ This directory is the maintained source for verifying the user-facing behavior o
 ## Driving conventions
 
 - Prefer `getByRole` with the accessible names quoted in the feature files; confirm a name against the latest `*.aria.yml` before trusting it.
-- Sidebar: `navigation` holding `link "My merchants"`, `button "Campaigns"` (expands `link "Data overview"` and `link "List"`), `link "Members"`, and under Preview `button "Wallet"`. Below 768px every item is an icon with no accessible name: use `openFromSidebar(page, "<path suffix>")` from `flows/nav.mjs`.
+- Sidebar: `navigation` holding `link "My merchants"`, `button "Campaigns"` (expands `link "Data overview"` and `link "List"`), `link "Members"`, and under Preview `button "Wallet"`. Below 768px the items show icons only but keep these names, `Campaigns` becomes `link "Campaigns"` to the list, and its sub-items are hidden: `openFromSidebar(page, "<path suffix>")` from `flows/nav.mjs` works at every width.
 - Header (`banner`): `navigation "Breadcrumb"`, `link "demo"` (to `/settings`), a page action (`link "Create new campaign"`, `link "Add a new merchant"`…), and the account button `button "E-Commerce Store"` (opens a `dialog` with `link "Settings"`, `button "Log out"`). A page action often exists twice (header and main): scope it with `getByRole("main")`.
 - Names, URLs and flags are literal. `--locale fr-FR` changes every name.
 - A failed drive writes `FAIL.png`, `FAIL.aria.yml` and the stack into `verdict.txt`, and exits 1. Exit 2 is a harness refusal (bad args, existing evidence dir, instance doctor failed).
