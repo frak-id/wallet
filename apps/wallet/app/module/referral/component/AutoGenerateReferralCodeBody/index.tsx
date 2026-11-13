@@ -17,6 +17,7 @@ import {
     type FormEvent,
     useCallback,
     useEffect,
+    useId,
     useRef,
     useState,
 } from "react";
@@ -75,6 +76,7 @@ export function AutoGenerateReferralCodeBody({
     onPersonalize,
 }: Props) {
     const { t } = useTranslation();
+    const fieldId = useId();
 
     const [autoCode, setAutoCode] = useState<string | null>(null);
     const suggest = useSuggestReferralCodes();
@@ -168,6 +170,7 @@ export function AutoGenerateReferralCodeBody({
                             <Box className={styles.labelRow}>
                                 <Text
                                     as="label"
+                                    htmlFor={fieldId}
                                     variant="bodySmall"
                                     weight="medium"
                                     color="secondary"
@@ -182,9 +185,7 @@ export function AutoGenerateReferralCodeBody({
                                 length="big"
                                 readOnly
                                 value={autoCode}
-                                aria-label={t(
-                                    "wallet.referral.create.autoConfirmLabel"
-                                )}
+                                id={fieldId}
                                 rightSection={
                                     <CheckIcon
                                         width={24}

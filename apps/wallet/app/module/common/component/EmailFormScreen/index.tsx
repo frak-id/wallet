@@ -78,6 +78,7 @@ export function EmailFormScreen({
 }: EmailFormScreenProps) {
     const [email, setEmail] = useState(initialValue);
     const formId = useId();
+    const fieldId = useId();
 
     const trimmed = email.trim();
     const hasValue = trimmed.length > 0;
@@ -140,6 +141,7 @@ export function EmailFormScreen({
                         <Box className={styles.labelRow}>
                             <Text
                                 as="label"
+                                htmlFor={fieldId}
                                 variant="bodySmall"
                                 weight="medium"
                                 color="secondary"
@@ -159,7 +161,7 @@ export function EmailFormScreen({
                             // No spellCheck={false}: on iOS it hides the QuickType bar that carries the email suggestions.
                             enterKeyHint="go"
                             ref={focusWithoutScroll}
-                            aria-label={label}
+                            id={fieldId}
                             placeholder={placeholder}
                             value={email}
                             onChange={handleChange}

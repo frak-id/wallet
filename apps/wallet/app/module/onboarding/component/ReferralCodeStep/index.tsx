@@ -9,7 +9,7 @@ import {
     type RedeemResult,
     useRedeemReferralCodeForm,
 } from "@frak-labs/wallet-shared";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
@@ -45,6 +45,7 @@ export function ReferralCodeStep({
     onPaste,
 }: ReferralCodeStepProps) {
     const { t } = useTranslation();
+    const fieldId = useId();
     const {
         code,
         hasValue,
@@ -100,6 +101,7 @@ export function ReferralCodeStep({
                     <Box className={styles.labelRow}>
                         <Text
                             as="label"
+                            htmlFor={fieldId}
                             variant="bodySmall"
                             weight="medium"
                             color="secondary"
@@ -111,7 +113,7 @@ export function ReferralCodeStep({
                         variant="bare"
                         tone="muted"
                         length="big"
-                        aria-label={t("onboarding.referral.label")}
+                        id={fieldId}
                         placeholder={t("onboarding.referral.placeholder")}
                         ref={focusWithoutScroll}
                         autoCapitalize="characters"
