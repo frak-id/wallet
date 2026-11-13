@@ -6,6 +6,25 @@ const PORT = Number(process.env.GALLERY_PORT ?? 3200);
 // because loopback is unreachable across a container's network namespace.
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
+const ENGINES = {
+    chromium: devices["Desktop Chrome"],
+    webkit: devices["Desktop Safari"],
+    firefox: devices["Desktop Firefox"],
+};
+const isEngine = (name: string): name is keyof typeof ENGINES =>
+    Object.hasOwn(ENGINES, name);
+// A typo must fail the run, not quietly drop an engine.
+const browsers = (process.env.GALLERY_BROWSERS ?? "chromium")
+    .split(",")
+    .map((name) => name.trim())
+    .map((name) => {
+        if (!isEngine(name))
+            throw new Error(
+                `GALLERY_BROWSERS: unknown engine "${name}" (use ${Object.keys(ENGINES).join(", ")})`
+            );
+        return name;
+    });
+
 export default defineConfig({
     testDir: "./gallery/specs",
     testMatch: "**/*.check.ts",
@@ -17,7 +36,7 @@ export default defineConfig({
     // GALLERY_SNAPSHOTS=1 once a baseline exists; behaviour checks always run.
     ignoreSnapshots: !process.env.GALLERY_SNAPSHOTS,
 
-    projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+    projects: browsers.map((name) => ({ name, use: { ...ENGINES[name] } })),
 
     webServer: {
         command:

@@ -171,7 +171,10 @@ function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
         );
     });
     const { boxShadow } = cs;
-    const focusVisible = el.matches(":focus-visible");
+    // WebKit focuses a time or date field's inner segment, so the input never matches :focus-visible.
+    const focusVisible = el.matches(
+        ':focus-visible, input:is([type="time"], [type="date"], [type="datetime-local"])'
+    );
     const focusedBorders = borders();
     const focusedShadows = shadows();
     el.blur();
@@ -459,7 +462,9 @@ function readClipping(caseEl: Element) {
         if (x || y) return { x, y, tolerance: 1, verb: "cuts its text off" };
         // Under half a line is fallback-font glyph overshoot, which differs by OS.
         const halfLine = Number.parseFloat(cs.fontSize) / 2;
+        // An inline box has no height to spill out of; Firefox still gives it a scrollHeight.
         if (
+            cs.display !== "inline" &&
             cs.overflowY === "visible" &&
             box.scrollHeight > box.clientHeight + 1
         )
@@ -605,7 +610,10 @@ for (const { id, title } of sections) {
             expectFindings("clip", id, found);
         });
 
-        test("shows a focus indicator on every tab stop", async ({ page }) => {
+        test("shows a focus indicator on every tab stop", async ({
+            page,
+            browserName,
+        }) => {
             const section = await openSection(page, id);
             const focusables = await section.evaluate(
                 (root, focusable) =>
@@ -615,8 +623,11 @@ for (const { id, title } of sections) {
                 FOCUSABLE
             );
             // A press that focuses nothing must not hide the ring from later keyboard focus.
+            // WebKit focuses nothing on a right-click, which leaves Radix's radio group
+            // treating the next Tab as a click; a left-click then Tab works in Safari.
+            const prime = browserName !== "webkit";
             for (const target of await section.locator(FOCUSABLE).all())
-                if (await target.isVisible())
+                if (prime && (await target.isVisible()))
                     await target.click({ button: "right", force: true });
             await section.locator(`#${id}-title`).focus();
             const { stops, found } = await tabThrough(page, id);
