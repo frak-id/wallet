@@ -747,16 +747,17 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
-      # Through the workspace, not `bunx`: see `wallet-pages`.
-      - name: "🌐 Install Chromium"
-        timeout-minutes: 5
-        run: bun run --cwd packages/design-system test:gallery:install
+      # Through the workspace, not `bunx`: see `wallet-pages`. WebKit and Firefox need system libraries.
+      - name: "🌐 Install Chromium, WebKit and Firefox"
+        timeout-minutes: 10
+        run: bun run --cwd packages/design-system test:gallery:install --with-deps webkit firefox
       # The config builds the gallery and serves it; `GALLERY_HOST` widens the
       # loopback-only bind for the same reason as `STANDALONE_HOST` above.
       - name: "🧪 Gallery checks"
         run: bun run --cwd packages/design-system test:gallery
         env:
           GALLERY_HOST: 0.0.0.0
+          GALLERY_BROWSERS: chromium,webkit,firefox
       - name: "📄 Upload report on failure"
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
