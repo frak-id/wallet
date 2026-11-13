@@ -116,6 +116,12 @@ export async function createIFrameFrakClient({
         ],
         lifecycleHandlers: {
             iframeLifecycle: (event, _context) => {
+                // Only the origin is checked: a client whose iframe left the
+                // DOM undestroyed would act on a newer iframe's events.
+                if (!iframe.isConnected) {
+                    void destroy({ detachOnly: true });
+                    return;
+                }
                 lifecycleManager.handleEvent(event);
             },
         },
