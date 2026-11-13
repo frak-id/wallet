@@ -30,7 +30,7 @@ export const popoverContentStyle = style({
     maxWidth: "var(--radix-popover-content-available-width)",
     maxHeight: "var(--radix-popover-content-available-height)",
     overflowY: "auto",
-    overflowWrap: "anywhere",
+    overflowWrap: "break-word",
     borderRadius: alias.cornerRadius.m,
     backgroundColor: vars.surface.background,
     boxShadow: "0 4px 16px 0 rgba(115, 115, 115, 0.2)",
