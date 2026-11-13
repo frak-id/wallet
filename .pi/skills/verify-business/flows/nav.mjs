@@ -1,4 +1,4 @@
-// Below 768px the sidebar shows icons only and its links have no accessible name, so they are found by destination.
+// Below 768px Campaigns is a link to the list and its sub-items are hidden, so items are found by destination.
 export async function openFromSidebar(page, pathSuffix) {
     const sidebar = page.getByRole("navigation").filter({
         has: page.locator('a[href$="/dashboard"]'),

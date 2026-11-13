@@ -205,12 +205,18 @@ export const itemIcon = style({
     display: "inline-flex",
 });
 
+// Icon-only below the tablet breakpoint, but the label stays the item's accessible name.
 export const itemLabel = style({
     flexGrow: 1,
-    display: "none",
     "@media": {
-        [`screen and (min-width: ${tablet}px)`]: {
-            display: "inline",
+        [`screen and (max-width: ${tablet - 0.02}px)`]: {
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
         },
     },
 });
