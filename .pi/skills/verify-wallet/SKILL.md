@@ -15,7 +15,7 @@ Read [`features/README.md`](features/README.md) before driving: it maps every us
 - **Auth** is a pre-seeded `frak_session_store` in localStorage (the light suite's mock session, `tests-light/mocks/sessions.ts`). `--logged-out` seeds an empty session instead. No passkey ceremony runs.
 - **Backend, chain RPC, analytics** are answered by the light suite's mocks (`tests-light/mocks/api.ts`). In `flow` mode every other request that leaves the app origin is **blocked** and listed in `network.log` — the run is hermetic and never touches gcp-dev.
 - **`--real-dev`** swaps all of that for the real thing, see [Real-dev mode](#real-dev-mode).
-- **Not covered here:** a real platform authenticator (Touch ID / Android biometrics), pairing, the SDK→listener iframe modal, referral attribution, sending transactions. Those need the SST stack and `apps/wallet/playwright.config.ts` (`bun run --cwd apps/wallet test:e2e`, see `apps/wallet/tests/README.md`). Tauri iOS/Android builds are out of scope too. Also not this skill: `apps/business`, `apps/listener`, `apps/shopify`.
+- **Not covered here:** a real platform authenticator (Touch ID / Android biometrics), pairing, the SDK→listener iframe modal, referral attribution, sending transactions. Those need the SST stack and `apps/wallet/playwright.config.ts` (`bun run --cwd apps/wallet test:e2e`, see `apps/wallet/tests/README.md`). Tauri iOS/Android builds are out of scope too. Also not this skill: `apps/business` (use `verify-business`), `apps/listener`, `apps/shopify`.
 
 ## Doctor
 
