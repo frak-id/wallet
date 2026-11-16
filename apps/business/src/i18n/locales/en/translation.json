@@ -360,7 +360,8 @@
             "audience": {
                 "title": "Audience",
                 "description": "Choose which members should receive this notification.",
-                "matched": "Audience matched: <0>{{total}}</0> members"
+                "matched": "Audience matched: <0>{{total}}</0> members",
+                "countError": "Couldn't count the members who match this audience."
             },
             "schedule": {
                 "title": "Schedule",

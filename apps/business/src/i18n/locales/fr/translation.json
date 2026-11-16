@@ -360,7 +360,8 @@
             "audience": {
                 "title": "Audience",
                 "description": "Choisissez quels membres recevront cette notification.",
-                "matched": "Audience ciblée : <0>{{total}}</0> membres"
+                "matched": "Audience ciblée : <0>{{total}}</0> membres",
+                "countError": "Impossible de compter les membres ciblés par cette audience."
             },
             "schedule": {
                 "title": "Planification",

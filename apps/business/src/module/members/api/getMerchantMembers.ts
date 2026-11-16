@@ -93,7 +93,9 @@ export async function getMerchantsMembersCount(
         });
 
     if (error || !data) {
-        return 0;
+        throw new Error(
+            `Failed to load member count: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return data.count;
