@@ -469,6 +469,7 @@ export default interface Resources {
             "fromPlaceholder": "E.g. 0",
             "globalCpaTitle": "Target CPA",
             "incomplete": "Each tier needs a basket range and a CPA above 0",
+            "inverted": "Each tier's upper bound must be higher than its lower bound.",
             "overlap": "Tiers can't overlap - each basket range must start where the previous one ends.",
             "removeTier": "Remove tier",
             "rewardPlaceholder": "E.g. 5",
