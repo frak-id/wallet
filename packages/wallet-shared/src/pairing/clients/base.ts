@@ -171,7 +171,13 @@ export abstract class BasePairingClient<
      * Update the state
      */
     protected setState(newState: Partial<TState>) {
-        this._store.setState((prev) => ({ ...prev, ...newState }));
+        this._store.setState((prev) => {
+            // Keep the same object when no field changes, so a repeated status (e.g. pong) notifies no one.
+            const changed = (Object.keys(newState) as (keyof TState)[]).some(
+                (key) => !Object.is(prev[key], newState[key])
+            );
+            return changed ? { ...prev, ...newState } : prev;
+        });
     }
 
     /**
