@@ -1,17 +1,22 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-    ignore: ["**/*.d.ts"],
+    // plugins/ holds PHP plugins, not a JS workspace; knip reads no .gitignore there,
+    // so gitignored dev trees (prestashop/.cache ships JS tests) would leak in.
+    ignore: ["**/*.d.ts", "plugins/**"],
+    // System tools a script shells out to, not npm packages.
+    ignoreBinaries: ["dot", "jq"],
     workspaces: {
         ".": {
             entry: ["infra/*.ts"],
             project: "infra/**/*.ts",
         },
         "example/vanilla-js": {
-            // Plain vite app. index.html boots src/main.ts (registered by the
-            // vite plugin, and by knip's default `src/{index,cli,main}` entry),
-            // and the only other source is src/types/vite-env.d.ts.
+            // Entries listed by hand: loading vite.config.ts needs a built SDK, and
+            // the ambassador*.html pages boot src/ambassador.ts.
+            entry: ["vite.config.ts", "src/main.ts", "src/ambassador.ts"],
             project: ["src/**/*.ts"],
+            vite: false,
         },
         "example/referral-demo": {
             // Vite PWA booted by index.html; scripts/ holds the snapshot CLI.
@@ -32,7 +37,13 @@ const config: KnipConfig = {
             entry: "**/*.ts",
         },
         "apps/wallet": {
-            entry: ["app/*.{ts,tsx}", "app/module/**/*.tsx"],
+            // Routes are listed explicitly: app/routeTree.gen.ts is gitignored and absent on a fresh checkout.
+            entry: [
+                "app/*.{ts,tsx}",
+                "app/module/**/*.tsx",
+                "app/routes/**/*.tsx",
+            ],
+            ignoreUnresolved: ["./routeTree.gen", "@/routeTree.gen"],
             project: ["app/**/*.{ts,tsx}"],
         },
         "apps/listener": {
@@ -43,6 +54,8 @@ const config: KnipConfig = {
         "apps/shopify": {
             entry: ["app/routes/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}", "db/**/*.ts"],
+            // Loaded by resolved path (createRequire(...).resolve), which knip cannot follow.
+            ignoreDependencies: ["pino-pretty"],
         },
         "apps/business": {
             entry: ["src/router.tsx", "src/routes/**/*.tsx"],
@@ -53,6 +66,8 @@ const config: KnipConfig = {
             entry: ["src/jobs/*.ts", "scripts/*.ts"],
             project: ["src/**/*.ts", "scripts/**/*.ts"],
             includeEntryExports: true,
+            // A pino transport target string inside createPinoLogger's options, which knip cannot follow.
+            ignoreDependencies: ["pino-pretty"],
         },
         "services/bootstrap": {
             // One-shot migration/backfill runner. src/index.ts is the only
