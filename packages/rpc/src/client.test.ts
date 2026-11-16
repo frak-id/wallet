@@ -83,7 +83,9 @@ describe("createRpcClient", () => {
     it("posts the request to the target origin", async () => {
         const { client, emitter } = setup();
 
-        void client.request({ method: "frak_ping", params: { name: "a" } });
+        client
+            .request({ method: "frak_ping", params: { name: "a" } })
+            .catch(() => {});
         const [message] = await sentMessages(emitter);
 
         expect(message).toMatchObject({
@@ -238,7 +240,9 @@ describe("createRpcClient", () => {
             middleware,
         });
 
-        void client.request({ method: "frak_ping", params: { name: "a" } });
+        client
+            .request({ method: "frak_ping", params: { name: "a" } })
+            .catch(() => {});
         await sentMessages(emitter);
 
         expect(calls).toEqual(["first", "second", "post"]);
