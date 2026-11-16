@@ -1,4 +1,4 @@
-import { ParentSize } from "@visx/responsive";
+import { useParentSize } from "@visx/responsive";
 import { scaleLinear } from "@visx/scale";
 import { motion } from "motion/react";
 import { useState } from "react";
@@ -126,36 +126,26 @@ export function FunnelChart({
     const max = Math.max(...steps.map((s) => s.value), 1);
     const lastIndex = steps.length - 1;
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const { parentRef, width } = useParentSize({ debounceTime: 10 });
+    const trackWidth = width - LABEL_COL - VALUE_COL - 2 * COLUMN_GAP;
 
     return (
-        <ParentSize debounceTime={10} parentSizeStyles={{ width: "100%" }}>
-            {({ width }) => {
-                const trackWidth =
-                    width - LABEL_COL - VALUE_COL - 2 * COLUMN_GAP;
-                return (
-                    <div className={funnelChartStyles.container}>
-                        <div className={funnelChartStyles.guides} aria-hidden>
-                            <span className={funnelChartStyles.guide} />
-                        </div>
-                        {steps.map((step, i) => (
-                            <FunnelRow
-                                faded={
-                                    hoveredIndex !== null && hoveredIndex !== i
-                                }
-                                isLast={i === lastIndex}
-                                key={step.label}
-                                max={max}
-                                onHover={(hovered) =>
-                                    setHoveredIndex(hovered ? i : null)
-                                }
-                                step={step}
-                                trackWidth={trackWidth}
-                                valueFormatter={valueFormatter}
-                            />
-                        ))}
-                    </div>
-                );
-            }}
-        </ParentSize>
+        <div className={funnelChartStyles.container} ref={parentRef}>
+            <div className={funnelChartStyles.guides} aria-hidden>
+                <span className={funnelChartStyles.guide} />
+            </div>
+            {steps.map((step, i) => (
+                <FunnelRow
+                    faded={hoveredIndex !== null && hoveredIndex !== i}
+                    isLast={i === lastIndex}
+                    key={step.label}
+                    max={max}
+                    onHover={(hovered) => setHoveredIndex(hovered ? i : null)}
+                    step={step}
+                    trackWidth={trackWidth}
+                    valueFormatter={valueFormatter}
+                />
+            ))}
+        </div>
     );
 }

@@ -14,6 +14,10 @@ import {
     ReferenceLine,
     XAxis,
 } from "@frak-labs/design-system/components/charts";
+import {
+    FunnelChart,
+    type FunnelStep,
+} from "@frak-labs/design-system/components/FunnelChart";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -85,6 +89,26 @@ export function SharingPieSection() {
             </Case>
             <Case name="device" fill>
                 <SharingPie buckets={device} />
+            </Case>
+        </Cases>
+    );
+}
+
+const funnelSteps: FunnelStep[] = [
+    { label: "Share CTA seen", value: 48_200 },
+    { label: "Share initiated", value: 14_460, delta: 12 },
+    { label: "Link shared", value: 7_230, delta: -4 },
+    { label: "Referred", value: 4_800, delta: 8 },
+    { label: "Converted", value: 2_384, delta: 21 },
+];
+
+export function FunnelSection() {
+    return (
+        <Cases title="Funnel">
+            <Case name="five steps" fill>
+                <Card radius="m">
+                    <FunnelChart steps={funnelSteps} />
+                </Card>
             </Case>
         </Cases>
     );
