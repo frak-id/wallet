@@ -32,8 +32,8 @@ export type UseOriginPairingFlowReturn = {
  *
  * - Initiates a pairing session on mount and emits the analytics event.
  * - Subscribes to the live client state.
- * - Exposes a single `handleRetry` callback that recovers from both
- *   transient (`retry-error`) and fatal (`error`) close states.
+ * - Exposes a single `handleRetry` callback that starts a new pairing from
+ *   both the `retry-error` and `error` close states.
  *
  * Both `LaunchPairing` (compact reveal) and `PairingView` (full-page route)
  * compose this hook with their own visual shell.
@@ -60,17 +60,14 @@ export function useOriginPairingFlow({
     }, [client, onSuccess, authenticatorHints]);
 
     /**
-     * Recover from a fatal/transient error surfaced by the origin client.
-     * `retry-error` (reconnect budget exhausted) → just call reconnect().
-     * `error` (fatal close) → reset() + a fresh initiatePairing() with the
-     * options the parent passed to this component.
+     * Both error states start a fresh pairing with the caller's options.
+     * `retry-error` already cleared the client state and leaves nothing to
+     * resume, so it skips `reset()`, which would also drop the user's session.
      */
     const handleRetry = useCallback(() => {
-        if (client.state.status === "retry-error") {
-            client.reconnect();
-            return;
+        if (client.state.status !== "retry-error") {
+            client.reset();
         }
-        client.reset();
         client.initiatePairing({ onSuccess, authenticatorHints });
     }, [client, onSuccess, authenticatorHints]);
 
