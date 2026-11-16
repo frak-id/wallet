@@ -2105,6 +2105,7 @@ export default interface Resources {
     "push": {
       "create": {
         "audience": {
+          "countError": "Couldn't count the members who match this audience.",
           "description": "Choose which members should receive this notification.",
           "matched": "Audience matched: <0>{{total}}</0> members",
           "title": "Audience"

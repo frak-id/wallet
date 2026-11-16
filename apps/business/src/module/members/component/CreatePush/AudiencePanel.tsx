@@ -1,4 +1,5 @@
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -6,6 +7,7 @@ import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
 import { EditCard } from "@/module/common/component/EditCard";
 import { useDebouncedValue } from "@/module/common/hook/useDebouncedValue";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
@@ -57,7 +59,14 @@ function SelectAudience() {
     const filter = useWatch({ control, name: "target.filter" });
     const debouncedFilter = useDebouncedValue(filter, COUNT_DEBOUNCE_MS);
 
-    const { data: count } = useQuery({
+    const {
+        data: count,
+        isFetching,
+        isPlaceholderData,
+        errorUpdatedAt,
+        dataUpdatedAt,
+        refetch,
+    } = useQuery({
         queryKey: audienceCountQueryKey(debouncedFilter, isDemoMode),
         queryFn: () =>
             getMerchantsMembersCount({ filter: debouncedFilter }, isDemoMode),
@@ -65,9 +74,12 @@ function SelectAudience() {
         placeholderData: keepPreviousData,
     });
 
+    // Not isError: a retry resets a query that never loaded back to pending, which would flash "0 members".
+    const countFailed = errorUpdatedAt > dataUpdatedAt;
+    const targetCount = countFailed || isPlaceholderData ? 0 : count;
     useEffect(() => {
-        if (count !== undefined) setValue("targetCount", count);
-    }, [count, setValue]);
+        if (targetCount !== undefined) setValue("targetCount", targetCount);
+    }, [targetCount, setValue]);
 
     return (
         <Stack space={"m"}>
@@ -75,17 +87,44 @@ function SelectAudience() {
                 initialValue={getValues("target.filter")}
                 onFilterSet={(updated) => setValue("target.filter", updated)}
             />
-            <Text variant={"body"}>
-                <Trans
-                    i18nKey={"push.create.audience.matched"}
-                    values={{ total: count ?? 0 }}
-                    components={[
-                        <Text key={"count"} as={"span"} weight={"semiBold"} />,
-                    ]}
-                />
-            </Text>
-            {count === 0 && (
-                <FieldError>{t("members.audience.minMember")}</FieldError>
+            {countFailed ? (
+                <>
+                    <FieldError>
+                        {t("push.create.audience.countError")}
+                    </FieldError>
+                    <Inline space={"s"}>
+                        <Button
+                            variant={"secondary"}
+                            size={"small"}
+                            width={"auto"}
+                            loading={isFetching}
+                            onClick={() => refetch()}
+                        >
+                            {t("errors.boundary.retry")}
+                        </Button>
+                    </Inline>
+                </>
+            ) : (
+                <>
+                    <Text variant={"body"}>
+                        <Trans
+                            i18nKey={"push.create.audience.matched"}
+                            values={{ total: count ?? 0 }}
+                            components={[
+                                <Text
+                                    key={"count"}
+                                    as={"span"}
+                                    weight={"semiBold"}
+                                />,
+                            ]}
+                        />
+                    </Text>
+                    {count === 0 && (
+                        <FieldError>
+                            {t("members.audience.minMember")}
+                        </FieldError>
+                    )}
+                </>
             )}
         </Stack>
     );
