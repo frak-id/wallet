@@ -12,6 +12,7 @@ import {
     requiresMatchedBasis,
     rewardFormToDraft,
     supportsMatchedBasis,
+    tieredRangeInverted,
     tieredRangesOverlap,
 } from "./utils";
 
@@ -120,6 +121,17 @@ describe("isRewardFormValid (tiered)", () => {
             ],
         };
         expect(isRewardFormValid(overlapping)).toBe(false);
+    });
+
+    it("fails when a tier's upper bound is below its lower bound", () => {
+        const inverted: RewardFormValues = {
+            ...tieredValues,
+            globalCpaTiers: [
+                { from: 500, to: 100, cpa: 10, unit: "amount" },
+                { from: 500, to: "", cpa: 10, unit: "percent" },
+            ],
+        };
+        expect(isRewardFormValid(inverted)).toBe(false);
     });
 
     // `CampaignManagementService` rejects a tier percent over 100 at publish.
@@ -263,6 +275,35 @@ describe("tieredRangesOverlap", () => {
             tieredRangesOverlap([
                 { from: "", to: "", cpa: "", unit: "amount" },
                 { from: 0, to: 100, cpa: 10, unit: "amount" },
+            ])
+        ).toBe(false);
+    });
+});
+
+describe("tieredRangeInverted", () => {
+    it("flags an upper bound below the lower bound, even when no range overlaps", () => {
+        const tiers = [
+            { from: 500, to: 100, cpa: 10, unit: "amount" as const },
+            { from: 200, to: 300, cpa: 10, unit: "amount" as const },
+        ];
+        expect(tieredRangesOverlap(tiers)).toBe(false);
+        expect(tieredRangeInverted(tiers)).toBe(true);
+    });
+
+    it("flags an empty range (upper bound equal to lower bound)", () => {
+        expect(
+            tieredRangeInverted([
+                { from: 100, to: 100, cpa: 10, unit: "amount" },
+            ])
+        ).toBe(true);
+    });
+
+    it("accepts ordered ranges, an open last tier and unfilled bounds", () => {
+        expect(
+            tieredRangeInverted([
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
+                { from: 100, to: "", cpa: 10, unit: "amount" },
+                { from: "", to: 50, cpa: "", unit: "amount" },
             ])
         ).toBe(false);
     });

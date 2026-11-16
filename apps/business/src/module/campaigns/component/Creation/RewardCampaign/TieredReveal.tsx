@@ -12,6 +12,7 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
+import { useDebouncedValue } from "@/module/common/hook/useDebouncedValue";
 import { DistributionBar } from "../DistributionBar";
 import { useCurrencyGlyph } from "./currencyGlyph";
 import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
@@ -25,8 +26,11 @@ import {
     recalcSplitOnCpaChange,
     recommendedSplit,
     splitTargetCpa,
+    tieredRangeInverted,
     tieredRangesOverlap,
 } from "./utils";
+
+const RANGE_MESSAGE_DEBOUNCE_MS = 400;
 
 export function TieredReveal({
     control,
@@ -76,7 +80,13 @@ export function TieredReveal({
         const e = fieldErrors(i, tier, i === lastIndex);
         return e.from || e.to || e.cpa;
     });
-    const tiersOverlap = tieredRangesOverlap(tiers);
+    // Range messages wait for typing to pause: typing 500 passes through 5 and 50.
+    // Keyed on a string: the watched array keeps its identity across edits.
+    const rangeKey = tiers.map((tier) => `${tier.from}-${tier.to}`).join();
+    const rangesSettled =
+        useDebouncedValue(rangeKey, RANGE_MESSAGE_DEBOUNCE_MS) === rangeKey;
+    const tiersInverted = rangesSettled && tieredRangeInverted(tiers);
+    const tiersOverlap = rangesSettled && tieredRangesOverlap(tiers);
     const hasCpa = tiers.some((tier) => Number(tier.cpa) > 0);
 
     function addTier() {
@@ -221,6 +231,10 @@ export function TieredReveal({
             {incomplete ? (
                 <FieldError>
                     {t("campaigns.create.reward.tiered.incomplete")}
+                </FieldError>
+            ) : tiersInverted ? (
+                <FieldError>
+                    {t("campaigns.create.reward.tiered.inverted")}
                 </FieldError>
             ) : tiersOverlap ? (
                 <FieldError>
