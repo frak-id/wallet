@@ -402,6 +402,13 @@ export const sections: readonly GallerySection[] = [
         "AffiliateBarSection"
     ),
     section(
+        "chart-funnel",
+        "Chart: campaign funnel",
+        "Charts",
+        () => import("./sections/charts"),
+        "FunnelSection"
+    ),
+    section(
         "chart-worst-case",
         "Chart: worst-case data",
         "Charts",

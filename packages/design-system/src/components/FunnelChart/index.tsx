@@ -1,9 +1,11 @@
-import { ParentSize } from "@visx/responsive";
+import { useParentSize } from "@visx/responsive";
 import { scaleLinear } from "@visx/scale";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { vars } from "../../theme.css";
+import { Box } from "../Box";
 import { DeltaIndicator } from "../DeltaIndicator";
+import { Text } from "../Text";
 import { funnelChartStyles } from "./funnelChart.css";
 
 export type FunnelStep = {
@@ -93,7 +95,14 @@ function FunnelRow({
             onMouseEnter={() => onHover(true)}
             onMouseLeave={() => onHover(false)}
         >
-            <span className={funnelChartStyles.label}>{step.label}</span>
+            <Text
+                as="span"
+                variant="bodySmall"
+                color="tertiary"
+                weight="medium"
+            >
+                {step.label}
+            </Text>
             <div className={funnelChartStyles.track}>
                 <FunnelBar
                     color={isLast ? vars.icon.success : vars.icon.action}
@@ -104,13 +113,15 @@ function FunnelRow({
                 />
             </div>
             <div className={funnelChartStyles.valueCell}>
-                <span
-                    className={`${funnelChartStyles.value}${
-                        isLast ? ` ${funnelChartStyles.valueSuccess}` : ""
-                    }`}
+                <Text
+                    as="span"
+                    variant="bodySmall"
+                    color={isLast ? "success" : "primary"}
+                    weight="medium"
+                    className={funnelChartStyles.value}
                 >
                     {valueFormatter(step.value)}
-                </span>
+                </Text>
                 {step.delta !== undefined && (
                     <DeltaIndicator delta={step.delta} size="s" />
                 )}
@@ -126,36 +137,34 @@ export function FunnelChart({
     const max = Math.max(...steps.map((s) => s.value), 1);
     const lastIndex = steps.length - 1;
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const { parentRef, width } = useParentSize<HTMLElement>({
+        debounceTime: 10,
+    });
+    const trackWidth = width - LABEL_COL - VALUE_COL - 2 * COLUMN_GAP;
 
     return (
-        <ParentSize debounceTime={10} parentSizeStyles={{ width: "100%" }}>
-            {({ width }) => {
-                const trackWidth =
-                    width - LABEL_COL - VALUE_COL - 2 * COLUMN_GAP;
-                return (
-                    <div className={funnelChartStyles.container}>
-                        <div className={funnelChartStyles.guides} aria-hidden>
-                            <span className={funnelChartStyles.guide} />
-                        </div>
-                        {steps.map((step, i) => (
-                            <FunnelRow
-                                faded={
-                                    hoveredIndex !== null && hoveredIndex !== i
-                                }
-                                isLast={i === lastIndex}
-                                key={step.label}
-                                max={max}
-                                onHover={(hovered) =>
-                                    setHoveredIndex(hovered ? i : null)
-                                }
-                                step={step}
-                                trackWidth={trackWidth}
-                                valueFormatter={valueFormatter}
-                            />
-                        ))}
-                    </div>
-                );
-            }}
-        </ParentSize>
+        <Box
+            display="flex"
+            flexDirection="column"
+            gap="m"
+            position="relative"
+            ref={parentRef}
+        >
+            <div className={funnelChartStyles.guides} aria-hidden>
+                <span className={funnelChartStyles.guide} />
+            </div>
+            {steps.map((step, i) => (
+                <FunnelRow
+                    faded={hoveredIndex !== null && hoveredIndex !== i}
+                    isLast={i === lastIndex}
+                    key={step.label}
+                    max={max}
+                    onHover={(hovered) => setHoveredIndex(hovered ? i : null)}
+                    step={step}
+                    trackWidth={trackWidth}
+                    valueFormatter={valueFormatter}
+                />
+            ))}
+        </Box>
     );
 }
