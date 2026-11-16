@@ -363,7 +363,7 @@
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
                 "modifyCta": "Modify my code",
-                "gameHint": "Frak Game: 2 tickets per friend who signs up with your code, once they connect their Instagram and follow @frak_fr."
+                "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw."
             },
             "edit": {
                 "title": "Edit my code",
@@ -1047,10 +1047,6 @@
             "title": "Frak Game",
             "openGame": "Current game",
             "hero": {
-                "drawn_one": "{{count}} ticket in the draw",
-                "drawn_other": "{{count}} tickets in the draw",
-                "pending_one": "{{count}} ticket on hold",
-                "pending_other": "{{count}} tickets on hold",
                 "unlocked_one": "Your ticket is unlocked",
                 "unlocked_other": "Your {{count}} tickets are unlocked",
                 "subtitleNone_one": "Connect your Instagram and follow @frak_fr so it counts in the draw",
@@ -1068,7 +1064,10 @@
                     "referredPurchase": "friend's purchase",
                     "referredSignup": "friend signed up",
                     "brandShare": "friend from a brand"
-                }
+                },
+                "label": "Your tickets in the draw",
+                "labelPending": "Your pending tickets",
+                "keepGoing": "Keep inviting friends to boost your chances!"
             },
             "missions": {
                 "title": "Missions",
@@ -1119,7 +1118,8 @@
                     "friends_one": "{{count}} purchase by a friend",
                     "friends_other": "{{count}} purchases by friends"
                 }
-            }
+            },
+            "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
         },
         "result": {
             "badge": {
@@ -1338,7 +1338,7 @@
         },
         "linked": {
             "badge": "Connected",
-            "counting": "You follow @frak_fr: your tickets count in the draw, with 1 more ticket in every game.",
+            "counting": "All set, your tickets count in the draw. As long as you follow @frak_fr, you get 1 bonus ticket in every Frak Game.",
             "notFollowing": "Last step: follow @frak_fr so your tickets count.",
             "follow": "Follow @frak_fr",
             "checkAgain": "Check again",

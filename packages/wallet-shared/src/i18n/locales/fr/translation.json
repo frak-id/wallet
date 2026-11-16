@@ -363,7 +363,7 @@
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code",
-                "gameHint": "Jeu Frak : 2 tickets par ami inscrit avec ton code, une fois son Instagram connecté et @frak_fr suivi."
+                "gameHint": "Pour chaque ami·e inscrit·e avec ton code qui connecte son Instagram et suit @frak_fr, tu gagnes 2 tickets au tirage."
             },
             "edit": {
                 "title": "Modifier mon code",
@@ -1002,7 +1002,7 @@
                 "description": "Ta récompense est en attente. Elle se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",
                 "descriptionJoinOnly": "Ton premier ticket est là. Cumule-en d'autres avant la fin du jeu pour tenter de gagner le lot.",
                 "game": {
-                    "endsAt": "Jusqu'à {{date}}",
+                    "endsAt": "Jusqu'au {{date}}",
                     "sponsor": "Offert par {{name}}"
                 }
             }
@@ -1047,10 +1047,6 @@
             "title": "Jeu Frak",
             "openGame": "Jeu en cours",
             "hero": {
-                "drawn_one": "{{count}} ticket au tirage",
-                "drawn_other": "{{count}} tickets au tirage",
-                "pending_one": "{{count}} ticket en attente",
-                "pending_other": "{{count}} tickets en attente",
                 "unlocked_one": "Ton ticket est débloqué",
                 "unlocked_other": "Tes {{count}} tickets sont débloqués",
                 "subtitleNone_one": "Connecte ton Instagram et suis @frak_fr pour qu'il compte au tirage",
@@ -1068,12 +1064,15 @@
                     "referredPurchase": "achat d'un ami",
                     "referredSignup": "ami inscrit",
                     "brandShare": "ami venu par une marque"
-                }
+                },
+                "label": "Tes tickets au tirage",
+                "labelPending": "Tes tickets en attente",
+                "keepGoing": "Continue d'inviter tes amis pour augmenter tes chances !"
             },
             "missions": {
                 "title": "Missions",
                 "progress": "{{done}} sur {{total}}",
-                "allDone": "Toutes les missions sont faites. Chaque ami et chaque achat ajoute encore des tickets.",
+                "allDone": "Toutes les missions sont faites. Chaque ami invité et chaque achat te rapportent encore des tickets.",
                 "reward_one": "+{{count}} ticket",
                 "reward_other": "+{{count}} tickets",
                 "rewardPerFriend_one": "+{{count}} ticket / ami",
@@ -1081,37 +1080,37 @@
                 "rewardPerPurchase_one": "+{{count}} ticket / achat",
                 "rewardPerPurchase_other": "+{{count}} tickets / achat",
                 "join": {
-                    "title": "Rejoindre le jeu",
+                    "title": "Rejoins le jeu",
                     "hint": "C'est fait, bienvenue !"
                 },
                 "instagram": {
                     "certified": {
                         "title": "Instagram connecté",
-                        "hint": "Tu suis @frak_fr, tes tickets comptent."
+                        "hint": "Tu suis @frak_fr, tes tickets comptent au tirage."
                     },
                     "declared": {
-                        "title": "Connecter ton Instagram",
-                        "hint_one": "Tes tickets comptent. Connecte-le pour {{count}} ticket de plus, sinon tu devras le faire en 24 h si tu es tiré au sort.",
-                        "hint_other": "Tes tickets comptent. Connecte-le pour {{count}} tickets de plus, sinon tu devras le faire en 24 h si tu es tiré au sort."
+                        "title": "Connecte ton Instagram",
+                        "hint_one": "Tes tickets comptent déjà. Connecte ton compte pour {{count}} ticket de plus.",
+                        "hint_other": "Tes tickets comptent déjà. Connecte ton compte pour {{count}} tickets de plus."
                     },
                     "notFollowing": {
-                        "title": "Suivre à nouveau @frak_fr",
-                        "hint": "Ton Instagram reste connecté. Suis à nouveau @frak_fr et tes tickets comptent tout de suite."
+                        "title": "Suis à nouveau @frak_fr",
+                        "hint": "Ton Instagram est connecté. Suis à nouveau @frak_fr pour que tes tickets comptent."
                     },
                     "none": {
-                        "title": "Débloquer tes tickets",
-                        "hint": "Connecte ton Instagram et suis @frak_fr pour entrer au tirage."
+                        "title": "Rejoins la communauté Frak",
+                        "hint": "Débloque tes premiers tickets : connecte ton Instagram et suis @frak_fr pour qu'ils comptent au tirage."
                     }
                 },
                 "friend": {
-                    "title": "Inviter un ami",
-                    "hint": "Avec ton code ou via une marque",
+                    "title": "Invite un ami",
+                    "hint": "Partage ton code unique et gagne des tickets pour chaque ami·e parrainé·e.",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
                 },
                 "purchase": {
-                    "title": "Acheter chez une marque",
+                    "title": "Achète chez une marque",
                     "hint": "Ton achat, ou celui d'un ami que tu as invité.",
                     "hintEarned": "{{parts}}. Chaque achat en ajoute {{amount}}.",
                     "own_one": "{{count}} achat à toi",
@@ -1119,7 +1118,8 @@
                     "friends_one": "{{count}} achat d'un ami",
                     "friends_other": "{{count}} achats d'amis"
                 }
-            }
+            },
+            "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"
         },
         "result": {
             "badge": {
@@ -1338,7 +1338,7 @@
         },
         "linked": {
             "badge": "Connecté",
-            "counting": "Tu suis @frak_fr : tes tickets comptent au tirage, avec 1 ticket de plus à chaque jeu.",
+            "counting": "Tout est bon, tes tickets comptent au tirage. Tant que tu suis @frak_fr, tu as 1 ticket bonus dans chaque Jeu Frak.",
             "notFollowing": "Dernière étape : abonne-toi à @frak_fr pour que tes tickets comptent.",
             "follow": "S'abonner à @frak_fr",
             "checkAgain": "Vérifier à nouveau",

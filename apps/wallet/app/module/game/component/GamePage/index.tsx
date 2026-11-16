@@ -170,12 +170,12 @@ export function GamePage() {
             )}
             {top.kind === "playing" && me && (
                 <>
-                    <GameHero
-                        me={me}
-                        prize={prizeOf(top.game, i18n.language)}
-                        endsAt={top.game.endsAt}
-                        gains={gains}
-                    />
+                    <Text color="secondary">
+                        {t("game.page.intro", {
+                            prize: prizeOf(top.game, i18n.language),
+                        })}
+                    </Text>
+                    <GameHero me={me} endsAt={top.game.endsAt} gains={gains} />
                     <GameMissions
                         missions={missionsOf(me)}
                         gameId={top.game.id}
