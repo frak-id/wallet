@@ -39,8 +39,9 @@ export async function getMerchantCampaigns({
         .campaigns.get();
 
     if (!data || error) {
-        console.warn("Error fetching campaigns", error);
-        return { bankDistributionStatus: null, campaigns: [] };
+        throw new Error(
+            `Failed to load campaigns: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return {
@@ -70,8 +71,11 @@ export async function getCampaignConfig({
         .campaigns({ campaignId })
         .get();
 
+    if (error?.status === 404) return null;
     if (error || !data) {
-        return null;
+        throw new Error(
+            `Failed to load campaign: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return data as Campaign;

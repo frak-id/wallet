@@ -31,6 +31,7 @@ import {
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { DateField } from "@/module/common/component/DateField";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { getNumberFormat } from "@/module/common/utils/intlCache";
@@ -63,12 +64,28 @@ import { Section } from "./parts";
 export function ConfigTab({ campaignId }: { campaignId: string }) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
-    const { data: campaign, isPending } = useQuery(
+    const {
+        data: campaign,
+        isPending,
+        isError,
+        error,
+        refetch,
+    } = useQuery(
         campaignConfigQueryOptions({ merchantId, campaignId, isDemoMode })
     );
 
     if (isPending) {
         return <Skeleton variant="rect" height={320} />;
+    }
+
+    if (isError) {
+        return (
+            <DataLoadError
+                error={error}
+                reset={() => refetch()}
+                resourceName="campaign configuration"
+            />
+        );
     }
 
     if (!campaign) {

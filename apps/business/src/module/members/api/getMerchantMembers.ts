@@ -64,7 +64,9 @@ export async function getMerchantMembers(
     );
 
     if (error || !data) {
-        return { totalResult: 0, members: [] };
+        throw new Error(
+            `Failed to load members: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return data;

@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type {
     GetMembersPageItem,
@@ -87,7 +88,13 @@ export function TableMembers() {
         }));
     }, [sortingState, setFilters]);
 
-    const { data: page, isPending } = useQuery({
+    const {
+        data: page,
+        isPending,
+        isError,
+        error,
+        refetch,
+    } = useQuery({
         ...membersPageQueryOptions({
             merchantId,
             filters,
@@ -137,6 +144,19 @@ export function TableMembers() {
             ]),
         [currency, t]
     );
+
+    if (isError) {
+        return (
+            <Stack space="l">
+                <TableMembersFilters />
+                <DataLoadError
+                    error={error}
+                    reset={() => refetch()}
+                    resourceName="members"
+                />
+            </Stack>
+        );
+    }
 
     if (!page || isPending) {
         return <Skeleton variant="rect" height={250} />;
