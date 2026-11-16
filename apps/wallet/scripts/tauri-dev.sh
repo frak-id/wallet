@@ -176,6 +176,58 @@ rsync_shim_dir() {
     echo "$dir"
 }
 
+# Pins every later adb call to one device through ANDROID_SERIAL, which adb reads
+# itself. With several devices attached and no pick, adb and the Tauri CLI both fail.
+select_android_device() {
+    command -v adb &> /dev/null || return 0
+    local serials count serial
+    serials="$(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')"
+    if [ -n "${ANDROID_SERIAL:-}" ]; then
+        echo "$serials" | grep -qxF "$ANDROID_SERIAL" && return 0
+        echo "[tauri-dev] ERROR: ANDROID_SERIAL=$ANDROID_SERIAL is not connected. Connected: ${serials:-none}" >&2
+        exit 1
+    fi
+    [ -z "$serials" ] && return 0
+    count="$(echo "$serials" | wc -l | tr -d ' ')"
+    if [ "$count" -ne 1 ]; then
+        echo "[tauri-dev] ERROR: $count Android devices connected — pick one with ANDROID_SERIAL=<serial>:" >&2
+        for serial in $serials; do
+            echo "[tauri-dev]        $serial  $(adb -s "$serial" shell getprop ro.product.model | tr -d '\r')" >&2
+        done
+        exit 1
+    fi
+    export ANDROID_SERIAL="$serials"
+}
+
+# The Tauri CLI runs $ANDROID_HOME/platform-tools/adb and picks among several devices only by a
+# fuzzy-matched name, which some phones never match. Point it at an SDK whose adb lists one device.
+use_android_sdk_shim() {
+    local real="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+    local dir="$WALLET_DIR/src-tauri/target/.android-sdk-shim" entry
+    rm -rf "$dir"
+    mkdir -p "$dir/platform-tools"
+    for entry in "$real"/* "$real"/platform-tools/*; do
+        case "$entry" in
+            "$real/platform-tools" | "$real/platform-tools/adb") ;;
+            *) ln -s "$entry" "$dir/${entry#"$real"/}" ;;
+        esac
+    done
+    cat > "$dir/platform-tools/adb" <<EOF
+#!/bin/bash
+[ "\$1" = devices ] || exec "$real/platform-tools/adb" "\$@"
+"$real/platform-tools/adb" "\$@" | awk -v keep="\$ANDROID_SERIAL" 'NR == 1 || \$1 == keep || NF == 0'
+EOF
+    chmod +x "$dir/platform-tools/adb"
+    # The CLI's own NDK pick, by its real path: through the shim it would get a path no other run uses.
+    if [ -z "${NDK_HOME:-}" ] && [ -d "$real/ndk" ]; then
+        NDK_HOME="$(printf '%s\n' "$real"/ndk/* | LC_ALL=C sort | tail -n 1)"
+        export NDK_HOME
+    fi
+    export ANDROID_HOME="$dir"
+    # Without local.properties, Gradle fails when ANDROID_SDK_ROOT and ANDROID_HOME differ.
+    unset ANDROID_SDK_ROOT
+}
+
 setup_adb_reverse() {
     echo "[tauri-dev] Setting up ADB reverse port forwarding..."
 
@@ -184,7 +236,7 @@ setup_adb_reverse() {
         return 0
     fi
 
-    if ! adb devices | grep -q "device$"; then
+    if [ -z "${ANDROID_SERIAL:-}" ]; then
         echo "[tauri-dev] WARNING: No Android device connected, skipping port forwarding"
         return 0
     fi
@@ -274,6 +326,14 @@ run_android() {
     setup_android_signing
     setup_firebase_config
     start_dev_server
+    # After the dev server, so a device that came online meanwhile still gets adb reverse.
+    # A user pick goes through the shim; otherwise at most one device is left, which the Tauri CLI takes alone.
+    local user_serial="${ANDROID_SERIAL:-}"
+    select_android_device
+    if [ -n "$user_serial" ]; then
+        use_android_sdk_shim
+        echo "[tauri-dev] Android target: $ANDROID_SERIAL"
+    fi
     setup_adb_reverse
     cd "$WALLET_DIR"
     # Match release: local dev rides the dev variant (id.frak.wallet.dev) so the
@@ -397,7 +457,7 @@ case "${1:-}" in
         echo ""
         echo "Commands:"
         echo "  dev         - Start Tauri dev server only"
-        echo "  android     - Start dev server + launch Android emulator"
+        echo "  android     - Start dev server + the connected Android device (several: pick one with ANDROID_SERIAL=<serial>)"
         echo "  ios         - Start dev server + iOS simulator (default: iPhone 17; select: ios \"<name>\" or TAURI_IOS_DEVICE)"
         echo "  ios-device  - Start dev server + a cabled iPhone (sole connected device, or TAURI_IOS_DEVICE / ios-device \"<name>\")"
         exit 1
