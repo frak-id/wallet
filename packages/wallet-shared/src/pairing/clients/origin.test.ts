@@ -186,6 +186,18 @@ describe("OriginPairingClient", () => {
         return ws;
     }
 
+    test("a pong while already paired notifies no store subscriber", () => {
+        const ws = bringClientToPaired();
+        expect(client.store.getState().status).toBe("paired");
+        const listener = vi.fn();
+        const unsubscribe = client.store.subscribe(listener);
+
+        ws.fire("message", { data: { type: "pong" } });
+
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
+    });
+
     test("sendSignatureRequest while paired enqueues the request and resolves on response", async () => {
         const ws = bringClientToPaired();
         const promise = client.sendSignatureRequest("0xdeadbeef" as Hex);

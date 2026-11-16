@@ -5,10 +5,10 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { PairingStatus } from "@/module/pairing/component/PairingStatus";
 
 export function PairingInfo({
-    state,
+    status,
     originName,
 }: {
-    state: TargetPairingState;
+    status: TargetPairingState["status"];
     originName?: string;
 }) {
     const { t } = useTranslation();
@@ -24,7 +24,7 @@ export function PairingInfo({
                 label={t("wallet.pairing.info.status")}
                 labelVariant="bodySmall"
                 labelColor="secondary"
-                action={<PairingStatus status={state.status} />}
+                action={<PairingStatus status={status} />}
             />
             {originName && (
                 <InfoRow
