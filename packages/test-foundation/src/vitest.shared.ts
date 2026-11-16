@@ -46,11 +46,9 @@ export default defineConfig({
             ? [
                   "verbose", // Detailed output for CI logs
                   "github-actions", // GitHub Actions annotations
-                  ["html", { outputFile: "coverage/test-report.html" }],
               ]
             : [
                   ["default", { summary: true }], // Clean summary for local
-                  ["html", { outputFile: "coverage/test-report.html" }],
               ],
 
         // Off locally for speed; `--coverage` or CI turns it on.

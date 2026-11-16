@@ -14,7 +14,7 @@ bun run shopify:deploy / :deploy:prod # Shopify app + extensions (regenerates st
 bun run gen:stage                     # Rewrite the generated stage artifacts to the prod table
 
 # from the repo root
-bun run test -- --project shopify-unit   # NOT `bun run test` here: the shared html reporter needs @vitest/ui, not installed in this app
+bun run test -- --project shopify-unit   # or `bun run test` from apps/shopify
 bun run deploy-gcp:staging / deploy-gcp:prod   # the SSR server on GKE
 ```
 
