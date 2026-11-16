@@ -549,4 +549,44 @@ describe("createRpcClient", () => {
         expect(received).toEqual([]);
         expect(iframeLifecycle).not.toHaveBeenCalled();
     });
+
+    it("rejects a request still in flight at cleanup", async () => {
+        const { client, emitter } = setup();
+        const pending = client.request({
+            method: "frak_ping",
+            params: { name: "x" },
+        });
+        await sentMessages(emitter);
+
+        client.cleanup();
+
+        await expect(pending).rejects.toMatchObject({
+            code: RpcErrorCodes.clientNotConnected,
+        });
+    });
+
+    it("reports a stream still open at cleanup to onError, once", async () => {
+        const onRequest = vi.fn(async (_message, ctx) => ctx);
+        const { client } = setup({ middleware: [{ onRequest }] });
+        const onError = vi.fn();
+        client.listen({ method: "frak_watch" }, () => {}, onError);
+
+        client.cleanup();
+        await settledOrPending(new Promise(() => {}));
+
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onError.mock.calls[0][0]).toMatchObject({
+            code: RpcErrorCodes.clientNotConnected,
+        });
+    });
+
+    it("rejects a request made after cleanup without posting it", async () => {
+        const { client, emitter } = setup();
+        client.cleanup();
+
+        await expect(
+            client.request({ method: "frak_ping", params: { name: "x" } })
+        ).rejects.toMatchObject({ code: RpcErrorCodes.clientNotConnected });
+        expect(emitter.postMessage).not.toHaveBeenCalled();
+    });
 });

@@ -105,8 +105,8 @@ export type RpcClient<
      *
      * `onError` is called once, and the stream closes, when the request cannot
      * be sent (a throwing `onRequest` middleware), the wallet answers with an
-     * error, or an `onResponse` middleware throws. Wallet errors arrive as a
-     * `FrakRpcError`. It is not called after unsubscribing.
+     * error, an `onResponse` middleware throws, or the client is cleaned up.
+     * Errors arrive as a `FrakRpcError`. It is not called after unsubscribing.
      *
      * @example
      * ```ts
@@ -139,7 +139,8 @@ export type RpcClient<
     sendLifecycle: (message: TLifecycleEvent) => void;
 
     /**
-     * Clean up resources and close connections
+     * Clean up resources and close connections; pending requests and open
+     * streams fail with `clientNotConnected`, and later requests are refused
      */
     cleanup: () => void;
 };
@@ -203,6 +204,16 @@ export function createRpcClient<
 
     // Active channels map (stores callbacks for both requests and listeners)
     const activeChannels = new Map<string, ChannelCallback>();
+    let cleanedUp = false;
+
+    function assertOpen() {
+        if (cleanedUp) {
+            throw new FrakRpcError(
+                RpcErrorCodes.clientNotConnected,
+                "The RPC client was cleaned up"
+            );
+        }
+    }
 
     /**
      * Check if a message is a lifecycle message
@@ -384,7 +395,10 @@ export function createRpcClient<
      * Send a message through the transport with middleware
      */
     async function sendMessage(message: RpcMessage<ExtractMethod<TSchema>>) {
+        assertOpen();
         const processedMessage = await executeOnRequestMiddleware(message);
+        // Cleanup may have settled this request while the middleware awaited.
+        assertOpen();
         emittingTransport.postMessage(processedMessage, targetOrigin);
     }
 
@@ -392,6 +406,7 @@ export function createRpcClient<
      * Send a lifecycle event (bypasses middleware)
      */
     function sendLifecycle(message: TLifecycleEvent) {
+        // SAFETY: postMessage clones any value; `RpcTransport` only types the RPC shape.
         emittingTransport.postMessage(
             message as unknown as RpcMessage,
             targetOrigin
@@ -464,6 +479,8 @@ export function createRpcClient<
                 console.error("[RPC Client] Listener error:", response.error);
                 // Close channel on error
                 activeChannels.delete(id);
+                if (closed) return;
+                closed = true;
                 onError?.(toFrakRpcError(response.error));
             } else {
                 // Call user's callback with the result
@@ -503,9 +520,18 @@ export function createRpcClient<
     function cleanup() {
         // Remove message listener
         listeningTransport.removeEventListener("message", handleMessage);
+        cleanedUp = true;
 
-        // Clear all active channels
+        const pending = [...activeChannels.values()];
         activeChannels.clear();
+        for (const settle of pending) {
+            settle({
+                error: {
+                    code: RpcErrorCodes.clientNotConnected,
+                    message: "The RPC client was cleaned up",
+                },
+            });
+        }
     }
 
     return {
