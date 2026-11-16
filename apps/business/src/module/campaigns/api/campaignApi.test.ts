@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { listGet, configGet, membersPost } = vi.hoisted(() => ({
+const { listGet, configGet, membersPost, countPost } = vi.hoisted(() => ({
     listGet: vi.fn(),
     configGet: vi.fn(),
     membersPost: vi.fn(),
+    countPost: vi.fn(),
 }));
 
 vi.mock("@/api/backendClient", () => ({
@@ -15,12 +16,17 @@ vi.mock("@/api/backendClient", () => ({
                     { get: listGet }
                 ),
             })),
-            { members: { post: membersPost } }
+            {
+                members: { post: membersPost, count: { post: countPost } },
+            }
         ),
     },
 }));
 
-import { getMerchantMembers } from "@/module/members/api/getMerchantMembers";
+import {
+    getMerchantMembers,
+    getMerchantsMembersCount,
+} from "@/module/members/api/getMerchantMembers";
 import { getCampaignConfig, getMerchantCampaigns } from "./campaignApi";
 
 const serverError = { status: 500, value: "Internal Server Error" };
@@ -66,6 +72,13 @@ describe("business list fetchers on a backend error", () => {
         membersPost.mockResolvedValue({ data: null, error: serverError });
         await expect(getMerchantMembers({}, false)).rejects.toThrow(
             "Failed to load members"
+        );
+    });
+
+    it("getMerchantsMembersCount throws instead of returning 0", async () => {
+        countPost.mockResolvedValue({ data: null, error: serverError });
+        await expect(getMerchantsMembersCount({}, false)).rejects.toThrow(
+            "Failed to load member count"
         );
     });
 });
