@@ -62,7 +62,7 @@ function PairingPage() {
     const { t } = useTranslation();
     const { id, mode } = Route.useSearch();
     const navigate = useNavigate();
-    const pairingState = useStore(client.store);
+    const pairingStatus = useStore(client.store, (s) => s.status);
     const session = useStore(sessionStore, selectSession);
     const {
         data: pairingInfo,
@@ -231,7 +231,7 @@ function PairingPage() {
             <Stack space="l">
                 <PairingHeader />
                 <PairingInfo
-                    state={pairingState}
+                    status={pairingStatus}
                     originName={pairingInfo.originName}
                 />
                 {hasPairingCode ? (

@@ -216,7 +216,8 @@ function MobileSsoButton({
         clearTimeout: clearSsoRedirectTimeout,
     } = useMountedTimeout();
     const client = getOriginPairingClient();
-    const clientState = useStore(client.store);
+    const pairing = useStore(client.store, (s) => s.pairing);
+    const pairingStatus = useStore(client.store, (s) => s.status);
     const { emitRedirectWithFallback } = useDeepLinkFallback();
 
     // Track whether the page was hidden (native app opened)
@@ -282,9 +283,7 @@ function MobileSsoButton({
         }, 30_000);
     };
 
-    const deepLinkHref = clientState.pairing
-        ? buildDeepLinkHref(clientState.pairing)
-        : undefined;
+    const deepLinkHref = pairing ? buildDeepLinkHref(pairing) : undefined;
 
     // Build a deferred SSO fallback that waits 5s and checks
     // whether the native app was actually opened before redirecting.
@@ -322,11 +321,11 @@ function MobileSsoButton({
     ]);
 
     useEffect(() => {
-        if (clientState.status === "paired") {
+        if (pairingStatus === "paired") {
             clearPairingTimeout();
             clearSsoRedirectTimeout();
         }
-    }, [clientState.status, clearPairingTimeout, clearSsoRedirectTimeout]);
+    }, [pairingStatus, clearPairingTimeout, clearSsoRedirectTimeout]);
 
     if (status === "idle") {
         return (

@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { trackEvent } from "../../common/analytics";
 import type { OnPairingSuccessCallback } from "../clients/origin";
 import { getOriginPairingClient } from "../clients/store";
@@ -17,7 +18,10 @@ export type UseOriginPairingFlowOptions = {
 };
 
 export type UseOriginPairingFlowReturn = {
-    clientState: OriginPairingState;
+    clientState: Pick<
+        OriginPairingState,
+        "status" | "pairing" | "partnerDevice"
+    >;
     pairingInfo: OriginPairingState["pairing"];
     isError: boolean;
     handleRetry: () => void;
@@ -39,7 +43,14 @@ export function useOriginPairingFlow({
     authenticatorHints,
 }: UseOriginPairingFlowOptions): UseOriginPairingFlowReturn {
     const client = getOriginPairingClient();
-    const clientState = useStore(client.store);
+    const clientState = useStore(
+        client.store,
+        useShallow((s) => ({
+            status: s.status,
+            pairing: s.pairing,
+            partnerDevice: s.partnerDevice,
+        }))
+    );
     const isError =
         clientState.status === "error" || clientState.status === "retry-error";
 

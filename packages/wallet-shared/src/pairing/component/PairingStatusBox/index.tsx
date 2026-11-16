@@ -4,14 +4,14 @@ import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import type { BasePairingClient } from "../../clients/base";
+import type { BasePairingState } from "../../types/states";
 import * as styles from "./index.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
 
-// Loose alias — we only need access to .store/.reset/.reconnect, the generics
-// are unused here so we accept any subclass.
+// Loose alias — we only need .store/.reset/.reconnect, so any subclass fits.
 // biome-ignore lint/suspicious/noExplicitAny: structural client prop
-type AnyPairingClient = BasePairingClient<any, any, any>;
+type AnyPairingClient = BasePairingClient<any, any, BasePairingState>;
 
 /**
  * StatusBoxModal is a component that displays a status icon and a title.
@@ -47,14 +47,15 @@ export function StatusBoxModal({
  * It is used to refresh the pairing process.
  */
 function StatusBoxRetry({ client }: { client: AnyPairingClient }) {
-    const state = useStore(client.store);
+    const status = useStore(client.store, (s) => s.status);
+    const closeInfo = useStore(client.store, (s) => s.closeInfo);
     const { t } = useTranslation();
-    const code = state.closeInfo?.code;
-    const reason = state.closeInfo?.reason;
+    const code = closeInfo?.code;
+    const reason = closeInfo?.reason;
 
-    if (state.status !== "retry-error" && state.status !== "error") return null;
+    if (status !== "retry-error" && status !== "error") return null;
 
-    const isFatal = state.status === "error";
+    const isFatal = status === "error";
     const onClick = () => {
         if (isFatal) {
             client.reset();
