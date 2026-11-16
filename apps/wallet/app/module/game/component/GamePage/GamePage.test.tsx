@@ -199,16 +199,20 @@ describe("GamePage", () => {
         });
     });
 
-    it("shows the tickets, prize and end date in the hero", () => {
+    it("states the prize above the hero, and the tickets, a nudge and the end date in it", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
-        expect(screen.getByText("50 € à gagner")).toBeInTheDocument();
+        expect(screen.getByText("game.page.intro")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
+        expect(screen.getByText("4")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.page.hero.keepGoing")
+        ).toBeInTheDocument();
         expect(
             screen.getByText("onboarding.game.reward.game.endsAt")
         ).toBeInTheDocument();
-        expect(screen.queryByText("game.page.hero.pending:4")).toBeNull();
+        expect(screen.queryByText("game.page.hero.labelPending")).toBeNull();
     });
 
     it("shows how many missions are done and only the ones left to do", () => {
@@ -276,12 +280,12 @@ describe("GamePage", () => {
         render(<GamePage />);
 
         expect(
-            screen.getByText("game.page.hero.pending:2")
+            screen.getByText("game.page.hero.labelPending")
         ).toBeInTheDocument();
         expect(
             screen.getByText("game.page.hero.subtitleNone:2")
         ).toBeInTheDocument();
-        expect(screen.queryByText("50 € à gagner")).toBeNull();
+        expect(screen.queryByText("game.page.hero.keepGoing")).toBeNull();
         const gate = screen.getByRole("link", {
             name: /game.page.missions.instagram.none.title/,
         });
@@ -293,7 +297,7 @@ describe("GamePage", () => {
         currentGame.data = player(1, true, "declared");
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:1")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         const certify = screen.getByRole("link", {
             name: /game.page.missions.instagram.declared.title/,
         });
@@ -555,7 +559,7 @@ describe("GamePage", () => {
         gameHistory.data = [result("earlier", "lost")];
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         expect(
             screen.getByText("game.history.ticketsOf:7")
         ).toBeInTheDocument();
@@ -647,7 +651,7 @@ describe("GamePage", () => {
         currentGame.isError = true;
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         expect(screen.queryByText("game.page.error")).toBeNull();
     });
 

@@ -552,11 +552,10 @@ export default interface Resources {
         "hero": {
           "countdownDays": "Ends in {{days}} d {{hours}} h",
           "countdownHours": "Ends in {{hours}} h {{minutes}} min",
-          "drawn_one": "{{count}} ticket in the draw",
-          "drawn_other": "{{count}} tickets in the draw",
           "gain": "+{{amount}} {{source}}",
-          "pending_one": "{{count}} ticket on hold",
-          "pending_other": "{{count}} tickets on hold",
+          "keepGoing": "Keep inviting friends to boost your chances!",
+          "label": "Your tickets in the draw",
+          "labelPending": "Your pending tickets",
           "since": "Since your last visit: {{gains}}",
           "sources": {
             "brandShare": "friend from a brand",
@@ -573,6 +572,7 @@ export default interface Resources {
           "unlocked_one": "Your ticket is unlocked",
           "unlocked_other": "Your {{count}} tickets are unlocked"
         },
+        "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
@@ -838,7 +838,7 @@ export default interface Resources {
       "linked": {
         "badge": "Connected",
         "checkAgain": "Check again",
-        "counting": "You follow @frak_fr: your tickets count in the draw, with 1 more ticket in every game.",
+        "counting": "All set, your tickets count in the draw. As long as you follow @frak_fr, you get 1 bonus ticket in every Frak Game.",
         "done": "Done",
         "follow": "Follow @frak_fr",
         "notFollowing": "Last step: follow @frak_fr so your tickets count.",
@@ -1888,7 +1888,7 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
-          "gameHint": "Frak Game: 2 tickets per friend who signs up with your code, once they connect their Instagram and follow @frak_fr.",
+          "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw.",
           "modifyCta": "Modify my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",

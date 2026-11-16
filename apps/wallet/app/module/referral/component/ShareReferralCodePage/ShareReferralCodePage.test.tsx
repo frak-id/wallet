@@ -44,8 +44,17 @@ vi.mock("@/module/stores/modalStore", () => ({
         select({ openModal: vi.fn() }),
 }));
 vi.mock("../ReferralPageShell", () => ({
-    ReferralPageShell: ({ children }: { children: React.ReactNode }) => (
-        <div>{children}</div>
+    ReferralPageShell: ({
+        description,
+        children,
+    }: {
+        description: string;
+        children: React.ReactNode;
+    }) => (
+        <div>
+            <p>{description}</p>
+            {children}
+        </div>
     ),
 }));
 

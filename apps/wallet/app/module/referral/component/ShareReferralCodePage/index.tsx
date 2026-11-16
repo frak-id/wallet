@@ -132,7 +132,11 @@ export function ShareReferralCodePage() {
     return (
         <ReferralPageShell
             title={t("wallet.referral.create.title")}
-            description={t("wallet.referral.create.description")}
+            description={t(
+                inGame
+                    ? "wallet.referral.share.gameHint"
+                    : "wallet.referral.create.description"
+            )}
         >
             {showToast ? (
                 <ToastSurface>
@@ -197,12 +201,6 @@ export function ShareReferralCodePage() {
                             </Box>
                         </Box>
                     </Box>
-
-                    {inGame ? (
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.referral.share.gameHint")}
-                        </Text>
-                    ) : null}
 
                     <Stack space="m">
                         <Button
