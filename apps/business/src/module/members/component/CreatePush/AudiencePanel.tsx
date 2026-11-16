@@ -14,6 +14,7 @@ import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { getMerchantsMembersCount } from "@/module/members/api/getMerchantMembers";
 import { AudienceFilter } from "@/module/members/component/CreatePush/AudienceFilter";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { audienceCountQueryKey } from "@/module/members/queries/queryKeys";
 
 const COUNT_DEBOUNCE_MS = 400;
@@ -36,9 +37,11 @@ export function AudiencePanel() {
                 rules={{
                     required: t("members.audience.required"),
                 }}
-                render={() => (
+                render={({ field }) => (
                     <FormItem>
-                        <SelectAudience />
+                        <SelectAudience
+                            onFilterSet={(filter) => field.onChange({ filter })}
+                        />
                         <FormMessage />
                     </FormItem>
                 )}
@@ -47,7 +50,11 @@ export function AudiencePanel() {
     );
 }
 
-function SelectAudience() {
+function SelectAudience({
+    onFilterSet,
+}: {
+    onFilterSet: (filter: FormMembersFiltering) => void;
+}) {
     const { t } = useTranslation();
     const { control, setValue, getValues } =
         useFormContext<FormCreatePushNotification>();
@@ -85,7 +92,7 @@ function SelectAudience() {
         <Stack space={"m"}>
             <AudienceFilter
                 initialValue={getValues("target.filter")}
-                onFilterSet={(updated) => setValue("target.filter", updated)}
+                onFilterSet={onFilterSet}
             />
             {countFailed ? (
                 <>
