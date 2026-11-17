@@ -1,5 +1,14 @@
 # @frak-labs/react-sdk
 
+## 1.7.0
+
+### Patch Changes
+
+- [#448](https://github.com/frak-id/wallet/pull/448) [`e1ce4a0`](https://github.com/frak-id/wallet/commit/e1ce4a0b1756e4544a420d900781b0a6de2d7e30) Thanks [@srod](https://github.com/srod)! - `FrakIFrameClientProvider` now creates a fresh client when it mounts again, instead of reusing the previous one bound to a removed iframe, and detaches its client when it unmounts. `client.destroy()` accepts `{ detachOnly: true }` to stop a client's listeners and timers while keeping its iframe and the cached merchant config. A client whose iframe has left the DOM detaches itself on the next lifecycle message instead of acting on it.
+- Updated dependencies [[`e1ce4a0`](https://github.com/frak-id/wallet/commit/e1ce4a0b1756e4544a420d900781b0a6de2d7e30), [`0cb4743`](https://github.com/frak-id/wallet/commit/0cb4743932f92b82cb20db6f43d7f05984eac95e)]:
+  - @frak-labs/core-sdk@1.7.0
+  - @frak-labs/frame-connector@1.7.0
+
 ## 1.6.0
 
 ### Patch Changes

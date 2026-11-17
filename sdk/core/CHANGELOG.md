@@ -1,5 +1,17 @@
 # @frak-labs/core-sdk
 
+## 1.7.0
+
+### Minor Changes
+
+- [#448](https://github.com/frak-id/wallet/pull/448) [`e1ce4a0`](https://github.com/frak-id/wallet/commit/e1ce4a0b1756e4544a420d900781b0a6de2d7e30) Thanks [@srod](https://github.com/srod)! - `FrakIFrameClientProvider` now creates a fresh client when it mounts again, instead of reusing the previous one bound to a removed iframe, and detaches its client when it unmounts. `client.destroy()` accepts `{ detachOnly: true }` to stop a client's listeners and timers while keeping its iframe and the cached merchant config. A client whose iframe has left the DOM detaches itself on the next lifecycle message instead of acting on it.
+
+### Patch Changes
+
+- [#449](https://github.com/frak-id/wallet/pull/449) [`0cb4743`](https://github.com/frak-id/wallet/commit/0cb4743932f92b82cb20db6f43d7f05984eac95e) Thanks [@srod](https://github.com/srod)! - SDK requests no longer wait forever for a wallet iframe that never connects: after 30 seconds they fail with `clientNotConnected`, `waitForConnection` resolves `false`, and `setupClient` detaches the client and returns `undefined` instead of hanging. A response that an `onResponse` middleware cannot process now rejects its request instead of leaving it pending, and closes a `listen()` stream instead of skipping that chunk. `listen()` takes an optional `onError` callback that receives the failure when a stream cannot be sent, the wallet answers with an error, or a response middleware throws. `watchWalletStatus` with a callback now rejects in that case instead of hanging. `cleanup()`, which `client.destroy()` runs, now rejects requests still in flight and reports open streams to `onError` with `clientNotConnected`, and a request made after it fails without being sent, so a provider remount no longer leaves `useWalletStatus` pending forever.
+- Updated dependencies [[`0cb4743`](https://github.com/frak-id/wallet/commit/0cb4743932f92b82cb20db6f43d7f05984eac95e)]:
+  - @frak-labs/frame-connector@1.7.0
+
 ## 1.6.0
 
 ### Minor Changes

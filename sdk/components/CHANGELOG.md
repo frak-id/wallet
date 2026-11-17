@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 1.5.1
+
+### Patch Changes
+
+- [#431](https://github.com/frak-id/wallet/pull/431) [`f581b22`](https://github.com/frak-id/wallet/commit/f581b223efa12aea9d6cc6954edb8f963ffa67f3) Thanks [@srod](https://github.com/srod)! - `<frak-banner>` text now wraps inside the banner when it holds a word too long for one line, such as an email address or a URL, instead of running past the banner's edge.
+- Updated dependencies [[`e1ce4a0`](https://github.com/frak-id/wallet/commit/e1ce4a0b1756e4544a420d900781b0a6de2d7e30), [`0cb4743`](https://github.com/frak-id/wallet/commit/0cb4743932f92b82cb20db6f43d7f05984eac95e)]:
+  - @frak-labs/core-sdk@1.7.0
+  - @frak-labs/frame-connector@1.7.0
+
 ## 1.5.0
 
 ### Minor Changes
