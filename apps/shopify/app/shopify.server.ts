@@ -29,6 +29,10 @@ const shopify = shopifyApp({
     sessionStorage: sessionStorageAdapter,
     distribution: AppDistribution.AppStore,
     polarisUrl: POLARIS_URL,
+    future: {
+        // Refresh only works if db/adapter persists refreshToken/refreshTokenExpires.
+        expiringOfflineAccessTokens: true,
+    },
 });
 
 export default shopify;
