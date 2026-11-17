@@ -573,6 +573,14 @@ export default interface Resources {
           "unlocked_other": "Your {{count}} tickets are unlocked"
         },
         "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
+        "invite": {
+          "description_one": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} ticket.",
+          "description_other": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} tickets.",
+          "noCode_one": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} ticket.",
+          "noCode_other": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} tickets.",
+          "share": "Share my link",
+          "title": "Invite your friends"
+        },
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
@@ -881,12 +889,12 @@ export default interface Resources {
       "processingDone": "Your wallet is ready",
       "referral": {
         "codeCopied": "Referral code copied!",
-        "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
+        "description": "Sign up with this code to earn cashback on your purchases at partner brands.",
         "manualEntry": "Referral code to enter at sign-up",
-        "openApp": "I already have the Frak app",
+        "openApp": "I already have the app",
         "openBrowser": "Open in the browser",
         "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser",
-        "title": "Your referral code"
+        "title": "You're invited to Frak"
       },
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",
       "title_noReward": "One last step!\nCopy your reward code"
@@ -1888,8 +1896,12 @@ export default interface Resources {
           "activeSince": "Active since",
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
+          "copyLink": "Copy link",
           "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw.",
+          "gameShareText": "Join the Frak Game with my code {{code}} and try to win {{prize}}!",
+          "linkCopiedToast": "Referral link copied",
           "modifyCta": "Modify my code",
+          "qrCaption": "Scan to sign up with my code",
           "savedToast": "New code saved",
           "shareCta": "Share my code",
           "shareText": "Use my referral code {{code}} to sign up on Frak."

@@ -358,10 +358,14 @@
             "share": {
                 "activeSince": "Actif depuis le",
                 "copyCode": "Copier le code",
+                "copyLink": "Copier le lien",
                 "copiedToast": "Code de parrainage copié",
+                "linkCopiedToast": "Lien de parrainage copié",
+                "qrCaption": "Scanne pour t'inscrire avec mon code",
                 "savedToast": "Nouveau code enregistré",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
+                "gameShareText": "Rejoins le Jeu Frak avec mon code {{code}} et tente de remporter {{prize}} au tirage !",
                 "modifyCta": "Modifier mon code",
                 "gameHint": "Pour chaque ami·e inscrit·e avec ton code qui connecte son Instagram et suit @frak_fr, tu gagnes 2 tickets au tirage."
             },
@@ -884,11 +888,11 @@
         "pendingDaysLeft": "{{ days }} jours restants",
         "dismiss": "Fermer",
         "referral": {
-            "title": "Ton code de parrainage",
-            "description": "Télécharge l'app et saisis ce code à l'inscription pour débloquer ton cashback exclusif.",
+            "title": "On t'invite sur Frak",
+            "description": "Inscris-toi avec ce code pour gagner du cashback sur tes achats chez nos marques partenaires.",
             "codeCopied": "Code de parrainage copié !",
             "manualEntry": "Code de parrainage à saisir à l'inscription",
-            "openApp": "J'ai déjà l'app Frak",
+            "openApp": "J'ai déjà l'app",
             "openBrowser": "Ouvrir dans le navigateur",
             "openBrowserHint": "Sinon : ⋯ en haut à droite → Ouvrir dans un navigateur externe"
         }
@@ -1118,6 +1122,14 @@
                     "friends_one": "{{count}} achat d'un ami",
                     "friends_other": "{{count}} achats d'amis"
                 }
+            },
+            "invite": {
+                "title": "Invite tes ami·e·s",
+                "description_one": "Chaque ami·e inscrit·e avec ton lien qui suit @frak_fr sur Instagram te rapporte {{count}} ticket.",
+                "description_other": "Chaque ami·e inscrit·e avec ton lien qui suit @frak_fr sur Instagram te rapporte {{count}} tickets.",
+                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e qui suit @frak_fr sur Instagram te rapporte {{count}} ticket.",
+                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e qui suit @frak_fr sur Instagram te rapporte {{count}} tickets.",
+                "share": "Partager mon lien"
             },
             "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"
         },

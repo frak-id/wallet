@@ -358,10 +358,14 @@
             "share": {
                 "activeSince": "Active since",
                 "copyCode": "Copy code",
+                "copyLink": "Copy link",
                 "copiedToast": "Referral code copied",
+                "linkCopiedToast": "Referral link copied",
+                "qrCaption": "Scan to sign up with my code",
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
+                "gameShareText": "Join the Frak Game with my code {{code}} and try to win {{prize}}!",
                 "modifyCta": "Modify my code",
                 "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw."
             },
@@ -884,11 +888,11 @@
         "pendingDaysLeft": "{{ days }} days left",
         "dismiss": "Close",
         "referral": {
-            "title": "Your referral code",
-            "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
+            "title": "You're invited to Frak",
+            "description": "Sign up with this code to earn cashback on your purchases at partner brands.",
             "codeCopied": "Referral code copied!",
             "manualEntry": "Referral code to enter at sign-up",
-            "openApp": "I already have the Frak app",
+            "openApp": "I already have the app",
             "openBrowser": "Open in the browser",
             "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser"
         }
@@ -1118,6 +1122,14 @@
                     "friends_one": "{{count}} purchase by a friend",
                     "friends_other": "{{count}} purchases by friends"
                 }
+            },
+            "invite": {
+                "title": "Invite your friends",
+                "description_one": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} ticket.",
+                "description_other": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} tickets.",
+                "noCode_one": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} ticket.",
+                "noCode_other": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} tickets.",
+                "share": "Share my link"
             },
             "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
         },

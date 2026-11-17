@@ -1,26 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 
+const COPIED_MS = 2000;
+
 export function useCopyToClipboardWithState() {
-    const [copied, setCopied] = useState(false);
+    const [copiedAt, setCopiedAt] = useState<number | null>(null);
 
     useEffect(() => {
-        if (copied) {
-            const timer = setTimeout(() => {
-                setCopied(false);
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [copied]);
+        if (copiedAt === null) return;
+        const timer = setTimeout(() => setCopiedAt(null), COPIED_MS);
+        return () => clearTimeout(timer);
+    }, [copiedAt]);
 
-    const copy = useCallback(
-        (text: string) => {
-            if (!copied) {
-                navigator.clipboard.writeText(text);
-                setCopied(true);
-            }
-        },
-        [copied]
-    );
+    // Writes on every call: a page with two copy targets must not keep the first value.
+    const copy = useCallback((text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedAt(performance.now());
+    }, []);
 
-    return { copied, copy };
+    return { copied: copiedAt !== null, copy };
 }

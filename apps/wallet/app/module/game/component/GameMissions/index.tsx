@@ -13,6 +13,7 @@ import {
     type Mission,
     type MissionText,
     missionsDone,
+    missionsListed,
     missionsToDo,
 } from "@/module/game/utils/gameMissions";
 
@@ -58,7 +59,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     );
 }
 
-/** How far the player is through the ways to earn tickets, and the ones left to do. */
+/** How far the player is through the ways to earn tickets, the ones left to do, and inviting more friends. */
 export function GameMissions({
     missions,
     gameId,
@@ -69,6 +70,7 @@ export function GameMissions({
     const { t } = useTranslation();
     const done = missionsDone(missions);
     const toDo = missionsToDo(missions);
+    const listed = missionsListed(missions);
 
     return (
         <Stack space="xs">
@@ -86,9 +88,14 @@ export function GameMissions({
                 tone={toDo.length > 0 ? "primary" : "success"}
                 label={t("game.page.missions.title")}
             />
-            {toDo.length > 0 ? (
+            {toDo.length === 0 && (
+                <Text variant="bodySmall" color="secondary">
+                    {t("game.page.missions.allDone")}
+                </Text>
+            )}
+            {listed.length > 0 && (
                 <Card padding="none">
-                    {toDo.map((mission) => (
+                    {listed.map((mission) => (
                         <MissionRow
                             key={mission.id}
                             mission={mission}
@@ -96,10 +103,6 @@ export function GameMissions({
                         />
                     ))}
                 </Card>
-            ) : (
-                <Text variant="bodySmall" color="secondary">
-                    {t("game.page.missions.allDone")}
-                </Text>
             )}
         </Stack>
     );
