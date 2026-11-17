@@ -7,8 +7,7 @@ import { purchaseTable } from "../../db/schema/purchaseTable";
 import { authenticate } from "../shopify.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-    const { shop, session, topic, payload } =
-        await authenticate.webhook(request);
+    const { shop, topic, payload } = await authenticate.webhook(request);
 
     // NEVER log the raw `payload`: several topics (CUSTOMERS_DATA_REQUEST,
     // CUSTOMERS_REDACT, ...) carry raw customer PII (email/phone/id). Persisting
@@ -19,13 +18,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     switch (topic) {
         case "APP_UNINSTALLED":
-            if (session) {
-                // Redelivered after the app is already gone, so the session may
-                // have been deleted by an earlier run of this same webhook.
-                await drizzleDb
-                    .delete(sessionTable)
-                    .where(eq(sessionTable.shop, shop));
-            }
+            // Not gated on `session`: once the app is gone its refresh token is
+            // rejected, so the library hands us no session for an expired token.
+            await drizzleDb
+                .delete(sessionTable)
+                .where(eq(sessionTable.shop, shop));
             break;
 
         case "APP_PURCHASES_ONE_TIME_UPDATE":

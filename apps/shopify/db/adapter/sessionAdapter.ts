@@ -26,6 +26,8 @@ export type SessionInput = {
 
 /**
  * Convert a session object to a database row for insertion.
+ * Absent fields are `null`, not `undefined`: the upsert's SET skips `undefined`
+ * keys, so the library clearing a rejected token would leave it in the row.
  */
 export function sessionToRow(
     session: SessionInput
@@ -35,13 +37,21 @@ export function sessionToRow(
         shop: session.shop,
         state: session.state,
         isOnline: session.isOnline,
-        scope: session.scope,
-        expires: session.expires,
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken,
-        refreshTokenExpires: session.refreshTokenExpires,
-        userId: session.onlineAccessInfo?.associated_user.id,
+        scope: session.scope ?? null,
+        expires: session.expires ?? null,
+        accessToken: session.accessToken ?? null,
+        refreshToken: session.refreshToken ?? null,
+        refreshTokenExpires: session.refreshTokenExpires ?? null,
+        userId: session.onlineAccessInfo?.associated_user.id ?? null,
     };
+}
+
+/**
+ * A non-expiring offline token: never sent, so `authenticate.admin` sees an
+ * inactive session and exchanges it for an expiring pair.
+ */
+function isNonExpiringOfflineToken(row: InferSelectModel<SessionTable>) {
+    return !row.isOnline && !row.expires;
 }
 
 /**
@@ -63,7 +73,7 @@ export function rowToSessionParams(
     if (row.scope) {
         sessionParams.scope = row.scope;
     }
-    if (row.accessToken) {
+    if (row.accessToken && !isNonExpiringOfflineToken(row)) {
         sessionParams.accessToken = row.accessToken;
     }
     if (row.refreshToken) {
