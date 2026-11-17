@@ -6,7 +6,7 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { sha256 } from "@noble/hashes/sha2.js";
-import { OpenPanel } from "@openpanel/web";
+import type { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
 import { setEnvironment } from "../config/environment";
 import { loadCachedConfig } from "../config/loadCachedConfig";
@@ -18,6 +18,7 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
+import { createSdkOpenPanel } from "../utils/analytics/openPanel";
 import { clearAllCache } from "../utils/cache";
 import {
     HANDSHAKE_TIMEOUT_MS,
@@ -165,62 +166,14 @@ export async function createIFrameFrakClient({
         sdkConfigStore.reset();
     };
 
-    let openPanel: OpenPanel | undefined;
+    const openPanel = createSdkOpenPanel(resolvedClientId);
     let track: TrackLifecycle | undefined;
-    if (
-        process.env.OPEN_PANEL_API_URL &&
-        process.env.OPEN_PANEL_SDK_CLIENT_ID
-    ) {
-        openPanel = new OpenPanel({
-            apiUrl: process.env.OPEN_PANEL_API_URL,
-            clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
-            // Off on a merchant's page: `sdk_initialized` already counts page
-            // loads, component impressions are the CTA denominator, and both
-            // auto-trackers collect the merchant's own traffic, not ours.
-            trackScreenViews: false,
-            trackOutgoingLinks: false,
-            // Never enable: `data-track` would let partner markup name events
-            // and ship arbitrary `data-*` values into our project.
-            trackAttributes: false,
-            // We use a filter to ensure we got the open panel instance initialized
-            //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
-            filter: ({ type, payload }) => {
-                if (type !== "track") return true;
-                if (!payload?.properties) return true;
-
-                // Check if we we got the properties once initialized
-                if (!("sdk_version" in payload.properties)) {
-                    payload.properties = {
-                        ...payload.properties,
-                        sdk_version: process.env.SDK_VERSION,
-                        ...(resolvedClientId && {
-                            user_anonymous_client_id: resolvedClientId,
-                            __deviceId: resolvedClientId,
-                        }),
-                    };
-                }
-
-                return true;
-            },
-        });
-        // `__deviceId` overrides OpenPanel's project + IP + user-agent device
-        // hash, which rotates daily and collides behind shared egress. Keying on
-        // the SDK's own persistent id is what lets a funnel cross from this page
-        // into the iframe and the wallet, which resolve the same id.
-        openPanel.setGlobalProperties({
-            sdk_version: process.env.SDK_VERSION,
-            ...(resolvedClientId && {
-                user_anonymous_client_id: resolvedClientId,
-                __deviceId: resolvedClientId,
-            }),
-        });
-        openPanel.init();
+    if (openPanel) {
         openPanel.track("sdk_initialized", {
             sdk_version: process.env.SDK_VERSION,
         });
 
-        const panel = openPanel;
-        track = (event, properties) => panel.track(event, properties);
+        track = (event, properties) => openPanel.track(event, properties);
         trackHandshake({
             track,
             isConnected: lifecycleManager.isConnected,
