@@ -6,6 +6,8 @@ import * as sharingPageUtils from "../actions/sharingPage";
 import * as clientReadyUtils from "./clientReady";
 import { initFrakSdk } from "./initFrakSdk";
 
+const openPanelTrack = vi.hoisted(() => vi.fn());
+
 // Mock dependencies — pass through withCache/clearAllCache so the real cache works
 vi.mock("@frak-labs/core-sdk", async () => {
     const actual = await vi.importActual<typeof import("@frak-labs/core-sdk")>(
@@ -15,6 +17,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
         ...actual,
         setupClient: vi.fn(),
         trackEvent: vi.fn(),
+        createSdkOpenPanel: vi.fn(() => ({ track: openPanelTrack })),
     };
 });
 
@@ -60,6 +63,64 @@ describe("initFrakSdk", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    describe("sdk_init_failed", () => {
+        beforeEach(async () => {
+            const actual = await vi.importActual<
+                typeof import("@frak-labs/core-sdk")
+            >("@frak-labs/core-sdk");
+            vi.mocked(coreSdkIndex.trackEvent).mockImplementation(
+                actual.trackEvent
+            );
+        });
+
+        const initFailedCalls = () =>
+            openPanelTrack.mock.calls.filter(
+                ([event]) => event === "sdk_init_failed"
+            );
+
+        it("reaches OpenPanel when the config is missing", async () => {
+            window.FrakSetup.config = undefined;
+            Object.defineProperty(window, "location", {
+                value: { href: "https://shop.test/", hostname: "shop.test" },
+                writable: true,
+            });
+
+            await initFrakSdk();
+            await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
+
+            expect(initFailedCalls()[0][1]).toEqual({
+                reason: expect.stringContaining("Configuration not found"),
+                config_missing: true,
+                domain: "shop.test",
+            });
+        });
+
+        it("reaches OpenPanel when no client could be created", async () => {
+            vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(undefined);
+
+            await initFrakSdk();
+            await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
+
+            expect(initFailedCalls()[0][1]).toEqual({
+                reason: "[Frak SDK] Failed to create client",
+                config_missing: false,
+                domain: "example.com",
+            });
+        });
+
+        it("is sent once per failed attempt, not once per caller", async () => {
+            vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(undefined);
+
+            await Promise.all([initFrakSdk(), initFrakSdk(), initFrakSdk()]);
+            // Inside the 1 s backoff: rejected by the cache, never attempted.
+            await initFrakSdk();
+            await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
+            await new Promise((resolve) => setTimeout(resolve, 10));
+
+            expect(initFailedCalls()).toHaveLength(1);
+        });
     });
 
     it("should export core SDK to window.FrakSetup.core", async () => {
