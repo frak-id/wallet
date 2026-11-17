@@ -11,9 +11,7 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
-    canShareNatively,
-    recordError,
-    shareNatively,
+    PairingQrCode,
     trackEvent,
     useCopyToClipboardWithState,
     useReferralStatus,
@@ -23,7 +21,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { modalStore } from "@/module/stores/modalStore";
-import { displayReferralLink, referralLink } from "../../utils/referralLink";
+import { useShareReferralLink } from "../../hook/useShareReferralLink";
+import { displayReferralLink, referralQrValue } from "../../utils/referralLink";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
@@ -42,7 +41,10 @@ export function ShareReferralCodePage() {
     const { data: status } = useReferralStatus();
     const inGame = useCurrentGame().data?.me.participating ?? false;
     const ownedCode = status?.ownedCode ?? null;
-    const link = ownedCode ? referralLink(ownedCode.code) : null;
+    const { link, share } = useShareReferralLink(
+        ownedCode?.code,
+        "referral_code"
+    );
     const shouldRedirect = status !== undefined && !ownedCode;
 
     useEffect(() => {
@@ -115,39 +117,11 @@ export function ShareReferralCodePage() {
         trackEvent("sharing_link_copied", { source: "referral_code", link });
     };
 
-    const handleShare = async () => {
-        if (!(ownedCode && link)) return;
-        const shareText = t("wallet.referral.share.shareText", {
-            code: ownedCode.code,
-        });
-        if (!canShareNatively()) {
+    const handleShare = () =>
+        share((value) => {
             setCopiedItem("link");
-            copy(`${shareText}\n${link}`);
-            trackEvent("sharing_link_copied", {
-                source: "referral_code",
-                link,
-            });
-            return;
-        }
-        trackEvent("sharing_link_started", { source: "referral_code", link });
-        // No `title`: with one, macOS Safari shares two items ("2 Images").
-        const shared = await shareNatively({
-            text: shareText,
-            url: link,
-        }).catch((err: unknown) => {
-            recordError(err, {
-                source: "sharing",
-                context: { sharing_source: "referral_code" },
-            });
-            return false;
+            copy(value);
         });
-        if (shared) {
-            trackEvent("sharing_link_shared", {
-                source: "referral_code",
-                link,
-            });
-        }
-    };
 
     return (
         <ReferralPageShell
@@ -180,6 +154,26 @@ export function ShareReferralCodePage() {
             {ownedCode && link ? (
                 <>
                     <Box className={styles.card}>
+                        <Stack
+                            space="s"
+                            align="center"
+                            className={styles.qrSection}
+                        >
+                            <div role="img" aria-label={link}>
+                                <PairingQrCode
+                                    value={referralQrValue(ownedCode.code)}
+                                    size={200}
+                                    errorCorrection="quartile"
+                                />
+                            </div>
+                            <Text
+                                variant="bodySmall"
+                                color="secondary"
+                                align="center"
+                            >
+                                {t("wallet.referral.share.qrCaption")}
+                            </Text>
+                        </Stack>
                         <Box className={styles.row}>
                             <Text
                                 as="span"

@@ -24,7 +24,8 @@ const {
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
-        t: (key: string) => key,
+        t: (key: string, values?: Record<string, string>) =>
+            values?.prize ? `${key}:${values.code}:${values.prize}` : key,
         i18n: { language: "fr-FR" },
     }),
 }));
@@ -33,6 +34,9 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     recordError,
     canShareNatively,
     shareNatively,
+    PairingQrCode: ({ value }: { value: string }) => (
+        <svg data-testid="qr" data-value={value} />
+    ),
     useCopyToClipboardWithState: () => ({ copied: clipboard.copied, copy }),
     useReferralStatus: () => ({
         data: { ownedCode: { code: "STORY1", createdAt: "2026-10-20" } },
@@ -112,6 +116,16 @@ describe("ShareReferralCodePage", () => {
         );
     });
 
+    it("draws the link as an uppercase QR, for the alphanumeric mode", () => {
+        render(<ShareReferralCodePage />);
+
+        expect(screen.getByTestId("qr")).toHaveAttribute(
+            "data-value",
+            "HTTPS://WALLET-TEST.FRAK.ID/R/STORY1"
+        );
+        expect(screen.getByRole("img", { name: LINK })).toBeInTheDocument();
+    });
+
     it("shows the code's link without its scheme", () => {
         render(<ShareReferralCodePage />);
 
@@ -165,6 +179,28 @@ describe("ShareReferralCodePage", () => {
         await waitFor(() =>
             expect(shareNatively).toHaveBeenCalledExactlyOnceWith({
                 text: "wallet.referral.share.shareText",
+                url: LINK,
+            })
+        );
+    });
+
+    it("invites to the open game, naming its prize", async () => {
+        game.data = {
+            game: { prizeAmount: 50, prizeDescription: "un iPhone" },
+            me: { participating: true },
+        };
+        shareNatively.mockResolvedValue(true);
+        render(<ShareReferralCodePage />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /wallet.referral.share.shareCta/,
+            })
+        );
+
+        await waitFor(() =>
+            expect(shareNatively).toHaveBeenCalledExactlyOnceWith({
+                text: "wallet.referral.share.gameShareText:STORY1:un iPhone",
                 url: LINK,
             })
         );

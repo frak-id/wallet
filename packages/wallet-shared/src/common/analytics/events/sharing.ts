@@ -5,7 +5,8 @@ export type SharingSource =
     | "modal"
     | "explorer_detail"
     | "welcome_card"
-    | "referral_code";
+    | "referral_code"
+    | "game_page";
 
 type SharingLinkProps = {
     source: SharingSource;

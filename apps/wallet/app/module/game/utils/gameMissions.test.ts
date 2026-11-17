@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type Mission, missionsDone, missionsOf } from "./gameMissions";
+import {
+    type Mission,
+    missionsDone,
+    missionsListed,
+    missionsOf,
+} from "./gameMissions";
 
 const NONE = {
     join: 1,
@@ -172,5 +177,29 @@ describe("missionsOf", () => {
                 },
             ],
         });
+    });
+});
+
+describe("missionsListed", () => {
+    const ids = (missions: Mission[]) => missions.map((m) => m.id);
+
+    it("keeps the friend mission once a friend joined, after the ones left to do", () => {
+        const missions = missionsOf(
+            me("declared", true, { referredSignup: 2 })
+        );
+
+        expect(ids(missionsListed(missions))).toEqual([
+            "instagram",
+            "purchase",
+            "friend",
+        ]);
+    });
+
+    it("drops every other mission once done", () => {
+        const missions = missionsOf(
+            me("certified", true, { purchase: 3, brandShare: 2 })
+        );
+
+        expect(ids(missionsListed(missions))).toEqual(["friend"]);
     });
 });

@@ -11,6 +11,12 @@ export const card = style({
     overflow: "hidden",
 });
 
+export const qrSection = style({
+    padding: `${alias.spacing.l} ${alias.spacing.m} ${alias.spacing.m}`,
+    color: vars.text.primary,
+    borderBottom: `1px solid ${vars.border.subtle}`,
+});
+
 export const row = style({
     display: "flex",
     alignItems: "center",

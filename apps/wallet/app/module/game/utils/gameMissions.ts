@@ -185,6 +185,14 @@ export const missionsToDo = (missions: Mission[]) =>
             (a, b) => Number(b.status === "gate") - Number(a.status === "gate")
         );
 
+/** The game page's rows: the missions left to do, then the friend one once done, since every new friend still adds tickets. */
+export const missionsListed = (missions: Mission[]) => [
+    ...missionsToDo(missions),
+    ...missions.filter(
+        (mission) => mission.id === "friend" && mission.status === "done"
+    ),
+];
+
 /** The step to do now: the gate locking the tickets first, else the first not done. */
 export const nextMissionOf = (missions: Mission[]) =>
     missionsToDo(missions).at(0);

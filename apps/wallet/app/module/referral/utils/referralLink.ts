@@ -8,3 +8,8 @@ export function referralLink(code: string): string {
 export function displayReferralLink(link: string): string {
     return link.replace(/^https?:\/\//, "");
 }
+
+/** Uppercase so the QR encodes in its denser alphanumeric mode; nginx and the deep-link resolver accept any case. */
+export function referralQrValue(code: string): string {
+    return referralLink(code).toUpperCase();
+}
