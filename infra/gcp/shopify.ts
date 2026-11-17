@@ -92,6 +92,7 @@ const shopifyBuildEnv = {
  */
 const shopifyRuntimeEnv = {
     STAGE: normalizedStageName,
+    SHOPIFY_API_KEY: shopifyApiKey,
     SHOPIFY_APP_URL: shopifyAppUrl,
     SCOPES: shopifyScopes,
     ...targetDbEnv,
