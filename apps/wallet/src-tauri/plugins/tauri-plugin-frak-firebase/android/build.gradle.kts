@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "com.plugin.frak_firebase"
     defaultConfig {
         minSdk = 28
@@ -32,6 +32,7 @@ dependencies {
 
     // FCM — push notifications token + topic + send.
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-installations")
 
     // Java/Kotlin uncaught-exception handler + custom keys/logs/recordError.
     implementation("com.google.firebase:firebase-crashlytics")

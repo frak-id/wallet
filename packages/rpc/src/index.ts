@@ -16,7 +16,8 @@
  * })
  * const unsubscribe = client.listen(
  *   { method: 'frak_listenToWalletStatus' },
- *   (status) => setStatus(status)
+ *   (status) => setStatus(status),
+ *   (error) => reportFailure(error)
  * )
  * ```
  *

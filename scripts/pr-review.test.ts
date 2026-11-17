@@ -197,11 +197,26 @@ describe("parseAgentReview", () => {
         ).toEqual({ ok: false, error: 'findings[0]: severity "nit"' });
         expect(
             parseAgentReview(
-                '{"findings":[{"severity":"minor","path":"a.ts","line":4,"startLine":4,"body":"x"}]}'
+                '{"findings":[{"severity":"minor","path":"a.ts","line":4,"startLine":5,"body":"x"}]}'
             )
         ).toEqual({
             ok: false,
-            error: "findings[0]: startLine 4 is not before line 4",
+            error: "findings[0]: startLine 5 is not before line 4",
+        });
+    });
+
+    it("reads a one-line range as a single-line finding", () => {
+        expect(
+            parseAgentReview(
+                '{"findings":[{"severity":"major","path":"a.ts","line":4,"startLine":4,"body":"x"}]}'
+            )
+        ).toEqual({
+            ok: true,
+            value: {
+                findings: [
+                    { severity: "major", path: "a.ts", line: 4, body: "x" },
+                ],
+            },
         });
     });
 

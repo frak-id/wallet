@@ -41,7 +41,7 @@ export function Navigation() {
     const membersUrl = merchantId ? `/m/${merchantId}/members` : "/members";
     return (
         <Stack as="nav" space="none" className={navigation}>
-            <Link to={dashboardUrl} className={logoWrapper}>
+            <Link to={dashboardUrl} className={logoWrapper} aria-label="Frak">
                 <LogoFrakWithName
                     width={105}
                     height={40}

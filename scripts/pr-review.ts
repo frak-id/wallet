@@ -179,6 +179,13 @@ function isLine(value: unknown): value is number {
     return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
 
+// The agent sometimes cites one line as a range; rejecting it would drop the whole review.
+function rangeStart(raw: Record<string, unknown>): unknown {
+    return raw.startLine === raw.line
+        ? undefined
+        : (raw.startLine ?? undefined);
+}
+
 function parseFinding(raw: unknown, at: number): Parsed<Finding> {
     const fail = (why: string): Parsed<Finding> => ({
         ok: false,
@@ -186,7 +193,7 @@ function parseFinding(raw: unknown, at: number): Parsed<Finding> {
     });
     if (!isRecord(raw)) return fail("not an object");
     const { severity, path, line, body } = raw;
-    const startLine = raw.startLine ?? undefined;
+    const startLine = rangeStart(raw);
     const suggestion = raw.suggestion ?? undefined;
     if (!isSeverity(severity))
         return fail(`severity ${JSON.stringify(severity)}`);

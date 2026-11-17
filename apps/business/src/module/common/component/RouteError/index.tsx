@@ -1,4 +1,5 @@
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
@@ -116,10 +117,15 @@ export function RouteError({
     showTechnicalDetails?: boolean;
 }) {
     const { t } = useTranslation();
+    // Without this a suspense query keeps its error and rethrows it on retry.
+    const queryErrorReset = useQueryErrorResetBoundary();
     return (
         <ErrorPanel
             error={error}
-            reset={reset}
+            reset={() => {
+                queryErrorReset.reset();
+                reset();
+            }}
             title={title}
             message={message}
             showRetry={showRetry}

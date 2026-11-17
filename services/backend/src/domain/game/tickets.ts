@@ -1,10 +1,10 @@
 export const TICKET_AMOUNTS = {
     join: 1,
-    instagramCertified: 2,
+    instagramCertified: 1,
     purchase: 3,
     referredPurchase: 3,
-    referredSignup: 1,
-    brandShare: 1,
+    referredSignup: 2,
+    brandShare: 2,
 } as const;
 
 export type TicketSource = keyof typeof TICKET_AMOUNTS;

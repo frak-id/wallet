@@ -18,15 +18,17 @@ under `#[cfg(mobile)]`).
 
 | Command | Description |
 |---|---|
-| `getToken` | Returns the current FCM registration token (or rejects with the buffered APNs error if registration failed). |
+| `getToken` | Registers with FCM and returns the Firebase Installation ID, which the backend sends to as an FCM token (or rejects with the buffered APNs error if registration failed). |
 | `requestPermissions` | Requests notification authorisation (iOS) / `POST_NOTIFICATIONS` (Android 13+). |
 | `checkPermissions` | Returns current permission state without prompting. |
 | `register` | Triggers `UIApplication.registerForRemoteNotifications()` on iOS; no-op on Android (auto-registers). |
-| `deleteToken` | Revokes the current FCM token. |
+| `deleteToken` | Unregisters the installation from FCM. |
 | `createChannel` | Creates an Android `NotificationChannel`; no-op on iOS. |
 | `sendNotification` | Posts a local notification. |
 
-**Events:** `token-refresh` (`{ token: string }`), `push-error` (`{ error: string }`).
+**Events:** `token-refresh` (`{ token: string }`, the Installation ID), `push-error` (`{ error: string }`).
+
+FCM registration uses the Firebase Installation ID (`firebase_messaging_installation_id_enabled` in the Android manifest, `FirebaseMessagingInstallationIdEnabled` in the iOS `Info.plist`). With the flag on, the legacy token APIs fail for every SDK in the process.
 
 ### Crashlytics (merged from tauri-plugin-frak-crashlytics)
 

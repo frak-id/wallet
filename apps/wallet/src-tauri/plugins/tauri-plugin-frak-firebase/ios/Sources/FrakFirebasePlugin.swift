@@ -1,5 +1,6 @@
 import FirebaseCore
 import FirebaseCrashlytics
+import FirebaseInstallations
 import FirebaseMessaging
 import FrakObjCExceptionCatcher
 import SwiftRs
@@ -242,7 +243,7 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     // MARK: - FCM commands
 
     @objc public func getToken(_ invoke: Invoke) throws {
-        Messaging.messaging().token { [weak self] token, error in
+        Messaging.messaging().register { [weak self] error in
             if let error = error {
                 if let buffered = self?.tokenBuffer.consume() {
                     invoke.resolve(["token": buffered])
@@ -256,14 +257,16 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
                 return
             }
 
-            if let token = token {
-                invoke.resolve(["token": token])
-            } else if let buffered = self?.tokenBuffer.consume() {
-                invoke.resolve(["token": buffered])
-            } else if let apnsError = self?.errorBuffer.consume() {
-                invoke.reject(apnsError)
-            } else {
-                invoke.reject("FCM token not available")
+            Installations.installations().installationID { token, _ in
+                if let token = token {
+                    invoke.resolve(["token": token])
+                } else if let buffered = self?.tokenBuffer.consume() {
+                    invoke.resolve(["token": buffered])
+                } else if let apnsError = self?.errorBuffer.consume() {
+                    invoke.reject(apnsError)
+                } else {
+                    invoke.reject("FCM token not available")
+                }
             }
         }
     }
@@ -321,13 +324,20 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     @objc public func deleteToken(_ invoke: Invoke) throws {
-        Messaging.messaging().deleteToken { error in
+        // unregister keeps the FID, so a later register would revive the logged-out wallet's backend row.
+        Messaging.messaging().unregister { error in
             if let error = error {
                 invoke.reject(error.localizedDescription)
                 return
             }
 
-            invoke.resolve()
+            Installations.installations().delete { error in
+                if let error = error {
+                    invoke.reject(error.localizedDescription)
+                    return
+                }
+                invoke.resolve()
+            }
         }
     }
 
@@ -521,8 +531,8 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
 
     // MARK: - MessagingDelegate
 
-    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        guard let token = fcmToken else {
+    func messaging(_ messaging: Messaging, didReceiveRegistration installationId: String?) {
+        guard let token = installationId else {
             return
         }
 

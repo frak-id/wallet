@@ -7,6 +7,9 @@ export const toastSurfaceTop = createVar();
 export const surface = style({
     position: "absolute",
     pointerEvents: "none",
+    // At left: 50% shrink-to-fit only gets half the parent: size to the content, wrap at the parent's width
+    width: "max-content",
+    maxWidth: "100%",
 });
 
 export const placement = recipe({

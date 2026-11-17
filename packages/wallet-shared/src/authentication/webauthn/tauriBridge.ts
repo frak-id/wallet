@@ -236,7 +236,7 @@ export function getTauriCreateFn(): OxCreateFn {
                 );
             return fromPluginRegistration(response);
         } catch (e) {
-            console.warn("Tauri create error", e);
+            console.warn("Tauri create error", extractTauriErrorMessage(e));
             throw nativeErrorToError(e);
         }
     };
@@ -318,7 +318,7 @@ export function getTauriGetFn(opts?: {
                 ReturnType<NonNullable<OxGetFn>>
             >;
         } catch (e) {
-            console.warn("Tauri get error", e);
+            console.warn("Tauri get error", extractTauriErrorMessage(e));
             throw nativeErrorToError(e);
         }
     };

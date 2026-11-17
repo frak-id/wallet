@@ -2,6 +2,16 @@ import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, fontSize, transition } from "../../tokens.css";
 
+// For wrappers whose border cannot change on focus: none, or pinned to the error color.
+// WebKit focuses a time or date field's inner segment: the input never matches :focus-visible,
+// and :has(input:focus) stays matched after blur, so those fields use :focus-within.
+const focusRing = {
+    "&:has(:focus-visible), &:focus-within:has(input:is([type=time], [type=date], [type=datetime-local]))":
+        {
+            boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        },
+};
+
 export const inputWrapper = recipe({
     base: {
         display: "flex",
@@ -45,10 +55,11 @@ export const inputWrapper = recipe({
                 height: "56px",
                 paddingInline: alias.spacing.m,
                 gap: alias.spacing.xs,
+                selectors: focusRing,
             },
             /**
-             * Borderless soft search field — white surface, no focus
-             * ring, compact padding. Designed for dashboard table
+             * Borderless soft search field — white surface, compact
+             * padding. Designed for dashboard table
              * filters (campaigns, members) where the input sits
              * directly on a coloured page background.
              */
@@ -58,11 +69,12 @@ export const inputWrapper = recipe({
                 padding: "6px 8px",
                 gap: alias.spacing.xs,
                 color: vars.icon.tertiary,
+                selectors: focusRing,
             },
         },
         length: {
             small: { width: "160px" },
-            medium: { width: "320px" },
+            medium: { width: "320px", maxWidth: "100%" },
             big: { width: "100%" },
         },
         tone: {
@@ -95,6 +107,7 @@ export const inputWrapper = recipe({
                     "&:focus-within": {
                         borderColor: vars.border.error,
                     },
+                    ...focusRing,
                 },
             },
         },

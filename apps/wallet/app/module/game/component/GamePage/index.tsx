@@ -13,6 +13,7 @@ import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { maybeAskForReview } from "@/module/common/utils/maybeAskForReview";
 import { GameHero } from "@/module/game/component/GameHero";
+import { GameInviteCard } from "@/module/game/component/GameInviteCard";
 import { GameMissions } from "@/module/game/component/GameMissions";
 import { PastGames } from "@/module/game/component/GameResult";
 import { GameResultView } from "@/module/game/component/GameResultView";
@@ -170,16 +171,17 @@ export function GamePage() {
             )}
             {top.kind === "playing" && me && (
                 <>
-                    <GameHero
-                        me={me}
-                        prize={prizeOf(top.game, i18n.language)}
-                        endsAt={top.game.endsAt}
-                        gains={gains}
-                    />
+                    <Text color="secondary">
+                        {t("game.page.intro", {
+                            prize: prizeOf(top.game, i18n.language),
+                        })}
+                    </Text>
+                    <GameHero me={me} endsAt={top.game.endsAt} gains={gains} />
                     <GameMissions
                         missions={missionsOf(me)}
                         gameId={top.game.id}
                     />
+                    <GameInviteCard />
                 </>
             )}
             {top.kind !== "loading" && (

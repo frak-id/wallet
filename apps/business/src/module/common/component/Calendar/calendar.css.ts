@@ -106,6 +106,8 @@ export const day = style([
         padding: 0,
         width: "36px",
         height: "36px",
+        // Lifts the large Button's 48px floor, which would beat this height
+        minHeight: 0,
         justifyContent: "center",
         borderRadius: alias.cornerRadius.s,
         selectors: {

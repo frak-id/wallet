@@ -83,7 +83,9 @@ describe("AutoGenerateReferralCodeBody", () => {
             expect(suggestMutateAsync).toHaveBeenCalledTimes(1);
         });
         await waitFor(() => {
-            expect(scope.getByDisplayValue("AUTO12")).toBeInTheDocument();
+            expect(
+                scope.getByLabelText("wallet.referral.create.autoConfirmLabel")
+            ).toHaveValue("AUTO12");
         });
     });
 

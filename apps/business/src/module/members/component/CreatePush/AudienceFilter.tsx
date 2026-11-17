@@ -1,7 +1,8 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { type Control, useForm, useWatch } from "react-hook-form";
+import { useState } from "react";
+import { type Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { DateField as DateInput } from "@/module/common/component/DateField";
 import { EditField } from "@/module/forms/EditField";
@@ -34,17 +35,17 @@ export function AudienceFilter({
     onFilterSet: (filter: FormMembersFiltering) => void;
 }) {
     const { t } = useTranslation();
-    // Seed once — echoing the parent's committed value back through `values`
-    // would reset an enabled-but-empty range to undefined, unchecking the box.
     const form = useForm<FormMembersFiltering>({
         defaultValues: initialValue ?? {},
     });
     const { control, getValues, setValue } = form;
 
-    const dateEnabled =
-        useWatch({ control, name: "firstInteractionTimestamp" }) !== undefined;
-    const interactionsEnabled =
-        useWatch({ control, name: "interactions" }) !== undefined;
+    const [dateEnabled, setDateEnabled] = useState(() =>
+        hasRange(initialValue?.firstInteractionTimestamp)
+    );
+    const [interactionsEnabled, setInteractionsEnabled] = useState(() =>
+        hasRange(initialValue?.interactions)
+    );
 
     const commit = () => {
         const data = getValues();
@@ -67,10 +68,12 @@ export function AudienceFilter({
                         label={t("members.filters.membershipDate")}
                         checked={dateEnabled}
                         onCheckedChange={(checked) => {
-                            setValue(
-                                "firstInteractionTimestamp",
-                                checked ? {} : undefined
-                            );
+                            setDateEnabled(checked);
+                            if (!checked)
+                                setValue(
+                                    "firstInteractionTimestamp",
+                                    undefined
+                                );
                             commit();
                         }}
                     />
@@ -97,7 +100,8 @@ export function AudienceFilter({
                         label={t("members.filters.interactions")}
                         checked={interactionsEnabled}
                         onCheckedChange={(checked) => {
-                            setValue("interactions", checked ? {} : undefined);
+                            setInteractionsEnabled(checked);
+                            if (!checked) setValue("interactions", undefined);
                             commit();
                         }}
                     />

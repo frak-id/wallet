@@ -63,7 +63,7 @@ describe("ticketCardOf", () => {
 
     it("moves on to the first mission not done", () => {
         const status = ticketCardOf(
-            me("certified", true, { instagramCertified: 2 })
+            me("certified", true, { instagramCertified: 1 })
         );
         expect(status).toMatchObject({
             kind: "next",
@@ -73,7 +73,7 @@ describe("ticketCardOf", () => {
 
     it("skips a done friend mission to the purchase one", () => {
         const status = ticketCardOf(
-            me("certified", true, { instagramCertified: 2, referredSignup: 1 })
+            me("certified", true, { instagramCertified: 1, referredSignup: 2 })
         );
         expect(status).toMatchObject({
             kind: "next",
@@ -84,9 +84,9 @@ describe("ticketCardOf", () => {
     it("is done when every mission is", () => {
         const status = ticketCardOf(
             me("certified", true, {
-                instagramCertified: 2,
+                instagramCertified: 1,
                 purchase: 3,
-                referredSignup: 1,
+                referredSignup: 2,
             })
         );
         expect(status).toEqual({ kind: "allDone" });

@@ -22,24 +22,29 @@ export function OriginPairingState() {
 /** Dot colour: red "idle", orange "connecting", green "paired". */
 function InnerOriginPairingState() {
     const client = getOriginPairingClient();
-    const state = useStore(client.store);
+    const pairingStatus = useStore(client.store, (s) => s.status);
+    const hasRequests = useStore(
+        client.store,
+        (s) => s.signatureRequests.size > 0
+    );
     const { t } = useTranslation();
 
-    const { status, text } = getStatusDetails(t, state);
+    const { status, text } = getStatusDetails(t, pairingStatus, hasRequests);
 
     return <StatusBoxModal status={status} title={text} client={client} />;
 }
 
 function getStatusDetails(
     t: TFunction,
-    state: OriginPairingStateType
+    pairingStatus: OriginPairingStateType["status"],
+    hasRequests: boolean
 ): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
 } {
     // If there are pending signatures, we display the signature request state
-    if (state.signatureRequests.size > 0) {
-        switch (state.status) {
+    if (hasRequests) {
+        switch (pairingStatus) {
             case "paired":
                 return {
                     status: "loading",
@@ -53,7 +58,7 @@ function getStatusDetails(
         }
     }
 
-    switch (state.status) {
+    switch (pairingStatus) {
         case "paired":
             return {
                 status: "success",
@@ -80,7 +85,7 @@ function getStatusDetails(
                 text: t("wallet.pairing.origin.state.error"),
             };
         default: {
-            const exhaustiveCheck: never = state.status;
+            const exhaustiveCheck: never = pairingStatus;
             throw new Error(`Unhandled status: ${exhaustiveCheck}`);
         }
     }

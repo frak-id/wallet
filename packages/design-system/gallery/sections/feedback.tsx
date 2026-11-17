@@ -1,16 +1,24 @@
 import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
+import { Avatar } from "@frak-labs/design-system/components/Avatar";
 import { Badge } from "@frak-labs/design-system/components/Badge";
+import { BannerStack } from "@frak-labs/design-system/components/BannerStack";
+import { DeltaIndicator } from "@frak-labs/design-system/components/DeltaIndicator";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
+import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { Notice } from "@frak-labs/design-system/components/Notice";
+import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
+import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { StatusBanner } from "@frak-labs/design-system/components/StatusBanner";
 import {
     ExclamationTriangleIcon,
     InfoIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { fixtures, longText } from "../fixtures";
+import { bannerFrame } from "../gallery.css";
 import { Case, Cases } from "../ui";
 
 type NoticeProps = ComponentProps<typeof Notice>;
@@ -277,6 +285,367 @@ export function AlertMessageSection() {
                         tone="warning"
                         icon={<InfoIcon width={24} height={24} />}
                         title={fixtures.nonLatin}
+                    />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+type ProgressBarProps = ComponentProps<typeof ProgressBar>;
+type NumberedCircleProps = ComponentProps<typeof NumberedCircle>;
+type AvatarProps = ComponentProps<typeof Avatar>;
+type DeltaIndicatorProps = ComponentProps<typeof DeltaIndicator>;
+
+const progressTones: NonNullable<ProgressBarProps["tone"]>[] = [
+    "primary",
+    "success",
+];
+const circleSizes: NonNullable<NumberedCircleProps["size"]>[] = [
+    "sm",
+    "md",
+    "lg",
+];
+const circleColors: NonNullable<NumberedCircleProps["color"]>[] = [
+    "primary",
+    "secondary",
+    "action",
+    "filled",
+];
+const avatarSizes: NonNullable<AvatarProps["size"]>[] = ["s", "m"];
+const deltaSizes: NonNullable<DeltaIndicatorProps["size"]>[] = ["s", "m"];
+
+function Track({ children }: { children: ReactNode }) {
+    return <div style={{ width: 240 }}>{children}</div>;
+}
+
+export function ProgressBarSection() {
+    return (
+        <>
+            <Cases title="Tones">
+                {progressTones.map((tone) => (
+                    <Case key={tone} name={`tone ${tone}`}>
+                        <Track>
+                            <ProgressBar
+                                value={60}
+                                tone={tone}
+                                label={`${tone} progress`}
+                            />
+                        </Track>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Values">
+                {[0, 25, 100].map((value) => (
+                    <Case key={value} name={`value ${value}`}>
+                        <Track>
+                            <ProgressBar value={value} label={`${value}%`} />
+                        </Track>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Height">
+                <Case name="height 12">
+                    <Track>
+                        <ProgressBar value={40} height={12} label="Thick" />
+                    </Track>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case">
+                <Case name="worst: negative value clamps to 0">
+                    <Track>
+                        <ProgressBar value={-40} label="Negative" />
+                    </Track>
+                </Case>
+                <Case name="worst: huge value clamps to 100">
+                    <Track>
+                        <ProgressBar
+                            value={Number(fixtures.hugeNumber)}
+                            label="Huge"
+                        />
+                    </Track>
+                </Case>
+                <Case name="worst: fractional value rounds">
+                    <Track>
+                        <ProgressBar value={33.333} label="Fractional" />
+                    </Track>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function NumberedCircleSection() {
+    return (
+        <>
+            {circleColors.map((color) => (
+                <Cases key={color} title={`Color ${color}`}>
+                    {circleSizes.map((size) => (
+                        <Case key={size} name={`${color} ${size}`}>
+                            <NumberedCircle
+                                number={3}
+                                size={size}
+                                color={color}
+                            />
+                        </Case>
+                    ))}
+                </Cases>
+            ))}
+            <Cases title="Worst Case">
+                <Case name="worst: zero">
+                    <NumberedCircle number={0} />
+                </Case>
+                <Case name="worst: two digits in the smallest circle">
+                    <NumberedCircle number={88} size="sm" />
+                </Case>
+                <Case name="worst: huge number">
+                    <NumberedCircle number={Number(fixtures.hugeNumber)} />
+                </Case>
+                <Case name="worst: negative">
+                    <NumberedCircle number={-12} size="sm" />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function AvatarSection() {
+    return (
+        <>
+            <Cases title="Sizes">
+                {avatarSizes.map((size) => (
+                    <Case key={size} name={`size ${size}`}>
+                        <Avatar name="Ada Lovelace" size={size} />
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Initials">
+                <Case name="two words">
+                    <Avatar name="Grace Hopper" />
+                </Case>
+                <Case name="three words">
+                    <Avatar name="Jean Baptiste Poquelin" />
+                </Case>
+                <Case name="one word">
+                    <Avatar name="Frak" />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case">
+                <Case name="worst: unbreakable email">
+                    <Avatar name={fixtures.unbreakableEmail} />
+                </Case>
+                <Case name="worst: one character">
+                    <Avatar name={fixtures.singleChar} />
+                </Case>
+                <Case name="worst: huge number">
+                    <Avatar name={fixtures.hugeNumber} />
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <Avatar name={fixtures.nonLatin} />
+                </Case>
+                <Case name="worst: empty">
+                    <Avatar name={fixtures.empty} />
+                </Case>
+                <Case name="worst: surrogate pair in a name">
+                    <Avatar name="🎉🚀" />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function DeltaIndicatorSection() {
+    return (
+        <>
+            {deltaSizes.map((size) => (
+                <Cases key={size} title={`Size ${size}`}>
+                    {[12, -5, 0].map((delta) => (
+                        <Case key={delta} name={`${size} ${delta}`}>
+                            <DeltaIndicator delta={delta} size={size} />
+                        </Case>
+                    ))}
+                </Cases>
+            ))}
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: huge number">
+                    <DeltaIndicator delta={Number(fixtures.hugeNumber)} />
+                </Case>
+                <Case name="worst: huge negative number">
+                    <DeltaIndicator delta={-Number(fixtures.hugeNumber)} />
+                </Case>
+                <Case name="worst: fractional">
+                    <DeltaIndicator delta={0.1 + 0.2} />
+                </Case>
+                <Case name="worst: negative zero">
+                    <DeltaIndicator delta={-0} />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+const dismissable = { onDismiss: noop, dismissLabel: "Dismiss" };
+
+export function StatusBannerSection() {
+    return (
+        <>
+            <Cases title="Parts" layout="stack">
+                <Case name="title only">
+                    <StatusBanner title="You are offline" />
+                </Case>
+                <Case name="description and dismiss">
+                    <StatusBanner
+                        title="Pairing in progress"
+                        description="Keep this screen open."
+                        {...dismissable}
+                    />
+                </Case>
+                <Case name="alert role, custom icon">
+                    <StatusBanner
+                        role="alert"
+                        icon={<InfoIcon width={20} height={20} />}
+                        title="Session expired"
+                        description="Sign in again to continue."
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <StatusBanner
+                        title={fixtures.unbreakableEmail}
+                        description={fixtures.unbreakableEmail}
+                        {...dismissable}
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <StatusBanner
+                        title={fixtures.longSentence}
+                        description={longText(3)}
+                        {...dismissable}
+                    />
+                </Case>
+                <Case name="worst: one character">
+                    <StatusBanner title={fixtures.singleChar} />
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <StatusBanner
+                        title={fixtures.nonLatin}
+                        description={fixtures.nonLatin}
+                        {...dismissable}
+                    />
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+function BannerFrame({ children }: { children: ReactNode }) {
+    return (
+        <div className={bannerFrame}>
+            <BannerStack>{children}</BannerStack>
+        </div>
+    );
+}
+
+export function BannerStackSection() {
+    return (
+        <>
+            <Cases title="Stacking">
+                <Case name="one banner">
+                    <BannerFrame>
+                        <StatusBanner title="You are offline" />
+                    </BannerFrame>
+                </Case>
+                <Case name="three banners">
+                    <BannerFrame>
+                        <StatusBanner title="You are offline" />
+                        <StatusBanner
+                            title="Pairing in progress"
+                            description="Keep this screen open."
+                            {...dismissable}
+                        />
+                        <StatusBanner role="alert" title="Update required" />
+                    </BannerFrame>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case">
+                <Case name="worst: unbreakable email">
+                    <BannerFrame>
+                        <StatusBanner
+                            title={fixtures.unbreakableEmail}
+                            {...dismissable}
+                        />
+                        <StatusBanner title={fixtures.singleChar} />
+                    </BannerFrame>
+                </Case>
+                <Case name="worst: long sentence">
+                    <BannerFrame>
+                        <StatusBanner
+                            title={fixtures.longSentence}
+                            description={fixtures.longSentence}
+                            {...dismissable}
+                        />
+                    </BannerFrame>
+                </Case>
+            </Cases>
+        </>
+    );
+}
+
+export function InAppBannerSection() {
+    return (
+        <>
+            <Cases title="Default" layout="stack">
+                <Case name="default">
+                    <InAppBanner
+                        title="Open in your browser"
+                        description="Some features need a full browser to work."
+                        cta="Open browser"
+                        dismissLabel="Dismiss"
+                        onAction={noop}
+                        onDismiss={noop}
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <InAppBanner
+                        title={fixtures.unbreakableEmail}
+                        description={fixtures.unbreakableEmail}
+                        cta={fixtures.unbreakableEmail}
+                        dismissLabel="Dismiss"
+                        onAction={noop}
+                        onDismiss={noop}
+                    />
+                </Case>
+                <Case name="worst: long sentence">
+                    <InAppBanner
+                        title={fixtures.longSentence}
+                        description={longText(3)}
+                        cta={fixtures.longSentence}
+                        dismissLabel="Dismiss"
+                        onAction={noop}
+                        onDismiss={noop}
+                    />
+                </Case>
+                <Case name="worst: one character">
+                    <InAppBanner
+                        title={fixtures.singleChar}
+                        description={fixtures.singleChar}
+                        cta={fixtures.singleChar}
+                        dismissLabel="Dismiss"
+                        onAction={noop}
+                        onDismiss={noop}
+                    />
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <InAppBanner
+                        title={fixtures.nonLatin}
+                        description={fixtures.nonLatin}
+                        cta={fixtures.nonLatin}
+                        dismissLabel="Dismiss"
+                        onAction={noop}
+                        onDismiss={noop}
                     />
                 </Case>
             </Cases>

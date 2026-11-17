@@ -64,7 +64,9 @@ export async function getMerchantMembers(
     );
 
     if (error || !data) {
-        return { totalResult: 0, members: [] };
+        throw new Error(
+            `Failed to load members: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return data;
@@ -91,7 +93,9 @@ export async function getMerchantsMembersCount(
         });
 
     if (error || !data) {
-        return 0;
+        throw new Error(
+            `Failed to load member count: ${error?.toString() ?? "unknown error"}`
+        );
     }
 
     return data.count;

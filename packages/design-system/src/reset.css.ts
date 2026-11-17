@@ -25,6 +25,8 @@ export const base = style({
     fontSize: "100%",
     font: "inherit",
     verticalAlign: "baseline",
+    // `break-word`, not `anywhere`: `anywhere` lets flex rows and table columns shrink below a whole word
+    overflowWrap: "break-word",
     WebkitTapHighlightColor: "transparent",
 });
 

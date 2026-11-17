@@ -7,6 +7,7 @@ import { Inline } from "../Inline";
 import { Text } from "../Text";
 import {
     confirmationTooltipIcon,
+    confirmationTooltipLabel,
     confirmationTooltipPill,
     confirmationTooltipPillExiting,
 } from "./confirmationTooltip.css";
@@ -32,7 +33,8 @@ export function ConfirmationTooltip({
         <Box
             role="status"
             aria-live="polite"
-            borderRadius="full"
+            // Half the one-line height: a full radius turns a wrapped pill into a lozenge
+            borderRadius="xl"
             className={clsx(
                 confirmationTooltipPill,
                 isLeaving && confirmationTooltipPillExiting,
@@ -42,7 +44,7 @@ export function ConfirmationTooltip({
             <Inline
                 space="xs"
                 align="center"
-                alignY="center"
+                alignY="top"
                 paddingX="l"
                 paddingY="s"
                 wrap={false}
@@ -50,7 +52,12 @@ export function ConfirmationTooltip({
                 <Box as="span" className={confirmationTooltipIcon}>
                     {icon}
                 </Box>
-                <Text variant="bodySmall" weight="medium" color="onAction">
+                <Text
+                    variant="bodySmall"
+                    weight="medium"
+                    color="onAction"
+                    className={confirmationTooltipLabel}
+                >
                     {children}
                 </Text>
             </Inline>

@@ -43,8 +43,13 @@ export function BackupStep({ blob, onDone, stepIndicator }: BackupStepProps) {
         )();
         if (error) return;
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
+
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
 
     const masked = "•".repeat(blob.length);
     const saveFailed = isError && !saved;

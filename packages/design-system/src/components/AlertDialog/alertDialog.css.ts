@@ -22,6 +22,7 @@ export const alertDialogOverlayStyle = style({
 
 export const alertDialogContentStyle = style({
     position: "fixed",
+    overflowWrap: "break-word",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",

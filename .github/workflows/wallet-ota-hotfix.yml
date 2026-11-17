@@ -10,6 +10,9 @@ name: "📡 Ship Wallet OTA"
 #
 # The guard pins the version-only native files to that release, then refuses
 # anything that still differs under `src-tauri/` or bumps a Tauri plugin package.
+# `allow_native_diff` (with a reason) lifts that refusal: use it only after
+# checking, change by change, that the new frontend calls nothing the released
+# binary lacks. The guard no longer proves it for you.
 #
 # The store release workflow (`tauri-mobile-release.yml`) deliberately does NOT
 # publish an OTA baseline: assets identical to the embedded ones would make
@@ -29,6 +32,15 @@ on:
         default: both
       notes:
         description: "Release notes shown in CrabNebula Cloud"
+        required: false
+        type: string
+      allow_native_diff:
+        description: "Ship despite native changes since the store release (checked by hand: the frontend does not depend on them)"
+        required: false
+        type: boolean
+        default: false
+      native_diff_reason:
+        description: "Required with allow_native_diff: why the released binary still runs this frontend"
         required: false
         type: string
 
@@ -100,19 +112,42 @@ jobs:
 
           apps/wallet/scripts/pin-native-version.sh "$VERSION"
 
-          if ! git diff --quiet "$TAG" -- apps/wallet/src-tauri; then
-            echo "::error::Native changes since $TAG — this needs a store release, not an OTA:"
-            git diff --name-only "$TAG" -- apps/wallet/src-tauri | sed 's/^/  /'
-            exit 1
-          fi
-
+          NATIVE_DIFF=$(git diff --name-only "$TAG" -- apps/wallet/src-tauri)
           # The JS halves of native plugins are versioned with their Rust side.
           GUEST_BUMPS=$(git diff "$TAG" HEAD -- bun.lock apps/wallet/package.json \
             | grep -E '^[-+][^-+].*(@tauri-apps/|@crabnebula/|tauri-plugin-)' || true)
-          if [ -n "$GUEST_BUMPS" ]; then
-            echo "::error::Tauri plugin packages changed since $TAG — this needs a store release, not an OTA:"
-            echo "$GUEST_BUMPS"
-            exit 1
+
+          if [ -n "$NATIVE_DIFF" ] || [ -n "$GUEST_BUMPS" ]; then
+            if [ -n "$NATIVE_DIFF" ]; then
+              echo "Native changes since $TAG:"
+              git diff --name-only "$TAG" -- apps/wallet/src-tauri | sed 's/^/  /'
+            fi
+            if [ -n "$GUEST_BUMPS" ]; then
+              echo "Tauri plugin packages changed since $TAG:"
+              echo "$GUEST_BUMPS"
+            fi
+
+            if [ "$ALLOW_NATIVE_DIFF" != "true" ]; then
+              echo "::error::Native changes since $TAG — this needs a store release, not an OTA (or allow_native_diff, once you have checked the frontend does not depend on them)."
+              exit 1
+            fi
+
+            REASON=$(printf '%s' "$NATIVE_DIFF_REASON" | tr '\n' ' ' | sed 's/^ *//; s/ *$//')
+            if [ -z "$REASON" ]; then
+              echo "::error::allow_native_diff needs a native_diff_reason."
+              exit 1
+            fi
+            echo "::warning::Shipping over native changes since $TAG: $REASON"
+            {
+              echo "### ⚠️ OTA over native changes since \`$TAG\`"
+              echo
+              echo "**Reason:** $REASON"
+              echo
+              echo '```'
+              [ -z "$NATIVE_DIFF" ] || echo "$NATIVE_DIFF"
+              [ -z "$GUEST_BUMPS" ] || echo "$GUEST_BUMPS"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
           if git diff --quiet "$TAG" -- apps/wallet packages sdk package.json bun.lock; then
@@ -120,10 +155,16 @@ jobs:
             exit 1
           fi
 
-          echo "[ci] $TAG → HEAD is web-assets-only, safe to ship over the air"
+          if [ -n "$NATIVE_DIFF" ] || [ -n "$GUEST_BUMPS" ]; then
+            echo "[ci] $TAG → HEAD has native changes, shipping over the air by override"
+          else
+            echo "[ci] $TAG → HEAD is web-assets-only, safe to ship over the air"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          ALLOW_NATIVE_DIFF: ${{ inputs.allow_native_diff }}
+          NATIVE_DIFF_REASON: ${{ inputs.native_diff_reason }}
 
   upload:
     name: "📡 ${{ matrix.platform }} ${{ needs.guard.outputs.version }} → prod"

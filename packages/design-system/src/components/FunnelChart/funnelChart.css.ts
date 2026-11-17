@@ -1,15 +1,8 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias, brand } from "../../tokens.css";
+import { alias } from "../../tokens.css";
 
 export const funnelChartStyles = {
-    container: style({
-        display: "flex",
-        flexDirection: "column",
-        gap: alias.spacing.m,
-        width: "100%",
-        position: "relative",
-    }),
     // Vertical dotted guides at 25/50/75/100% of the bar column, drawn
     // by absolutely positioned `<span>` children using a real
     // `border-left: 1px dotted` so the dots render crisp instead of
@@ -36,11 +29,6 @@ export const funnelChartStyles = {
         alignItems: "center",
         columnGap: alias.spacing.m,
     }),
-    label: style({
-        fontSize: "14px",
-        lineHeight: "22px",
-        color: vars.text.tertiary,
-    }),
     track: style({
         position: "relative",
         height: "16px",
@@ -54,14 +42,8 @@ export const funnelChartStyles = {
         alignItems: "flex-end",
         gap: "2px",
     }),
+    // Text has no numeric-figures variant; this adds to bodySmall without overriding it.
     value: style({
-        fontSize: "14px",
-        lineHeight: "22px",
-        color: vars.text.primary,
         fontVariantNumeric: "tabular-nums",
-    }),
-    valueSuccess: style({
-        color: vars.text.success,
-        fontWeight: brand.typography.fontWeight.medium,
     }),
 };

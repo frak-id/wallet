@@ -84,6 +84,9 @@ type TextProps = {
     children?: ReactNode;
     className?: string;
     title?: string;
+    id?: string;
+    /** With `as="label"`, the `id` of the field it names. */
+    htmlFor?: string;
     onClick?: () => void;
     ref?: Ref<HTMLElement>;
 };
@@ -97,6 +100,8 @@ export function Text({
     children,
     className,
     title,
+    id,
+    htmlFor,
     onClick,
     ref,
 }: TextProps) {
@@ -114,6 +119,8 @@ export function Text({
             onClick={onClick}
             ref={ref}
             title={title}
+            id={id}
+            htmlFor={htmlFor}
         >
             {children}
         </Box>

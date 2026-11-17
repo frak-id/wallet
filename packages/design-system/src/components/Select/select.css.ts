@@ -44,7 +44,7 @@ const triggerBase = style({
 export const triggerLength = recipe({
     variants: {
         length: {
-            medium: { width: "320px" },
+            medium: { width: "320px", maxWidth: "100%" },
             big: { width: "100%" },
         },
     },
@@ -74,6 +74,13 @@ export const selectStyles = {
     trigger: triggerBase,
     triggerBare,
     triggerBareMuted,
+
+    value: style({
+        minWidth: 0,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    }),
 
     icon: style({
         color: vars.icon.secondary,

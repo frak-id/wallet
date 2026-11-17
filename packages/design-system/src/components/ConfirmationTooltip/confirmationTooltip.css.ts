@@ -36,9 +36,9 @@ const easeIn = "cubic-bezier(0.4, 0, 1, 1)";
 
 export const confirmationTooltipPill = style({
     display: "inline-block",
+    maxWidth: "100%",
     backgroundColor: vars.surface.overlay,
     backdropFilter: "blur(16px)",
-    whiteSpace: "nowrap",
     userSelect: "none",
     zIndex: zIndex.toast,
     animation: `${pillEnter} 380ms ${easeOutBack} both`,
@@ -58,6 +58,9 @@ export const confirmationTooltipPillExiting = style({
         },
     },
 });
+
+// Centers the 22px first line on the 24px icon when the row aligns to the top
+export const confirmationTooltipLabel = style({ paddingTop: "1px" });
 
 export const confirmationTooltipIcon = style({
     display: "inline-flex",

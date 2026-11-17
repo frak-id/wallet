@@ -135,7 +135,6 @@
     "@typescript/native": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/integration": "catalog:",
-    "@vanilla-extract/sprinkles": "catalog:",
     "@vanilla-extract/vite-plugin": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",

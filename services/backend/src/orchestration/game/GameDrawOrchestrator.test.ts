@@ -184,8 +184,8 @@ describe("GameDrawOrchestrator.freeze", () => {
         ]);
         players.ticketsOf.mockImplementation(async (_game, groupId) =>
             groupId === "follower"
-                ? { ...NO_TICKETS, join: 1, instagramCertified: 2, purchase: 3 }
-                : { ...NO_TICKETS, join: 1, brandShare: 1 }
+                ? { ...NO_TICKETS, join: 1, instagramCertified: 1, purchase: 3 }
+                : { ...NO_TICKETS, join: 1, brandShare: 2 }
         );
         instagramLinks.findByIdentityGroups.mockResolvedValue([
             { identityGroupId: "follower", follows: true },
@@ -206,12 +206,12 @@ describe("GameDrawOrchestrator.freeze", () => {
             insert.entries.map((e: DrawEntry) => [e.identityGroupId, e])
         );
         expect(byGroup.get("follower")).toMatchObject({
-            drawTickets: 6,
+            drawTickets: 5,
             discarded: null,
             instagram: "certified",
         });
         expect(byGroup.get("declarer")).toMatchObject({
-            drawTickets: 2,
+            drawTickets: 3,
             discarded: null,
             instagram: "declared",
         });
@@ -223,7 +223,7 @@ describe("GameDrawOrchestrator.freeze", () => {
         expect(byGroup.get("lurker")).toMatchObject({
             drawTickets: 0,
             discarded: "not_linked",
-            tickets: { join: 1, brandShare: 1 },
+            tickets: { join: 1, brandShare: 2 },
         });
         expect(insert).toMatchObject({
             status: "frozen",
@@ -231,8 +231,8 @@ describe("GameDrawOrchestrator.freeze", () => {
             totalTickets: 8,
             drandRound: drandRoundAt(new Date(NOW.getTime() + 10 * 60_000)),
             snapshotRoot: snapshotRoot([
-                { pid: byGroup.get("follower")?.pid ?? "", tickets: 6 },
-                { pid: byGroup.get("declarer")?.pid ?? "", tickets: 2 },
+                { pid: byGroup.get("follower")?.pid ?? "", tickets: 5 },
+                { pid: byGroup.get("declarer")?.pid ?? "", tickets: 3 },
             ]),
         });
         expect(insert.entries.map((e: DrawEntry) => e.pid)).toEqual(

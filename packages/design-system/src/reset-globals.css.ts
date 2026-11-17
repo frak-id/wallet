@@ -22,8 +22,7 @@ globalStyle("*, *::after, *::before", {
  * Seed the safe-area inset variables from `env()` so the `safeArea` design
  * tokens resolve them. WKWebView does not evaluate `env()` when it sits in a
  * `var()` fallback (`var(--x, env(...))` returns 0 on a notched iPhone), but
- * resolves it once the variable itself is assigned the `env()`. Android's native
- * plugin (initSafeAreaInsets) overrides top/bottom via inline style, which wins.
+ * resolves it once the variable itself is assigned the `env()`.
  */
 globalStyle(":root", {
     vars: {

@@ -3,23 +3,34 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { currentGame, gameHistory, navigate, trackEvent, maybeAskForReview } =
-    vi.hoisted(() => ({
-        navigate: vi.fn(),
-        trackEvent: vi.fn(),
-        maybeAskForReview: vi.fn(),
-        currentGame: {
-            data: undefined as unknown,
-            isError: false,
-            refetch: vi.fn(() => Promise.resolve()),
-        },
-        gameHistory: {
-            data: [] as unknown[],
-            isLoading: false,
-            isError: false,
-            refetch: vi.fn(() => Promise.resolve()),
-        },
-    }));
+const {
+    currentGame,
+    gameHistory,
+    navigate,
+    trackEvent,
+    maybeAskForReview,
+    referral,
+} = vi.hoisted(() => ({
+    referral: {
+        data: undefined as
+            | { ownedCode: { code: string; createdAt: string } | null }
+            | undefined,
+    },
+    navigate: vi.fn(),
+    trackEvent: vi.fn(),
+    maybeAskForReview: vi.fn(),
+    currentGame: {
+        data: undefined as unknown,
+        isError: false,
+        refetch: vi.fn(() => Promise.resolve()),
+    },
+    gameHistory: {
+        data: [] as unknown[],
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(() => Promise.resolve()),
+    },
+}));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
@@ -49,6 +60,7 @@ vi.mock("react-i18next", () => ({
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
     trackEvent,
+    useReferralStatus: () => referral,
 }));
 vi.mock("@/module/common/utils/maybeAskForReview", () => ({
     maybeAskForReview,
@@ -119,6 +131,9 @@ const player = (
 
 describe("GamePage", () => {
     beforeEach(() => {
+        referral.data = {
+            ownedCode: { code: "STORY1", createdAt: "2026-10-20" },
+        };
         gameHistory.data = [];
         gameHistory.isLoading = false;
         gameHistory.isError = false;
@@ -199,16 +214,20 @@ describe("GamePage", () => {
         });
     });
 
-    it("shows the tickets, prize and end date in the hero", () => {
+    it("states the prize above the hero, and the tickets, a nudge and the end date in it", () => {
         currentGame.data = player(4, true);
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
-        expect(screen.getByText("50 € à gagner")).toBeInTheDocument();
+        expect(screen.getByText("game.page.intro")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
+        expect(screen.getByText("4")).toBeInTheDocument();
+        expect(
+            screen.getByText("game.page.hero.keepGoing")
+        ).toBeInTheDocument();
         expect(
             screen.getByText("onboarding.game.reward.game.endsAt")
         ).toBeInTheDocument();
-        expect(screen.queryByText("game.page.hero.pending:4")).toBeNull();
+        expect(screen.queryByText("game.page.hero.labelPending")).toBeNull();
     });
 
     it("shows how many missions are done and only the ones left to do", () => {
@@ -228,7 +247,7 @@ describe("GamePage", () => {
             })
         ).toHaveAttribute("href", "/profile/referral/share");
         expect(
-            screen.getByText("game.page.missions.rewardPerFriend:1")
+            screen.getByText("game.page.missions.rewardPerFriend:2")
         ).toBeInTheDocument();
         expect(
             screen.queryByText("game.page.missions.instagram.certified.title")
@@ -255,9 +274,9 @@ describe("GamePage", () => {
         ).toHaveAttribute("href", "/explorer");
     });
 
-    it("says every mission is done, with no step left to show", () => {
+    it("says every mission is done, and keeps the friend one to invite another", () => {
         const data = player(7, true);
-        data.me.ticketsBySource.referredSignup = 1;
+        data.me.ticketsBySource.referredSignup = 2;
         currentGame.data = data;
         const { container } = render(<GamePage />);
 
@@ -268,7 +287,40 @@ describe("GamePage", () => {
         expect(
             screen.getByText("game.page.missions.allDone")
         ).toBeInTheDocument();
-        expect(container.querySelector('a[href^="/profile"]')).toBeNull();
+        expect(
+            screen.getByRole("link", {
+                name: /game.page.missions.friend.hintEarned/,
+            })
+        ).toHaveAttribute("href", "/profile/referral/share");
+        expect(container.querySelector('a[href="/explorer"]')).toBeNull();
+        expect(
+            container.querySelector('a[href="/profile/instagram"]')
+        ).toBeNull();
+    });
+
+    it("lists the friend mission after the to-do ones once a friend joined", () => {
+        const data = player(1, true, "declared");
+        data.me.ticketsBySource.referredSignup = 2;
+        currentGame.data = data;
+        render(<GamePage />);
+
+        expect(
+            screen.getAllByRole("link").map((link) => link.getAttribute("href"))
+        ).toEqual([
+            "/profile/instagram",
+            "/explorer",
+            "/profile/referral/share",
+        ]);
+    });
+
+    it("offers the player's referral link under the missions", () => {
+        currentGame.data = player(4, true);
+        render(<GamePage />);
+
+        expect(screen.getByText("game.page.invite.title")).toBeInTheDocument();
+        expect(
+            screen.getByText("wallet-test.frak.id/r/STORY1")
+        ).toBeInTheDocument();
     });
 
     it("locks the tickets of a player with no Instagram and gates the first mission", () => {
@@ -276,29 +328,29 @@ describe("GamePage", () => {
         render(<GamePage />);
 
         expect(
-            screen.getByText("game.page.hero.pending:2")
+            screen.getByText("game.page.hero.labelPending")
         ).toBeInTheDocument();
         expect(
             screen.getByText("game.page.hero.subtitleNone:2")
         ).toBeInTheDocument();
-        expect(screen.queryByText("50 € à gagner")).toBeNull();
+        expect(screen.queryByText("game.page.hero.keepGoing")).toBeNull();
         const gate = screen.getByRole("link", {
             name: /game.page.missions.instagram.none.title/,
         });
         expect(gate).toHaveAttribute("href", "/profile/instagram");
-        expect(gate).toHaveTextContent("game.page.missions.reward:2");
+        expect(gate).toHaveTextContent("game.page.missions.reward:1");
     });
 
-    it("offers a declared player the +2 to certify, their tickets already counting", () => {
+    it("offers a declared player the +1 to certify, their tickets already counting", () => {
         currentGame.data = player(1, true, "declared");
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:1")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         const certify = screen.getByRole("link", {
             name: /game.page.missions.instagram.declared.title/,
         });
         expect(certify).toHaveAttribute("href", "/profile/instagram");
-        expect(certify).toHaveTextContent("game.page.missions.reward:2");
+        expect(certify).toHaveTextContent("game.page.missions.reward:1");
     });
 
     it("tells a certified non-follower to follow again", () => {
@@ -555,7 +607,7 @@ describe("GamePage", () => {
         gameHistory.data = [result("earlier", "lost")];
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         expect(
             screen.getByText("game.history.ticketsOf:7")
         ).toBeInTheDocument();
@@ -647,7 +699,7 @@ describe("GamePage", () => {
         currentGame.isError = true;
         render(<GamePage />);
 
-        expect(screen.getByText("game.page.hero.drawn:4")).toBeInTheDocument();
+        expect(screen.getByText("game.page.hero.label")).toBeInTheDocument();
         expect(screen.queryByText("game.page.error")).toBeNull();
     });
 

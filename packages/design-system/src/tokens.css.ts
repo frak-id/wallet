@@ -386,11 +386,8 @@ export const fontSize = {
 /**
  * Safe-area inset expressions for use in `*.css.ts` calc()/max() strings.
  *
- * On Android Tauri the WebView draws edge-to-edge but does NOT populate the CSS
- * `env(safe-area-inset-*)` values, so `safeArea.ts` mirrors the native insets
- * into `--safe-area-inset-*` custom properties on `<html>`. Always prefer the
- * var (set on Android), fall back to `env()` (iOS/web), then `0px`. Using raw
- * `env(...)` alone clips bottom content behind the Android nav bar.
+ * Read through the `--safe-area-inset-*` variables, which `reset-globals.css.ts`
+ * seeds from `env()` so WKWebView resolves them.
  */
 export const safeArea = {
     top: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",

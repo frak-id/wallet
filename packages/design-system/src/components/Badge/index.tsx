@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import { Children, type PointerEvent, type ReactNode } from "react";
 
 import { Box } from "../Box";
-import { badgeVariants } from "./badge.css";
+import { badgeLabel, badgeVariants } from "./badge.css";
 
 type BadgeVariant =
     | "success"
@@ -26,14 +26,33 @@ export function Badge({
     children,
     className,
 }: BadgeProps) {
+    const parts = Children.toArray(children);
+    const text = parts.every(
+        (part) => typeof part === "string" || typeof part === "number"
+    )
+        ? parts.join("")
+        : undefined;
+
+    // Only a truncated label gets a title: any title shadows an ancestor's (e.g. a titled link)
+    const titleIfTruncated = (event: PointerEvent<HTMLElement>) => {
+        const badge = event.currentTarget;
+        const label = badge.firstElementChild;
+        if (text && label && label.scrollWidth > label.clientWidth) {
+            badge.title = text;
+        } else {
+            badge.removeAttribute("title");
+        }
+    };
+
     return (
         <Box
             as="span"
+            onPointerEnter={text ? titleIfTruncated : undefined}
             className={
                 clsx(badgeVariants({ variant, size }), className) || undefined
             }
         >
-            {children}
+            <span className={badgeLabel}>{children}</span>
         </Box>
     );
 }

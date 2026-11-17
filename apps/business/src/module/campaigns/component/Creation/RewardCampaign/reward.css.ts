@@ -86,14 +86,14 @@ export const modelRow = style({
     display: "flex",
     gap: alias.spacing.m,
     alignItems: "stretch",
+    flexWrap: "wrap",
     width: "100%",
     selectors: { "&&": { flexDirection: "row" } },
 });
 
 export const modelOption = style({
     display: "flex",
-    flex: 1,
-    minWidth: 0,
+    flex: "1 1 160px",
     alignItems: "center",
     gap: alias.spacing.m,
     padding: `${alias.spacing.m} ${alias.spacing.m} ${alias.spacing.m} 0`,
@@ -152,6 +152,7 @@ export const recoHighlight = style({ color: vars.text.action });
 
 export const recipientGrid = style({
     display: "flex",
+    flexWrap: "wrap",
     gap: alias.spacing.m,
     width: "100%",
 });
@@ -159,8 +160,7 @@ export const recipientBox = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xs,
-    flex: 1,
-    minWidth: 0,
+    flex: "1 1 160px",
     padding: alias.spacing.m,
     backgroundColor: vars.surface.tertiary,
     borderRadius: alias.cornerRadius.m,

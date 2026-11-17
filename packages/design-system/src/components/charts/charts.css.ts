@@ -45,6 +45,7 @@ export const yTickLabel = style({
     ...textXs,
     position: "absolute",
     color: vars.text.tertiary,
+    whiteSpace: "nowrap",
 });
 
 export const tooltipBox = style({

@@ -8,6 +8,8 @@ Default permissions for the frak-updater plugin
 - `allow-start-soft-update`
 - `allow-complete-soft-update`
 - `allow-open-store`
+- `allow-register-listener`
+- `allow-remove-listener`
 
 ## Permission Table
 
@@ -92,6 +94,58 @@ Enables the open_store command without any pre-configured scope.
 <td>
 
 Denies the open_store command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-updater:allow-register-listener`
+
+</td>
+<td>
+
+Enables the register_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-updater:deny-register-listener`
+
+</td>
+<td>
+
+Denies the register_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-updater:allow-remove-listener`
+
+</td>
+<td>
+
+Enables the remove_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-updater:deny-remove-listener`
+
+</td>
+<td>
+
+Denies the remove_listener command without any pre-configured scope.
 
 </td>
 </tr>

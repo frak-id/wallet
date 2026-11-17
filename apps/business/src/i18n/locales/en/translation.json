@@ -360,7 +360,8 @@
             "audience": {
                 "title": "Audience",
                 "description": "Choose which members should receive this notification.",
-                "matched": "Audience matched: <0>{{total}}</0> members"
+                "matched": "Audience matched: <0>{{total}}</0> members",
+                "countError": "Couldn't count the members who match this audience."
             },
             "schedule": {
                 "title": "Schedule",
@@ -872,6 +873,7 @@
                     "addTier": "Add a tier",
                     "removeTier": "Remove tier",
                     "incomplete": "Each tier needs a basket range and a CPA above 0",
+                    "inverted": "Each tier's upper bound must be higher than its lower bound.",
                     "overlap": "Tiers can't overlap - each basket range must start where the previous one ends."
                 },
                 "eligibility": {

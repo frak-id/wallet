@@ -1196,6 +1196,40 @@ describe("InstallView — ref-only referral code branch", () => {
         }
     );
 
+    test("the copied label leaves no timer behind once the page unmounts", async ({
+        queryWrapper,
+    }) => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        vi.stubGlobal("navigator", {
+            ...navigator,
+            clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+        });
+        try {
+            const { unmount } = render(
+                <InstallView
+                    search={{ ref: "FRAKPA" }}
+                    navigation={{
+                        toWallet: vi.fn(),
+                        toRegister: vi.fn(),
+                        toCode: vi.fn(),
+                    }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
+            fireEvent.click(await screen.findByText("installCode.copyCode"));
+            await screen.findByText("installCode.referral.codeCopied");
+
+            unmount();
+            // What a torn-down test environment looks like to a stray timer.
+            vi.stubGlobal("window", undefined);
+            await vi.advanceTimersByTimeAsync(2000);
+        } finally {
+            vi.unstubAllGlobals();
+            vi.useRealTimers();
+        }
+    });
+
     test("on mobile, hands the code to an installed app", async ({
         queryWrapper,
     }) => {

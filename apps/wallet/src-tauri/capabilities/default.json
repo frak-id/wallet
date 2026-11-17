@@ -6,7 +6,6 @@
     "permissions": [
         "core:default",
         "log:default",
-        "safe-area-insets:default",
         "biometric:default",
         "frak-firebase:default",
         "deep-link:default",

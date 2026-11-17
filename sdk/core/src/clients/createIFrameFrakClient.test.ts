@@ -331,6 +331,74 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         }
     });
 
+    test("destroy({ detachOnly }) stops the client but keeps the iframe and the cached config", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe,
+        });
+        vi.mocked(sdkConfigStore.reset).mockClear();
+        await client.destroy({ detachOnly: true });
+
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+        expect(iframe.isConnected).toBe(true);
+        expect(sdkConfigStore.clearCache).not.toHaveBeenCalled();
+        expect(sdkConfigStore.reset).not.toHaveBeenCalled();
+    });
+
+    test("a client whose iframe left the DOM detaches instead of handling lifecycle events", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { createIFrameLifecycleManager } = await import(
+            "./transports/iframeLifecycleManager"
+        );
+        const iframe = makeIframe();
+        await createIFrameFrakClient({ config: baseConfig(), iframe });
+        const { lifecycleHandlers } =
+            vi.mocked(createRpcClient).mock.calls[0][0];
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        const { handleEvent } = vi.mocked(createIFrameLifecycleManager).mock
+            .results[0].value;
+        const event = { iframeLifecycle: "show" } as const;
+        const context = { origin: "https://wallet.frak.id", source: null };
+
+        lifecycleHandlers?.iframeLifecycle?.(event, context);
+        expect(handleEvent).toHaveBeenCalledTimes(1);
+
+        iframe.remove();
+        lifecycleHandlers?.iframeLifecycle?.(event, context);
+        expect(handleEvent).toHaveBeenCalledTimes(1);
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    test("destroy() still removes the iframe and clears the cached config", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe,
+        });
+        vi.mocked(sdkConfigStore.reset).mockClear();
+        await client.destroy();
+
+        expect(iframe.isConnected).toBe(false);
+        expect(sdkConfigStore.clearCache).toHaveBeenCalledTimes(1);
+        expect(sdkConfigStore.reset).toHaveBeenCalledTimes(1);
+    });
+
     test("removes the freshness listener when destroy wins the race against setup", async () => {
         const addSpy = vi.spyOn(document, "addEventListener");
         const removeSpy = vi.spyOn(document, "removeEventListener");
@@ -661,5 +729,232 @@ describe("createIFrameFrakClient - asset push failures", () => {
                 error_message: "i18n is not cloneable",
             },
         ]);
+    });
+});
+
+describe("createIFrameFrakClient - handshake deadline", () => {
+    type Gate = {
+        onRequest: (message: unknown, ctx: unknown) => Promise<unknown>;
+    };
+    let gate: Gate;
+    let sendLifecycle: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        currentConfig = {
+            isResolved: true,
+            merchantId: "merchant",
+            domain: "merchant.example.com",
+            allowedDomains: [],
+        };
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        vi.mocked(createRpcClient).mockImplementation((config: any) => {
+            gate = config.middleware[0];
+            sendLifecycle = vi.fn();
+            return {
+                sendLifecycle,
+                request: vi.fn(),
+                listen: vi.fn(),
+                cleanup: vi.fn(),
+            } as any;
+        });
+    });
+
+    async function setup(isConnected: Promise<boolean>) {
+        const { createIFrameLifecycleManager } = await import(
+            "./transports/iframeLifecycleManager"
+        );
+        vi.mocked(createIFrameLifecycleManager).mockReturnValueOnce({
+            isConnected,
+            handleEvent: vi.fn(),
+        } as any);
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const iframe = document.createElement("iframe");
+        document.body.appendChild(iframe);
+        const client = await createIFrameFrakClient({
+            config: { metadata: { name: "Test Merchant" } },
+            iframe,
+        });
+        return { client, iframe };
+    }
+
+    test("rejects pending requests and resolves waitForConnection false at the deadline", async () => {
+        vi.useFakeTimers();
+        try {
+            const { client } = await setup(new Promise(() => {}));
+            const request = gate.onRequest({}, {});
+            const outcome = request.then(
+                () => "resolved",
+                (error) => error.code
+            );
+
+            await vi.advanceTimersByTimeAsync(29_999);
+            expect(await Promise.race([outcome, "pending"])).toBe("pending");
+
+            await vi.advanceTimersByTimeAsync(1);
+            expect(await outcome).toBe(-32001);
+            expect(await client.waitForConnection).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    const heartbeats = () =>
+        sendLifecycle.mock.calls.filter(
+            ([event]) => event.clientLifecycle === "heartbeat"
+        ).length;
+
+    test("stops pinging the iframe once it connects", async () => {
+        vi.useFakeTimers();
+        try {
+            await setup(Promise.resolve(true));
+            await vi.advanceTimersByTimeAsync(5_000);
+
+            expect(heartbeats()).toBe(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("stops pinging the iframe at the deadline", async () => {
+        vi.useFakeTimers();
+        try {
+            await setup(new Promise(() => {}));
+
+            await vi.advanceTimersByTimeAsync(30_000);
+            const sent = heartbeats();
+            await vi.advanceTimersByTimeAsync(5_000);
+
+            expect(sent).toBeGreaterThan(100);
+            expect(heartbeats()).toBe(sent);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("serves requests made after a late connection", async () => {
+        vi.useFakeTimers();
+        try {
+            let connect!: (value: boolean) => void;
+            await setup(new Promise((resolve) => (connect = resolve)));
+
+            await vi.advanceTimersByTimeAsync(30_000);
+            connect(true);
+            resolveFreshConfig({
+                merchantId: "merchant",
+                domain: "merchant.example.com",
+                allowedDomains: [],
+            });
+
+            await expect(gate.onRequest({}, "ctx")).resolves.toBe("ctx");
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("rejects requests once the iframe is removed from the page", async () => {
+        const { iframe } = await setup(Promise.resolve(true));
+        iframe.remove();
+
+        await expect(gate.onRequest({}, {})).rejects.toMatchObject({
+            code: -32001,
+        });
+    });
+
+    describe("streams", () => {
+        async function runRealRpcClient() {
+            const actual = await vi.importActual<
+                typeof import("@frak-labs/frame-connector")
+            >("@frak-labs/frame-connector");
+            const { createRpcClient } = await import(
+                "@frak-labs/frame-connector"
+            );
+            vi.mocked(createRpcClient).mockImplementation(
+                actual.createRpcClient
+            );
+        }
+
+        const listenPosts = (post: { mock: { calls: unknown[][] } }) =>
+            post.mock.calls.filter(
+                ([message]) =>
+                    (message as { topic?: string })?.topic ===
+                    "frak_listenToWalletStatus"
+            ).length;
+
+        test("watchWalletStatus rejects at the deadline when the iframe never connects", async () => {
+            vi.useFakeTimers();
+            vi.spyOn(console, "error").mockImplementation(() => {});
+            try {
+                await runRealRpcClient();
+                const { client } = await setup(new Promise(() => {}));
+                const { watchWalletStatus } = await import(
+                    "../actions/watchWalletStatus"
+                );
+                const outcome = watchWalletStatus(client, vi.fn()).then(
+                    () => "resolved",
+                    (error) => error.code
+                );
+
+                await vi.advanceTimersByTimeAsync(29_999);
+                expect(await Promise.race([outcome, "pending"])).toBe(
+                    "pending"
+                );
+
+                await vi.advanceTimersByTimeAsync(1);
+                expect(await outcome).toBe(-32001);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        test("a listen failed at the deadline reports it, and a new listen after a late connection is posted", async () => {
+            vi.useFakeTimers();
+            vi.spyOn(console, "error").mockImplementation(() => {});
+            try {
+                await runRealRpcClient();
+                let connect!: (value: boolean) => void;
+                const { client, iframe } = await setup(
+                    new Promise((resolve) => (connect = resolve))
+                );
+                const post = vi.spyOn(
+                    iframe.contentWindow as Window,
+                    "postMessage"
+                );
+                const onError = vi.fn();
+                client.listenerRequest(
+                    { method: "frak_listenToWalletStatus" },
+                    vi.fn(),
+                    onError
+                );
+
+                await vi.advanceTimersByTimeAsync(29_999);
+                expect(onError).not.toHaveBeenCalled();
+                await vi.advanceTimersByTimeAsync(1);
+                expect(onError).toHaveBeenCalledTimes(1);
+                expect(onError.mock.calls[0][0]).toMatchObject({
+                    code: -32001,
+                });
+
+                connect(true);
+                resolveFreshConfig({
+                    merchantId: "merchant",
+                    domain: "merchant.example.com",
+                    allowedDomains: [],
+                });
+                await vi.advanceTimersByTimeAsync(1_000);
+                await client.waitForSetup;
+                client.listenerRequest(
+                    { method: "frak_listenToWalletStatus" },
+                    vi.fn(),
+                    vi.fn()
+                );
+
+                await vi.waitFor(() => expect(listenPosts(post)).toBe(1));
+            } finally {
+                vi.useRealTimers();
+            }
+        });
     });
 });

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "com.plugin.install_referrer"
     defaultConfig {
         minSdk = 28

@@ -7,7 +7,7 @@ import { ensureIdentity } from "./ensureIdentity";
  * Watch the current Frak wallet status
  * @param client - The current Frak Client
  * @param callback - The callback that will receive any wallet status change
- * @returns A promise resolving with the initial wallet status
+ * @returns A promise resolving with the initial wallet status, or rejecting if the wallet cannot be reached before it
  *
  * @description This function will return the current wallet status, and will listen to any change in the wallet status.
  *
@@ -48,7 +48,8 @@ export function watchWalletStatus(
                 firstResult.resolve(status);
                 hasResolved = true;
             }
-        }
+        },
+        (error) => firstResult.reject(error)
     );
 
     return firstResult.promise;

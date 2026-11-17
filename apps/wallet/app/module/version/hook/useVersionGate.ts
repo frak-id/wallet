@@ -36,8 +36,11 @@ const STALE_TIME_MS = 5 * 60 * 1000;
 const minVersionQueryOptions = {
     queryKey: versionKey.minSupported,
     queryFn: async () => {
+        // no-store: the WebView's HTTP cache would otherwise replay a rolled-back floor.
         const { data, error } =
-            await authenticatedBackendApi.common.version.get();
+            await authenticatedBackendApi.common.version.get({
+                fetch: { cache: "no-store" },
+            });
         // Propagate Eden errors so TanStack Query keeps its retry/backoff
         // semantics — a swallowed failure silently disables the hard-update
         // floor until the next stale window.
@@ -45,7 +48,6 @@ const minVersionQueryOptions = {
         if (!data) throw new Error("Missing version response from backend");
         return data.minVersion;
     },
-    staleTime: STALE_TIME_MS,
     refetchOnWindowFocus: true,
 } as const;
 
@@ -58,6 +60,22 @@ const RELEASE_VERSION = /^\d+\.\d+\.\d+$/;
 function getBuildVersion(): string | undefined {
     const version = process.env.APP_VERSION;
     return version && RELEASE_VERSION.test(version) ? version : undefined;
+}
+
+function getPlatformKey(): "ios" | "android" | null {
+    return IS_IOS ? "ios" : IS_ANDROID ? "android" : null;
+}
+
+function isBlockedByFloor(
+    currentVersion: string | undefined,
+    floor: string | undefined
+): boolean {
+    return Boolean(
+        currentVersion &&
+            floor &&
+            floor !== "0.0.0" &&
+            isBelow(currentVersion, floor)
+    );
 }
 
 const nativeUpdateQueryOptions = {
@@ -87,6 +105,22 @@ export function useVersionGate(): VersionGateState {
     const minVersion = useQuery({
         ...minVersionQueryOptions,
         enabled: IS_TAURI,
+        // A blocked app must re-check on every launch and focus to see a lowered floor.
+        staleTime: (query) => {
+            const platformKey = getPlatformKey();
+            const currentVersion =
+                getBuildVersion() ??
+                queryClient.getQueryData<NativeUpdateStatus>(
+                    versionKey.nativeStatus
+                )?.currentVersion;
+            return platformKey &&
+                isBlockedByFloor(
+                    currentVersion,
+                    query.state.data?.[platformKey]
+                )
+                ? 0
+                : STALE_TIME_MS;
+        },
     });
     const native = useQuery({
         ...nativeUpdateQueryOptions,
@@ -151,23 +185,14 @@ export function useVersionGate(): VersionGateState {
 
     if (!IS_TAURI) return { kind: "idle" };
 
-    const platformKey: "ios" | "android" | null = IS_IOS
-        ? "ios"
-        : IS_ANDROID
-          ? "android"
-          : null;
+    const platformKey = getPlatformKey();
     if (!platformKey) return { kind: "idle" };
 
     const currentVersion =
         getBuildVersion() ?? native.data?.currentVersion ?? "";
     const minRequired = minVersion.data?.[platformKey];
 
-    if (
-        currentVersion &&
-        minRequired &&
-        minRequired !== "0.0.0" &&
-        isBelow(currentVersion, minRequired)
-    ) {
+    if (minRequired && isBlockedByFloor(currentVersion, minRequired)) {
         return {
             kind: "hard_update",
             currentVersion,

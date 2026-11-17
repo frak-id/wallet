@@ -169,20 +169,27 @@ describe("LaunchPairing", () => {
             expect(mockReconnect).not.toHaveBeenCalled();
         });
 
-        it("clicking retry on retry-error calls reconnect (no reset)", () => {
+        it("clicking retry on retry-error starts a new pairing (no reset, no reconnect)", () => {
             mockPairingState = {
                 status: "retry-error",
                 pairing: null,
                 partnerDevice: null,
             };
-            render(<LaunchPairing />);
+            const onSuccess = vi.fn();
+            render(<LaunchPairing onSuccess={onSuccess} />);
+
+            mockInitiatePairing.mockClear();
 
             fireEvent.click(
                 screen.getByText("wallet.pairing.launch.error.retry")
             );
 
-            expect(mockReconnect).toHaveBeenCalledTimes(1);
+            expect(mockInitiatePairing).toHaveBeenCalledTimes(1);
+            expect(mockInitiatePairing).toHaveBeenCalledWith({
+                onSuccess,
+            });
             expect(mockReset).not.toHaveBeenCalled();
+            expect(mockReconnect).not.toHaveBeenCalled();
         });
     });
 

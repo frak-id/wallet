@@ -70,7 +70,7 @@ function instagramOf({ instagram, eligible }: Me): Mission {
             title: "game.page.missions.instagram.declared.title",
             hint: {
                 key: "game.page.missions.instagram.declared.hint",
-                values: { amount: reward },
+                values: { count: reward },
             },
         };
     }
@@ -184,6 +184,14 @@ export const missionsToDo = (missions: Mission[]) =>
         .sort(
             (a, b) => Number(b.status === "gate") - Number(a.status === "gate")
         );
+
+/** The game page's rows: the missions left to do, then the friend one once done, since every new friend still adds tickets. */
+export const missionsListed = (missions: Mission[]) => [
+    ...missionsToDo(missions),
+    ...missions.filter(
+        (mission) => mission.id === "friend" && mission.status === "done"
+    ),
+];
 
 /** The step to do now: the gate locking the tickets first, else the first not done. */
 export const nextMissionOf = (missions: Mission[]) =>

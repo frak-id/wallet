@@ -97,6 +97,9 @@ type Wrapper = {
     idleBorder: string;
     borderWidth: number;
     background: string[];
+    focusedShadow: string;
+    idleShadow: string;
+    outerBackground: string[];
 };
 
 type StopFacts = {
@@ -104,6 +107,7 @@ type StopFacts = {
     who: string;
     focusVisible: boolean;
     outline: { width: number; style: string; color: string; offset: number };
+    outlineClipped: boolean;
     boxShadow: string;
     idle: { outline: string; boxShadow: string };
     parentBackground: string[];
@@ -112,13 +116,17 @@ type StopFacts = {
 };
 
 /** Runs in the page: reads what the element Tab just focused looks like. */
-function readFocus(sectionId: string): StopFacts | "left" {
+function readFocus(sectionId: string): StopFacts | "left" | "repeat" {
     const root = document.querySelector(
         `[data-gallery-section="${sectionId}"]`
     );
     const el = document.activeElement;
     if (!root || !(el instanceof HTMLElement) || !root.contains(el))
         return "left";
+    // A multi-segment field (time, date) is one element with several stops, and
+    // refocusing it below would jump back to its first segment.
+    if ("galleryInspected" in el.dataset) return "repeat";
+    el.dataset.galleryInspected = "";
 
     const backgroundStack = (from: Element | null) => {
         const stack: string[] = [];
@@ -134,6 +142,7 @@ function readFocus(sectionId: string): StopFacts | "left" {
     for (let n = el.parentElement; n && n !== root; n = n.parentElement)
         chain.push(n);
     const borders = () => chain.map((n) => getComputedStyle(n).borderColor);
+    const shadows = () => chain.map((n) => getComputedStyle(n).boxShadow);
 
     const cs = getComputedStyle(el);
     const outline = {
@@ -142,11 +151,35 @@ function readFocus(sectionId: string): StopFacts | "left" {
         color: cs.outlineColor,
         offset: Number.parseFloat(cs.outlineOffset),
     };
+    const reach = Math.max(outline.width + outline.offset, 0);
+    const own = el.getBoundingClientRect();
+    // An outline drawn outside the element is cut by any ancestor that clips overflow.
+    const outlineClipped = chain.some((n) => {
+        const style = getComputedStyle(n);
+        if (
+            ![style.overflowX, style.overflowY].some(
+                (v) => v === "hidden" || v === "clip"
+            )
+        )
+            return false;
+        const box = n.getBoundingClientRect();
+        return (
+            own.left - reach < box.left ||
+            own.top - reach < box.top ||
+            own.right + reach > box.right ||
+            own.bottom + reach > box.bottom
+        );
+    });
     const { boxShadow } = cs;
-    const focusVisible = el.matches(":focus-visible");
+    // WebKit focuses a time or date field's inner segment, so the input never matches :focus-visible.
+    const focusVisible = el.matches(
+        ':focus-visible, input:is([type="time"], [type="date"], [type="datetime-local"])'
+    );
     const focusedBorders = borders();
+    const focusedShadows = shadows();
     el.blur();
     const idleBorders = borders();
+    const idleShadows = shadows();
     const idleStyle = getComputedStyle(el);
     const idle = {
         outline: `${idleStyle.outlineStyle} ${Number.parseFloat(idleStyle.outlineWidth)}px ${idleStyle.outlineColor}`,
@@ -162,6 +195,7 @@ function readFocus(sectionId: string): StopFacts | "left" {
         who: `<${el.tagName.toLowerCase()}> "${el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30) ?? ""}"`,
         focusVisible,
         outline,
+        outlineClipped,
         boxShadow,
         idle,
         parentBackground: backgroundStack(el.parentElement),
@@ -171,8 +205,30 @@ function readFocus(sectionId: string): StopFacts | "left" {
             idleBorder: idleBorders[i],
             borderWidth: Number.parseFloat(getComputedStyle(n).borderTopWidth),
             background: backgroundStack(n),
+            focusedShadow: focusedShadows[i],
+            idleShadow: idleShadows[i],
+            outerBackground: backgroundStack(n.parentElement),
         })),
     };
+}
+
+/** Tabs from the section title until focus leaves it, inspecting each stop. */
+async function tabThrough(page: Page, id: string) {
+    const found: Finding[] = [];
+    let stops = 0;
+    for (; stops < MAX_TAB_STOPS; stops++) {
+        await page.keyboard.press("Tab");
+        const facts = await page.evaluate(readFocus, id);
+        if (facts === "left") break;
+        if (facts === "repeat") continue;
+        const problem = inspectStop(facts);
+        if (problem)
+            found.push({
+                key: `focus:${id}:${facts.caseName}`,
+                detail: `${facts.who}: ${problem}`,
+            });
+    }
+    return { stops, found };
 }
 
 type Rgb = { r: number; g: number; b: number; a: number };
@@ -267,6 +323,7 @@ function findRing(facts: StopFacts): Ring | null {
     const outlineText = `${outline.style} ${outline.width}px ${outline.color}`;
     const shadow = boxShadow !== idle.boxShadow && outerShadow(boxShadow);
     if (
+        !facts.outlineClipped &&
         outline.width > 0 &&
         outline.style !== "none" &&
         isVisibleColor(outline.color) &&
@@ -278,6 +335,12 @@ function findRing(facts: StopFacts): Ring | null {
             flush: outline.offset <= 0,
         };
     if (shadow) return { ...shadow, background };
+    for (const w of facts.wrappers) {
+        const ring =
+            w.focusedShadow !== w.idleShadow && outerShadow(w.focusedShadow);
+        if (ring)
+            return { ...ring, background: w.outerBackground, flush: false };
+    }
     const wrapper = facts.wrappers.find(
         (w) => w.borderWidth > 0 && w.focusedBorder !== w.idleBorder
     );
@@ -354,7 +417,9 @@ function readClipping(caseEl: Element) {
         const rects: DOMRect[] = [];
         const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
         for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-            if (!t.textContent?.trim()) continue;
+            // A textarea's value is a text node the browser does not lay out.
+            if (!t.textContent?.trim() || t.parentElement?.closest("textarea"))
+                continue;
             const range = document.createRange();
             range.selectNodeContents(t);
             rects.push(range.getBoundingClientRect());
@@ -397,7 +462,9 @@ function readClipping(caseEl: Element) {
         if (x || y) return { x, y, tolerance: 1, verb: "cuts its text off" };
         // Under half a line is fallback-font glyph overshoot, which differs by OS.
         const halfLine = Number.parseFloat(cs.fontSize) / 2;
+        // An inline box has no height to spill out of; Firefox still gives it a scrollHeight.
         if (
+            cs.display !== "inline" &&
             cs.overflowY === "visible" &&
             box.scrollHeight > box.clientHeight + 1
         )
@@ -543,7 +610,10 @@ for (const { id, title } of sections) {
             expectFindings("clip", id, found);
         });
 
-        test("shows a focus indicator on every tab stop", async ({ page }) => {
+        test("shows a focus indicator on every tab stop", async ({
+            page,
+            browserName,
+        }) => {
             const section = await openSection(page, id);
             const focusables = await section.evaluate(
                 (root, focusable) =>
@@ -553,23 +623,14 @@ for (const { id, title } of sections) {
                 FOCUSABLE
             );
             // A press that focuses nothing must not hide the ring from later keyboard focus.
+            // WebKit focuses nothing on a right-click, which leaves Radix's radio group
+            // treating the next Tab as a click; a left-click then Tab works in Safari.
+            const prime = browserName !== "webkit";
             for (const target of await section.locator(FOCUSABLE).all())
-                if (await target.isVisible())
+                if (prime && (await target.isVisible()))
                     await target.click({ button: "right", force: true });
             await section.locator(`#${id}-title`).focus();
-            const found: Finding[] = [];
-            let stops = 0;
-            for (; stops < MAX_TAB_STOPS; stops++) {
-                await page.keyboard.press("Tab");
-                const facts = await page.evaluate(readFocus, id);
-                if (facts === "left") break;
-                const problem = inspectStop(facts);
-                if (problem)
-                    found.push({
-                        key: `focus:${id}:${facts.caseName}`,
-                        detail: `${facts.who}: ${problem}`,
-                    });
-            }
+            const { stops, found } = await tabThrough(page, id);
             expect(stops, "tab order never left the section").toBeLessThan(
                 MAX_TAB_STOPS
             );
@@ -603,7 +664,9 @@ for (const { id, title } of sections) {
                     found.push({ key: `overlay:${id}:${caseName}`, detail });
                 await trigger.focus();
                 await page.keyboard.press("Enter");
-                const dialog = page.getByRole("dialog");
+                const dialog = page
+                    .getByRole("dialog")
+                    .or(page.getByRole("alertdialog"));
                 await expect(dialog, `${caseName} did not open`).toBeVisible();
                 for (const problem of await dialog.evaluate(readOverlay))
                     report(problem);
@@ -669,7 +732,9 @@ for (const { id, title } of sections) {
                         detail: ring,
                     });
                 }
-                const popup = page.locator('[role="dialog"], [role="listbox"]');
+                const popup = page.locator(
+                    '[role="dialog"], [role="alertdialog"], [role="listbox"]'
+                );
                 if ((await popup.count()) > 0) {
                     await page.keyboard.press("Escape");
                     await expect(popup).toHaveCount(0);

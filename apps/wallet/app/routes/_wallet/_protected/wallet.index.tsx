@@ -59,8 +59,8 @@ function WalletPage() {
                 <DemoAccount />
                 <Balance />
                 <AddEmailCard />
-                <WelcomeCard />
                 <GameCard />
+                <WelcomeCard />
                 <EarningsSection />
             </Box>
         </PullToRefresh>

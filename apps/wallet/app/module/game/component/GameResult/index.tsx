@@ -13,12 +13,11 @@ import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    ExternalLinkIcon,
     GiftIcon,
     HourglassIcon,
     InstagramIcon,
 } from "@frak-labs/design-system/icons";
-import { backendUrl, openExternalUrl } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { Ticket, TicketX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
@@ -237,18 +236,18 @@ export function GameResultDetail({
 /** Kept low-key on purpose: only the curious go and check the public record. */
 function VerifyDraw({ gameId, pid }: { gameId: string; pid: string }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const openDraw = () => {
+        modalStore.getState().dismissAll();
+        void navigate({ to: "/draw", search: { game: gameId, pid } });
+    };
     return (
         <Stack space="xxs" align="center">
             <Button
                 variant="ghost"
                 size="small"
                 width="auto"
-                rightIcon={<ExternalLinkIcon />}
-                onClick={() =>
-                    void openExternalUrl(
-                        `${backendUrl}/common/game/${gameId}/draw`
-                    )
-                }
+                onClick={openDraw}
             >
                 {t("game.result.verify.link")}
             </Button>

@@ -7,7 +7,7 @@ import {
     stopIframeBootObservation,
 } from "../utils/iframe/iframeBoot";
 
-/** The SDK stops polling the listener, and reports a timeout, after this. */
+/** The SDK stops polling the listener, reports a timeout, and fails pending requests after this. */
 export const HANDSHAKE_TIMEOUT_MS = 30_000;
 
 export type TrackLifecycle = <E extends keyof SdkLifecycleEventMap>(

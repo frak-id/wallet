@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "id.frak.share"
     defaultConfig {
         minSdk = 28

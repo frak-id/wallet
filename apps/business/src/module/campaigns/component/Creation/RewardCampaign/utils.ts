@@ -558,6 +558,13 @@ export function tieredRangesOverlap(tiers: CpaTierRow[]): boolean {
     );
 }
 
+/** Whether any tier's upper bound is not above its lower bound; the backend rejects it at save. */
+export function tieredRangeInverted(tiers: CpaTierRow[]): boolean {
+    return tiers.some(
+        (t) => t.from !== "" && t.to !== "" && Number(t.from) >= Number(t.to)
+    );
+}
+
 /** Whether Ambassador + Referee sum to the rewards pool (Frak's 20% aside). */
 function splitMatchesPool(
     targetCpa: number,
@@ -629,6 +636,7 @@ export function isRewardFormValid(
     if (values.model === "tiered") {
         return (
             tieredTiersValid(values.globalCpaTiers) &&
+            !tieredRangeInverted(values.globalCpaTiers) &&
             !tieredRangesOverlap(values.globalCpaTiers) &&
             tieredSplitValid(values)
         );

@@ -200,7 +200,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         ]);
     });
 
-    it("grants 1 ticket per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
+    it("grants 2 tickets per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
         answer([[0]], [[0]], [[2]], [[0]], []);
 
         await expect(
@@ -210,7 +210,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
             instagramCertified: 0,
             purchase: 0,
             referredPurchase: 0,
-            referredSignup: 2,
+            referredSignup: 4,
             brandShare: 0,
         });
     });
@@ -238,7 +238,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         ]);
     });
 
-    it("grants 1 ticket per distinct brand-share friend with a wallet", async () => {
+    it("grants 2 tickets per distinct brand-share friend with a wallet", async () => {
         answer([[0]], [[0]], [[0]], [[3]], []);
 
         await expect(
@@ -249,7 +249,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
             purchase: 0,
             referredPurchase: 0,
             referredSignup: 0,
-            brandShare: 3,
+            brandShare: 6,
         });
     });
 
@@ -266,7 +266,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
     });
 
     it.each([
-        ["a certified follower", [[true]], 2],
+        ["a certified follower", [[true]], 1],
         ["a certified non-follower", [[false]], 0],
         ["an uncertified holder", [], 0],
     ])("grants %s %i Instagram tickets", async (_name, rows, expected) => {
@@ -284,11 +284,11 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
             player.ticketsOf(game, HOLDER, JOINED_AT)
         ).resolves.toEqual({
             join: 1,
-            instagramCertified: 2,
+            instagramCertified: 1,
             purchase: 3,
             referredPurchase: 3,
-            referredSignup: 1,
-            brandShare: 1,
+            referredSignup: 2,
+            brandShare: 2,
         });
     });
 });

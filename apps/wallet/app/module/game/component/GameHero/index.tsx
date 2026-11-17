@@ -156,22 +156,16 @@ export function HeroEndsAt({ endsAt }: { endsAt: Date | string }) {
 
 type GameHeroProps = {
     me: CurrentGameResponse["me"];
-    prize: string;
     endsAt: Date | string;
     gains: GameGains;
 };
 
 /** The player's tickets as a deck, held under a padlock until they count in the draw. */
-export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
+export function GameHero({ me, endsAt, gains }: GameHeroProps) {
     const { t } = useTranslation();
     const locked = !me.eligible;
     const showPadlock = locked || gains.unlocked;
     const count = me.tickets;
-    const title = locked
-        ? t("game.page.hero.pending", { count })
-        : gains.unlocked
-          ? t("game.page.hero.unlocked", { count })
-          : t("game.page.hero.drawn", { count });
     const subtitle = locked
         ? t(
               me.instagram === "certified"
@@ -179,7 +173,7 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                   : "game.page.hero.subtitleNone",
               { count }
           )
-        : prize;
+        : t("game.page.hero.keepGoing");
 
     return (
         <HeroCard
@@ -191,6 +185,13 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                 )
             }
         >
+            <Text variant="overline" color="onAction" as="p">
+                {t(
+                    locked
+                        ? "game.page.hero.labelPending"
+                        : "game.page.hero.label"
+                )}
+            </Text>
             <TicketDeck
                 face={count}
                 cards={{ locked, unlocking: gains.unlocked }}
@@ -201,9 +202,11 @@ export function GameHero({ me, prize, endsAt, gains }: GameHeroProps) {
                 )}
                 {gains.total > 0 && <GainBadge count={gains.total} />}
             </TicketDeck>
-            <Text variant="heading3" color="onAction" as="p">
-                {title}
-            </Text>
+            {gains.unlocked && (
+                <Text variant="heading3" color="onAction" as="p">
+                    {t("game.page.hero.unlocked", { count })}
+                </Text>
+            )}
             {gains.total > 0 && (
                 <HeroChip tone="success">
                     {t("game.page.hero.since", {

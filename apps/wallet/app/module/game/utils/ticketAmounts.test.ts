@@ -11,11 +11,11 @@ describe("ticketAmounts", () => {
         expect(
             totalTickets({
                 join: 1,
-                instagramCertified: 2,
+                instagramCertified: 1,
                 purchase: 6,
                 referredPurchase: 3,
                 referredSignup: 2,
-                brandShare: 1,
+                brandShare: 2,
             })
         ).toBe(15);
     });

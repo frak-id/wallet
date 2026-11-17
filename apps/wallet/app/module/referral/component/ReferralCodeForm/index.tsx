@@ -16,7 +16,7 @@ import {
     useSuggestReferralCodes,
 } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { OrDivider } from "../OrDivider";
 import * as styles from "./index.css";
@@ -78,6 +78,7 @@ export function ReferralCodeForm({
     onDirty,
 }: ReferralCodeFormProps) {
     const { t } = useTranslation();
+    const fieldId = useId();
     const navigate = useNavigate();
 
     const [stem, setStem] = useState("");
@@ -160,6 +161,7 @@ export function ReferralCodeForm({
                     <Box className={styles.labelRow}>
                         <Text
                             as="label"
+                            htmlFor={fieldId}
                             variant="bodySmall"
                             weight="medium"
                             color="secondary"
@@ -170,7 +172,7 @@ export function ReferralCodeForm({
                     <Input
                         variant="bare"
                         length="big"
-                        aria-label={t("wallet.referral.create.label")}
+                        id={fieldId}
                         placeholder={t("wallet.referral.create.placeholder")}
                         autoCapitalize="none"
                         autoComplete="off"

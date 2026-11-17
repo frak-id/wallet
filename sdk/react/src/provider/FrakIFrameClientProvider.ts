@@ -13,6 +13,8 @@ import {
     createElement,
     Fragment,
     type ReactNode,
+    useEffect,
+    useRef,
     useState,
 } from "react";
 import { useFrakConfig } from "../hook";
@@ -55,10 +57,18 @@ export function FrakIFrameClientProvider({
     children?: ReactNode;
 }) {
     const config = useFrakConfig();
+    // `useFrakConfig` returns a new object on every render: as an effect
+    // dependency it would rebuild the client each time.
+    const [initialConfig] = useState(config);
 
-    // The iframe element itself, captured from the ref so the client query
+    // The iframe element itself, captured from the ref so the client effect
     // below can run once it exists.
     const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
+    const [client, setClient] = useState<FrakClient>();
+    const live = useRef<{
+        iframe: HTMLIFrameElement;
+        created: Promise<FrakClient | undefined>;
+    }>(undefined);
 
     // Seed the listener URL with the derived anonymous id; without it the
     // listener falls back to its own store.
@@ -74,26 +84,44 @@ export function FrakIFrameClientProvider({
         staleTime: Number.POSITIVE_INFINITY,
     });
 
-    const { data: client } = useQuery({
-        queryKey: ["frak", "iframe-client", iframeSrc],
-        queryFn: () =>
-            createIFrameFrakClient({
-                iframe: iframe as HTMLIFrameElement,
-                config,
-            }),
-        enabled: !!iframe,
-        staleTime: Number.POSITIVE_INFINITY,
-        // A persister would serialise the client, dropping `request` and
-        // leaving a truthy, dead object that the infinite staleTime never
-        // refetches.
-        meta: { storable: false },
-    });
+    useEffect(() => {
+        if (!iframe) return;
+        if (live.current?.iframe !== iframe) {
+            live.current = {
+                iframe,
+                created: createIFrameFrakClient({
+                    iframe,
+                    config: initialConfig,
+                }).catch((error: unknown) => {
+                    console.error("[Frak] Failed to create the client", error);
+                    return undefined;
+                }),
+            };
+        }
+        const { created } = live.current;
+        let released = false;
+        void created.then((next) => {
+            if (!released) setClient(next);
+        });
+        return () => {
+            released = true;
+            // `<Activity>` hides with the iframe still in the DOM: keep its
+            // client so in-flight requests still settle.
+            if (iframe.isConnected) return;
+            live.current = undefined;
+            setClient(undefined);
+            // `detachOnly`: React owns the iframe element.
+            void created.then((stale) => stale?.destroy({ detachOnly: true }));
+        };
+    }, [iframe, initialConfig]);
 
     // Create the iframe that will be used to communicate with the wallet.
-    // Rendered only once the src is known, so it never loads twice.
+    // Rendered only once the src is known, so it never loads twice. Keyed on
+    // the src so a new src gets a new element, and with it a new client.
     const iFrame = iframeSrc
         ? createElement("iframe", {
               ...baseIframeProps,
+              key: iframeSrc,
               src: iframeSrc,
               style: style ?? baseIframeProps.style,
               ref: setIframe,

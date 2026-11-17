@@ -150,7 +150,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
             purchase: 3,
             referredPurchase: 0,
             referredSignup: 2,
-            brandShare: 1,
+            brandShare: 2,
         };
         const { orchestrator, ticketsOf } = makeOrchestrator({
             joinedAt: JOINED_AT,
@@ -162,7 +162,7 @@ describe("FrakGameOrchestrator.getCurrentGame", () => {
         expect(ticketsOf).toHaveBeenCalledWith(game, USER, JOINED_AT);
         expect(result.me).toEqual({
             participating: true,
-            tickets: 7,
+            tickets: 8,
             ticketsBySource,
             eligible: false,
             instagram: "none",

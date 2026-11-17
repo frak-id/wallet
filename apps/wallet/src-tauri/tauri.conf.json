@@ -58,7 +58,8 @@
             "icons/icon.ico"
         ],
         "android": {
-            "debugApplicationIdSuffix": ".dev"
+            "debugApplicationIdSuffix": ".dev",
+            "minSdkVersion": 29
         },
         "iOS": {
             "developmentTeam": "57DZ6Z2235",

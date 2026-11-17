@@ -11,6 +11,12 @@ export const card = style({
     overflow: "hidden",
 });
 
+export const qrSection = style({
+    padding: `${alias.spacing.l} ${alias.spacing.m} ${alias.spacing.m}`,
+    color: vars.text.primary,
+    borderBottom: `1px solid ${vars.border.subtle}`,
+});
+
 export const row = style({
     display: "flex",
     alignItems: "center",
@@ -23,6 +29,15 @@ export const codeLabel = style({
     flex: "1 0 0",
     minWidth: 0,
 });
+
+export const linkLabel = style([
+    codeLabel,
+    {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    },
+]);
 
 export const copyButton = style({
     display: "inline-flex",
@@ -44,7 +59,7 @@ export const dateValue = style({
     color: vars.text.primary,
 });
 
-export const dateIcon = style({
+export const rowIcon = style({
     color: vars.icon.primary,
     flexShrink: 0,
 });

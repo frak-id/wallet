@@ -26,13 +26,13 @@ describe("gainsSince", () => {
     it("lists the positive deltas in display order and totals them", () => {
         const result = gainsSince(
             seen({ purchase: 3 }),
-            seen({ instagramCertified: 2, purchase: 6, brandShare: 1 })
+            seen({ instagramCertified: 1, purchase: 6, brandShare: 2 })
         );
 
         expect(result.gains).toEqual([
-            { source: "instagramCertified", tickets: 2 },
+            { source: "instagramCertified", tickets: 1 },
             { source: "purchase", tickets: 3 },
-            { source: "brandShare", tickets: 1 },
+            { source: "brandShare", tickets: 2 },
         ]);
         expect(result.total).toBe(6);
         expect(result.unlocked).toBe(false);
@@ -50,11 +50,11 @@ describe("gainsSince", () => {
     it("flags the unlock when the tickets were held and now count", () => {
         const result = gainsSince(
             seen({}, false),
-            seen({ instagramCertified: 2 })
+            seen({ instagramCertified: 1 })
         );
 
         expect(result.unlocked).toBe(true);
-        expect(result.total).toBe(2);
+        expect(result.total).toBe(1);
     });
 
     it("does not flag an unlock for tickets that were already counting or still are not", () => {

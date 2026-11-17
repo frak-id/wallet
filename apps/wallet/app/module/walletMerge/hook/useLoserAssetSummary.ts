@@ -12,14 +12,10 @@ import {
     erc20DecimalsAbi,
     rewarderGetClaimableAbi,
 } from "@/module/tokens/utils/abi";
+import { STABLECOIN_SYMBOL } from "@/module/tokens/utils/claimedBalance";
 import { walletMergeKey } from "../queryKeys/walletMerge";
 
 const STABLECOIN_IDS = Object.keys(currentStablecoins) as Stablecoin[];
-
-const STABLECOIN_SYMBOL: Record<Stablecoin, string> = {
-    usdc: "USDC",
-    eure: "EURe",
-};
 
 export type LoserAssetSummaryEntry = {
     id: Stablecoin;

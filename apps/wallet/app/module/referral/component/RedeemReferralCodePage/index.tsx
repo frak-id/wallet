@@ -19,7 +19,7 @@ import {
     useUnredeemReferralCode,
 } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
 import { OrDivider } from "../OrDivider";
@@ -112,6 +112,8 @@ export function RedeemForm({
         initialCode,
     });
 
+    const fieldId = useId();
+
     return (
         <form onSubmit={handleSubmit}>
             <Stack space="m">
@@ -119,6 +121,7 @@ export function RedeemForm({
                     <Box className={styles.labelRow}>
                         <Text
                             as="label"
+                            htmlFor={fieldId}
                             variant="bodySmall"
                             weight="medium"
                             color="secondary"
@@ -129,7 +132,7 @@ export function RedeemForm({
                     <Input
                         variant="bare"
                         length="big"
-                        aria-label={label ?? t("wallet.referral.redeem.label")}
+                        id={fieldId}
                         placeholder={t("wallet.referral.redeem.placeholder")}
                         autoCapitalize="characters"
                         autoComplete="off"

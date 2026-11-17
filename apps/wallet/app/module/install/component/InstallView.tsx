@@ -966,9 +966,14 @@ function useCodeHandoff({
         if (!(wroteClipboard || handedOff)) return null;
 
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
         return { handedOff };
     }, [value, clip, handOver]);
+
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
 
     return { copied, copy, handOver };
 }

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "id.frak.updater"
     defaultConfig {
         minSdk = 28

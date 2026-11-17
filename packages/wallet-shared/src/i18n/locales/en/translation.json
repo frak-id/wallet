@@ -358,12 +358,16 @@
             "share": {
                 "activeSince": "Active since",
                 "copyCode": "Copy code",
+                "copyLink": "Copy link",
                 "copiedToast": "Referral code copied",
+                "linkCopiedToast": "Referral link copied",
+                "qrCaption": "Scan to sign up with my code",
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
+                "gameShareText": "Join the Frak Game with my code {{code}} and try to win {{prize}}!",
                 "modifyCta": "Modify my code",
-                "gameHint": "Frak Game: 1 ticket per friend who signs up with your code, once they connect their Instagram and follow @frak_fr."
+                "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw."
             },
             "edit": {
                 "title": "Edit my code",
@@ -884,11 +888,11 @@
         "pendingDaysLeft": "{{ days }} days left",
         "dismiss": "Close",
         "referral": {
-            "title": "Your referral code",
-            "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
+            "title": "You're invited to Frak",
+            "description": "Sign up with this code to earn cashback on your purchases at partner brands.",
             "codeCopied": "Referral code copied!",
             "manualEntry": "Referral code to enter at sign-up",
-            "openApp": "I already have the Frak app",
+            "openApp": "I already have the app",
             "openBrowser": "Open in the browser",
             "openBrowserHint": "Otherwise: ⋯ at the top right → Open in external browser"
         }
@@ -980,7 +984,7 @@
                     "title": "Share and earn tickets",
                     "reward": "You each earn {{reward}}.",
                     "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-                    "description": "1 ticket per friend who signs up with your code and connects their Instagram, and 1 per friend with a Frak wallet who opens your share of a brand."
+                    "description": "2 tickets per friend who signs up with your code, connects their Instagram and follows @frak_fr, and 2 per friend with a Frak wallet who opens your share of a brand."
                 },
                 "purchase": {
                     "title": "Shop at a partner brand",
@@ -988,7 +992,7 @@
                 },
                 "follow": {
                     "title": "Activate your tickets with Instagram",
-                    "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 2 more tickets. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn."
+                    "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 1 more ticket. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn."
                 }
             },
             "bonus": {
@@ -1047,10 +1051,6 @@
             "title": "Frak Game",
             "openGame": "Current game",
             "hero": {
-                "drawn_one": "{{count}} ticket in the draw",
-                "drawn_other": "{{count}} tickets in the draw",
-                "pending_one": "{{count}} ticket on hold",
-                "pending_other": "{{count}} tickets on hold",
                 "unlocked_one": "Your ticket is unlocked",
                 "unlocked_other": "Your {{count}} tickets are unlocked",
                 "subtitleNone_one": "Connect your Instagram and follow @frak_fr so it counts in the draw",
@@ -1068,7 +1068,10 @@
                     "referredPurchase": "friend's purchase",
                     "referredSignup": "friend signed up",
                     "brandShare": "friend from a brand"
-                }
+                },
+                "label": "Your tickets in the draw",
+                "labelPending": "Your pending tickets",
+                "keepGoing": "Keep inviting friends to boost your chances!"
             },
             "missions": {
                 "title": "Missions",
@@ -1091,7 +1094,8 @@
                     },
                     "declared": {
                         "title": "Connect your Instagram",
-                        "hint": "Your tickets count. Connect it for {{amount}} more tickets, or you'll have to do it within 24 h if you're drawn."
+                        "hint_one": "Your tickets count. Connect it for {{count}} more ticket, or you'll have to do it within 24 h if you're drawn.",
+                        "hint_other": "Your tickets count. Connect it for {{count}} more tickets, or you'll have to do it within 24 h if you're drawn."
                     },
                     "notFollowing": {
                         "title": "Follow @frak_fr again",
@@ -1118,7 +1122,16 @@
                     "friends_one": "{{count}} purchase by a friend",
                     "friends_other": "{{count}} purchases by friends"
                 }
-            }
+            },
+            "invite": {
+                "title": "Invite your friends",
+                "description_one": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} ticket.",
+                "description_other": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} tickets.",
+                "noCode_one": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} ticket.",
+                "noCode_other": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} tickets.",
+                "share": "Share my link"
+            },
+            "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
         },
         "result": {
             "badge": {
@@ -1213,6 +1226,91 @@
             "close": "Close"
         }
     },
+    "gameDraw": {
+        "title": "Frak Game draw",
+        "phase": {
+            "scheduled": "The draw takes place on {{date}}.",
+            "drawing": "The draw is in progress. The result arrives in a few minutes.",
+            "checking": "The draw has happened. We are checking the winner.",
+            "confirmed": "The winner is confirmed.",
+            "noWinner": "No winner for this game."
+        },
+        "me": {
+            "title": "You in the draw",
+            "tickets": "Your tickets",
+            "chance": "Your chances",
+            "rank": "Your place in the ranking",
+            "rankValue": "#{{rank}}",
+            "won": "You won!",
+            "rejected": "You were drawn, but you were rejected.",
+            "ahead_one": "The player ranked before you was rejected.",
+            "ahead_other": "The {{count}} players ranked before you were rejected.",
+            "notFound": "Your id is not in this draw. Either you did not play, or your tickets were not counted.",
+            "pid": "Your id",
+            "copied": "Copied",
+            "copyLabel": "Copy your full id"
+        },
+        "summary": {
+            "title": "The draw in numbers",
+            "participants": "Participants",
+            "totalTickets": "Tickets in the draw",
+            "frozenAt": "List frozen on",
+            "random": "Random number (drand)",
+            "randomRound": "Round {{round}}",
+            "randomAt": "Emitted on",
+            "randomDue": "Due on",
+            "winner": "Winner",
+            "winnerNone": "Not known yet",
+            "winnerNobody": "Nobody",
+            "payout": "Prize",
+            "payoutPaid": "Paid",
+            "payoutPending": "Being paid"
+        },
+        "how": {
+            "title": "How the draw works",
+            "freeze": "When the game ends, we freeze the list of tickets and publish its fingerprint.",
+            "random": "A public random number (drand) is chosen in advance. It is emitted later: nobody knows it before, not even Frak.",
+            "rank": "That number ranks the participants: the more tickets you have, the better your chance of being ahead.",
+            "winner": "The first in the ranking wins if they have connected their Instagram and follow @frak_fr; if not, they have 24 h to do so. A player can also be rejected (fraud, not eligible…). Either way, it goes to the next one."
+        },
+        "rejection": {
+            "title": "Rejected players",
+            "introConfirmed_one": "{{count}} player drawn before the winner was rejected.",
+            "introConfirmed_other": "{{count}} players drawn before the winner were rejected.",
+            "introPending_one": "{{count}} drawn player has been rejected so far.",
+            "introPending_other": "{{count}} drawn players have been rejected so far.",
+            "introNoWinner_one": "{{count}} drawn player was rejected.",
+            "introNoWinner_other": "{{count}} drawn players were rejected.",
+            "label": "#{{rank}} · {{pid}}",
+            "labelYou": "#{{rank}} · {{pid}} (you)",
+            "self": "Rejected",
+            "reason": {
+                "not_verified_in_time": "Instagram not certified in time",
+                "not_following_at_review": "No longer following @frak_fr",
+                "fraud": "Fraud",
+                "unreachable": "Unreachable",
+                "ineligible": "Not eligible"
+            }
+        },
+        "links": {
+            "raw": "See the raw data",
+            "drand": "See the random number at drand"
+        },
+        "loading": "Loading the draw…",
+        "notDrawn": {
+            "title": "No draw yet",
+            "description": "The list of tickets is not frozen yet. Come back after the game ends."
+        },
+        "error": {
+            "title": "Could not load the draw",
+            "description": "Check your connection, then try again.",
+            "retry": "Try again"
+        },
+        "invalid": {
+            "title": "Invalid draw link",
+            "description": "This link does not lead to a draw. Open it from your game result."
+        }
+    },
     "instagram": {
         "title": "Your Instagram",
         "error": "Couldn't load your Instagram account.",
@@ -1220,7 +1318,7 @@
         "mobileOnly": "Open this page on your phone: Instagram messages only open in the Instagram app.",
         "certify": {
             "title": "Connect your Instagram",
-            "perks": "+2 tickets in every game, and your welcome reward unlocked.",
+            "perks": "+1 ticket in every game, and your welcome reward unlocked.",
             "codeLabel": "Your code",
             "copy": "Copy the code",
             "copied": "Copied",
@@ -1252,7 +1350,7 @@
         },
         "linked": {
             "badge": "Connected",
-            "counting": "You follow @frak_fr: your tickets count in the draw, with 2 more tickets in every game.",
+            "counting": "All set, your tickets count in the draw. As long as you follow @frak_fr, you get 1 bonus ticket in every Frak Game.",
             "notFollowing": "Last step: follow @frak_fr so your tickets count.",
             "follow": "Follow @frak_fr",
             "checkAgain": "Check again",

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type Mission, missionsDone, missionsOf } from "./gameMissions";
+import {
+    type Mission,
+    missionsDone,
+    missionsListed,
+    missionsOf,
+} from "./gameMissions";
 
 const NONE = {
     join: 1,
@@ -45,8 +50,8 @@ describe("missionsOf", () => {
 
         expect(instagram).toMatchObject({
             status: "done",
-            earned: 2,
-            reward: 2,
+            earned: 1,
+            reward: 1,
         });
         expect(instagram.route).toBeUndefined();
         expect(instagram.title).toBe(
@@ -54,7 +59,7 @@ describe("missionsOf", () => {
         );
     });
 
-    it("leaves a declared Instagram to certify for the +2", () => {
+    it("leaves a declared Instagram to certify for the +1", () => {
         expect(
             byId(missionsOf(me("declared", true)), "instagram")
         ).toMatchObject({
@@ -64,7 +69,7 @@ describe("missionsOf", () => {
             title: "game.page.missions.instagram.declared.title",
             hint: {
                 key: "game.page.missions.instagram.declared.hint",
-                values: { amount: 2 },
+                values: { count: 1 },
             },
         });
     });
@@ -93,7 +98,7 @@ describe("missionsOf", () => {
         expect(byId(missions, "friend")).toMatchObject({
             status: "todo",
             earned: 0,
-            reward: 1,
+            reward: 2,
             route: "/profile/referral/share",
             hint: { key: "game.page.missions.friend.hint" },
         });
@@ -109,14 +114,14 @@ describe("missionsOf", () => {
     it("splits the friends by code and by brand, and keeps the route once done", () => {
         const friend = byId(
             missionsOf(
-                me("certified", true, { referredSignup: 2, brandShare: 1 })
+                me("certified", true, { referredSignup: 4, brandShare: 2 })
             ),
             "friend"
         );
 
         expect(friend).toMatchObject({
             status: "done",
-            earned: 3,
+            earned: 6,
             route: "/profile/referral/share",
         });
         expect(friend.hint).toEqual({
@@ -136,7 +141,7 @@ describe("missionsOf", () => {
 
     it("names only the friend source that earned", () => {
         const friend = byId(
-            missionsOf(me("certified", true, { brandShare: 1 })),
+            missionsOf(me("certified", true, { brandShare: 2 })),
             "friend"
         );
 
@@ -172,5 +177,29 @@ describe("missionsOf", () => {
                 },
             ],
         });
+    });
+});
+
+describe("missionsListed", () => {
+    const ids = (missions: Mission[]) => missions.map((m) => m.id);
+
+    it("keeps the friend mission once a friend joined, after the ones left to do", () => {
+        const missions = missionsOf(
+            me("declared", true, { referredSignup: 2 })
+        );
+
+        expect(ids(missionsListed(missions))).toEqual([
+            "instagram",
+            "purchase",
+            "friend",
+        ]);
+    });
+
+    it("drops every other mission once done", () => {
+        const missions = missionsOf(
+            me("certified", true, { purchase: 3, brandShare: 2 })
+        );
+
+        expect(ids(missionsListed(missions))).toEqual(["friend"]);
     });
 });
