@@ -358,7 +358,9 @@
             "share": {
                 "activeSince": "Actif depuis le",
                 "copyCode": "Copier le code",
+                "copyLink": "Copier le lien",
                 "copiedToast": "Code de parrainage copié",
+                "linkCopiedToast": "Lien de parrainage copié",
                 "savedToast": "Nouveau code enregistré",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",

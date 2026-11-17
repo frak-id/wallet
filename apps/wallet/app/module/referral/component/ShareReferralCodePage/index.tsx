@@ -7,6 +7,7 @@ import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     CalendarIcon,
     CopyIcon,
+    LinkIcon,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
@@ -22,6 +23,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { modalStore } from "@/module/stores/modalStore";
+import { displayReferralLink, referralLink } from "../../utils/referralLink";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
@@ -40,6 +42,7 @@ export function ShareReferralCodePage() {
     const { data: status } = useReferralStatus();
     const inGame = useCurrentGame().data?.me.participating ?? false;
     const ownedCode = status?.ownedCode ?? null;
+    const link = ownedCode ? referralLink(ownedCode.code) : null;
     const shouldRedirect = status !== undefined && !ownedCode;
 
     useEffect(() => {
@@ -60,6 +63,7 @@ export function ShareReferralCodePage() {
         : "";
 
     const { copied, copy } = useCopyToClipboardWithState();
+    const [copiedItem, setCopiedItem] = useState<"code" | "link">("code");
     // `copied` flips back to false after the hook's internal 2 s timer.
     // We keep the toast mounted long enough for the exit animation to play.
     const [showToast, setShowToast] = useState(false);
@@ -99,33 +103,49 @@ export function ShareReferralCodePage() {
 
     const handleCopy = () => {
         if (!ownedCode) return;
+        setCopiedItem("code");
         copy(ownedCode.code);
         trackEvent("sharing_link_copied", { source: "referral_code" });
     };
 
+    const handleCopyLink = () => {
+        if (!link) return;
+        setCopiedItem("link");
+        copy(link);
+        trackEvent("sharing_link_copied", { source: "referral_code", link });
+    };
+
     const handleShare = async () => {
-        if (!ownedCode) return;
+        if (!(ownedCode && link)) return;
         const shareText = t("wallet.referral.share.shareText", {
             code: ownedCode.code,
         });
         if (!canShareNatively()) {
-            copy(shareText);
-            trackEvent("sharing_link_copied", { source: "referral_code" });
+            setCopiedItem("link");
+            copy(`${shareText}\n${link}`);
+            trackEvent("sharing_link_copied", {
+                source: "referral_code",
+                link,
+            });
             return;
         }
-        trackEvent("sharing_link_started", { source: "referral_code" });
-        // `text` only: with a `title` too, macOS Safari shares two items ("2 Images").
-        const shared = await shareNatively({ text: shareText }).catch(
-            (err: unknown) => {
-                recordError(err, {
-                    source: "sharing",
-                    context: { sharing_source: "referral_code" },
-                });
-                return false;
-            }
-        );
+        trackEvent("sharing_link_started", { source: "referral_code", link });
+        // No `title`: with one, macOS Safari shares two items ("2 Images").
+        const shared = await shareNatively({
+            text: shareText,
+            url: link,
+        }).catch((err: unknown) => {
+            recordError(err, {
+                source: "sharing",
+                context: { sharing_source: "referral_code" },
+            });
+            return false;
+        });
         if (shared) {
-            trackEvent("sharing_link_shared", { source: "referral_code" });
+            trackEvent("sharing_link_shared", {
+                source: "referral_code",
+                link,
+            });
         }
     };
 
@@ -141,7 +161,11 @@ export function ShareReferralCodePage() {
             {showToast ? (
                 <ToastSurface>
                     <ConfirmationTooltip isLeaving={!copied}>
-                        {t("wallet.referral.share.copiedToast")}
+                        {t(
+                            copiedItem === "link"
+                                ? "wallet.referral.share.linkCopiedToast"
+                                : "wallet.referral.share.copiedToast"
+                        )}
                     </ConfirmationTooltip>
                 </ToastSurface>
             ) : null}
@@ -153,7 +177,7 @@ export function ShareReferralCodePage() {
                 </ToastSurface>
             ) : null}
 
-            {ownedCode ? (
+            {ownedCode && link ? (
                 <>
                     <Box className={styles.card}>
                         <Box className={styles.row}>
@@ -176,6 +200,30 @@ export function ShareReferralCodePage() {
                             </Box>
                         </Box>
                         <Box className={styles.row}>
+                            <LinkIcon
+                                width={16}
+                                height={16}
+                                className={styles.rowIcon}
+                            />
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                className={styles.linkLabel}
+                            >
+                                {displayReferralLink(link)}
+                            </Text>
+                            <Box
+                                as="button"
+                                type="button"
+                                aria-label={t("wallet.referral.share.copyLink")}
+                                className={styles.copyButton}
+                                onClick={handleCopyLink}
+                            >
+                                <CopyIcon />
+                            </Box>
+                        </Box>
+                        <Box className={styles.row}>
                             <Text
                                 as="span"
                                 variant="bodySmall"
@@ -189,7 +237,7 @@ export function ShareReferralCodePage() {
                                 <CalendarIcon
                                     width={16}
                                     height={16}
-                                    className={styles.dateIcon}
+                                    className={styles.rowIcon}
                                 />
                                 <Text
                                     as="span"

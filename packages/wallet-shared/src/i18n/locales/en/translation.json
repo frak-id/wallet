@@ -358,7 +358,9 @@
             "share": {
                 "activeSince": "Active since",
                 "copyCode": "Copy code",
+                "copyLink": "Copy link",
                 "copiedToast": "Referral code copied",
+                "linkCopiedToast": "Referral link copied",
                 "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",

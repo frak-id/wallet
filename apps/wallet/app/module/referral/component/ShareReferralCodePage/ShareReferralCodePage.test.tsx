@@ -9,6 +9,7 @@ const {
     game,
     canShareNatively,
     shareNatively,
+    clipboard,
 } = vi.hoisted(() => ({
     trackEvent: vi.fn(),
     recordError: vi.fn(),
@@ -17,6 +18,7 @@ const {
     game: { data: undefined as unknown },
     canShareNatively: vi.fn(),
     shareNatively: vi.fn(),
+    clipboard: { copied: false },
 }));
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
@@ -31,7 +33,7 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     recordError,
     canShareNatively,
     shareNatively,
-    useCopyToClipboardWithState: () => ({ copied: false, copy }),
+    useCopyToClipboardWithState: () => ({ copied: clipboard.copied, copy }),
     useReferralStatus: () => ({
         data: { ownedCode: { code: "STORY1", createdAt: "2026-10-20" } },
     }),
@@ -61,11 +63,14 @@ vi.mock("../ReferralPageShell", () => ({
 import { ShareReferralCodePage } from "./index";
 
 const SOURCE = { source: "referral_code" };
+const LINK = "https://wallet-test.frak.id/r/STORY1";
+const LINK_SOURCE = { ...SOURCE, link: LINK };
 
 describe("ShareReferralCodePage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         game.data = undefined;
+        clipboard.copied = false;
         canShareNatively.mockReturnValue(true);
     });
 
@@ -107,7 +112,47 @@ describe("ShareReferralCodePage", () => {
         );
     });
 
-    it("shares the text alone through the native share primitive", async () => {
+    it("shows the code's link without its scheme", () => {
+        render(<ShareReferralCodePage />);
+
+        expect(
+            screen.getByText("wallet-test.frak.id/r/STORY1")
+        ).toBeInTheDocument();
+    });
+
+    it("copies the full link and tracks it apart from a code copy", () => {
+        render(<ShareReferralCodePage />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "wallet.referral.share.copyLink",
+            })
+        );
+
+        expect(copy).toHaveBeenCalledWith(LINK);
+        expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+            "sharing_link_copied",
+            LINK_SOURCE
+        );
+    });
+
+    it.each([
+        ["wallet.referral.share.copyCode", "wallet.referral.share.copiedToast"],
+        [
+            "wallet.referral.share.copyLink",
+            "wallet.referral.share.linkCopiedToast",
+        ],
+    ])("confirms %s with %s", (button, toast) => {
+        const { rerender } = render(<ShareReferralCodePage />);
+
+        fireEvent.click(screen.getByRole("button", { name: button }));
+        clipboard.copied = true;
+        rerender(<ShareReferralCodePage />);
+
+        expect(screen.getByText(toast)).toBeInTheDocument();
+    });
+
+    it("shares the text and the link through the native share primitive", async () => {
         shareNatively.mockResolvedValue(true);
         render(<ShareReferralCodePage />);
 
@@ -120,6 +165,7 @@ describe("ShareReferralCodePage", () => {
         await waitFor(() =>
             expect(shareNatively).toHaveBeenCalledExactlyOnceWith({
                 text: "wallet.referral.share.shareText",
+                url: LINK,
             })
         );
     });
@@ -136,12 +182,12 @@ describe("ShareReferralCodePage", () => {
 
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "sharing_link_started",
-            SOURCE
+            LINK_SOURCE
         );
         await waitFor(() =>
             expect(trackEvent).toHaveBeenLastCalledWith(
                 "sharing_link_shared",
-                SOURCE
+                LINK_SOURCE
             )
         );
         expect(trackEvent).toHaveBeenCalledTimes(2);
@@ -161,7 +207,7 @@ describe("ShareReferralCodePage", () => {
         await Promise.resolve();
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "sharing_link_started",
-            SOURCE
+            LINK_SOURCE
         );
         expect(copy).not.toHaveBeenCalled();
     });
@@ -185,11 +231,11 @@ describe("ShareReferralCodePage", () => {
         );
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "sharing_link_started",
-            SOURCE
+            LINK_SOURCE
         );
     });
 
-    it("copies the share text and tracks a copy where nothing can share", () => {
+    it("copies the share text and the link where nothing can share", () => {
         canShareNatively.mockReturnValue(false);
         render(<ShareReferralCodePage />);
 
@@ -199,10 +245,12 @@ describe("ShareReferralCodePage", () => {
             })
         );
 
-        expect(copy).toHaveBeenCalledWith("wallet.referral.share.shareText");
+        expect(copy).toHaveBeenCalledWith(
+            `wallet.referral.share.shareText\n${LINK}`
+        );
         expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
             "sharing_link_copied",
-            SOURCE
+            LINK_SOURCE
         );
     });
 });

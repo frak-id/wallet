@@ -24,6 +24,15 @@ export const codeLabel = style({
     minWidth: 0,
 });
 
+export const linkLabel = style([
+    codeLabel,
+    {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    },
+]);
+
 export const copyButton = style({
     display: "inline-flex",
     alignItems: "center",
@@ -44,7 +53,7 @@ export const dateValue = style({
     color: vars.text.primary,
 });
 
-export const dateIcon = style({
+export const rowIcon = style({
     color: vars.icon.primary,
     flexShrink: 0,
 });
