@@ -30,7 +30,8 @@ export type RpcClientConfig<
     TLifecycleEvent = unknown,
 > = {
     /**
-     * The transport to use for emitting events (e.g., window or iframe.contentWindow)
+     * The window requests are posted to (e.g., iframe.contentWindow); only
+     * messages whose `event.source` is this window are handled
      */
     emittingTransport: RpcTransport;
     /**
@@ -167,7 +168,7 @@ type ChannelCallback = (response: RpcResponse) => void;
  * import type { IFrameRpcSchema, ClientLifecycleEvent, IFrameLifecycleEvent } from '@frak-labs/core-sdk'
  *
  * const client = createRpcClient<IFrameRpcSchema, ClientLifecycleEvent | IFrameLifecycleEvent>({
- *   emittingTransport: window,
+ *   emittingTransport: iframe.contentWindow,
  *   listeningTransport: window,
  *   targetOrigin: 'https://wallet.frak.id',
  *   lifecycleHandlers: {
@@ -338,6 +339,11 @@ export function createRpcClient<
             }
         } catch (e) {
             console.error("[RPC Client] Invalid origin", e);
+            return;
+        }
+
+        // Several clients can share one window, each paired with its own iframe.
+        if (event.source !== emittingTransport) {
             return;
         }
 
