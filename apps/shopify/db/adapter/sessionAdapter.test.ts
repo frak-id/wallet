@@ -60,6 +60,8 @@ describe("sessionToRow", () => {
             scope: "read_products",
             expires: new Date("2025-01-01"),
             accessToken: "shpat_xxx",
+            refreshToken: null,
+            refreshTokenExpires: null,
             userId: 42,
         });
     });
@@ -72,11 +74,11 @@ describe("sessionToRow", () => {
             isOnline: false,
         };
         const row = sessionToRow(session);
-        expect(row.userId).toBeUndefined();
+        expect(row.userId).toBeNull();
         expect(row.isOnline).toBe(false);
     });
 
-    it("handles missing optional fields", () => {
+    it("writes null for every absent field so the upsert overwrites it", () => {
         const session: SessionInput = {
             id: "s-1",
             shop: "shop.myshopify.com",
@@ -84,11 +86,25 @@ describe("sessionToRow", () => {
             isOnline: false,
         };
         const row = sessionToRow(session);
-        expect(row.scope).toBeUndefined();
-        expect(row.expires).toBeUndefined();
-        expect(row.accessToken).toBeUndefined();
-        expect(row.refreshToken).toBeUndefined();
-        expect(row.refreshTokenExpires).toBeUndefined();
+        expect(row.scope).toBeNull();
+        expect(row.expires).toBeNull();
+        expect(row.accessToken).toBeNull();
+        expect(row.refreshToken).toBeNull();
+        expect(row.refreshTokenExpires).toBeNull();
+    });
+
+    it("writes null for an access token the library cleared after a 401", () => {
+        const session = new Session({
+            id: "offline_shop.myshopify.com",
+            shop: "shop.myshopify.com",
+            state: "",
+            isOnline: false,
+            accessToken: "shpat_rejected",
+            expires: new Date("2027-01-01T01:00:00Z"),
+        });
+        session.accessToken = undefined;
+
+        expect(sessionToRow(session).accessToken).toBeNull();
     });
 });
 
@@ -112,6 +128,25 @@ describe("rowToSessionParams", () => {
         expect(params.expires).toBe(new Date("2025-06-15T12:00:00Z").getTime());
         expect(params.accessToken).toBe("shpat_abc");
         expect(params.onlineAccessInfo).toBe(99);
+    });
+
+    it("keeps the access token of an expiring offline session", () => {
+        const params = rowToSessionParams({
+            ...nullRow,
+            expires: new Date("2027-01-01T01:00:00Z"),
+            accessToken: "shpat_expiring",
+        });
+        expect(params.accessToken).toBe("shpat_expiring");
+    });
+
+    it("drops a non-expiring offline token so authenticate.admin re-exchanges it", () => {
+        const loaded = Session.fromPropertyArray(
+            Object.entries(
+                rowToSessionParams({ ...nullRow, accessToken: "shpat_legacy" })
+            )
+        );
+        expect(loaded.accessToken).toBeUndefined();
+        expect(loaded.isActive(undefined)).toBe(false);
     });
 
     it("omits every nullable field when null", () => {
