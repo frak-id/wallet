@@ -135,12 +135,6 @@ export async function createIFrameFrakClient({
         ],
         lifecycleHandlers: {
             iframeLifecycle: (event, _context) => {
-                // Only the origin is checked: a client whose iframe left the
-                // DOM undestroyed would act on a newer iframe's events.
-                if (!iframe.isConnected) {
-                    void destroy({ detachOnly: true });
-                    return;
-                }
                 lifecycleManager.handleEvent(event);
             },
         },
@@ -184,6 +178,8 @@ export async function createIFrameFrakClient({
 
     const waitForSetup = postConnectionSetup({
         config,
+        iframe,
+        detach: () => void destroy({ detachOnly: true }),
         rpcClient,
         lifecycleManager,
         configPromise,
@@ -370,6 +366,8 @@ async function buildSdkIdentity({
  */
 async function postConnectionSetup({
     config,
+    iframe,
+    detach,
     rpcClient,
     lifecycleManager,
     configPromise,
@@ -379,6 +377,8 @@ async function postConnectionSetup({
     clientId,
 }: {
     config: FrakWalletSdkConfig;
+    iframe: HTMLIFrameElement;
+    detach: () => void;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
     configPromise: Promise<MerchantConfigResult> | undefined;
@@ -585,7 +585,7 @@ async function postConnectionSetup({
         });
     }
 
-    return setupProofFreshnessRepush(sendLifecycleConfig);
+    return setupProofFreshnessRepush(sendLifecycleConfig, iframe, detach);
 }
 
 /** Half of `frak-merge-v1`'s 600 s window, so a stored proof is never stale. */
@@ -600,13 +600,20 @@ const PROOF_REPUSH_MIN_INTERVAL_MS = 60 * 1000;
  * otherwise present one past its window. The listener is last-write-wins.
  */
 function setupProofFreshnessRepush(
-    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>
+    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>,
+    iframe: HTMLIFrameElement,
+    detach: () => void
 ): () => void {
     if (typeof document === "undefined") return () => {};
 
     let lastRepushAt = 0;
 
     const repush = (throttled: boolean) => {
+        // The iframe can leave the DOM without destroy().
+        if (!iframe.isConnected) {
+            detach();
+            return;
+        }
         if (document.visibilityState !== "visible") return;
         if (!sdkConfigStore.isResolved) return;
         const now = Date.now();

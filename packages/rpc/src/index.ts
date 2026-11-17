@@ -5,7 +5,7 @@
  * @example Client side
  * ```ts
  * const client = createRpcClient<IFrameRpcSchema>({
- *   emittingTransport: window,
+ *   emittingTransport: iframe.contentWindow,
  *   listeningTransport: window,
  *   targetOrigin: 'https://wallet.frak.id'
  * })
