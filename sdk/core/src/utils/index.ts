@@ -1,5 +1,5 @@
 // Generic, framework-agnostic utilities. Keep this surface narrow.
-export { trackEvent } from "./analytics";
+export { createSdkOpenPanel, trackEvent } from "./analytics";
 export {
     type DeepLinkFallbackOptions,
     isChromiumAndroid,
