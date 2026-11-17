@@ -1,8 +1,10 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import {
+    createSdkOpenPanel,
     decodeProductsParam,
     deleteQueryParamCaseInsensitive,
     type FrakWalletSdkConfig,
+    getClientIdAsync,
     getQueryParamCaseInsensitive,
     setupClient,
     trackEvent,
@@ -29,23 +31,33 @@ export function initFrakSdk(): Promise<void> {
 
     // withCache deduplicates concurrent calls and caches success with Infinity TTL.
     // doInit throws on failure → withCache won't cache rejections → retry is possible.
-    // .catch prevents unhandled rejections (callers don't await the return value).
-    return withCache(() => doInit(), {
-        cacheKey: "frak-sdk-init",
-        cacheTime: Number.POSITIVE_INFINITY,
-    }).catch((err: unknown) => {
-        // No client yet means the per-client OpenPanel instance isn't
-        // available. Fall back to `window.FrakSetup?.client` — it may have
-        // been populated by a prior doInit() run even if this one failed.
-        trackEvent(window.FrakSetup?.client, "sdk_init_failed", {
-            reason:
-                err instanceof Error
-                    ? err.message
-                    : typeof err === "string"
-                      ? err
-                      : "unknown",
-            config_missing: !window.FrakSetup?.config,
-        });
+    // Reported inside the cached fn: every caller's .catch would fire per caller,
+    // and on withCache's own backoff rejections.
+    return withCache(
+        () =>
+            doInit().catch((err: unknown) => {
+                void reportInitFailure(err);
+                throw err;
+            }),
+        {
+            cacheKey: "frak-sdk-init",
+            cacheTime: Number.POSITIVE_INFINITY,
+        }
+    ).catch(() => {});
+}
+
+/** No client exists after a failed init, so the event goes through its own OpenPanel. */
+async function reportInitFailure(err: unknown) {
+    const clientId = await getClientIdAsync().catch(() => undefined);
+    trackEvent({ openPanel: createSdkOpenPanel(clientId) }, "sdk_init_failed", {
+        reason:
+            err instanceof Error
+                ? err.message
+                : typeof err === "string"
+                  ? err
+                  : "unknown",
+        config_missing: !window.FrakSetup?.config,
+        domain: window.FrakSetup?.config?.domain ?? window.location.hostname,
     });
 }
 

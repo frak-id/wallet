@@ -9,12 +9,12 @@ import type { SdkEventMap } from "./events";
  * The client must be passed explicitly because the OpenPanel instance is
  * scoped to each `FrakClient` (a partner site may hold multiple iframes).
  *
- * @param client - The Frak client instance (no-op if undefined)
+ * @param client - The Frak client, or anything carrying its OpenPanel instance (no-op if undefined)
  * @param event - Typed event name from the SDK event map
  * @param properties - Typed properties for the given event
  */
 export function trackEvent<K extends keyof SdkEventMap>(
-    client: FrakClient | undefined,
+    client: Pick<FrakClient, "openPanel"> | undefined,
     event: K,
     properties?: SdkEventMap[K]
 ): void {
