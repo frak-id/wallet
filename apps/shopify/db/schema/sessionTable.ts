@@ -11,6 +11,8 @@ export const sessionTable = pgTable("session" as string, {
     scope: text("scope"),
     expires: timestamp("expires", { mode: "date" }),
     accessToken: text("accessToken"),
+    refreshToken: text("refreshToken"),
+    refreshTokenExpires: timestamp("refreshTokenExpires", { mode: "date" }),
     userId: bigint("userId", { mode: "number" }),
 });
 

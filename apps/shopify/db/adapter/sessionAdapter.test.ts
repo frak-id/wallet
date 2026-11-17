@@ -1,16 +1,43 @@
+import { Session } from "@shopify/shopify-api";
+import type { InferSelectModel } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
+import type { SessionTable } from "../schema/sessionTable";
 import {
     rowToSessionParams,
     type SessionInput,
     sessionToRow,
 } from "./sessionAdapter";
 
-/**
- * Tests for session adapter row<->session conversion logic.
- *
- * The actual adapter depends on Drizzle + Shopify Session class,
- * so we test the transformation logic independently.
- */
+type SessionRow = InferSelectModel<SessionTable>;
+
+const nullRow: SessionRow = {
+    id: "s-1",
+    shop: "shop.myshopify.com",
+    state: "active",
+    isOnline: false,
+    scope: null,
+    expires: null,
+    accessToken: null,
+    refreshToken: null,
+    refreshTokenExpires: null,
+    userId: null,
+};
+
+function toSelectRow(session: SessionInput): SessionRow {
+    const row = sessionToRow(session);
+    return {
+        id: row.id,
+        shop: row.shop,
+        state: row.state,
+        isOnline: row.isOnline ?? false,
+        scope: row.scope ?? null,
+        expires: row.expires ?? null,
+        accessToken: row.accessToken ?? null,
+        refreshToken: row.refreshToken ?? null,
+        refreshTokenExpires: row.refreshTokenExpires ?? null,
+        userId: row.userId ?? null,
+    };
+}
 
 describe("sessionToRow", () => {
     it("maps all fields correctly", () => {
@@ -60,22 +87,23 @@ describe("sessionToRow", () => {
         expect(row.scope).toBeUndefined();
         expect(row.expires).toBeUndefined();
         expect(row.accessToken).toBeUndefined();
+        expect(row.refreshToken).toBeUndefined();
+        expect(row.refreshTokenExpires).toBeUndefined();
     });
 });
 
 describe("rowToSessionParams", () => {
     it("maps all fields from row", () => {
-        const row = {
+        const params = rowToSessionParams({
+            ...nullRow,
             id: "session-123",
             shop: "test.myshopify.com",
-            state: "active",
             isOnline: true,
             scope: "read_products,write_products",
             expires: new Date("2025-06-15T12:00:00Z"),
             accessToken: "shpat_abc",
             userId: 99,
-        };
-        const params = rowToSessionParams(row);
+        });
         expect(params.id).toBe("session-123");
         expect(params.shop).toBe("test.myshopify.com");
         expect(params.state).toBe("active");
@@ -86,64 +114,18 @@ describe("rowToSessionParams", () => {
         expect(params.onlineAccessInfo).toBe(99);
     });
 
-    it("omits expires when null", () => {
-        const row = {
-            id: "s-1",
-            shop: "shop.myshopify.com",
-            state: "active",
-            isOnline: false as const,
-            expires: null,
-            scope: null,
-            accessToken: null,
-            userId: null,
-        };
-        const params = rowToSessionParams(row);
-        expect(params).not.toHaveProperty("expires");
-    });
-
-    it("omits scope when null", () => {
-        const row = {
-            id: "s-1",
-            shop: "shop.myshopify.com",
-            state: "active",
-            isOnline: false as const,
-            scope: null,
-            expires: null,
-            accessToken: null,
-            userId: null,
-        };
-        const params = rowToSessionParams(row);
-        expect(params).not.toHaveProperty("scope");
-    });
-
-    it("omits accessToken when null", () => {
-        const row = {
-            id: "s-1",
-            shop: "shop.myshopify.com",
-            state: "active",
-            isOnline: false as const,
-            accessToken: null,
-            scope: null,
-            expires: null,
-            userId: null,
-        };
-        const params = rowToSessionParams(row);
-        expect(params).not.toHaveProperty("accessToken");
-    });
-
-    it("omits onlineAccessInfo when userId is null", () => {
-        const row = {
-            id: "s-1",
-            shop: "shop.myshopify.com",
-            state: "active",
-            isOnline: false as const,
-            userId: null,
-            scope: null,
-            expires: null,
-            accessToken: null,
-        };
-        const params = rowToSessionParams(row);
-        expect(params).not.toHaveProperty("onlineAccessInfo");
+    it("omits every nullable field when null", () => {
+        const params = rowToSessionParams(nullRow);
+        for (const key of [
+            "expires",
+            "scope",
+            "accessToken",
+            "refreshToken",
+            "refreshTokenExpires",
+            "onlineAccessInfo",
+        ]) {
+            expect(params).not.toHaveProperty(key);
+        }
     });
 });
 
@@ -157,19 +139,7 @@ describe("round-trip session<->row", () => {
             scope: "read_products",
             accessToken: "shpat_rt",
         };
-        const row = sessionToRow(original);
-        const params = rowToSessionParams(
-            row as {
-                id: string;
-                shop: string;
-                state: string;
-                isOnline: boolean;
-                scope: string | null;
-                expires: Date | null;
-                accessToken: string | null;
-                userId: number | null;
-            }
-        );
+        const params = rowToSessionParams(toSelectRow(original));
 
         expect(params.id).toBe(original.id);
         expect(params.shop).toBe(original.shop);
@@ -181,28 +151,38 @@ describe("round-trip session<->row", () => {
 
     it("converts expires Date to timestamp through round-trip", () => {
         const expires = new Date("2025-12-31T23:59:59Z");
-        const original: SessionInput = {
-            id: "s-exp",
+        const params = rowToSessionParams(
+            toSelectRow({
+                id: "s-exp",
+                shop: "shop.myshopify.com",
+                state: "active",
+                isOnline: false,
+                expires,
+            })
+        );
+
+        expect(params.expires).toBe(expires.getTime());
+    });
+
+    it("keeps the refresh token of an expiring offline session", () => {
+        const refreshTokenExpires = new Date("2027-03-01T00:00:00Z");
+        const original = new Session({
+            id: "offline_shop.myshopify.com",
             shop: "shop.myshopify.com",
             state: "active",
             isOnline: false,
-            expires,
-        };
-        const row = sessionToRow(original);
-        const params = rowToSessionParams(
-            row as {
-                id: string;
-                shop: string;
-                state: string;
-                isOnline: boolean;
-                scope: string | null;
-                expires: Date | null;
-                accessToken: string | null;
-                userId: number | null;
-            }
+            accessToken: "shpat_expiring",
+            expires: new Date("2027-01-01T01:00:00Z"),
+            refreshToken: "shprt_abc",
+            refreshTokenExpires,
+        });
+
+        const loaded = Session.fromPropertyArray(
+            Object.entries(rowToSessionParams(toSelectRow(original)))
         );
 
-        // Session stores expires as timestamp (number), row stores as Date
-        expect(params.expires).toBe(expires.getTime());
+        expect(loaded.refreshToken).toBe("shprt_abc");
+        expect(loaded.refreshTokenExpires).toEqual(refreshTokenExpires);
+        expect(loaded.accessToken).toBe("shpat_expiring");
     });
 });
