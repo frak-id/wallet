@@ -20,6 +20,7 @@ import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { createSdkOpenPanel } from "../utils/analytics/openPanel";
 import { clearAllCache } from "../utils/cache";
+import { IFRAME_REPLACED_EVENT } from "../utils/iframe/iframeHelper";
 import {
     HANDSHAKE_TIMEOUT_MS,
     type TrackLifecycle,
@@ -159,6 +160,11 @@ export async function createIFrameFrakClient({
         sdkConfigStore.clearCache();
         sdkConfigStore.reset();
     };
+    iframe.addEventListener(
+        IFRAME_REPLACED_EVENT,
+        () => void destroy({ detachOnly: true }),
+        { once: true }
+    );
 
     const openPanel = createSdkOpenPanel(resolvedClientId);
     let track: TrackLifecycle | undefined;
