@@ -25,7 +25,7 @@ export const root = style({
 export const face = style({
     display: "flex",
     minHeight: 118,
-    borderRadius: alias.cornerRadius.xl,
+    borderRadius: alias.cornerRadius.l,
     overflow: "hidden",
     background: white,
     mask: tearMask,
@@ -131,8 +131,16 @@ export const mainButton = style({
         "&:focus-visible::after": {
             outline: `3px solid ${primary[600]}`,
             outlineOffset: -3,
-            borderRadius: alias.cornerRadius.xl,
+            borderRadius: alias.cornerRadius.l,
         },
+    },
+});
+
+/** Wraps the pill under the label rather than squeezing either; keeps it clear of the corner close button. */
+export const header = recipe({
+    base: { flexWrap: "wrap" },
+    variants: {
+        dismissible: { true: { paddingRight: 16 } },
     },
 });
 

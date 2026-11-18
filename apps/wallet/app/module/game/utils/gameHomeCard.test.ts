@@ -16,16 +16,16 @@ const endedDaysAgo = (days: number, outcome: GameOutcome = "won") =>
 
 describe("homeCardOf", () => {
     it("is empty while the current game is still loading", () => {
-        expect(homeCardOf(undefined, [endedDaysAgo(1)], now)).toBeNull();
+        expect(homeCardOf(undefined, [endedDaysAgo(1)], {}, now)).toBeNull();
     });
 
     it("is empty with no open game and no result", () => {
-        expect(homeCardOf(none, [], now)).toBeNull();
-        expect(homeCardOf(none, undefined, now)).toBeNull();
+        expect(homeCardOf(none, [], {}, now)).toBeNull();
+        expect(homeCardOf(none, undefined, {}, now)).toBeNull();
     });
 
     it("shows the open game", () => {
-        expect(homeCardOf(open, [], now)).toEqual({
+        expect(homeCardOf(open, [], {}, now)).toEqual({
             kind: "open",
             game: open.game,
             me,
@@ -33,28 +33,50 @@ describe("homeCardOf", () => {
     });
 
     it("prefers the open game over a result that ended", () => {
-        expect(homeCardOf(open, [endedDaysAgo(2)], now)?.kind).toBe("open");
+        expect(homeCardOf(open, [endedDaysAgo(2)], {}, now)?.kind).toBe("open");
     });
 
-    it("shows the latest result when it ended within two weeks", () => {
-        const latest = endedDaysAgo(13);
-        expect(homeCardOf(none, [latest, endedDaysAgo(40)], now)).toEqual({
+    it("shows the latest result when it ended within a week", () => {
+        const latest = endedDaysAgo(6);
+        expect(homeCardOf(none, [latest, endedDaysAgo(40)], {}, now)).toEqual({
             kind: "ended",
             result: latest,
         });
     });
 
-    it("drops a result that ended two weeks ago", () => {
-        expect(homeCardOf(none, [endedDaysAgo(14)], now)).toBeNull();
+    it("drops a result that ended a week ago", () => {
+        expect(homeCardOf(none, [endedDaysAgo(7)], {}, now)).toBeNull();
+    });
+
+    it("drops a result the user dismissed", () => {
+        const latest = endedDaysAgo(1);
+        expect(
+            homeCardOf(none, [latest], { [latest.game.id]: "won" }, now)
+        ).toBeNull();
+    });
+
+    it("shows again once the outcome changes", () => {
+        const won = endedDaysAgo(1, "won");
+        expect(
+            homeCardOf(none, [won], { [won.game.id]: "drawing" }, now)
+        ).toEqual({ kind: "ended", result: won });
+    });
+
+    it("keeps a draw waiting on the user even when its game was dismissed", () => {
+        const pending = endedDaysAgo(1, "pending_verification");
+        expect(
+            homeCardOf(none, [pending], { [pending.game.id]: "drawing" }, now)
+                ?.kind
+        ).toBe("drawn");
     });
 
     it("puts a draw waiting on the user first, even over an open game", () => {
         const pending = endedDaysAgo(1, "pending_verification");
-        expect(homeCardOf(open, [pending], now)).toEqual({
+        expect(homeCardOf(open, [pending], {}, now)).toEqual({
             kind: "drawn",
             result: pending,
         });
-        expect(homeCardOf(none, [endedDaysAgo(1), pending], now)).toEqual({
+        expect(homeCardOf(none, [endedDaysAgo(1), pending], {}, now)).toEqual({
             kind: "drawn",
             result: pending,
         });

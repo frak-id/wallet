@@ -36,6 +36,11 @@ export type GameEventMap = {
         state: "open" | "drawn" | "ended";
         target: "game" | "join";
     };
+    /** The close button on the wallet-home ticket of a game that ended. */
+    game_card_dismissed: {
+        game_id: string;
+        outcome: GameEventMap["game_result_viewed"]["outcome"];
+    };
     game_progress_shown: { tickets_gained: number; unlocked: boolean };
     game_result_viewed: {
         game_id: string;

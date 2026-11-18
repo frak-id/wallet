@@ -56,7 +56,7 @@ export function useLogout() {
         moneriumStore.getState().reset();
         ibanStore.getState().reset();
         // Per device, not per account: the next user must not inherit it.
-        gameSeenStore.setState({ seen: {} });
+        gameSeenStore.setState({ seen: {}, dismissed: {} });
         queryClient.removeQueries();
         setTimeout(() => {
             cleanLocalStorage();
