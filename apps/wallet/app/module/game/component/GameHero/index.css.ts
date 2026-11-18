@@ -31,6 +31,23 @@ const lockOut = keyframes({
     "100%": { opacity: 0, transform: "scale(0.4) rotate(20deg)" },
 });
 
+const gatherLeft = keyframes({
+    "0%, 100%": { transform: "rotate(-12deg) translateX(-18px)" },
+    "50%": { transform: "rotate(-3deg) translateX(-4px)" },
+});
+
+const gatherRight = keyframes({
+    "0%, 100%": { transform: "rotate(8deg) translateX(16px)" },
+    "50%": { transform: "rotate(2deg) translateX(4px)" },
+});
+
+const lift = keyframes({
+    "0%, 100%": { transform: "translateY(0)" },
+    "50%": { transform: "translateY(-6px)" },
+});
+
+const shuffleTiming = "1.4s ease-in-out infinite";
+
 /** Without motion the animation's end state shows at once; `end` restates it where it is not the default. */
 const still = (end: { opacity?: number } = {}) => ({
     "@media": {
@@ -139,7 +156,29 @@ export const card = recipe({
                 ...still(),
             },
         },
+        // Loading: the side cards gather behind the front one and fan out again.
+        shuffling: { true: {} },
     },
+    compoundVariants: [
+        {
+            variants: { position: "left", shuffling: true },
+            style: {
+                animation: `${gatherLeft} ${shuffleTiming}`,
+                ...still(),
+            },
+        },
+        {
+            variants: { position: "right", shuffling: true },
+            style: {
+                animation: `${gatherRight} ${shuffleTiming}`,
+                ...still(),
+            },
+        },
+        {
+            variants: { position: "front", shuffling: true },
+            style: { animation: `${lift} ${shuffleTiming}`, ...still() },
+        },
+    ],
 });
 
 export const padlock = recipe({

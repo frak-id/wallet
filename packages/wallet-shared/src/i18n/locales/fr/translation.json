@@ -1025,6 +1025,7 @@
             "firstTicket": "1er ticket offert"
         },
         "prizeToWin": "{{prize}} à gagner au tirage",
+        "loading": "Chargement du jeu…",
         "card": {
             "label": "Jeu Frak",
             "ticket_one": "ticket",

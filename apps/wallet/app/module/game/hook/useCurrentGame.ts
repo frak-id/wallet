@@ -1,13 +1,13 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 export const currentGameKeys = {
     all: ["game", "current"] as const,
 };
 
-/** The open game (`null` when none is open) and the user's standing in it. */
-export function useCurrentGame() {
-    return useQuery({
+/** Shared by `useCurrentGame` and route guards, which read it outside React. */
+export function currentGameQueryOptions() {
+    return queryOptions({
         queryKey: currentGameKeys.all,
         queryFn: async () => {
             const { data, error } =
@@ -16,4 +16,9 @@ export function useCurrentGame() {
             return data;
         },
     });
+}
+
+/** The open game (`null` when none is open) and the user's standing in it. */
+export function useCurrentGame() {
+    return useQuery(currentGameQueryOptions());
 }
