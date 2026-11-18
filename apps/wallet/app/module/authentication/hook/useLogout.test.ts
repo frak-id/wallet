@@ -201,6 +201,7 @@ describe("useLogout", () => {
             },
             eligible: false,
         });
+        gameSeenStore.getState().dismiss("g1", "lost");
         expect(
             window.localStorage.getItem("frak_game_seen_store")
         ).not.toBeNull();
@@ -208,6 +209,7 @@ describe("useLogout", () => {
         await runLogout(queryWrapper.wrapper);
 
         expect(gameSeenStore.getState().seen).toEqual({});
+        expect(gameSeenStore.getState().dismissed).toEqual({});
         expect(window.localStorage.getItem("frak_game_seen_store")).toBeNull();
     });
 });

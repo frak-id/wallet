@@ -19,6 +19,7 @@ import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useNavigate } from "@tanstack/react-router";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
+import { CloseButton } from "@/module/common/component/CloseButton";
 import { useCurrentGame } from "@/module/game/hook/useCurrentGame";
 import { useGameHistory } from "@/module/game/hook/useGameHistory";
 import { useNow } from "@/module/game/hook/useNow";
@@ -44,12 +45,13 @@ import * as ticket from "./index.css";
 
 /**
  * Wallet-home recap: a draw waiting on the user first (straight to certifying),
- * then the open game, or the last game played when it ended recently; hidden otherwise.
+ * then the open game, or the last game played when it ended recently and was not closed; hidden otherwise.
  */
 export function GameCard() {
     const { data } = useCurrentGame();
     const history = useGameHistory();
-    const card = homeCardOf(data, history.data);
+    const dismissed = gameSeenStore((s) => s.dismissed);
+    const card = homeCardOf(data, history.data, dismissed);
 
     switch (card?.kind) {
         case "drawn":
@@ -102,6 +104,7 @@ function TicketShell({
     pill,
     headline,
     status,
+    onDismiss,
 }: {
     tone: "active" | "muted";
     stub: ReactNode;
@@ -110,6 +113,7 @@ function TicketShell({
     pill: ReactNode;
     headline: ReactNode;
     status: ReactNode;
+    onDismiss?: () => void;
 }) {
     const { t } = useTranslation();
 
@@ -118,7 +122,12 @@ function TicketShell({
             <div className={ticket.face}>
                 <div className={ticket.stub({ tone })}>{stub}</div>
                 <Stack space="xxs" justify="center" className={ticket.main}>
-                    <Spread space="xs">
+                    <Spread
+                        space="xs"
+                        className={ticket.header({
+                            dismissible: onDismiss !== undefined,
+                        })}
+                    >
                         <button
                             type="button"
                             className={ticket.mainButton}
@@ -140,6 +149,12 @@ function TicketShell({
                     {status}
                 </Stack>
             </div>
+            {onDismiss && (
+                <CloseButton
+                    ariaLabel={t("common.close")}
+                    onClick={onDismiss}
+                />
+            )}
         </div>
     );
 }
@@ -285,6 +300,7 @@ function EndedGameCard({ result }: { result: GameResult }) {
     const tickets = totalTickets(result.ticketsBySource);
     const headline = t(title, { prize });
     const date = formatGameDate(result.game.endsAt, i18n.language);
+    const dismiss = gameSeenStore((s) => s.dismiss);
 
     return (
         <TicketShell
@@ -331,6 +347,13 @@ function EndedGameCard({ result }: { result: GameResult }) {
                     {t("game.history.gameOf", { date })}
                 </span>
             }
+            onDismiss={() => {
+                trackEvent("game_card_dismissed", {
+                    game_id: result.game.id,
+                    outcome: result.outcome,
+                });
+                dismiss(result.game.id, result.outcome);
+            }}
             headline={<Headline>{headline}</Headline>}
             status={
                 <StatusRow
