@@ -21,7 +21,7 @@ name: A referral link launches the stopped wallet on its code entry page
           optional: true
 # Join page while a game is open, else the referral redeem page; never the home.
 - extendedWaitUntil:
-    visible: "Game code|Code du jeu|Referral code|Code de parrainage"
+    visible: "Game code.*|Code du jeu.*|Referral code|Code de parrainage"
     timeout: 30000
     label: "The stopped wallet opened on a code entry page"
 - extendedWaitUntil:

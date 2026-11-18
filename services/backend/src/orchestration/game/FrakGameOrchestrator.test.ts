@@ -347,6 +347,55 @@ describe("FrakGameOrchestrator join without gameReward", () => {
     );
 });
 
+describe("FrakGameOrchestrator.joinWithFriendCode", () => {
+    beforeEach(() => track.mockReset());
+
+    it("writes a non-newcomer game_join and tracks it from the friend's code", async () => {
+        const { orchestrator, createIdempotent, findRule } = makeOrchestrator();
+
+        await orchestrator.joinWithFriendCode(game, USER);
+
+        expect(createIdempotent).toHaveBeenCalledExactlyOnceWith({
+            type: "game_join",
+            identityGroupId: USER,
+            merchantId: FRAK_MERCHANT_ID,
+            externalEventId: `game_join:game-1:${USER}`,
+            payload: { gameId: "game-1", newcomer: false },
+        });
+        expect(findRule).not.toHaveBeenCalled();
+        expect(track).toHaveBeenCalledWith("game_joined", USER, {
+            game_id: "game-1",
+            source: "friend_code",
+            newcomer: false,
+        });
+    });
+
+    it("tracks nothing for a player already in the game", async () => {
+        const { orchestrator } = makeOrchestrator({ created: false });
+
+        await orchestrator.joinWithFriendCode(game, USER);
+
+        expect(track).not.toHaveBeenCalled();
+    });
+});
+
+describe("FrakGameOrchestrator.findOpenGame", () => {
+    it("returns the open game with its summary", async () => {
+        const { orchestrator } = makeOrchestrator();
+
+        await expect(orchestrator.findOpenGame()).resolves.toEqual({
+            game,
+            summary: expect.objectContaining({ id: "game-1", sponsor: null }),
+        });
+    });
+
+    it("returns null when no game is open", async () => {
+        const { orchestrator } = makeOrchestrator({ game: null });
+
+        await expect(orchestrator.findOpenGame()).resolves.toBeNull();
+    });
+});
+
 describe("FrakGameOrchestrator.applySignup", () => {
     beforeEach(() => track.mockReset());
 
