@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 1.5.2
+
+### Patch Changes
+
+- [#474](https://github.com/frak-id/wallet/pull/474) [`09e05be`](https://github.com/frak-id/wallet/commit/09e05bedbab77ea473d92861851e97943fbb45a2) Thanks [@KONFeature](https://github.com/KONFeature)! - The CDN bootstrap now reports `sdk_init_failed` when `initFrakSdk` fails, for example when `window.FrakSetup.config` is missing. The event was never sent before, because it went through a client that does not exist after a failed init. It is now sent once per failed attempt, with `reason`, `config_missing` and the page `domain`. `trackEvent` accepts any object that carries an `openPanel`.
+- Updated dependencies [[`1c9dca4`](https://github.com/frak-id/wallet/commit/1c9dca4aa6467069b71d567cb28070dfd592dec3), [`6735782`](https://github.com/frak-id/wallet/commit/673578255a68148fdf0a9c798625965097f7861e), [`09e05be`](https://github.com/frak-id/wallet/commit/09e05bedbab77ea473d92861851e97943fbb45a2)]:
+  - @frak-labs/core-sdk@1.7.1
+  - @frak-labs/frame-connector@1.7.1
+
 ## 1.5.1
 
 ### Patch Changes

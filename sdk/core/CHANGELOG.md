@@ -1,5 +1,17 @@
 # @frak-labs/core-sdk
 
+## 1.7.1
+
+### Patch Changes
+
+- [#474](https://github.com/frak-id/wallet/pull/474) [`1c9dca4`](https://github.com/frak-id/wallet/commit/1c9dca4aa6467069b71d567cb28070dfd592dec3) Thanks [@KONFeature](https://github.com/KONFeature)! - A second `setupClient` call now detaches the client bound to the `#frak-wallet` iframe it replaces, at once. Before, that client kept its listeners and its proof refresh timer until its next refresh, and its in-flight requests stayed pending until then.
+
+- [#474](https://github.com/frak-id/wallet/pull/474) [`6735782`](https://github.com/frak-id/wallet/commit/673578255a68148fdf0a9c798625965097f7861e) Thanks [@KONFeature](https://github.com/KONFeature)! - `createRpcClient` now handles only the messages sent by its `emittingTransport` window. Before, it accepted any window on the target origin, so two clients on one page each acted on the other's iframe lifecycle events, and a `redirect` with `openInNewTab` could open two tabs. A client whose iframe has left the DOM now detaches itself on its next visibility change, or within 5 minutes, instead of on another iframe's message.
+
+- [#474](https://github.com/frak-id/wallet/pull/474) [`09e05be`](https://github.com/frak-id/wallet/commit/09e05bedbab77ea473d92861851e97943fbb45a2) Thanks [@KONFeature](https://github.com/KONFeature)! - The CDN bootstrap now reports `sdk_init_failed` when `initFrakSdk` fails, for example when `window.FrakSetup.config` is missing. The event was never sent before, because it went through a client that does not exist after a failed init. It is now sent once per failed attempt, with `reason`, `config_missing` and the page `domain`. `trackEvent` accepts any object that carries an `openPanel`.
+- Updated dependencies [[`6735782`](https://github.com/frak-id/wallet/commit/673578255a68148fdf0a9c798625965097f7861e)]:
+  - @frak-labs/frame-connector@1.7.1
+
 ## 1.7.0
 
 ### Minor Changes

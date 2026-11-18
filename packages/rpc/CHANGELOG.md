@@ -1,5 +1,11 @@
 # @frak-labs/frame-connector
 
+## 1.7.1
+
+### Patch Changes
+
+- [#474](https://github.com/frak-id/wallet/pull/474) [`6735782`](https://github.com/frak-id/wallet/commit/673578255a68148fdf0a9c798625965097f7861e) Thanks [@KONFeature](https://github.com/KONFeature)! - `createRpcClient` now handles only the messages sent by its `emittingTransport` window. Before, it accepted any window on the target origin, so two clients on one page each acted on the other's iframe lifecycle events, and a `redirect` with `openInNewTab` could open two tabs. A client whose iframe has left the DOM now detaches itself on its next visibility change, or within 5 minutes, instead of on another iframe's message.
+
 ## 1.7.0
 
 ### Minor Changes
