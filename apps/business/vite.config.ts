@@ -20,7 +20,11 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const isProd = process.env.NODE_ENV === "production";
 
 // Warn-only gzip reference for the eager boot JS closure (login screen).
-const EAGER_JS_BUDGET_GZIP = 275 * 1024;
+const EAGER_JS_BUDGET_GZIP = 255 * 1024;
+
+const TANSTACK_VENDOR = /node_modules[\\/]@tanstack/;
+const UI_VENDOR =
+    /node_modules[\\/](@radix-ui|@floating-ui|lucide-react|react-hook-form)/;
 
 // `tags: ["$initial"]` on `app-shell` limits it to modules statically
 // reachable from the entry; without it, bootstrap/lazy-shared modules leak
@@ -29,10 +33,25 @@ function buildChunkGroups() {
     return [
         // Vendor split — stable libraries first for long-term browser cache.
         { ...reactVendorChunkGroup, priority: 40 },
+        // Vendor groups are `$initial`-tagged so a library only lazy routes use
+        // (react-hook-form, table-core, most of Radix) is not pulled eager just
+        // for sharing a vendor name; the `*-lazy` siblings catch the rest.
         {
             name: "tanstack-vendor",
-            test: /node_modules[\\/]@tanstack/,
+            test: TANSTACK_VENDOR,
+            tags: ["$initial"] as "$initial"[],
             priority: 32,
+            minShareCount: 1,
+        },
+        // The `*-lazy` groups must stay below `app-shell`, like
+        // blockchain-vendor: above it, a boot module a lazy package imports
+        // lands in the lazy chunk and drags that chunk into the eager closure.
+        // And above `auth-lazy`/`common-lazy`, or those absorb the vendor code
+        // into a chunk whose hash changes with every app release.
+        {
+            name: "tanstack-vendor-lazy",
+            test: TANSTACK_VENDOR,
+            priority: 25,
             minShareCount: 1,
         },
         // Must stay *below* `app-shell`: a higher priority buckets the eager
@@ -52,8 +71,15 @@ function buildChunkGroups() {
         },
         {
             name: "ui-vendor",
-            test: /node_modules[\\/](@radix-ui|lucide-react|react-hook-form)/,
+            test: UI_VENDOR,
+            tags: ["$initial"] as "$initial"[],
             priority: 30,
+            minShareCount: 1,
+        },
+        {
+            name: "ui-vendor-lazy",
+            test: UI_VENDOR,
+            priority: 25,
             minShareCount: 1,
         },
         {
@@ -79,14 +105,24 @@ function buildChunkGroups() {
             priority: 26,
             minShareCount: 1,
         },
+        // Shared LAZY auth code (login methods, verify-email, invite) and what it
+        // imports, apart from `common-lazy` so the login screen does not fetch
+        // the dashboard's shared viem and countries code with it.
+        {
+            name: "auth-lazy",
+            test: /[\\/]src[\\/]module[\\/]auth[\\/]/,
+            priority: 24,
+            minShareCount: 2,
+            minSize: 0,
+        },
         // Shared LAZY app machinery used by 2+ features. Sits above the
         // feature groups so a shared module isn't swept into whichever feature
-        // matches its importer first. `forms`/`auth` must NOT sit in
-        // `feature-login`: restricted pages import them.
+        // matches its importer first. `forms` must NOT sit in `feature-login`:
+        // restricted pages import it. Shared `auth` code is in `auth-lazy`.
         {
             name: "common-lazy",
-            test: /[\\/]src[\\/]module[\\/](?:common|forms|auth)[\\/]/,
-            priority: 24,
+            test: /[\\/]src[\\/]module[\\/](?:common|forms)[\\/]/,
+            priority: 23,
             minShareCount: 2,
             minSize: 0,
         },
@@ -94,18 +130,18 @@ function buildChunkGroups() {
         // their `src/module/<name>/` code. Only `component` bodies are lazy — a
         // route's `beforeLoad`/top-level imports always stay in `$initial`.
         // `feature-login` covers the pre-auth surface (login, invite,
-        // verify-email); shared `forms`/`auth` code lives in `common-lazy`.
+        // verify-email); shared code is in `auth-lazy` and `common-lazy`.
         {
             name: "feature-login",
             test: /[\\/]src[\\/](?:module[\\/]login[\\/]|routes[\\/](?:login|invite|verify-email)(?:\.|[\\/]))/,
-            priority: 22,
+            priority: 21,
             minShareCount: 1,
         },
         // Platform-admin tools: merchants never load them.
         {
             name: "feature-internal",
             test: /[\\/]src[\\/](?:module[\\/]internal[\\/]|routes[\\/]_restricted[\\/]internal(?:\.|[\\/]))/,
-            priority: 23,
+            priority: 22,
             minShareCount: 1,
         },
         // Everything behind the `_restricted` auth gate (dashboard, campaigns,
@@ -113,7 +149,7 @@ function buildChunkGroups() {
         {
             name: "feature-restricted",
             test: /[\\/]src[\\/](?:module[\\/](?:dashboard|campaigns|members|merchant|settings)[\\/]|routes[\\/]_restricted(?:\.|[\\/]))/,
-            priority: 21,
+            priority: 20,
             minShareCount: 1,
         },
         {
