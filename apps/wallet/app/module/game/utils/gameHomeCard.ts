@@ -1,10 +1,11 @@
 import type {
     CurrentGameResponse,
+    GameOutcome,
     GameResult,
 } from "@frak-labs/backend-elysia/domain/game/schemas";
 
 /** How long after its end a game's result stays on the wallet home. */
-const RESULT_CARD_MS = 14 * 24 * 60 * 60 * 1000;
+const RESULT_CARD_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type HomeCard =
     | { kind: "drawn"; result: GameResult }
@@ -15,10 +16,11 @@ export type HomeCard =
       }
     | { kind: "ended"; result: GameResult };
 
-/** What the wallet home shows: a draw waiting on the user, else the open game, else a recent result. */
+/** What the wallet home shows: a draw waiting on the user, else the open game, else a recent result not closed in its current outcome. */
 export function homeCardOf(
     current: CurrentGameResponse | undefined,
     history: GameResult[] | undefined,
+    dismissed: Record<string, GameOutcome>,
     now = Date.now()
 ): HomeCard | null {
     const pending = history?.find(
@@ -29,7 +31,7 @@ export function homeCardOf(
         return { kind: "open", game: current.game, me: current.me };
     }
     const latest = current && history?.[0];
-    if (!latest) return null;
+    if (!latest || dismissed[latest.game.id] === latest.outcome) return null;
     const recent =
         now - new Date(latest.game.endsAt).getTime() < RESULT_CARD_MS;
     return recent ? { kind: "ended", result: latest } : null;

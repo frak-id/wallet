@@ -81,7 +81,7 @@ describe("GameCard", () => {
     beforeEach(() => {
         navigate.mockClear();
         trackEvent.mockClear();
-        gameSeenStore.setState({ seen: {} });
+        gameSeenStore.setState({ seen: {}, dismissed: {} });
         gameHistory.data = [];
     });
 
@@ -112,10 +112,12 @@ describe("GameCard", () => {
                 screen.getByText("game.card.statusResult")
             ).toBeInTheDocument();
             expect(container.querySelectorAll("[role=button]")).toHaveLength(0);
-            const buttons = screen.getAllByRole("button");
-            expect(buttons).toHaveLength(1);
-            expect(buttons[0]).toHaveAccessibleName("game.card.endedAriaLabel");
-            fireEvent.click(buttons[0]);
+            expect(screen.getAllByRole("button")).toHaveLength(2);
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: "game.card.endedAriaLabel",
+                })
+            );
             expect(navigate).toHaveBeenCalledExactlyOnceWith({ to: "/game" });
             expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
                 "game_card_clicked",
@@ -143,11 +145,38 @@ describe("GameCard", () => {
         expect(screen.queryByText(/^50\s€$/)).toBeNull();
     });
 
-    it("drops the last result from home after two weeks", () => {
+    it("drops the last result from home after a week", () => {
         currentGame.data = { game: null, me: { participating: false } };
-        gameHistory.data = [endedDaysAgo(15)];
+        gameHistory.data = [endedDaysAgo(8)];
         const { container } = render(<GameCard />);
         expect(container.firstChild).toBeNull();
+    });
+
+    it("hides a game that ended once its ticket is closed, without opening it", () => {
+        currentGame.data = { game: null, me: { participating: false } };
+        gameHistory.data = [endedDaysAgo(2, "lost")];
+        const { container } = render(<GameCard />);
+
+        fireEvent.click(screen.getByRole("button", { name: "common.close" }));
+
+        expect(container.firstChild).toBeNull();
+        expect(navigate).not.toHaveBeenCalled();
+        expect(trackEvent).toHaveBeenCalledExactlyOnceWith(
+            "game_card_dismissed",
+            { game_id: "g1", outcome: "lost" }
+        );
+        expect(gameSeenStore.getState().dismissed).toEqual({ g1: "lost" });
+    });
+
+    it("has no close button on the open game", () => {
+        currentGame.data = {
+            game: openGame,
+            me: player("certified", true),
+        };
+        render(<GameCard />);
+        expect(
+            screen.queryByRole("button", { name: "common.close" })
+        ).toBeNull();
     });
 
     describe("with a draw waiting on the user", () => {
