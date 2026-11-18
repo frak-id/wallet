@@ -15,7 +15,7 @@ export class LruMap<TValue = unknown> extends Map<string, TValue> {
         this.maxSize = size;
     }
 
-    override get(key: string) {
+    override get(key: string): TValue | undefined {
         const value = super.get(key);
         if (super.has(key)) {
             // Move to end (most recently used)
@@ -25,7 +25,7 @@ export class LruMap<TValue = unknown> extends Map<string, TValue> {
         return value;
     }
 
-    override set(key: string, value: TValue) {
+    override set(key: string, value: TValue): this {
         if (super.has(key)) super.delete(key);
         super.set(key, value);
         // Evict least recently used if over capacity

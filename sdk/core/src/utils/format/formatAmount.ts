@@ -9,7 +9,7 @@ import { widenGroupSeparator } from "./widenGroupSeparator";
  * @param currency - Optional currency config; defaults to EUR/fr-FR when omitted
  * @returns Localized currency string (e.g. "1 500 €", "$1,500")
  */
-export function formatAmount(amount: number, currency?: Currency) {
+export function formatAmount(amount: number, currency?: Currency): string {
     // Get the supported locale (e.g. "fr-FR")
     const supportedLocale = getSupportedLocale(currency);
 

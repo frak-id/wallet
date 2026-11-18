@@ -4,7 +4,11 @@ import type {
 } from "@frak-labs/core-sdk";
 import { displaySharingPage } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    type UseMutationResult,
+    useMutation,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -44,7 +48,11 @@ type UseDisplaySharingPageParams = {
  */
 export function useDisplaySharingPage({
     mutations,
-}: UseDisplaySharingPageParams = {}) {
+}: UseDisplaySharingPageParams = {}): UseMutationResult<
+    DisplaySharingPageResultType,
+    FrakRpcError,
+    DisplaySharingPageParamsType & { placement?: string }
+> {
     const client = useFrakClient();
 
     return useMutation({

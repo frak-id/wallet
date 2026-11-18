@@ -1,8 +1,11 @@
 import { type FrakWalletSdkConfig, setEnvironment } from "@frak-labs/core-sdk";
 import {
+    type Context,
     createContext,
     createElement,
+    type FunctionComponentElement,
     type PropsWithChildren,
+    type ProviderProps,
     useState,
 } from "react";
 
@@ -10,9 +13,8 @@ import {
  * The context that will keep the Frak Wallet SDK configuration
  * @ignore
  */
-export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
-    undefined
-);
+export const FrakConfigContext: Context<FrakWalletSdkConfig | undefined> =
+    createContext<FrakWalletSdkConfig | undefined>(undefined);
 
 /**
  * Props to instantiate the Frak Wallet SDK configuration provider
@@ -38,7 +40,7 @@ export type FrakConfigProviderProps = {
  */
 export function FrakConfigProvider(
     parameters: PropsWithChildren<FrakConfigProviderProps>
-) {
+): FunctionComponentElement<ProviderProps<FrakWalletSdkConfig | undefined>> {
     const { children, config } = parameters;
 
     // Not an effect: children's own effects and queries run first and would

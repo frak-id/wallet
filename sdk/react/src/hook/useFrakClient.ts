@@ -1,3 +1,4 @@
+import type { FrakClient } from "@frak-labs/core-sdk";
 import { useContext } from "react";
 import { FrakIFrameClientContext } from "../provider";
 
@@ -6,6 +7,6 @@ import { FrakIFrameClientContext } from "../provider";
  *
  * @group hooks
  */
-export function useFrakClient() {
+export function useFrakClient(): FrakClient | undefined {
     return useContext(FrakIFrameClientContext);
 }

@@ -229,7 +229,7 @@ function replaceUrl({
 }: {
     url?: string;
     context: FrakContextV1 | FrakContextV2 | null;
-}) {
+}): void {
     if (typeof window === "undefined" || !window.location?.href) {
         console.error("No window found, can't update context");
         return;
@@ -257,10 +257,11 @@ function replaceUrl({
  * for both V1 (wallet address) and V2 (anonymous clientId) referral contexts.
  */
 export const FrakContextManager = {
-    compress,
-    decompress,
-    parse,
-    update,
-    remove,
-    replaceUrl,
+    // isolatedDeclarations needs the asserts; an object type annotation would hide the methods' docs from TypeDoc.
+    compress: compress as typeof compress,
+    decompress: decompress as typeof decompress,
+    parse: parse as typeof parse,
+    update: update as typeof update,
+    remove: remove as typeof remove,
+    replaceUrl: replaceUrl as typeof replaceUrl,
 };

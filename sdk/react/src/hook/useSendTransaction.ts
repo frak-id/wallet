@@ -4,7 +4,11 @@ import {
     sendTransaction,
 } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    type UseMutationResult,
+    useMutation,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -44,7 +48,11 @@ type UseSendTransactionParams = {
  */
 export function useSendTransactionAction({
     mutations,
-}: UseSendTransactionParams = {}) {
+}: UseSendTransactionParams = {}): UseMutationResult<
+    SendTransactionReturnType,
+    FrakRpcError,
+    SendTransactionParams
+> {
     const client = useFrakClient();
 
     return useMutation({

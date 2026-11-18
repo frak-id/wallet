@@ -108,7 +108,7 @@ export async function withCache<TData>(
  * Clear all cached data (both pending promises and resolved responses).
  * Called automatically when the client is destroyed.
  */
-export function clearAllCache() {
+export function clearAllCache(): void {
     if (!store) return;
     store.promiseCache.clear();
     store.responseCache.clear();

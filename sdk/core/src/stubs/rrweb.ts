@@ -5,6 +5,6 @@
  * build-time define, so the alias is the only lever. Session replay is never
  * enabled, and the NPM builds keep the real dynamic import for consumers.
  */
-export function record() {
+export function record(): () => void {
     return () => {};
 }

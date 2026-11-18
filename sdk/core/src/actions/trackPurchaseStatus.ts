@@ -36,7 +36,7 @@ export async function trackPurchaseStatus(args: {
     orderId: string | number;
     token: string;
     merchantId?: string;
-}) {
+}): Promise<void> {
     if (typeof window === "undefined") {
         console.warn("[Frak] No window found, can't track purchase");
         return;
