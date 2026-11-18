@@ -5,7 +5,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { GiftIcon, InstagramIcon } from "@frak-labs/design-system/icons";
 import { type RedeemResult, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
@@ -64,19 +64,17 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
         result: RedeemResult;
         refetched: Promise<void>;
     } | null>(null);
-    // A shared friend's code lands here too, from a player already in the game.
+    // The route's loader sends every other case away before this renders.
     const openGame =
         current.data?.game && !current.data.me.participating
             ? current.data.game
             : null;
-    // Every shared code lands here; with no game open it can only be a friend's code.
-    const noGame = current.data !== undefined && !current.data.game;
-    const hasGame = !!current.data?.game;
+    const joinable = !!openGame;
 
     useEffect(() => {
-        if (!hasGame) return;
+        if (!joinable) return;
         trackEvent("game_code_entry_viewed", { prefilled: !!initialCode });
-    }, [initialCode, hasGame]);
+    }, [initialCode, joinable]);
 
     const handleRedeemed = (result: RedeemResult) => {
         trackEvent("game_code_submitted", {
@@ -104,16 +102,6 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
                     await joined.refetched;
                     navigate({ to: "/game", replace: true });
                 }}
-            />
-        );
-    }
-
-    if (noGame) {
-        return (
-            <Navigate
-                to="/profile/referral/redeem"
-                search={{ code: initialCode }}
-                replace
             />
         );
     }

@@ -1025,6 +1025,7 @@
             "firstTicket": "1st ticket on us"
         },
         "prizeToWin": "{{prize}} to win in the draw",
+        "loading": "Loading the game…",
         "card": {
             "label": "Frak Game",
             "ticket_one": "ticket",

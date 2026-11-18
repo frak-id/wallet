@@ -9,7 +9,10 @@ export {
     REDEMPTION_CODE_LENGTH,
     useRedeemReferralCodeForm,
 } from "./hook/useRedeemReferralCodeForm";
-export { useReferralStatus } from "./hook/useReferralStatus";
+export {
+    referralStatusQueryOptions,
+    useReferralStatus,
+} from "./hook/useReferralStatus";
 export { useReplaceReferralCode } from "./hook/useReplaceReferralCode";
 export { useSuggestReferralCodes } from "./hook/useSuggestReferralCodes";
 export { useUnredeemReferralCode } from "./hook/useUnredeemReferralCode";

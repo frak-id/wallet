@@ -206,6 +206,7 @@ export {
     REDEMPTION_CODE_LENGTH,
     type RedeemResult,
     referralKey,
+    referralStatusQueryOptions,
     useIssueReferralCode,
     useRedeemReferralCode,
     useRedeemReferralCodeForm,
