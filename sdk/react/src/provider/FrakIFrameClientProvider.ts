@@ -8,10 +8,13 @@ import {
 } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import {
+    type Context,
     type CSSProperties,
     createContext,
     createElement,
     Fragment,
+    type FragmentProps,
+    type FunctionComponentElement,
     type ReactNode,
     useEffect,
     useRef,
@@ -23,9 +26,8 @@ import { useFrakConfig } from "../hook";
  * The context that will keep the Frak Wallet SDK client
  * @ignore
  */
-export const FrakIFrameClientContext = createContext<FrakClient | undefined>(
-    undefined
-);
+export const FrakIFrameClientContext: Context<FrakClient | undefined> =
+    createContext<FrakClient | undefined>(undefined);
 
 /**
  * Props to instantiate the Frak Wallet SDK configuration provider
@@ -55,7 +57,7 @@ export function FrakIFrameClientProvider({
 }: {
     style?: CSSProperties;
     children?: ReactNode;
-}) {
+}): FunctionComponentElement<FragmentProps> {
     const config = useFrakConfig();
     // `useFrakConfig` returns a new object on every render: as an effect
     // dependency it would rebuild the client each time.

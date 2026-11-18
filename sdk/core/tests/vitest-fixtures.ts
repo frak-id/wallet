@@ -3,7 +3,7 @@
  * packages/wallet-shared.
  */
 
-import { test as baseTest } from "vitest";
+import { test as baseTest, type TestAPI } from "vitest";
 
 export type SdkCoreTestFixtures = {
     /**
@@ -25,25 +25,28 @@ export type SdkCoreTestFixtures = {
     };
 };
 
-export const test = baseTest.extend<SdkCoreTestFixtures>({
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    mockUint8Arrays: async ({}, use) => {
-        await use({
-            empty: new Uint8Array([]),
-            simple: new Uint8Array([72, 101, 108, 108, 111]), // "Hello"
-            complex: new Uint8Array([0, 1, 2, 3, 255, 254, 253, 252, 127, 128]),
-        });
-    },
+export const test: TestAPI<SdkCoreTestFixtures> =
+    baseTest.extend<SdkCoreTestFixtures>({
+        // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
+        mockUint8Arrays: async ({}, use) => {
+            await use({
+                empty: new Uint8Array([]),
+                simple: new Uint8Array([72, 101, 108, 108, 111]), // "Hello"
+                complex: new Uint8Array([
+                    0, 1, 2, 3, 255, 254, 253, 252, 127, 128,
+                ]),
+            });
+        },
 
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    mockBase64Strings: async ({}, use) => {
-        await use({
-            empty: "",
-            simple: "SGVsbG8", // "Hello" in base64url
-            withSpecialChars: "AB-_", // Contains URL-safe characters
-        });
-    },
-});
+        // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
+        mockBase64Strings: async ({}, use) => {
+            await use({
+                empty: "",
+                simple: "SGVsbG8", // "Hello" in base64url
+                withSpecialChars: "AB-_", // Contains URL-safe characters
+            });
+        },
+    });
 
 /**
  * The hooks come straight from `vitest` rather than being destructured off the

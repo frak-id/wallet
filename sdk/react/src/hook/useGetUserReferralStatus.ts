@@ -1,7 +1,11 @@
 import type { UserReferralStatusType } from "@frak-labs/core-sdk";
 import { getUserReferralStatus } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+import {
+    type UseQueryOptions,
+    type UseQueryResult,
+    useQuery,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -47,7 +51,10 @@ type UseGetUserReferralStatusParams = {
 export function useGetUserReferralStatus({
     query,
     cacheTime,
-}: UseGetUserReferralStatusParams = {}) {
+}: UseGetUserReferralStatusParams = {}): UseQueryResult<
+    UserReferralStatusType | null,
+    FrakRpcError
+> {
     const client = useFrakClient();
 
     return useQuery({

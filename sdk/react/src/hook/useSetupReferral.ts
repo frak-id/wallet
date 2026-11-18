@@ -1,6 +1,6 @@
 import { setupReferral } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
-import { useQuery } from "@tanstack/react-query";
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /**
@@ -17,7 +17,7 @@ import { useFrakClient } from "./useFrakClient";
  * @see {@link @frak-labs/core-sdk!actions.setupReferral | `setupReferral()`} for more info about the underlying action
  * @see {@link @frak-labs/core-sdk!actions.REFERRAL_SUCCESS_EVENT | `REFERRAL_SUCCESS_EVENT`} for the event name constant
  */
-export function useSetupReferral() {
+export function useSetupReferral(): UseQueryResult<null, Error> {
     const client = useFrakClient();
 
     return useQuery({

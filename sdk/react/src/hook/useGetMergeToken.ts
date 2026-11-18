@@ -1,6 +1,10 @@
 import { getMergeToken } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+import {
+    type UseQueryOptions,
+    type UseQueryResult,
+    useQuery,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -43,7 +47,7 @@ type UseGetMergeTokenParams = {
 export function useGetMergeToken({
     query,
     cacheTime,
-}: UseGetMergeTokenParams = {}) {
+}: UseGetMergeTokenParams = {}): UseQueryResult<string | null, FrakRpcError> {
     const client = useFrakClient();
 
     return useQuery({

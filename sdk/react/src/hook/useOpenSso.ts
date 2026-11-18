@@ -1,7 +1,11 @@
 import type { OpenSsoArgsType, OpenSsoReturnType } from "@frak-labs/core-sdk";
 import { openSso } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    type UseMutationResult,
+    useMutation,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -37,7 +41,13 @@ type UseOpenSsoParams = {
  * @see {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} for more info about the underlying action
  * @see {@link @tanstack/react-query!useMutation | `useMutation()`} for more info about the mutation options and response
  */
-export function useOpenSso({ mutations }: UseOpenSsoParams = {}) {
+export function useOpenSso({
+    mutations,
+}: UseOpenSsoParams = {}): UseMutationResult<
+    OpenSsoReturnType,
+    FrakRpcError,
+    OpenSsoArgsType
+> {
     const client = useFrakClient();
 
     return useMutation({

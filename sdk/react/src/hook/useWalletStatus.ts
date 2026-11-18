@@ -1,7 +1,11 @@
 import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 import { watchWalletStatus } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    type UseQueryResult,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useFrakClient } from "./useFrakClient";
 
@@ -19,7 +23,10 @@ import { useFrakClient } from "./useFrakClient";
  * @see {@link @frak-labs/core-sdk!actions.watchWalletStatus | `watchWalletStatus()`} for more info about the underlying action
  * @see {@link @tanstack/react-query!useQuery | `useQuery()`} for more info about the useQuery response
  */
-export function useWalletStatus() {
+export function useWalletStatus(): UseQueryResult<
+    WalletStatusReturnType,
+    Error
+> {
     const queryClient = useQueryClient();
     const client = useFrakClient();
 

@@ -1,3 +1,4 @@
+import type { FrakWalletSdkConfig } from "@frak-labs/core-sdk";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useContext } from "react";
 import { FrakConfigContext } from "../provider";
@@ -10,7 +11,7 @@ import { FrakConfigContext } from "../provider";
  * @see {@link @frak-labs/react-sdk!FrakConfigProvider | FrakConfigProvider} for the config provider
  * @see {@link @frak-labs/core-sdk!index.FrakWalletSdkConfig | FrakWalletSdkConfig} for the config type
  */
-export function useFrakConfig() {
+export function useFrakConfig(): FrakWalletSdkConfig {
     const config = useContext(FrakConfigContext);
     if (!config) {
         throw new FrakRpcError(

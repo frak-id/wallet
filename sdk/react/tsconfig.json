@@ -53,6 +53,7 @@
 
     // Declaration files
     "declaration": true,
+    "isolatedDeclarations": true,
     "declarationDir": "./dist"
   },
   "tsc-alias": {

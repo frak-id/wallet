@@ -1,5 +1,6 @@
 import {
     type ProcessReferralOptions,
+    type ReferralState,
     referralInteraction,
 } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
@@ -27,7 +28,7 @@ export function useReferralInteraction({
     options,
 }: {
     options?: ProcessReferralOptions;
-} = {}) {
+} = {}): ReferralState | Error {
     const client = useFrakClient();
 
     const {
