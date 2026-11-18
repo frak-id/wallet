@@ -23,18 +23,35 @@ type EmitterStub = {
 const WALLET_ORIGIN = "https://wallet.example";
 const OTHER_ORIGIN = "https://evil.example";
 
-function respond(origin: string, id: string, response: unknown) {
+const walletFrame: EmitterStub = { postMessage: vi.fn() };
+const otherWalletFrame: EmitterStub = { postMessage: vi.fn() };
+
+function respond(
+    origin: string,
+    id: string,
+    response: unknown,
+    source: EmitterStub = walletFrame
+) {
     window.dispatchEvent(
         new MessageEvent("message", {
             origin,
+            source: source as unknown as Window,
             data: { id, topic: "frak_ping", data: response },
         })
     );
 }
 
-function sendLifecycleFrom(origin: string, message: LifecycleMessage) {
+function sendLifecycleFrom(
+    origin: string,
+    message: LifecycleMessage,
+    source: EmitterStub = walletFrame
+) {
     window.dispatchEvent(
-        new MessageEvent("message", { origin, data: message })
+        new MessageEvent("message", {
+            origin,
+            source: source as unknown as Window,
+            data: message,
+        })
     );
 }
 
@@ -64,7 +81,7 @@ describe("createRpcClient", () => {
     function setup(
         overrides: Partial<RpcClientConfig<TestSchema, LifecycleMessage>> = {}
     ) {
-        const emitter: EmitterStub = { postMessage: vi.fn() };
+        const emitter = walletFrame;
         client = createRpcClient<TestSchema, LifecycleMessage>({
             emittingTransport: emitter as unknown as Window,
             listeningTransport: window,
@@ -77,6 +94,7 @@ describe("createRpcClient", () => {
     afterEach(() => {
         client?.cleanup();
         client = undefined;
+        walletFrame.postMessage.mockReset();
         vi.restoreAllMocks();
     });
 
@@ -168,6 +186,24 @@ describe("createRpcClient", () => {
 
         respond(WALLET_ORIGIN, message.id, { result: "real" });
         await expect(result).resolves.toBe("real");
+    });
+
+    it("ignores a response from another window of the wallet origin, even with the right id", async () => {
+        const { client, emitter } = setup();
+
+        const result = client.request({
+            method: "frak_ping",
+            params: { name: "a" },
+        });
+        const [message] = await sentMessages(emitter);
+        respond(
+            WALLET_ORIGIN,
+            message.id,
+            { result: "forged" },
+            otherWalletFrame
+        );
+
+        expect(await settledOrPending(result)).toBe("pending");
     });
 
     it("compares origins without case or path", async () => {
@@ -519,6 +555,34 @@ describe("createRpcClient", () => {
         await settledOrPending(new Promise(() => {}));
 
         expect(iframeLifecycle).not.toHaveBeenCalled();
+    });
+
+    it("delivers a lifecycle message only to the client of the window that sent it", async () => {
+        const handlerA = vi.fn();
+        const handlerB = vi.fn();
+        const clientFor = (frame: EmitterStub, iframeLifecycle: Mock) =>
+            createRpcClient<TestSchema, LifecycleMessage>({
+                emittingTransport: frame as unknown as Window,
+                listeningTransport: window,
+                targetOrigin: WALLET_ORIGIN,
+                lifecycleHandlers: { iframeLifecycle },
+            });
+        const clients = [
+            clientFor(walletFrame, handlerA),
+            clientFor(otherWalletFrame, handlerB),
+        ];
+
+        sendLifecycleFrom(
+            WALLET_ORIGIN,
+            { iframeLifecycle: "show" },
+            otherWalletFrame
+        );
+        await vi.waitFor(() => expect(handlerB).toHaveBeenCalled());
+        await settledOrPending(new Promise(() => {}));
+        for (const c of clients) c.cleanup();
+
+        expect(handlerB).toHaveBeenCalledTimes(1);
+        expect(handlerA).not.toHaveBeenCalled();
     });
 
     it("sends lifecycle messages straight to the target origin, skipping middleware", () => {
