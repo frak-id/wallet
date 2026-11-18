@@ -45,10 +45,13 @@ type FrakInteraction = Pick<
 /** `gameReward` is set only for a newcomer whose call created the join interaction. */
 type JoinOutcome = { game: GameSummary; gameReward?: number };
 
+/** The open game with its summary, read before any redeem write. */
+export type OpenGame = { game: GameSelect; summary: GameSummary };
+
 /** Read before the referrer link is written, applied after it. */
 export type SignupPlan = {
     reward?: number;
-    game?: { game: GameSelect; summary: GameSummary };
+    game?: OpenGame;
 };
 
 export type SignupOutcome = { reward?: number; game?: GameSummary };
@@ -157,25 +160,29 @@ export class FrakGameOrchestrator {
         return { game: summary, gameReward: created ? reward : undefined };
     }
 
+    async findOpenGame(): Promise<OpenGame | null> {
+        const game = await this.gameRepository.findCurrent(new Date());
+        if (!game) return null;
+        return { game, summary: await this.summarize(game) };
+    }
+
     /** A friend's code outside a signup: no reward, and the friend earns no ticket for it. */
     async joinWithFriendCode(
         game: GameSelect,
         identityGroupId: string
-    ): Promise<GameSummary> {
-        const summary = await this.summarize(game);
+    ): Promise<void> {
         await this.writeJoin(game, identityGroupId, false, "friend_code");
-        return summary;
     }
 
     /** The signup reward and the open game the referee joins with it. */
     async planSignup(): Promise<SignupPlan> {
-        const [invite, game] = await Promise.all([
+        const [invite, open] = await Promise.all([
             this.inviteRewards(),
-            this.gameRepository.findCurrent(new Date()),
+            this.findOpenGame(),
         ]);
-        if (!game) return { reward: invite?.referee };
-        const summary = await this.summarize(game);
-        return { reward: invite?.referee, game: { game, summary } };
+        return open
+            ? { reward: invite?.referee, game: open }
+            : { reward: invite?.referee };
     }
 
     /** Pays both sides once the signup rule is live; one per referee, ever. */

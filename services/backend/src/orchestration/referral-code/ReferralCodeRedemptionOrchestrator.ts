@@ -55,9 +55,9 @@ export class ReferralCodeRedemptionOrchestrator {
     /**
      * Redeem a referral code: a friend's or Frak code sets the caller's single
      * cross-merchant referrer, a game code joins its game. A friend's code also
-     * joins the current open game. Errors are `HttpError`s: 404 `NOT_FOUND`,
-     * 400 `SELF_REFERRAL`, 409 `WOULD_CYCLE`, `ALREADY_REDEEMED`,
-     * `GAME_CLOSED`, `FRAK_REFERRER`.
+     * joins the open game, then keeps a referrer already in place instead of
+     * failing. `HttpError`s: 404 `NOT_FOUND`, 400 `SELF_REFERRAL`, 409
+     * `WOULD_CYCLE`, `ALREADY_REDEEMED`, `GAME_CLOSED`, `FRAK_REFERRER`.
      */
     async redeem(params: RedeemParams): Promise<RedeemResult> {
         const referralCode = await this.referralCodeService.findByCode(
@@ -96,16 +96,16 @@ export class ReferralCodeRedemptionOrchestrator {
         params: RedeemParams
     ): Promise<RedeemResult> {
         const referee = params.refereeIdentityGroupId;
-        // Read before linking: once linked, a retry fails as ALREADY_REDEEMED.
+        // Every read before the link: a failed read must leave nothing written.
         const signupPlan = (await this.paysSignup(params))
             ? await this.frakGame.planSignup()
             : null;
-        const game = signupPlan
-            ? (signupPlan.game?.game ?? null)
-            : await this.gameRepository.findCurrent(new Date());
+        const open = signupPlan
+            ? (signupPlan.game ?? null)
+            : await this.frakGame.findOpenGame();
 
         const refusal = await this.linkReferrer(referralCode, params);
-        if (refusal && !game) throw linkRefusalError(refusal);
+        if (refusal && !open) throw linkRefusalError(refusal);
 
         const base = {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
@@ -119,12 +119,8 @@ export class ReferralCodeRedemptionOrchestrator {
             );
             return { ...base, game: signup.game, signupReward: signup.reward };
         }
-        return {
-            ...base,
-            game: game
-                ? await this.frakGame.joinWithFriendCode(game, referee)
-                : undefined,
-        };
+        if (open) await this.frakGame.joinWithFriendCode(open.game, referee);
+        return { ...base, game: open?.summary };
     }
 
     private async paysSignup({

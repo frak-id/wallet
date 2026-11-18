@@ -25,7 +25,7 @@ name: The game card opens the game or its join page
       - runFlow:
           when:
             visible: "Back|Retour"
-            notVisible: "Game code|Code du jeu"
+            notVisible: "Game code.*|Code du jeu.*"
           commands:
             - assertVisible: "Frak Game|Jeu Frak"
             - extendedWaitUntil:
@@ -38,7 +38,7 @@ name: The game card opens the game or its join page
       # Not playing yet: the card leads to the code entry page.
       - runFlow:
           when:
-            visible: "Game code|Code du jeu"
+            visible: "Game code.*|Code du jeu.*"
           commands:
             - assertVisible: "Join the game|Participer au jeu"
             - takeScreenshot: build/maestro/wallet-game-join

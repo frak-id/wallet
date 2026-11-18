@@ -126,7 +126,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
                 initialCode={initialCode}
                 label={t("game.join.label")}
                 submitLabel={t("game.join.submit")}
-                keepFrakReferrerOnCancel
+                keepFrakReferrer
             />
             <InfoCard>
                 <InfoRow

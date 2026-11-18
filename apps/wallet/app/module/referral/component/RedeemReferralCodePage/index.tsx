@@ -99,14 +99,14 @@ export function RedeemForm({
     initialCode,
     label,
     submitLabel,
-    keepFrakReferrerOnCancel,
+    keepFrakReferrer,
 }: {
     onRedeemed: (result: RedeemResult) => void;
     onError?: (errorKey: string) => void;
     initialCode?: string;
     label?: string;
     submitLabel?: string;
-    keepFrakReferrerOnCancel?: boolean;
+    keepFrakReferrer?: boolean;
 }) {
     const { t } = useTranslation();
     const {
@@ -125,7 +125,7 @@ export function RedeemForm({
         onApplied: onRedeemed,
         onError,
         initialCode,
-        keepFrakReferrerOnCancel,
+        keepFrakReferrer,
     });
 
     const fieldId = useId();

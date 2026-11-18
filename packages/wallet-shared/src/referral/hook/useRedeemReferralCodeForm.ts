@@ -41,8 +41,8 @@ type UseRedeemReferralCodeFormOptions = {
     initialCode?: string;
     /** Forwarded to `/redeem`; only the onboarding step sets it. */
     context?: RedeemContext;
-    /** Declining to replace Frak still redeems, keeping Frak: the game join screen, where the code joins the game. */
-    keepFrakReferrerOnCancel?: boolean;
+    /** Keeps Frak as referrer without asking: the game join screen, where a code is for joining. */
+    keepFrakReferrer?: boolean;
 };
 
 function sanitizeCode(raw: string): string {
@@ -66,7 +66,7 @@ export function useRedeemReferralCodeForm({
     resetErrorOnChange = true,
     initialCode,
     context,
-    keepFrakReferrerOnCancel = false,
+    keepFrakReferrer = false,
 }: UseRedeemReferralCodeFormOptions = {}) {
     const [confirmingFrakReplace, setConfirmingFrakReplace] = useState(false);
     const redeem = useRedeemReferralCode({
@@ -118,7 +118,11 @@ export function useRedeemReferralCodeForm({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!canSubmit) return;
-        redeem.mutate({ code, context });
+        redeem.mutate({
+            code,
+            context,
+            replaceFrakReferrer: keepFrakReferrer ? false : undefined,
+        });
     };
 
     const confirmFrakReplace = () => {
@@ -129,10 +133,6 @@ export function useRedeemReferralCodeForm({
     const cancelFrakReplace = () => {
         trackEvent("frak_referrer_replace_resolved", { outcome: "cancelled" });
         setConfirmingFrakReplace(false);
-        if (keepFrakReferrerOnCancel) {
-            redeem.mutate({ code, context, replaceFrakReferrer: false });
-            return;
-        }
         redeem.reset();
     };
 

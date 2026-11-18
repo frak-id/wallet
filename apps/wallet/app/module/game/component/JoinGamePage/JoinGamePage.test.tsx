@@ -55,16 +55,19 @@ vi.mock("@/module/referral/component/RedeemReferralCodePage", () => ({
         onError,
         initialCode,
         submitLabel,
+        keepFrakReferrer,
     }: {
         onRedeemed: (result: RedeemResult) => void;
         onError?: (errorKey: string) => void;
         initialCode?: string;
         submitLabel?: string;
+        keepFrakReferrer?: boolean;
     }) => (
         <>
             <button
                 type="button"
                 onClick={() => onRedeemed(redeemResult.current)}
+                data-keep-frak={keepFrakReferrer ? "yes" : "no"}
             >
                 {submitLabel} {initialCode}
             </button>
@@ -253,6 +256,15 @@ describe("JoinGamePage", () => {
         expect(refetchQueries).toHaveBeenCalledWith({
             queryKey: ["game", "current"],
         });
+    });
+
+    it("keeps Frak as referrer without asking", () => {
+        render(<JoinGamePage initialCode="LOLA10" />);
+
+        expect(screen.getByRole("button", { name: /LOLA10/ })).toHaveAttribute(
+            "data-keep-frak",
+            "yes"
+        );
     });
 
     it("shows the confetti screen when a friend's code joins the game", async () => {

@@ -367,35 +367,28 @@ describe("useRedeemReferralCodeForm", () => {
         );
     });
 
-    test("keepFrakReferrerOnCancel resends the code keeping Frak", async ({
+    test("keepFrakReferrer submits keeping Frak, with no confirmation", async ({
         queryWrapper,
     }) => {
-        vi.mocked(authenticatedWalletApi.referral.code.redeem.post)
-            .mockResolvedValueOnce({
-                error: { value: { code: "FRAK_REFERRER" }, status: 409 },
-            } as never)
-            .mockResolvedValueOnce({
-                data: { kind: "user", game: { id: "g1" } },
-                error: null,
-            } as never);
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            data: { kind: "user", game: { id: "g1" } },
+            error: null,
+        } as never);
 
         const onApplied = vi.fn();
         const { result } = renderHook(
             () =>
                 useRedeemReferralCodeForm({
                     onApplied,
-                    keepFrakReferrerOnCancel: true,
+                    keepFrakReferrer: true,
                 }),
             { wrapper: queryWrapper.wrapper }
         );
 
         act(() => result.current.handleChange(makeChange("lola10")));
         act(() => result.current.handleSubmit(makeSubmit()));
-        await waitFor(() =>
-            expect(result.current.confirmingFrakReplace).toBe(true)
-        );
-
-        act(() => result.current.cancelFrakReplace());
 
         await waitFor(() =>
             expect(onApplied).toHaveBeenCalledWith({
@@ -405,7 +398,7 @@ describe("useRedeemReferralCodeForm", () => {
         );
         expect(
             authenticatedWalletApi.referral.code.redeem.post
-        ).toHaveBeenLastCalledWith({
+        ).toHaveBeenCalledExactlyOnceWith({
             code: "LOLA10",
             context: undefined,
             replaceFrakReferrer: false,

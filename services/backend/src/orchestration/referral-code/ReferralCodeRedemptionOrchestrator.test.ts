@@ -147,11 +147,12 @@ function makeOrchestrator() {
         findById: vi.fn().mockResolvedValue(gameRule),
         findActiveByMerchant: vi.fn().mockResolvedValue([signupRule]),
     };
+    const merchantRepository = { findById: vi.fn() };
 
     const frakGame = new FrakGameOrchestrator(
         gameRepository as never,
         campaignRuleRepository as never,
-        { findById: vi.fn() } as never,
+        merchantRepository as never,
         interactionLogRepository as never,
         gamePlayer as never,
         { findByIdentityGroup: vi.fn().mockResolvedValue(null) } as never,
@@ -194,6 +195,7 @@ function makeOrchestrator() {
         gameRepository,
         gamePlayer,
         campaignRuleRepository,
+        merchantRepository,
     };
 }
 
@@ -386,6 +388,20 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
 
         await expect(ctx.redeem(undefined)).rejects.toThrow("db down");
         expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it("does not link the referrer when the game's sponsor cannot be read", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue({
+            ...openGame,
+            sponsorMerchantId: "sponsor",
+        });
+        ctx.merchantRepository.findById.mockRejectedValue(new Error("db down"));
+
+        await expect(ctx.redeem(undefined)).rejects.toThrow("db down");
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).not.toHaveBeenCalled();
     });
 
     it.each([{ context: undefined }, { context: "onboarding" }] as const)(
