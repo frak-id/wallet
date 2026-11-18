@@ -571,7 +571,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.5.2",
+      "version": "1.5.3",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -607,7 +607,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "1.7.1",
+      "version": "1.7.2",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@noble/curves": "catalog:",
@@ -649,7 +649,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "1.7.1",
+      "version": "1.7.2",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",

@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 1.7.2
+
+### Patch Changes
+
+- [#478](https://github.com/frak-id/wallet/pull/478) [`857e09b`](https://github.com/frak-id/wallet/commit/857e09b3f0272d8c8dae4cf8aa1b202ad1f5132e) Thanks [@srod](https://github.com/srod)! - Export the `ReferralState` type from `@frak-labs/core-sdk/actions` and `@frak-labs/core-sdk/bundle`. It is the resolved value of `referralInteraction()`, and `useReferralInteraction()` in `@frak-labs/react-sdk` now names it in its return type.
+
 ## 1.7.1
 
 ### Patch Changes
