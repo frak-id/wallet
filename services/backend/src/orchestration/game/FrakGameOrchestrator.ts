@@ -157,6 +157,16 @@ export class FrakGameOrchestrator {
         return { game: summary, gameReward: created ? reward : undefined };
     }
 
+    /** A friend's code outside a signup: no reward, and the friend earns no ticket for it. */
+    async joinWithFriendCode(
+        game: GameSelect,
+        identityGroupId: string
+    ): Promise<GameSummary> {
+        const summary = await this.summarize(game);
+        await this.writeJoin(game, identityGroupId, false, "friend_code");
+        return summary;
+    }
+
     /** The signup reward and the open game the referee joins with it. */
     async planSignup(): Promise<SignupPlan> {
         const [invite, game] = await Promise.all([

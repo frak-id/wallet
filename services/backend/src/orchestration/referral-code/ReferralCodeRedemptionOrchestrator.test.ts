@@ -359,11 +359,76 @@ describe("ReferralCodeRedemptionOrchestrator referral signup", () => {
         ).not.toHaveBeenCalled();
     });
 
-    it("does not join the current game for an existing user's friend code", async () => {
+    it("joins the current game without reward for an existing user's friend code", async () => {
         ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
 
-        await ctx.redeem(undefined);
+        const result = await ctx.redeem(undefined);
 
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(result.gameReward).toBeUndefined();
+        expect(result.signupReward).toBeUndefined();
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).toHaveBeenCalledExactlyOnceWith({
+            type: "game_join",
+            identityGroupId: REFEREE,
+            merchantId: FRAK_MERCHANT_ID,
+            externalEventId: `game_join:game-1:${REFEREE}`,
+            payload: { gameId: "game-1", newcomer: false },
+        });
+        expect(ctx.referralLinkRepository.create).toHaveBeenCalledWith(
+            expect.objectContaining({ referrerIdentityGroupId: "owner-group" })
+        );
+    });
+
+    it("does not link the referrer when an existing user's game read fails", async () => {
+        ctx.gameRepository.findCurrent.mockRejectedValue(new Error("db down"));
+
+        await expect(ctx.redeem(undefined)).rejects.toThrow("db down");
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it.each([{ context: undefined }, { context: "onboarding" }] as const)(
+        "keeps a friend already in the slot and joins the open game ($context)",
+        async ({ context }) => {
+            ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+            ctx.referralLinkRepository.create.mockResolvedValue(null);
+
+            const result = await ctx.redeem(context);
+
+            expect(result.game).toMatchObject({ id: "game-1" });
+            expect(result.signupReward).toBeUndefined();
+            expect(
+                ctx.interactionLogRepository.createIdempotent
+            ).toHaveBeenCalledExactlyOnceWith(
+                expect.objectContaining({
+                    type: "game_join",
+                    payload: { gameId: "game-1", newcomer: false },
+                })
+            );
+        }
+    );
+
+    it("joins the open game without linking a code that would cycle", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+        ctx.referralLinkRepository.wouldCreateCycle.mockResolvedValue(true);
+
+        const result = await ctx.redeem(undefined);
+
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it("still rejects the user's own code while a game is open", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+        ctx.referralCodeService.findByCode.mockResolvedValue({
+            ...userCode,
+            ownerIdentityGroupId: REFEREE,
+        });
+
+        await expect(ctx.redeem(undefined)).rejects.toMatchObject({
+            code: "SELF_REFERRAL",
+        });
         expect(
             ctx.interactionLogRepository.createIdempotent
         ).not.toHaveBeenCalled();
@@ -568,6 +633,49 @@ describe("ReferralCodeRedemptionOrchestrator friend's code over Frak", () => {
                 refereeIdentityGroupId: REFEREE,
             })
         );
+    });
+
+    it("asks to confirm even while a game is open", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+
+        await expect(ctx.redeem(undefined)).rejects.toMatchObject({
+            code: "FRAK_REFERRER",
+        });
+        expect(
+            ctx.interactionLogRepository.createIdempotent
+        ).not.toHaveBeenCalled();
+    });
+
+    it("replaces Frak and joins the open game once confirmed", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+
+        const result = await ctx.redeem(undefined, true);
+
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(ctx.referralLinkRepository.removeReferrer).toHaveBeenCalled();
+        expect(ctx.referralLinkRepository.create).toHaveBeenCalled();
+    });
+
+    it("keeps Frak and joins the open game when the user declines", async () => {
+        ctx.gameRepository.findCurrent.mockResolvedValue(openGame);
+
+        const result = await ctx.redeem(undefined, false);
+
+        expect(result.game).toMatchObject({ id: "game-1" });
+        expect(
+            ctx.referralLinkRepository.removeReferrer
+        ).not.toHaveBeenCalled();
+        expect(ctx.referralLinkRepository.create).not.toHaveBeenCalled();
+    });
+
+    it("reports ALREADY_REDEEMED when the user keeps Frak with no game open", async () => {
+        await expect(ctx.redeem(undefined, false)).rejects.toMatchObject({
+            status: 409,
+            code: "ALREADY_REDEEMED",
+        });
+        expect(
+            ctx.referralLinkRepository.removeReferrer
+        ).not.toHaveBeenCalled();
     });
 
     it("keeps ALREADY_REDEEMED when a friend already holds the slot", async () => {

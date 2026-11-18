@@ -255,7 +255,22 @@ describe("JoinGamePage", () => {
         });
     });
 
-    it("hands a friend's code back to the referral page", () => {
+    it("shows the confetti screen when a friend's code joins the game", async () => {
+        redeemResult.current = { kind: "user", game };
+        render(<JoinGamePage initialCode="LOLA10" />);
+
+        fireEvent.click(screen.getByRole("button", { name: /LOLA10/ }));
+        fireEvent.click(screen.getByText(/reward-0 game-prize/));
+
+        await waitFor(() =>
+            expect(navigate).toHaveBeenCalledWith({
+                to: "/game",
+                replace: true,
+            })
+        );
+    });
+
+    it("hands a friend's code back to the referral page when no game came back", () => {
         redeemResult.current = { kind: "user" };
         render(<JoinGamePage initialCode="LOLA10" />);
 

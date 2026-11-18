@@ -1018,8 +1018,8 @@
                 "title": "Your ticket is waiting"
             },
             "title": "Join the game",
-            "description": "Enter the game code, shared in our Instagram stories, to take part.",
-            "label": "Game code",
+            "description": "Enter the game code from our Instagram stories, or a friend's code, to take part.",
+            "label": "Game code or friend's code",
             "submit": "Join",
             "findCode": "Find the code on Instagram",
             "firstTicket": "1st ticket on us"

@@ -89,7 +89,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
             setJoined({ result, refetched });
             return;
         }
-        // A friend's code became the referrer: the referral page shows it as before.
+        // The game closed meanwhile: a friend's code only became the referrer.
         navigate({ to: "/profile/referral/redeem", replace: true });
     };
 
@@ -126,6 +126,7 @@ export function JoinGamePage({ initialCode }: { initialCode?: string }) {
                 initialCode={initialCode}
                 label={t("game.join.label")}
                 submitLabel={t("game.join.submit")}
+                keepFrakReferrerOnCancel
             />
             <InfoCard>
                 <InfoRow
