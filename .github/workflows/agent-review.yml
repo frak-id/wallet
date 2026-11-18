@@ -43,8 +43,10 @@ jobs:
         github.event.pull_request.base.ref == 'main') &&
       (github.event.action == 'closed' || !github.event.pull_request.draft)
     runs-on: 'frak-hetzner-wallet'
-    # The sandbox's boot (10 minutes at most), the agent (40), the posting.
-    timeout-minutes: 60
+    # The sandbox's boot (10 minutes at most), the agent (40), the posting. A
+    # closed PR's run only destroys sandboxes (a destroy waits up to 5
+    # minutes for one still being created).
+    timeout-minutes: ${{ github.event.action == 'closed' && 10 || 60 }}
     permissions:
       contents: read
       # Posts the review and its progress comment, collapses the earlier ones.
