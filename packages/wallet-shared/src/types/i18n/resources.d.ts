@@ -537,13 +537,13 @@ export default interface Resources {
         "title": "Past games"
       },
       "join": {
-        "description": "Enter the game code, shared in our Instagram stories, to take part.",
+        "description": "Enter the game code from our Instagram stories, or a friend's code, to take part.",
         "findCode": "Find the code on Instagram",
         "firstTicket": "1st ticket on us",
         "hero": {
           "title": "Your ticket is waiting"
         },
-        "label": "Game code",
+        "label": "Game code or friend's code",
         "submit": "Join",
         "title": "Join the game"
       },

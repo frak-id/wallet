@@ -5,7 +5,11 @@ import type {
 } from "@frak-labs/core-sdk";
 import { displayModal } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    type UseMutationResult,
+    useMutation,
+} from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
@@ -50,7 +54,11 @@ type UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> = {
  */
 export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({
     mutations,
-}: UseDisplayModalParams<T> = {}) {
+}: UseDisplayModalParams<T> = {}): UseMutationResult<
+    ModalRpcStepsResultType<T>,
+    FrakRpcError,
+    DisplayModalParamsType<T> & { placement?: string }
+> {
     const client = useFrakClient();
 
     return useMutation({

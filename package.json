@@ -27,7 +27,7 @@
   "private": true,
   "scripts": {
     "build:infra": "sst build --stage dev",
-    "build:sdk": "dirs=(core legacy react components) && bun run --cwd packages/rpc build && for d in ${dirs[@]}; do bun run --cwd sdk/${d} build || exit 1; done",
+    "build:sdk": "bun run --filter @frak-labs/frame-connector --filter @frak-labs/core-sdk --filter @frak-labs/nexus-sdk --filter @frak-labs/react-sdk --filter @frak-labs/components build",
     "changeset": "changeset",
     "changeset:release": "bun run build:sdk && bun run check:es-output && bun scripts/publish-sdk.ts",
     "changeset:version": "changeset version && bun install --lockfile-only",

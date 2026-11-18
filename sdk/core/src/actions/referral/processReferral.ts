@@ -33,7 +33,7 @@ export type ProcessReferralOptions = {
  * The different states of the referral process.
  * @inline
  */
-type ReferralState =
+export type ReferralState =
     | "idle"
     | "processing"
     | "success"

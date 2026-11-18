@@ -13,13 +13,17 @@ export type JoinRedirect =
 export function joinRedirectOf(
     current: CurrentGameResponse,
     code: string | undefined,
-    ownCode: string | undefined
+    ownCode: string | undefined,
+    hasFriendReferrer = false
 ): JoinRedirect | null {
     const isOwn = code !== undefined && code === ownCode;
     if (current.game && !current.me.participating) {
         return isOwn ? { to: "/game/join", search: {} } : null;
     }
-    if (current.game && (isOwn || !code)) return { to: "/game" };
+    // A friend as referrer keeps the slot: the referral page would show no form.
+    if (current.game && (isOwn || !code || hasFriendReferrer)) {
+        return { to: "/game" };
+    }
     if (isOwn) return { to: "/profile/referral/share" };
     // Nothing left to join: a friend's code can only become the referrer.
     return { to: "/profile/referral/redeem", search: { code } };
@@ -43,5 +47,11 @@ export async function resolveJoinRedirect(
             : undefined,
     ]);
     if (!current) return null;
-    return joinRedirectOf(current, code, status?.ownedCode?.code);
+    const referrer = status?.crossMerchantReferrer;
+    return joinRedirectOf(
+        current,
+        code,
+        status?.ownedCode?.code,
+        !!referrer && !referrer.isFrak
+    );
 }

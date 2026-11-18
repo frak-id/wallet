@@ -19,8 +19,10 @@ import {
     useUnredeemReferralCode,
 } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { currentGameKeys } from "@/module/game/hook/useCurrentGame";
 import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
 import { OrDivider } from "../OrDivider";
 import { ReferralPageShell } from "../ReferralPageShell";
@@ -41,12 +43,23 @@ export function RedeemReferralCodePage({
 } = {}) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const { data: status } = useReferralStatus();
     const referrer = status?.crossMerchantReferrer ?? null;
 
     const invalidateStatus = () =>
         queryClient.invalidateQueries({ queryKey: referralKey.status() });
+
+    const handleRedeemed = async (result: RedeemResult) => {
+        if (!result.game) {
+            await invalidateStatus();
+            return;
+        }
+        // /game bounces a stale non-participant back to the join screen.
+        await queryClient.refetchQueries({ queryKey: currentGameKeys.all });
+        navigate({ to: "/game", replace: true });
+    };
 
     return (
         <ReferralPageShell
@@ -64,7 +77,7 @@ export function RedeemReferralCodePage({
                         <>
                             <OrDivider />
                             <RedeemForm
-                                onRedeemed={invalidateStatus}
+                                onRedeemed={handleRedeemed}
                                 initialCode={initialCode}
                             />
                         </>
@@ -72,7 +85,7 @@ export function RedeemReferralCodePage({
                 </Stack>
             ) : (
                 <RedeemForm
-                    onRedeemed={invalidateStatus}
+                    onRedeemed={handleRedeemed}
                     initialCode={initialCode}
                 />
             )}
@@ -86,12 +99,14 @@ export function RedeemForm({
     initialCode,
     label,
     submitLabel,
+    keepFrakReferrer,
 }: {
     onRedeemed: (result: RedeemResult) => void;
     onError?: (errorKey: string) => void;
     initialCode?: string;
     label?: string;
     submitLabel?: string;
+    keepFrakReferrer?: boolean;
 }) {
     const { t } = useTranslation();
     const {
@@ -110,6 +125,7 @@ export function RedeemForm({
         onApplied: onRedeemed,
         onError,
         initialCode,
+        keepFrakReferrer,
     });
 
     const fieldId = useId();

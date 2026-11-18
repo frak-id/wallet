@@ -5,7 +5,7 @@ import ky, { type KyInstance } from "ky";
 export type ProductEventMap = {
     game_joined: {
         game_id: string;
-        source: "game_code" | "friend_signup";
+        source: "game_code" | "friend_signup" | "friend_code";
         newcomer: boolean;
     };
     referral_signup_completed: { referrer_identity_group_id: string };

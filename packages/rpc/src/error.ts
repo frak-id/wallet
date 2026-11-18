@@ -31,7 +31,7 @@ export class FrakRpcError<T = undefined> extends Error {
     constructor(
         public code: number,
         message: string,
-        public data?: T
+        public data?: T | undefined
     ) {
         super(message);
     }

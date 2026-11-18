@@ -10,7 +10,7 @@ Frak Wallet monorepo — Web3 referral tracking & rewards. TS/React/Bun + ERC-43
 
 ```bash
 bun install                          # Bun ONLY — npm/pnpm/yarn forbidden
-bun run build:sdk                    # Sequence: rpc → core → legacy → react → components
+bun run build:sdk                    # Bun --filter, workspace-dep order: rpc → core → {react, components}; legacy in parallel
 bun run test                         # NEVER `bun test` — use `bun run test` (Vitest workspace)
 bun run format && bun run lint && bun run typecheck && bun run test  # Quality gate (all four mandatory pre-commit)
 bun run lint:comments                # Comment budget on Kotlin/Swift/TS — already inside `bun run lint`

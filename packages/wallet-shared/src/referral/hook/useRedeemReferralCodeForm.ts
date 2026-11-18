@@ -41,6 +41,8 @@ type UseRedeemReferralCodeFormOptions = {
     initialCode?: string;
     /** Forwarded to `/redeem`; only the onboarding step sets it. */
     context?: RedeemContext;
+    /** Keeps Frak as referrer without asking: the game join screen, where a code is for joining. */
+    keepFrakReferrer?: boolean;
 };
 
 function sanitizeCode(raw: string): string {
@@ -64,6 +66,7 @@ export function useRedeemReferralCodeForm({
     resetErrorOnChange = true,
     initialCode,
     context,
+    keepFrakReferrer = false,
 }: UseRedeemReferralCodeFormOptions = {}) {
     const [confirmingFrakReplace, setConfirmingFrakReplace] = useState(false);
     const redeem = useRedeemReferralCode({
@@ -115,7 +118,11 @@ export function useRedeemReferralCodeForm({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!canSubmit) return;
-        redeem.mutate({ code, context });
+        redeem.mutate({
+            code,
+            context,
+            replaceFrakReferrer: keepFrakReferrer ? false : undefined,
+        });
     };
 
     const confirmFrakReplace = () => {

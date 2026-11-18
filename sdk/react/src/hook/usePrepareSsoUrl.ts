@@ -1,7 +1,10 @@
-import type { PrepareSsoParamsType } from "@frak-labs/core-sdk";
+import type {
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
+} from "@frak-labs/core-sdk";
 import { prepareSsoUrl } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
-import { useQuery } from "@tanstack/react-query";
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /**
@@ -42,7 +45,9 @@ import { useFrakClient } from "./useFrakClient";
  * @see {@link @frak-labs/core-sdk!actions.prepareSsoUrl | `prepareSsoUrl()`} for the underlying action
  * @see {@link useOpenSso | `useOpenSso()`} for opening the prepared URL
  */
-export function usePrepareSsoUrl(params: PrepareSsoParamsType) {
+export function usePrepareSsoUrl(
+    params: PrepareSsoParamsType
+): UseQueryResult<PrepareSsoReturnType, Error> {
     const client = useFrakClient();
 
     return useQuery({

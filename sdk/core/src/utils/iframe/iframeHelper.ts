@@ -128,7 +128,7 @@ export function changeIframeVisibility({
 }: {
     iframe: HTMLIFrameElement;
     isVisible: boolean;
-}) {
+}): void {
     if (!isVisible) {
         exitTopLayer(iframe);
         iframe.style.width = "0";

@@ -367,6 +367,45 @@ describe("useRedeemReferralCodeForm", () => {
         );
     });
 
+    test("keepFrakReferrer submits keeping Frak, with no confirmation", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            data: { kind: "user", game: { id: "g1" } },
+            error: null,
+        } as never);
+
+        const onApplied = vi.fn();
+        const { result } = renderHook(
+            () =>
+                useRedeemReferralCodeForm({
+                    onApplied,
+                    keepFrakReferrer: true,
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        act(() => result.current.handleChange(makeChange("lola10")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+
+        await waitFor(() =>
+            expect(onApplied).toHaveBeenCalledWith({
+                kind: "user",
+                game: { id: "g1" },
+            })
+        );
+        expect(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).toHaveBeenCalledExactlyOnceWith({
+            code: "LOLA10",
+            context: undefined,
+            replaceFrakReferrer: false,
+        });
+        expect(result.current.confirmingFrakReplace).toBe(false);
+    });
+
     test("resetErrorOnChange clears mutation error on edit", async ({
         queryWrapper,
     }) => {

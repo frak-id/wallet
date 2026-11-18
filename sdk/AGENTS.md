@@ -1,6 +1,6 @@
 # sdk/ — Compass
 
-Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **strict**: `rpc → core → react → components`. Linked via Changesets: `frame-connector`, `core-sdk`, `react-sdk`. `legacy` is still in the `build:sdk` sequence but no longer depends on anything, so its position there is arbitrary.
+Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **strict**: `rpc → core → {react, components}`. `build:sdk` gets it from the `workspace:*` dependencies through `bun run --filter`, which starts `legacy` alongside `rpc`, then runs `react` and `components` in parallel once `core` is done; a package missing that dependency would race its upstream `dist`. A failed package does not stop its dependents: they build against the stale upstream `dist` and print "Done", so read the first error, not the last line. The exit code is still non-zero. Linked via Changesets: `frame-connector`, `core-sdk`, `react-sdk`.
 
 `android/` and `ios/` are **native SDKs, not npm packages** — different toolchains, different registries, different release train. They are excluded from `build:sdk`, biome, knip and Changesets. See the section at the bottom.
 
@@ -22,6 +22,7 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 - **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: it emits its `NexusSDK` global to `dist/bundle`, so a `sdk/*/cdn` glob misses it. That path stays registered in `check:es-output`.
 - **`sdk/components/cdn/components.js` embeds its own package version** (`process.env.SDK_VERSION`, from `package.json` via `tsdown.config.ts`, same pattern as `sdk/core`) so it always jumps straight to the exact jsDelivr release instead of a floating tag. Merchants load this file from `sdk.frak.id`/`sdk-dev.frak.id` (`infra/sdk-pointer.ts`), a first-party pointer with a 5-minute cache in front of it, not jsDelivr directly — every integration keeps an `onerror` fallback to jsDelivr's floating tag in case the pointer is ever unreachable.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
+- **`.d.ts` comes from oxc, not tsc, in `packages/rpc`, `sdk/core` and `sdk/react`**: their tsconfigs set `isolatedDeclarations`, so every export needs a written type (typecheck and the build both fail without one), and oxc copies it as written. Two traps tsc hid. An exported object with getters needs a written type, or oxc publishes the getters as writable with no error (`sdkConfigStore`). And an object type annotation hides member docs from TypeDoc, which builds the reference pages from source, so `FrakContextManager` uses `x as typeof x` per member instead. `sdk/components` still uses tsc.
 
 ## Non-Obvious Patterns
 
@@ -36,7 +37,7 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 - **Action pattern**: `client.request({ method, params })` — never call transports directly.
 - **Hook pattern**: `useFrakClient()` + `useQuery`/`useMutation` — never recreate clients.
 - **`sdk/legacy` is retired, and its stubs must never settle.** `src/bundle.ts` exposes six no-op exports behind the `NexusSDK` global, each returning a forever-pending promise. That is not laziness: the integrations still loading this bundle chain their setup off the first call, so resolving runs their `console.error` branches, rejecting runs their catch blocks, and resolving successfully runs their success paths — which log every page load. Stalling is the only silent outcome. It publishes only to keep the npm name and the jsdelivr URL alive, and it is Knip-ignored, so nothing will flag an export you add — do not add one.
-- **`bun run build:sdk` means "build the JS SDKs"** and must keep meaning that. Native builds are separate scripts — there is no Turborepo here to hang them off, only sequential Bun `--filter` calls.
+- **`bun run build:sdk` means "build the JS SDKs"** and must keep meaning that. Native builds are separate scripts — there is no Turborepo here to hang them off, only Bun `--filter` calls.
 
 ## Quick Commands
 

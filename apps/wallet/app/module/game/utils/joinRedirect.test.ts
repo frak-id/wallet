@@ -63,6 +63,18 @@ describe("joinRedirectOf", () => {
         });
     });
 
+    it("sends a player whose referrer is a friend to the game page", () => {
+        expect(
+            joinRedirectOf(current("open", true), "LOLA10", "MINE01", true)
+        ).toEqual({ to: "/game" });
+    });
+
+    it("keeps a non-player whose referrer is a friend on the join screen", () => {
+        expect(
+            joinRedirectOf(current("open"), "LOLA10", "MINE01", true)
+        ).toBeNull();
+    });
+
     it("sends the user's own code to their share page when no game is open", () => {
         expect(joinRedirectOf(current("none"), "MINE01", "MINE01")).toEqual({
             to: "/profile/referral/share",
@@ -110,6 +122,28 @@ describe("resolveJoinRedirect", () => {
             search: { code: "LOLA10" },
         });
     });
+
+    it.each([
+        { isFrak: false, expected: { to: "/game" } },
+        {
+            isFrak: true,
+            expected: {
+                to: "/profile/referral/redeem",
+                search: { code: "LOLA10" },
+            },
+        },
+    ])(
+        "reads the current referrer (isFrak $isFrak) for a player's friend code",
+        async ({ isFrak, expected }) => {
+            statusFn.mockResolvedValue({
+                ownedCode: { code: "MINE01" },
+                crossMerchantReferrer: { code: "PREV01", isFrak },
+            });
+            await expect(
+                resolveJoinRedirect(queryClient, "LOLA10")
+            ).resolves.toEqual(expected);
+        }
+    );
 
     it("skips the referral status without a code", async () => {
         await expect(

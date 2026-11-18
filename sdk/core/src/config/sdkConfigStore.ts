@@ -144,7 +144,21 @@ async function fetchFromBackend(
     }
 }
 
-export const sdkConfigStore = {
+export const sdkConfigStore: {
+    getConfig: () => SdkResolvedConfig;
+    get isResolved(): boolean;
+    get isCacheFresh(): boolean;
+    setCacheScope(domain: string, lang?: string): void;
+    setConfig(config: SdkResolvedConfig): void;
+    reset(): void;
+    clearCache(): void;
+    resolve(
+        domain?: string,
+        lang?: Language
+    ): Promise<MerchantConfigResponse | undefined>;
+    getMerchantId(): string | undefined;
+    resolveMerchantId(domain?: string): Promise<string | undefined>;
+} = {
     getConfig,
 
     get isResolved(): boolean {

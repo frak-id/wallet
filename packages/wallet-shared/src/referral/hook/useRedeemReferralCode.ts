@@ -20,13 +20,13 @@ type RedeemInput = {
     code: string;
     /** Set only by the onboarding step; gates a `kind='frak'` code. */
     context?: RedeemContext;
-    /** Accepts losing the welcome bonus when Frak holds the referrer slot (409 `FRAK_REFERRER`). */
+    /** Answers 409 `FRAK_REFERRER`: `true` replaces Frak (no welcome bonus), `false` keeps it. */
     replaceFrakReferrer?: boolean;
 };
 
 export type RedeemResult = {
     kind: ReferralCodeKind;
-    /** The game joined: its own code, or the current open game on a friend's signup. */
+    /** The game joined: its own code, or the current open game on a friend's code. */
     game?: GameSummary;
     /** The Frak Game reward queued by this call, in EURe. */
     gameReward?: number;

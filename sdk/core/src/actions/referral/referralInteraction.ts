@@ -4,6 +4,7 @@ import { watchWalletStatus } from "../index";
 import {
     type ProcessReferralOptions,
     processReferral,
+    type ReferralState,
 } from "./processReferral";
 
 /**
@@ -25,7 +26,7 @@ export async function referralInteraction(
     }: {
         options?: ProcessReferralOptions;
     } = {}
-) {
+): Promise<ReferralState | undefined> {
     const frakContext = FrakContextManager.parse({
         url: window.location.href,
     });

@@ -12,6 +12,7 @@ export { prepareSsoUrl } from "./prepareSsoUrl";
 export {
     type ProcessReferralOptions,
     processReferral,
+    type ReferralState,
 } from "./referral/processReferral";
 // Referral
 export { referralInteraction } from "./referral/referralInteraction";
