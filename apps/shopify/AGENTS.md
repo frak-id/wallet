@@ -9,7 +9,7 @@ bun run shopify:dev      # Direct Shopify CLI (no SST env); root `bun run dev` o
 bun run build            # react-router build
 bun run typecheck        # react-router typegen && tsc --noEmit — covers extensions/*/src too
 bun run db:generate      # Drizzle migration into drizzle/prod/ only when STAGE=production
-bun run db:migrate       # Apply migrations
+bun run db:migrate       # Apply migrations (deploys run it as the `ShopifyMigrate` Job before the pod rolls)
 bun run shopify:deploy / :deploy:prod # Shopify app + extensions (regenerates stage artifacts first)
 bun run gen:stage                     # Rewrite the generated stage artifacts to the prod table
 
