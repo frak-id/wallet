@@ -119,6 +119,7 @@ export {
     clearAllCache,
     coerceProductCandidates,
     compressJsonToB64,
+    createSdkOpenPanel,
     type DeepLinkFallbackOptions,
     decodeProductsParam,
     decompressJsonFromB64,

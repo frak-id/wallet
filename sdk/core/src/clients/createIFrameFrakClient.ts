@@ -6,7 +6,7 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { sha256 } from "@noble/hashes/sha2.js";
-import { OpenPanel } from "@openpanel/web";
+import type { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
 import { setEnvironment } from "../config/environment";
 import { loadCachedConfig } from "../config/loadCachedConfig";
@@ -18,7 +18,9 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
+import { createSdkOpenPanel } from "../utils/analytics/openPanel";
 import { clearAllCache } from "../utils/cache";
+import { IFRAME_REPLACED_EVENT } from "../utils/iframe/iframeHelper";
 import {
     HANDSHAKE_TIMEOUT_MS,
     type TrackLifecycle,
@@ -134,12 +136,6 @@ export async function createIFrameFrakClient({
         ],
         lifecycleHandlers: {
             iframeLifecycle: (event, _context) => {
-                // Only the origin is checked: a client whose iframe left the
-                // DOM undestroyed would act on a newer iframe's events.
-                if (!iframe.isConnected) {
-                    void destroy({ detachOnly: true });
-                    return;
-                }
                 lifecycleManager.handleEvent(event);
             },
         },
@@ -164,63 +160,20 @@ export async function createIFrameFrakClient({
         sdkConfigStore.clearCache();
         sdkConfigStore.reset();
     };
+    iframe.addEventListener(
+        IFRAME_REPLACED_EVENT,
+        () => void destroy({ detachOnly: true }),
+        { once: true }
+    );
 
-    let openPanel: OpenPanel | undefined;
+    const openPanel = createSdkOpenPanel(resolvedClientId);
     let track: TrackLifecycle | undefined;
-    if (
-        process.env.OPEN_PANEL_API_URL &&
-        process.env.OPEN_PANEL_SDK_CLIENT_ID
-    ) {
-        openPanel = new OpenPanel({
-            apiUrl: process.env.OPEN_PANEL_API_URL,
-            clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
-            // Off on a merchant's page: `sdk_initialized` already counts page
-            // loads, component impressions are the CTA denominator, and both
-            // auto-trackers collect the merchant's own traffic, not ours.
-            trackScreenViews: false,
-            trackOutgoingLinks: false,
-            // Never enable: `data-track` would let partner markup name events
-            // and ship arbitrary `data-*` values into our project.
-            trackAttributes: false,
-            // We use a filter to ensure we got the open panel instance initialized
-            //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
-            filter: ({ type, payload }) => {
-                if (type !== "track") return true;
-                if (!payload?.properties) return true;
-
-                // Check if we we got the properties once initialized
-                if (!("sdk_version" in payload.properties)) {
-                    payload.properties = {
-                        ...payload.properties,
-                        sdk_version: process.env.SDK_VERSION,
-                        ...(resolvedClientId && {
-                            user_anonymous_client_id: resolvedClientId,
-                            __deviceId: resolvedClientId,
-                        }),
-                    };
-                }
-
-                return true;
-            },
-        });
-        // `__deviceId` overrides OpenPanel's project + IP + user-agent device
-        // hash, which rotates daily and collides behind shared egress. Keying on
-        // the SDK's own persistent id is what lets a funnel cross from this page
-        // into the iframe and the wallet, which resolve the same id.
-        openPanel.setGlobalProperties({
-            sdk_version: process.env.SDK_VERSION,
-            ...(resolvedClientId && {
-                user_anonymous_client_id: resolvedClientId,
-                __deviceId: resolvedClientId,
-            }),
-        });
-        openPanel.init();
+    if (openPanel) {
         openPanel.track("sdk_initialized", {
             sdk_version: process.env.SDK_VERSION,
         });
 
-        const panel = openPanel;
-        track = (event, properties) => panel.track(event, properties);
+        track = (event, properties) => openPanel.track(event, properties);
         trackHandshake({
             track,
             isConnected: lifecycleManager.isConnected,
@@ -231,6 +184,8 @@ export async function createIFrameFrakClient({
 
     const waitForSetup = postConnectionSetup({
         config,
+        iframe,
+        detach: () => void destroy({ detachOnly: true }),
         rpcClient,
         lifecycleManager,
         configPromise,
@@ -417,6 +372,8 @@ async function buildSdkIdentity({
  */
 async function postConnectionSetup({
     config,
+    iframe,
+    detach,
     rpcClient,
     lifecycleManager,
     configPromise,
@@ -426,6 +383,8 @@ async function postConnectionSetup({
     clientId,
 }: {
     config: FrakWalletSdkConfig;
+    iframe: HTMLIFrameElement;
+    detach: () => void;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
     configPromise: Promise<MerchantConfigResult> | undefined;
@@ -632,7 +591,7 @@ async function postConnectionSetup({
         });
     }
 
-    return setupProofFreshnessRepush(sendLifecycleConfig);
+    return setupProofFreshnessRepush(sendLifecycleConfig, iframe, detach);
 }
 
 /** Half of `frak-merge-v1`'s 600 s window, so a stored proof is never stale. */
@@ -647,13 +606,20 @@ const PROOF_REPUSH_MIN_INTERVAL_MS = 60 * 1000;
  * otherwise present one past its window. The listener is last-write-wins.
  */
 function setupProofFreshnessRepush(
-    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>
+    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>,
+    iframe: HTMLIFrameElement,
+    detach: () => void
 ): () => void {
     if (typeof document === "undefined") return () => {};
 
     let lastRepushAt = 0;
 
     const repush = (throttled: boolean) => {
+        // The iframe can leave the DOM without destroy().
+        if (!iframe.isConnected) {
+            detach();
+            return;
+        }
         if (document.visibilityState !== "visible") return;
         if (!sdkConfigStore.isResolved) return;
         const now = Date.now();

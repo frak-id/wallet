@@ -9,7 +9,7 @@ bun run shopify:dev      # Direct Shopify CLI (no SST env); root `bun run dev` o
 bun run build            # react-router build
 bun run typecheck        # react-router typegen && tsc --noEmit — covers extensions/*/src too
 bun run db:generate      # Drizzle migration into drizzle/prod/ only when STAGE=production
-bun run db:migrate       # Apply migrations
+bun run db:migrate       # Apply migrations (deploys run it as the `ShopifyMigrate` Job before the pod rolls)
 bun run shopify:deploy / :deploy:prod # Shopify app + extensions (regenerates stage artifacts first)
 bun run gen:stage                     # Rewrite the generated stage artifacts to the prod table
 
@@ -41,6 +41,7 @@ bun run deploy-gcp:staging / deploy-gcp:prod   # the SSR server on GKE
 - **Imports**: relative, or the `app/*` / `db/*` tsconfig paths (resolved by Vite's native `resolve.tsconfigPaths`). There is no `@/*` alias.
 - **Stage naming**: the deployed stages are `gcp-staging` / `gcp-production`, so runtime `STAGE` is `staging` / `production`. `isProd()` (`utils/env.ts`) also accepts `prod`; `drizzle.config.ts` does not, so `STAGE=prod bun run db:generate` writes into `drizzle/dev/`.
 - **Session-loss traps**: no bare `<a>`, no `redirect` from `react-router` in auth routes, no lowercase `<form/>` — embedded app loses Shopify session. Use `Link`/`Form`/`useFetcher()` and `redirect` from `authenticate.admin`.
+- **Offline tokens expire, and the admin never refreshes them**: `future.expiringOfflineAccessTokens` is on. `authenticate.admin` re-runs token exchange once the token is within 5 min of expiry; only webhooks and the app proxy use the refresh token, and neither needs `admin`. `db/adapter/sessionAdapter.ts` must write `null`, never `undefined` — the upsert's SET skips `undefined`, so a token the library cleared after a 401 would survive and bounce the merchant forever — and it hides non-expiring offline tokens so the admin exchanges them. A shop stuck anyway: `bun scripts/resetOfflineSession.ts --shop <domain> --apply` in the shopify pod, then the merchant reopens the app.
 - **Webhooks**: app topics are declared per config in `shopify.app.*.toml` (no `afterAuth` registration) and land on `/webhooks`. `ORDERS_UPDATED` is the exception: onboarding creates it with `webhookSubscriptionCreate`, pointed at the backend, which accepts any `x-shopify-api-version` ≥ 2024-10.
 - **The API version moves as a set**: `ApiVersion.*` in `app/shopify.server.ts`, both app tomls, the three extension tomls and `@shopify/ui-extensions`. The list is in `extensions/AGENTS.md`. A new version also needs a `@shopify/shopify-api` that exports it.
 - **Storefront origins are baked at deploy, not read from metafields**: dev and prod are two different Shopify apps, so `scripts/generateStageArtifacts.ts` writes the wallet/backend/SDK origins into `extensions/theme-components/blocks/listener.liquid` (the `frak:stage` region) and `extensions/checkout-post-purchase/src/frakStage.gen.ts` before each deploy. Both are committed on the **prod** table and gated by `bun run check:shopify-stage` inside root `lint` — `shopify app deploy` uploads the working tree, so a stale dev generation would reach every merchant. See `extensions/AGENTS.md`.

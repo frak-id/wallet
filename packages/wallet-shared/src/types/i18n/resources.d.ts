@@ -547,6 +547,7 @@ export default interface Resources {
         "submit": "Join",
         "title": "Join the game"
       },
+      "loading": "Loading the game…",
       "page": {
         "error": "Couldn't load the game.",
         "hero": {

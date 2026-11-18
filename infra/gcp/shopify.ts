@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { Input, Resource } from "@pulumi/pulumi";
+import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
 import {
     backendUrl,
@@ -92,6 +93,7 @@ const shopifyBuildEnv = {
  */
 const shopifyRuntimeEnv = {
     STAGE: normalizedStageName,
+    SHOPIFY_API_KEY: shopifyApiKey,
     SHOPIFY_APP_URL: shopifyAppUrl,
     SCOPES: shopifyScopes,
     ...targetDbEnv,
@@ -156,7 +158,24 @@ if (!$dev) {
     });
     runtimeSecretName = shopifySecrets.metadata.name;
 
-    serviceDeps.push(image, shopifySecrets);
+    // Pulumi awaits Job completion, so the Deployment only rolls once the
+    // schema matches the image. `STAGE` from the Secret picks drizzle/{dev,prod}.
+    const migrationJob = new KubernetesJob("ShopifyMigrate", {
+        namespace: walletNamespace.metadata.name,
+        appLabels: { app: "shopify-migrate" },
+        job: {
+            container: {
+                name: "migrate",
+                image: image.ref,
+                command: ["bun", "run", "db:migrate"],
+                envFrom: [
+                    { secretRef: { name: shopifySecrets.metadata.name } },
+                ],
+            },
+        },
+    });
+
+    serviceDeps.push(image, shopifySecrets, migrationJob);
 }
 
 /**

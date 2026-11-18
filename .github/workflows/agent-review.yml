@@ -1,0 +1,73 @@
+name: "🔬 Agent review (Atelier)"
+
+# On trial next to pr-review.yml: Atelier's agent-review action
+# (frak-id/atelier, actions/agent-review/README.md) reviews each non-draft
+# PR in an Atelier sandbox booted from this repo's prebuild at the PR's head.
+# Its pi agent reviews the merge base to the head (with sub-agents past 500
+# changed lines), and the job posts one review as github-actions[bot], with
+# findings kept across pushes (F1, F2…). Frak Bot's review is unchanged:
+# compare the two on the same PRs.
+#
+# Off while `vars.ATELIER_URL` is empty. `secrets.ATELIER_REVIEWER_API_KEY` is
+# frak-agents' key for the trial (`FRAK_AGENTS_API_KEY` in infra-core; set it
+# again after a rotation there). Its sandboxes get a token that writes to
+# every frak-id repo, and run the PR's code: give the reviews an account of
+# their own, wallet only and read only, before this outlives the trial.
+#
+# Runs on its own in-cluster scale set (infra-core `infra/hetzner/arc.ts`,
+# `frak-hetzner-wallet-review`): the job mostly waits on the agent, up to an
+# hour, which shouldn't hold a hosted runner, nor the deploys' scale set.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+
+# A newer push cancels the review in progress (its sandbox is destroyed), and
+# closing the PR cancels it too: that run only cleans up.
+concurrency:
+  group: agent-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: "🔬 Agent review (Atelier)"
+    # A fork's PR gets no secret, and its branch isn't one Atelier can boot:
+    # not reviewed. This filter only spares this workflow's fork runs: a fork
+    # runs its own copy of the file, so the runner's exposure to forks is the
+    # repo's fork-PR approval setting, as for every self-hosted job here.
+    if: >-
+      vars.ATELIER_URL != '' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot' &&
+      !(github.event.pull_request.head.ref == 'dev' &&
+        github.event.pull_request.base.ref == 'main') &&
+      (github.event.action == 'closed' || !github.event.pull_request.draft)
+    runs-on: 'frak-hetzner-wallet-review'
+    # The sandbox's boot (10 minutes at most), the agent (40), the posting. A
+    # closed PR's run only destroys sandboxes (a destroy waits up to 5
+    # minutes for one still being created).
+    timeout-minutes: ${{ github.event.action == 'closed' && 10 || 60 }}
+    permissions:
+      contents: read
+      # Posts the review and its progress comment, collapses the earlier ones.
+      pull-requests: write
+    steps:
+      - name: "🔬 Review"
+        uses: frak-id/atelier/actions/agent-review@40d4dc2ff7a953e88d6816b012bdbfb0b1235929 # main
+        with:
+          atelier-url: ${{ vars.ATELIER_URL }}
+          api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}
+
+      # Cancelled mid-review (a newer push, the timeout): the step above
+      # couldn't destroy its sandbox. Only this head's: the newer push's run
+      # may have its own already.
+      - name: "🧹 Destroy the cancelled review's sandbox"
+        if: cancelled()
+        uses: frak-id/atelier/actions/agent-review@40d4dc2ff7a953e88d6816b012bdbfb0b1235929 # main
+        with:
+          atelier-url: ${{ vars.ATELIER_URL }}
+          api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}
+          mode: cleanup-head

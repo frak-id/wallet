@@ -23,10 +23,6 @@ const {
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => navigate,
     Link: () => null,
-    Navigate: (props: object) => {
-        navigate(props);
-        return null;
-    },
 }));
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
@@ -148,12 +144,13 @@ describe("JoinGamePage", () => {
         expect(screen.queryByText(/game.prizeToWin/)).toBeNull();
     });
 
-    it("leaves the hero out for a player already in the game", () => {
+    it("leaves the hero and the view count out for a player already in the game", () => {
         currentGame.data = openGame(true, null);
         render(<JoinGamePage />);
 
         expect(screen.queryByText("game.join.hero.title")).toBeNull();
         expect(screen.getByText("game.join.description")).toBeInTheDocument();
+        expect(trackEvent).not.toHaveBeenCalled();
     });
 
     it("lists the past games under the code form, each opening its result", () => {
@@ -182,19 +179,6 @@ describe("JoinGamePage", () => {
         expect(trackEvent).toHaveBeenCalledWith("game_code_entry_viewed", {
             prefilled: true,
         });
-    });
-
-    it("sends a code to the referral page when no game is open", () => {
-        currentGame.data = { game: null, me: { participating: false } };
-        render(<JoinGamePage initialCode="LOLA10" />);
-
-        expect(navigate).toHaveBeenCalledWith({
-            to: "/profile/referral/redeem",
-            search: { code: "LOLA10" },
-            replace: true,
-        });
-        expect(screen.queryByText("game.join.title")).toBeNull();
-        expect(trackEvent).not.toHaveBeenCalled();
     });
 
     it.each([

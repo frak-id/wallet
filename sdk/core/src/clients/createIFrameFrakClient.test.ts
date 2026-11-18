@@ -14,6 +14,7 @@ vi.mock("@openpanel/web", () => ({
 vi.mock("../config/clientId", () => ({
     getClientId: vi.fn(() => "anon-client-id"),
     getClientIdAsync: vi.fn(async () => "anon-client-id"),
+    initClientId: vi.fn(async () => "anon-client-id"),
 }));
 
 vi.mock("../identity/sign", () => ({
@@ -331,6 +332,35 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         }
     });
 
+    test("a client detaches as soon as createIframe replaces its iframe", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createIframe } = await import("../utils/iframe/iframeHelper");
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+        iframe.id = "frak-wallet";
+
+        await createIFrameFrakClient({ config: baseConfig(), iframe });
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        vi.mocked(sdkConfigStore.reset).mockClear();
+
+        const replacement = createIframe({ config: baseConfig() });
+
+        expect(iframe.isConnected).toBe(false);
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+        expect(sdkConfigStore.reset).not.toHaveBeenCalled();
+        expect(sdkConfigStore.clearCache).not.toHaveBeenCalled();
+        await vi.waitFor(() =>
+            expect(document.querySelectorAll("#frak-wallet")).toHaveLength(1)
+        );
+        document
+            .querySelector("#frak-wallet")
+            ?.dispatchEvent(new Event("load"));
+        await replacement;
+    });
+
     test("destroy({ detachOnly }) stops the client but keeps the iframe and the cached config", async () => {
         const { createIFrameFrakClient } = await import(
             "./createIFrameFrakClient"
@@ -351,33 +381,6 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         expect(iframe.isConnected).toBe(true);
         expect(sdkConfigStore.clearCache).not.toHaveBeenCalled();
         expect(sdkConfigStore.reset).not.toHaveBeenCalled();
-    });
-
-    test("a client whose iframe left the DOM detaches instead of handling lifecycle events", async () => {
-        const { createIFrameFrakClient } = await import(
-            "./createIFrameFrakClient"
-        );
-        const { createRpcClient } = await import("@frak-labs/frame-connector");
-        const { createIFrameLifecycleManager } = await import(
-            "./transports/iframeLifecycleManager"
-        );
-        const iframe = makeIframe();
-        await createIFrameFrakClient({ config: baseConfig(), iframe });
-        const { lifecycleHandlers } =
-            vi.mocked(createRpcClient).mock.calls[0][0];
-        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
-        const { handleEvent } = vi.mocked(createIFrameLifecycleManager).mock
-            .results[0].value;
-        const event = { iframeLifecycle: "show" } as const;
-        const context = { origin: "https://wallet.frak.id", source: null };
-
-        lifecycleHandlers?.iframeLifecycle?.(event, context);
-        expect(handleEvent).toHaveBeenCalledTimes(1);
-
-        iframe.remove();
-        lifecycleHandlers?.iframeLifecycle?.(event, context);
-        expect(handleEvent).toHaveBeenCalledTimes(1);
-        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
     });
 
     test("destroy() still removes the iframe and clears the cached config", async () => {
@@ -566,6 +569,44 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    test("detaches instead of re-pushing once its iframe left the DOM", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+        const { sdkConfigStore } = await import("../config/sdkConfigStore");
+        const iframe = makeIframe();
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe,
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+        await client.waitForSetup;
+        const rpcClient = vi.mocked(createRpcClient).mock.results[0].value;
+        const beforeRepush = resolvedConfigCalls().length;
+        vi.mocked(sdkConfigStore.reset).mockClear();
+
+        iframe.remove();
+        Object.defineProperty(document, "visibilityState", {
+            value: "visible",
+            configurable: true,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+        await vi.waitFor(() => expect(rpcClient.cleanup).toHaveBeenCalled());
+        document.dispatchEvent(new Event("visibilitychange"));
+        await Promise.resolve();
+
+        expect(rpcClient.cleanup).toHaveBeenCalledTimes(1);
+        expect(resolvedConfigCalls()).toHaveLength(beforeRepush);
+        expect(sdkConfigStore.reset).not.toHaveBeenCalled();
     });
 
     test("ignores a visibilitychange that leaves the tab hidden", async () => {

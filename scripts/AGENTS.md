@@ -155,6 +155,9 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
 - **It posts as Frak Bot, a GitHub App**: `vars.FRAK_BOT_CLIENT_ID` + `secrets.FRAK_BOT_PRIVATE_KEY`.
   Comments are found again by marker and by the App's own login, because an App can only edit or
   delete its own comments. Each run deletes the previous run's inline comments that nobody replied to.
+- **A second reviewer is on trial**: `.github/workflows/agent-review.yml` runs Atelier's agent-review
+  action, which reviews in an Atelier sandbox and posts as `github-actions[bot]`. It shares nothing
+  with this one (its own markers, account and state), and stays off until `vars.ATELIER_URL` is set.
 
 ## Anti-Patterns
 

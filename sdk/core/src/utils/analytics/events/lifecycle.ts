@@ -31,12 +31,12 @@ export type SdkLifecycleEventMap = {
         | ({ reason: "asset_push" } & SdkAssetPushContext)
         | { reason: "unknown" };
     /**
-     * Emitted by the CDN bootstrap when `initFrakSdk()` throws before a
-     * client is available. Uses a transient OpenPanel instance so broken
-     * partner integrations are still captured.
+     * Emitted once per failed `initFrakSdk()` attempt in the CDN bootstrap,
+     * through a transient OpenPanel instance since no client exists yet.
      */
     sdk_init_failed: {
         reason: string;
         config_missing?: boolean;
+        domain?: string;
     };
 };

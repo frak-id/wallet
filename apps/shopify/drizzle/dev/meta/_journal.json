@@ -22,6 +22,13 @@
             "when": 1746724353070,
             "tag": "0002_flaky_baron_zemo",
             "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "7",
+            "when": 1794922703694,
+            "tag": "0003_curved_radioactive_man",
+            "breakpoints": true
         }
     ]
 }

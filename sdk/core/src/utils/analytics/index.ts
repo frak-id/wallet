@@ -6,4 +6,5 @@ export type {
     SdkLifecycleEventMap,
     SdkReferralEventMap,
 } from "./events";
+export { createSdkOpenPanel } from "./openPanel";
 export { trackEvent } from "./trackEvent";

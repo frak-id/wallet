@@ -50,7 +50,7 @@ export async function doSomething(
 - **Metafield namespace**: `"frak"`. Keys: `modal_i18n`, `appearance`, `merchant_id`, `ambassador_page` (read by `proxy/ambassador.liquid`). Values: JSON-stringified.
 - **Generic helpers**: `metafields.ts` has `readMetafield<T>()` / `writeMetafield<T>()` — reuse for new metafields.
 - **Error handling**: try-catch, return `null`/`undefined` on failure. Never throw from services.
-- **Logging**: use the structured pino logger (`import { log } from "./logger"`), never `console.*` (on GKE `console.warn` is misclassified as ERROR severity). Pattern: `log.error({ err, merchantId }, "short message")`. Per-request `reqId`/`shop`/`merchantId`/`route` are attached automatically via the request context (root `middleware` + `setRequestContext`). For backend/HTTP errors branch severity with `levelForStatus(status)` (404 → info, other 4xx → warn, 5xx → error).
+- **Logging**: use the structured pino logger (`import { log } from "./logger"`), never `console.*` (on GKE `console.warn` is misclassified as ERROR severity). Pattern: `log.error({ err, merchantId }, "short message")`. Per-request `reqId`/`shop`/`merchantId`/`route` are attached automatically via the request context (root `middleware` + `setRequestContext`). For backend/HTTP errors branch severity with `levelForStatus(status)` (404 → info, other 4xx → warn, 5xx → error). A Drizzle error's message, stack and `params` carry the bound values (session tokens included): the logger's `logMethod` hook (`redactQueryParams`) strips them from errors and from top-level strings, so log the error object rather than copying `err.params` or its message into a nested field.
 - **Tests**: Co-located `*.test.ts` files. Run with `bun run test`.
 
 ## DEPENDENCY GRAPH
