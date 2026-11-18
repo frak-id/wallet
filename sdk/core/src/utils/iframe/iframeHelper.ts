@@ -28,6 +28,9 @@ export const baseIframeProps = {
     },
 };
 
+/** An event, not module state: the replaced client may come from another SDK bundle. */
+export const IFRAME_REPLACED_EVENT = "frak:iframe-replaced";
+
 /**
  * Create the Frak iframe
  * @param args
@@ -43,6 +46,7 @@ export async function createIframe({
 
     // If the iframe is already created, remove it
     if (alreadyCreatedIFrame) {
+        alreadyCreatedIFrame.dispatchEvent(new Event(IFRAME_REPLACED_EVENT));
         alreadyCreatedIFrame.remove();
     }
 

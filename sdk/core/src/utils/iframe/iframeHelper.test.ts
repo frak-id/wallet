@@ -130,6 +130,7 @@ describe("iframeHelper", () => {
 
         it("should remove existing iframe before creating new one", async () => {
             const existingIframe = {
+                dispatchEvent: vi.fn(),
                 remove: vi.fn(),
             } as unknown as HTMLIFrameElement;
 
