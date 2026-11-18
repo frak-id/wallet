@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createRequire } from "node:module";
 import { isRunningLocally } from "@frak-labs/app-essentials";
+import { redactQueryParams } from "@frak-labs/app-essentials/utils/redactQueryParams";
 import { pino } from "pino";
 
 /**
@@ -82,6 +83,13 @@ export const log = pino({
     // Merge the request-scoped correlation fields into every line.
     mixin() {
         return requestContextStore.getStore() ?? {};
+    },
+    // A failed session upsert would otherwise log the shop's access and refresh tokens
+    hooks: {
+        logMethod(args, method) {
+            redactQueryParams(args);
+            method.apply(this, args);
+        },
     },
     transport: isRunningLocally
         ? {

@@ -37,6 +37,11 @@
       "import": "./src/utils/env.ts",
       "default": "./src/utils/env.ts"
     },
+    "./utils/redactQueryParams": {
+      "types": "./src/utils/redactQueryParams.ts",
+      "import": "./src/utils/redactQueryParams.ts",
+      "default": "./src/utils/redactQueryParams.ts"
+    },
     "./utils/platform": {
       "types": "./src/utils/platform.ts",
       "import": "./src/utils/platform.ts",
