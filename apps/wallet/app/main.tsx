@@ -24,9 +24,12 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
 import { registerAppLaunch } from "@/module/common/utils/maybeAskForReview";
 import { initNativeGlass } from "@/module/native-glass/bridge";
+import { runOtaBootGate } from "@/module/version/utils/otaBootGate";
+import { hideBootSplash } from "./utils/bootSplash";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
+import { trackUserInteraction } from "./utils/userInteraction";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -127,17 +130,30 @@ declare module "@tanstack/react-router" {
     }
 }
 
+/** The router's default `pendingMs`: past it, its pending UI beats a splash. */
+const BOOT_SPLASH_MAX_WAIT_MS = 1_000;
+
+function dismissNativeSplash() {
+    (
+        window as unknown as {
+            NativeSplash?: { dismiss(): void };
+        }
+    ).NativeSplash?.dismiss();
+}
+
 async function main() {
+    const firstLoadSettled = new Promise<void>((resolve) => {
+        const unsubscribe = router.subscribe("onResolved", () => {
+            unsubscribe();
+            resolve();
+        });
+    });
+
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
+        trackUserInteraction();
         await initNativeGlass();
         initKeyboardInset();
-        const firstLoadSettled = new Promise<void>((resolve) => {
-            const unsubscribe = router.subscribe("onResolved", () => {
-                unsubscribe();
-                resolve();
-            });
-        });
         await initDeepLinks((options) => {
             return router.navigate(
                 options as Parameters<typeof router.navigate>[0]
@@ -182,6 +198,15 @@ async function main() {
             },
         });
 
+    if (IS_TAURI) {
+        // Android holds its native splash until now; the boot splash looks identical.
+        dismissNativeSplash();
+        if ((await runOtaBootGate(queryClient)) === "reload") {
+            location.reload();
+            return;
+        }
+    }
+
     const rootElement = document.getElementById("root");
     if (!rootElement) {
         throw new Error("Root element not found");
@@ -198,15 +223,14 @@ async function main() {
         );
     });
 
-    if (IS_TAURI) registerAppLaunch();
-
-    // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
     if (IS_TAURI) {
-        (
-            window as unknown as {
-                NativeSplash?: { dismiss(): void };
-            }
-        ).NativeSplash?.dismiss();
+        registerAppLaunch();
+        const maxWait = new Promise((resolve) =>
+            setTimeout(resolve, BOOT_SPLASH_MAX_WAIT_MS)
+        );
+        void Promise.race([firstLoadSettled, maxWait]).then(() =>
+            requestAnimationFrame(hideBootSplash)
+        );
     }
 }
 

@@ -1717,6 +1717,10 @@
                 "cta": "Redémarrer"
             },
             "dismiss": "Plus tard"
+        },
+        "otaBoot": {
+            "checking": "Recherche de mises à jour…",
+            "downloading": "Téléchargement de la dernière version…"
         }
     }
 }

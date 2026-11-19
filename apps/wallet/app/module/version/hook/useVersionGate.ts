@@ -3,7 +3,7 @@ import {
     IS_IOS,
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
-import { authenticatedBackendApi, recordError } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginListener } from "@tauri-apps/api/core";
 import { useEffect } from "react";
@@ -14,7 +14,7 @@ import {
     listenToNativeUpdateStatus,
     type NativeUpdateStatus,
 } from "../utils/nativeUpdater";
-import { stageOtaUpdate } from "../utils/otaUpdater";
+import { otaUpdateQueryOptions } from "../utils/otaUpdateQuery";
 
 export type VersionGateState =
     | { kind: "idle" }
@@ -136,19 +136,9 @@ export function useVersionGate(): VersionGateState {
     });
 
     const ota = useQuery({
-        queryKey: versionKey.otaUpdate,
-        queryFn: () =>
-            stageOtaUpdate().catch((error: unknown) => {
-                recordError(error, { source: "ota_update" });
-                throw error;
-            }),
+        ...otaUpdateQueryOptions,
         enabled: IS_TAURI,
-        // A staged bundle stays staged until the reload: re-checking could hide the prompt.
-        staleTime: (query) =>
-            query.state.data?.status === "staged" ? "static" : STALE_TIME_MS,
         refetchOnWindowFocus: true,
-        retry: false,
-        meta: { storable: false },
     });
 
     // Subscribe to the native push channel on Android so download progress
