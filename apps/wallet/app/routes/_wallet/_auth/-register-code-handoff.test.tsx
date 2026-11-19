@@ -115,9 +115,9 @@ const RegisterPage = Route.options.component as () => React.ReactElement;
 
 const merchant = { name: "Acme", domain: "acme.test" };
 
-const reachReferralCode = () => {
+const reachReferralCode = (continues = 4) => {
     render(<RegisterPage />);
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < continues; i++) {
         fireEvent.click(screen.getByRole("button", { name: "continue" }));
     }
     const modal = modalStore.getState().modal;
@@ -135,10 +135,11 @@ describe("RegisterPage — codes typed in the wrong field", () => {
         track.mockClear();
     });
 
-    test("a referral code from /reward-code is prefilled in the referral step", () => {
+    test("a referral code from /reward-code skips the slides and is prefilled in the referral step", () => {
         search.current = { ref: "RJFK56", refSource: "reward_code" };
 
-        reachReferralCode();
+        // Email step, then secure-space step: the two marketing slides are gone.
+        reachReferralCode(2);
         expect(screen.getByText("prefill-RJFK56")).toBeInTheDocument();
 
         fireEvent.click(
