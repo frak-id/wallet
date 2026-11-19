@@ -25,6 +25,10 @@ vi.mock("i18next", () => ({
 
 const CHANNEL = "prod-ios-1-2-3";
 
+function gatedChannel() {
+    return localStorage.getItem("frak_ota_boot_gate_channel");
+}
+
 function resolveAfter(ms: number, result: OtaUpdateResult) {
     return new Promise<OtaUpdateResult>((resolve) =>
         setTimeout(() => resolve(result), ms)
@@ -71,6 +75,7 @@ describe("runOtaBootGate", () => {
         stageOtaUpdateMock.mockResolvedValue({ status: "staged" });
 
         expect(await runOtaBootGate(client)).toBe("reload");
+        expect(gatedChannel()).toBe(CHANNEL);
     });
 
     it("fades the status out before reloading", async () => {
@@ -107,6 +112,7 @@ describe("runOtaBootGate", () => {
         stageOtaUpdateMock.mockRejectedValue(new Error("offline"));
 
         expect(await runOtaBootGate(client)).toBe("render");
+        expect(gatedChannel()).toBe(CHANNEL);
     });
 
     it("gives up at the cap and leaves the check running in the shared cache", async () => {
@@ -119,6 +125,7 @@ describe("runOtaBootGate", () => {
         const outcome = runOtaBootGate(client);
         await vi.advanceTimersByTimeAsync(OTA_BOOT_GATE_TIMEOUT_MS);
         expect(await outcome).toBe("render");
+        expect(gatedChannel()).toBe(CHANNEL);
 
         await vi.advanceTimersByTimeAsync(5_000);
         expect(client.getQueryData(versionKey.otaUpdate)).toEqual({

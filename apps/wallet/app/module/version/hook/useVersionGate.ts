@@ -15,6 +15,7 @@ import {
     type NativeUpdateStatus,
 } from "../utils/nativeUpdater";
 import { otaUpdateQueryOptions } from "../utils/otaUpdateQuery";
+import { VERSION_STALE_TIME_MS } from "../utils/staleTime";
 
 export type VersionGateState =
     | { kind: "idle" }
@@ -26,12 +27,6 @@ export type VersionGateState =
     | { kind: "soft_update_in_progress" }
     | { kind: "soft_update_downloaded" }
     | { kind: "ota_ready" };
-
-/**
- * 5 min cache: the wallet refetches on focus anyway, this just avoids
- * spamming Apple's iTunes endpoint and our backend during fast nav.
- */
-const STALE_TIME_MS = 5 * 60 * 1000;
 
 const minVersionQueryOptions = {
     queryKey: versionKey.minSupported,
@@ -81,7 +76,7 @@ function isBlockedByFloor(
 const nativeUpdateQueryOptions = {
     queryKey: versionKey.nativeStatus,
     queryFn: async (): Promise<NativeUpdateStatus> => checkNativeUpdate(),
-    staleTime: STALE_TIME_MS,
+    staleTime: VERSION_STALE_TIME_MS,
     refetchOnWindowFocus: true,
 } as const;
 
@@ -119,7 +114,7 @@ export function useVersionGate(): VersionGateState {
                     query.state.data?.[platformKey]
                 )
                 ? 0
-                : STALE_TIME_MS;
+                : VERSION_STALE_TIME_MS;
         },
     });
     const native = useQuery({
