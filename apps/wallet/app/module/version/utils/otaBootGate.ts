@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
-import { setBootSplashStatus } from "@/utils/bootSplash";
+import { clearBootSplashStatus, setBootSplashStatus } from "@/utils/bootSplash";
 import { otaUpdateQueryOptions } from "./otaUpdateQuery";
 import { getOtaChannel } from "./otaUpdater";
 
@@ -10,9 +10,9 @@ const GATED_CHANNEL_KEY = "frak_ota_boot_gate_channel";
 export const OTA_BOOT_GATE_TIMEOUT_MS = 8_000;
 
 const STATUS_STEPS = [
-    { afterMs: 600, key: "version.otaBoot.checking" },
+    { afterMs: 300, key: "version.otaBoot.checking" },
     // An up-to-date answer is one small request: still running here means a bundle is downloading.
-    { afterMs: 2_500, key: "version.otaBoot.downloading" },
+    { afterMs: 1_500, key: "version.otaBoot.downloading" },
 ] as const;
 
 type StatusKey = (typeof STATUS_STEPS)[number]["key"];
@@ -46,9 +46,10 @@ export async function runOtaBootGate(
     stopStatus();
     localStorage.setItem(GATED_CHANNEL_KEY, channel);
 
-    if (result?.status === "staged") return "reload";
-    setBootSplashStatus(null);
-    return "render";
+    if (result?.status !== "staged") return "render";
+    // The reloaded page starts without the line: fade it now rather than have it vanish.
+    await clearBootSplashStatus();
+    return "reload";
 }
 
 function showStatusWhileSlow(): () => void {

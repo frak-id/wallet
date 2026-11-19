@@ -1,13 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+    clearBootSplashStatus,
     hideBootSplash,
     setBootSplashStatus,
-    showBootSplash,
 } from "./bootSplash";
 
 function splash() {
     const element = document.getElementById("boot-splash");
     if (!element) throw new Error("boot splash missing");
+    return element;
+}
+
+function status() {
+    const element = document.querySelector(".boot-splash-status");
+    if (!element) throw new Error("status missing");
     return element;
 }
 
@@ -25,34 +31,50 @@ describe("boot splash", () => {
         vi.useRealTimers();
     });
 
-    it("fades out, then hides and clears its status", () => {
+    it("keeps the text while the status fades out", () => {
+        setBootSplashStatus("Downloading");
+        setBootSplashStatus(null);
+
+        expect(status().hasAttribute("data-visible")).toBe(false);
+        expect(status().textContent).toBe("Downloading");
+    });
+
+    it("resolves the status fade only once it is over", async () => {
+        setBootSplashStatus("Downloading");
+        let done = false;
+        void clearBootSplashStatus().then(() => {
+            done = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(249);
+        expect(done).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(done).toBe(true);
+    });
+
+    it("does not wait to clear a status nobody saw", async () => {
+        await expect(clearBootSplashStatus()).resolves.toBeUndefined();
+    });
+
+    it("plays the exit, then hides and clears its status", () => {
         setBootSplashStatus("Downloading");
 
         hideBootSplash();
         expect(splash().hasAttribute("data-leaving")).toBe(true);
+        vi.advanceTimersByTime(449);
         expect(splash().hidden).toBe(false);
 
-        vi.advanceTimersByTime(200);
+        vi.advanceTimersByTime(1);
         expect(splash().hidden).toBe(true);
-        expect(splash().textContent?.trim()).toBe("");
-    });
-
-    it("comes back over a fade that has not finished", () => {
-        hideBootSplash();
-        showBootSplash();
-
-        vi.advanceTimersByTime(200);
-        expect(splash().hidden).toBe(false);
         expect(splash().hasAttribute("data-leaving")).toBe(false);
+        expect(status().textContent).toBe("");
     });
 
-    it("does nothing when the page has no splash", () => {
+    it("does nothing when the page has no splash", async () => {
         document.body.innerHTML = "";
 
-        expect(() => {
-            setBootSplashStatus("x");
-            hideBootSplash();
-            showBootSplash();
-        }).not.toThrow();
+        setBootSplashStatus("x");
+        hideBootSplash();
+        await expect(clearBootSplashStatus()).resolves.toBeUndefined();
     });
 });

@@ -1,8 +1,6 @@
 import { sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect, useState } from "react";
 import { useStore } from "zustand";
-import { showBootSplash } from "@/utils/bootSplash";
-import { hasUserInteracted } from "@/utils/userInteraction";
 import { useVersionGate } from "../hook/useVersionGate";
 import { HardUpdateGate } from "./HardUpdateGate";
 import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
@@ -48,15 +46,6 @@ export function VersionGate() {
         }
     }, [state, progressDismissed]);
 
-    // Logged out and untouched: nothing in flight to lose, so boot the bundle behind the splash.
-    useEffect(() => {
-        if (state.kind !== "ota_ready" || hasSession || hasUserInteracted()) {
-            return;
-        }
-        showBootSplash();
-        location.reload();
-    }, [state.kind, hasSession]);
-
     if (state.kind === "hard_update") {
         return (
             <HardUpdateGate
@@ -81,7 +70,7 @@ export function VersionGate() {
     }
 
     if (state.kind === "ota_ready") {
-        // Logged out: never interrupt onboarding; the next launch boots the bundle anyway.
+        // Logged out: never interrupt onboarding, never reload under the user; the next launch boots it.
         if (otaDismissed || !hasSession) return null;
         return (
             <SoftUpdatePrompt

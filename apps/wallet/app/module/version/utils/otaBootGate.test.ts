@@ -73,6 +73,24 @@ describe("runOtaBootGate", () => {
         expect(await runOtaBootGate(client)).toBe("reload");
     });
 
+    it("fades the status out before reloading", async () => {
+        stageOtaUpdateMock.mockReturnValue(
+            resolveAfter(2_000, { status: "staged" })
+        );
+
+        let outcome: string | undefined;
+        void runOtaBootGate(client).then((value) => {
+            outcome = value;
+        });
+        await vi.advanceTimersByTimeAsync(2_000);
+        expect(statusVisible()).toBe(false);
+        expect(statusText()).toBe("version.otaBoot.downloading");
+        expect(outcome).toBeUndefined();
+
+        await vi.advanceTimersByTimeAsync(250);
+        expect(outcome).toBe("reload");
+    });
+
     it("gates each binary only once", async () => {
         stageOtaUpdateMock.mockResolvedValue({ status: "up_to_date" });
 
@@ -101,7 +119,6 @@ describe("runOtaBootGate", () => {
         const outcome = runOtaBootGate(client);
         await vi.advanceTimersByTimeAsync(OTA_BOOT_GATE_TIMEOUT_MS);
         expect(await outcome).toBe("render");
-        expect(statusVisible()).toBe(false);
 
         await vi.advanceTimersByTimeAsync(5_000);
         expect(client.getQueryData(versionKey.otaUpdate)).toEqual({
@@ -112,11 +129,11 @@ describe("runOtaBootGate", () => {
 
     it("shows no status when the answer is quick", async () => {
         stageOtaUpdateMock.mockReturnValue(
-            resolveAfter(300, { status: "up_to_date" })
+            resolveAfter(250, { status: "up_to_date" })
         );
 
         const outcome = runOtaBootGate(client);
-        await vi.advanceTimersByTimeAsync(300);
+        await vi.advanceTimersByTimeAsync(250);
         await outcome;
         await vi.advanceTimersByTimeAsync(5_000);
 
@@ -130,18 +147,30 @@ describe("runOtaBootGate", () => {
         );
 
         const outcome = runOtaBootGate(client);
-        await vi.advanceTimersByTimeAsync(599);
+        await vi.advanceTimersByTimeAsync(299);
         expect(statusVisible()).toBe(false);
 
         await vi.advanceTimersByTimeAsync(1);
         expect(statusText()).toBe("version.otaBoot.checking");
         expect(statusVisible()).toBe(true);
 
-        await vi.advanceTimersByTimeAsync(1_900);
+        await vi.advanceTimersByTimeAsync(1_200);
         expect(statusText()).toBe("version.otaBoot.downloading");
 
-        await vi.advanceTimersByTimeAsync(1_500);
+        await vi.advanceTimersByTimeAsync(2_750);
         expect(await outcome).toBe("reload");
-        expect(statusText()).toBe("version.otaBoot.downloading");
+    });
+
+    it("leaves the status for the splash exit when it renders", async () => {
+        stageOtaUpdateMock.mockReturnValue(
+            resolveAfter(500, { status: "up_to_date" })
+        );
+
+        const outcome = runOtaBootGate(client);
+        await vi.advanceTimersByTimeAsync(500);
+
+        expect(await outcome).toBe("render");
+        expect(statusVisible()).toBe(true);
+        expect(statusText()).toBe("version.otaBoot.checking");
     });
 });

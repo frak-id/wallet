@@ -33,21 +33,29 @@ const coverStore = create<{ full: number; bottom: number }>(() => ({
     bottom: 0,
 }));
 
+/** Holds native chrome back until the returned release runs; for surfaces outside React. */
+export function coverNativeChrome(extent: "full" | "bottom"): () => void {
+    const bump = (by: number) =>
+        coverStore.setState((s) =>
+            extent === "full"
+                ? { full: s.full + by }
+                : { bottom: s.bottom + by }
+        );
+    bump(1);
+    let released = false;
+    return () => {
+        if (released) return;
+        released = true;
+        bump(-1);
+    };
+}
+
 /**
  * Marks a web surface native chrome must not draw over while mounted: a
  * full-screen gate (`full`), or a prompt pinned to the bottom edge.
  */
 export function useCoverNativeChrome(extent: "full" | "bottom") {
-    useEffect(() => {
-        const bump = (by: number) =>
-            coverStore.setState((s) =>
-                extent === "full"
-                    ? { full: s.full + by }
-                    : { bottom: s.bottom + by }
-            );
-        bump(1);
-        return () => bump(-1);
-    }, [extent]);
+    useEffect(() => coverNativeChrome(extent), [extent]);
 }
 
 function useEdgeCovered(edge: NativeEdge): boolean {

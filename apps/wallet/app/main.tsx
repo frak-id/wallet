@@ -24,12 +24,12 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
 import { registerAppLaunch } from "@/module/common/utils/maybeAskForReview";
 import { initNativeGlass } from "@/module/native-glass/bridge";
+import { coverNativeChrome } from "@/module/native-glass/hook/useOverlayOpen";
 import { runOtaBootGate } from "@/module/version/utils/otaBootGate";
 import { hideBootSplash } from "./utils/bootSplash";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
-import { trackUserInteraction } from "./utils/userInteraction";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -151,7 +151,6 @@ async function main() {
 
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
-        trackUserInteraction();
         await initNativeGlass();
         initKeyboardInset();
         await initDeepLinks((options) => {
@@ -212,6 +211,9 @@ async function main() {
         throw new Error("Root element not found");
     }
 
+    // Native views paint above the webview: the tab bar would float over the splash.
+    const uncoverChrome = IS_TAURI ? coverNativeChrome("full") : undefined;
+
     startTransition(() => {
         const root = createRoot(rootElement);
         root.render(
@@ -229,7 +231,10 @@ async function main() {
             setTimeout(resolve, BOOT_SPLASH_MAX_WAIT_MS)
         );
         void Promise.race([firstLoadSettled, maxWait]).then(() =>
-            requestAnimationFrame(hideBootSplash)
+            requestAnimationFrame(() => {
+                hideBootSplash();
+                uncoverChrome?.();
+            })
         );
     }
 }

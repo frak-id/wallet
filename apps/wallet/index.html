@@ -22,14 +22,9 @@
             z-index: 2147483647;
             display: block;
             background: #ffffff;
-            transition: opacity 0.2s ease-out;
         }
         :root[data-os="android"] #boot-splash {
             --boot-logo-size: 90px;
-        }
-        #boot-splash[data-leaving] {
-            opacity: 0;
-            pointer-events: none;
         }
         .boot-splash-logo {
             position: absolute;
@@ -38,6 +33,9 @@
             width: var(--boot-logo-size);
             height: var(--boot-logo-size);
             transform: translate(-50%, -50%);
+            transition:
+                opacity 0.25s ease-in,
+                transform 0.3s cubic-bezier(0.4, 0, 1, 1);
         }
         .boot-splash-status {
             position: absolute;
@@ -49,10 +47,27 @@
             align-items: center;
             gap: 12px;
             opacity: 0;
-            transition: opacity 0.25s ease-out;
+            transform: translateY(4px);
+            transition:
+                opacity 0.25s ease-out,
+                transform 0.25s ease-out;
         }
         .boot-splash-status[data-visible] {
             opacity: 1;
+            transform: none;
+        }
+        /* Exit (450 ms, bootSplash.ts): the logo zooms out of view, then the backdrop uncovers the app. */
+        #boot-splash[data-leaving] {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-out 0.15s;
+        }
+        #boot-splash[data-leaving] .boot-splash-logo {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.08);
+        }
+        #boot-splash[data-leaving] .boot-splash-status {
+            opacity: 0;
         }
         .boot-splash-text {
             margin: 0;
@@ -92,6 +107,9 @@
                 width: 100%;
                 opacity: 0.4;
                 animation: none;
+            }
+            #boot-splash[data-leaving] .boot-splash-logo {
+                transform: translate(-50%, -50%);
             }
         }
         </style>

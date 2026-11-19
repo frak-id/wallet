@@ -11,23 +11,12 @@ import {
 import type { VersionGateState } from "../hook/useVersionGate";
 import { VersionGate } from "./VersionGate";
 
-const { useVersionGateMock, hasUserInteractedMock, showBootSplashMock } =
-    vi.hoisted(() => ({
-        useVersionGateMock: vi.fn<() => VersionGateState>(),
-        hasUserInteractedMock: vi.fn<() => boolean>(),
-        showBootSplashMock: vi.fn(),
-    }));
+const { useVersionGateMock } = vi.hoisted(() => ({
+    useVersionGateMock: vi.fn<() => VersionGateState>(),
+}));
 
 vi.mock("../hook/useVersionGate", () => ({
     useVersionGate: useVersionGateMock,
-}));
-
-vi.mock("@/utils/userInteraction", () => ({
-    hasUserInteracted: hasUserInteractedMock,
-}));
-
-vi.mock("@/utils/bootSplash", () => ({
-    showBootSplash: showBootSplashMock,
 }));
 
 vi.mock("./SoftUpdatePrompt", () => ({
@@ -41,8 +30,6 @@ describe("VersionGate with a staged OTA bundle", () => {
 
     beforeEach(() => {
         reload.mockReset();
-        showBootSplashMock.mockReset();
-        hasUserInteractedMock.mockReset().mockReturnValue(false);
         useVersionGateMock.mockReset().mockReturnValue({ kind: "ota_ready" });
         sessionStore.getState().clearSession();
         vi.stubGlobal("location", { ...window.location, reload });
@@ -52,17 +39,7 @@ describe("VersionGate with a staged OTA bundle", () => {
         vi.unstubAllGlobals();
     });
 
-    test("reloads behind the splash when logged out and untouched", () => {
-        render(<VersionGate />);
-
-        expect(showBootSplashMock).toHaveBeenCalledTimes(1);
-        expect(reload).toHaveBeenCalledTimes(1);
-        expect(screen.queryByText(/prompt:/)).toBeNull();
-    });
-
-    test("stays silent once a logged-out user has started something", () => {
-        hasUserInteractedMock.mockReturnValue(true);
-
+    test("stays silent for a logged-out user, without reloading", () => {
         render(<VersionGate />);
 
         expect(reload).not.toHaveBeenCalled();
