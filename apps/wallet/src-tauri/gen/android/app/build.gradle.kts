@@ -83,11 +83,6 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
-                jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
-                jniLibs.keepDebugSymbols.add("*/x86/*.so")
-                jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
-            }
         }
         getByName("release") {
             // Dev release builds (TestFlight/Play internal track) carry the
@@ -112,6 +107,10 @@ android {
             configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
                 nativeSymbolUploadEnabled = true
             }
+            // Same symbols for Play Console: packed into the AAB, picked up on upload.
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
     compileOptions {
@@ -124,6 +123,13 @@ android {
     buildFeatures {
         buildConfig = true
         resValues = true
+    }
+}
+
+// `packaging` inside a build type is the module-wide block, so debug-only unstripped libs need the variant API.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.packaging.jniLibs.keepDebugSymbols.add("**/*.so")
     }
 }
 
