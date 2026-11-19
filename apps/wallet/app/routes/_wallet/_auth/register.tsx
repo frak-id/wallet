@@ -155,6 +155,7 @@ function RegisterPage() {
     // Step state machine, transition helper, and per-step analytics tracking.
     const { step, stepRef, goToStep, flowRef } = useRegisterFlow({
         prefilledEmail,
+        refSource,
         onBeforeTransition: () => setLoginError(null),
     });
     // Hold the email collected on the `emailInput` step. Stays in component

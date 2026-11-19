@@ -50,10 +50,15 @@ export type GoToStep = (
  * Resolve the starting onboarding step. Arriving from `/login/email` with a
  * confirmed-unused prefilled email jumps straight to the secure-space step —
  * the email collection step would just re-ask for something already typed.
- * Otherwise start at the first marketing slide.
+ * A referral code handed over by `/reward-code` skips the marketing slides,
+ * whose first one links back to `/reward-code`.
  */
-export function resolveInitialRegisterStep(prefilledEmail?: string): FlowStep {
-    return prefilledEmail ? "onboardingThree" : "onboardingOne";
+export function resolveInitialRegisterStep(
+    prefilledEmail?: string,
+    refSource?: "reward_code"
+): FlowStep {
+    if (prefilledEmail) return "onboardingThree";
+    return refSource === "reward_code" ? "emailInput" : "onboardingOne";
 }
 
 /**
@@ -65,13 +70,15 @@ export function resolveInitialRegisterStep(prefilledEmail?: string): FlowStep {
  */
 export function useRegisterFlow({
     prefilledEmail,
+    refSource,
     onBeforeTransition,
 }: {
     prefilledEmail?: string;
+    refSource?: "reward_code";
     onBeforeTransition?: () => void;
 }) {
     const [step, setStep] = useState<FlowStep>(() =>
-        resolveInitialRegisterStep(prefilledEmail)
+        resolveInitialRegisterStep(prefilledEmail, refSource)
     );
     const flowRef = useRef<Flow | null>(null);
 

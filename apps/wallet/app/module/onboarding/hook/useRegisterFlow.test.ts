@@ -61,6 +61,12 @@ describe("resolveInitialRegisterStep", () => {
     test("jumps to the secure-space step when an email is prefilled", () => {
         expect(resolveInitialRegisterStep("a@b.co")).toBe("onboardingThree");
     });
+
+    test("starts at the email step for a referral code handed over by /reward-code", () => {
+        expect(resolveInitialRegisterStep(undefined, "reward_code")).toBe(
+            "emailInput"
+        );
+    });
 });
 
 describe("useRegisterFlow", () => {
