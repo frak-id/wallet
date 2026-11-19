@@ -7,6 +7,7 @@ export {
 export {
     REDEEM_ERROR_KEY_MAP,
     REDEMPTION_CODE_LENGTH,
+    type UnknownCodeOutcome,
     useRedeemReferralCodeForm,
 } from "./hook/useRedeemReferralCodeForm";
 export {

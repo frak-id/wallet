@@ -5,6 +5,7 @@ import { IdentityContext } from "../../../domain/identity/context";
 import type { InstallCodeCredential } from "../../../domain/identity/repositories/InstallCodeRepository";
 import { assertNotMintingServerMintedId } from "../../../domain/identity/schemas/serverMintedId";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { ReferralCodeContext } from "../../../domain/referral-code/context";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { verifyProofUnenforced } from "../../../orchestration/identity/latchedProof";
 
@@ -196,6 +197,27 @@ async function resolveRowAnonymousId(row: {
     return deferred?.anonymousId ?? null;
 }
 
+/**
+ * Both code kinds share one alphabet and length, so a friend's referral code
+ * typed here is told apart from a typo: the wallet redirects it to onboarding.
+ */
+async function resolveInstallCodeRow(code: string) {
+    try {
+        return await IdentityContext.services.installCode.resolve({ code });
+    } catch (error) {
+        if (!(error instanceof HttpError) || error.code !== "CODE_NOT_FOUND") {
+            throw error;
+        }
+        const referralCode =
+            await ReferralCodeContext.services.referralCode.findByCode(code);
+        if (!referralCode) throw error;
+        throw HttpError.notFound(
+            "REFERRAL_CODE",
+            "This is a referral code, not an install code"
+        );
+    }
+}
+
 const installCodeResolveRoute = new Elysia()
     .use(
         rateLimitMiddleware({
@@ -207,10 +229,7 @@ const installCodeResolveRoute = new Elysia()
     .post(
         "/resolve",
         async ({ body }) => {
-            const installCode =
-                await IdentityContext.services.installCode.resolve({
-                    code: body.code,
-                });
+            const installCode = await resolveInstallCodeRow(body.code);
             const { merchantId } = installCode;
 
             const [merchant, anonymousId] = await Promise.all([

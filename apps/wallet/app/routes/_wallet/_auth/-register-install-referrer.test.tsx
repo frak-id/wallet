@@ -43,6 +43,9 @@ vi.mock("@/module/pending-actions/hook/useExecutePendingActions", () => ({
         executePendingActions: vi.fn().mockResolvedValue(false),
     }),
 }));
+vi.mock("@/module/reward-code/hook/useInstallCodeFallback", () => ({
+    useInstallCodeFallback: () => vi.fn(),
+}));
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =

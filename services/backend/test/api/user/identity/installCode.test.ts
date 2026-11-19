@@ -13,6 +13,7 @@ const {
     mockResolveForGenerate,
     mockResolveDeferred,
     mockFindNodeByIdentity,
+    mockFindReferralCode,
 } = vi.hoisted(() => ({
     mockGenerate: vi.fn(),
     mockResolve: vi.fn(),
@@ -25,6 +26,15 @@ const {
     mockResolveForGenerate: vi.fn(),
     mockResolveDeferred: vi.fn(),
     mockFindNodeByIdentity: vi.fn(),
+    mockFindReferralCode: vi.fn(),
+}));
+
+vi.mock("../../../../src/domain/referral-code/context", () => ({
+    ReferralCodeContext: {
+        services: {
+            referralCode: { findByCode: mockFindReferralCode },
+        },
+    },
 }));
 
 vi.mock("../../../../src/domain/identity/context", () => ({
@@ -99,6 +109,7 @@ describe("Install Code Routes API", () => {
         mockResolveForGenerate.mockReset();
         mockResolveDeferred.mockReset();
         mockFindNodeByIdentity.mockReset();
+        mockFindReferralCode.mockReset();
     });
 
     describe("POST /install-code/generate", () => {
@@ -434,7 +445,60 @@ describe("Install Code Routes API", () => {
                 error: "Invalid or expired install code",
                 code: "CODE_NOT_FOUND",
             });
+            expect(mockFindReferralCode).toHaveBeenCalledWith("ABC123");
             expect(mockMintTicket).not.toHaveBeenCalled();
+        });
+
+        it("404s as REFERRAL_CODE when the code is an active referral code", async () => {
+            mockResolve.mockRejectedValue(
+                HttpError.notFound(
+                    "CODE_NOT_FOUND",
+                    "Invalid or expired install code"
+                )
+            );
+            mockFindReferralCode.mockResolvedValue({
+                id: "ref-1",
+                code: "RJFK56",
+            });
+
+            const response = await installCodeRoutes.handle(
+                new Request("http://localhost/install-code/resolve", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: "rjfk56" }),
+                })
+            );
+
+            expect(response.status).toBe(404);
+            expect(await response.json()).toMatchObject({
+                code: "REFERRAL_CODE",
+            });
+            expect(mockFindMerchantById).not.toHaveBeenCalled();
+            expect(mockMintTicket).not.toHaveBeenCalled();
+        });
+
+        it("never looks up referral codes when the install code resolves", async () => {
+            mockResolve.mockResolvedValue({
+                merchantId: MERCHANT_ID,
+                anonymousId: "anon-1",
+            });
+            mockFindMerchantById.mockResolvedValue({
+                name: "Acme",
+                domain: "acme.com",
+            });
+            mockFindGroupByIdentity.mockResolvedValue(null);
+            mockMintTicket.mockResolvedValue("minted-ticket");
+
+            const response = await installCodeRoutes.handle(
+                new Request("http://localhost/install-code/resolve", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: "ABC123" }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+            expect(mockFindReferralCode).not.toHaveBeenCalled();
         });
 
         it("resolves a deferred row from its stored checkout token", async () => {

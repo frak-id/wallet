@@ -9,6 +9,15 @@ describe("resolveReferralPrefill", () => {
         });
     });
 
+    test("a code carried over from /reward-code keeps its source", () => {
+        expect(
+            resolveReferralPrefill("URLCOD", "REFCOD", "reward_code")
+        ).toEqual({
+            code: "URLCOD",
+            source: "reward_code",
+        });
+    });
+
     test("falls back to the install referrer when there is no URL ref", () => {
         expect(resolveReferralPrefill(undefined, "REFCOD")).toEqual({
             code: "REFCOD",

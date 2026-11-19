@@ -7,6 +7,7 @@ import { CloseIcon } from "@frak-labs/design-system/icons";
 import {
     REDEMPTION_CODE_LENGTH,
     type RedeemResult,
+    type UnknownCodeOutcome,
     useRedeemReferralCodeForm,
 } from "@frak-labs/wallet-shared";
 import { type ReactNode, useEffect, useId } from "react";
@@ -34,6 +35,8 @@ type ReferralCodeStepProps = {
     initialCode?: string;
     /** Fired after a successful paste, for the parent's prefill-source analytics. */
     onPaste?: () => void;
+    /** Second chance for a code that is not a referral code, e.g. an install code. */
+    onUnknownCode?: (code: string) => Promise<UnknownCodeOutcome>;
 };
 
 export function ReferralCodeStep({
@@ -43,6 +46,7 @@ export function ReferralCodeStep({
     onBusyChange,
     initialCode,
     onPaste,
+    onUnknownCode,
 }: ReferralCodeStepProps) {
     const { t } = useTranslation();
     const fieldId = useId();
@@ -67,6 +71,7 @@ export function ReferralCodeStep({
         requireCompleteCode: false,
         initialCode,
         context: "onboarding",
+        onUnknownCode,
     });
 
     // Clear on unmount too: leaving mid-redemption would otherwise strand the
