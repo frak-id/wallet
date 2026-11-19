@@ -1,4 +1,6 @@
+import { sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect, useState } from "react";
+import { useStore } from "zustand";
 import { useVersionGate } from "../hook/useVersionGate";
 import { HardUpdateGate } from "./HardUpdateGate";
 import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
@@ -15,6 +17,7 @@ import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
  */
 export function VersionGate() {
     const state = useVersionGate();
+    const hasSession = useStore(sessionStore, (s) => s.session !== null);
     const [dismissedFor, setDismissedFor] = useState<string | null>(null);
     const [progressDismissed, setProgressDismissed] = useState(false);
     // The staged bundle boots at the next launch anyway, so "later" holds for the session.
@@ -67,7 +70,8 @@ export function VersionGate() {
     }
 
     if (state.kind === "ota_ready") {
-        if (otaDismissed) return null;
+        // Logged out: never interrupt onboarding, never reload under the user; the next launch boots it.
+        if (otaDismissed || !hasSession) return null;
         return (
             <SoftUpdatePrompt
                 mode="ota_ready"

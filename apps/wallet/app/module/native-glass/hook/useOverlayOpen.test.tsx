@@ -13,6 +13,7 @@ import { SoftUpdatePrompt } from "@/module/version/component/SoftUpdatePrompt";
 import { initNativeGlass } from "../bridge";
 import { GlassDetailActions } from "../component/GlassDetailActions";
 import { NativeTabBar } from "../component/NativeTabBar";
+import { coverNativeChrome } from "./useOverlayOpen";
 
 const { invokeMock, addPluginListenerMock } = vi.hoisted(() => ({
     invokeMock: vi.fn(),
@@ -160,6 +161,26 @@ describe("useCoverNativeChrome", () => {
         expect(chromeVisibility()).toEqual(allHidden);
 
         rerender(<Screen />);
+        await flushBridge();
+        expect(chromeVisibility()).toEqual(allVisible);
+    });
+
+    it("keeps every surface out from the first mount until the boot splash releases them", async () => {
+        const release = coverNativeChrome("full");
+        render(<Screen />);
+        await flushBridge();
+        expect(chromeVisibility()).toEqual(allHidden);
+        expect(
+            invokeMock.mock.calls.some(
+                ([name, args]) =>
+                    name === "plugin:frak-glass|set_tab_bar" && args?.visible
+            )
+        ).toBe(false);
+
+        act(() => {
+            release();
+            release();
+        });
         await flushBridge();
         expect(chromeVisibility()).toEqual(allVisible);
     });

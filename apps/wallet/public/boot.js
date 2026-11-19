@@ -10,6 +10,10 @@ if (window.__TAURI_INTERNALS__) {
             "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
         );
     document.documentElement.setAttribute("data-platform", "tauri");
+    // The boot splash sizes its logo like each platform's native launch screen.
+    if (/android/i.test(navigator.userAgent)) {
+        document.documentElement.setAttribute("data-os", "android");
+    }
 }
 
 // Users should install the native app, not the PWA.

@@ -16,14 +16,18 @@ export type OtaUpdateResult =
     | { status: "up_to_date" }
     | { status: "staged" };
 
+/** The channel this build listens on, `null` where OTA does not apply. */
+export function getOtaChannel(): string | null {
+    return IS_TAURI ? __OTA_CHANNEL__ : null;
+}
+
 /**
  * The only OTA check: the plugin's boot check is off (`updateOnStartup: false`).
+ * `check()` also downloads and verifies the whole bundle, with no progress events.
  * The plugin is imported dynamically so the browser build never pulls it in.
  */
 export async function stageOtaUpdate(): Promise<OtaUpdateResult> {
-    if (!IS_TAURI) return { status: "unsupported" };
-
-    const channel = __OTA_CHANNEL__;
+    const channel = getOtaChannel();
     if (!channel) return { status: "unsupported" };
 
     const { check, setChannel } = await import(

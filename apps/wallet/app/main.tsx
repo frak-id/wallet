@@ -1,9 +1,10 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_IOS, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { setEnvironment } from "@frak-labs/core-sdk";
 import {
     defaultNS,
     fallbackLng,
+    getInvoke,
     interpolation,
     recordError,
     setupBigIntSerialization,
@@ -24,6 +25,9 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
 import { registerAppLaunch } from "@/module/common/utils/maybeAskForReview";
 import { initNativeGlass } from "@/module/native-glass/bridge";
+import { coverNativeChrome } from "@/module/native-glass/hook/useOverlayOpen";
+import { runOtaBootGate } from "@/module/version/utils/otaBootGate";
+import { hideBootSplash } from "./utils/bootSplash";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
@@ -127,17 +131,44 @@ declare module "@tanstack/react-router" {
     }
 }
 
+/** The router's default `pendingMs`: past it, its pending UI beats a splash. */
+const BOOT_SPLASH_MAX_WAIT_MS = 1_000;
+
+/** Resolves once the page has rendered a frame; capped, should frames stall. */
+function afterNextPaint() {
+    return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        setTimeout(resolve, 300);
+    });
+}
+
+/** Hands over from the native splash (`MainActivity` on Android, `ios.rs` on iOS) once the boot splash has painted under it. */
+async function dismissNativeSplash() {
+    await afterNextPaint();
+    if (!IS_IOS) {
+        (
+            window as unknown as {
+                NativeSplash?: { dismiss(): void };
+            }
+        ).NativeSplash?.dismiss();
+        return;
+    }
+    const invoke = await getInvoke();
+    await invoke("dismiss_launch_cover");
+}
+
 async function main() {
+    const firstLoadSettled = new Promise<void>((resolve) => {
+        const unsubscribe = router.subscribe("onResolved", () => {
+            unsubscribe();
+            resolve();
+        });
+    });
+
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
         await initNativeGlass();
         initKeyboardInset();
-        const firstLoadSettled = new Promise<void>((resolve) => {
-            const unsubscribe = router.subscribe("onResolved", () => {
-                unsubscribe();
-                resolve();
-            });
-        });
         await initDeepLinks((options) => {
             return router.navigate(
                 options as Parameters<typeof router.navigate>[0]
@@ -182,10 +213,35 @@ async function main() {
             },
         });
 
+    if (IS_TAURI) {
+        // The native splash holds until now; the boot splash looks identical.
+        dismissNativeSplash().catch((error) =>
+            recordError(error, {
+                source: "bootstrap",
+                context: { stage: "launch_cover" },
+            })
+        );
+        // Fail open: a broken gate must never keep the app from rendering.
+        const outcome = await runOtaBootGate(queryClient).catch((error) => {
+            recordError(error, {
+                source: "ota_update",
+                context: { stage: "boot_gate" },
+            });
+            return "render" as const;
+        });
+        if (outcome === "reload") {
+            location.reload();
+            return;
+        }
+    }
+
     const rootElement = document.getElementById("root");
     if (!rootElement) {
         throw new Error("Root element not found");
     }
+
+    // Native views paint above the webview: the tab bar would float over the splash.
+    const uncoverChrome = IS_TAURI ? coverNativeChrome("full") : undefined;
 
     startTransition(() => {
         const root = createRoot(rootElement);
@@ -198,16 +254,20 @@ async function main() {
         );
     });
 
-    if (IS_TAURI) registerAppLaunch();
-
-    // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
     if (IS_TAURI) {
-        (
-            window as unknown as {
-                NativeSplash?: { dismiss(): void };
-            }
-        ).NativeSplash?.dismiss();
+        const maxWait = new Promise((resolve) =>
+            setTimeout(resolve, BOOT_SPLASH_MAX_WAIT_MS)
+        );
+        void Promise.race([firstLoadSettled, maxWait]).then(() =>
+            // Chrome waits for the end of the exit, or the tab bar lands on a blank splash.
+            requestAnimationFrame(() => hideBootSplash().then(uncoverChrome))
+        );
+        registerAppLaunch();
     }
 }
 
-main().catch((error) => recordError(error, { source: "bootstrap" }));
+main().catch((error) => {
+    // The splash sits above everything and takes every touch: never leave it up.
+    void hideBootSplash();
+    recordError(error, { source: "bootstrap" });
+});

@@ -145,6 +145,10 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
   keeping its findings (F1, F2…) across pushes. Its logic lives in `frak-id/atelier`
   (`actions/agent-review/`), not in this repo. It stays off while `vars.ATELIER_URL` is empty, and then
   no PR is reviewed.
+- **What it is told about this repo is root `REVIEW.md`**, read on the PR's *target* branch, so an edit
+  to it only applies once merged. The AGENTS.md files hold the rules; REVIEW.md holds only what a
+  review needs on top of them. Its inputs stay at the action's defaults until `src/stats.ts` (atelier
+  README, *Measure*) shows a kind of finding being dismissed.
 
 ## Anti-Patterns
 

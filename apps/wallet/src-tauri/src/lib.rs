@@ -20,6 +20,21 @@ fn set_swipe_back_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), St
     }
 }
 
+/// Drops the iOS launch cover once the web boot splash is on screen; no-op elsewhere.
+#[tauri::command]
+fn dismiss_launch_cover(app: tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "ios")]
+    {
+        app.run_on_main_thread(ios::remove_launch_cover)
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "ios"))]
+    {
+        let _ = app;
+        Ok(())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -78,12 +93,22 @@ pub fn run() {
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = ios::set_swipe_back(&window, true);
+                    let _ = ios::add_launch_cover(&window);
                 }
+                // Same 5 s safety net as Android's splash, for a bundle that never boots.
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(5));
+                    let _ = handle.run_on_main_thread(ios::remove_launch_cover);
+                });
             }
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![set_swipe_back_enabled])
+        .invoke_handler(tauri::generate_handler![
+            set_swipe_back_enabled,
+            dismiss_launch_cover
+        ])
         .run(context)
         .expect("error while running tauri application");
 }

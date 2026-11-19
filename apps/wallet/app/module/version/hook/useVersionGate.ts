@@ -3,7 +3,7 @@ import {
     IS_IOS,
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
-import { authenticatedBackendApi, recordError } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginListener } from "@tauri-apps/api/core";
 import { useEffect } from "react";
@@ -14,7 +14,8 @@ import {
     listenToNativeUpdateStatus,
     type NativeUpdateStatus,
 } from "../utils/nativeUpdater";
-import { stageOtaUpdate } from "../utils/otaUpdater";
+import { otaUpdateQueryOptions } from "../utils/otaUpdateQuery";
+import { VERSION_STALE_TIME_MS } from "../utils/staleTime";
 
 export type VersionGateState =
     | { kind: "idle" }
@@ -26,12 +27,6 @@ export type VersionGateState =
     | { kind: "soft_update_in_progress" }
     | { kind: "soft_update_downloaded" }
     | { kind: "ota_ready" };
-
-/**
- * 5 min cache: the wallet refetches on focus anyway, this just avoids
- * spamming Apple's iTunes endpoint and our backend during fast nav.
- */
-const STALE_TIME_MS = 5 * 60 * 1000;
 
 const minVersionQueryOptions = {
     queryKey: versionKey.minSupported,
@@ -81,7 +76,7 @@ function isBlockedByFloor(
 const nativeUpdateQueryOptions = {
     queryKey: versionKey.nativeStatus,
     queryFn: async (): Promise<NativeUpdateStatus> => checkNativeUpdate(),
-    staleTime: STALE_TIME_MS,
+    staleTime: VERSION_STALE_TIME_MS,
     refetchOnWindowFocus: true,
 } as const;
 
@@ -119,7 +114,7 @@ export function useVersionGate(): VersionGateState {
                     query.state.data?.[platformKey]
                 )
                 ? 0
-                : STALE_TIME_MS;
+                : VERSION_STALE_TIME_MS;
         },
     });
     const native = useQuery({
@@ -136,19 +131,9 @@ export function useVersionGate(): VersionGateState {
     });
 
     const ota = useQuery({
-        queryKey: versionKey.otaUpdate,
-        queryFn: () =>
-            stageOtaUpdate().catch((error: unknown) => {
-                recordError(error, { source: "ota_update" });
-                throw error;
-            }),
+        ...otaUpdateQueryOptions,
         enabled: IS_TAURI,
-        // A staged bundle stays staged until the reload: re-checking could hide the prompt.
-        staleTime: (query) =>
-            query.state.data?.status === "staged" ? "static" : STALE_TIME_MS,
         refetchOnWindowFocus: true,
-        retry: false,
-        meta: { storable: false },
     });
 
     // Subscribe to the native push channel on Android so download progress
