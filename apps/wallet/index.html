@@ -23,8 +23,9 @@
             display: block;
             background: #ffffff;
         }
+        /* Android 12+ drops an icon background matching the splash colour and scales the icon 1.2x: 90 dp drawn at 108. */
         :root[data-os="android"] #boot-splash {
-            --boot-logo-size: 90px;
+            --boot-logo-size: 108px;
         }
         .boot-splash-logo {
             position: absolute;

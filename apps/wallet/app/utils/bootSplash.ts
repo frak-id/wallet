@@ -29,17 +29,24 @@ export function clearBootSplashStatus(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, STATUS_FADE_MS));
 }
 
-export function hideBootSplash(): void {
+let exit: Promise<void> | undefined;
+
+/** Plays the exit; resolves once the splash is gone (at once when there is none). */
+export function hideBootSplash(): Promise<void> {
     const splash = getSplash();
-    if (!splash || splash.hidden || splash.hasAttribute("data-leaving")) {
-        return;
-    }
+    if (!splash || splash.hidden) return Promise.resolve();
+    if (exit) return exit;
     splash.toggleAttribute("data-leaving", true);
-    setTimeout(() => {
-        splash.hidden = true;
-        splash.removeAttribute("data-leaving");
-        setBootSplashStatus(null);
-        const parts = getStatus();
-        if (parts) parts.line.textContent = "";
-    }, EXIT_MS);
+    exit = new Promise((resolve) =>
+        setTimeout(() => {
+            splash.hidden = true;
+            splash.removeAttribute("data-leaving");
+            setBootSplashStatus(null);
+            const parts = getStatus();
+            if (parts) parts.line.textContent = "";
+            exit = undefined;
+            resolve();
+        }, EXIT_MS)
+    );
+    return exit;
 }

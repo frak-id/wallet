@@ -56,15 +56,22 @@ describe("boot splash", () => {
         await expect(clearBootSplashStatus()).resolves.toBeUndefined();
     });
 
-    it("plays the exit, then hides and clears its status", () => {
+    it("plays the exit, then hides, clears its status and resolves", async () => {
         setBootSplashStatus("Downloading");
+        let gone = false;
 
-        hideBootSplash();
+        const exit = hideBootSplash();
+        void exit.then(() => {
+            gone = true;
+        });
+        expect(hideBootSplash()).toBe(exit);
         expect(splash().hasAttribute("data-leaving")).toBe(true);
-        vi.advanceTimersByTime(249);
+        await vi.advanceTimersByTimeAsync(249);
         expect(splash().hidden).toBe(false);
+        expect(gone).toBe(false);
 
-        vi.advanceTimersByTime(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(gone).toBe(true);
         expect(splash().hidden).toBe(true);
         expect(splash().hasAttribute("data-leaving")).toBe(false);
         expect(status().textContent).toBe("");
@@ -74,7 +81,7 @@ describe("boot splash", () => {
         document.body.innerHTML = "";
 
         setBootSplashStatus("x");
-        hideBootSplash();
+        await expect(hideBootSplash()).resolves.toBeUndefined();
         await expect(clearBootSplashStatus()).resolves.toBeUndefined();
     });
 });

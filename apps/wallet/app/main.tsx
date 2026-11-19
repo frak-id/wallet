@@ -1,9 +1,10 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_IOS, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { setEnvironment } from "@frak-labs/core-sdk";
 import {
     defaultNS,
     fallbackLng,
+    getInvoke,
     interpolation,
     recordError,
     setupBigIntSerialization,
@@ -133,12 +134,27 @@ declare module "@tanstack/react-router" {
 /** The router's default `pendingMs`: past it, its pending UI beats a splash. */
 const BOOT_SPLASH_MAX_WAIT_MS = 1_000;
 
-function dismissNativeSplash() {
-    (
-        window as unknown as {
-            NativeSplash?: { dismiss(): void };
-        }
-    ).NativeSplash?.dismiss();
+/** Resolves once the page has rendered a frame; capped, should frames stall. */
+function afterNextPaint() {
+    return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        setTimeout(resolve, 300);
+    });
+}
+
+/** Hands over from the native splash (`MainActivity` on Android, `ios.rs` on iOS) once the boot splash has painted under it. */
+async function dismissNativeSplash() {
+    await afterNextPaint();
+    if (!IS_IOS) {
+        (
+            window as unknown as {
+                NativeSplash?: { dismiss(): void };
+            }
+        ).NativeSplash?.dismiss();
+        return;
+    }
+    const invoke = await getInvoke();
+    await invoke("dismiss_launch_cover");
 }
 
 async function main() {
@@ -198,9 +214,22 @@ async function main() {
         });
 
     if (IS_TAURI) {
-        // Android holds its native splash until now; the boot splash looks identical.
-        dismissNativeSplash();
-        if ((await runOtaBootGate(queryClient)) === "reload") {
+        // The native splash holds until now; the boot splash looks identical.
+        dismissNativeSplash().catch((error) =>
+            recordError(error, {
+                source: "bootstrap",
+                context: { stage: "launch_cover" },
+            })
+        );
+        // Fail open: a broken gate must never keep the app from rendering.
+        const outcome = await runOtaBootGate(queryClient).catch((error) => {
+            recordError(error, {
+                source: "ota_update",
+                context: { stage: "boot_gate" },
+            });
+            return "render" as const;
+        });
+        if (outcome === "reload") {
             location.reload();
             return;
         }
@@ -226,17 +255,19 @@ async function main() {
     });
 
     if (IS_TAURI) {
-        registerAppLaunch();
         const maxWait = new Promise((resolve) =>
             setTimeout(resolve, BOOT_SPLASH_MAX_WAIT_MS)
         );
         void Promise.race([firstLoadSettled, maxWait]).then(() =>
-            requestAnimationFrame(() => {
-                hideBootSplash();
-                uncoverChrome?.();
-            })
+            // Chrome waits for the end of the exit, or the tab bar lands on a blank splash.
+            requestAnimationFrame(() => hideBootSplash().then(uncoverChrome))
         );
+        registerAppLaunch();
     }
 }
 
-main().catch((error) => recordError(error, { source: "bootstrap" }));
+main().catch((error) => {
+    // The splash sits above everything and takes every touch: never leave it up.
+    void hideBootSplash();
+    recordError(error, { source: "bootstrap" });
+});
