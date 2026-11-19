@@ -1,5 +1,5 @@
-/** The `#boot-splash[data-leaving]` transition in `index.html`: 150 ms delay + 300 ms fade. */
-const EXIT_MS = 450;
+/** The `#boot-splash[data-leaving]` transition in `index.html`: 90 ms delay + 160 ms fade. */
+const EXIT_MS = 250;
 /** The `.boot-splash-status` opacity transition in `index.html`. */
 const STATUS_FADE_MS = 250;
 

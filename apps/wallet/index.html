@@ -33,9 +33,6 @@
             width: var(--boot-logo-size);
             height: var(--boot-logo-size);
             transform: translate(-50%, -50%);
-            transition:
-                opacity 0.25s ease-in,
-                transform 0.3s cubic-bezier(0.4, 0, 1, 1);
         }
         .boot-splash-status {
             position: absolute;
@@ -56,18 +53,22 @@
             opacity: 1;
             transform: none;
         }
-        /* Exit (450 ms, bootSplash.ts): the logo zooms out of view, then the backdrop uncovers the app. */
+        /* Exit (250 ms, bootSplash.ts): the backdrop waits for the logo, so it never ghosts over the app. */
         #boot-splash[data-leaving] {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease-out 0.15s;
+            transition: opacity 0.16s ease-out 0.09s;
         }
         #boot-splash[data-leaving] .boot-splash-logo {
             opacity: 0;
-            transform: translate(-50%, -50%) scale(1.08);
+            transform: translate(-50%, -50%) scale(1.06);
+            transition:
+                opacity 0.09s ease-out,
+                transform 0.09s ease-out;
         }
         #boot-splash[data-leaving] .boot-splash-status {
             opacity: 0;
+            transition: opacity 0.09s ease-out;
         }
         .boot-splash-text {
             margin: 0;

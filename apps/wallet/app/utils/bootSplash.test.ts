@@ -61,7 +61,7 @@ describe("boot splash", () => {
 
         hideBootSplash();
         expect(splash().hasAttribute("data-leaving")).toBe(true);
-        vi.advanceTimersByTime(449);
+        vi.advanceTimersByTime(249);
         expect(splash().hidden).toBe(false);
 
         vi.advanceTimersByTime(1);
