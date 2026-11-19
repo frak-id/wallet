@@ -357,9 +357,9 @@ jobs:
   ios:
     name: "🍎 iOS"
     needs: [validate, prepare]
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
     # See `prepare`.
     cache-mode: write
 
@@ -393,18 +393,24 @@ jobs:
         with:
           name: sdk-dist
 
+      # cargo-mobile2 runs xcodebuild with a cleared environment, so DEVELOPER_DIR alone
+      # leaves the archive on the image's default Xcode.
+      - name: "🧰 Select Xcode"
+        run: sudo xcode-select -s "$DEVELOPER_DIR"
+
       - name: "🦀 Setup Rust"
         uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: aarch64-apple-ios
+          # swift-rs needs llvm-objcopy to re-export @_cdecl symbols on Xcode 27.
+          components: llvm-tools
 
-      # macos-26 ships rustup via Homebrew, which wraps the cargo/rustc shims with
-      # env_script_all_files. Those wrappers exec rustup-init with argv[0] pointing
-      # at the wrapper path, so the binary loses its argv[0]-based dispatch and
-      # behaves as the installer (rejecting `cargo metadata` with `unexpected argument`).
-      # dtolnay/rust-toolchain skips adding $CARGO_HOME/bin to PATH when rustup is
-      # already present, so we prepend it manually to make the real rustup shims win.
+      # A Homebrew-installed rustup wraps the cargo/rustc shims with env_script_all_files.
+      # Those wrappers exec rustup-init with argv[0] pointing at the wrapper path, so the
+      # binary loses its argv[0]-based dispatch and behaves as the installer (rejecting
+      # `cargo metadata` with `unexpected argument`). dtolnay/rust-toolchain skips adding
+      # $CARGO_HOME/bin to PATH when rustup is already present, so we prepend it manually.
       - name: "🔗 Prepend cargo bin to PATH"
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
@@ -414,7 +420,7 @@ jobs:
           workspaces: apps/wallet/src-tauri
           cache-on-failure: true
           key: ${{ needs.validate.outputs.stage }}
-          prefix-key: "v1-rust"
+          prefix-key: "v1-xcode27-rust"
 
       - name: "💾 Setup SST Cache"
         id: sst-caching
@@ -432,8 +438,8 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-xcode-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
-          restore-keys: ${{ runner.os }}-xcode-derived-
+          key: ${{ runner.os }}-xcode27-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
+          restore-keys: ${{ runner.os }}-xcode27-derived-
 
       # `swift-rs` invokes `swift build` from each plugin's build.rs in parallel under cargo,
       # racing over this single global cache. Caching it across runs gives subsequent runs warm

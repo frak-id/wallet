@@ -911,14 +911,17 @@ jobs:
   # a signing identity nor an App Store Connect key.
   wallet-ios:
     name: "🍎 Wallet · iOS release build"
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.walletIos == 'true'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # See the same step in tauri-mobile-release.yml.
+      - name: "🧰 Select Xcode"
+        run: sudo xcode-select -s "$DEVELOPER_DIR"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
@@ -927,14 +930,16 @@ jobs:
           # Same pin as RUST_TOOLCHAIN in tauri-mobile-release.yml.
           toolchain: "1.98.1"
           targets: aarch64-apple-ios
-      # Homebrew's rustup shims on macos-26 lose their argv[0] dispatch; see the
-      # same step in tauri-mobile-release.yml.
+          # swift-rs needs llvm-objcopy to re-export @_cdecl symbols on Xcode 27.
+          components: llvm-tools
+      # Homebrew-wrapped rustup shims lose their argv[0] dispatch; see the same step
+      # in tauri-mobile-release.yml.
       - name: "🔗 Prepend cargo bin to PATH"
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: apps/wallet/src-tauri
-          prefix-key: "v1-rust-ios"
+          prefix-key: "v2-xcode27-rust-ios"
           cache-on-failure: true
       # Same key as the release job: both hold the same global SwiftPM artifacts.
       - name: "💾 Cache SwiftPM artifacts"
