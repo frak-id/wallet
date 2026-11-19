@@ -1287,6 +1287,10 @@ export default interface Resources {
         "retry": "Try again",
         "title": "Update required"
       },
+      "otaBoot": {
+        "checking": "Checking for updates…",
+        "downloading": "Downloading the latest version…"
+      },
       "softUpdate": {
         "available": {
           "cta": "Update",

@@ -11,10 +11,12 @@ import android.webkit.WebView
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.splashscreen.SplashScreenViewProvider
 import app.tauri.plugin.PluginManager
 
 class MainActivity : TauriActivity() {
-  private var keepSplash = true
+  private var splashView: SplashScreenViewProvider? = null
+  private var splashReleased = false
 
   /**
    * Workaround for https://github.com/tauri-apps/tao/issues/1217.
@@ -37,8 +39,12 @@ class MainActivity : TauriActivity() {
    * cycled `cargo update -p tao -p wry`.
    */
   override fun onCreate(savedInstanceState: Bundle?) {
-    val splashScreen = installSplashScreen()
-    splashScreen.setKeepOnScreenCondition { keepSplash }
+    // Held as an overlay rather than kept on screen: a kept splash stops the WebView from
+    // drawing, so the boot splash under it would only paint after the splash is gone.
+    installSplashScreen().setOnExitAnimationListener { provider ->
+      splashView = provider
+      if (splashReleased) releaseSplash()
+    }
     // The web UI is light-only: dark bar icons even when the phone is in dark mode.
     enableEdgeToEdge(
       statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -63,7 +69,14 @@ class MainActivity : TauriActivity() {
     window.decorView.setBackgroundColor(Color.parseColor("#FFFFFF"))
 
     // Safety timeout: dismiss splash after 5s even if JS never signals readiness
-    Handler(Looper.getMainLooper()).postDelayed({ keepSplash = false }, 5000)
+    Handler(Looper.getMainLooper()).postDelayed(::releaseSplash, 5000)
+  }
+
+  /** Main thread only; idempotent. */
+  private fun releaseSplash() {
+    splashReleased = true
+    splashView?.remove()
+    splashView = null
   }
 
   override fun onNewIntent(intent: Intent) {
@@ -98,7 +111,7 @@ class MainActivity : TauriActivity() {
   private inner class SplashBridge {
     @JavascriptInterface
     fun dismiss() {
-      keepSplash = false
+      runOnUiThread(::releaseSplash)
     }
   }
 }
