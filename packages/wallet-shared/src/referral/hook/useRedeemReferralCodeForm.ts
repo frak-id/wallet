@@ -87,6 +87,7 @@ export function useRedeemReferralCodeForm({
         useState<DefaultTranslationKey | null>(null);
     // Bumped by every edit, so a late `onUnknownCode` answer cannot land on a code the user changed.
     const unknownAttemptRef = useRef(0);
+    const submittedAttemptRef = useRef(0);
 
     const clearUnknown = () => {
         unknownAttemptRef.current += 1;
@@ -99,7 +100,12 @@ export function useRedeemReferralCodeForm({
         submitted: string,
         error: Error
     ) => {
-        const attempt = ++unknownAttemptRef.current;
+        const attempt = submittedAttemptRef.current;
+        // Edited while `/redeem` was in flight: this 404 answers a code the field does not hold.
+        if (attempt !== unknownAttemptRef.current) {
+            redeem.reset();
+            return;
+        }
         setIsResolvingUnknown(true);
         const outcome = await resolver(submitted).catch(
             (): UnknownCodeOutcome => "unknown"
@@ -173,20 +179,21 @@ export function useRedeemReferralCodeForm({
         return true;
     };
 
+    const submit = (replaceFrakReferrer: boolean | undefined) => {
+        clearUnknown();
+        submittedAttemptRef.current = unknownAttemptRef.current;
+        redeem.mutate({ code, context, replaceFrakReferrer });
+    };
+
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!canSubmit) return;
-        clearUnknown();
-        redeem.mutate({
-            code,
-            context,
-            replaceFrakReferrer: keepFrakReferrer ? false : undefined,
-        });
+        submit(keepFrakReferrer ? false : undefined);
     };
 
     const confirmFrakReplace = () => {
         trackEvent("frak_referrer_replace_resolved", { outcome: "confirmed" });
-        redeem.mutate({ code, context, replaceFrakReferrer: true });
+        submit(true);
     };
 
     const cancelFrakReplace = () => {

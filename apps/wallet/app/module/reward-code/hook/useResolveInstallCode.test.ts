@@ -151,32 +151,36 @@ describe("useResolveInstallCode", () => {
         );
     });
 
-    test("reports a miss on the reward-code page only", async ({
-        queryWrapper,
-    }) => {
-        mockResolvePost.mockResolvedValue({
-            data: null,
-            error: { status: 404, value: { code: "CODE_NOT_FOUND" } },
-        });
+    test.for([
+        ["reward_code", 404, "CODE_NOT_FOUND", true],
+        ["reward_code", 404, "REFERRAL_CODE", false],
+        ["referral_code", 404, "CODE_NOT_FOUND", false],
+        ["referral_code", 404, "REFERRAL_CODE", false],
+        ["referral_code", 429, "RATE_LIMITED", true],
+        ["referral_code", 500, "INTERNAL_ERROR", true],
+    ] as const)(
+        "on %s, a %i %s reports a failure: %s",
+        async ([surface, status, code, reported], { queryWrapper }) => {
+            mockResolvePost.mockResolvedValue({
+                data: null,
+                error: { status, value: { code } },
+            });
 
-        const onPage = renderHook(() => useResolveInstallCode(), {
-            wrapper: queryWrapper.wrapper,
-        });
-        onPage.result.current.resolve("ABC123");
-        await waitFor(() => expect(onPage.result.current.isError).toBe(true));
-        expect(trackEvent).toHaveBeenCalledWith("install_code_resolve_failed", {
-            error_code: "CODE_NOT_FOUND",
-        });
+            const { result } = renderHook(
+                () => useResolveInstallCode({ surface }),
+                { wrapper: queryWrapper.wrapper }
+            );
+            result.current.resolve("ABC123");
+            await waitFor(() => expect(result.current.isError).toBe(true));
 
-        vi.mocked(trackEvent).mockClear();
-        const inReferralField = renderHook(
-            () => useResolveInstallCode({ surface: "referral_code" }),
-            { wrapper: queryWrapper.wrapper }
-        );
-        inReferralField.result.current.resolve("ABC123");
-        await waitFor(() =>
-            expect(inReferralField.result.current.isError).toBe(true)
-        );
-        expect(trackEvent).not.toHaveBeenCalled();
-    });
+            if (reported) {
+                expect(trackEvent).toHaveBeenCalledWith(
+                    "install_code_resolve_failed",
+                    { error_code: code }
+                );
+            } else {
+                expect(trackEvent).not.toHaveBeenCalled();
+            }
+        }
+    );
 });

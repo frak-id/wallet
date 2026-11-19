@@ -100,7 +100,11 @@ describe("RewardCodePage", () => {
         await waitFor(() =>
             expect(mockNavigate).toHaveBeenCalledWith({
                 to: "/register",
-                search: { ref: "RJFK56", refSource: "reward_code" },
+                search: {
+                    new: true,
+                    ref: "RJFK56",
+                    refSource: "reward_code",
+                },
                 replace: true,
             })
         );

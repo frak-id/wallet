@@ -1,5 +1,6 @@
 import {
     authenticatedBackendApi,
+    getErrorCode,
     type InstallCodeSurface,
     setInstallSource,
     trackEvent,
@@ -45,13 +46,15 @@ export function useResolveInstallCode({
             ].resolve.post({ code });
 
             if (error) {
-                // From the referral field a miss is a mistyped referral code,
-                // not a failed install code: it would skew that funnel.
-                if (surface === "reward_code") {
+                const errorCode = getErrorCode(error) ?? "unknown";
+                // A code meant for the other field is handed on, not a failed install code.
+                const isWrongField =
+                    errorCode === "REFERRAL_CODE" ||
+                    (surface === "referral_code" &&
+                        errorCode === "CODE_NOT_FOUND");
+                if (!isWrongField) {
                     trackEvent("install_code_resolve_failed", {
-                        error_code:
-                            (error as { value?: { code?: string } })?.value
-                                ?.code ?? "unknown",
+                        error_code: errorCode,
                     });
                 }
                 throw error;

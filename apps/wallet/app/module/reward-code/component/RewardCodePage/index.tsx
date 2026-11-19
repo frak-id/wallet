@@ -61,9 +61,10 @@ export function RewardCodePage() {
         } catch (err) {
             // Any other error is rendered from the mutation state.
             if (getErrorCode(err) === REFERRAL_CODE_ERROR) {
+                // Without `new`, a device holding a credential is sent to `/login` and skips the referral step.
                 navigate({
                     to: "/register",
-                    search: { ref: code, refSource: "reward_code" },
+                    search: { new: true, ref: code, refSource: "reward_code" },
                     replace: true,
                 });
             }

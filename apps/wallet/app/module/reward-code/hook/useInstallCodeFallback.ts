@@ -1,4 +1,8 @@
-import type { UnknownCodeOutcome } from "@frak-labs/wallet-shared";
+import {
+    getErrorStatus,
+    REDEEM_ERROR_KEY_MAP,
+    type UnknownCodeOutcome,
+} from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { useResolveInstallCode } from "@/module/reward-code/hook/useResolveInstallCode";
@@ -19,8 +23,15 @@ export function useInstallCodeFallback(
 
     return useCallback(
         async (code: string): Promise<UnknownCodeOutcome> => {
-            const result = await resolveAsync(code).catch(() => null);
-            if (!result) return "unknown";
+            let result: Awaited<ReturnType<typeof resolveAsync>>;
+            try {
+                result = await resolveAsync(code);
+            } catch (error) {
+                // Only a 404 means "no install code"; a 429, 5xx or offline must not read as "doesn't exist".
+                return getErrorStatus(error) === 404
+                    ? "unknown"
+                    : { errorKey: REDEEM_ERROR_KEY_MAP.fallback };
+            }
             if (result.outcome === "UNRESOLVED") {
                 return { errorKey: "rewardCode.error.unresolved" };
             }

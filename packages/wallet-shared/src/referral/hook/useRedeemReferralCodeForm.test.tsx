@@ -590,6 +590,43 @@ describe("useRedeemReferralCodeForm", () => {
             expect(result.current.code).toBe("XYZ789");
         });
 
+        test("a 404 landing after an edit skips the fallback", async ({
+            queryWrapper,
+        }) => {
+            let answer: (value: unknown) => void = () => {};
+            vi.mocked(
+                authenticatedWalletApi.referral.code.redeem.post
+            ).mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        answer = resolve;
+                    }) as never
+            );
+            const onUnknownCode = vi.fn();
+            const onError = vi.fn();
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode, onError }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+            await waitFor(() => expect(result.current.isPending).toBe(true));
+
+            act(() => result.current.handleChange(makeChange("xyz789")));
+            await act(async () =>
+                answer({
+                    error: { value: { code: "NOT_FOUND" }, status: 404 },
+                })
+            );
+
+            await waitFor(() => expect(result.current.isPending).toBe(false));
+            expect(onUnknownCode).not.toHaveBeenCalled();
+            expect(onError).not.toHaveBeenCalled();
+            expect(result.current.code).toBe("XYZ789");
+            expect(result.current.errorMessageKey).toBeNull();
+        });
+
         test("other errors never reach the fallback", async ({
             queryWrapper,
         }) => {

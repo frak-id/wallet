@@ -85,4 +85,21 @@ describe("useInstallCodeFallback", () => {
         expect(mockExecutePendingActions).not.toHaveBeenCalled();
         expect(onResolved).not.toHaveBeenCalled();
     });
+
+    test.for([
+        ["rate limited", { status: 429, value: { code: "RATE_LIMITED" } }],
+        ["server error", { status: 500, value: {} }],
+        ["network failure", new TypeError("Failed to fetch")],
+    ] as const)(
+        "a %s shows the generic retry message, not 'not found'",
+        async ([_failure, error]) => {
+            mockResolveAsync.mockRejectedValue(error);
+            const { fallback, onResolved } = renderFallback();
+
+            await expect(fallback("ABC234")).resolves.toEqual({
+                errorKey: "wallet.referral.redeem.errorGeneric",
+            });
+            expect(onResolved).not.toHaveBeenCalled();
+        }
+    );
 });
