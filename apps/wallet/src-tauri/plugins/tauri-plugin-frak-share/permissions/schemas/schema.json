@@ -295,6 +295,18 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the open_in_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-open-in-app",
+          "markdownDescription": "Enables the open_in_app command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the open_in_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-open-in-app",
+          "markdownDescription": "Denies the open_in_app command without any pre-configured scope."
+        },
+        {
           "description": "Enables the share_text command without any pre-configured scope.",
           "type": "string",
           "const": "allow-share-text",
@@ -307,10 +319,10 @@
           "markdownDescription": "Denies the share_text command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the frak-share plugin\n#### This default permission set includes:\n\n- `allow-share-text`",
+          "description": "Default permissions for the frak-share plugin\n#### This default permission set includes:\n\n- `allow-share-text`\n- `allow-open-in-app`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the frak-share plugin\n#### This default permission set includes:\n\n- `allow-share-text`"
+          "markdownDescription": "Default permissions for the frak-share plugin\n#### This default permission set includes:\n\n- `allow-share-text`\n- `allow-open-in-app`"
         }
       ]
     }

@@ -1,4 +1,4 @@
-const COMMANDS: &[&str] = &["share_text"];
+const COMMANDS: &[&str] = &["share_text", "open_in_app"];
 
 fn main() {
     tauri_plugin::Builder::new(COMMANDS)
