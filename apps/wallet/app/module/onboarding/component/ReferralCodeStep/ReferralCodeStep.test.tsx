@@ -10,6 +10,7 @@ let capturedOptions:
           requireCompleteCode?: boolean;
           initialCode?: string;
           context?: string;
+          onUnknownCode?: (code: string) => Promise<unknown>;
       }
     | undefined;
 
@@ -98,6 +99,7 @@ function renderStep(overrides?: {
     onBusyChange?: (isBusy: boolean) => void;
     initialCode?: string;
     onPaste?: () => void;
+    onUnknownCode?: (code: string) => Promise<"handled">;
 }) {
     const onApplied = overrides?.onApplied ?? vi.fn();
     const onSkip = overrides?.onSkip ?? vi.fn();
@@ -110,6 +112,7 @@ function renderStep(overrides?: {
             onBusyChange={onBusyChange}
             initialCode={overrides?.initialCode}
             onPaste={overrides?.onPaste}
+            onUnknownCode={overrides?.onUnknownCode}
             headerEnd={
                 <button type="button" onClick={onSkip}>
                     onboarding.skipStep
@@ -223,6 +226,12 @@ describe("ReferralCodeStep", () => {
         renderStep({ onApplied, onError });
         expect(capturedOptions?.onApplied).toBe(onApplied);
         expect(capturedOptions?.onError).toBe(onError);
+    });
+
+    it("forwards onUnknownCode to the shared hook", () => {
+        const onUnknownCode = vi.fn(async () => "handled" as const);
+        renderStep({ onUnknownCode });
+        expect(capturedOptions?.onUnknownCode).toBe(onUnknownCode);
     });
 
     it("renders the parent's skip in the header, not in the footer", () => {

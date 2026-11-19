@@ -18,7 +18,9 @@ type ReferralCodeOutcome =
     | "applied"
     | "skipped"
     | "auto_skipped_existing"
-    | "error";
+    | "error"
+    // An install code typed in the referral field, resolved as one.
+    | "install_code";
 
 export type { ReferralCodeKind };
 
@@ -27,6 +29,8 @@ export type ReferralPrefillSource =
     | "url"
     | "install_referrer"
     | "paste"
+    // A referral code typed on the reward-code page, carried over.
+    | "reward_code"
     | "none";
 
 type EmailInputOutcome =

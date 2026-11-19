@@ -40,6 +40,7 @@ import { useRegisterFlow } from "@/module/onboarding/hook/useRegisterFlow";
 import { useSkipLatch } from "@/module/onboarding/hook/useSkipLatch";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
+import { useInstallCodeFallback } from "@/module/reward-code/hook/useInstallCodeFallback";
 import { modalStore } from "@/module/stores/modalStore";
 import "./register.css";
 
@@ -52,14 +53,17 @@ type RegisterSearch = {
     email?: string;
     /** Referral code carried by an `/install?ref=` deep link or QR. */
     ref?: string;
+    /** Set when `/reward-code` was handed a referral code and sent it here. */
+    refSource?: "reward_code";
 };
 
 /** The page's own `?ref=` wins over the (async, Android-only) Play install referrer. */
 export function resolveReferralPrefill(
     searchRef: string | undefined,
-    referrerCode: string | undefined
+    referrerCode: string | undefined,
+    searchRefSource?: "reward_code"
 ): { code: string | undefined; source: ReferralPrefillSource } {
-    if (searchRef) return { code: searchRef, source: "url" };
+    if (searchRef) return { code: searchRef, source: searchRefSource ?? "url" };
     if (referrerCode) return { code: referrerCode, source: "install_referrer" };
     return { code: undefined, source: "none" };
 }
@@ -77,6 +81,8 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
                 ? search.email
                 : undefined,
         ref: parseReferralCode(search.ref),
+        refSource:
+            search.refSource === "reward_code" ? "reward_code" : undefined,
     }),
     beforeLoad: async ({ search }) => {
         // Skip redirect if user explicitly requested new account creation
@@ -140,7 +146,7 @@ let hasAnnouncedInstallReferrer = false;
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { email: prefilledEmail, ref } = Route.useSearch();
+    const { email: prefilledEmail, ref, refSource } = Route.useSearch();
     const [loginError, setLoginError] = useState<Error | null>(null);
     // The skip control lives in each asking step's header slot, so its
     // disabled state has to come from the step rather than from inside it.
@@ -196,7 +202,8 @@ function RegisterPage() {
 
     const referralPrefill = resolveReferralPrefill(
         ref,
-        referrerData?.referralCode
+        referrerData?.referralCode,
+        refSource
     );
     const [hasPastedReferralCode, setHasPastedReferralCode] = useState(false);
     const referralPrefillSource: ReferralPrefillSource = hasPastedReferralCode
@@ -337,6 +344,23 @@ function RegisterPage() {
             goToStep("notification");
         },
         [goToStep, stepRef, referralPrefillSource]
+    );
+
+    // An install code typed in the referral field, recovered as `/reward-code` would.
+    const handleReferralInstallCode = useCallback(
+        (merchant: { name: string; domain: string }) => {
+            if (stepRef.current !== "referralCode") return;
+            flowRef.current?.track("referral_code_resolved", {
+                outcome: "install_code",
+                prefill_source: referralPrefillSource,
+            });
+            openModal({ id: "rewardCodeSuccess", merchant });
+            goToStep("notification");
+        },
+        [goToStep, openModal, stepRef, referralPrefillSource]
+    );
+    const handleUnknownReferralCode = useInstallCodeFallback(
+        handleReferralInstallCode
     );
 
     const handleReferralSkip = useCallback(() => {
@@ -536,6 +560,7 @@ function RegisterPage() {
                     onBusyChange={setIsStepBusy}
                     initialCode={referralPrefill.code}
                     onPaste={handleReferralPaste}
+                    onUnknownCode={handleUnknownReferralCode}
                 />
             )}
             {step === "notification" && (

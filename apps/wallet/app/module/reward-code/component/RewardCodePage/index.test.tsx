@@ -84,4 +84,46 @@ describe("RewardCodePage", () => {
             )
         );
     });
+
+    test("a referral code goes to onboarding with the code prefilled", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "REFERRAL_CODE" } },
+        });
+
+        render(<RewardCodePage />, { wrapper: queryWrapper.wrapper });
+        typeCode("RJFK56");
+        fireEvent.click(screen.getByText("rewardCode.validate"));
+
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/register",
+                search: {
+                    new: true,
+                    ref: "RJFK56",
+                    refSource: "reward_code",
+                },
+                replace: true,
+            })
+        );
+        expect(screen.queryByText("rewardCode.error.invalid")).toBeNull();
+    });
+
+    test("an unknown code stays here with the invalid message", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "CODE_NOT_FOUND" } },
+        });
+
+        render(<RewardCodePage />, { wrapper: queryWrapper.wrapper });
+        typeCode("ABC123");
+        fireEvent.click(screen.getByText("rewardCode.validate"));
+
+        await screen.findByText("rewardCode.error.invalid");
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
 });

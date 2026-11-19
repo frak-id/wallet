@@ -19,6 +19,9 @@ export type InstallSource =
 
 export type InstallStore = "app_store" | "play_store";
 
+/** Where an install code was typed: its own page, or the onboarding referral field. */
+export type InstallCodeSurface = "reward_code" | "referral_code";
+
 export type InstallReferrerMissingReason = "empty" | "missing_params";
 
 export type InstallProbeSurface = "overlay" | "product";
@@ -111,6 +114,7 @@ export type InstallEventMap = {
         merchant_domain: string;
         /** `UNRESOLVED` means the code was valid but named no identity. */
         outcome: "RESOLVED" | "UNRESOLVED";
+        surface?: InstallCodeSurface;
     };
     install_code_resolve_failed: {
         error_code: string;
