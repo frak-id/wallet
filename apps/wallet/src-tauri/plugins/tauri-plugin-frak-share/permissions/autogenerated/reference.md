@@ -5,6 +5,7 @@ Default permissions for the frak-share plugin
 #### This default permission set includes the following:
 
 - `allow-share-text`
+- `allow-open-in-app`
 
 ## Permission Table
 
@@ -14,6 +15,32 @@ Default permissions for the frak-share plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`frak-share:allow-open-in-app`
+
+</td>
+<td>
+
+Enables the open_in_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-share:deny-open-in-app`
+
+</td>
+<td>
+
+Denies the open_in_app command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>

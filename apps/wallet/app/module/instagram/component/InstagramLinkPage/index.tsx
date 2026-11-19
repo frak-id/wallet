@@ -28,10 +28,7 @@ import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { useOnReturn } from "@/module/common/hook/useOnReturn";
-import {
-    FRAK_INSTAGRAM_DM_URL,
-    FRAK_INSTAGRAM_URL,
-} from "@/module/instagram/config";
+import { FRAK_INSTAGRAM_URL } from "@/module/instagram/config";
 import {
     type InstagramDeclaration,
     type InstagramLink,
@@ -42,6 +39,7 @@ import {
     useInstagramStatus,
     useRefreshInstagramFollow,
 } from "@/module/instagram/hook/useInstagramLink";
+import { openInstagramDm } from "@/module/instagram/utils/openInstagramDm";
 
 /** Back to whichever page opened this one (profile, game…), or the profile on a deep link. */
 function useLeave() {
@@ -183,7 +181,7 @@ function SendCode() {
         copy(code.data);
         armReturn();
         trackEvent("instagram_dm_opened");
-        void openExternalUrl(`${FRAK_INSTAGRAM_DM_URL}?ref=${code.data}`);
+        void openInstagramDm(code.data);
     };
     const notReceived =
         !sent.isPending &&

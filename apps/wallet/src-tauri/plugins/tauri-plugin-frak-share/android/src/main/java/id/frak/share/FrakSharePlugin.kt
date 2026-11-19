@@ -111,6 +111,29 @@ class FrakSharePlugin(activity: Activity) : Plugin(activity) {
         }
     }
 
+    /** Opens [url] in the app [packageName] only, skipping the browser; rejects when that app cannot handle it. */
+    @Command
+    fun openInApp(invoke: Invoke) {
+        val args = invoke.getArgs()
+        val url = args.getString("url")
+        val packageName = args.getString("packageName")
+        if (url.isNullOrEmpty() || packageName.isNullOrEmpty()) {
+            invoke.reject("Missing 'url' or 'packageName' parameter")
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            setPackage(packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            pluginActivity.startActivity(intent)
+            invoke.resolve()
+        } catch (e: Exception) {
+            invoke.reject(e.message ?: "Failed to open $packageName")
+        }
+    }
+
     /**
      * Downloads the thumbnail into the app cache and wraps it in a
      * FileProvider URI the chooser can read. Blocks the share for at most
