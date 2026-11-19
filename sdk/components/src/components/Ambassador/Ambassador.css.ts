@@ -123,14 +123,28 @@ const headingFace = (role: "h1" | "h2") => ({
     },
 });
 
+type HeadingBox = {
+    fontSize: string;
+    lineHeight?: number;
+    letterSpacing?: string;
+};
+
+/** Scoped under the root: a theme's `.elementor-kit-51 h1` outranks a single class. */
+const headingBox = (box: HeadingBox) => ({
+    [`${root} &`]: { margin: 0, ...box },
+});
+
 const regionTitle = style({
-    margin: 0,
-    fontSize: H2_SIZE,
-    lineHeight: 1.2,
     fontWeight: "var(--frak-amb-h2-weight, inherit)",
-    letterSpacing: "var(--frak-amb-h2-spacing, normal)",
     color: "var(--frak-amb-h2-color, inherit)",
-    selectors: headingFace("h2"),
+    selectors: {
+        ...headingFace("h2"),
+        ...headingBox({
+            fontSize: H2_SIZE,
+            lineHeight: 1.2,
+            letterSpacing: "var(--frak-amb-h2-spacing, normal)",
+        }),
+    },
 });
 
 const lede = style({
@@ -204,13 +218,16 @@ export const heroBody = style({
 export const heroEyebrow = mutedSmall;
 
 export const heroTitle = style({
-    margin: 0,
-    fontSize: "var(--frak-amb-h1-size, clamp(2em, 4.6vw, 3.2em))",
-    lineHeight: 1.1,
     fontWeight: "var(--frak-amb-h1-weight, inherit)",
-    letterSpacing: "var(--frak-amb-h1-spacing, normal)",
     color: "var(--frak-amb-h1-color, inherit)",
-    selectors: headingFace("h1"),
+    selectors: {
+        ...headingFace("h1"),
+        ...headingBox({
+            fontSize: "var(--frak-amb-h1-size, clamp(2em, 4.6vw, 3.2em))",
+            lineHeight: 1.1,
+            letterSpacing: "var(--frak-amb-h1-spacing, normal)",
+        }),
+    },
 });
 
 export const heroLede = lede;
@@ -301,7 +318,10 @@ export const rewardEyebrow = mutedSmall;
 
 // The heading keeps the body size so the figure inside it scales from the
 // page, not from a host h2 size; its words take the h2 size on their own span.
-export const rewardHeading = style([regionTitle, { fontSize: "1em" }]);
+export const rewardHeading = style([
+    regionTitle,
+    { selectors: headingBox({ fontSize: "1em" }) },
+]);
 
 export const rewardHeadingText = style({ fontSize: H2_SIZE });
 
@@ -503,9 +523,7 @@ export const stepIcon = style({
 });
 
 export const stepTitle = style({
-    margin: 0,
-    fontSize: "1.05em",
-    lineHeight: 1.3,
+    selectors: headingBox({ fontSize: "1.05em", lineHeight: 1.3 }),
 });
 
 export const stepDescription = muted;
