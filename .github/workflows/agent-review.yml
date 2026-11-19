@@ -3,9 +3,20 @@ name: "🔬 Agent review (Atelier)"
 # The repo's PR reviewer: Atelier's agent-review action
 # (frak-id/atelier, actions/agent-review/README.md) reviews each non-draft
 # PR in an Atelier sandbox booted from this repo's prebuild at the PR's head.
-# Its pi agent reviews the merge base to the head (with sub-agents past 500
-# changed lines), and the job posts one review as github-actions[bot], with
-# findings kept across pushes (F1, F2…).
+# Two pi agents review the merge base to the head, one after the other: one
+# for issues (critical/major become line comments and block), then one for
+# improvements (performance, duplication, conventions; listed in the body,
+# never blocking). Past 500 changed lines each may use sub-agents. The job
+# posts the issues as one review as github-actions[bot] as soon as they are
+# in, adds the improvements to it after, and keeps findings across pushes
+# (F1, F2…).
+#
+# Defaults on purpose: `subagents: auto` and the default `allowed-findings`
+# (5 minor, 3 per improvement category, more on a bigger diff). Before tuning
+# one, measure with the action's `src/stats.ts` (README, *Measure*). The
+# agents' model is their toolbox's on Atelier, not set here. Repo-specific
+# guidance is root `REVIEW.md`, read on the PR's target branch: a PR can't
+# change the rules it's reviewed by.
 #
 # Off while `vars.ATELIER_URL` is empty, and then no PR is reviewed.
 # `secrets.ATELIER_REVIEWER_API_KEY` is frak-agents' key
@@ -46,9 +57,9 @@ jobs:
         github.event.pull_request.base.ref == 'main') &&
       (github.event.action == 'closed' || !github.event.pull_request.draft)
     runs-on: 'frak-hetzner-wallet-review'
-    # The sandbox's boot (10 minutes at most), the agent (40), the posting. A
-    # closed PR's run only destroys sandboxes (a destroy waits up to 5
-    # minutes for one still being created).
+    # The sandbox's boot (10 minutes at most), the two agents (40 together,
+    # `agent-timeout-minutes`), the posting. A closed PR's run only destroys
+    # sandboxes (a destroy waits up to 5 minutes for one still being created).
     timeout-minutes: ${{ github.event.action == 'closed' && 10 || 60 }}
     permissions:
       contents: read
@@ -56,17 +67,18 @@ jobs:
       pull-requests: write
     steps:
       - name: "🔬 Review"
-        uses: frak-id/atelier/actions/agent-review@40d4dc2ff7a953e88d6816b012bdbfb0b1235929 # main
+        uses: frak-id/atelier/actions/agent-review@54d6feac790e51c8f4e02146c8b39e4115c61189 # main
         with:
           atelier-url: ${{ vars.ATELIER_URL }}
           api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}
 
       # Cancelled mid-review (a newer push, the timeout): the step above
       # couldn't destroy its sandbox. Only this head's: the newer push's run
-      # may have its own already.
+      # may have its own already. Cancelled between the issues and the
+      # improvements, it also replaces the review's "on the way" line.
       - name: "🧹 Destroy the cancelled review's sandbox"
         if: cancelled()
-        uses: frak-id/atelier/actions/agent-review@40d4dc2ff7a953e88d6816b012bdbfb0b1235929 # main
+        uses: frak-id/atelier/actions/agent-review@54d6feac790e51c8f4e02146c8b39e4115c61189 # main
         with:
           atelier-url: ${{ vars.ATELIER_URL }}
           api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}
