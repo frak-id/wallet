@@ -2,16 +2,17 @@ name: "📦 Dependency report"
 
 # Weekly sweep of every version pinned in this repo. Two halves, on purpose:
 #
-#   1. `scripts/dependency-inventory.ts` resolves current-vs-latest across four
+#   1. `scripts/dependency-inventory.ts` resolves current-vs-latest across five
 #      surfaces: npm packages, Tauri's Rust crates, container images plus the
-#      Pulumi/SST providers, and action pins. Deterministic, no LLM.
+#      Pulumi/SST providers, action pins, and the Gradle and SwiftPM pins of the
+#      native builds. Deterministic, no LLM.
 #   2. A single pi agent (lighter config than a dev workstation: no extensions,
 #      no subagents, built-in tools only, sonnet via cliproxy) researches what
 #      changed in each `tier: "research"` item and writes the report.
 #
 # The npm and cargo minor/patch tail never reaches the agent: the collector
 # tiers it as `appendix` and the upsert renders it mechanically afterwards.
-# sdk/android, sdk/ios and the PHP plugins are deliberately out of scope.
+# The PHP plugins are deliberately out of scope.
 #
 # The report lands in one labelled issue. While that issue is open, later runs
 # rewrite its body and add a "what moved" comment instead of opening a new one.
@@ -29,10 +30,12 @@ on:
     - cron: '0 6 * * 1'
   push:
     branches: [dev]
-    # Exactly what the four collectors read — npm manifests and the lockfile,
+    # Exactly what the five collectors read — npm manifests and the lockfile,
     # the Tauri crates, the Dockerfiles and `packageManager`, the SST provider
-    # block, and every `uses:` pin. `infra/**` is deliberately absent: its image
-    # refs are all first-party, so nothing upstream is pinned there.
+    # block, every `uses:` pin, and for native the Gradle build scripts, the
+    # version catalog, the wrapper properties and the SwiftPM manifests.
+    # `infra/**` is deliberately absent: its image refs are all first-party, so
+    # nothing upstream is pinned there.
     paths:
       - '**/package.json'
       - 'bun.lock'
@@ -42,6 +45,10 @@ on:
       - '.github/workflows/**'
       - '.github/actions/**'
       - 'sst.config.ts'
+      - '**/*.gradle.kts'
+      - '**/libs.versions.toml'
+      - '**/gradle-wrapper.properties'
+      - '**/Package.swift'
       # The pipeline itself: a collector or prompt change must be provable on dev.
       - 'scripts/dependency/**'
       - 'scripts/dependency-inventory.ts'

@@ -99,6 +99,24 @@ workflow that holds a signing credential, which is 17 of 25 pins — true, deter
 as 17 near-identical entries. The collector keeps the flag on every one; the prompt consolidates them
 into a single entry with one table. Editorial problems belong in the prompt, not in the collector.
 
+## Native surface — 2026-11-19 (FRA-411)
+
+The September build left Gradle and SwiftPM out on two grounds. The gates (`check:native-versions`,
+`check:ios-floor`) already held the version sites that matter, and the Gradle catalog was "689
+lines of collector for 25 items nobody acts on".
+
+Neither ground held. On 2026-11-06 the Tauri Android build still used the toolchain that `tauri
+android init` had generated, AGP 8.11.0 and Kotlin 1.9.25, until
+https://github.com/frak-id/wallet/pull/394 replaced it. Firebase was a major behind on Android and
+on iOS. androidx was two to four minors behind. The gates cover only our own version sites, such as
+`id.frak.sdk` and the iOS floor. They say nothing about how far a dependency is behind upstream.
+
+So `native` is now a fifth surface, between `cargo` and `npm`. It collects Maven coordinates, Gradle
+plugins and the three Gradle wrappers, plus the one remote SwiftPM package (`firebase-ios-sdk`).
+Every outdated item goes to research, since `tierFor` demotes only npm and cargo. One trap shaped
+the collector: an androidx release can require a compileSdk above the module's, so it reads
+`minCompileSdk` from the AAR and reports that item as blocked rather than behind.
+
 ## Still open
 
 - Tier 1. Renovate would still cover npm, `libs.versions.toml`, composer and Actions with PRs
