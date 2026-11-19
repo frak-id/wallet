@@ -32,6 +32,7 @@ export type {
 export type { GameEventMap } from "./game";
 export type { InstagramEventMap } from "./instagram";
 export type {
+    InstallCodeSurface,
     InstallEventMap,
     InstallPageView,
     InstallProbeSurface,

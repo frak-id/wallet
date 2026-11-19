@@ -1,5 +1,6 @@
 import {
     authenticatedBackendApi,
+    type InstallCodeSurface,
     setInstallSource,
     trackEvent,
 } from "@frak-labs/wallet-shared";
@@ -16,14 +17,21 @@ type ResolveResult = {
     outcome?: "UNRESOLVED";
 };
 
+type UseResolveInstallCodeOptions = UseMutationOptions<
+    ResolveResult,
+    Error,
+    string
+> & { surface?: InstallCodeSurface };
+
 /**
  * Hook to resolve an install code via the backend. A resolved code queues a
  * pending ensure action so its anonymous identity is merged after auth; an
  * `UNRESOLVED` one queues nothing and leaves the page on its download CTA.
  */
-export function useResolveInstallCode(
-    options?: UseMutationOptions<ResolveResult, Error, string>
-) {
+export function useResolveInstallCode({
+    surface = "reward_code",
+    ...options
+}: UseResolveInstallCodeOptions = {}) {
     const {
         mutate: resolve,
         mutateAsync: resolveAsync,
@@ -37,11 +45,15 @@ export function useResolveInstallCode(
             ].resolve.post({ code });
 
             if (error) {
-                trackEvent("install_code_resolve_failed", {
-                    error_code:
-                        (error as { value?: { code?: string } })?.value?.code ??
-                        "unknown",
-                });
+                // From the referral field a miss is a mistyped referral code,
+                // not a failed install code: it would skew that funnel.
+                if (surface === "reward_code") {
+                    trackEvent("install_code_resolve_failed", {
+                        error_code:
+                            (error as { value?: { code?: string } })?.value
+                                ?.code ?? "unknown",
+                    });
+                }
                 throw error;
             }
 
@@ -49,6 +61,7 @@ export function useResolveInstallCode(
                 has_wallet: Boolean(data.hasWallet),
                 merchant_domain: data.merchant.domain,
                 outcome: data.outcome ?? "RESOLVED",
+                surface,
             });
             setInstallSource("install_code");
 

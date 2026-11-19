@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { CodeInput, trackEvent } from "@frak-labs/wallet-shared";
+import { CodeInput, getErrorCode, trackEvent } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,9 @@ import { useResolveInstallCode } from "@/module/reward-code/hook/useResolveInsta
 import { modalStore } from "@/module/stores/modalStore";
 
 const CODE_LENGTH = 6;
+
+/** The backend's answer for a friend's referral code typed here instead of in onboarding. */
+const REFERRAL_CODE_ERROR = "REFERRAL_CODE";
 
 export function RewardCodePage() {
     const { t } = useTranslation();
@@ -55,16 +58,25 @@ export function RewardCodePage() {
                 merchant: result.merchant,
                 onExit: () => navigate({ to: "/register", replace: true }),
             });
-        } catch {
-            // Error is captured by the mutation state
+        } catch (err) {
+            // Any other error is rendered from the mutation state.
+            if (getErrorCode(err) === REFERRAL_CODE_ERROR) {
+                navigate({
+                    to: "/register",
+                    search: { ref: code, refSource: "reward_code" },
+                    replace: true,
+                });
+            }
         }
     }, [isComplete, isPending, code, resolveAsync, openModal, navigate]);
 
-    const errorMessage = error
-        ? t("rewardCode.error.invalid")
-        : unresolved
-          ? t("rewardCode.error.unresolved")
-          : undefined;
+    // A referral code is leaving for onboarding: no error flash on the way out.
+    const errorMessage =
+        error && getErrorCode(error) !== REFERRAL_CODE_ERROR
+            ? t("rewardCode.error.invalid")
+            : unresolved
+              ? t("rewardCode.error.unresolved")
+              : undefined;
 
     return (
         <FlowStepScreen

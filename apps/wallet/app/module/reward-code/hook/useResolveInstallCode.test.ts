@@ -1,4 +1,6 @@
 /** @jsxImportSource react */
+
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
@@ -125,5 +127,56 @@ describe("useResolveInstallCode", () => {
         expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
             0
         );
+    });
+
+    test("tags a resolution with the surface it was typed on", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: { merchantId: "merchant-1", merchant, hasWallet: false },
+            error: null,
+        });
+
+        const { result } = renderHook(
+            () => useResolveInstallCode({ surface: "referral_code" }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        result.current.resolve("ABC123");
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+        expect(trackEvent).toHaveBeenCalledWith(
+            "install_code_resolved",
+            expect.objectContaining({ surface: "referral_code" })
+        );
+    });
+
+    test("reports a miss on the reward-code page only", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "CODE_NOT_FOUND" } },
+        });
+
+        const onPage = renderHook(() => useResolveInstallCode(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        onPage.result.current.resolve("ABC123");
+        await waitFor(() => expect(onPage.result.current.isError).toBe(true));
+        expect(trackEvent).toHaveBeenCalledWith("install_code_resolve_failed", {
+            error_code: "CODE_NOT_FOUND",
+        });
+
+        vi.mocked(trackEvent).mockClear();
+        const inReferralField = renderHook(
+            () => useResolveInstallCode({ surface: "referral_code" }),
+            { wrapper: queryWrapper.wrapper }
+        );
+        inReferralField.result.current.resolve("ABC123");
+        await waitFor(() =>
+            expect(inReferralField.result.current.isError).toBe(true)
+        );
+        expect(trackEvent).not.toHaveBeenCalled();
     });
 });

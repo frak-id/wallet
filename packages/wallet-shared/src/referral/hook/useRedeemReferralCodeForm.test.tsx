@@ -431,4 +431,188 @@ describe("useRedeemReferralCodeForm", () => {
         act(() => result.current.handleChange(makeChange("wrong2")));
         await waitFor(() => expect(result.current.errorMessageKey).toBeNull());
     });
+
+    describe("onUnknownCode", () => {
+        const mockNotFound = () =>
+            vi
+                .mocked(authenticatedWalletApi.referral.code.redeem.post)
+                .mockResolvedValue({
+                    error: { value: { code: "NOT_FOUND" }, status: 404 },
+                } as never);
+
+        test("a handled code clears the field with no error", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            const onUnknownCode = vi.fn().mockResolvedValue("handled");
+            const onError = vi.fn();
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode, onError }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() => expect(result.current.code).toBe(""));
+            expect(onUnknownCode).toHaveBeenCalledWith("ABC234");
+            expect(result.current.errorMessageKey).toBeNull();
+            expect(result.current.isPending).toBe(false);
+            expect(onError).not.toHaveBeenCalled();
+        });
+
+        test("stays pending and silent while the fallback runs", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            let settle: (outcome: "unknown") => void = () => {};
+            const onUnknownCode = vi.fn(
+                () =>
+                    new Promise<"unknown">((resolve) => {
+                        settle = resolve;
+                    })
+            );
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() => expect(onUnknownCode).toHaveBeenCalled());
+            expect(result.current.isPending).toBe(true);
+            expect(result.current.canSubmit).toBe(false);
+            expect(result.current.errorMessageKey).toBeNull();
+
+            await act(async () => settle("unknown"));
+            expect(result.current.isPending).toBe(false);
+        });
+
+        test("an unknown code keeps the not-found message", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            const onUnknownCode = vi.fn().mockResolvedValue("unknown");
+            const onError = vi.fn();
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode, onError }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() =>
+                expect(onError).toHaveBeenCalledWith(
+                    "wallet.referral.redeem.errorNotFound"
+                )
+            );
+            expect(result.current.errorMessageKey).toBe(
+                "wallet.referral.redeem.errorNotFound"
+            );
+            expect(result.current.code).toBe("ABC234");
+        });
+
+        test("a rejected fallback is treated as unknown", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            const onUnknownCode = vi
+                .fn()
+                .mockRejectedValue(new Error("network"));
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() =>
+                expect(result.current.errorMessageKey).toBe(
+                    "wallet.referral.redeem.errorNotFound"
+                )
+            );
+        });
+
+        test("an error key replaces the not-found message until the next edit", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            const onUnknownCode = vi
+                .fn()
+                .mockResolvedValue({ errorKey: "rewardCode.error.unresolved" });
+            const onError = vi.fn();
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode, onError }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() =>
+                expect(result.current.errorMessageKey).toBe(
+                    "rewardCode.error.unresolved"
+                )
+            );
+            expect(onError).toHaveBeenCalledWith("rewardCode.error.unresolved");
+
+            act(() => result.current.handleChange(makeChange("abc235")));
+            expect(result.current.errorMessageKey).toBeNull();
+        });
+
+        test("an answer landing after an edit is dropped", async ({
+            queryWrapper,
+        }) => {
+            mockNotFound();
+            let settle: (outcome: "handled") => void = () => {};
+            const onUnknownCode = vi.fn(
+                () =>
+                    new Promise<"handled">((resolve) => {
+                        settle = resolve;
+                    })
+            );
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+            await waitFor(() => expect(onUnknownCode).toHaveBeenCalled());
+
+            act(() => result.current.handleChange(makeChange("xyz789")));
+            expect(result.current.isPending).toBe(false);
+
+            await act(async () => settle("handled"));
+            expect(result.current.code).toBe("XYZ789");
+        });
+
+        test("other errors never reach the fallback", async ({
+            queryWrapper,
+        }) => {
+            vi.mocked(
+                authenticatedWalletApi.referral.code.redeem.post
+            ).mockResolvedValue({
+                error: { value: { code: "SELF_REFERRAL" }, status: 400 },
+            } as never);
+            const onUnknownCode = vi.fn();
+            const { result } = renderHook(
+                () => useRedeemReferralCodeForm({ onUnknownCode }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            act(() => result.current.handleChange(makeChange("abc234")));
+            act(() => result.current.handleSubmit(makeSubmit()));
+
+            await waitFor(() =>
+                expect(result.current.errorMessageKey).toBe(
+                    "wallet.referral.redeem.errorSelf"
+                )
+            );
+            expect(onUnknownCode).not.toHaveBeenCalled();
+        });
+    });
 });

@@ -1,8 +1,9 @@
 import type { RedeemContext } from "@frak-labs/backend-elysia/domain/referral-code/schemas";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, useRef, useState } from "react";
 import { trackEvent } from "../../common/analytics";
 import { getErrorCode, resolveApiErrorKey } from "../../common/api/errors";
 import { readClipboardText } from "../../common/utils/readClipboardText";
+import type { DefaultTranslationKey } from "../../types";
 import {
     type RedeemResult,
     useRedeemReferralCode,
@@ -12,6 +13,14 @@ export const REDEMPTION_CODE_LENGTH = 6;
 
 /** Frak holds the referrer slot: the caller confirms before the friend's code replaces it. */
 const FRAK_REFERRER_CODE = "FRAK_REFERRER";
+
+const NOT_FOUND_CODE = "NOT_FOUND";
+
+/** What `onUnknownCode` made of the code: an error key replaces the not-found message. */
+export type UnknownCodeOutcome =
+    | "handled"
+    | "unknown"
+    | { errorKey: DefaultTranslationKey };
 
 export const REDEEM_ERROR_KEY_MAP = {
     byCode: {
@@ -43,6 +52,8 @@ type UseRedeemReferralCodeFormOptions = {
     context?: RedeemContext;
     /** Keeps Frak as referrer without asking: the game join screen, where a code is for joining. */
     keepFrakReferrer?: boolean;
+    /** Second chance for a code `/redeem` 404s on, e.g. an install code typed in this field. */
+    onUnknownCode?: (code: string) => Promise<UnknownCodeOutcome>;
 };
 
 function sanitizeCode(raw: string): string {
@@ -67,19 +78,63 @@ export function useRedeemReferralCodeForm({
     initialCode,
     context,
     keepFrakReferrer = false,
+    onUnknownCode,
 }: UseRedeemReferralCodeFormOptions = {}) {
     const [confirmingFrakReplace, setConfirmingFrakReplace] = useState(false);
+    const [code, setCode] = useState(() => sanitizeCode(initialCode ?? ""));
+    const [isResolvingUnknown, setIsResolvingUnknown] = useState(false);
+    const [unknownErrorKey, setUnknownErrorKey] =
+        useState<DefaultTranslationKey | null>(null);
+    // Bumped by every edit, so a late `onUnknownCode` answer cannot land on a code the user changed.
+    const unknownAttemptRef = useRef(0);
+
+    const clearUnknown = () => {
+        unknownAttemptRef.current += 1;
+        setIsResolvingUnknown(false);
+        setUnknownErrorKey(null);
+    };
+
+    const resolveUnknown = async (
+        resolver: NonNullable<typeof onUnknownCode>,
+        submitted: string,
+        error: Error
+    ) => {
+        const attempt = ++unknownAttemptRef.current;
+        setIsResolvingUnknown(true);
+        const outcome = await resolver(submitted).catch(
+            (): UnknownCodeOutcome => "unknown"
+        );
+        if (attempt !== unknownAttemptRef.current) return;
+        setIsResolvingUnknown(false);
+        if (outcome === "handled") {
+            setCode("");
+            redeem.reset();
+            return;
+        }
+        const key =
+            outcome === "unknown"
+                ? resolveApiErrorKey(error, REDEEM_ERROR_KEY_MAP)
+                : outcome.errorKey;
+        if (outcome !== "unknown") setUnknownErrorKey(outcome.errorKey);
+        if (key) onError?.(key);
+    };
+
     const redeem = useRedeemReferralCode({
         mutations: {
             onSuccess: (result) => {
                 setConfirmingFrakReplace(false);
                 onApplied?.(result);
             },
-            onError: (error) => {
-                const asksConfirm = getErrorCode(error) === FRAK_REFERRER_CODE;
+            onError: (error, variables) => {
+                const errorCode = getErrorCode(error);
+                const asksConfirm = errorCode === FRAK_REFERRER_CODE;
                 setConfirmingFrakReplace(asksConfirm);
                 if (asksConfirm) {
                     trackEvent("frak_referrer_replace_prompted");
+                    return;
+                }
+                if (onUnknownCode && errorCode === NOT_FOUND_CODE) {
+                    resolveUnknown(onUnknownCode, variables.code, error);
                     return;
                 }
                 const key = resolveApiErrorKey(error, REDEEM_ERROR_KEY_MAP);
@@ -88,19 +143,21 @@ export function useRedeemReferralCodeForm({
         },
     });
 
-    const [code, setCode] = useState(() => sanitizeCode(initialCode ?? ""));
+    const isPending = redeem.isPending || isResolvingUnknown;
     const hasValue = code.length > 0;
     const isComplete = code.length === REDEMPTION_CODE_LENGTH;
     const canSubmit =
-        (requireCompleteCode ? isComplete : hasValue) && !redeem.isPending;
+        (requireCompleteCode ? isComplete : hasValue) && !isPending;
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setCode(sanitizeCode(e.target.value));
+        clearUnknown();
         if (resetErrorOnChange && redeem.error) redeem.reset();
     };
 
     const handleClear = () => {
         setCode("");
+        clearUnknown();
         redeem.reset();
     };
 
@@ -111,6 +168,7 @@ export function useRedeemReferralCodeForm({
         } catch {
             return false;
         }
+        clearUnknown();
         if (resetErrorOnChange && redeem.error) redeem.reset();
         return true;
     };
@@ -118,6 +176,7 @@ export function useRedeemReferralCodeForm({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!canSubmit) return;
+        clearUnknown();
         redeem.mutate({
             code,
             context,
@@ -137,16 +196,17 @@ export function useRedeemReferralCodeForm({
     };
 
     const errorMessageKey =
-        getErrorCode(redeem.error) === FRAK_REFERRER_CODE
+        isResolvingUnknown || getErrorCode(redeem.error) === FRAK_REFERRER_CODE
             ? null
-            : resolveApiErrorKey(redeem.error, REDEEM_ERROR_KEY_MAP);
+            : (unknownErrorKey ??
+              resolveApiErrorKey(redeem.error, REDEEM_ERROR_KEY_MAP));
 
     return {
         code,
         hasValue,
         isComplete,
         canSubmit,
-        isPending: redeem.isPending,
+        isPending,
         errorMessageKey,
         handleChange,
         handleClear,

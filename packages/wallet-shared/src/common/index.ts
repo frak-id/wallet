@@ -29,6 +29,7 @@ export type {
     FlowOutcome,
     FlowStartExtras,
     InAppBrowserRedirectTarget,
+    InstallCodeSurface,
     InstallEventMap,
     InstallPageView,
     InstallReferrerMissingReason,
