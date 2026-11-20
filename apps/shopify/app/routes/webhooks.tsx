@@ -13,6 +13,32 @@ import { authenticate } from "../shopify.server";
 
 type WebhookContext = Awaited<ReturnType<typeof authenticate.webhook>>;
 
+async function notifyActivated({
+    rows,
+    shop,
+    admin,
+    paidAt,
+}: Pick<WebhookContext, "shop" | "admin"> & {
+    rows: (typeof purchaseTable.$inferSelect)[];
+    paidAt: Date;
+}) {
+    const contact = await fetchShopContact(admin);
+    for (const row of rows) {
+        await notifyPaidPurchase({
+            purchaseId: row.purchaseId,
+            shop,
+            domain: row.shop,
+            amount: row.amount,
+            currency: row.currency,
+            bank: row.bank,
+            paidAt: paidAt.toISOString(),
+            test: !isProd(),
+            shopName: contact.name,
+            email: contact.email,
+        });
+    }
+}
+
 async function updatePurchase({
     shop,
     payload,
@@ -46,21 +72,10 @@ async function updatePurchase({
         .returning();
     if (!isActive || rows.length === 0) return;
 
-    const contact = await fetchShopContact(admin);
-    for (const row of rows) {
-        await notifyPaidPurchase({
-            purchaseId: row.purchaseId,
-            shop,
-            domain: row.shop,
-            amount: row.amount,
-            currency: row.currency,
-            bank: row.bank,
-            paidAt: updatedAt.toISOString(),
-            test: !isProd(),
-            shopName: contact.name,
-            email: contact.email,
-        });
-    }
+    // Not awaited: Shopify wants a 2xx within 5s, and a retry would find the row active anyway.
+    notifyActivated({ rows, shop, admin, paidAt: updatedAt }).catch((err) =>
+        log.error({ err, shop, purchaseId }, "payment notification failed")
+    );
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {

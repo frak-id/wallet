@@ -1,20 +1,7 @@
 import { createHmac } from "node:crypto";
+import type { ShopifyPaidPurchase } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { AdminApiContext } from "@shopify/shopify-app-react-router/server";
 import { levelForStatus, log } from "./logger";
-
-/** Mirrors `ShopifyPaidPurchase` in the backend's PaymentNotificationOrchestrator. */
-export type PaidPurchaseNotification = {
-    purchaseId: number;
-    shop: string;
-    domain: string;
-    amount: string;
-    currency: string;
-    bank: string;
-    paidAt: string;
-    test: boolean;
-    shopName: string | null;
-    email: string | null;
-};
 
 type ShopContact = { name: string | null; email: string | null };
 
@@ -47,7 +34,7 @@ export async function fetchShopContact(
  * Never throws: the purchase is already recorded, the notification is best-effort.
  */
 export async function notifyPaidPurchase(
-    notification: PaidPurchaseNotification
+    notification: ShopifyPaidPurchase
 ): Promise<boolean> {
     const secret = process.env.SHOPIFY_API_SECRET;
     const backendUrl = process.env.BACKEND_URL;

@@ -360,6 +360,7 @@ const moneriumSyncOrchestrator = new MoneriumSyncOrchestrator(
 
 const paymentNotificationOrchestrator = new PaymentNotificationOrchestrator(
     MerchantContext.repositories.merchant,
+    MerchantContext.repositories.dnsCheck,
     slackClient
 );
 

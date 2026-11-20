@@ -111,6 +111,10 @@ export {
     MemberSortSchema,
 } from "./memberSchemas";
 export {
+    type ShopifyPaidPurchase,
+    ShopifyPaidPurchaseSchema,
+} from "./paymentSchemas";
+export {
     MergePreviewQuerySchema,
     type MergePreviewResponse,
     MergePreviewSchema,

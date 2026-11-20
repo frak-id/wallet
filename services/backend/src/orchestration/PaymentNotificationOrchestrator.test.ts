@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import { DnsCheckRepository } from "../infrastructure/dns/DnsCheckRepository";
 import type { StripeCheckoutSession } from "../infrastructure/integrations/stripe";
-import {
-    PaymentNotificationOrchestrator,
-    type ShopifyPaidPurchase,
-} from "./PaymentNotificationOrchestrator";
+import { PaymentNotificationOrchestrator } from "./PaymentNotificationOrchestrator";
+import type { ShopifyPaidPurchase } from "./schemas/paymentSchemas";
 
 vi.mock("@backend-infrastructure", () => ({
     log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -26,6 +25,7 @@ function setup() {
     const slack = { postMessage: vi.fn().mockResolvedValue(true) };
     const orchestrator = new PaymentNotificationOrchestrator(
         merchants as never,
+        new DnsCheckRepository(),
         slack as never
     );
     const posted = () =>
@@ -126,5 +126,20 @@ describe("PaymentNotificationOrchestrator.notifyShopifyPurchase", () => {
         expect(message).toContain("owner@acme.com");
         expect(message).toContain(purchase.bank);
         expect(message).toContain("AppPurchaseOneTime 42");
+    });
+
+    it("normalizes the shop domain the way merchant domains are stored", async () => {
+        const { orchestrator, merchants, posted } = setup();
+        merchants.findByDomain.mockImplementation(async (domain: string) =>
+            domain === "acme.com" ? merchant : null
+        );
+
+        await orchestrator.notifyShopifyPurchase({
+            ...purchase,
+            domain: "https://WWW.Acme.com/",
+        });
+
+        expect(merchants.findByDomain).toHaveBeenCalledTimes(1);
+        expect(posted()[0]).toContain("€250.00 paid via Shopify from Acme");
     });
 });

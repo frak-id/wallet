@@ -135,16 +135,16 @@ describe("webhooks action, APP_PURCHASES_ONE_TIME_UPDATE", () => {
         vi.clearAllMocks();
     });
 
+    const activatedRow = {
+        purchaseId: 42,
+        shop: "gone.example",
+        amount: "250",
+        currency: "eur",
+        bank: "0x3333333333333333333333333333333333333333",
+    };
+
     it("notifies the backend once the purchase turns active", async () => {
-        updateReturning.mockResolvedValue([
-            {
-                purchaseId: 42,
-                shop: "gone.example",
-                amount: "250",
-                currency: "eur",
-                bank: "0x3333333333333333333333333333333333333333",
-            },
-        ]);
+        updateReturning.mockResolvedValue([activatedRow]);
 
         const response = await action(args(purchaseUpdateRequest("ACTIVE")));
 
@@ -157,18 +157,30 @@ describe("webhooks action, APP_PURCHASES_ONE_TIME_UPDATE", () => {
             sql: '("purchase"."purchaseId" = $1 and "purchase"."status" <> $2)',
             params: [42, "active"],
         });
-        expect(notifyPaidPurchase).toHaveBeenCalledWith({
-            purchaseId: 42,
-            shop: SHOP,
-            domain: "gone.example",
-            amount: "250",
-            currency: "eur",
-            bank: "0x3333333333333333333333333333333333333333",
-            paidAt: "2026-11-20T10:00:00.000Z",
-            test: true,
-            shopName: "Gone Shop",
-            email: "owner@gone.example",
-        });
+        await vi.waitFor(() =>
+            expect(notifyPaidPurchase).toHaveBeenCalledWith({
+                purchaseId: 42,
+                shop: SHOP,
+                domain: "gone.example",
+                amount: "250",
+                currency: "eur",
+                bank: "0x3333333333333333333333333333333333333333",
+                paidAt: "2026-11-20T10:00:00.000Z",
+                test: true,
+                shopName: "Gone Shop",
+                email: "owner@gone.example",
+            })
+        );
+    });
+
+    it("answers Shopify without waiting for the backend notification", async () => {
+        updateReturning.mockResolvedValue([activatedRow]);
+        notifyPaidPurchase.mockReturnValueOnce(new Promise(() => {}));
+
+        const response = await action(args(purchaseUpdateRequest("ACTIVE")));
+
+        expect(response.status).toBe(200);
+        await vi.waitFor(() => expect(notifyPaidPurchase).toHaveBeenCalled());
     });
 
     it("stays silent on a redelivery of an already active purchase", async () => {

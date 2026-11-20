@@ -1,13 +1,16 @@
 import { log } from "@backend-infrastructure";
 import { t, verifyTimestampedBody } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia, getSchemaValidator, status } from "elysia";
 import {
     isValidStripeSignature,
     type StripeCheckoutSession,
     type StripeEvent,
 } from "../../infrastructure/integrations/stripe";
 import { OrchestrationContext } from "../../orchestration/context";
-import type { ShopifyPaidPurchase } from "../../orchestration/PaymentNotificationOrchestrator";
+import {
+    type ShopifyPaidPurchase,
+    ShopifyPaidPurchaseSchema,
+} from "../../orchestration/schemas/paymentSchemas";
 
 const textResponses = {
     200: t.String(),
@@ -32,28 +35,18 @@ function paidCheckoutSession(event: StripeEvent): StripeCheckoutSession | null {
     return null;
 }
 
-const SHOPIFY_STRING_FIELDS = [
-    "shop",
-    "domain",
-    "amount",
-    "currency",
-    "bank",
-    "paidAt",
-] as const;
+const shopifyPurchaseValidator = getSchemaValidator(ShopifyPaidPurchaseSchema);
 
+/** Validated after the signature check, which needs the raw text Elysia would otherwise parse. */
 function parseShopifyPurchase(body: string): ShopifyPaidPurchase | null {
-    let value: Record<string, unknown>;
+    let value: unknown;
     try {
         value = JSON.parse(body);
     } catch {
         return null;
     }
-    const valid =
-        typeof value?.purchaseId === "number" &&
-        typeof value.test === "boolean" &&
-        SHOPIFY_STRING_FIELDS.every((key) => typeof value[key] === "string");
-    // Every required field was type-checked just above.
-    return valid ? (value as ShopifyPaidPurchase) : null;
+    const parsed = shopifyPurchaseValidator.safeParse(value);
+    return parsed.success ? parsed.data : null;
 }
 
 /**

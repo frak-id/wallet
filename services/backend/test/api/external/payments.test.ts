@@ -176,5 +176,23 @@ describe("Payment webhooks", () => {
             expect(response.status).toBe(400);
             expect(notifyShopifyPurchase).not.toHaveBeenCalled();
         });
+
+        it("answers 400 to a signed body with a mistyped field", async () => {
+            const response = await postShopify(
+                JSON.stringify({ ...purchase, purchaseId: "42" })
+            );
+
+            expect(response.status).toBe(400);
+            expect(notifyShopifyPurchase).not.toHaveBeenCalled();
+        });
+
+        it("accepts a field from a newer Shopify app", async () => {
+            const newer = { ...purchase, plan: "plus" };
+
+            const response = await postShopify(JSON.stringify(newer));
+
+            expect(response.status).toBe(200);
+            expect(notifyShopifyPurchase).toHaveBeenCalledWith(newer);
+        });
     });
 });

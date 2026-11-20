@@ -6,6 +6,7 @@ import type {
     MerchantRepository,
     MerchantSelect,
 } from "../domain/merchant/repositories/MerchantRepository";
+import type { DnsCheckRepository } from "../infrastructure/dns/DnsCheckRepository";
 import {
     buildPaymentMessage,
     type PaymentNotification,
@@ -16,22 +17,7 @@ import {
     stripeAmountToMajor,
     stripePaymentUrl,
 } from "../infrastructure/integrations/stripe";
-
-/** A Shopify one-time app purchase (merchant bank top-up) the merchant just approved. */
-export type ShopifyPaidPurchase = {
-    purchaseId: number;
-    /** `*.myshopify.com` domain of the shop. */
-    shop: string;
-    /** Shop domain stored on the purchase row (primary domain when set). */
-    domain: string;
-    amount: string;
-    currency: string;
-    bank: string;
-    paidAt: string;
-    test: boolean;
-    shopName?: string | null;
-    email?: string | null;
-};
+import type { ShopifyPaidPurchase } from "./schemas/paymentSchemas";
 
 const DEFAULT_CHANNEL = "payments";
 
@@ -48,6 +34,7 @@ export class PaymentNotificationOrchestrator {
 
     constructor(
         private readonly merchants: MerchantRepository,
+        private readonly dnsCheck: DnsCheckRepository,
         private readonly slack: SlackClient
     ) {}
 
@@ -108,10 +95,11 @@ export class PaymentNotificationOrchestrator {
     private async findMerchantByShop(
         purchase: ShopifyPaidPurchase
     ): Promise<MerchantSelect | null> {
-        const primary = purchase.domain
-            .replace(/^https?:\/\//, "")
-            .replace(/^www\./, "");
-        for (const domain of new Set([primary, purchase.shop])) {
+        // Same normalizer merchant domains are stored with; throws on garbage, read as not found.
+        const candidates = [purchase.domain, purchase.shop].map((domain) =>
+            this.dnsCheck.getNormalizedDomain(domain)
+        );
+        for (const domain of new Set(candidates)) {
             const merchant =
                 (await this.merchants.findByDomain(domain)) ??
                 (await this.merchants.findByAllowedDomain(domain));

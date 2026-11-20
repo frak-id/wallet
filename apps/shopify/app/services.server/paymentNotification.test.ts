@@ -1,18 +1,15 @@
 import { createHmac } from "node:crypto";
+import type { ShopifyPaidPurchase } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { AdminApiContext } from "@shopify/shopify-app-react-router/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-    fetchShopContact,
-    notifyPaidPurchase,
-    type PaidPurchaseNotification,
-} from "./paymentNotification";
+import { fetchShopContact, notifyPaidPurchase } from "./paymentNotification";
 
 vi.mock("./logger", () => ({
     log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     levelForStatus: () => "warn",
 }));
 
-const notification: PaidPurchaseNotification = {
+const notification: ShopifyPaidPurchase = {
     purchaseId: 42,
     shop: "acme.myshopify.com",
     domain: "acme.com",
