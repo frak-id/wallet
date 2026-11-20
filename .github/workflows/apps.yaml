@@ -12,6 +12,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job runs PR code (install scripts, Gradle, Cargo build scripts) and none writes back.
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   # ── Change detection ────────────────────────────────────
   # The workflow-level `paths:` above is all-or-nothing, and `sdk/**` covers both the
