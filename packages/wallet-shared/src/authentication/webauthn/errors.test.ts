@@ -304,12 +304,50 @@ describe("classifyWebauthnError — iOS envelope", () => {
         expect(isReportableWebauthnError(err)).toBe(true);
     });
 
+    it("classifies a 1004 on a device with no passcode as an unreported no-screen-lock", () => {
+        const err = nativeError(
+            JSON.stringify({
+                type: "UnknownError",
+                message:
+                    "[1004] The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1004.); deviceOwnerAuth=passcodeNotSet",
+            })
+        );
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("no-screen-lock");
+        expect(result.retryable).toBe(true);
+        expect(isReportableWebauthnError(err)).toBe(false);
+    });
+
+    it("classifies a 1010 on a device with no passcode as no-screen-lock", () => {
+        const err = nativeError(
+            JSON.stringify({
+                type: "UnknownError",
+                message:
+                    "[1010] The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1010.); deviceOwnerAuth=passcodeNotSet",
+            })
+        );
+        expect(classifyWebauthnError(err).kind).toBe("no-screen-lock");
+        expect(isReportableWebauthnError(err)).toBe(false);
+    });
+
+    it("keeps a 1010 on a device with a passcode a reported unknown", () => {
+        const err = nativeError(
+            JSON.stringify({
+                type: "UnknownError",
+                message:
+                    "[1010] The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1010.); deviceOwnerAuth=ok",
+            })
+        );
+        expect(classifyWebauthnError(err).kind).toBe("unknown");
+        expect(isReportableWebauthnError(err)).toBe(true);
+    });
+
     it("keeps a 1004 carrying underlying-error detail a reported, retryable unknown", () => {
         const err = nativeError(
             JSON.stringify({
                 type: "UnknownError",
                 message:
-                    "[1004] The operation couldn't be completed. (com.apple.AuthenticationServices.AuthorizationError error 1004.); underlying=ASCAuthorizationErrorDomain#6; deviceOwnerAuth=passcodeNotSet",
+                    "[1004] The operation couldn't be completed. (com.apple.AuthenticationServices.AuthorizationError error 1004.); underlying=ASCAuthorizationErrorDomain#6; deviceOwnerAuth=ok",
             })
         );
         const result = classifyWebauthnError(err);
