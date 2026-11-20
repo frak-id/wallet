@@ -129,6 +129,10 @@ export const elysiaEnv = {
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
     AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
+    // Merchant top-up notifications; the bot must be a member of the channel.
+    SLACK_PAYMENTS_CHANNEL: "payments",
+    // Signing secret of the Stripe endpoint `/ext/payments/stripe/webhook`; empty = off.
+    STRIPE_WEBHOOK_SECRET: new sst.Secret("STRIPE_WEBHOOK_SECRET", "").value,
 
     // Resend (transactional email)
     RESEND_API_KEY: resendApiKey.value,

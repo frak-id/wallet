@@ -18,6 +18,7 @@ import { WalletContext } from "../domain/wallet/context";
 import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { DrandClient } from "../infrastructure/integrations/drand";
+import { slackClient } from "../infrastructure/integrations/slack";
 import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { AffiliateReportingOrchestrator } from "./AffiliateReportingOrchestrator";
@@ -56,6 +57,7 @@ import {
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
 import { MoneriumSyncOrchestrator } from "./monerium";
 import { NotificationOrchestrator } from "./NotificationOrchestrator";
+import { PaymentNotificationOrchestrator } from "./PaymentNotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
@@ -356,6 +358,12 @@ const moneriumSyncOrchestrator = new MoneriumSyncOrchestrator(
     MoneriumContext.rateLimitPause
 );
 
+const paymentNotificationOrchestrator = new PaymentNotificationOrchestrator(
+    MerchantContext.repositories.merchant,
+    MerchantContext.repositories.dnsCheck,
+    slackClient
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -393,5 +401,6 @@ export namespace OrchestrationContext {
         billing: billingOrchestrator,
         monthlyBill: monthlyBillOrchestrator,
         moneriumSync: moneriumSyncOrchestrator,
+        paymentNotification: paymentNotificationOrchestrator,
     };
 }

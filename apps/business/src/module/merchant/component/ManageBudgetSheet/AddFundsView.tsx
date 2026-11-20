@@ -17,11 +17,14 @@ import {
 import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import type { BudgetToken } from "@/module/merchant/utils/budgetTokens";
+import { buildOnRampUrl } from "@/module/merchant/utils/onRampUrl";
+import { useAccountCredentials } from "@/module/settings/security/useSecuritySettings";
 import * as styles from "./manage-budget-sheet.css";
 
 export function AddFundsView({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
     const { data, isLoading } = useGetMerchantBank({ merchantId });
+    const { data: account } = useAccountCredentials();
 
     if (isLoading) {
         return (
@@ -63,7 +66,10 @@ export function AddFundsView({ merchantId }: { merchantId: string }) {
                 )}
                 <Button
                     as="a"
-                    href={process.env.FUNDING_ON_RAMP_URL ?? "#"}
+                    href={buildOnRampUrl(process.env.FUNDING_ON_RAMP_URL, {
+                        merchantId,
+                        email: account?.email,
+                    })}
                     target="_blank"
                     rel="noopener noreferrer"
                     size="large"
