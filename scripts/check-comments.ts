@@ -3,6 +3,7 @@
  * Enforces the comment budget from the root AGENTS.md across Kotlin, Swift and TS/TSX.
  * Run: `bun run lint:comments`, or pass explicit paths to scope it to a diff.
  */
+import { execFileSync } from "node:child_process";
 import {
     existsSync,
     readdirSync,
@@ -11,33 +12,6 @@ import {
     writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-
-const DEFAULT_ROOTS = [
-    "sdk/android/frak-sdk/src",
-    "sdk/android/frak-sdk-ui/src",
-    "sdk/ios/Sources",
-    "sdk/ios/Tests",
-    // `Package.swift` is a Swift file sitting one directory above `Sources`, so each
-    // manifest has to be named on its own.
-    "sdk/ios/Package.swift",
-    "example/native-android/app/src",
-    "example/native-ios/Sources",
-    "example/native-ios/Package.swift",
-    "apps/wallet/app",
-    "apps/business/src",
-    "apps/listener/app",
-    "apps/shopify/app",
-    "services/backend/src",
-    "services/bootstrap/src",
-    "services/credential-sync/src",
-    "packages",
-    "sdk/core/src",
-    "sdk/react/src",
-    "sdk/components/src",
-    "sdk/legacy/src",
-    "scripts",
-    "infra",
-];
 
 /** Trees that are installed, emitted or vendored — never authored, so never budgeted. */
 const IGNORED_DIRS = new Set([
@@ -95,9 +69,30 @@ type Finding = {
     detail: string;
 };
 
-/** TS/TSX are checkable too, but only when a path asks for them — biome already owns that tree. */
-const isSource = (f: string) =>
-    [".kt", ".swift", ".ts", ".tsx"].some((ext) => f.endsWith(ext));
+const SOURCE_EXTS = [".kt", ".swift", ".ts", ".tsx"];
+
+const isBudgeted = (f: string) =>
+    SOURCE_EXTS.some((ext) => f.endsWith(ext)) &&
+    !isGenerated(f) &&
+    !f.split("/").some((part) => IGNORED_DIRS.has(part));
+
+/** Every tracked or new, non-ignored source file, so a new directory is budgeted by default. */
+function repoFiles(): string[] {
+    return execFileSync(
+        "git",
+        [
+            "ls-files",
+            "-z",
+            "-co",
+            "--exclude-standard",
+            "--",
+            ...SOURCE_EXTS.map((ext) => `*${ext}`),
+        ],
+        { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
+    )
+        .split("\0")
+        .filter((f) => f !== "" && isBudgeted(f) && existsSync(f));
+}
 
 function walk(dir: string, out: string[] = []): string[] {
     let entries: string[];
@@ -115,7 +110,7 @@ function walk(dir: string, out: string[] = []): string[] {
         if (!stat) continue;
         if (stat.isDirectory()) {
             walk(full, out);
-        } else if (isSource(full) && !isGenerated(full)) {
+        } else if (isBudgeted(full)) {
             out.push(full);
         }
     }
@@ -218,7 +213,7 @@ function docReferenceFindings(
     );
 }
 
-function checkFile(file: string): Finding[] {
+export function checkFile(file: string): Finding[] {
     const lines = readFileSync(file, "utf8").split("\n");
     const findings: Finding[] = [];
     let i = 0;
@@ -281,70 +276,88 @@ function checkFile(file: string): Finding[] {
     return findings;
 }
 
-const args = process.argv.slice(2);
-const roots = args.filter((a) => !a.startsWith("--"));
-const files = (roots.length > 0 ? roots : DEFAULT_ROOTS).flatMap((r) =>
-    statSync(r, { throwIfNoEntry: false })?.isDirectory() ? walk(r) : [r]
-);
-
-const findings = files.flatMap(checkFile);
-
-// Debt that predates the gate, counted per file. A file may only ever get better: touch one and
-// its budget is whatever the baseline says, so the number ratchets down and never up.
-const baselinePath = "scripts/comment-budget-baseline.json";
-const baseline: Record<string, number> = existsSync(baselinePath)
-    ? JSON.parse(readFileSync(baselinePath, "utf8"))
-    : {};
-
-const counts = new Map<string, number>();
-for (const f of findings) counts.set(f.file, (counts.get(f.file) ?? 0) + 1);
-
-if (args.includes("--update-baseline")) {
-    const next = Object.fromEntries([...counts].sort());
-    writeFileSync(baselinePath, `${JSON.stringify(next, null, 4)}\n`);
-    console.log(
-        `baseline written: ${counts.size} file(s), ${findings.length} finding(s)`
+/** A file may only ever get better: more findings than its baseline fail; fewer only ask for a baseline update. */
+export function compareToBaseline(
+    findings: Finding[],
+    baseline: Record<string, number>,
+    scanned: Set<string>
+) {
+    const counts = new Map<string, number>();
+    for (const f of findings) counts.set(f.file, (counts.get(f.file) ?? 0) + 1);
+    const regressions = findings.filter(
+        (f) => (counts.get(f.file) ?? 0) > (baseline[f.file] ?? 0)
     );
-    process.exit(0);
-}
-
-const regressions = findings.filter(
-    (f) => (counts.get(f.file) ?? 0) > (baseline[f.file] ?? 0)
-);
-// Only files this run actually scanned; a scoped run must not report the rest as fixed.
-const scanned = new Set(files);
-const improved = Object.keys(baseline).filter(
-    (f) => scanned.has(f) && (counts.get(f) ?? 0) < baseline[f]
-);
-
-for (const f of regressions.sort(
-    (a, b) => a.file.localeCompare(b.file) || a.line - b.line
-)) {
-    console.log(`${f.file}:${f.line}  ${f.rule}: ${f.detail}`);
-}
-
-if (improved.length > 0) {
-    console.log(
-        `\n${improved.length} file(s) improved past the baseline — run \`bun run lint:comments -- --update-baseline\` to lock it in.`
+    // Only files this run actually scanned; a scoped run must not report the rest as fixed.
+    const improved = Object.keys(baseline).filter(
+        (f) => scanned.has(f) && (counts.get(f) ?? 0) < baseline[f]
     );
+    return { counts, regressions, improved };
 }
 
-if (regressions.length === 0) {
-    const debt = findings.length;
-    console.log(
-        `✅ comment budget clean across ${files.length} files` +
-            (debt > 0 ? ` (${debt} baselined finding(s) left to pay down)` : "")
+if (import.meta.main) {
+    const args = process.argv.slice(2);
+    const roots = args.filter((a) => !a.startsWith("--"));
+    const files =
+        roots.length > 0
+            ? roots.flatMap((r) =>
+                  statSync(r, { throwIfNoEntry: false })?.isDirectory()
+                      ? walk(r)
+                      : [r]
+              )
+            : repoFiles();
+
+    const findings = files.flatMap(checkFile);
+
+    const baselinePath = "scripts/comment-budget-baseline.json";
+    const baseline: Record<string, number> = existsSync(baselinePath)
+        ? JSON.parse(readFileSync(baselinePath, "utf8"))
+        : {};
+
+    const { counts, regressions, improved } = compareToBaseline(
+        findings,
+        baseline,
+        new Set(files)
     );
-    process.exit(0);
+
+    if (args.includes("--update-baseline")) {
+        const next = Object.fromEntries([...counts].sort());
+        writeFileSync(baselinePath, `${JSON.stringify(next, null, 4)}\n`);
+        console.log(
+            `baseline written: ${counts.size} file(s), ${findings.length} finding(s)`
+        );
+        process.exit(0);
+    }
+
+    for (const f of regressions.sort(
+        (a, b) => a.file.localeCompare(b.file) || a.line - b.line
+    )) {
+        console.log(`${f.file}:${f.line}  ${f.rule}: ${f.detail}`);
+    }
+    if (improved.length > 0) {
+        console.log(
+            `\n${improved.length} file(s) improved past the baseline — run \`bun run lint:comments -- --update-baseline\` to lock it in.`
+        );
+    }
+
+    if (regressions.length === 0) {
+        const debt = findings.length;
+        console.log(
+            `✅ comment budget clean across ${files.length} files` +
+                (debt > 0
+                    ? ` (${debt} baselined finding(s) left to pay down)`
+                    : "")
+        );
+        process.exit(0);
+    }
+
+    const byRule = new Map<string, number>();
+    for (const f of regressions)
+        byRule.set(f.rule, (byRule.get(f.rule) ?? 0) + 1);
+    console.log(
+        `\n❌ ${regressions.length} new finding(s): ${[...byRule]
+            .map(([r, n]) => `${r}=${n}`)
+            .join(", ")}`
+    );
+    console.log("Budget lives in AGENTS.md → 'Comments are on a budget'.");
+    process.exit(1);
 }
-
-const byRule = new Map<string, number>();
-for (const f of regressions) byRule.set(f.rule, (byRule.get(f.rule) ?? 0) + 1);
-
-console.log(
-    `\n❌ ${regressions.length} new finding(s): ${[...byRule]
-        .map(([r, n]) => `${r}=${n}`)
-        .join(", ")}`
-);
-console.log("Budget lives in AGENTS.md → 'Comments are on a budget'.");
-process.exit(1);
