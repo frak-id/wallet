@@ -11,6 +11,7 @@ import {
     withCache,
 } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
+import { FrakRpcError } from "@frak-labs/frame-connector";
 import { openSharingPage } from "../actions/sharingPage";
 import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
 import { dispatchClientReadyEvent } from "./clientReady";
@@ -46,16 +47,26 @@ export function initFrakSdk(): Promise<void> {
     ).catch(() => {});
 }
 
+type InitFailureReason = "config_missing" | "client_unavailable";
+
+function initFailure(reason: InitFailureReason, message: string) {
+    return Object.assign(new Error(message), { reason });
+}
+
+/** A code, not the message: OpenPanel drops a value starting with `[`. */
+function failureReason(err: unknown): string {
+    if (!(err instanceof Error)) return "unknown";
+    if ("reason" in err && typeof err.reason === "string") return err.reason;
+    // FrakRpcError leaves `name` as "Error".
+    if (err instanceof FrakRpcError) return `rpc_${err.code}`;
+    return err.name;
+}
+
 /** No client exists after a failed init, so the event goes through its own OpenPanel. */
 async function reportInitFailure(err: unknown) {
     const clientId = await getClientIdAsync().catch(() => undefined);
     trackEvent({ openPanel: createSdkOpenPanel(clientId) }, "sdk_init_failed", {
-        reason:
-            err instanceof Error
-                ? err.message
-                : typeof err === "string"
-                  ? err
-                  : "unknown",
+        reason: failureReason(err),
         config_missing: !window.FrakSetup?.config,
         domain: window.FrakSetup?.config?.domain ?? window.location.hostname,
     });
@@ -67,7 +78,8 @@ async function reportInitFailure(err: unknown) {
  */
 async function doInit(): Promise<void> {
     if (!window.FrakSetup?.config) {
-        throw new Error(
+        throw initFailure(
+            "config_missing",
             "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
         );
     }
@@ -77,7 +89,10 @@ async function doInit(): Promise<void> {
     });
 
     if (!client) {
-        throw new Error("[Frak SDK] Failed to create client");
+        throw initFailure(
+            "client_unavailable",
+            "[Frak SDK] Failed to create client"
+        );
     }
 
     window.FrakSetup.client = client;
