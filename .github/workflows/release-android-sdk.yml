@@ -64,7 +64,6 @@ jobs:
         with:
           # v6 defaults to the proprietary enhanced cache (Gradle Terms of Use); basic stays MIT.
           cache-provider: basic
-          build-root-directory: sdk/android
           # This job holds the signing key and the Portal token; the wrapper jar it runs
           # is worth verifying against Gradle's published hashes.
           validate-wrappers: true
