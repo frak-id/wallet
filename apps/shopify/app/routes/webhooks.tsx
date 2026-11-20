@@ -1,13 +1,70 @@
 import { drizzleDb } from "app/db.server";
 import { log } from "app/services.server/logger";
+import {
+    fetchShopContact,
+    notifyPaidPurchase,
+} from "app/services.server/paymentNotification";
+import { isProd } from "app/utils/env";
 import { sessionTable } from "db/schema/sessionTable";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import type { ActionFunctionArgs } from "react-router";
 import { purchaseTable } from "../../db/schema/purchaseTable";
 import { authenticate } from "../shopify.server";
 
+type WebhookContext = Awaited<ReturnType<typeof authenticate.webhook>>;
+
+async function updatePurchase({
+    shop,
+    payload,
+    admin,
+}: Pick<WebhookContext, "shop" | "payload" | "admin">) {
+    const purchaseId = Number.parseInt(
+        payload.app_purchase_one_time.admin_graphql_api_id.replace(
+            "gid://shopify/AppPurchaseOneTime/",
+            ""
+        ),
+        10
+    );
+    const status: (typeof purchaseTable.$inferSelect)["status"] =
+        payload.app_purchase_one_time.status.toLowerCase();
+    const updatedAt = new Date(payload.app_purchase_one_time.updated_at);
+    log.info({ shop, purchaseId, status }, "Updating purchase");
+
+    // Only the update that flips the row to active returns it, so a redelivery notifies nothing.
+    const isActive = status === "active";
+    const rows = await drizzleDb
+        .update(purchaseTable)
+        .set({ status, updatedAt })
+        .where(
+            isActive
+                ? and(
+                      eq(purchaseTable.purchaseId, purchaseId),
+                      ne(purchaseTable.status, "active")
+                  )
+                : eq(purchaseTable.purchaseId, purchaseId)
+        )
+        .returning();
+    if (!isActive || rows.length === 0) return;
+
+    const contact = await fetchShopContact(admin);
+    for (const row of rows) {
+        await notifyPaidPurchase({
+            purchaseId: row.purchaseId,
+            shop,
+            domain: row.shop,
+            amount: row.amount,
+            currency: row.currency,
+            bank: row.bank,
+            paidAt: updatedAt.toISOString(),
+            test: !isProd(),
+            shopName: contact.name,
+            email: contact.email,
+        });
+    }
+}
+
 export const action = async ({ request }: ActionFunctionArgs) => {
-    const { shop, topic, payload } = await authenticate.webhook(request);
+    const { shop, topic, payload, admin } = await authenticate.webhook(request);
 
     // NEVER log the raw `payload`: several topics (CUSTOMERS_DATA_REQUEST,
     // CUSTOMERS_REDACT, ...) carry raw customer PII (email/phone/id). Persisting
@@ -27,30 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         case "APP_PURCHASES_ONE_TIME_UPDATE":
             try {
-                const purchaseId = Number.parseInt(
-                    payload.app_purchase_one_time.admin_graphql_api_id.replace(
-                        "gid://shopify/AppPurchaseOneTime/",
-                        ""
-                    ),
-                    10
-                );
-                log.info(
-                    {
-                        shop,
-                        purchaseId,
-                        status: payload.app_purchase_one_time.status,
-                    },
-                    "Updating purchase"
-                );
-                await drizzleDb
-                    .update(purchaseTable)
-                    .set({
-                        status: payload.app_purchase_one_time.status.toLowerCase(),
-                        updatedAt: new Date(
-                            payload.app_purchase_one_time.updated_at
-                        ),
-                    })
-                    .where(eq(purchaseTable.purchaseId, purchaseId));
+                await updatePurchase({ shop, payload, admin });
             } catch (e) {
                 log.error({ err: e, shop }, "Error updating purchase");
             }

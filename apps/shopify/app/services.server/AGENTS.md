@@ -33,6 +33,7 @@ export async function doSomething(
 | **webhook.ts**          | Webhook subscription management + Frak status check        | None     | Shopify GraphQL + backend API      |
 | **purchase.ts**         | One-time app purchases, DB tracking                        | None     | Shopify GraphQL + Drizzle          |
 | **purchase.helpers.ts** | Validation (amount, bank address), GID parsing             | None     | Pure functions                     |
+| **paymentNotification.ts** | Paid top-up → backend `/ext/payments/shopify/purchase` (Slack), signed `timestamp.body` with the app secret | None | Shopify GraphQL + backend API |
 | **merchant.ts**         | Merchant ID resolution (cache → metafield → backend)       | LRU 5min | Shopify GraphQL + backend API      |
 | **backendMerchant.ts**  | Campaigns, bank + Frak webhook status from the backend     | LRU 5s   | backend API                        |
 | **frakEnv.ts**          | Frak wallet/backend URLs per stage                         | None     | Pure                               |

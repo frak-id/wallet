@@ -24,6 +24,10 @@ export {
     type TwoFactorMethod,
     TwoFactorMethodDto,
 } from "./stepUpRequired";
+export {
+    signTimestampedBody,
+    verifyTimestampedBody,
+} from "./timestampedHmac";
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";
 export { describeUserAgent } from "./userAgent";
 export { isUuid } from "./uuid";
