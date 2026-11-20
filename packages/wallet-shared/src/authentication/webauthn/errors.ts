@@ -24,7 +24,7 @@ export type WebauthnErrorKind =
     | "cancelled" // user dismissed / timed out — soft, retryable
     | "permissions-policy" // frame not allowed to run WebAuthn (delegation missing, or an extension's own gate)
     | "sync-failed" // GPM "folsom" sync/decrypt failure (50162/50161/50191)
-    | "no-screen-lock" // device has no PIN/biometric lock (50166 / ConstraintError)
+    | "no-screen-lock" // device has no PIN/biometric lock (50166 / ConstraintError / iOS passcodeNotSet)
     | "already-registered" // excludeCredentials match (InvalidStateError / 50157)
     | "no-credential" // nothing on this device to authenticate with (50156)
     | "unsupported" // platform/provider can't satisfy the request
@@ -200,7 +200,13 @@ function kindFromSignals(
         haystack.includes("excluded credential")
     )
         return { kind: "already-registered", retryable: false };
-    if (name === "ConstraintError" || haystack.includes("screen lock"))
+    // iOS gives no passcode-specific code (1004, or 1010 on iOS 26+, also
+    // cover other causes), so the plugin appends an LAContext probe.
+    if (
+        name === "ConstraintError" ||
+        haystack.includes("screen lock") ||
+        haystack.includes("deviceownerauth=passcodenotset")
+    )
         return { kind: "no-screen-lock", retryable: true };
     if (
         haystack.includes("type_no_credential") ||

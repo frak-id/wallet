@@ -21,7 +21,7 @@ export default interface Resources {
           "title": "No passkey found"
         },
         "noScreenLock": {
-          "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.",
+          "message": "Your device needs a screen lock (passcode, PIN, or pattern) to use passkeys. Add one in your settings, then try again.",
           "title": "Screen lock required"
         },
         "notAllowed": {
