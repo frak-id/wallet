@@ -131,7 +131,6 @@ jobs:
         with:
           # v6 defaults to the proprietary enhanced cache (Gradle Terms of Use); basic stays MIT.
           cache-provider: basic
-          build-root-directory: example/native-android
           cache-read-only: true
           validate-wrappers: true
 
