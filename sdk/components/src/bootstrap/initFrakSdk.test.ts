@@ -1,6 +1,7 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sharingPageUtils from "../actions/sharingPage";
 import * as clientReadyUtils from "./clientReady";
@@ -91,7 +92,7 @@ describe("initFrakSdk", () => {
             await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
 
             expect(initFailedCalls()[0][1]).toEqual({
-                reason: expect.stringContaining("Configuration not found"),
+                reason: "config_missing",
                 config_missing: true,
                 domain: "shop.test",
             });
@@ -104,9 +105,38 @@ describe("initFrakSdk", () => {
             await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
 
             expect(initFailedCalls()[0][1]).toEqual({
-                reason: "[Frak SDK] Failed to create client",
+                reason: "client_unavailable",
                 config_missing: false,
                 domain: "example.com",
+            });
+        });
+
+        it("names the error when client setup throws", async () => {
+            vi.mocked(coreSdkIndex.setupClient).mockRejectedValue(
+                new TypeError("[Frak] iframe blocked")
+            );
+
+            await initFrakSdk();
+            await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
+
+            expect(initFailedCalls()[0][1]).toMatchObject({
+                reason: "TypeError",
+            });
+        });
+
+        it("sends the RPC code when client setup throws a FrakRpcError", async () => {
+            vi.mocked(coreSdkIndex.setupClient).mockRejectedValue(
+                new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "The iframe does not have a content window"
+                )
+            );
+
+            await initFrakSdk();
+            await vi.waitFor(() => expect(initFailedCalls()).toHaveLength(1));
+
+            expect(initFailedCalls()[0][1]).toMatchObject({
+                reason: "rpc_-32002",
             });
         });
 
