@@ -1,5 +1,11 @@
 import type { FiatAmounts, RewardSummary } from "@frak-labs/core-sdk";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/preact";
+import {
+    act,
+    cleanup,
+    fireEvent,
+    render,
+    waitFor,
+} from "@testing-library/preact";
 import { render as renderUnflushed } from "preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sharingPageUtils from "@/actions/sharingPage";
@@ -448,7 +454,7 @@ describe("Ambassador", () => {
 
     it("Covers AE4. a failed referee fetch renders exactly as a campaign without a referee reward", () => {
         const absent = render(<Ambassador />).container.innerHTML;
-        cleanup();
+        act(() => cleanup());
         refereeRewardImpl.mockImplementation(() => {
             // useReward reports a rejected fetch as no reward (useReward.test.ts).
             return { reward: undefined, hasReward: false };
@@ -473,7 +479,7 @@ describe("Ambassador", () => {
         expect(
             text(blankClause.container, ".frak-ambassador__reward-footer")
         ).toBe("Free · no commitment · paid to your bank account");
-        cleanup();
+        act(() => cleanup());
 
         const blankCaption = render(<Ambassador rewardFooterCaption="" />);
 
@@ -511,7 +517,7 @@ describe("Ambassador", () => {
 
         expect(closed.querySelector(".frak-ambassador__hero-pill")).toBeNull();
         expect(closed.textContent).not.toContain("gift");
-        cleanup();
+        act(() => cleanup());
 
         setRefereeReward("0,80 €");
         const open = render(<Ambassador {...props} />).container;
@@ -1116,7 +1122,7 @@ describe("Ambassador", () => {
         expect(
             friend?.querySelector(".frak-ambassador__amount-unit")?.textContent
         ).toBe("$");
-        cleanup();
+        act(() => cleanup());
 
         setReferrerReward(undefined);
         const { container: worded } = render(<Ambassador />);
@@ -1205,7 +1211,7 @@ describe("Ambassador", () => {
         };
         render(<Ambassador />);
         expect(brandMentions()).toBe(2);
-        cleanup();
+        act(() => cleanup());
 
         setRefereeReward("0,80 €");
         render(<Ambassador />);
@@ -1801,7 +1807,7 @@ describe("Ambassador", () => {
                     ".frak-ambassador__my-rewards-main .frak-ambassador__my-rewards-share"
                 )
             ).not.toBeNull();
-            cleanup();
+            act(() => cleanup());
 
             isMobile.mockReturnValue(true);
             const mobile = render(<Ambassador />);

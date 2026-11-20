@@ -1,6 +1,6 @@
-import type { JSX } from "preact";
+import type { SVGAttributes } from "preact";
 
-type GiftIconProps = JSX.SVGAttributes<SVGSVGElement> & {
+type GiftIconProps = SVGAttributes<SVGSVGElement> & {
     /** Stroke of the box and bow; a dark surface needs a light one. */
     ink?: string;
 };

@@ -359,7 +359,7 @@ describe("Banner pending mode", () => {
         const { unmount } = render(<Banner />);
         expect(hasInlineReminder()).toBe(true);
 
-        unmount();
+        act(() => unmount());
         expect(hasInlineReminder()).toBe(false);
     });
 });
