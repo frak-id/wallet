@@ -3,9 +3,9 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', '*.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', '*.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
@@ -194,7 +194,7 @@ jobs:
             # `check:safe-area` walks every `.css.ts` under apps/packages/sdk/
             # example; the deep-link/floor checks read `src-tauri`;
             # `check:bun-version` reads the `apps/*` and `services/*` Dockerfiles;
-            # the comment budget scans every root in `scripts/check-comments.ts`.
+            # the comment budget scans every tracked `.kt`/`.swift`/`.ts`/`.tsx` file.
             #
             # No `!` entries: in paths-filter a negation is a rule matching
             # everything outside that path, not an exclusion from the includes
@@ -213,6 +213,8 @@ jobs:
               - 'services/**'
               - 'infra/**'
               - 'scripts/**'
+              # Root-level `knip.ts`, `sst.config.ts`, `vitest.config.ts`.
+              - '*.ts'
               - 'package.json'
               - '.github/workflows/tauri-mobile-release.yml'
               - '.github/workflows/apps.yaml'
@@ -516,7 +518,7 @@ jobs:
       - name: "🍞 Bun version pins"
         run: bun run check:bun-version
       # Per-file ceiling in `scripts/comment-budget-baseline.json`: a file may only
-      # get better. No arguments, so it scans every default root.
+      # get better. No arguments, so it scans every tracked source file.
       - name: "💬 Comment budget"
         run: bun run lint:comments
 
