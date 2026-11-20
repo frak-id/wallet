@@ -1,7 +1,8 @@
 import Foundation
 import LocalAuthentication
 
-private let authorizationFailedCode = 1004
+// 1004 .failed and 1010 .deviceNotConfiguredForPasskeyCreation both cover a missing passcode among other causes.
+private let deviceOwnerProbeCodes: Set<Int> = [1004, 1010]
 
 func authorizationErrorDetail(
     _ error: Error,
@@ -15,7 +16,7 @@ func authorizationErrorDetail(
             parts.append(describeUnderlying(nested))
         }
     }
-    if nsError.code == authorizationFailedCode {
+    if deviceOwnerProbeCodes.contains(nsError.code) {
         parts.append("deviceOwnerAuth=\(deviceOwnerAuth())")
     }
     return parts.joined(separator: "; ")

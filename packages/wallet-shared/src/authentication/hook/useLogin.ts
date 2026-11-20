@@ -5,6 +5,7 @@ import {
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
+import { useCallback } from "react";
 import {
     extractAuthError,
     type Flow,
@@ -96,7 +97,7 @@ export function useLogin(
         isSuccess,
         isError,
         error,
-        mutateAsync: login,
+        mutateAsync,
     } = useMutation<Session, Error, UseLoginArgs, LoginContext>({
         ...options,
         mutationKey: authKey.login,
@@ -244,6 +245,16 @@ export function useLogin(
             options?.onError?.(err, vars, ctx, mutationCtx);
         },
     });
+
+    // onError already reports the failure: callers that don't await must not re-surface it as unhandled.
+    const login = useCallback(
+        (args: UseLoginArgs) => {
+            const promise = mutateAsync(args);
+            promise.catch(() => {});
+            return promise;
+        },
+        [mutateAsync]
+    );
 
     return {
         isLoading,

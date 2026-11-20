@@ -450,6 +450,27 @@ describe("useLogin", () => {
         });
     });
 
+    test("a failed login nobody awaits leaves no unhandled rejection", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        vi.mocked(WebAuthnP256.sign).mockRejectedValue(new Error("boom"));
+        const unhandled = vi.fn();
+        process.on("unhandledRejection", unhandled);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        result.current.login(undefined);
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        process.off("unhandledRejection", unhandled);
+
+        expect(unhandled).not.toHaveBeenCalled();
+    });
+
     test("should encode authentication response correctly", async ({
         queryWrapper,
         mockAddress,
