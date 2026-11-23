@@ -9,6 +9,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { APP_PATHS } from "./store-notes";
 
 export const TITLE_PREFIX = "release: dev → main (";
 export const TITLE_LIMIT = 256;
@@ -110,12 +111,7 @@ type SurfaceRule = Omit<SurfaceHit, "files"> & {
     match: (path: string) => boolean;
 };
 
-const WALLET_WEB = [
-    "apps/wallet/",
-    "packages/wallet-shared/",
-    "packages/design-system/",
-    "packages/app-essentials/",
-];
+const WALLET_WEB = APP_PATHS.map((path) => `${path}/`);
 const JS_SDK = /^(sdk\/(core|react|components|legacy)|packages\/rpc)\//;
 const SHOPIFY_DEPLOYED =
     /^apps\/shopify\/(extensions\/|shopify\.app\.[^/]+\.toml$)/;
@@ -623,6 +619,60 @@ function lines(raw: string): string[] {
         .filter(Boolean);
 }
 
+type Spawned = {
+    status: number | null;
+    stdout: string | null;
+    stderr: string | null;
+};
+
+function failed(command: string, result: Spawned): Error {
+    const detail = result.stderr?.trim() || `exit ${result.status}`;
+    return new Error(`${command} failed: ${detail}`);
+}
+
+// Git answers a yes/no query with exit 0 or 1: any other status is an error, never a "no".
+export function exitAnswer(result: Spawned, command: string): 0 | 1 {
+    if (result.status === 0 || result.status === 1) return result.status;
+    throw failed(command, result);
+}
+
+// `git merge-tree` also exits 1 on a bad ref: only a tree id on line 1 proves the merge ran.
+export function mergeTreeConflicts(result: Spawned): string[] {
+    const [tree = "", ...paths] = lines(result.stdout ?? "");
+    const status = exitAnswer(result, "git merge-tree");
+    if (!/^[0-9a-f]{40,64}$/.test(tree)) throw failed("git merge-tree", result);
+    return status === 1 ? paths : [];
+}
+
+// Newest first: each workflow's latest run, minus the workflow collecting these facts.
+export function latestRuns(runs: CiRun[], running?: string): CiRun[] {
+    const latest = new Map<string, CiRun>();
+    for (const run of runs) {
+        if (run.workflowName === running || latest.has(run.workflowName)) {
+            continue;
+        }
+        latest.set(run.workflowName, run);
+    }
+    return [...latest.values()];
+}
+
+function gitAnswer(args: string[]): 0 | 1 {
+    const result = spawnSync("git", args, { encoding: "utf8" });
+    return exitAnswer(result, `git ${args.join(" ")}`);
+}
+
+// One line for the context file; `execFileSync` errors carry the command's stderr.
+function failure(error: unknown): string {
+    const stderr =
+        error instanceof Error && "stderr" in error
+            ? String(error.stderr ?? "")
+            : "";
+    const text =
+        stderr.trim() ||
+        (error instanceof Error ? error.message : String(error));
+    return text.replace(/\s+/g, " ").slice(0, 500);
+}
+
 // `gh` missing or unauthenticated degrades a fact to "unknown", never the run.
 function gh<T>(args: string[]): T | null {
     try {
@@ -659,26 +709,25 @@ function log(range: string[]): Commit[] {
 
 function isAncestor(ancestor: string, descendant: string): boolean {
     return (
-        spawnSync("git", ["merge-base", "--is-ancestor", ancestor, descendant])
-            .status === 0
+        gitAnswer(["merge-base", "--is-ancestor", ancestor, descendant]) === 0
     );
 }
 
 function trialMergeConflicts(base: string, head: string): string[] {
-    const result = spawnSync(
-        "git",
-        [
-            "merge-tree",
-            "--write-tree",
-            "--name-only",
-            "--no-messages",
-            base,
-            head,
-        ],
-        { encoding: "utf8" }
+    return mergeTreeConflicts(
+        spawnSync(
+            "git",
+            [
+                "merge-tree",
+                "--write-tree",
+                "--name-only",
+                "--no-messages",
+                base,
+                head,
+            ],
+            { encoding: "utf8" }
+        )
     );
-    // Exit 1 = conflicts; line 1 is the tree id, the rest are conflicted paths.
-    return result.status === 1 ? lines(result.stdout).slice(1) : [];
 }
 
 function liveStoreTag(): string | null {
@@ -736,7 +785,7 @@ function simulateOta(tag: string, head: string): OtaReport {
             .split("\n")
             .filter((line) => GUEST_BUMP.test(line));
         const webChanged =
-            spawnSync("git", [
+            gitAnswer([
                 "-C",
                 dir,
                 "diff",
@@ -748,7 +797,7 @@ function simulateOta(tag: string, head: string): OtaReport {
                 "sdk",
                 "package.json",
                 "bun.lock",
-            ]).status !== 0;
+            ]) === 1;
         return { tag, nativeFiles, guestBumps, webChanged };
     } finally {
         spawnSync("git", ["worktree", "remove", "--force", dir]);
@@ -764,22 +813,27 @@ function otaReport(head: string): OtaReport {
             reason: "Unknown: no production `app-*` GitHub release found (or `gh` unavailable).",
         };
     }
-    if (
-        spawnSync("git", ["rev-parse", "-q", "--verify", `refs/tags/${tag}`])
-            .status !== 0
-    ) {
+    try {
+        const ref = `refs/tags/${tag}`;
+        if (gitAnswer(["rev-parse", "-q", "--verify", ref]) === 1) {
+            return {
+                tag,
+                reason: `Unknown: tag \`${tag}\` is not fetched locally.`,
+            };
+        }
+        if (!isAncestor(tag, head)) {
+            return {
+                tag,
+                reason: `\`${head}\` does not descend from \`${tag}\`: the OTA guard would refuse to run.`,
+            };
+        }
+        return simulateOta(tag, head);
+    } catch (error) {
         return {
             tag,
-            reason: `Unknown: tag \`${tag}\` is not fetched locally.`,
+            reason: `Unknown: simulating the guard failed. A \`pin-native-version\` error here fails the real guard too. Error: ${failure(error)}`,
         };
     }
-    if (!isAncestor(tag, head)) {
-        return {
-            tag,
-            reason: `\`${head}\` does not descend from \`${tag}\`: the OTA guard would refuse to run.`,
-        };
-    }
-    return simulateOta(tag, head);
 }
 
 function latestTag(prefix: string): string | null {
@@ -824,13 +878,7 @@ function ciRuns(sha: string): CiRun[] | null {
         "--json",
         "workflowName,status,conclusion,url",
     ]);
-    if (runs === null) return null;
-    // Newest first: keep each workflow's latest run only.
-    const latest = new Map<string, CiRun>();
-    for (const run of runs) {
-        if (!latest.has(run.workflowName)) latest.set(run.workflowName, run);
-    }
-    return [...latest.values()];
+    return runs === null ? null : latestRuns(runs, process.env.GITHUB_WORKFLOW);
 }
 
 type GhPr = {

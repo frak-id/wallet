@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
     BODY_LIMIT,
+    type CiRun,
     classify,
     demote,
+    exitAnswer,
     type Facts,
     isTestPath,
+    latestRuns,
+    mergeTreeConflicts,
     parseChangeset,
     parseLog,
     parseNumstat,
@@ -256,5 +260,79 @@ describe("renderContext", () => {
         expect(text).toContain("Unknown: `gh` unavailable.");
         expect(text).toContain("##### Why");
         expect(text).not.toContain("Previous release PR");
+    });
+});
+
+describe("exitAnswer", () => {
+    it("returns git's yes/no exit status", () => {
+        expect(exitAnswer({ status: 0, stdout: "", stderr: "" }, "git q")).toBe(
+            0
+        );
+        expect(exitAnswer({ status: 1, stdout: "", stderr: "" }, "git q")).toBe(
+            1
+        );
+    });
+
+    it("throws on any other status instead of answering no", () => {
+        const bad = { status: 128, stdout: "", stderr: "fatal: bad object\n" };
+        expect(() => exitAnswer(bad, "git q")).toThrow(
+            "git q failed: fatal: bad object"
+        );
+        const killed = { status: null, stdout: null, stderr: null };
+        expect(() => exitAnswer(killed, "git q")).toThrow("exit null");
+    });
+});
+
+describe("mergeTreeConflicts", () => {
+    const tree = "c4e3a25803c0dfedc0792c08ecad1107faaa52d9";
+
+    it("reads a clean merge as no conflict", () => {
+        const clean = { status: 0, stdout: `${tree}\n`, stderr: "" };
+        expect(mergeTreeConflicts(clean)).toEqual([]);
+    });
+
+    it("lists the conflicted paths after the tree id", () => {
+        const stdout = `${tree}\napps/wallet/package.json\nbun.lock\n`;
+        expect(mergeTreeConflicts({ status: 1, stdout, stderr: "" })).toEqual([
+            "apps/wallet/package.json",
+            "bun.lock",
+        ]);
+    });
+
+    it("throws on an exit 1 with no tree id, as for a bad ref", () => {
+        const stderr = "merge-tree: nope - not something we can merge\n";
+        expect(() =>
+            mergeTreeConflicts({ status: 1, stdout: "", stderr })
+        ).toThrow("not something we can merge");
+    });
+
+    it("throws on a hard error", () => {
+        const fatal = { status: 128, stdout: "", stderr: "fatal: shallow" };
+        expect(() => mergeTreeConflicts(fatal)).toThrow("fatal: shallow");
+    });
+});
+
+describe("latestRuns", () => {
+    const run = (workflowName: string, status: string): CiRun => ({
+        workflowName,
+        status,
+        conclusion: "",
+        url: `https://ci/${workflowName}/${status}`,
+    });
+
+    it("keeps each workflow's newest run", () => {
+        const runs = [run("CI", "in_progress"), run("CI", "completed")];
+        expect(latestRuns(runs)).toEqual([run("CI", "in_progress")]);
+    });
+
+    it("drops the workflow collecting the facts", () => {
+        const runs = [
+            run("🚢 Release PR (dev → main)", "in_progress"),
+            run("Deploy", "completed"),
+            run("🚢 Release PR (dev → main)", "completed"),
+        ];
+        expect(latestRuns(runs, "🚢 Release PR (dev → main)")).toEqual([
+            run("Deploy", "completed"),
+        ]);
     });
 });
