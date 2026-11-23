@@ -2,7 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { PaginationDots, useReferralStatus } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { type KeyboardEvent, type MouseEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
@@ -89,8 +89,7 @@ export function WelcomeCard() {
         slideCount: visibleSlides.length,
     });
 
-    const handleDismiss = (event: MouseEvent) => {
-        event.stopPropagation();
+    const handleDismiss = () => {
         const currentSlide = visibleSlides[currentIndex] ?? visibleSlides[0];
         if (!currentSlide) return;
 
@@ -107,14 +106,6 @@ export function WelcomeCard() {
     const handleIntroClick = () => {
         openModal({ id: "welcomeDetail" });
     };
-
-    const handleKeyDown =
-        (callback: (() => void) | undefined) => (event: KeyboardEvent) => {
-            if (callback && (event.key === "Enter" || event.key === " ")) {
-                event.preventDefault();
-                callback();
-            }
-        };
 
     if (visibleSlides.length === 0) {
         return null;
@@ -140,19 +131,6 @@ export function WelcomeCard() {
                             variant="secondary"
                             padding="none"
                             className={styles.cardContainer}
-                            role="button"
-                            tabIndex={0}
-                            onClick={
-                                slide.kind === "intro"
-                                    ? handleIntroClick
-                                    : slide.onAction
-                            }
-                            onKeyDown={handleKeyDown(
-                                slide.kind === "intro"
-                                    ? handleIntroClick
-                                    : slide.onAction
-                            )}
-                            style={{ cursor: "pointer" }}
                         >
                             {index === currentIndex && (
                                 <CloseButton
@@ -161,27 +139,37 @@ export function WelcomeCard() {
                                     className={styles.dismissButton}
                                 />
                             )}
-                            {slide.kind === "intro" ? (
-                                <IntroSlide
-                                    title={slide.title}
-                                    items={slide.items}
-                                />
-                            ) : slide.kind === "invite" ? (
-                                <InviteSlide
-                                    title={slide.title}
-                                    items={slide.items}
-                                />
-                            ) : slide.kind === "frakBonus" ? (
-                                <FrakBonusSlide
-                                    title={slide.title}
-                                    description={slide.description}
-                                />
-                            ) : (
-                                <NotificationSlide
-                                    title={slide.title}
-                                    actionI18nKey={slide.actionI18nKey}
-                                />
-                            )}
+                            <button
+                                type="button"
+                                className={styles.cardAction}
+                                onClick={
+                                    slide.kind === "intro"
+                                        ? handleIntroClick
+                                        : slide.onAction
+                                }
+                            >
+                                {slide.kind === "intro" ? (
+                                    <IntroSlide
+                                        title={slide.title}
+                                        items={slide.items}
+                                    />
+                                ) : slide.kind === "invite" ? (
+                                    <InviteSlide
+                                        title={slide.title}
+                                        items={slide.items}
+                                    />
+                                ) : slide.kind === "frakBonus" ? (
+                                    <FrakBonusSlide
+                                        title={slide.title}
+                                        description={slide.description}
+                                    />
+                                ) : (
+                                    <NotificationSlide
+                                        title={slide.title}
+                                        actionI18nKey={slide.actionI18nKey}
+                                    />
+                                )}
+                            </button>
                         </Card>
                     </Box>
                 ))}
