@@ -19,7 +19,7 @@ usage() {
     cat <<'EOF'
 Usage:
   verify-wallet.sh doctor
-  verify-wallet.sh flow <spa|standalone> <flow.mjs> [--logged-out] [--desktop] [--evidence DIR]
+  verify-wallet.sh flow <spa|standalone> <flow.mjs> [--logged-out] [--desktop|--webkit|--firefox] [--evidence DIR]
   verify-wallet.sh flow spa <flow.mjs> --real-dev [--desktop] [--evidence DIR]
   verify-wallet.sh check [--evidence DIR] -- <playwright args for playwright.light.config.ts>
 
@@ -157,6 +157,7 @@ cmd_flow() {
         --logged-out) [ "$REAL_DEV" = 0 ] || die "--real-dev and --logged-out are exclusive"; auth=out ;;
         --desktop) device="Desktop Chrome" ;;
         --webkit) device="iPhone 16" ;;
+        --firefox) device="Desktop Firefox" ;;
         --real-dev) [ "$auth" != out ] || die "--real-dev and --logged-out are exclusive"; REAL_DEV=1; auth=real-dev ;;
         --evidence) evidence=$2; shift ;;
         *) die "unknown flow option: $1" ;;

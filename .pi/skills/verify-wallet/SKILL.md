@@ -36,11 +36,11 @@ Two modes. Both block until done; there is no long-lived instance to attach to.
 ### `flow` — drive one user path you wrote (hermetic)
 
 ```bash
-.pi/skills/verify-wallet/scripts/verify-wallet.sh flow <spa|standalone> <flow.mjs> [--logged-out] [--desktop] [--evidence DIR]
+.pi/skills/verify-wallet/scripts/verify-wallet.sh flow <spa|standalone> <flow.mjs> [--logged-out] [--desktop|--webkit|--firefox] [--evidence DIR]
 ```
 
 - Launch: `spa` runs `bun run build:sw` then `vite dev --port <free> --strictPort` (ready = `GET /` answers; first boot ~30 s). `standalone` runs `build:standalone` and serves it (ready = `GET /sharing` answers).
-- Device: Pixel 7 (the app is mobile-first); `--desktop` switches to Desktop Chrome. Locale `en-US`, clipboard granted.
+- Device: Pixel 7 (the app is mobile-first); `--desktop` switches to Desktop Chrome, `--webkit` to iPhone 16 (WebKit), `--firefox` to Desktop Firefox (Playwright has no mobile Firefox). Locale `en-US`, clipboard granted on Chromium only; WebKit and Firefox run with the service worker blocked. WebKit over the vite dev server sometimes loads a blank page: rerun. Playwright's WebKit tabs to buttons, unlike real Safari's default.
 - Headless by default. `VERIFY_HEADED=1` opens a visible window, so a human can click through mocked data; a flow that awaits `page.waitForEvent("close", { timeout: 0 })` keeps it open until they close it.
 - A flow is an ES module exporting one async function. It gets `{ page, context, url, step, expect }`: a Playwright page already mocked and authenticated, the instance base URL, `step(name)` which writes `NN-name.png` (full page) + `NN-name.aria.yml` (ARIA snapshot of `body`) + a `steps.log` line, and Playwright's `expect` (auto-waiting assertions work outside the test runner). Throwing anything = FAIL.
 
