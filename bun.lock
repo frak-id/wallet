@@ -571,7 +571,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.5.3",
+      "version": "1.6.0",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
