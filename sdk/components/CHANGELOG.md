@@ -1,5 +1,19 @@
 # @frak-labs/components
 
+## 1.6.0
+
+### Minor Changes
+
+- [#499](https://github.com/frak-id/wallet/pull/499) [`6222f37`](https://github.com/frak-id/wallet/commit/6222f37ba7f51210b0823a2e6af252c335c37e9e) Thanks [@srod](https://github.com/srod)! - Components now render with Preact 11. The shared runtime chunk on the CDN is about 0.6 KB smaller gzipped. The custom elements, their attributes and the CDN loader are unchanged.
+  
+  If you import the Preact components from the npm subpaths (`./ambassador`, `./banner`, `./buttonShare`, `./buttonWallet`, `./openInApp`, `./postPurchase`) and render them inside your own Preact app, that app must be on Preact 11. Two Preact copies on one page break hooks.
+
+### Patch Changes
+
+- [#498](https://github.com/frak-id/wallet/pull/498) [`b298b96`](https://github.com/frak-id/wallet/commit/b298b96a7b51fda4e494f4f1183a6663fd27c842) Thanks [@srod](https://github.com/srod)! - `<frak-ambassador>` keeps its heading sizes when the host theme styles headings through a scoped rule such as Elementor's `.elementor-kit-51 h1`. That rule outranked the component's own, so on such a WordPress site the hero title took the theme's 120px size and ran under the hero photo.
+
+- [#501](https://github.com/frak-id/wallet/pull/501) [`c266695`](https://github.com/frak-id/wallet/commit/c2666952eb9b20c619f0eee057e6ee4900e7b1f7) Thanks [@srod](https://github.com/srod)! - `sdk_init_failed` now sends `reason` as a short code: `config_missing`, `client_unavailable`, `rpc_<code>` when client setup throws a `FrakRpcError`, or the error name for any other error. It used to send the error message, which starts with `[Frak SDK]`, and OpenPanel drops any string that starts with `[` without ending with `]`, so `reason` was never stored.
+
 ## 1.5.3
 
 ### Patch Changes

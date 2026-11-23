@@ -1,5 +1,2 @@
-• Faster, smoother app launch with no splash flicker.
-• Instagram links now open directly in the Instagram app.
-• Fixed referral and reward codes being rejected in the wrong field.
-• A friend's invite code can now join the open Frak Game for any wallet.
-• You can now close a finished game ticket from the game card.
+• Signing up with a friend's referral code now earns them their tickets right away, no need to connect Instagram anymore.
+• Fixed: on iOS with no passcode set, you now get a clear message telling you to set one, instead of a stuck retry.
