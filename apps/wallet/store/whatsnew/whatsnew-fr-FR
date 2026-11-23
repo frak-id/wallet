@@ -1,5 +1,2 @@
-• Lancement de l'app plus rapide et plus fluide, sans scintillement au démarrage.
-• Les liens Instagram s'ouvrent directement dans l'app Instagram.
-• Correction des codes de parrainage et de récompense rejetés quand ils étaient saisis dans le mauvais champ.
-• Le code d'un ami peut désormais rejoindre le Frak Game ouvert, même avec un wallet existant.
-• Tu peux maintenant fermer un ticket de jeu terminé depuis la carte du jeu.
+• Le code de parrainage d'un ami lui rapporte maintenant ses tickets tout de suite, plus besoin de connecter Instagram.
+• Correction : sur iOS sans code d'accès configuré, tu reçois maintenant un message clair au lieu d'un blocage sans fin.
