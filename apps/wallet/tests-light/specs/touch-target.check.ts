@@ -53,8 +53,8 @@ test.describe("44px touch target", () => {
         await expect(dismiss).toBeVisible();
 
         const inset = await dismiss.evaluate((btn) => {
-            // By role: production builds hash the `cardContainer` class name.
-            const card = btn.parentElement?.closest('[role="button"]');
+            // The card is the dismiss button's parent: production builds hash the `cardContainer` class name.
+            const card = btn.parentElement;
             if (!card) return null;
             const b = btn.getBoundingClientRect();
             const c = card.getBoundingClientRect();
