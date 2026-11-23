@@ -58,6 +58,13 @@ export const backendInstance = new KubernetesService(
         appLabels,
 
         pod: {
+            // Matches `USER 1000:1000` (bun) in services/backend/Dockerfile
+            securityContext: {
+                runAsNonRoot: true,
+                runAsUser: 1000,
+                runAsGroup: 1000,
+                seccompProfile: { type: "RuntimeDefault" },
+            },
             containers: [
                 {
                     name: "elysia",
@@ -79,6 +86,20 @@ export const backendInstance = new KubernetesService(
                             secretRef: { name: elysiaSecrets.metadata.name },
                         },
                     ],
+                    securityContext: {
+                        allowPrivilegeEscalation: false,
+                        capabilities: { drop: ["ALL"] },
+                    },
+                    // Gates liveness/readiness: up to 5 min (60 x 5s) to boot
+                    startupProbe: {
+                        httpGet: {
+                            path: "/health",
+                            port: 3030,
+                        },
+                        periodSeconds: 5,
+                        timeoutSeconds: 3,
+                        failureThreshold: 60,
+                    },
                     livenessProbe: {
                         httpGet: {
                             path: "/health",
