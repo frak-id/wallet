@@ -92,8 +92,8 @@ function attributedToLink(): SQL | undefined {
     );
 }
 
-/** Friends who signed up with the holder's code in the window and now follow @frak_fr; the referrer comes from the link, which merges keep current. */
-function followingSignups(holderGroupId: string, from: Date, endsAt: Date) {
+/** Friends who signed up with the holder's code in the window; the referrer comes from the link, which merges keep current. */
+function friendSignups(holderGroupId: string, from: Date, endsAt: Date) {
     return db
         .select({ n: countDistinct(interactionLogsTable.identityGroupId) })
         .from(interactionLogsTable)
@@ -101,13 +101,6 @@ function followingSignups(holderGroupId: string, from: Date, endsAt: Date) {
             referralLinksTable,
             eq(
                 referralLinksTable.refereeIdentityGroupId,
-                interactionLogsTable.identityGroupId
-            )
-        )
-        .innerJoin(
-            instagramLinksTable,
-            eq(
-                instagramLinksTable.identityGroupId,
                 interactionLogsTable.identityGroupId
             )
         )
@@ -119,8 +112,7 @@ function followingSignups(holderGroupId: string, from: Date, endsAt: Date) {
                 lt(interactionLogsTable.createdAt, endsAt),
                 eq(referralLinksTable.referrerIdentityGroupId, holderGroupId),
                 eq(referralLinksTable.scope, "cross_merchant"),
-                isNull(referralLinksTable.removedAt),
-                eq(instagramLinksTable.follows, true)
+                isNull(referralLinksTable.removedAt)
             )
         );
 }
@@ -276,7 +268,7 @@ export class GamePlayerOrchestrator {
                             attributedToLink()
                         )
                     ),
-                followingSignups(identityGroupId, from, game.endsAt),
+                friendSignups(identityGroupId, from, game.endsAt),
                 brandShareFriends(identityGroupId, from, game.endsAt),
                 db
                     .select({ follows: instagramLinksTable.follows })
@@ -288,7 +280,7 @@ export class GamePlayerOrchestrator {
             ]);
         return {
             join: TICKET_AMOUNTS.join,
-            // Read at count time like the friend tickets: an unfollow takes them back.
+            // Read at count time: an unfollow takes it back.
             instagramCertified: certified[0]?.follows
                 ? TICKET_AMOUNTS.instagramCertified
                 : 0,
