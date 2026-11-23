@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createRequire } from "node:module";
 import { isRunningLocally } from "@frak-labs/app-essentials";
+import { cloudLoggingOptions } from "@frak-labs/app-essentials/utils/cloudLogging";
 import { redactQueryParams } from "@frak-labs/app-essentials/utils/redactQueryParams";
 import { pino } from "pino";
 
@@ -91,13 +92,15 @@ export const log = pino({
             method.apply(this, args);
         },
     },
-    transport: isRunningLocally
+    ...(isRunningLocally
         ? {
-              // Absolute: under vite's module runner pino cannot resolve a bare target from its call sites.
-              target: createRequire(import.meta.url).resolve("pino-pretty"),
-              options: {
-                  colorize: true,
+              transport: {
+                  // Absolute: under vite's module runner pino cannot resolve a bare target from its call sites.
+                  target: createRequire(import.meta.url).resolve("pino-pretty"),
+                  options: {
+                      colorize: true,
+                  },
               },
           }
-        : undefined,
+        : cloudLoggingOptions),
 });

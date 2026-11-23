@@ -68,7 +68,8 @@ COPY --from=app-builder --chown=bun:bun /app/services/backend/package.json ./
 COPY --from=app-builder --chown=bun:bun /app/services/backend/dist ./dist
 COPY --from=runtime-deps --chown=bun:bun /runtime/node_modules ./node_modules
 
-USER bun
+# Numeric (bun = 1000:1000 in oven/bun) so the kubelet can verify runAsNonRoot
+USER 1000:1000
 
 EXPOSE 3030
 

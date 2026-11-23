@@ -60,6 +60,23 @@ agent that writes the report issue.
   every localization. It refuses while Apple holds another version (in review, pending release):
   clear that version, then re-run the job alone. It never submits for review.
 
+## The dev → main release PR
+
+- **`release-pr.ts collect` + `.github/pi/release-pr.prompt.md` write the production release PR**
+  (`.github/workflows/release-pr.yml`, driven by `/skill:release`). Same split as the store notes:
+  the collector owns every number, version, divergence, OTA verdict and PR body; the agent only
+  explains them. `check` rejects a draft missing one of the five headings, or citing a `#N` or a
+  backticked commit hash that is nowhere in the facts, which is what catches a carried-over or
+  invented reference.
+- **The OTA verdict re-runs `wallet-ota-hotfix.yml`'s guard**: a detached worktree at the head,
+  `apps/wallet/scripts/pin-native-version.sh` at the live `app-*` release, then the same diffs.
+  Change the guard and `simulateOta` must follow, or the PR promises an OTA the guard refuses.
+- **The trial merge is `git merge-tree --write-tree`** (git ≥ 2.38). Its conflict list is what the
+  skill uses to decide whether a `main` → `dev` sync can be resolved automatically (version sites
+  only) or goes to a human.
+- Run it locally to preview a release: `bun scripts/release-pr.ts collect --out /tmp/c.md --facts
+  /tmp/f.json` (defaults `origin/main..origin/dev`; `gh` facts degrade to "unknown" without auth).
+
 ## The dependency pipeline
 
 ```

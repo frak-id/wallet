@@ -1,5 +1,6 @@
-import { createPinoLogger } from "@bogeychan/elysia-logger";
+import { createPinoLogger, formatters } from "@bogeychan/elysia-logger";
 import { isRunningLocally } from "@frak-labs/app-essentials";
+import { cloudLoggingOptions } from "@frak-labs/app-essentials/utils/cloudLogging";
 import { redactQueryParams } from "@frak-labs/app-essentials/utils/redactQueryParams";
 
 /**
@@ -15,12 +16,18 @@ export const log = createPinoLogger({
             method.apply(this, args);
         },
     },
-    transport: isRunningLocally
+    ...(isRunningLocally
         ? {
-              target: "pino-pretty",
-              options: {
-                  colorize: true,
+              transport: {
+                  target: "pino-pretty",
+                  options: {
+                      colorize: true,
+                  },
               },
           }
-        : undefined,
+        : {
+              ...cloudLoggingOptions,
+              // Passing `formatters` replaces the plugin's request/context `log` formatter
+              formatters: { ...formatters, ...cloudLoggingOptions.formatters },
+          }),
 });

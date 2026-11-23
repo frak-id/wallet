@@ -40,9 +40,10 @@ if (!WALLET_URL || !WALLET_DIR || !EVIDENCE_DIR || !flowPath) {
 }
 
 const require = createRequire(join(WALLET_DIR, "package.json"));
-const { chromium, webkit, devices, expect } = require("@playwright/test");
+const playwright = require("@playwright/test");
+const { devices, expect } = playwright;
 const profile = devices[VERIFY_DEVICE ?? "Pixel 7"];
-const onWebkit = profile.defaultBrowserType === "webkit";
+const onChromium = profile.defaultBrowserType === "chromium";
 const fromWallet = (p) => import(pathToFileURL(join(WALLET_DIR, p)).href);
 const { mockDefaultApiRoutes } = await fromWallet("tests-light/mocks/api.ts");
 const { sessionStoreValue, unauthenticatedSessionStoreValue } =
@@ -54,7 +55,7 @@ const log = (file, line) => appendFileSync(out(file), `${line}\n`);
 const appOrigin = new URL(WALLET_URL).origin;
 
 // Real-dev: the page origin is wallet-dev.frak.id resolved to the local server; the service worker refuses its mkcert cert without the flag.
-const browser = await (onWebkit ? webkit : chromium).launch({
+const browser = await playwright[profile.defaultBrowserType].launch({
     headless: process.env.VERIFY_HEADED !== "1",
     args: realDev
         ? [
@@ -68,9 +69,9 @@ const context = await browser.newContext({
     baseURL: WALLET_URL,
     ignoreHTTPSErrors: true,
     locale: "en-US",
-    // WebKit rejects the clipboard permissions, and does not route requests its service worker relays.
-    permissions: onWebkit ? [] : ["clipboard-read", "clipboard-write"],
-    serviceWorkers: onWebkit ? "block" : "allow",
+    // WebKit and Firefox reject the clipboard permissions, and do not route requests their service worker relays.
+    permissions: onChromium ? ["clipboard-read", "clipboard-write"] : [],
+    serviceWorkers: onChromium ? "allow" : "block",
 });
 const page = await context.newPage();
 

@@ -5,6 +5,7 @@ import path from "node:path";
 /**
  * `sdk[-dev].frak.id/components.js`: a 5-minute-TTL pointer at the exact
  * jsDelivr release, deployed by the release workflows right after `npm publish`.
+ * `/loader.js` redirects to the same release so integrations can modulepreload it.
  * Also the production origin of the Shopify ambassador app proxy page.
  */
 
@@ -46,8 +47,21 @@ const version =
         ) as { version: string }
     ).version;
 
+const loaderUrl = `https://cdn.jsdelivr.net/npm/@frak-labs/components@${version}/cdn/loader.js`;
+
 // Same statement `sdk/components/src/components.ts` builds to for this version.
-const shim = `import("https://cdn.jsdelivr.net/npm/@frak-labs/components@${version}/cdn/loader.js");\n`;
+const shim = `import("${loaderUrl}");\n`;
+
+// The bucket route never forwards Origin, so S3 CORS cannot answer;
+// `<script type="module">` integrations and the modulepreload need these from the edge.
+const edgeHeaders = Object.entries({
+    "access-control-allow-origin": "*",
+    "cross-origin-resource-policy": "cross-origin",
+    "timing-allow-origin": "*",
+    "x-content-type-options": "nosniff",
+});
+const cfHeaders = (headers: [string, string][]) =>
+    `{ ${headers.map(([k, v]) => `"${k}": { value: "${v}" }`).join(", ")} }`;
 
 const bucket = new sst.aws.Bucket("SdkPointer", {
     access: "cloudfront",
@@ -84,7 +98,17 @@ const router = new sst.aws.Router("SdkPointerRouter", {
         // Runs before route matching. Shopify forwards child paths and appends a
         // per-request timestamp + signature, which would make every request a miss.
         viewerRequest: {
+            // The module map is keyed by the requested URL and the base URL is the
+            // final one, so the preload lands in the HTTP cache the shim's import()
+            // reads, and loader.js's relative chunks still resolve on jsDelivr.
             injection: `
+if (event.request.uri === "/loader.js") {
+    return {
+        statusCode: 302,
+        statusDescription: "Found",
+        headers: ${cfHeaders([["location", loaderUrl], ["cache-control", CACHE_CONTROL], ...edgeHeaders])},
+    };
+}
 if (event.request.uri.startsWith("/${AMBASSADOR_KEY}")) {
     event.request.uri = "/${AMBASSADOR_KEY}";
     event.request.querystring = {};
@@ -92,14 +116,12 @@ if (event.request.uri.startsWith("/${AMBASSADOR_KEY}")) {
 `,
         },
         viewerResponse: {
-            // The bucket route never forwards Origin, so S3 CORS cannot answer;
-            // `<script type="module">` integrations need these from the edge.
-            injection: `
-event.response.headers["access-control-allow-origin"] = { value: "*" };
-event.response.headers["cross-origin-resource-policy"] = { value: "cross-origin" };
-event.response.headers["timing-allow-origin"] = { value: "*" };
-event.response.headers["x-content-type-options"] = { value: "nosniff" };
-`,
+            injection: edgeHeaders
+                .map(
+                    ([k, v]) =>
+                        `event.response.headers["${k}"] = { value: "${v}" };`
+                )
+                .join("\n"),
         },
     },
 });

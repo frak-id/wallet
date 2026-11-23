@@ -37,6 +37,18 @@ describe("buildFrakSnippet", () => {
         expect(snippet).not.toContain('href="https://sdk.frak.id"');
     });
 
+    it("modulepreloads the pointer's loader redirect before the script", () => {
+        const prod = buildFrakSnippet(BASE);
+        const dev = buildFrakSnippet({ ...BASE, componentsUrl: DEV_URL });
+        const preload =
+            '<link rel="modulepreload" href="https://sdk.frak.id/loader.js">';
+        expect(prod).toContain(preload);
+        expect(prod.indexOf(preload)).toBeLessThan(prod.indexOf("<script"));
+        expect(dev).toContain(
+            '<link rel="modulepreload" href="https://sdk-dev.frak.id/loader.js">'
+        );
+    });
+
     it("falls back to the jsDelivr latest tag for the prod pointer", () => {
         const snippet = buildFrakSnippet(BASE);
         expect(snippet).toContain(

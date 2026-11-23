@@ -1,0 +1,236 @@
+name: "🚢 Release PR (dev → main)"
+
+# Opens the production release PR, `dev` → `main`, with a title and body written by
+# pi from the facts `scripts/release-pr.ts collect` gathers (range, divergence,
+# versions, changesets, surfaces, OTA safety, CI, PR bodies). The agent explains
+# those facts and never produces new ones: `release-pr.ts check` rejects a draft
+# missing a section or citing a PR or commit the release does not contain.
+#
+# Run it from Actions, or through the agent skill `/skill:release`
+# (`.agents/skills/release/`), which also merges and runs the releases after.
+#
+# With a release PR already open it stops before spending tokens. `refresh`
+# rewrites that PR's title and body instead, ticked boxes and hand edits included.
+#
+# The PR is opened with GITHUB_TOKEN, so its `pull_request` events start no
+# workflow (no CI rerun, no Atelier review): the checks it shows are the `dev`
+# push runs of the same commit. Merge it as a person, never with this token, or
+# the `main` push starts no deploy.
+
+on:
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: "Rewrite the title and body of the open dev → main PR (drops ticked boxes and hand edits)"
+        type: boolean
+        default: false
+      model:
+        description: "Model writing the PR"
+        type: choice
+        options:
+          - claude-sonnet-5-5
+          - claude-opus-latest
+        default: claude-sonnet-5-5
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  # `gh run list` in the collector reads the dev head's CI.
+  actions: read
+
+env:
+  CI: true
+  PI_SKIP_VERSION_CHECK: "1"
+  PI_TELEMETRY: "0"
+  # Same pin as dependency-report.yml: a pi release must not change the PR silently.
+  PI_VERSION: "0.86.1"
+  BASE_BRANCH: main
+  HEAD_BRANCH: dev
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release-pr:
+    name: "🚢 Release PR (dev → main)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Full history and tags: the collector diffs against `main`, the merge base
+      # and the live `app-*` store release.
+      - name: "📥 Checkout dev"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.HEAD_BRANCH }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: "🔎 Is there anything to release, and is a PR open?"
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REFRESH: ${{ inputs.refresh }}
+        run: |
+          set -euo pipefail
+          AHEAD=$(git rev-list --count "origin/${BASE_BRANCH}..origin/${HEAD_BRANCH}")
+          if [ "$AHEAD" = "0" ]; then
+            echo "::error::origin/${HEAD_BRANCH} has no commit origin/${BASE_BRANCH} lacks: nothing to release."
+            exit 1
+          fi
+
+          PR=$(gh pr list --base "$BASE_BRANCH" --head "$HEAD_BRANCH" --state open \
+            --json number --jq '.[0].number // empty')
+          echo "pr=${PR}" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$PR" ] && [ "$REFRESH" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::#${PR} is already open. Re-run with refresh to rewrite its title and body."
+            {
+              echo "### ⏭️ #${PR} is already open"
+              echo
+              echo "Nothing was generated. Re-run with **refresh** to rewrite its title and body."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "[ci] ${AHEAD} commits on ${HEAD_BRANCH} that ${BASE_BRANCH} lacks; open PR: ${PR:-none}"
+          fi
+
+      - name: "🧅 Setup Bun"
+        if: steps.state.outputs.skip != 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      # No `bun install`: the collector only uses node builtins, git and gh.
+      - name: "🧾 Collect the release facts"
+        if: steps.state.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          bun scripts/release-pr.ts collect \
+            --base "origin/${BASE_BRANCH}" \
+            --head "origin/${HEAD_BRANCH}" \
+            --out "${RUNNER_TEMP}/release-pr-context.md" \
+            --facts "${RUNNER_TEMP}/release-pr-facts.json"
+
+      # Fails in seconds rather than inside the agent with pi's "No API key found for cliproxy".
+      - name: "🔑 Preflight the proxy credential"
+        if: steps.state.outputs.skip != 'true'
+        env:
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+        run: |
+          for name in CLIPROXY_API_KEY CLIPROXY_BASE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${name} is empty. Set it as an Actions secret on this repo, or as an org secret shared with it."
+              exit 1
+            fi
+          done
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "Authorization: Bearer ${CLIPROXY_API_KEY}" "${CLIPROXY_BASE_URL}/v1/models" || echo 000)
+          if [ "${code}" != "200" ]; then
+            echo "::error::The proxy returned HTTP ${code} — key rejected or unreachable from the runner."
+            exit 1
+          fi
+
+      - name: "🟢 Setup Node"
+        if: steps.state.outputs.skip != 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: "🤖 Install pi"
+        if: steps.state.outputs.skip != 'true'
+        run: npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+      # Same lighter pi as the dependency report. The agent gets no GitHub token:
+      # PR bodies are already in the context. It writes only under RUNNER_TEMP.
+      - name: "✍️ Write the PR"
+        if: steps.state.outputs.skip != 'true'
+        env:
+          PI_CODING_AGENT_DIR: ${{ runner.temp }}/pi
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${PI_CODING_AGENT_DIR}"
+          jq -n --arg baseUrl "${CLIPROXY_BASE_URL}" -f .github/pi/models.jq \
+            > "${PI_CODING_AGENT_DIR}/models.json"
+
+          CONTEXT="${RUNNER_TEMP}/release-pr-context.md"
+          FACTS="${RUNNER_TEMP}/release-pr-facts.json"
+          TITLE="${RUNNER_TEMP}/release-pr-title.txt"
+          BODY="${RUNNER_TEMP}/release-pr-body.md"
+          CHECK="bun scripts/release-pr.ts check --facts ${FACTS} --title ${TITLE} --body ${BODY}"
+          BEFORE=$(git status --porcelain=v1 -uall)
+
+          pi \
+            --name "release-pr" \
+            --no-extensions \
+            --no-skills \
+            --model "cliproxy/${MODEL}" \
+            --thinking high \
+            --tools read,write,bash,grep,find,ls \
+            -p @.github/pi/release-pr.prompt.md \
+            "Today is $(date -u +%Y-%m-%d). The context file is ${CONTEXT} and the facts JSON is ${FACTS}. Write the title to ${TITLE} and the body to ${BODY}, then run: ${CHECK}"
+
+          if [ "$(git status --porcelain=v1 -uall)" != "$BEFORE" ]; then
+            echo "::error::The agent changed the worktree:"
+            git status --porcelain=v1 -uall
+            exit 1
+          fi
+
+      - name: "📝 Gate the draft"
+        if: steps.state.outputs.skip != 'true'
+        run: |
+          bun scripts/release-pr.ts check \
+            --facts "${RUNNER_TEMP}/release-pr-facts.json" \
+            --title "${RUNNER_TEMP}/release-pr-title.txt" \
+            --body "${RUNNER_TEMP}/release-pr-body.md"
+
+      # REST rather than `gh pr create/edit`: no projects lookup, which GITHUB_TOKEN cannot read.
+      - name: "📌 Open or refresh the PR"
+        if: steps.state.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ steps.state.outputs.pr }}
+        run: |
+          set -euo pipefail
+          TITLE=$(cat "${RUNNER_TEMP}/release-pr-title.txt")
+          BODY="${RUNNER_TEMP}/release-pr-body.md"
+          if [ -n "$PR" ]; then
+            URL=$(gh api -X PATCH "repos/${GH_REPO}/pulls/${PR}" \
+              -f title="$TITLE" -F body="@${BODY}" --jq .html_url)
+            VERB="Refreshed"
+          else
+            URL=$(gh api -X POST "repos/${GH_REPO}/pulls" \
+              -f base="$BASE_BRANCH" -f head="$HEAD_BRANCH" \
+              -f title="$TITLE" -F body="@${BODY}" --jq .html_url)
+            VERB="Opened"
+          fi
+          echo "[ci] ${VERB} ${URL}"
+          {
+            echo "### 🚢 ${VERB} [${TITLE}](${URL})"
+            echo
+            echo "The collected facts and the draft are in the \`release-pr\` artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "📦 Keep the facts and the draft"
+        if: always() && steps.state.outputs.skip != 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-pr
+          path: |
+            ${{ runner.temp }}/release-pr-context.md
+            ${{ runner.temp }}/release-pr-facts.json
+            ${{ runner.temp }}/release-pr-title.txt
+            ${{ runner.temp }}/release-pr-body.md
+          if-no-files-found: ignore
+          retention-days: 14

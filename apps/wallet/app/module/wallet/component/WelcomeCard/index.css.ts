@@ -2,13 +2,32 @@ import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
+export const cardAction = style({
+    display: "block",
+    width: "100%",
+    padding: 0,
+    border: 0,
+    background: "none",
+    color: "inherit",
+    font: "inherit",
+    textAlign: "inherit",
+    cursor: "pointer",
+    outline: "none",
+});
+
 export const cardContainer = style({
     overflow: "hidden",
     borderRadius: alias.cornerRadius.l,
     position: "relative",
+    selectors: {
+        // The card's overflow clips its button's outline, so the card wears the platform ring.
+        [`&:has(> ${cardAction}:focus-visible)`]: {
+            outline: ["auto", "-webkit-focus-ring-color auto 1px"],
+        },
+    },
 });
 
-// The card is itself a button, so the region grows down and left, where a
+// The card's action button sits under it, so the region grows down and left, where a
 // near-miss would navigate. Up and right leave the card and hit nothing.
 export const dismissButton = style({
     position: "absolute",

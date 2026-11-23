@@ -1,5 +1,5 @@
 import type { useReferralStatus } from "@frak-labs/wallet-shared";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WelcomeCard } from "./index";
 
@@ -259,14 +259,32 @@ describe("WelcomeCard", () => {
         expect(container.querySelectorAll("[data-index]")).toHaveLength(2);
     });
 
-    it("should navigate to /profile/referral when the invite slide is clicked", () => {
+    it("keeps the dismiss button outside the slide's own button", () => {
         const { container } = render(<WelcomeCard />);
 
-        // Slide order: intro (0), notifications (1), invite (2).
-        const inviteCard = container
-            .querySelectorAll("[data-index]")[2]
-            ?.querySelector("[role='button']") as HTMLElement;
-        fireEvent.click(inviteCard);
+        const introAction = within(
+            container.querySelector("[data-index='0']") as HTMLElement
+        ).getByRole("button", { name: /^wallet\.welcome\.title/ });
+
+        expect(within(introAction).queryByRole("button")).toBeNull();
+    });
+
+    it("should not navigate when the dismiss button is clicked", () => {
+        render(<WelcomeCard />);
+
+        fireEvent.click(screen.getByRole("button", { name: "common.close" }));
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("should navigate to /profile/referral when the invite slide is clicked", () => {
+        render(<WelcomeCard />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /^wallet\.welcome\.invite\.title/,
+            })
+        );
 
         expect(mockNavigate).toHaveBeenCalledWith({ to: "/profile/referral" });
     });
@@ -322,10 +340,11 @@ describe("WelcomeCard", () => {
 
         render(<WelcomeCard />);
 
-        const bonusCard = screen
-            .getByText("wallet.welcome.frakBonus.title")
-            .closest("[role='button']") as HTMLElement;
-        fireEvent.click(bonusCard);
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /^wallet\.welcome\.frakBonus\.title/,
+            })
+        );
 
         expect(mockNavigate).toHaveBeenCalledWith({ to: "/explorer" });
     });
@@ -353,10 +372,11 @@ describe("WelcomeCard", () => {
     it("should navigate to /profile when the notification slide is clicked", () => {
         render(<WelcomeCard />);
 
-        const notificationCard = screen
-            .getByText("wallet.activateNotifications")
-            .closest("[role='button']") as HTMLElement;
-        fireEvent.click(notificationCard);
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: /^wallet\.welcome\.notifications\.title/,
+            })
+        );
 
         expect(mockNavigate).toHaveBeenCalledWith({ to: "/profile" });
     });
