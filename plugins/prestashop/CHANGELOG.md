@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-23
+
 ### Added
 
 - **Reward reminder setting.** Settings gains a *Reward reminder* checkbox, on by default (`FRAK_REWARD_REMINDER`, unset on shops predating it counts as on, so no upgrade script). It controls the small badge shown to shoppers who earned a reward on the shop but have not created their Frak wallet yet. Turning it off adds `rewardReminder:{enabled:false}` to the `window.FrakSetup` config.
@@ -266,7 +268,9 @@ Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new ve
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.1.0...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.1.1...HEAD
+
+[1.1.1]: https://github.com/frak-id/wallet/compare/prestashop-1.1.0...prestashop-1.1.1
 
 [1.1.0]: https://github.com/frak-id/wallet/compare/prestashop-1.0.10...prestashop-1.1.0
 
