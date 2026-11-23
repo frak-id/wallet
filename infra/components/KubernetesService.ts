@@ -111,6 +111,9 @@ type KubernetesServiceArgs = {
 
         // Definition of each container
         containers: Input<inputs.core.v1.Container>[];
+
+        // Pod-level security context, unset by default
+        securityContext?: Input<inputs.core.v1.PodSecurityContext>;
     };
 
     // Info for the service
@@ -239,6 +242,7 @@ export class KubernetesService extends ComponentResource {
                         metadata: { labels: this.labels },
                         spec: {
                             containers: this.args.pod.containers,
+                            securityContext: this.args.pod.securityContext,
                         },
                     },
                 },
