@@ -15,6 +15,10 @@ version on dispatch.
 
 - **Reward reminder setting.** Settings gains a *Reward reminder* checkbox, on by default (`FRAK_REWARD_REMINDER`, unset on shops predating it counts as on, so no upgrade script). It controls the small badge shown to shoppers who earned a reward on the shop but have not created their Frak wallet yet. Turning it off adds `rewardReminder:{enabled:false}` to the `window.FrakSetup` config.
 
+### Changed
+
+- **The SDK loader now downloads while the page is still parsing.** The SDK `<script>` is preceded by `<link rel="modulepreload" href="https://sdk.frak.id/loader.js">` (`FrakUrls::sdkPointerLoader()`), a redirect to the exact loader the pointer shim imports. Before, the loader request only started once the deferred shim ran after the page finished parsing. The tag sits in `<head>`, so on a slow link its 35 KB share bandwidth with the theme's own head resources. Release only once `sdk.frak.id/loader.js` answers a `302`; until then the preload is a wasted 404.
+
 ## [1.1.0] - 2026-10-06
 
 Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new version is above the installed one, and without it upgraded shops print the CMS tags as text. Wait for a components release that serves `<frak-ambassador>` from `sdk.frak.id` before releasing.

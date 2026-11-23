@@ -34,6 +34,16 @@ class Frak_Sdk_Urls {
 	}
 
 	/**
+	 * Redirect to the exact loader the shim `import()`s, so it can be
+	 * modulepreloaded while the shim itself is still waiting to run.
+	 *
+	 * @return string
+	 */
+	public static function pointer_loader(): string {
+		return self::pointer_host() . '/loader.js';
+	}
+
+	/**
 	 * Fallback shim loaded only if {@see pointer_script()} fails: `@latest` in
 	 * production, `@beta` on the dev stack.
 	 *
@@ -55,20 +65,21 @@ class Frak_Sdk_Urls {
 	}
 
 	/**
-	 * `script_loader_tag` callback adding the fallback `onerror` to the
-	 * `frak-sdk` tag. `$tag` also carries the inline `before` config script,
-	 * so only the opening tag that has a `src` is touched.
+	 * `script_loader_tag` callback for the `frak-sdk` tag: a modulepreload of
+	 * {@see pointer_loader()} in front of it, and the fallback `onerror` on the
+	 * opening tag that has a `src` (`$tag` also carries the inline config).
 	 *
 	 * @param string $tag    Full `<script>` tag markup.
 	 * @param string $handle Registered script handle.
 	 * @return string
 	 */
-	public static function add_onerror_attribute( $tag, $handle ) {
+	public static function filter_sdk_tag( $tag, $handle ) {
 		if ( 'frak-sdk' !== $handle ) {
 			return $tag;
 		}
+		$preload      = '<link rel="modulepreload" href="' . esc_url( self::pointer_loader() ) . '" />' . "\n";
 		$with_onerror = '<script onerror="' . esc_attr( self::fallback_onerror_js() ) . '" ';
-		return preg_replace( '/<script (?=[^>]*\bsrc=)/', $with_onerror, $tag, 1 );
+		return $preload . preg_replace( '/<script (?=[^>]*\bsrc=)/', $with_onerror, $tag, 1 );
 	}
 
 	/**
