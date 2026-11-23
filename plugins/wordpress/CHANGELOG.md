@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-23
+
 ### Added
 
 - **Reward reminder setting.** Settings → Frak gains a *Reward reminder* checkbox, on by default. It controls the small badge shown to shoppers who earned a reward on the store but have not created their Frak wallet yet. Turning it off adds `rewardReminder: { enabled: false }` to the `window.FrakSetup` config.
@@ -233,7 +235,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.2.0...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.3.0...HEAD
+
+[1.3.0]: https://github.com/frak-id/wallet/compare/wordpress-1.2.0...wordpress-1.3.0
 
 [1.2.0]: https://github.com/frak-id/wallet/compare/wordpress-1.1.11...wordpress-1.2.0
 
