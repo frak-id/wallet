@@ -1,5 +1,11 @@
 import type { FiatAmounts, RewardSummary } from "@frak-labs/core-sdk";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/preact";
+import {
+    act,
+    cleanup,
+    fireEvent,
+    render,
+    waitFor,
+} from "@testing-library/preact";
 import { render as renderUnflushed } from "preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sharingPageUtils from "@/actions/sharingPage";
@@ -448,7 +454,7 @@ describe("Ambassador", () => {
 
     it("Covers AE4. a failed referee fetch renders exactly as a campaign without a referee reward", () => {
         const absent = render(<Ambassador />).container.innerHTML;
-        cleanup();
+        act(() => cleanup());
         refereeRewardImpl.mockImplementation(() => {
             // useReward reports a rejected fetch as no reward (useReward.test.ts).
             return { reward: undefined, hasReward: false };
@@ -473,7 +479,7 @@ describe("Ambassador", () => {
         expect(
             text(blankClause.container, ".frak-ambassador__reward-footer")
         ).toBe("Free · no commitment · paid to your bank account");
-        cleanup();
+        act(() => cleanup());
 
         const blankCaption = render(<Ambassador rewardFooterCaption="" />);
 
@@ -511,7 +517,7 @@ describe("Ambassador", () => {
 
         expect(closed.querySelector(".frak-ambassador__hero-pill")).toBeNull();
         expect(closed.textContent).not.toContain("gift");
-        cleanup();
+        act(() => cleanup());
 
         setRefereeReward("0,80 €");
         const open = render(<Ambassador {...props} />).container;
@@ -1116,7 +1122,7 @@ describe("Ambassador", () => {
         expect(
             friend?.querySelector(".frak-ambassador__amount-unit")?.textContent
         ).toBe("$");
-        cleanup();
+        act(() => cleanup());
 
         setReferrerReward(undefined);
         const { container: worded } = render(<Ambassador />);
@@ -1205,7 +1211,7 @@ describe("Ambassador", () => {
         };
         render(<Ambassador />);
         expect(brandMentions()).toBe(2);
-        cleanup();
+        act(() => cleanup());
 
         setRefereeReward("0,80 €");
         render(<Ambassador />);
@@ -1365,6 +1371,36 @@ describe("Ambassador", () => {
 
         const root = container.querySelector(".frak-ambassador");
         expect(computed(root, "text-align")).toBe("start");
+    });
+
+    it("keeps its heading sizes under a theme's scoped heading rule, as Elementor's `.elementor-kit-51 h1`", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss(
+            ".elementor-kit-51 h1, .elementor-kit-51 h2, .elementor-kit-51 h3 { font-size: 120px; line-height: 3; margin: 40px; letter-spacing: 9px; }"
+        );
+        const { container } = render(
+            <div class="elementor-kit-51">
+                <Ambassador />
+            </div>
+        );
+
+        const title = container.querySelector(".frak-ambassador__hero-title");
+        const titleSize = Number.parseFloat(computed(title, "font-size"));
+        expect(titleSize).not.toBe(120);
+        expect(
+            Number.parseFloat(computed(title, "line-height")) / titleSize
+        ).toBeCloseTo(1.1);
+        expect(computed(title, "margin-top")).toBe("0px");
+        expect(computed(title, "letter-spacing")).not.toBe("9px");
+        const steps = container.querySelector(".frak-ambassador__steps-title");
+        expect(computed(steps, "font-size")).not.toBe("120px");
+        const reward = container.querySelector(
+            ".frak-ambassador__reward-heading"
+        );
+        expect(computed(reward, "font-size")).toBe("16px");
+        const step = container.querySelector(".frak-ambassador__step-title");
+        expect(computed(step, "font-size")).toBe("16.8px");
+        expect(computed(step, "margin-top")).toBe("0px");
     });
 
     it("keeps the hero photo and badge sizes under a rich-text rule on images, as when placed in a Shopify page body", async () => {
@@ -1771,7 +1807,7 @@ describe("Ambassador", () => {
                     ".frak-ambassador__my-rewards-main .frak-ambassador__my-rewards-share"
                 )
             ).not.toBeNull();
-            cleanup();
+            act(() => cleanup());
 
             isMobile.mockReturnValue(true);
             const mobile = render(<Ambassador />);

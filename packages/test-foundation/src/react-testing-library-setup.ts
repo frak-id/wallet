@@ -22,7 +22,7 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, configure } from "@testing-library/react";
+import { act, cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach } from "vitest";
 
 // RTL's `waitFor` keeps its own 1s budget, independent of `testTimeout`. Ten
@@ -30,10 +30,11 @@ import { afterAll, afterEach } from "vitest";
 // so a test awaiting a dynamic import fails on load rather than on behaviour.
 configure({ asyncUtilTimeout: 5000 });
 
-// Cleanup React Testing Library after each test
-// This ensures DOM is clean between tests and prevents memory leaks
+// Inside act: Preact 11 (listener aliases this import to preact) defers unmount cleanups past paint.
 afterEach(() => {
-    cleanup();
+    act(() => {
+        cleanup();
+    });
 });
 
 // Radix's focus scope dispatches its unmount event from a `setTimeout(0)`. One

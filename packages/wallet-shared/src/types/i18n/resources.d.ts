@@ -21,7 +21,7 @@ export default interface Resources {
           "title": "No passkey found"
         },
         "noScreenLock": {
-          "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.",
+          "message": "Your device needs a screen lock (passcode, PIN, or pattern) to use passkeys. Add one in your settings, then try again.",
           "title": "Screen lock required"
         },
         "notAllowed": {
@@ -575,10 +575,10 @@ export default interface Resources {
         },
         "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
         "invite": {
-          "description_one": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} ticket.",
-          "description_other": "Each friend who signs up with your link and follows @frak_fr on Instagram earns you {{count}} tickets.",
-          "noCode_one": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} ticket.",
-          "noCode_other": "Create your code to get your link. Each friend who signs up and follows @frak_fr on Instagram earns you {{count}} tickets.",
+          "description_one": "Each friend who signs up with your link earns you {{count}} ticket.",
+          "description_other": "Each friend who signs up with your link earns you {{count}} tickets.",
+          "noCode_one": "Create your code to get your link. Each friend who signs up with it earns you {{count}} ticket.",
+          "noCode_other": "Create your code to get your link. Each friend who signs up with it earns you {{count}} tickets.",
           "share": "Share my link",
           "title": "Invite your friends"
         },
@@ -1122,7 +1122,7 @@ export default interface Resources {
           },
           "howItWorks": "How it works",
           "invite": {
-            "description": "2 tickets per friend who signs up with your code, connects their Instagram and follows @frak_fr, and 2 per friend with a Frak wallet who opens your share of a brand.",
+            "description": "2 tickets per friend who signs up with your code, and 2 per friend with a Frak wallet who opens your share of a brand.",
             "reward": "You each earn {{reward}}.",
             "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
             "title": "Share and earn tickets"
@@ -1902,7 +1902,7 @@ export default interface Resources {
           "copiedToast": "Referral code copied",
           "copyCode": "Copy code",
           "copyLink": "Copy link",
-          "gameHint": "For every friend who signs up with your code, connects their Instagram and follows @frak_fr, you earn 2 tickets in the draw.",
+          "gameHint": "For every friend who signs up with your code, you earn 2 tickets in the draw.",
           "gameShareText": "Join the Frak Game with my code {{code}} and try to win {{prize}}!",
           "linkCopiedToast": "Referral link copied",
           "modifyCta": "Modify my code",

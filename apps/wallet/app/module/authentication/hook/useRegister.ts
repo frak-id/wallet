@@ -25,6 +25,7 @@ import {
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
+import { useCallback } from "react";
 import { toHex } from "viem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 
@@ -45,7 +46,7 @@ export function useRegister(
         isSuccess,
         isError,
         error,
-        mutateAsync: register,
+        mutateAsync,
     } = useMutation<Session, Error, UseRegisterArgs, RegisterContext>({
         retry: transientRetry,
         retryDelay: transientRetryDelay,
@@ -157,6 +158,16 @@ export function useRegister(
             options?.onError?.(err, vars, ctx, mutationCtx);
         },
     });
+
+    // onError already reports the failure: callers that don't await must not re-surface it as unhandled.
+    const register = useCallback(
+        (args: UseRegisterArgs) => {
+            const promise = mutateAsync(args);
+            promise.catch(() => {});
+            return promise;
+        },
+        [mutateAsync]
+    );
 
     return {
         isRegisterInProgress,

@@ -7,6 +7,9 @@ on:
   pull_request:
     paths: ['plugins/**']
 
+permissions:
+  contents: read
+
 jobs:
   # ── Magento ─────────────────────────────────────────────
   magento-coding-standard:

@@ -367,7 +367,7 @@
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "gameShareText": "Rejoins le Jeu Frak avec mon code {{code}} et tente de remporter {{prize}} au tirage !",
                 "modifyCta": "Modifier mon code",
-                "gameHint": "Pour chaque ami·e inscrit·e avec ton code qui connecte son Instagram et suit @frak_fr, tu gagnes 2 tickets au tirage."
+                "gameHint": "Pour chaque ami·e inscrit·e avec ton code, tu gagnes 2 tickets au tirage."
             },
             "edit": {
                 "title": "Modifier mon code",
@@ -984,7 +984,7 @@
                     "title": "Partage et gagne des tickets",
                     "reward": "Vous gagnez {{reward}} chacun.",
                     "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "2 tickets par ami qui s'inscrit avec ton code, connecte son Instagram et suit @frak_fr, et 2 par ami qui a un porte-monnaie Frak et ouvre ton partage d'une marque."
+                    "description": "2 tickets par ami qui s'inscrit avec ton code, et 2 par ami qui a un porte-monnaie Frak et ouvre ton partage d'une marque."
                 },
                 "purchase": {
                     "title": "Achète chez une marque partenaire",
@@ -1126,10 +1126,10 @@
             },
             "invite": {
                 "title": "Invite tes ami·e·s",
-                "description_one": "Chaque ami·e inscrit·e avec ton lien qui suit @frak_fr sur Instagram te rapporte {{count}} ticket.",
-                "description_other": "Chaque ami·e inscrit·e avec ton lien qui suit @frak_fr sur Instagram te rapporte {{count}} tickets.",
-                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e qui suit @frak_fr sur Instagram te rapporte {{count}} ticket.",
-                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e qui suit @frak_fr sur Instagram te rapporte {{count}} tickets.",
+                "description_one": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} ticket.",
+                "description_other": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} tickets.",
+                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} ticket.",
+                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} tickets.",
                 "share": "Partager mon lien"
             },
             "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"

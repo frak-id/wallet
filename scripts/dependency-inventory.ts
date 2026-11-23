@@ -11,18 +11,20 @@ import * as fs from "node:fs";
 import { collectCargo } from "./dependency/collect-cargo";
 import { collectCi } from "./dependency/collect-ci";
 import { collectInfra } from "./dependency/collect-infra";
+import { collectNative } from "./dependency/collect-native";
 import { collectNpm } from "./dependency/collect-npm";
 import { log } from "./dependency/registry";
 import { FLOORS } from "./dependency/traps";
 import type { Inventory, InventoryItem, Surface } from "./dependency/types";
 import { tierFor } from "./dependency/types";
 
-const SURFACES: Surface[] = ["infra", "ci", "cargo", "npm"];
+const SURFACES: Surface[] = ["infra", "ci", "cargo", "native", "npm"];
 
 const COLLECTORS: [string, () => Promise<InventoryItem[]>][] = [
     ["infra", collectInfra],
     ["ci", collectCi],
     ["cargo", collectCargo],
+    ["native", collectNative],
     ["npm", collectNpm],
 ];
 
@@ -106,6 +108,7 @@ const FLOORS_BY_SURFACE: Record<Surface, number> = {
     cargo: 10,
     infra: 5,
     ci: 15,
+    native: 20,
 };
 
 function assertPlausible(items: InventoryItem[]): void {

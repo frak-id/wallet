@@ -13,6 +13,10 @@ declare global {
             // Shopify
             SHOPIFY_API_SECRET: string;
             SHOPIFY_CLIENT_ID: string;
+            // Payment notifications (Slack); an empty Stripe secret disables its webhook
+            SLACK_BOT_TOKEN?: string;
+            SLACK_PAYMENTS_CHANNEL?: string;
+            STRIPE_WEBHOOK_SECRET?: string;
             // Business dashboard origin — Shopify SSO callback redirect target
             BUSINESS_URL: string;
             // RustFS (object storage)

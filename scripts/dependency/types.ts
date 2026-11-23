@@ -7,14 +7,18 @@
  */
 
 /** Which section of the report an item lands in. */
-export type Surface = "npm" | "cargo" | "infra" | "ci";
+export type Surface = "npm" | "cargo" | "infra" | "ci" | "native";
 
 export type Kind =
     | "npm"
     | "cargo"
     | "pulumi-provider"
     | "image"
-    | "github-action";
+    | "github-action"
+    | "maven"
+    | "gradle-plugin"
+    | "gradle-wrapper"
+    | "swiftpm";
 
 /**
  * `research` items get a written entry. `appendix` items are rendered

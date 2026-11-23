@@ -170,7 +170,7 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         });
     });
 
-    it("counts friends who signed up with the holder's code in the window and follow @frak_fr", async () => {
+    it("counts friends who signed up with the holder's code in the window, Instagram or not", async () => {
         answer([[0]], [[0]], [[0]], [[0]], []);
 
         await player.ticketsOf(game, HOLDER, JOINED_AT);
@@ -183,11 +183,9 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
         expect(text).toContain(
             'inner join "referral_links" on "referral_links"."referee_identity_group_id" = "interaction_logs"."identity_group_id"'
         );
+        expect(text).not.toContain("instagram_links");
         expect(text).toContain(
-            'inner join "instagram_links" on "instagram_links"."identity_group_id" = "interaction_logs"."identity_group_id"'
-        );
-        expect(text).toContain(
-            'where ("interaction_logs"."type" = $1 and "interaction_logs"."merchant_id" = $2 and "interaction_logs"."created_at" >= $3 and "interaction_logs"."created_at" < $4 and "referral_links"."referrer_identity_group_id" = $5 and "referral_links"."scope" = $6 and "referral_links"."removed_at" is null and "instagram_links"."follows" = $7)'
+            'where ("interaction_logs"."type" = $1 and "interaction_logs"."merchant_id" = $2 and "interaction_logs"."created_at" >= $3 and "interaction_logs"."created_at" < $4 and "referral_links"."referrer_identity_group_id" = $5 and "referral_links"."scope" = $6 and "referral_links"."removed_at" is null)'
         );
         expect(params).toEqual([
             "referral_signup",
@@ -196,11 +194,10 @@ describe("GamePlayerOrchestrator.ticketsOf", () => {
             ENDS_AT.toISOString(),
             HOLDER,
             "cross_merchant",
-            true,
         ]);
     });
 
-    it("grants 2 tickets per friend who signed up and follows @frak_fr, on top of the join ticket", async () => {
+    it("grants 2 tickets per friend who signed up with the code, on top of the join ticket", async () => {
         answer([[0]], [[0]], [[2]], [[0]], []);
 
         await expect(

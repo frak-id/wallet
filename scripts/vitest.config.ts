@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import { maxWorkers } from "../packages/test-foundation/src/vitest.workers";
+import { maxWorkers } from "../packages/test-foundation/src/vitest.workers.ts";
 
 // Standalone rather than extending the shared config: `scripts/` is not a
 // workspace, so it cannot resolve `@frak-labs/test-foundation`. These are

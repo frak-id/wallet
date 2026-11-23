@@ -3,14 +3,19 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', '*.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', '*.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Every job runs PR code (install scripts, Gradle, Cargo build scripts) and none writes back.
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   # ── Change detection ────────────────────────────────────
@@ -189,7 +194,7 @@ jobs:
             # `check:safe-area` walks every `.css.ts` under apps/packages/sdk/
             # example; the deep-link/floor checks read `src-tauri`;
             # `check:bun-version` reads the `apps/*` and `services/*` Dockerfiles;
-            # the comment budget scans every root in `scripts/check-comments.ts`.
+            # the comment budget scans every tracked `.kt`/`.swift`/`.ts`/`.tsx` file.
             #
             # No `!` entries: in paths-filter a negation is a rule matching
             # everything outside that path, not an exclusion from the includes
@@ -208,6 +213,8 @@ jobs:
               - 'services/**'
               - 'infra/**'
               - 'scripts/**'
+              # Root-level `knip.ts`, `sst.config.ts`, `vitest.config.ts`.
+              - '*.ts'
               - 'package.json'
               - '.github/workflows/tauri-mobile-release.yml'
               - '.github/workflows/apps.yaml'
@@ -337,8 +344,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-      - name: "🔨 Install dependencies"
-        run: bun install --frozen-lockfile
       - name: "☕ Setup Java 17"
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -352,9 +357,12 @@ jobs:
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-provider: basic
-          build-root-directory: apps/wallet/src-tauri/gen/android
           cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
           validate-wrappers: true
+      # After Gradle: its cache key hashes `**/*.gradle*` from the repo root, and
+      # walking node_modules took 3 minutes.
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           # Same pin as RUST_TOOLCHAIN in tauri-mobile-release.yml.
@@ -510,7 +518,7 @@ jobs:
       - name: "🍞 Bun version pins"
         run: bun run check:bun-version
       # Per-file ceiling in `scripts/comment-budget-baseline.json`: a file may only
-      # get better. No arguments, so it scans every default root.
+      # get better. No arguments, so it scans every tracked source file.
       - name: "💬 Comment budget"
         run: bun run lint:comments
 
@@ -825,7 +833,6 @@ jobs:
         with:
           # v6 defaults to the proprietary enhanced cache (Gradle Terms of Use); basic stays MIT.
           cache-provider: basic
-          build-root-directory: sdk/android
           cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
           # `validateDistributionUrl` in gradle-wrapper.properties checks the URL is
           # well-formed, not the bytes. This checks the wrapper jar against Gradle's
@@ -911,14 +918,17 @@ jobs:
   # a signing identity nor an App Store Connect key.
   wallet-ios:
     name: "🍎 Wallet · iOS release build"
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
     needs: changes
     if: needs.changes.outputs.walletIos == 'true'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # See the same step in tauri-mobile-release.yml.
+      - name: "🧰 Select Xcode"
+        run: sudo xcode-select -s "$DEVELOPER_DIR"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
@@ -927,14 +937,16 @@ jobs:
           # Same pin as RUST_TOOLCHAIN in tauri-mobile-release.yml.
           toolchain: "1.98.1"
           targets: aarch64-apple-ios
-      # Homebrew's rustup shims on macos-26 lose their argv[0] dispatch; see the
-      # same step in tauri-mobile-release.yml.
+          # swift-rs needs llvm-objcopy to re-export @_cdecl symbols on Xcode 27.
+          components: llvm-tools
+      # Homebrew-wrapped rustup shims lose their argv[0] dispatch; see the same step
+      # in tauri-mobile-release.yml.
       - name: "🔗 Prepend cargo bin to PATH"
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: apps/wallet/src-tauri
-          prefix-key: "v1-rust-ios"
+          prefix-key: "v2-xcode27-rust-ios"
           cache-on-failure: true
       # Same key as the release job: both hold the same global SwiftPM artifacts.
       - name: "💾 Cache SwiftPM artifacts"

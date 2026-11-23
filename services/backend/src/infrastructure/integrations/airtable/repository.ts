@@ -1,5 +1,6 @@
 import { log } from "@backend-infrastructure/external/logger";
 import ky, { type KyInstance } from "ky";
+import { slackClient } from "../slack";
 import {
     AIRTABLE_CONFIG,
     type AirtableRequestBody,
@@ -22,15 +23,8 @@ type AirtableCreateResponse = {
     records: AirtableRecord[];
 };
 
-/** Slack always returns HTTP 200 — the `ok` field carries the real outcome. */
-type SlackResponse = {
-    ok: boolean;
-    error?: string;
-};
-
 export class AirtableRepository {
     private readonly airtableApi: KyInstance;
-    private readonly slackApi?: KyInstance;
 
     constructor() {
         const apiKey = process.env.AIRTABLE_API_KEY;
@@ -50,14 +44,6 @@ export class AirtableRepository {
                 backoffLimit: 30_000,
             },
         });
-
-        const slackToken = process.env.SLACK_BOT_TOKEN;
-        if (slackToken) {
-            this.slackApi = ky.create({
-                prefix: "https://slack.com/api",
-                headers: { Authorization: `Bearer ${slackToken}` },
-            });
-        }
     }
 
     async checkDuplicateEmail(
@@ -109,48 +95,30 @@ export class AirtableRepository {
         tableType: TableType,
         data: AirtableRequestBody
     ): Promise<void> {
-        if (!this.slackApi) {
-            log.info("Slack not configured, skipping notification");
-            return;
-        }
-
-        try {
-            const tableName = tableType.replace("_", " ");
-            const response = await this.slackApi
-                .post("chat.postMessage", {
-                    json: {
-                        channel: "crm",
-                        text: `New *${tableName}* record created`,
-                        blocks: [
-                            {
-                                type: "section",
-                                text: {
-                                    type: "mrkdwn",
-                                    text: `*Email: ${data.email}*`,
-                                },
-                            },
-                            {
-                                type: "section",
-                                fields: Object.entries(data)
-                                    .filter(([key]) => key !== "email")
-                                    .slice(0, 8) // Limit to 8 fields to avoid Slack limits
-                                    .map(([key, value]) => ({
-                                        type: "mrkdwn",
-                                        text: `*${key}:* ${String(value)}`,
-                                    })),
-                            },
-                        ],
+        const tableName = tableType.replace("_", " ");
+        await slackClient.postMessage({
+            channel: "crm",
+            text: `New *${tableName}* record created`,
+            blocks: [
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: `*Email: ${data.email}*`,
                     },
-                })
-                .json<SlackResponse>();
-
-            if (!response.ok) {
-                throw new Error(`Slack API error: ${response.error}`);
-            }
-        } catch (error) {
-            // Don't fail the main operation if Slack notification fails
-            log.error(error, "Failed to send Slack notification:");
-        }
+                },
+                {
+                    type: "section",
+                    fields: Object.entries(data)
+                        .filter(([key]) => key !== "email")
+                        .slice(0, 8) // Limit to 8 fields to avoid Slack limits
+                        .map(([key, value]) => ({
+                            type: "mrkdwn",
+                            text: `*${key}:* ${String(value)}`,
+                        })),
+                },
+            ],
+        });
     }
 
     async processRequest(

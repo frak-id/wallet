@@ -239,6 +239,29 @@ describe("useRegister", () => {
         });
     });
 
+    test("a failed register nobody awaits leaves no unhandled rejection", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        vi.mocked(WebAuthnP256.createCredential).mockRejectedValue(
+            new Error("User cancelled")
+        );
+        const unhandled = vi.fn();
+        process.on("unhandledRejection", unhandled);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        result.current.register();
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        process.off("unhandledRejection", unhandled);
+
+        expect(unhandled).not.toHaveBeenCalled();
+    });
+
     test("should handle API registration failure", async ({ queryWrapper }) => {
         const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(

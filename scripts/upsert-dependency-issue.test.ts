@@ -42,7 +42,7 @@ const inventory = (items: InventoryItem[]): Inventory => ({
         appendix: 0,
         flagged: 0,
         errors: 0,
-        bySurface: { npm: 0, cargo: 0, infra: 0, ci: 0 },
+        bySurface: { npm: 0, cargo: 0, infra: 0, ci: 0, native: 0 },
     },
     items,
 });

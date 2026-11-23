@@ -64,10 +64,10 @@ agent that writes the report issue.
 
 ```
 dependency/types.ts      the contract: InventoryItem, Flag, Floor, projects, semverDelta(), tierFor()
-dependency/registry.ts   upstream lookups only — npm, crates.io, Docker Hub, GitHub
+dependency/registry.ts   upstream lookups only — npm, crates.io, Docker Hub, GitHub, Maven repos, Gradle
 dependency/traps.ts      repo knowledge: the gated FLOORS and the per-package TRAPS table
 dependency/collect-*.ts  one exported async collector each, resolving to InventoryItem[]
-                         four surfaces: infra, ci, cargo, npm
+                         five surfaces: infra, ci, cargo, native, npm
 dependency-inventory.ts  orchestrates, re-derives tiering, emits JSON   (`bun run deps:inventory`)
 upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix to one issue,
                          stamps the inventory fingerprint into it, and answers `--check-changed`
@@ -95,17 +95,21 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
   section's organising key: one entry means one workspace owns the bump, several means it is a
   catalog pin and the edit is one root-manifest line. `bun outdated` is the only place the
   fan-out is written down — its `Workspace` column reads `catalog (@a, @b, …)` for a catalog row,
-  and `consumersOf()` is what keeps that from being thrown away. The other three surfaces have no
+  and `consumersOf()` is what keeps that from being thrown away. The other four surfaces have no
   `projects` and must not be reorganised by it.
 - **Never move version discovery into the report agent.** The agent is forbidden from introducing a
   version that is not in `dependency-inventory.json`, and that guarantee dies the moment it starts
   scanning files for versions itself. A collector that cannot resolve something emits
   `latest: null` with a `note` and the `lookup-failed` flag — it never guesses.
-- **Scope is four surfaces, and the exclusions are deliberate.** `sdk/android`, `sdk/ios` and the
-  PHP plugins are not collected: their gates (`check:native-versions`, `check:ios-floor`) already
-  hold the version sites that matter, and a weekly writeup of the Gradle catalog was 689 lines of
-  collector for 25 items nobody acts on. Tauri's Rust crates are in scope; its iOS `Package.swift`
-  pins are not.
+- **Scope is five surfaces, and the exclusions are deliberate.** `native` covers every Gradle build
+  (`sdk/android`, `example/native-android`, the Tauri Android project and plugins) and the remote
+  `.package(url:)` pins in the Tauri plugins' `ios/Package.swift`. Two things are not collected: the
+  PHP plugins, and the `path` packages in those `Package.swift` files. `id.frak.sdk:*` in
+  `example/native-android` is our own SDK, held by `check:native-versions`, and is skipped.
+- **An androidx `latest` can be out of reach.** A release's `minCompileSdk` can exceed the compileSdk
+  of the module that declares it, and AGP then fails the build. The native collector reads
+  `minCompileSdk` from the latest version's AAR (`aar-metadata.properties`) instead of trusting
+  `latest`, and flags the item `floor-coupled`.
 - **Tiering is what keeps the report finite.** ~900 npm and cargo entries are collected; only
   `tier: "research"` reaches the agent. Their minors and patches are `tier: "appendix"` and are
   rendered mechanically by `upsert-dependency-issue.ts` after the agent's body.
