@@ -40,6 +40,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Infra (AWS/GCP) | `infra/` · `sst.config.ts` · `infra/gcp/*.ts` |
 | Version gates + the dependency report (weekly + gated on every `dev` push) | `scripts/` (`check-*.ts`, `dependency/`) · `.github/pi/` |
 | SDK CDN pointer (`sdk[-dev].frak.id`) | `infra/sdk-pointer.ts` (own SST stages `sdk-pointer[-dev]`, deployed by the release workflows) |
+| Production release (MEP) | `/skill:release` (`.agents/skills/release/`, catalog of every release workflow) · the dev → main PR is `.github/workflows/release-pr.yml` + `scripts/release-pr.ts` |
 
 ## Non-Obvious Patterns (Tribal Knowledge)
 
