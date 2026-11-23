@@ -34,13 +34,13 @@ if (!existsSync(join(cdnDir, "loader.js"))) {
     process.exit(1);
 }
 
-// Merchants load either sdk.frak.id/components.js or the jsdelivr package; both
-// end up importing jsdelivr's cdn/loader.js and its chunks, which we serve locally.
+// Merchants load either sdk.frak.id/components.js or the jsdelivr package, and preload
+// sdk.frak.id/loader.js; all of them resolve to cdn/ files, which we serve locally.
 function serveLocal(route: Route) {
     const file = route
         .request()
         .url()
-        .match(/\/cdn\/([^/?#]+\.js)(?:[?#]|$)/)?.[1];
+        .match(/\/([^/?#]+\.js)(?:[?#]|$)/)?.[1];
     const path = join(
         cdnDir,
         file && existsSync(join(cdnDir, file)) ? file : "components.js"
@@ -69,6 +69,7 @@ const context = await browser.newContext({
         : undefined,
 });
 await context.route("https://sdk.frak.id/components.js*", serveLocal);
+await context.route("https://sdk.frak.id/loader.js*", serveLocal);
 await context.route(
     "https://cdn.jsdelivr.net/npm/@frak-labs/components**",
     serveLocal
