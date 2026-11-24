@@ -6,7 +6,6 @@ import {
     Deferred,
     type ExtractReturnType,
     FrakRpcError,
-    RpcErrorCodes,
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
@@ -22,11 +21,6 @@ type OnDisplaySharingPageRequest = RpcPromiseHandler<
     "frak_displaySharingPage",
     WalletRpcContext
 >;
-
-// Module-level deferred (the listener mounts once per iframe lifetime),
-// preserving the "supersede previous request" semantics from the
-// original ref-based hook.
-let pendingDeferred: Deferred<DisplaySharingPageResultType> | null = null;
 
 type DisplaySharingPageDeps = {
     setRequest: (request: UIRequest) => void;
@@ -57,20 +51,8 @@ export const handleDisplaySharingPage = async (
     const entryPoint =
         typeof rawEntryPoint === "string" ? rawEntryPoint : undefined;
 
-    // Clean up any existing deferred
-    if (pendingDeferred) {
-        pendingDeferred.reject(
-            new FrakRpcError(
-                RpcErrorCodes.internalError,
-                "New sharing page request superseded previous request"
-            )
-        );
-        pendingDeferred = null;
-    }
-
     // Create a new deferred for this sharing page request
     const deferred = new Deferred<DisplaySharingPageResultType>();
-    pendingDeferred = deferred;
 
     // Create emitter that resolves the deferred
     const emitter = async (
@@ -117,12 +99,6 @@ export const handleDisplaySharingPage = async (
         placement: placementId,
     });
 
-    try {
-        // Wait for user action via deferred promise
-        return await deferred.promise;
-    } finally {
-        if (pendingDeferred === deferred) {
-            pendingDeferred = null;
-        }
-    }
+    // Wait for user action via deferred promise
+    return await deferred.promise;
 };

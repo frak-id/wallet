@@ -8,12 +8,14 @@
  * so it can stay in the eager bundle.
  */
 
+import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 type Handler = (req: UIRequest) => void;
 
 let activeHandler: Handler | null = null;
 const pending: UIRequest[] = [];
+let lastRequest: UIRequest | null = null;
 
 export const uiBus = {
     /**
@@ -22,6 +24,16 @@ export const uiBus = {
      * delivered FIFO when a handler attaches.
      */
     request(req: UIRequest): void {
+        // A request already settled ignores this, so handlers keep their own errors.
+        if (lastRequest && lastRequest !== req) {
+            void lastRequest.emitter({
+                error: {
+                    code: RpcErrorCodes.internalError,
+                    message: "New request superseded previous request",
+                },
+            });
+        }
+        lastRequest = req;
         if (activeHandler) {
             activeHandler(req);
             return;
