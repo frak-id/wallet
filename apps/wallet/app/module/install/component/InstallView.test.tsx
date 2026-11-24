@@ -1221,9 +1221,7 @@ describe("InstallView — ref-only referral code branch", () => {
             await screen.findByText("installCode.referral.codeCopied");
 
             unmount();
-            // What a torn-down test environment looks like to a stray timer.
-            vi.stubGlobal("window", undefined);
-            await vi.advanceTimersByTimeAsync(2000);
+            expect(vi.getTimerCount()).toBe(0);
         } finally {
             vi.unstubAllGlobals();
             vi.useRealTimers();
