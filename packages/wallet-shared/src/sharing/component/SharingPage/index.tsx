@@ -1,6 +1,6 @@
 import { Text } from "@frak-labs/design-system/components/Text";
 import { clsx } from "clsx";
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { ExternalLink } from "../../../common/component/ExternalLink";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
@@ -48,6 +48,7 @@ export function SharingPage({
     t,
 }: SharingPageProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const titleId = useId();
     const chromeless = isChromeless(chrome);
 
     // off when a host owns dismissal, and on the confirmation screen, which
@@ -90,6 +91,7 @@ export function SharingPage({
                 )}
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby={titleId}
                 tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -105,7 +107,7 @@ export function SharingPage({
                     <RewardCard merchant={merchant} reward={reward} t={t} />
 
                     <section className={styles.rewardCard}>
-                        <Text as="h2" variant="heading2">
+                        <Text as="h2" variant="heading2" id={titleId}>
                             {t("sdk.sharingPage.reward.title")}
                         </Text>
                         <Text variant="bodySmall" color="secondary">

@@ -131,7 +131,8 @@
                 },
                 "cta": "Récupérer mes {{ estimatedReward }}",
                 "cta_noReward": "Installer l'application",
-                "shareAgain": "Partager à nouveau"
+                "shareAgain": "Partager à nouveau",
+                "close": "Fermer"
             }
         }
     }

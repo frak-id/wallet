@@ -11,7 +11,7 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import { clsx } from "clsx";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useId, useRef } from "react";
 import { MerchantLogo } from "../MerchantLogo";
 import {
     isChromeless,
@@ -66,6 +66,7 @@ export function PostShareConfirmation({
     onInstall,
 }: PostShareConfirmationProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const titleId = useId();
     const chromeless = isChromeless(chrome);
 
     useOverlayBehaviour({
@@ -96,6 +97,7 @@ export function PostShareConfirmation({
                 )}
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby={titleId}
                 tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -113,6 +115,7 @@ export function PostShareConfirmation({
                             type="button"
                             className={styles.dismissButton}
                             onClick={onDismiss}
+                            aria-label={t("sdk.sharingPage.confirmation.close")}
                         >
                             <CloseIcon width={24} height={24} />
                         </button>
@@ -159,6 +162,7 @@ export function PostShareConfirmation({
                     <section className={styles.heroSection}>
                         <Text
                             as="h1"
+                            id={titleId}
                             variant="heading3"
                             className={styles.heroSectionTitle}
                         >
