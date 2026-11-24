@@ -4,6 +4,7 @@ import {
     IS_TAURI,
     isStandalonePwa,
 } from "@frak-labs/app-essentials/utils/platform";
+import { createPostHogMirror } from "@frak-labs/core-sdk";
 import { OpenPanel } from "@openpanel/web";
 import { isInIframe } from "../lib/inApp";
 import { resolveAnonymousId } from "./anonymousId";
@@ -38,6 +39,10 @@ export function getPlatformInfo() {
 const clientId =
     process.env.OPEN_PANEL_WALLET_CLIENT_ID ??
     process.env.OPEN_PANEL_LISTENER_CLIENT_ID;
+const postHogMirror = process.env.POSTHOG_HOST
+    ? createPostHogMirror(process.env.POSTHOG_HOST, process.env.POSTHOG_TOKEN)
+    : undefined;
+
 export const openPanel =
     typeof window !== "undefined" && process.env.OPEN_PANEL_API_URL && clientId
         ? new OpenPanel({
@@ -65,6 +70,7 @@ export const openPanel =
                           ...getInitProperties(),
                       };
                   }
+                  postHogMirror?.(payload);
                   return true;
               },
           })

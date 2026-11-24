@@ -119,6 +119,7 @@ export {
     clearAllCache,
     coerceProductCandidates,
     compressJsonToB64,
+    createPostHogMirror,
     createSdkOpenPanel,
     type DeepLinkFallbackOptions,
     decodeProductsParam,

@@ -1,5 +1,9 @@
 // Generic, framework-agnostic utilities. Keep this surface narrow.
-export { createSdkOpenPanel, trackEvent } from "./analytics";
+export {
+    createPostHogMirror,
+    createSdkOpenPanel,
+    trackEvent,
+} from "./analytics";
 export {
     type DeepLinkFallbackOptions,
     isChromiumAndroid,

@@ -1,4 +1,5 @@
 import { OpenPanel } from "@openpanel/web";
+import { createPostHogMirror } from "./postHogMirror";
 
 /**
  * Build the SDK's OpenPanel instance, or `undefined` when the build carries no
@@ -23,6 +24,14 @@ export function createSdkOpenPanel(
         }),
     };
 
+    // The `POSTHOG_HOST` test lets the bundler drop the mirror when it is off.
+    const postHogMirror = process.env.POSTHOG_HOST
+        ? createPostHogMirror(
+              process.env.POSTHOG_HOST,
+              process.env.POSTHOG_TOKEN
+          )
+        : undefined;
+
     const openPanel = new OpenPanel({
         apiUrl: process.env.OPEN_PANEL_API_URL,
         clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
@@ -41,6 +50,7 @@ export function createSdkOpenPanel(
             if (!("sdk_version" in payload.properties)) {
                 payload.properties = { ...payload.properties, ...identity };
             }
+            postHogMirror?.(payload);
             return true;
         },
     });
