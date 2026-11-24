@@ -261,6 +261,7 @@ export default interface Resources {
           "cardPopupDescription_noReward": "A purchase was made through your link. Install the app to track your purchases.",
           "cardPopupTitle": "You just won {{estimatedReward}}! 🎉",
           "cardPopupTitle_noReward": "A friend just bought! 🎉",
+          "close": "Close",
           "cta": "Collect my {{estimatedReward}}",
           "cta_noReward": "Install the app",
           "shareAgain": "Share again",

@@ -130,7 +130,8 @@
                 },
                 "cta": "Collect my {{ estimatedReward }}",
                 "cta_noReward": "Install the app",
-                "shareAgain": "Share again"
+                "shareAgain": "Share again",
+                "close": "Close"
             }
         }
     }
