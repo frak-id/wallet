@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
+import { postHogDefines } from "../../packages/dev-tooling/src/posthog.ts";
 
 const openPanelClientId = {
     dev: "6eacc8d7-49ac-4936-95e9-81ef29449570",
@@ -23,6 +24,7 @@ const buildDefine = {
         "https://op-api.gcp.frak.id"
     ),
     "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
+    ...postHogDefines(process.env.STAGE === "production"),
     "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
     // Default mobile deep-link scheme baked into the published NPM/CDN bundle.
     // In-monorepo dev consumers (listener-dev) override this via their own Vite `define`.
