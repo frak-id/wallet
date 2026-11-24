@@ -16,6 +16,7 @@ import {
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
+    postHogDefines,
 } from "../../packages/dev-tooling/index.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -315,6 +316,7 @@ export default defineConfig(async () => {
             "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
                 getSstResource("OPEN_PANEL_LISTENER_CLIENT_ID")
             ),
+            ...postHogDefines(isProd),
             "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                 process.env.WEBAUTHN_RP_ID
             ),

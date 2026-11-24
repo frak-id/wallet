@@ -2,6 +2,7 @@ import * as process from "node:process";
 import {
     getSandboxEnv,
     getSstResource,
+    postHogDefines,
 } from "../../packages/dev-tooling/index.ts";
 import walletPackage from "./package.json" with { type: "json" };
 
@@ -64,6 +65,7 @@ export async function getDefineProps({
     const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
     const stage = getSstResource("STAGE") ?? "dev";
+    const isProd = process.env.STAGE?.includes("prod") ?? false;
 
     // OTA channel for this exact binary: stage (BACKEND_URL), platform (__IS_IOS__)
     // and version (the Rust command surface) are all baked in. `walletPackage.version`,
@@ -117,14 +119,13 @@ export async function getDefineProps({
         "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
             getSstResource("OPEN_PANEL_WALLET_CLIENT_ID")
         ),
+        ...postHogDefines(isProd),
         "process.env.WEBAUTHN_RP_ID": JSON.stringify(
             process.env.WEBAUTHN_RP_ID
         ),
         // Same split as the listener: prod opens id.frak.wallet, every other stage the dev variant.
         "process.env.DEEP_LINK_SCHEME": JSON.stringify(
-            process.env.STAGE?.includes("prod")
-                ? "frakwallet://"
-                : "frakwallet-dev://"
+            isProd ? "frakwallet://" : "frakwallet-dev://"
         ),
         "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
             getSstResource("ANDROID_SHA256_FINGERPRINT")
