@@ -158,10 +158,11 @@ type GameHeroProps = {
     me: CurrentGameResponse["me"];
     endsAt: Date | string;
     gains: GameGains;
+    prize: string;
 };
 
 /** The player's tickets as a deck, held under a padlock until they count in the draw. */
-export function GameHero({ me, endsAt, gains }: GameHeroProps) {
+export function GameHero({ me, endsAt, gains, prize }: GameHeroProps) {
     const { t } = useTranslation();
     const locked = !me.eligible;
     const showPadlock = locked || gains.unlocked;
@@ -173,7 +174,7 @@ export function GameHero({ me, endsAt, gains }: GameHeroProps) {
                   : "game.page.hero.subtitleNone",
               { count }
           )
-        : t("game.page.hero.keepGoing");
+        : t("game.page.hero.keepGoing", { prize });
 
     return (
         <HeroCard

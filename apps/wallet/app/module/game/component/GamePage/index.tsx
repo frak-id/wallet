@@ -176,7 +176,12 @@ export function GamePage() {
                             prize: prizeOf(top.game, i18n.language),
                         })}
                     </Text>
-                    <GameHero me={me} endsAt={top.game.endsAt} gains={gains} />
+                    <GameHero
+                        me={me}
+                        endsAt={top.game.endsAt}
+                        gains={gains}
+                        prize={prizeOf(top.game, i18n.language)}
+                    />
                     <GameMissions
                         missions={missionsOf(me)}
                         gameId={top.game.id}
