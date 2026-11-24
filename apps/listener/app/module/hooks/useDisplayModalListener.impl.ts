@@ -32,9 +32,16 @@ type OnDisplayModalRequest = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-// The listener is mounted once for the iframe lifetime, so a single handle is
-// enough: the supersede path tears the previous subscription down first.
-let activeUnsubscribe: (() => void) | null = null;
+// The listener is mounted once for the iframe lifetime. Only the newest request
+// may take the UI; the displayed one stays live until it is replaced.
+let latestRequest: object | null = null;
+let settleDisplayed: (() => void) | null = null;
+
+const superseded = () =>
+    new FrakRpcError(
+        RpcErrorCodes.internalError,
+        "New modal request superseded previous request"
+    );
 
 type DisplayModalDeps = {
     setRequest: (request: UIRequest) => void;
@@ -51,13 +58,14 @@ export const handleDisplayModal = async (
 ): Promise<ModalRpcStepsResultType> => {
     const backendConfig = resolvingContextStore.getState().backendSdkConfig;
 
-    // Tear down any pending modal subscription before starting a new one.
-    activeUnsubscribe?.();
-    activeUnsubscribe = null;
+    const request = {};
+    latestRequest = request;
 
     // If no modal to display, early exit
     const steps = coerceFinalActionToReward(params[0]);
     if (Object.keys(steps).length === 0) {
+        settleDisplayed?.();
+        settleDisplayed = null;
         modalStore.getState().clearModal();
         throw new FrakRpcError(
             RpcErrorCodes.invalidRequest,
@@ -73,7 +81,12 @@ export const handleDisplayModal = async (
         stepsPrepared,
     });
 
-    // Create a new deferred for this modal request
+    // A newer request arrived during the refresh: it owns the store and the UI
+    if (latestRequest !== request) {
+        throw superseded();
+    }
+    settleDisplayed?.();
+
     const deferred = new Deferred<ModalRpcStepsResultType>();
 
     // Save the new modal
@@ -86,7 +99,6 @@ export const handleDisplayModal = async (
     });
 
     // Subscribe to modal state changes for THIS specific modal
-    // This subscription will be cleaned up when modal completes or new modal opens
     const unsubscribe = modalStore.subscribe((state) => {
         // If modal was cleared (no steps), ignore this state change
         if (!state.steps) return;
@@ -112,8 +124,10 @@ export const handleDisplayModal = async (
             unsubscribe();
         }
     });
-
-    activeUnsubscribe = unsubscribe;
+    settleDisplayed = () => {
+        unsubscribe();
+        deferred.reject(superseded());
+    };
 
     const metadata = params[1] ?? {};
     const configMetadata = params[2] ?? {};
