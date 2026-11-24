@@ -27,6 +27,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from "react";
 import { useStore } from "zustand";
@@ -66,9 +67,21 @@ export { handleDisplayModal } from "@/module/hooks/useDisplayModalListener.impl"
 export function ListenerModal(props: ModalUiType & GenericWalletUiType) {
     return (
         <BlockchainProvider>
-            <ListenerModalInner {...props} />
+            <ListenerModalInner key={requestKey(props.emitter)} {...props} />
         </BlockchainProvider>
     );
+}
+
+// One key per request, so a request arriving while the previous one closes
+// gets a fresh, open modal instead of inheriting its closing state.
+const requestKeys = new WeakMap<object, number>();
+let lastRequestKey = 0;
+function requestKey(emitter: object): number {
+    const existing = requestKeys.get(emitter);
+    if (existing !== undefined) return existing;
+    lastRequestKey += 1;
+    requestKeys.set(emitter, lastRequestKey);
+    return lastRequestKey;
 }
 
 function ListenerModalInner({
@@ -82,6 +95,10 @@ function ListenerModalInner({
     // iframes off the backend pairing socket.
     usePersistentPairingClient();
     const [isOpen, setIsOpen] = useState(true);
+    const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+        undefined
+    );
+    useEffect(() => () => clearTimeout(closeTimer.current), []);
     const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();
     const parentUrl = useStore(
@@ -96,9 +113,6 @@ function ListenerModalInner({
         client: getOriginPairingClient(),
     });
 
-    useEffect(() => {
-        setLogoFailed(false);
-    }, [logoUrl]);
     /**
      * Method to close the modal
      */
@@ -107,7 +121,8 @@ function ListenerModalInner({
         setIsOpen(false);
 
         // Wait for animation to complete before clearing state
-        setTimeout(() => {
+        clearTimeout(closeTimer.current);
+        closeTimer.current = setTimeout(() => {
             // Clear modal store
             modalStore.getState().clearModal();
             // Then clear the UI request which will unmount the component
