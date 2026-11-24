@@ -539,6 +539,10 @@
                 "cancelled": "Récupération annulée.",
                 "cancelledDescription": "Vous avez annulé la demande. Vous pouvez réessayer quand vous le souhaitez.",
                 "tryAnother": "Utiliser une autre sauvegarde",
+                "readError": {
+                    "title": "Vérification impossible",
+                    "description": "Nous n'avons pas pu lire la configuration de récupération de ce porte-monnaie. Vérifiez votre connexion et réessayez."
+                },
                 "notConfigured": {
                     "title": "Pas de récupération sur ce porte-monnaie",
                     "description": "Ce porte-monnaie n'a pas de récupération activée, il ne peut donc pas être récupéré avec une sauvegarde."

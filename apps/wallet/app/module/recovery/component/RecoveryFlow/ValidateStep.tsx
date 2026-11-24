@@ -33,7 +33,39 @@ export function ValidateStep({
     stepIndicator,
 }: ValidateStepProps) {
     const { t } = useTranslation();
-    const { data: recovery, isLoading } = useOnChainRecovery(walletAddress);
+    const {
+        data: recovery,
+        isLoading,
+        isError,
+        isFetching,
+        refetch,
+    } = useOnChainRecovery(walletAddress);
+
+    if (isError && recovery === undefined) {
+        return (
+            <FlowStepScreen
+                title={t("wallet.recoveryUsage.validate.readError.title")}
+                description={t(
+                    "wallet.recoveryUsage.validate.readError.description"
+                )}
+                onBack={onBack}
+                stepIndicator={stepIndicator}
+                footer={
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="large"
+                        width="full"
+                        loading={isFetching}
+                        disabled={isFetching}
+                        onClick={() => refetch()}
+                    >
+                        {t("wallet.recoveryUsage.validate.retry")}
+                    </Button>
+                }
+            />
+        );
+    }
 
     if (isLoading || recovery === undefined) {
         return (

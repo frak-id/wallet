@@ -9,8 +9,12 @@ import { currentViemClient } from "@frak-labs/wallet-shared";
 import { tryit } from "radash";
 import {
     type Address,
+    BaseError,
+    ContractFunctionRevertedError,
+    ContractFunctionZeroDataError,
     type Hex,
     hexToBigInt,
+    InternalRpcError,
     isAddressEqual,
     keccak256,
     toFunctionSelector,
@@ -37,7 +41,7 @@ export async function getCurrentRecoveryOption({
     const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
 
     // Query the kernel wallet to see the current recovery options
-    const [, recoveryOption] = await tryit(() =>
+    const [readError, recoveryOption] = await tryit(() =>
         readContract(currentViemClient, {
             address: wallet,
             abi: [getExecutionAbi],
@@ -45,6 +49,10 @@ export async function getCurrentRecoveryOption({
             args: [addPasskeySelector],
         })
     )();
+    if (readError) {
+        if (isNoRecoveryRead(readError)) return null;
+        throw readError;
+    }
     if (!recoveryOption) {
         return null;
     }
@@ -84,6 +92,22 @@ export async function getCurrentRecoveryOption({
         validAfter: recoveryOption.validAfter,
         validUntil: recoveryOption.validUntil,
     };
+}
+
+/**
+ * No code at the address (wallet never deployed) or a revert means no recovery;
+ * any other error is a failed read. viem files a JSON-RPC -32603 (what eRPC
+ * answers on its own timeouts) under a revert, so an InternalRpcError in the
+ * chain disqualifies it.
+ */
+function isNoRecoveryRead(error: Error): boolean {
+    if (!(error instanceof BaseError)) return false;
+    if (error.walk((cause) => cause instanceof InternalRpcError)) return false;
+    return !!error.walk(
+        (cause) =>
+            cause instanceof ContractFunctionZeroDataError ||
+            cause instanceof ContractFunctionRevertedError
+    );
 }
 
 /**

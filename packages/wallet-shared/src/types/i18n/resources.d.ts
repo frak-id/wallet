@@ -1817,6 +1817,10 @@ export default interface Resources {
             "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup.",
             "title": "No recovery on this wallet"
           },
+          "readError": {
+            "description": "We couldn't read this wallet's recovery setup. Check your connection and try again.",
+            "title": "Couldn't check this wallet"
+          },
           "retry": "Try again",
           "title": "Confirm recovery",
           "tooEarly": {

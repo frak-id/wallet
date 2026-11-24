@@ -539,6 +539,10 @@
                 "cancelled": "Recovery was cancelled.",
                 "cancelledDescription": "You cancelled the prompt. You can try again whenever you're ready.",
                 "tryAnother": "Use a different backup",
+                "readError": {
+                    "title": "Couldn't check this wallet",
+                    "description": "We couldn't read this wallet's recovery setup. Check your connection and try again."
+                },
                 "notConfigured": {
                     "title": "No recovery on this wallet",
                     "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup."
