@@ -1076,7 +1076,7 @@
                 },
                 "label": "Tes tickets au tirage",
                 "labelPending": "Tes tickets en attente",
-                "keepGoing": "Continue d'inviter tes amis pour augmenter tes chances !"
+                "keepGoing": "Plus tu fais découvrir l'app à tes ami·e·s, plus tu gagnes de chances de remporter {{prize}} !"
             },
             "missions": {
                 "title": "Missions",
@@ -1112,15 +1112,15 @@
                     }
                 },
                 "friend": {
-                    "title": "Invite un ami",
+                    "title": "Fais télécharger l'app à tes ami·e·s",
                     "hint": "Partage ton code unique et gagne des tickets pour chaque ami·e parrainé·e.",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
                 },
                 "purchase": {
-                    "title": "Achète chez une marque",
-                    "hint": "Ton achat, ou celui d'un ami que tu as invité.",
+                    "title": "Fais-toi plaisir !",
+                    "hint": "Tes achats, ou ceux des ami·e·s que tu as invité·e·s, te rapportent des tickets.",
                     "hintEarned": "{{parts}}. Chaque achat en ajoute {{amount}}.",
                     "own_one": "{{count}} achat à toi",
                     "own_other": "{{count}} achats à toi",
@@ -1129,11 +1129,11 @@
                 }
             },
             "invite": {
-                "title": "Invite tes ami·e·s",
-                "description_one": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} ticket.",
-                "description_other": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} tickets.",
-                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} ticket.",
-                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} tickets.",
+                "title": "Tes ami·e·s te portent chance !",
+                "description_one": "Chaque ami·e qui télécharge Frak grâce à ton lien te rapporte {{count}} ticket supplémentaire.",
+                "description_other": "Chaque ami·e qui télécharge Frak grâce à ton lien te rapporte {{count}} tickets supplémentaires.",
+                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e qui télécharge Frak grâce à ce lien te rapporte {{count}} ticket supplémentaire.",
+                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e qui télécharge Frak grâce à ce lien te rapporte {{count}} tickets supplémentaires.",
                 "share": "Partager mon lien"
             },
             "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"

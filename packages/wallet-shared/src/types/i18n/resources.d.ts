@@ -555,7 +555,7 @@ export default interface Resources {
           "countdownDays": "Ends in {{days}} d {{hours}} h",
           "countdownHours": "Ends in {{hours}} h {{minutes}} min",
           "gain": "+{{amount}} {{source}}",
-          "keepGoing": "Keep inviting friends to boost your chances!",
+          "keepGoing": "The more friends you bring to the app, the better your chances to win {{prize}}!",
           "label": "Your tickets in the draw",
           "labelPending": "Your pending tickets",
           "since": "Since your last visit: {{gains}}",
@@ -576,19 +576,19 @@ export default interface Resources {
         },
         "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
         "invite": {
-          "description_one": "Each friend who signs up with your link earns you {{count}} ticket.",
-          "description_other": "Each friend who signs up with your link earns you {{count}} tickets.",
-          "noCode_one": "Create your code to get your link. Each friend who signs up with it earns you {{count}} ticket.",
-          "noCode_other": "Create your code to get your link. Each friend who signs up with it earns you {{count}} tickets.",
+          "description_one": "Each friend who downloads Frak through your link earns you {{count}} extra ticket.",
+          "description_other": "Each friend who downloads Frak through your link earns you {{count}} extra tickets.",
+          "noCode_one": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra ticket.",
+          "noCode_other": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra tickets.",
           "share": "Share my link",
-          "title": "Invite your friends"
+          "title": "Your friends bring you luck!"
         },
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
             "hint": "With your code or through a brand",
             "hintEarned": "{{parts}}. Invite another one.",
-            "title": "Invite a friend",
+            "title": "Get your friends to download the app",
             "viaBrand": "{{count}} via a brand",
             "withCode": "{{count}} with your code"
           },
@@ -619,11 +619,11 @@ export default interface Resources {
           "purchase": {
             "friends_one": "{{count}} purchase by a friend",
             "friends_other": "{{count}} purchases by friends",
-            "hint": "Your purchase, or one by a friend you invited.",
+            "hint": "Your purchases, or those of friends you invited, earn you tickets.",
             "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
             "own_one": "{{count}} purchase of yours",
             "own_other": "{{count}} purchases of yours",
-            "title": "Buy from a brand"
+            "title": "Treat yourself!"
           },
           "rewardPerFriend_one": "+{{count}} ticket / friend",
           "rewardPerFriend_other": "+{{count}} tickets / friend",

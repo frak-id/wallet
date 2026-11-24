@@ -1076,7 +1076,7 @@
                 },
                 "label": "Your tickets in the draw",
                 "labelPending": "Your pending tickets",
-                "keepGoing": "Keep inviting friends to boost your chances!"
+                "keepGoing": "The more friends you bring to the app, the better your chances to win {{prize}}!"
             },
             "missions": {
                 "title": "Missions",
@@ -1112,15 +1112,15 @@
                     }
                 },
                 "friend": {
-                    "title": "Invite a friend",
+                    "title": "Get your friends to download the app",
                     "hint": "With your code or through a brand",
                     "hintEarned": "{{parts}}. Invite another one.",
                     "withCode": "{{count}} with your code",
                     "viaBrand": "{{count}} via a brand"
                 },
                 "purchase": {
-                    "title": "Buy from a brand",
-                    "hint": "Your purchase, or one by a friend you invited.",
+                    "title": "Treat yourself!",
+                    "hint": "Your purchases, or those of friends you invited, earn you tickets.",
                     "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
                     "own_one": "{{count}} purchase of yours",
                     "own_other": "{{count}} purchases of yours",
@@ -1129,11 +1129,11 @@
                 }
             },
             "invite": {
-                "title": "Invite your friends",
-                "description_one": "Each friend who signs up with your link earns you {{count}} ticket.",
-                "description_other": "Each friend who signs up with your link earns you {{count}} tickets.",
-                "noCode_one": "Create your code to get your link. Each friend who signs up with it earns you {{count}} ticket.",
-                "noCode_other": "Create your code to get your link. Each friend who signs up with it earns you {{count}} tickets.",
+                "title": "Your friends bring you luck!",
+                "description_one": "Each friend who downloads Frak through your link earns you {{count}} extra ticket.",
+                "description_other": "Each friend who downloads Frak through your link earns you {{count}} extra tickets.",
+                "noCode_one": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra ticket.",
+                "noCode_other": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra tickets.",
                 "share": "Share my link"
             },
             "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
