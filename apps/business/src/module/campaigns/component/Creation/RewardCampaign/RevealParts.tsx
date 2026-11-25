@@ -1,7 +1,10 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { RadioGroupItem } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckFilledIcon, LightbulbIcon } from "@frak-labs/design-system/icons";
+import { useId } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { campaignStore } from "@/stores/campaignStore";
@@ -67,5 +70,74 @@ export function TriggeredRow() {
                 })}
             </Text>
         </Inline>
+    );
+}
+
+/** A titled switch row whose title names the switch. */
+export function ToggleRow({
+    title,
+    description,
+    checked,
+    onCheckedChange,
+}: {
+    title: string;
+    description: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+}) {
+    const titleId = useId();
+    return (
+        <div className={styles.referralRow}>
+            <span className={styles.referralMain}>
+                <Text id={titleId} variant="body" weight="medium">
+                    {title}
+                </Text>
+                <Text variant="bodySmall" color="secondary">
+                    {description}
+                </Text>
+            </span>
+            <Switch
+                aria-labelledby={titleId}
+                checked={checked}
+                onCheckedChange={onCheckedChange}
+            />
+        </div>
+    );
+}
+
+/** One radio of a card group: the radio, a title and its description. */
+export function RadioOptionCard({
+    id,
+    value,
+    title,
+    description,
+    disabled = false,
+}: {
+    id: string;
+    value: string;
+    title: string;
+    description: string;
+    disabled?: boolean;
+}) {
+    return (
+        <label
+            htmlFor={id}
+            className={`${styles.modelOption}${disabled ? ` ${styles.modelOptionDisabled}` : ""}`}
+        >
+            <RadioGroupItem
+                id={id}
+                value={value}
+                size="l"
+                disabled={disabled}
+            />
+            <span className={styles.modelMain}>
+                <Text variant="body" weight="medium">
+                    {title}
+                </Text>
+                <Text variant="bodySmall" color="secondary">
+                    {description}
+                </Text>
+            </span>
+        </label>
     );
 }

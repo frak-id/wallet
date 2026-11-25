@@ -23,6 +23,16 @@ export const row = style({
     textAlign: "left",
 });
 
+/** A goal the merchant can't pick yet; its hint says why. */
+export const rowLocked = style({
+    cursor: "not-allowed",
+});
+
+/** Dims a locked goal's icon and text, never its hint. */
+export const dimmed = style({
+    opacity: 0.6,
+});
+
 /** Radio + badge group: centered to each other (radio sits at the badge's
  * vertical centre) and nudged 2px down to align with the text block. */
 export const left = style({

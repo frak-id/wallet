@@ -11,10 +11,8 @@ import {
     editableScopeCondition,
     isAdvancedScope,
 } from "@/module/campaigns/component/Creation/ProductsCampaign/utils";
-import {
-    draftToRewardForm,
-    splitTargetCpa,
-} from "@/module/campaigns/component/Creation/RewardCampaign/utils";
+import { splitTargetCpa } from "@/module/campaigns/component/Creation/RewardCampaign/cpa";
+import { draftToRewardForm } from "@/module/campaigns/component/Creation/RewardCampaign/utils";
 import { WizardStep } from "@/module/campaigns/component/Creation/WizardStep";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
@@ -33,6 +31,7 @@ import {
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
 import { CampaignLaunched } from "./CampaignLaunched";
+import { SubscriptionRewardRows } from "./SubscriptionRewardRows";
 
 const FORM_ID = "campaign-validation-form";
 const EMPTY = "—";
@@ -239,6 +238,18 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                 </DetailRow>
             )}
 
+            {reward.excludeSubscriptions && (
+                <DetailRow
+                    label={t("campaigns.create.validation.subscriptionOrders")}
+                >
+                    <DetailValue>
+                        {t(
+                            "campaigns.create.validation.subscriptionOrdersExcluded"
+                        )}
+                    </DetailValue>
+                </DetailRow>
+            )}
+
             {isPurchase && (
                 <DetailRow
                     label={t("campaigns.create.validation.rewardLockup")}
@@ -327,6 +338,15 @@ function RewardRows({
     currencyGlyph: string;
 }) {
     const { t } = useTranslation();
+
+    if (reward.subscription) {
+        return (
+            <SubscriptionRewardRows
+                reward={reward}
+                currencyGlyph={currencyGlyph}
+            />
+        );
+    }
 
     if (reward.model === "tiered") {
         const tiers = reward.globalCpaTiers;

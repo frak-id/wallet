@@ -1,7 +1,7 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { DoubleChevronIcon, PercentIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
-import type { ControllerRenderProps } from "react-hook-form";
+import type { ControllerRenderProps, FieldPathByValue } from "react-hook-form";
 import { InputNumber } from "@/module/forms/InputNumber";
 import { useCurrencyGlyph } from "./currencyGlyph";
 import * as styles from "./reward.css";
@@ -55,16 +55,8 @@ export function NumberStepper({
     );
 }
 
-/** The numeric, single-value fields the stepper input is used for. */
-type NumericFieldName =
-    | "targetCpa"
-    | "ambassadorAmount"
-    | "refereeAmount"
-    | "targetCpaPercent"
-    | "ambassadorPercent"
-    | "refereePercent"
-    | "minPurchaseAmount"
-    | "lockupDays";
+/** Any number field of the form, single-value or inside a period or tier row. */
+export type NumericFieldName = FieldPathByValue<RewardFormValues, number | "">;
 
 type StepperFieldProps = {
     field: ControllerRenderProps<RewardFormValues, NumericFieldName>;

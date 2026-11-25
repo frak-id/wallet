@@ -4,11 +4,13 @@ import type { Hex } from "viem";
 import {
     type CampaignDraft,
     getChaining,
+    getExcludeSubscriptions,
     getMinPurchaseAmount,
     getReferralOnly,
     isNegativeProductScope,
     isPurchaseCampaign,
     setChaining,
+    setExcludeSubscriptions,
     setMinPurchaseAmount,
     setReferralOnly,
 } from "@/stores/campaignStore";
@@ -16,6 +18,20 @@ import type {
     CampaignRuleDefinition,
     RewardDefinition,
 } from "@/types/Campaign";
+import { REWARDS_SHARE, splitMatchesPool } from "./cpa";
+import {
+    allowedModels,
+    DEFAULT_INACTIVITY_DAYS,
+    DEFAULT_STEP_DAYS,
+    emptyPeriod,
+    MAX_INACTIVITY_DAYS,
+    MAX_STEP_DAYS,
+    periodIssues,
+    periodRewards,
+    readPlan,
+    type StepBy,
+    type SubscriptionPeriod,
+} from "./subscription";
 
 export type RewardModel = "fixed" | "percentage" | "tiered";
 type TierUnit = "percent" | "amount";
@@ -38,7 +54,7 @@ export type RewardBasis = "basket" | "matchedItems";
  * basket range and unit come from the matching `globalCpaTiers` entry by index.
  * `""` shows the placeholder.
  */
-type TierRow = {
+export type TierRow = {
     reward: number | "";
 };
 
@@ -78,6 +94,21 @@ export type RewardFormValues = {
     /** Shared eligibility + lockup. `""` = left empty (saved as 0). */
     minPurchaseAmount: number | "";
     lockupDays: number | "";
+    /** Subscription campaign: rewards by plan period instead of the fields above. */
+    subscription: boolean;
+    /** The stored plan is something the periods can't express: shown untouched. */
+    unsupportedSubscription: boolean;
+    inactivityDays: number | "";
+    /** What unlocks each reward after the first payment. */
+    stepBy: StepBy;
+    /** `amount` progression: paid after the first payment per reward. */
+    stepAmount: number | "";
+    /** `duration` progression: days of active subscription per reward. */
+    stepDays: number | "";
+    /** The plan's periods, chained from step 1; the last one's end is the plan length. */
+    periods: SubscriptionPeriod[];
+    /** Regular sales campaign: skip subscription orders. */
+    excludeSubscriptions: boolean;
 };
 
 /**
@@ -98,14 +129,6 @@ export function supportsMatchedBasis(
 ): boolean {
     return !!draft.rule.productScope;
 }
-
-const FRAK_COMMISSION_PERCENT = 20;
-/** Share of the Target CPA that reaches users (the rest is Frak's commission). */
-const REWARDS_SHARE = 1 - FRAK_COMMISSION_PERCENT / 100;
-/** Frak's recommended split of the rewards pool, in favour of the Ambassador. */
-const AMBASSADOR_RECO_SHARE = 0.8;
-/** Tolerance for the "Ambassador + Referee = pool" validation (rounding). */
-const SPLIT_EPSILON = 0.01;
 
 const emptyTier = (): TierRow => ({ reward: "" });
 
@@ -131,66 +154,15 @@ export const DEFAULT_REWARD_FORM: RewardFormValues = {
     rewardBasis: "basket",
     minPurchaseAmount: "",
     lockupDays: "",
+    subscription: false,
+    unsupportedSubscription: false,
+    inactivityDays: DEFAULT_INACTIVITY_DAYS,
+    stepBy: "cycle",
+    stepAmount: "",
+    stepDays: DEFAULT_STEP_DAYS,
+    periods: [emptyPeriod()],
+    excludeSubscriptions: false,
 };
-
-/** Split a Target CPA (EUR or %) into the rewards pool and Frak's commission. */
-export function splitTargetCpa(targetCpa: number) {
-    const rewardsPool = roundTo(targetCpa * REWARDS_SHARE);
-    return { rewardsPool, frakCommission: roundTo(targetCpa - rewardsPool) };
-}
-
-/**
- * Reverse of `splitTargetCpa`: derive the Target CPA from an
- * Ambassador/Referee split. The split is the rewards pool (Frak's commission
- * sits on top), so CPA = pool / rewards-share, rounded to the cent. Used to
- * keep the CPA in sync when the user tweaks the split directly.
- */
-export function recalcCpaFromSplit(ambassador: number, referee: number) {
-    return roundTo((ambassador + referee) / REWARDS_SHARE);
-}
-
-/** Frak's recommended Ambassador/Referee values for a Target CPA (80/20 of pool). */
-export function recommendedSplit(targetCpa: number) {
-    const { rewardsPool } = splitTargetCpa(targetCpa);
-    // Prefer a whole-number Ambassador share with the Referee taking the
-    // remainder, so typical pools land on clean integers (pool 8 → 6 / 2). But
-    // for small pools the rounded share can overshoot (pool 0.8 → 1), pushing
-    // the Referee negative — there, fall back to a to-the-cent split.
-    const whole = Math.round(rewardsPool * AMBASSADOR_RECO_SHARE);
-    const ambassador =
-        whole > 0 && whole < rewardsPool
-            ? whole
-            : roundTo(rewardsPool * AMBASSADOR_RECO_SHARE);
-    const referee = roundTo(rewardsPool - ambassador);
-    return { ambassador, referee };
-}
-
-/**
- * When a Target CPA changes, decide the next Ambassador/Referee split. If the
- * current amounts are still the untouched recommendation for the *previous* CPA
- * they track the new CPA (re-recommended); if the user edited them, they stay
- * put (returns `null`, leaving the split for the mismatch warning to flag).
- * Shared by the Fixed/% and Tiered reveals so every model behaves identically.
- */
-export function recalcSplitOnCpaChange({
-    prevCpa,
-    nextCpa,
-    ambassador,
-    referee,
-}: {
-    prevCpa: number;
-    nextCpa: number;
-    ambassador: number;
-    referee: number;
-}): { ambassador: number; referee: number } | null {
-    const prevReco = recommendedSplit(prevCpa);
-    const isUntouchedReco =
-        ambassador > 0 &&
-        referee > 0 &&
-        ambassador === prevReco.ambassador &&
-        referee === prevReco.referee;
-    return isUntouchedReco ? recommendedSplit(nextCpa) : null;
-}
 
 /**
  * Build a recipient's backend tiers by zipping its per-tier reward onto the
@@ -321,6 +293,7 @@ function rewardsFromForm(
     rewardToken?: Hex
 ): RewardDefinition[] {
     const token: TokenPatch = rewardToken ? { token: rewardToken } : {};
+    if (values.subscription) return periodRewards(values, token);
     switch (values.model) {
         case "fixed":
             return fixedRewards(values, token);
@@ -343,12 +316,6 @@ type BackendTier = {
 const tierReward = (tier: BackendTier) =>
     tier.percent !== undefined ? tier.percent : (tier.amount ?? 0);
 
-/**
- * Rebuild the tiered form from its two persisted reward definitions. The
- * Global CPA table isn't stored, so each tier's range/unit comes from the
- * persisted (ambassador) tiers and its CPA is re-derived from the split
- * (CPA = pool / 80%, mirroring `targetCpa`).
- */
 /**
  * Read the persisted basis off a reward definition. Any matched-items marker
  * on either recipient means the campaign pays on the scoped items — the two
@@ -376,6 +343,12 @@ function rewardBasisOf(
         : "basket";
 }
 
+/**
+ * Rebuild the tiered form from its two persisted reward definitions. The
+ * Global CPA table isn't stored, so each tier's range/unit comes from the
+ * persisted (ambassador) tiers and its CPA is re-derived from the split
+ * (CPA = pool / 80%, mirroring `targetCpa`).
+ */
 function tieredDraftToForm(
     rule: CampaignRuleDefinition,
     referrer?: RewardDefinition,
@@ -419,11 +392,39 @@ function tieredDraftToForm(
             : DEFAULT_REWARD_FORM.refereeTiers,
         // Tiered eligibility comes from the ranges; the standalone min is unused.
         minPurchaseAmount: "",
-        lockupDays: rule.defaultLockupSeconds
-            ? Math.round(
-                  rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
-              )
-            : "",
+        lockupDays: lockupDaysOf(rule),
+        excludeSubscriptions: getExcludeSubscriptions(rule),
+    };
+}
+
+function lockupDaysOf(rule: CampaignRuleDefinition): number | "" {
+    return rule.defaultLockupSeconds
+        ? Math.round(rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY)
+        : "";
+}
+
+/** A subscription rule as the form; a plan the periods can't express comes back flagged. */
+function subscriptionDraftToForm(
+    rule: CampaignRuleDefinition
+): RewardFormValues {
+    const base: RewardFormValues = {
+        ...DEFAULT_REWARD_FORM,
+        referralOnly: getReferralOnly(rule),
+        subscription: true,
+        inactivityDays:
+            rule.subscription?.inactivityDays ?? DEFAULT_INACTIVITY_DAYS,
+        stepBy: rule.subscription?.stepBy ?? "cycle",
+        stepAmount: rule.subscription?.stepAmount ?? "",
+        stepDays: rule.subscription?.stepDays ?? DEFAULT_STEP_DAYS,
+        lockupDays: lockupDaysOf(rule),
+    };
+    const plan = readPlan(rule.rewards);
+    if (!plan) return { ...base, unsupportedSubscription: true };
+    return {
+        ...base,
+        model: plan.model,
+        periods: plan.periods,
+        minPurchaseAmount: getMinPurchaseAmount(rule) || "",
     };
 }
 
@@ -431,6 +432,7 @@ export function draftToRewardForm(
     draft: Pick<CampaignDraft, "rule">
 ): RewardFormValues {
     const { rule } = draft;
+    if (rule.subscription) return subscriptionDraftToForm(rule);
     const referrer = rule.rewards.find((r) => r.recipient === "referrer");
     const referee = rule.rewards.find((r) => r.recipient === "referee");
     const sample = referrer ?? referee;
@@ -472,11 +474,34 @@ export function draftToRewardForm(
         refereePercent,
         // 0/none ⇒ leave empty so the field shows its placeholder on arrival.
         minPurchaseAmount: getMinPurchaseAmount(rule) || "",
-        lockupDays: rule.defaultLockupSeconds
-            ? Math.round(
-                  rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
-              )
-            : "",
+        lockupDays: lockupDaysOf(rule),
+        excludeSubscriptions: getExcludeSubscriptions(rule),
+    };
+}
+
+/** Sets the rule's `subscription` block from the form, or removes it. */
+function withSubscription(
+    rule: CampaignRuleDefinition,
+    values?: RewardFormValues
+): CampaignRuleDefinition {
+    if (!values) {
+        const { subscription: _dropped, ...rest } = rule;
+        return rest;
+    }
+    const { stepBy } = values;
+    return {
+        ...rule,
+        subscription: {
+            inactivityDays:
+                Number(values.inactivityDays) || DEFAULT_INACTIVITY_DAYS,
+            ...(stepBy !== "cycle" ? { stepBy } : {}),
+            ...(stepBy === "amount"
+                ? { stepAmount: Number(values.stepAmount) || 0 }
+                : {}),
+            ...(stepBy === "duration"
+                ? { stepDays: Number(values.stepDays) || DEFAULT_STEP_DAYS }
+                : {}),
+        },
     };
 }
 
@@ -484,9 +509,11 @@ export function rewardFormToDraft(
     values: RewardFormValues,
     draft: CampaignDraft
 ): CampaignDraft {
+    if (values.unsupportedSubscription) return draft;
     // Empty fields ("") save as 0. Both fields describe a purchase, so a
     // non-purchase campaign saves neither (the step doesn't show them).
     const isPurchase = isPurchaseCampaign(draft.rule);
+    const isSubscription = isPurchase && values.subscription;
     const lockupDays = isPurchase ? Number(values.lockupDays) || 0 : 0;
     const minPurchase =
         !isPurchase || values.model === "tiered"
@@ -497,6 +524,7 @@ export function rewardFormToDraft(
     // after the basis was picked) can't produce an unpublishable rule.
     const normalised: RewardFormValues = {
         ...values,
+        subscription: isSubscription,
         rewardBasis: !supportsMatchedBasis(draft)
             ? "basket"
             : requiresMatchedBasis(draft)
@@ -511,9 +539,18 @@ export function rewardFormToDraft(
     rule = setReferralOnly(rule, values.referralOnly);
     // Tiered defines its eligibility via basket ranges; clear the standalone min.
     rule = setMinPurchaseAmount(rule, minPurchase);
+    rule = withSubscription(rule, isSubscription ? values : undefined);
+    rule = setExcludeSubscriptions(
+        rule,
+        isPurchase && !isSubscription && values.excludeSubscriptions
+    );
     // Rewards were rebuilt above; re-apply preserved chaining so editing the
-    // reward step never wipes the referral-chain settings.
-    rule = setChaining(rule, getChaining(draft.rule));
+    // reward step never wipes the referral-chain settings. A subscription plan
+    // can't carry any.
+    rule = setChaining(
+        rule,
+        isSubscription ? undefined : getChaining(draft.rule)
+    );
     return { ...draft, rule };
 }
 
@@ -565,16 +602,6 @@ export function tieredRangeInverted(tiers: CpaTierRow[]): boolean {
     );
 }
 
-/** Whether Ambassador + Referee sum to the rewards pool (Frak's 20% aside). */
-function splitMatchesPool(
-    targetCpa: number,
-    ambassador: number,
-    referee: number
-) {
-    const { rewardsPool } = splitTargetCpa(targetCpa);
-    return Math.abs(ambassador + referee - rewardsPool) < SPLIT_EPSILON;
-}
-
 /**
  * Whether every tier has both recipient rewards filled in. The split is no
  * longer forced to equal 80% of the CPA — the per-tier distribution bar shows
@@ -594,6 +621,39 @@ function tieredSplitValid(values: RewardFormValues): boolean {
     );
 }
 
+const isPositive = (value: number | "" | undefined) => Number(value) > 0;
+
+const isIntegerIn = (value: number | "", min: number, max: number) => {
+    const n = Number(value);
+    return value !== "" && Number.isInteger(n) && n >= min && n <= max;
+};
+
+/** The model fits the progression, and the progression has its step size. */
+function stepByValid(values: RewardFormValues): boolean {
+    if (!values.model || !allowedModels(values.stepBy).includes(values.model)) {
+        return false;
+    }
+    if (values.stepBy === "amount") return isPositive(values.stepAmount);
+    if (values.stepBy === "duration") {
+        return isIntegerIn(values.stepDays, 1, MAX_STEP_DAYS);
+    }
+    return true;
+}
+
+function isSubscriptionFormValid(
+    values: RewardFormValues,
+    options?: { requiresMatchedBasis?: boolean }
+): boolean {
+    // A stored plan the form can't read is left as stored; the backend checks it.
+    if (values.unsupportedSubscription) return true;
+    // A negated scope demands a matched basis, which a subscription forbids.
+    if (options?.requiresMatchedBasis || !stepByValid(values)) return false;
+    if (!isIntegerIn(values.inactivityDays, 1, MAX_INACTIVITY_DAYS)) {
+        return false;
+    }
+    return periodIssues(values).length === 0;
+}
+
 /**
  * Continue gating. Fixed/% require a positive Target CPA whose pool is fully
  * allocated (Ambassador + Referee + Frak commission = Target CPA). Tiered
@@ -607,6 +667,9 @@ export function isRewardFormValid(
     values: RewardFormValues,
     options?: { requiresMatchedBasis?: boolean }
 ): boolean {
+    if (values.subscription || values.unsupportedSubscription) {
+        return isSubscriptionFormValid(values, options);
+    }
     if (options?.requiresMatchedBasis && values.model === "fixed") {
         return false;
     }

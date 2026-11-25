@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
@@ -16,6 +17,12 @@ import { EligibilityField } from "./EligibilityField";
 import { LockupField } from "./LockupField";
 import { ModelField } from "./ModelField";
 import { RewardBasisField } from "./RewardBasisField";
+import {
+    ExcludeSubscriptionsField,
+    InactivityField,
+    StepByField,
+    StepSizeField,
+} from "./SubscriptionFields";
 import {
     DEFAULT_REWARD_FORM,
     draftToRewardForm,
@@ -52,6 +59,21 @@ export function RewardCampaign() {
     });
 
     const model = useWatch({ control: form.control, name: "model" });
+    const isSubscription = useWatch({
+        control: form.control,
+        name: "subscription",
+    });
+    const isUnsupported = useWatch({
+        control: form.control,
+        name: "unsupportedSubscription",
+    });
+    const stepBy = useWatch({ control: form.control, name: "stepBy" });
+    const excludesSubscriptions = useWatch({
+        control: form.control,
+        name: "excludeSubscriptions",
+    });
+    const { data: merchant } = useMerchant({ merchantId });
+    const hasProvider = Boolean(merchant?.subscriptionProvider);
 
     // A scoped campaign can pay on the matched items; a negated scope must.
     const isScoped = supportsMatchedBasis({ rule });
@@ -101,84 +123,174 @@ export function RewardCampaign() {
                                 {t("campaigns.create.reward.saveError")}
                             </InfoBanner>
                         )}
-                        <WizardFieldCard
-                            space="xs"
-                            label={t(
-                                "campaigns.create.reward.campaignType.label"
-                            )}
-                            description={t(
-                                "campaigns.create.reward.campaignType.description"
-                            )}
-                        >
-                            <CampaignTypeField control={form.control} />
-                        </WizardFieldCard>
-
-                        <WizardFieldCard
-                            space="xs"
-                            label={t("campaigns.create.reward.model.label")}
-                            description={t(
-                                "campaigns.create.reward.model.description"
-                            )}
-                        >
-                            <ModelField
-                                control={form.control}
-                                setValue={form.setValue}
-                                model={model}
-                                isPurchase={isPurchase}
-                            />
-                        </WizardFieldCard>
-
-                        {isScoped && model && model !== "fixed" && (
-                            <WizardFieldCard
-                                space="xs"
-                                label={t("campaigns.create.reward.basis.label")}
-                                description={t(
-                                    "campaigns.create.reward.basis.description"
-                                )}
-                            >
-                                <RewardBasisField
-                                    control={form.control}
-                                    locked={basisLocked}
-                                />
-                            </WizardFieldCard>
-                        )}
-
-                        {basisLocked && model === "fixed" && (
-                            <InfoBanner tone="error">
+                        {isUnsupported ? (
+                            <InfoBanner>
                                 {t(
-                                    "campaigns.create.reward.basis.fixedNotAllowed"
+                                    "campaigns.create.reward.subscription.unsupported"
                                 )}
                             </InfoBanner>
-                        )}
+                        ) : (
+                            <>
+                                <WizardFieldCard
+                                    space="xs"
+                                    label={t(
+                                        "campaigns.create.reward.campaignType.label"
+                                    )}
+                                    description={t(
+                                        "campaigns.create.reward.campaignType.description"
+                                    )}
+                                >
+                                    <CampaignTypeField control={form.control} />
+                                </WizardFieldCard>
 
-                        {/* Minimum purchase and lockup both describe a
-                            purchase; neither has a meaning off that trigger. */}
-                        {isPurchase && model !== "tiered" && (
-                            <WizardFieldCard
-                                space="xs"
-                                label={t(
-                                    "campaigns.create.reward.eligibility.label"
+                                {isSubscription && (
+                                    <WizardFieldCard
+                                        space="xs"
+                                        label={t(
+                                            "campaigns.create.reward.subscription.stepBy.title"
+                                        )}
+                                        description={t(
+                                            "campaigns.create.reward.subscription.stepBy.description"
+                                        )}
+                                    >
+                                        <Stack space="m">
+                                            <StepByField
+                                                control={form.control}
+                                                setValue={form.setValue}
+                                                getValues={form.getValues}
+                                            />
+                                            <StepSizeField
+                                                control={form.control}
+                                                stepBy={stepBy}
+                                            />
+                                        </Stack>
+                                    </WizardFieldCard>
                                 )}
-                                description={t(
-                                    "campaigns.create.reward.eligibility.description"
-                                )}
-                            >
-                                <EligibilityField control={form.control} />
-                            </WizardFieldCard>
-                        )}
 
-                        {isPurchase && (
-                            <WizardFieldCard
-                                space="xs"
-                                label={t(
-                                    "campaigns.create.reward.lockup.label"
+                                {isSubscription && basisLocked && (
+                                    <InfoBanner tone="error">
+                                        {t(
+                                            "campaigns.create.reward.subscription.scopeNotAllowed"
+                                        )}
+                                    </InfoBanner>
                                 )}
-                                description={t(
-                                    "campaigns.create.reward.lockup.description"
+
+                                {isPurchase &&
+                                    !isSubscription &&
+                                    (hasProvider || excludesSubscriptions) && (
+                                        <WizardFieldCard
+                                            space="xs"
+                                            label={t(
+                                                "campaigns.create.reward.subscription.exclude.label"
+                                            )}
+                                            description={t(
+                                                "campaigns.create.reward.subscription.exclude.cardDescription"
+                                            )}
+                                        >
+                                            <ExcludeSubscriptionsField
+                                                control={form.control}
+                                            />
+                                        </WizardFieldCard>
+                                    )}
+
+                                <WizardFieldCard
+                                    space="xs"
+                                    label={t(
+                                        "campaigns.create.reward.model.label"
+                                    )}
+                                    description={t(
+                                        "campaigns.create.reward.model.description"
+                                    )}
+                                >
+                                    <ModelField
+                                        control={form.control}
+                                        setValue={form.setValue}
+                                        model={model}
+                                        isPurchase={isPurchase}
+                                        isSubscription={isSubscription}
+                                        stepBy={stepBy}
+                                    />
+                                </WizardFieldCard>
+
+                                {/* A subscription pays on the whole payment, so no basis to pick. */}
+                                {!isSubscription &&
+                                    isScoped &&
+                                    model &&
+                                    model !== "fixed" && (
+                                        <WizardFieldCard
+                                            space="xs"
+                                            label={t(
+                                                "campaigns.create.reward.basis.label"
+                                            )}
+                                            description={t(
+                                                "campaigns.create.reward.basis.description"
+                                            )}
+                                        >
+                                            <RewardBasisField
+                                                control={form.control}
+                                                locked={basisLocked}
+                                            />
+                                        </WizardFieldCard>
+                                    )}
+
+                                {!isSubscription &&
+                                    basisLocked &&
+                                    model === "fixed" && (
+                                        <InfoBanner tone="error">
+                                            {t(
+                                                "campaigns.create.reward.basis.fixedNotAllowed"
+                                            )}
+                                        </InfoBanner>
+                                    )}
+
+                                {/* Minimum purchase and lockup both describe a
+                                    purchase; neither has a meaning off that trigger. */}
+                                {isPurchase && model !== "tiered" && (
+                                    <WizardFieldCard
+                                        space="xs"
+                                        label={t(
+                                            "campaigns.create.reward.eligibility.label"
+                                        )}
+                                        description={t(
+                                            "campaigns.create.reward.eligibility.description"
+                                        )}
+                                    >
+                                        <EligibilityField
+                                            control={form.control}
+                                        />
+                                    </WizardFieldCard>
                                 )}
-                            >
-                                <LockupField control={form.control} />
-                            </WizardFieldCard>
+
+                                {isSubscription && (
+                                    <WizardFieldCard
+                                        space="xs"
+                                        label={t(
+                                            "campaigns.create.reward.subscription.inactivity.title"
+                                        )}
+                                        description={t(
+                                            "campaigns.create.reward.subscription.inactivity.description"
+                                        )}
+                                    >
+                                        <InactivityField
+                                            control={form.control}
+                                        />
+                                    </WizardFieldCard>
+                                )}
+
+                                {isPurchase && (
+                                    <WizardFieldCard
+                                        space="xs"
+                                        label={t(
+                                            "campaigns.create.reward.lockup.label"
+                                        )}
+                                        description={t(
+                                            "campaigns.create.reward.lockup.description"
+                                        )}
+                                    >
+                                        <LockupField control={form.control} />
+                                    </WizardFieldCard>
+                                )}
+                            </>
                         )}
                     </Stack>
                 </form>

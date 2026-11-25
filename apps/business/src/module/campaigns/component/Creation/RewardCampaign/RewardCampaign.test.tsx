@@ -1,8 +1,12 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Profiler } from "react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { campaignStore } from "@/stores/campaignStore";
+
+const merchant = vi.hoisted(() => ({
+    provider: null as "recharge" | null,
+}));
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
@@ -20,6 +24,11 @@ vi.mock("@/module/campaigns/hook/useCampaignCurrencyGlyph", () => ({
 }));
 vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
     useActiveMerchantId: () => "m1",
+}));
+vi.mock("@/module/merchant/hook/useMerchant", () => ({
+    useMerchant: () => ({
+        data: { subscriptionProvider: merchant.provider },
+    }),
 }));
 
 import * as rows from "../wizardRows.css";
@@ -350,5 +359,137 @@ describe("RewardBasisField", () => {
         expect(
             screen.getByText("campaigns.create.reward.basis.lockedNote")
         ).toBeInTheDocument();
+    });
+});
+
+describe("RewardCampaign subscriptions", () => {
+    const PROGRESSION = "campaigns.create.reward.subscription.stepBy.title";
+    const EXCLUDE_TITLE = "campaigns.create.reward.subscription.exclude.title";
+    const PERIODS = "campaigns.create.reward.subscription.periods";
+
+    function renderStep(
+        provider: "recharge" | null,
+        subscription?: Record<string, never>
+    ) {
+        merchant.provider = provider;
+        onTestFinished(() => {
+            merchant.provider = null;
+            campaignStore.getState().reset();
+        });
+        if (subscription) {
+            act(() =>
+                campaignStore.getState().updateDraft((d) => ({
+                    ...d,
+                    rule: { ...d.rule, subscription },
+                }))
+            );
+        }
+        return render(<RewardCampaign />);
+    }
+
+    it("shows the reward progression on a subscription campaign only", () => {
+        const { unmount } = renderStep("recharge");
+        expect(screen.queryByText(PROGRESSION)).not.toBeInTheDocument();
+        unmount();
+
+        renderStep("recharge", {});
+        expect(screen.getByText(PROGRESSION)).toBeInTheDocument();
+    });
+
+    it("offers the exclude toggle on a regular sales campaign, not on a subscription one", () => {
+        const { unmount } = renderStep("recharge");
+        expect(screen.getByText(EXCLUDE_TITLE)).toBeInTheDocument();
+        unmount();
+
+        renderStep("recharge", {});
+        expect(screen.queryByText(EXCLUDE_TITLE)).not.toBeInTheDocument();
+    });
+
+    it("hides the exclude toggle while the merchant has no provider connected", () => {
+        renderStep(null);
+
+        expect(screen.queryByText(EXCLUDE_TITLE)).not.toBeInTheDocument();
+    });
+
+    it("keeps the tiered model off a subscription campaign", () => {
+        renderStep("recharge", {});
+
+        expect(document.getElementById("model-tiered")).toBeDisabled();
+        expect(document.getElementById("model-fixed")).toBeEnabled();
+    });
+
+    it("starts with one period for the whole plan and adds one per click", () => {
+        renderStep("recharge", {});
+        fireEvent.click(document.getElementById("model-fixed") as HTMLElement);
+
+        expect(
+            screen.getByText(`${PERIODS}.title.cycle.all`)
+        ).toBeInTheDocument();
+        expect(
+            screen.getAllByLabelText("campaigns.create.reward.fixed.cpaLabel")
+        ).toHaveLength(1);
+
+        fireEvent.click(screen.getByRole("button", { name: `${PERIODS}.add` }));
+
+        expect(
+            screen.getAllByLabelText("campaigns.create.reward.fixed.cpaLabel")
+        ).toHaveLength(2);
+        expect(
+            screen.getByRole("button", { name: `${PERIODS}.remove` })
+        ).toBeInTheDocument();
+    });
+
+    it("names the referral and exclude switches after their titles", () => {
+        renderStep("recharge");
+
+        expect(
+            screen.getByRole("switch", {
+                name: "campaigns.create.reward.campaignType.referral.title",
+            })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("switch", { name: EXCLUDE_TITLE })
+        ).toBeInTheDocument();
+    });
+
+    it("names the progression radio group", () => {
+        renderStep("recharge", {});
+
+        expect(
+            screen.getByRole("radiogroup", { name: PROGRESSION })
+        ).toBeInTheDocument();
+    });
+
+    it("names the read-only first step after its visible label", () => {
+        renderStep("recharge", {});
+        fireEvent.click(document.getElementById("model-fixed") as HTMLElement);
+
+        const from = screen.getByLabelText(`${PERIODS}.range.cycle`);
+
+        expect(from).toBeDisabled();
+        expect(from).toHaveValue("1");
+    });
+
+    it("tells the merchant when a progression drops percentages back to fixed amounts", () => {
+        const notice =
+            "campaigns.create.reward.subscription.stepBy.modelFallback";
+        renderStep("recharge", {});
+        fireEvent.click(
+            document.getElementById("model-percentage") as HTMLElement
+        );
+        expect(screen.queryByText(notice)).not.toBeInTheDocument();
+
+        fireEvent.click(
+            document.getElementById("step-by-duration") as HTMLElement
+        );
+
+        expect(screen.getByText(notice)).toBeInTheDocument();
+        expect(document.getElementById("model-fixed")).toBeChecked();
+
+        fireEvent.click(
+            document.getElementById("step-by-cycle") as HTMLElement
+        );
+
+        expect(screen.queryByText(notice)).not.toBeInTheDocument();
     });
 });

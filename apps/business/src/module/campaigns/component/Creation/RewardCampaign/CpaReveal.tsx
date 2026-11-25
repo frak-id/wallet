@@ -1,5 +1,6 @@
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { useMemo } from "react";
 import {
     type Control,
     Controller,
@@ -8,17 +9,21 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { DistributionBar } from "../DistributionBar";
-import { useCurrencyGlyph } from "./currencyGlyph";
-import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
-import * as styles from "./reward.css";
-import { StepperField, type UnitKind } from "./StepperField";
 import {
-    type RewardFormValues,
     recalcCpaFromSplit,
     recalcSplitOnCpaChange,
     recommendedSplit,
     splitTargetCpa,
-} from "./utils";
+} from "./cpa";
+import { useCurrencyGlyph } from "./currencyGlyph";
+import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
+import * as styles from "./reward.css";
+import {
+    type NumericFieldName,
+    StepperField,
+    type UnitKind,
+} from "./StepperField";
+import type { RewardFormValues } from "./utils";
 
 export function RecipientBox({
     control,
@@ -32,11 +37,7 @@ export function RecipientBox({
     onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
-    name:
-        | "ambassadorAmount"
-        | "refereeAmount"
-        | "ambassadorPercent"
-        | "refereePercent";
+    name: NumericFieldName;
     label: string;
     unit: UnitKind;
     placeholder: string;
@@ -80,12 +81,29 @@ export function RecipientBox({
 // Cleared inputs become "" (not 0); coerce so the empty checks hold.
 const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
 
+export type CpaSplitProps = {
+    control: Control<RewardFormValues>;
+    setValue: UseFormSetValue<RewardFormValues>;
+    unit: "amount" | "percent";
+    cpaName: NumericFieldName;
+    ambName: NumericFieldName;
+    refName: NumericFieldName;
+    cpaLabel: string;
+    cpaPlaceholder: string;
+    ambPlaceholder: string;
+    refPlaceholder: string;
+    /** Hint under each recipient input, given its share of the pool. */
+    recipientHint: (poolPercent: number) => string;
+    /** Show the hint even while the input is empty (the % model's static hint). */
+    hintWhenEmpty?: boolean;
+};
+
 /**
- * Shared Target-CPA reveal for the Fixed (€) and % models: a Target CPA input,
- * an 80/20 distribution bar, a gated reco bar, and the Ambassador/Referee
- * split inputs. The unit (€ vs %) and field names are passed per model.
+ * The Target CPA input, its 80/20 distribution bar with Frak's commission, a
+ * gated reco bar, and the Ambassador/Referee split inputs. Shared by every
+ * Fixed and % reward, one-shot or per subscription period.
  */
-export function CpaReveal({
+export function CpaSplit({
     control,
     setValue,
     unit,
@@ -98,22 +116,7 @@ export function CpaReveal({
     refPlaceholder,
     recipientHint,
     hintWhenEmpty = false,
-}: {
-    control: Control<RewardFormValues>;
-    setValue: UseFormSetValue<RewardFormValues>;
-    unit: "amount" | "percent";
-    cpaName: "targetCpa" | "targetCpaPercent";
-    ambName: "ambassadorAmount" | "ambassadorPercent";
-    refName: "refereeAmount" | "refereePercent";
-    cpaLabel: string;
-    cpaPlaceholder: string;
-    ambPlaceholder: string;
-    refPlaceholder: string;
-    /** Hint under each recipient input, given its share of the pool. */
-    recipientHint: (poolPercent: number) => string;
-    /** Show the hint even while the input is empty (the % model's static hint). */
-    hintWhenEmpty?: boolean;
-}) {
+}: CpaSplitProps) {
     const { t } = useTranslation();
     const cpa = num(useWatch({ control, name: cpaName }));
     const ambassador = num(useWatch({ control, name: ambName }));
@@ -150,8 +153,6 @@ export function CpaReveal({
 
     return (
         <Stack space="m">
-            <RevealHeader />
-
             <Controller
                 control={control}
                 name={cpaName}
@@ -257,9 +258,62 @@ export function CpaReveal({
                     })}
                 </FieldError>
             )}
+        </Stack>
+    );
+}
 
+/** The one-shot Fixed (€) and % reward: the shared split under the reveal header. */
+export function CpaReveal(props: CpaSplitProps) {
+    return (
+        <Stack space="m">
+            <RevealHeader />
+            <CpaSplit {...props} />
             <TriggeredRow />
         </Stack>
+    );
+}
+
+/** Props of the Fixed (€) model's split, wherever its fields live. */
+export function useFixedSplitLabels() {
+    const { t } = useTranslation();
+    return useMemo(
+        () => ({
+            cpaLabel: t("campaigns.create.reward.fixed.cpaLabel"),
+            cpaPlaceholder: t("campaigns.create.reward.fixed.cpaPlaceholder"),
+            ambPlaceholder: t(
+                "campaigns.create.reward.recipient.ambassadorPlaceholder"
+            ),
+            refPlaceholder: t(
+                "campaigns.create.reward.recipient.refereePlaceholder"
+            ),
+            recipientHint: (percent: number) =>
+                t("campaigns.create.reward.fixed.percentOfPool", { percent }),
+        }),
+        [t]
+    );
+}
+
+/** Props of the % model's split; `recipientHint` overrides the per-payment hint. */
+export function usePercentSplitLabels(recipientHint?: string) {
+    const { t } = useTranslation();
+    const hint =
+        recipientHint ?? t("campaigns.create.reward.percentage.recipientHint");
+    return useMemo(
+        () => ({
+            cpaLabel: t("campaigns.create.reward.percentage.cpaLabel"),
+            cpaPlaceholder: t(
+                "campaigns.create.reward.percentage.cpaPlaceholder"
+            ),
+            ambPlaceholder: t(
+                "campaigns.create.reward.recipient.ambassadorPlaceholder"
+            ),
+            refPlaceholder: t(
+                "campaigns.create.reward.recipient.refereePlaceholder"
+            ),
+            recipientHint: () => hint,
+            hintWhenEmpty: true,
+        }),
+        [t, hint]
     );
 }
 
@@ -270,7 +324,6 @@ export function FixedReveal({
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
 }) {
-    const { t } = useTranslation();
     return (
         <CpaReveal
             control={control}
@@ -279,17 +332,7 @@ export function FixedReveal({
             cpaName="targetCpa"
             ambName="ambassadorAmount"
             refName="refereeAmount"
-            cpaLabel={t("campaigns.create.reward.fixed.cpaLabel")}
-            cpaPlaceholder={t("campaigns.create.reward.fixed.cpaPlaceholder")}
-            ambPlaceholder={t(
-                "campaigns.create.reward.recipient.ambassadorPlaceholder"
-            )}
-            refPlaceholder={t(
-                "campaigns.create.reward.recipient.refereePlaceholder"
-            )}
-            recipientHint={(percent) =>
-                t("campaigns.create.reward.fixed.percentOfPool", { percent })
-            }
+            {...useFixedSplitLabels()}
         />
     );
 }
@@ -301,7 +344,6 @@ export function PercentageReveal({
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
 }) {
-    const { t } = useTranslation();
     return (
         <CpaReveal
             control={control}
@@ -310,20 +352,7 @@ export function PercentageReveal({
             cpaName="targetCpaPercent"
             ambName="ambassadorPercent"
             refName="refereePercent"
-            cpaLabel={t("campaigns.create.reward.percentage.cpaLabel")}
-            cpaPlaceholder={t(
-                "campaigns.create.reward.percentage.cpaPlaceholder"
-            )}
-            ambPlaceholder={t(
-                "campaigns.create.reward.recipient.ambassadorPlaceholder"
-            )}
-            refPlaceholder={t(
-                "campaigns.create.reward.recipient.refereePlaceholder"
-            )}
-            recipientHint={() =>
-                t("campaigns.create.reward.percentage.recipientHint")
-            }
-            hintWhenEmpty
+            {...usePercentSplitLabels()}
         />
     );
 }

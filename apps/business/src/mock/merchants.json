@@ -13,7 +13,8 @@
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
             "allowedDomains": [],
-            "allowedPackageIds": []
+            "allowedPackageIds": [],
+            "subscriptionProvider": "recharge"
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",

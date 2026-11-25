@@ -132,7 +132,7 @@ function TierCell({
 }
 
 /** A delete (trash) button on a tier's title row (rendered for tier 2+). */
-function TierDelete({
+export function TierDelete({
     onRemove,
     label,
 }: {
@@ -154,11 +154,14 @@ function TierDelete({
 /** A labelled field column (label above the input). */
 export function TierField({
     label,
+    htmlFor,
     className,
     padding,
     children,
 }: {
     label?: string;
+    /** `id` of the control the label names. */
+    htmlFor?: string;
     className?: string;
     /** Pads the column into a card (the recipient reward boxes). */
     padding?: "m";
@@ -167,6 +170,7 @@ export function TierField({
     return (
         <FieldLabel
             label={label}
+            htmlFor={htmlFor}
             className={`${className ?? styles.tierField}${padding === "m" ? ` ${styles.tierPadded}` : ""}`}
         >
             {children}

@@ -31,6 +31,7 @@ import {
 } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
 import { shouldShowError } from "../fieldError";
+import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./budget.css";
@@ -492,6 +493,9 @@ export function BudgetCampaign() {
     const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
     const updateDraft = campaignStore((s) => s.updateDraft);
+    const isSubscription = campaignStore(
+        (s) => s.draft.rule.subscription !== undefined
+    );
     const saveCampaign = useSaveCampaign();
 
     const defaultValues = useMemo(() => draftToBudgetValues(draft), [draft]);
@@ -542,6 +546,12 @@ export function BudgetCampaign() {
                     <WizardFieldCard>
                         <BudgetCapField control={form.control} />
                     </WizardFieldCard>
+
+                    {isSubscription && (
+                        <InfoBanner>
+                            {t("campaigns.create.budget.subscriptionReserve")}
+                        </InfoBanner>
+                    )}
 
                     <WizardFieldCard
                         space="xs"

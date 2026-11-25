@@ -1,6 +1,7 @@
 import type {
     AffiliateBrandInfo,
     AllowedPackageId,
+    MerchantDetailResponse,
 } from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import type { Address } from "viem";
@@ -38,6 +39,7 @@ export type MerchantData = {
     allowedPackageIds: AllowedPackageId[];
     isAffiliate?: boolean;
     affiliate?: AffiliateBrandInfo | null;
+    subscriptionProvider?: MerchantDetailResponse["subscriptionProvider"];
 };
 
 function getMerchantMockData(merchantId: string): MerchantData {
@@ -88,6 +90,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 allowedDomains: data.allowedDomains ?? [],
                 allowedPackageIds: data.allowedPackageIds ?? [],
                 affiliate: data.affiliate ?? null,
+                subscriptionProvider: data.subscriptionProvider ?? null,
             };
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
