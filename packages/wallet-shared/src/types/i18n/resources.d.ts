@@ -578,9 +578,9 @@ export default interface Resources {
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
-            "hint": "With your code or through a brand",
+            "hint": "Share it with as many friends as you can.",
             "hintEarned": "{{parts}}. Invite another one.",
-            "title": "Get your friends to download the app",
+            "title": "Get friends on the app",
             "viaBrand": "{{count}} via a brand",
             "withCode": "{{count}} with your code"
           },
@@ -595,8 +595,8 @@ export default interface Resources {
               "title": "Connect your Instagram"
             },
             "none": {
-              "hint": "Connect your Instagram and follow @frak_fr to enter the draw.",
-              "title": "Unlock your tickets"
+              "hint": "Follow @frak_fr.",
+              "title": "Join us on Instagram"
             },
             "notFollowing": {
               "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away.",

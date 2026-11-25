@@ -1087,13 +1087,13 @@
                         "hint": "Ton Instagram est connecté. Suis à nouveau @frak_fr pour que tes tickets comptent."
                     },
                     "none": {
-                        "title": "Rejoins la communauté Frak",
-                        "hint": "Débloque tes premiers tickets : connecte ton Instagram et suis @frak_fr pour qu'ils comptent au tirage."
+                        "title": "Rejoins-nous sur Instagram",
+                        "hint": "Suis @frak_fr."
                     }
                 },
                 "friend": {
-                    "title": "Fais télécharger l'app à tes ami·e·s",
-                    "hint": "Partage ton code unique et gagne des tickets pour chaque ami·e parrainé·e.",
+                    "title": "Fais télécharger l'app",
+                    "hint": "Partage à un max d'ami·e·s.",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
