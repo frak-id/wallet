@@ -6,7 +6,6 @@ import {
     Deferred,
     type ExtractReturnType,
     FrakRpcError,
-    RpcErrorCodes,
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
@@ -16,6 +15,7 @@ import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
+import { supersededError } from "@/uiBus";
 
 type OnDisplaySharingPageRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -23,13 +23,9 @@ type OnDisplaySharingPageRequest = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-// Module-level deferred (the listener mounts once per iframe lifetime),
-// preserving the "supersede previous request" semantics from the
-// original ref-based hook.
-let pendingDeferred: Deferred<DisplaySharingPageResultType> | null = null;
-
 type DisplaySharingPageDeps = {
     setRequest: (request: UIRequest) => void;
+    isLatest: () => boolean;
 };
 
 /**
@@ -38,7 +34,7 @@ type DisplaySharingPageDeps = {
  */
 export const handleDisplaySharingPage = async (
     params: Parameters<OnDisplaySharingPageRequest>[0],
-    { setRequest }: DisplaySharingPageDeps
+    { setRequest, isLatest }: DisplaySharingPageDeps
 ): Promise<DisplaySharingPageResultType> => {
     const backendConfig = resolvingContextStore.getState().backendSdkConfig;
 
@@ -57,20 +53,8 @@ export const handleDisplaySharingPage = async (
     const entryPoint =
         typeof rawEntryPoint === "string" ? rawEntryPoint : undefined;
 
-    // Clean up any existing deferred
-    if (pendingDeferred) {
-        pendingDeferred.reject(
-            new FrakRpcError(
-                RpcErrorCodes.internalError,
-                "New sharing page request superseded previous request"
-            )
-        );
-        pendingDeferred = null;
-    }
-
     // Create a new deferred for this sharing page request
     const deferred = new Deferred<DisplaySharingPageResultType>();
-    pendingDeferred = deferred;
 
     // Create emitter that resolves the deferred
     const emitter = async (
@@ -90,6 +74,10 @@ export const handleDisplaySharingPage = async (
             deferred.resolve(response.result);
         }
     };
+
+    if (!isLatest()) {
+        throw supersededError();
+    }
 
     const resolved = resolveBackendMetadata(configMetadata, backendConfig);
 
@@ -117,12 +105,6 @@ export const handleDisplaySharingPage = async (
         placement: placementId,
     });
 
-    try {
-        // Wait for user action via deferred promise
-        return await deferred.promise;
-    } finally {
-        if (pendingDeferred === deferred) {
-            pendingDeferred = null;
-        }
-    }
+    // Wait for user action via deferred promise
+    return await deferred.promise;
 };

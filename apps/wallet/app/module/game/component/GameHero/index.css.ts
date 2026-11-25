@@ -68,6 +68,7 @@ export const hero = style({
     color: white,
     background: `radial-gradient(120% 90% at 50% 0%, ${brand.colors.primary[400]}, ${brand.colors.primary[700]})`,
     textAlign: "center",
+    textWrap: "balance",
 });
 
 export const lockedLayer = recipe({

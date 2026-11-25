@@ -1,6 +1,4 @@
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Inline } from "@frak-labs/design-system/components/Inline";
-import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { LockIcon } from "@frak-labs/design-system/icons";
@@ -12,7 +10,6 @@ import { ICONS, rewardOf } from "@/module/game/utils/gameMissionDisplay";
 import {
     type Mission,
     type MissionText,
-    missionsDone,
     missionsListed,
     missionsToDo,
 } from "@/module/game/utils/gameMissions";
@@ -59,7 +56,7 @@ function MissionRow({ mission, gameId }: { mission: Mission; gameId: string }) {
     );
 }
 
-/** How far the player is through the ways to earn tickets, the ones left to do, and inviting more friends. */
+/** The ways to earn tickets the player has left to do, and inviting more friends. */
 export function GameMissions({
     missions,
     gameId,
@@ -68,26 +65,12 @@ export function GameMissions({
     gameId: string;
 }) {
     const { t } = useTranslation();
-    const done = missionsDone(missions);
     const toDo = missionsToDo(missions);
     const listed = missionsListed(missions);
 
     return (
         <Stack space="xs">
-            <Inline space="s" align="space-between" alignY="baseline">
-                <Text weight="semiBold">{t("game.page.missions.title")}</Text>
-                <Text variant="bodySmall" color="secondary">
-                    {t("game.page.missions.progress", {
-                        done,
-                        total: missions.length,
-                    })}
-                </Text>
-            </Inline>
-            <ProgressBar
-                value={(done / missions.length) * 100}
-                tone={toDo.length > 0 ? "primary" : "success"}
-                label={t("game.page.missions.title")}
-            />
+            <Text weight="semiBold">{t("game.page.missions.title")}</Text>
             {toDo.length === 0 && (
                 <Text variant="bodySmall" color="secondary">
                     {t("game.page.missions.allDone")}

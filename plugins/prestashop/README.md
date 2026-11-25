@@ -18,7 +18,7 @@
 2. In your PrestaShop back office, go to **Modules → Module Manager → Upload a module** and select the zip.
 3. Once uploaded, click **Configure** to open the Frak Integration settings page.
 4. Register the shop domain on your [Frak business dashboard](https://business.frak.id) under **Merchant → Allowed Domains** so the merchant resolver can map this shop to a Frak merchant UUID.
-5. Copy the webhook secret from **Merchant → Purchase Tracker** in the dashboard, paste it into the **Webhook Secret** field on the module config page, and click **Save**.
+5. In the dashboard, open **Merchant → Purchase Tracker**, select **Custom** (there is no PrestaShop entry: the module posts to the custom webhook route), copy the secret and click **Register**. Paste the secret into the **Webhook Secret** field on the module config page, and click **Save Settings**.
 6. Click **Refresh Merchant** if the badge does not flip to green automatically.
 
 The module ships its `vendor/` directory inside the zip, so no composer install is required on the merchant side.
@@ -58,8 +58,8 @@ Some auto-rendered placements expose a small set of merchant-tunable options on 
 
 | Placement | Option | Type | Choices / format | Default |
 | --- | --- | --- | --- | --- |
-| `share_product`, `share_cart` | Button style | select | `primary` / `secondary` / `none` | `secondary` |
-| `banner_top`, `banner_home` | Custom CSS class | text | letters, digits, spaces, dashes, underscores (max 200 chars) | (empty) |
+| `share_product` | Button style | select | `primary` / `secondary` / `none` | `secondary` |
+| `banner_top` | Custom CSS class | text | letters, digits, spaces, dashes, underscores (max 200 chars) | (empty) |
 
 Submitted values are validated by `FrakPlacementRegistry::setState()` (select choices restricted to the schema; text inputs trimmed, length-capped, and regex-validated) and persisted alongside the enable/disable flags in the same bundled `FRAK_PLACEMENTS` Configuration row — one autoloaded row, one decode per request. The dispatcher forwards every resolved option as a renderer attribute on `<frak-button-share>` / `<frak-banner>` / `<frak-post-purchase>`, so adding a new merchant-tunable option is a single schema entry on the placement (declare `type` / `label` / `default` and — for selects — `choices`).
 

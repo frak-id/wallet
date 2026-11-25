@@ -8,20 +8,48 @@
  * so it can stay in the eager bundle.
  */
 
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 type Handler = (req: UIRequest) => void;
 
+const SUPERSEDED_MESSAGE = "New request superseded previous request";
+
+export const supersededError = () =>
+    new FrakRpcError(RpcErrorCodes.internalError, SUPERSEDED_MESSAGE);
+
 let activeHandler: Handler | null = null;
 const pending: UIRequest[] = [];
+let lastRequest: UIRequest | null = null;
+let latestClaim: object | null = null;
 
 export const uiBus = {
+    /**
+     * Mark the caller as the newest request of any type. The returned check
+     * turns false once a later `claim()` happens; nothing is settled here.
+     */
+    claim(): () => boolean {
+        const token = {};
+        latestClaim = token;
+        return () => latestClaim === token;
+    },
+
     /**
      * Dispatch a UI request. If the provider is mounted (`attach` was called)
      * the handler runs synchronously; otherwise the request is queued and
      * delivered FIFO when a handler attaches.
      */
     request(req: UIRequest): void {
+        // A request already settled ignores this, so handlers keep their own errors.
+        if (lastRequest && lastRequest !== req) {
+            void lastRequest.emitter({
+                error: {
+                    code: RpcErrorCodes.internalError,
+                    message: SUPERSEDED_MESSAGE,
+                },
+            });
+        }
+        lastRequest = req;
         if (activeHandler) {
             activeHandler(req);
             return;

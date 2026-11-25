@@ -14,7 +14,7 @@ Framework-agnostic core SDK. Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`
 `.`, `./actions`, `./bundle`, `./rewards`, `./identity`, plus the four read-only fixture subpaths (`./identity/fixtures`, `./context/fixtures`, `./context/sharing-links-fixtures`, `./rewards/fixtures`) the native SDKs read. `package.json` `exports` is authoritative. `development` condition → `./src/index.ts` (monorepo dev). No `browser` field on purpose — it pointed bundlers (`mainFields: ["browser"]`) at the non-tree-shakeable 39.5 KB IIFE and defeated `sideEffects: false`. CDN consumers fetch `cdn/bundle.js` by URL, not via package resolution.
 
 ## Defined Variables (tsdown)
-`OPEN_PANEL_API_URL`, `SDK_VERSION` — injected at build time; not read from runtime env.
+`OPEN_PANEL_API_URL`, `POSTHOG_HOST`, `POSTHOG_TOKEN`, `SDK_VERSION` — injected at build time; not read from runtime env. The two `POSTHOG_*` values live once in `packages/dev-tooling/src/posthog.ts` and are baked in only for `STAGE=production`; any other build leaves them `undefined`, so the OpenPanel → PostHog mirror is not wired into the filter (the function itself still ships in the `FrakSDK` namespace). A production build sends a copy of every OpenPanel `track` event to Frak's PostHog project, without the wallet addresses, a person profile, a cookie or anything stored.
 
 ## Non-Obvious Patterns
 - **Framework-agnostic rule**: NO React/Preact/Vue code here — that belongs in `sdk/react` or `sdk/components`.

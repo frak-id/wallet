@@ -33,6 +33,7 @@
     "changeset:version": "changeset version && bun install --lockfile-only",
     "check:android-manifest": "bun scripts/check-android-manifest.ts",
     "check:bun-version": "bun scripts/check-bun-version.ts",
+    "check:bundle-size": "bun scripts/check-bundle-size.ts",
     "check:es-output": "bun scripts/check-es-version.ts output",
     "check:i18n-types": "bun scripts/check-i18n-types.ts",
     "check:ios-floor": "bun scripts/check-ios-floor.ts",

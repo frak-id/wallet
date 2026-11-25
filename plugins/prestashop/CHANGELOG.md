@@ -11,6 +11,18 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-25
+
+### Changed
+
+- **Settings page layout.** *Save Settings* moves to a bar that stays at the bottom of the screen while you scroll, and sits at the end of the page once you reach it. The Reward reminder, Component Placements and Ambassador page panels now use the same label-left layout as the other sections. The webhook queue counts show as three tiles, with a red tile when deliveries are parked and the last error in its own block.
+
+### Fixed
+
+- **Webhook secret instructions.** They pointed to *Merchant → Purchase Tracker → PrestaShop*, which the Frak dashboard does not have. They now say to select *Custom* and click *Register* before copying the secret.
+- **Placement option help showed `&quot;`.** Placement labels and descriptions were HTML-escaped twice; they now print quotes and ampersands as typed.
+- **Settings page kept the previous release's styles after an upgrade.** `admin.css` and `admin.js` were requested at the same URL in every release, so a browser that had cached them kept the old files. Both URLs now end in `?v=<module version>`.
+
 ## [1.1.1] - 2026-11-23
 
 ### Added
@@ -268,7 +280,9 @@ Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new ve
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.1.1...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.1.2...HEAD
+
+[1.1.2]: https://github.com/frak-id/wallet/compare/prestashop-1.1.1...prestashop-1.1.2
 
 [1.1.1]: https://github.com/frak-id/wallet/compare/prestashop-1.1.0...prestashop-1.1.1
 

@@ -28,8 +28,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
     public function setMedia($isNewTheme = false): void
     {
         parent::setMedia($isNewTheme);
-        $this->addJS($this->module->getPathUri() . 'views/js/admin.js');
-        $this->addCSS($this->module->getPathUri() . 'views/css/admin.css');
+        // Versioned URLs: a browser holding the previous release's file would otherwise keep it after an upgrade.
+        $version = '?v=' . rawurlencode((string) $this->module->version);
+        $this->addJS($this->module->getPathUri() . 'views/js/admin.js' . $version);
+        $this->addCSS($this->module->getPathUri() . 'views/css/admin.css' . $version);
     }
 
     public function renderView()
@@ -136,9 +138,9 @@ class AdminFrakIntegrationController extends ModuleAdminController
     private function buildPlacementGroups(): array
     {
         $component_labels = [
-            FrakPlacementRegistry::COMPONENT_SHARE_BUTTON => $this->module->l('Share button'),
-            FrakPlacementRegistry::COMPONENT_BANNER => $this->module->l('Banner'),
-            FrakPlacementRegistry::COMPONENT_POST_PURCHASE => $this->module->l('Post-purchase card'),
+            FrakPlacementRegistry::COMPONENT_SHARE_BUTTON => $this->plainL('Share button'),
+            FrakPlacementRegistry::COMPONENT_BANNER => $this->plainL('Banner'),
+            FrakPlacementRegistry::COMPONENT_POST_PURCHASE => $this->plainL('Post-purchase card'),
         ];
 
         $groups = [];
@@ -159,8 +161,8 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $groups[$component]['items'][] = [
                 'id' => $id,
                 'config_key' => $placement['config_key'],
-                'label' => $this->module->l($placement['label']),
-                'description' => $this->module->l($placement['description']),
+                'label' => $this->plainL($placement['label']),
+                'description' => $this->plainL($placement['description']),
                 'hook' => $placement['hook'],
                 'placement_attr' => $placement['placement_attr'],
                 'enabled' => $entry['enabled'],
@@ -213,8 +215,8 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $entry = [
                 'name' => $config_key . '__option__' . $key,
                 'type' => $type,
-                'label' => $this->module->l((string) ($meta['label'] ?? $key)),
-                'description' => isset($meta['description']) ? $this->module->l((string) $meta['description']) : '',
+                'label' => $this->plainL((string) ($meta['label'] ?? $key)),
+                'description' => isset($meta['description']) ? $this->plainL((string) $meta['description']) : '',
                 'value' => $value,
             ];
             if ($type === FrakPlacementRegistry::OPTION_TYPE_SELECT) {
@@ -223,13 +225,19 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 foreach ($choices as $choice_value => $choice_label) {
                     $entry['choices'][] = [
                         'value' => (string) $choice_value,
-                        'label' => $this->module->l((string) $choice_label),
+                        'label' => $this->plainL((string) $choice_label),
                     ];
                 }
             }
             $inputs[] = $entry;
         }
         return $inputs;
+    }
+
+    /** `Module::l()` returns HTML-escaped text and the template escapes again, so decode it once here. */
+    private function plainL(string $string): string
+    {
+        return html_entity_decode($this->module->l($string), ENT_QUOTES, 'UTF-8');
     }
 
     public function postProcess()

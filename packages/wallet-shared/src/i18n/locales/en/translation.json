@@ -539,6 +539,10 @@
                 "cancelled": "Recovery was cancelled.",
                 "cancelledDescription": "You cancelled the prompt. You can try again whenever you're ready.",
                 "tryAnother": "Use a different backup",
+                "readError": {
+                    "title": "Couldn't check this wallet",
+                    "description": "We couldn't read this wallet's recovery setup. Check your connection and try again."
+                },
                 "notConfigured": {
                     "title": "No recovery on this wallet",
                     "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup."
@@ -976,25 +980,6 @@
             "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>"
         },
         "game": {
-            "rules": {
-                "title": "The Frak Game",
-                "description": "Collect tickets: a random draw picks the winner when the game ends.",
-                "howItWorks": "How it works",
-                "invite": {
-                    "title": "Share and earn tickets",
-                    "reward": "You each earn {{reward}}.",
-                    "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-                    "description": "2 tickets per friend who signs up with your code, and 2 per friend with a Frak wallet who opens your share of a brand."
-                },
-                "purchase": {
-                    "title": "Shop at a partner brand",
-                    "description": "Your purchase, or one by a friend you referred."
-                },
-                "follow": {
-                    "title": "Activate your tickets with Instagram",
-                    "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 1 more ticket. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn."
-                }
-            },
             "bonus": {
                 "title": "Your {{reward}} bonus",
                 "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
@@ -1072,11 +1057,10 @@
                 },
                 "label": "Your tickets in the draw",
                 "labelPending": "Your pending tickets",
-                "keepGoing": "Keep inviting friends to boost your chances!"
+                "keepGoing": "The more friends you bring to the app, the better your chances to win {{prize}}!"
             },
             "missions": {
                 "title": "Missions",
-                "progress": "{{done}} of {{total}}",
                 "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
                 "reward_one": "+{{count}} ticket",
                 "reward_other": "+{{count}} tickets",
@@ -1103,34 +1087,26 @@
                         "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away."
                     },
                     "none": {
-                        "title": "Unlock your tickets",
-                        "hint": "Connect your Instagram and follow @frak_fr to enter the draw."
+                        "title": "Join us on Instagram",
+                        "hint": "Follow @frak_fr."
                     }
                 },
                 "friend": {
-                    "title": "Invite a friend",
-                    "hint": "With your code or through a brand",
+                    "title": "Get friends on the app",
+                    "hint": "Share it with as many friends as you can.",
                     "hintEarned": "{{parts}}. Invite another one.",
                     "withCode": "{{count}} with your code",
                     "viaBrand": "{{count}} via a brand"
                 },
                 "purchase": {
-                    "title": "Buy from a brand",
-                    "hint": "Your purchase, or one by a friend you invited.",
+                    "title": "Treat yourself!",
+                    "hint": "Your purchases, or those of friends you invited, earn you tickets.",
                     "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
                     "own_one": "{{count}} purchase of yours",
                     "own_other": "{{count}} purchases of yours",
                     "friends_one": "{{count}} purchase by a friend",
                     "friends_other": "{{count}} purchases by friends"
                 }
-            },
-            "invite": {
-                "title": "Invite your friends",
-                "description_one": "Each friend who signs up with your link earns you {{count}} ticket.",
-                "description_other": "Each friend who signs up with your link earns you {{count}} tickets.",
-                "noCode_one": "Create your code to get your link. Each friend who signs up with it earns you {{count}} ticket.",
-                "noCode_other": "Create your code to get your link. Each friend who signs up with it earns you {{count}} tickets.",
-                "share": "Share my link"
             },
             "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
         },

@@ -152,7 +152,7 @@ class FrakPlacementRegistry
             'default' => false,
             'placement_attr' => 'top',
             'label' => 'Banner above the storefront content (full-width)',
-            'description' => 'Renders the referral / in-app browser banner full-width below the header (via the `displayNavFullWidth` hook). Auto-hides when the SDK has nothing to surface.',
+            'description' => 'Renders the referral / in-app browser banner full-width below the header. Auto-hides when the SDK has nothing to surface.',
             'options' => [
                 'classname' => self::BANNER_CLASSNAME_OPTION,
             ],

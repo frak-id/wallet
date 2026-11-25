@@ -1,5 +1,5 @@
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
 import { modalStore } from "@/module/stores/modalStore";
@@ -9,6 +9,7 @@ import { ListenerModal } from "./index";
 // The real signature-cancel hook returns a plain callable (not a mutation
 // object), so the mock must be callable to exercise the clientAborted path.
 const cancelAllSignaturesMock = vi.hoisted(() => vi.fn());
+const clearRequestMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/module/hooks/useGetMergeToken", () => ({
     useGetMergeToken: () => vi.fn(),
@@ -22,7 +23,7 @@ vi.mock("@/ui/BlockchainProvider", () => ({
 
 vi.mock("@/ui/ListenerUiProvider", () => ({
     useListenerUI: () => ({
-        clearRequest: vi.fn(),
+        clearRequest: clearRequestMock,
     }),
     useListenerTranslation: () => ({
         t: (value: string) => value,
@@ -88,7 +89,17 @@ vi.mock("../../../component/ToastLoading", () => ({
 vi.mock("@radix-ui/react-alert-dialog", () => {
     const Stub = ({ children }: { children?: ReactNode }) => <>{children}</>;
     return {
-        Root: Stub,
+        Root: ({
+            open,
+            children,
+        }: {
+            open?: boolean;
+            children?: ReactNode;
+        }) => (
+            <div data-testid="dialog-root" data-open={String(open)}>
+                {children}
+            </div>
+        ),
         Trigger: Stub,
         Portal: Stub,
         // Forward props so the overlay click (which drives onOpenChange) is
@@ -128,18 +139,20 @@ function setModalState(state: MockModalState) {
     (modalStore.setState as unknown as (s: MockModalState) => void)(state);
 }
 
+function modalProps(emitter: (payload: unknown) => Promise<void>) {
+    return {
+        type: "modal" as const,
+        emitter,
+        metadata: {},
+        steps: {},
+        appName: "test-app",
+        configMetadata: { name: "test-app" },
+        logoUrl: "https://assets.example.com/logo.png",
+    };
+}
+
 function renderModal(emitter = vi.fn(async (_payload: unknown) => {})) {
-    render(
-        <ListenerModal
-            type="modal"
-            emitter={emitter}
-            metadata={{}}
-            steps={{}}
-            appName="test-app"
-            configMetadata={{ name: "test-app" }}
-            logoUrl="https://assets.example.com/logo.png"
-        />
-    );
+    render(<ListenerModal {...modalProps(emitter)} />);
     return emitter;
 }
 
@@ -211,5 +224,69 @@ describe("ListenerModal", () => {
         const emitter = renderModal();
 
         expect(emitter).toHaveBeenCalledWith({ result });
+    });
+
+    test("opens a request that arrives while the previous one is closing", () => {
+        vi.useFakeTimers();
+        try {
+            const result = { login: { wallet: "0xabc" } };
+            setModalState({
+                steps: [{ key: "login" }],
+                results: result,
+                currentStep: 0,
+                shouldFinish: result,
+            });
+            const first = vi.fn(async (_payload: unknown) => {});
+            const { rerender } = render(
+                <ListenerModal {...modalProps(first)} />
+            );
+            expect(first).toHaveBeenCalledWith({ result });
+
+            act(() =>
+                setModalState({
+                    steps: [{ key: "login" }],
+                    results: {},
+                    currentStep: 0,
+                    shouldFinish: null,
+                })
+            );
+            const second = vi.fn(async (_payload: unknown) => {});
+            rerender(<ListenerModal {...modalProps(second)} />);
+            act(() => {
+                vi.advanceTimersByTime(250);
+            });
+
+            expect(screen.getByTestId("dialog-root")).toHaveAttribute(
+                "data-open",
+                "true"
+            );
+            expect(modalStore.getState().clearModal).not.toHaveBeenCalled();
+            expect(clearRequestMock).not.toHaveBeenCalled();
+            expect(second).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("clears the store and the request once the close animation ends", () => {
+        vi.useFakeTimers();
+        try {
+            const result = { login: { wallet: "0xabc" } };
+            setModalState({
+                steps: [{ key: "login" }],
+                results: result,
+                currentStep: 0,
+                shouldFinish: result,
+            });
+            renderModal();
+            act(() => {
+                vi.advanceTimersByTime(200);
+            });
+
+            expect(modalStore.getState().clearModal).toHaveBeenCalledTimes(1);
+            expect(clearRequestMock).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

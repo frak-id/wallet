@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { containerChromeless } from "../shared.css";
 import {
@@ -81,5 +81,20 @@ describe("PostShareConfirmation chromeless mode", () => {
 
         expect(surface).toHaveAttribute("role", "dialog");
         expect(surface).toHaveAttribute("aria-modal", "true");
+    });
+
+    it("names the dialog by its heading and the close button by its label", () => {
+        renderConfirmation();
+
+        expect(
+            screen.getByRole("dialog", {
+                name: "sdk.sharingPage.confirmation.title",
+            })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", {
+                name: "sdk.sharingPage.confirmation.close",
+            })
+        ).toBeInTheDocument();
     });
 });

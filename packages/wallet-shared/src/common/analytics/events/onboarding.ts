@@ -63,7 +63,7 @@ type OnboardingMidFlowEvents = {
     };
     // Fires once when the user lands on a Frak Game onboarding step.
     game_step_viewed: OnboardingBaseProps & {
-        step: "rules" | "reward";
+        step: "reward";
     };
     // Fires once when the user lands on the `emailInput` onboarding step.
     email_input_viewed: OnboardingBaseProps | undefined;

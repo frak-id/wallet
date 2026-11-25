@@ -18,8 +18,8 @@ pointer with a 5-minute cache, so a release reaches you within minutes; if it
 is ever unreachable, `onerror` falls back to jsDelivr's `@latest` tag (a
 7-day browser cache, but still your SDK). The pointer's own fetch is
 no-cors, so only jsDelivr's preconnect carries `crossorigin`. `loader.js`
-redirects to the exact loader the pointer imports, so the preload lets it
-download while the page is still parsing:
+re-exports the exact loader the pointer imports, so browsers that follow a
+modulepreload's imports (Firefox) download it while the page is still parsing:
 
 ```html
 <link rel="dns-prefetch" href="https://sdk.frak.id">

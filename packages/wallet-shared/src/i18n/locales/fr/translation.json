@@ -539,6 +539,10 @@
                 "cancelled": "Récupération annulée.",
                 "cancelledDescription": "Vous avez annulé la demande. Vous pouvez réessayer quand vous le souhaitez.",
                 "tryAnother": "Utiliser une autre sauvegarde",
+                "readError": {
+                    "title": "Vérification impossible",
+                    "description": "Nous n'avons pas pu lire la configuration de récupération de ce porte-monnaie. Vérifiez votre connexion et réessayez."
+                },
                 "notConfigured": {
                     "title": "Pas de récupération sur ce porte-monnaie",
                     "description": "Ce porte-monnaie n'a pas de récupération activée, il ne peut donc pas être récupéré avec une sauvegarde."
@@ -976,25 +980,6 @@
             "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
         },
         "game": {
-            "rules": {
-                "title": "Le Jeu Frak",
-                "description": "Cumule des tickets : un tirage au sort désigne le gagnant à la fin du jeu.",
-                "howItWorks": "Comment ça marche",
-                "invite": {
-                    "title": "Partage et gagne des tickets",
-                    "reward": "Vous gagnez {{reward}} chacun.",
-                    "rewardSplit": "Tu gagnes {{referrer}}, ton ami {{referee}}.",
-                    "description": "2 tickets par ami qui s'inscrit avec ton code, et 2 par ami qui a un porte-monnaie Frak et ouvre ton partage d'une marque."
-                },
-                "purchase": {
-                    "title": "Achète chez une marque partenaire",
-                    "description": "Ton achat, ou celui d'un ami parrainé."
-                },
-                "follow": {
-                    "title": "Active tes tickets avec Instagram",
-                    "description": "Suis <igLink>@frak_fr</igLink>, puis indique ton @ : tes tickets comptent au tirage. Connecte ton compte pour 1 ticket de plus. Tiré au sort sans l'avoir connecté ? Tu as 24 h pour le faire, sinon un autre gagnant est tiré."
-                }
-            },
             "bonus": {
                 "title": "Ton bonus de {{reward}}",
                 "description": "Il se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",
@@ -1072,11 +1057,10 @@
                 },
                 "label": "Tes tickets au tirage",
                 "labelPending": "Tes tickets en attente",
-                "keepGoing": "Continue d'inviter tes amis pour augmenter tes chances !"
+                "keepGoing": "Plus tu fais découvrir l'app à tes ami·e·s, plus tu gagnes de chances de remporter {{prize}} !"
             },
             "missions": {
                 "title": "Missions",
-                "progress": "{{done}} sur {{total}}",
                 "allDone": "Toutes les missions sont faites. Chaque ami invité et chaque achat te rapportent encore des tickets.",
                 "reward_one": "+{{count}} ticket",
                 "reward_other": "+{{count}} tickets",
@@ -1103,34 +1087,26 @@
                         "hint": "Ton Instagram est connecté. Suis à nouveau @frak_fr pour que tes tickets comptent."
                     },
                     "none": {
-                        "title": "Rejoins la communauté Frak",
-                        "hint": "Débloque tes premiers tickets : connecte ton Instagram et suis @frak_fr pour qu'ils comptent au tirage."
+                        "title": "Rejoins-nous sur Instagram",
+                        "hint": "Suis @frak_fr."
                     }
                 },
                 "friend": {
-                    "title": "Invite un ami",
-                    "hint": "Partage ton code unique et gagne des tickets pour chaque ami·e parrainé·e.",
+                    "title": "Fais télécharger l'app",
+                    "hint": "Partage à un max d'ami·e·s.",
                     "hintEarned": "{{parts}}. Invites-en un autre.",
                     "withCode": "{{count}} avec ton code",
                     "viaBrand": "{{count}} via une marque"
                 },
                 "purchase": {
-                    "title": "Achète chez une marque",
-                    "hint": "Ton achat, ou celui d'un ami que tu as invité.",
+                    "title": "Fais-toi plaisir !",
+                    "hint": "Tes achats, ou ceux des ami·e·s que tu as invité·e·s, te rapportent des tickets.",
                     "hintEarned": "{{parts}}. Chaque achat en ajoute {{amount}}.",
                     "own_one": "{{count}} achat à toi",
                     "own_other": "{{count}} achats à toi",
                     "friends_one": "{{count}} achat d'un ami",
                     "friends_other": "{{count}} achats d'amis"
                 }
-            },
-            "invite": {
-                "title": "Invite tes ami·e·s",
-                "description_one": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} ticket.",
-                "description_other": "Chaque ami·e inscrit·e avec ton lien te rapporte {{count}} tickets.",
-                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} ticket.",
-                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e inscrit·e avec ce lien te rapporte {{count}} tickets.",
-                "share": "Partager mon lien"
             },
             "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"
         },

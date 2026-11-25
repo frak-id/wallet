@@ -261,6 +261,7 @@ export default interface Resources {
           "cardPopupDescription_noReward": "A purchase was made through your link. Install the app to track your purchases.",
           "cardPopupTitle": "You just won {{estimatedReward}}! 🎉",
           "cardPopupTitle_noReward": "A friend just bought! 🎉",
+          "close": "Close",
           "cta": "Collect my {{estimatedReward}}",
           "cta_noReward": "Install the app",
           "shareAgain": "Share again",
@@ -554,7 +555,7 @@ export default interface Resources {
           "countdownDays": "Ends in {{days}} d {{hours}} h",
           "countdownHours": "Ends in {{hours}} h {{minutes}} min",
           "gain": "+{{amount}} {{source}}",
-          "keepGoing": "Keep inviting friends to boost your chances!",
+          "keepGoing": "The more friends you bring to the app, the better your chances to win {{prize}}!",
           "label": "Your tickets in the draw",
           "labelPending": "Your pending tickets",
           "since": "Since your last visit: {{gains}}",
@@ -574,20 +575,12 @@ export default interface Resources {
           "unlocked_other": "Your {{count}} tickets are unlocked"
         },
         "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
-        "invite": {
-          "description_one": "Each friend who signs up with your link earns you {{count}} ticket.",
-          "description_other": "Each friend who signs up with your link earns you {{count}} tickets.",
-          "noCode_one": "Create your code to get your link. Each friend who signs up with it earns you {{count}} ticket.",
-          "noCode_other": "Create your code to get your link. Each friend who signs up with it earns you {{count}} tickets.",
-          "share": "Share my link",
-          "title": "Invite your friends"
-        },
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
-            "hint": "With your code or through a brand",
+            "hint": "Share it with as many friends as you can.",
             "hintEarned": "{{parts}}. Invite another one.",
-            "title": "Invite a friend",
+            "title": "Get friends on the app",
             "viaBrand": "{{count}} via a brand",
             "withCode": "{{count}} with your code"
           },
@@ -602,8 +595,8 @@ export default interface Resources {
               "title": "Connect your Instagram"
             },
             "none": {
-              "hint": "Connect your Instagram and follow @frak_fr to enter the draw.",
-              "title": "Unlock your tickets"
+              "hint": "Follow @frak_fr.",
+              "title": "Join us on Instagram"
             },
             "notFollowing": {
               "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away.",
@@ -614,15 +607,14 @@ export default interface Resources {
             "hint": "Done, welcome!",
             "title": "Join the game"
           },
-          "progress": "{{done}} of {{total}}",
           "purchase": {
             "friends_one": "{{count}} purchase by a friend",
             "friends_other": "{{count}} purchases by friends",
-            "hint": "Your purchase, or one by a friend you invited.",
+            "hint": "Your purchases, or those of friends you invited, earn you tickets.",
             "hintEarned": "{{parts}}. Each purchase adds {{amount}}.",
             "own_one": "{{count}} purchase of yours",
             "own_other": "{{count}} purchases of yours",
-            "title": "Buy from a brand"
+            "title": "Treat yourself!"
           },
           "rewardPerFriend_one": "+{{count}} ticket / friend",
           "rewardPerFriend_other": "+{{count}} tickets / friend",
@@ -1113,25 +1105,6 @@ export default interface Resources {
             "sponsor": "Offered by {{name}}"
           },
           "title": "You're in the game!"
-        },
-        "rules": {
-          "description": "Collect tickets: a random draw picks the winner when the game ends.",
-          "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 1 more ticket. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn.",
-            "title": "Activate your tickets with Instagram"
-          },
-          "howItWorks": "How it works",
-          "invite": {
-            "description": "2 tickets per friend who signs up with your code, and 2 per friend with a Frak wallet who opens your share of a brand.",
-            "reward": "You each earn {{reward}}.",
-            "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-            "title": "Share and earn tickets"
-          },
-          "purchase": {
-            "description": "Your purchase, or one by a friend you referred.",
-            "title": "Shop at a partner brand"
-          },
-          "title": "The Frak Game"
         }
       },
       "keypass": {
@@ -1815,6 +1788,10 @@ export default interface Resources {
           "notConfigured": {
             "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup.",
             "title": "No recovery on this wallet"
+          },
+          "readError": {
+            "description": "We couldn't read this wallet's recovery setup. Check your connection and try again.",
+            "title": "Couldn't check this wallet"
           },
           "retry": "Try again",
           "title": "Confirm recovery",

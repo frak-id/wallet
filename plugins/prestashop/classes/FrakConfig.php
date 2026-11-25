@@ -27,7 +27,7 @@ class FrakConfig
     /** Logo URL (absolute). May point to the shipped uploads dir. */
     public const LOGO_URL = 'FRAK_LOGO_URL';
 
-    /** HMAC signing key pasted from `business.frak.id` (Merchant → Purchase Tracker). */
+    /** HMAC signing key pasted from `business.frak.id` (Merchant → Purchase Tracker → Custom). */
     public const WEBHOOK_SECRET = 'FRAK_WEBHOOK_SECRET';
 
     /** 64-char hex token gating `controllers/front/cron.php` via `hash_equals`. */

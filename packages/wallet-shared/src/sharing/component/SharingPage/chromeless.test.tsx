@@ -145,6 +145,14 @@ describe("SharingPage chromeless mode", () => {
         expect(surface).toHaveAttribute("aria-modal", "true");
     });
 
+    it("names the dialog by its heading", () => {
+        renderPage();
+
+        expect(
+            screen.getByRole("dialog", { name: "sdk.sharingPage.reward.title" })
+        ).toBeInTheDocument();
+    });
+
     it("routes Escape to the confirmation screen's own dismiss handler while it is shown, not this page's", () => {
         const onDismiss = vi.fn();
         const onConfirmationDismiss = vi.fn();

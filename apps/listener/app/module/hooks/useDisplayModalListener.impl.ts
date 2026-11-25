@@ -25,6 +25,7 @@ import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
+import { supersededError } from "@/uiBus";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -32,12 +33,13 @@ type OnDisplayModalRequest = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-// The listener is mounted once for the iframe lifetime, so a single handle is
-// enough: the supersede path tears the previous subscription down first.
-let activeUnsubscribe: (() => void) | null = null;
+// The listener is mounted once for the iframe lifetime. The displayed modal
+// stays live until a newer request of either type replaces it.
+let settleDisplayed: (() => void) | null = null;
 
 type DisplayModalDeps = {
     setRequest: (request: UIRequest) => void;
+    isLatest: () => boolean;
 };
 
 /**
@@ -47,17 +49,15 @@ type DisplayModalDeps = {
  */
 export const handleDisplayModal = async (
     params: Parameters<OnDisplayModalRequest>[0],
-    { setRequest }: DisplayModalDeps
+    { setRequest, isLatest }: DisplayModalDeps
 ): Promise<ModalRpcStepsResultType> => {
     const backendConfig = resolvingContextStore.getState().backendSdkConfig;
-
-    // Tear down any pending modal subscription before starting a new one.
-    activeUnsubscribe?.();
-    activeUnsubscribe = null;
 
     // If no modal to display, early exit
     const steps = coerceFinalActionToReward(params[0]);
     if (Object.keys(steps).length === 0) {
+        settleDisplayed?.();
+        settleDisplayed = null;
         modalStore.getState().clearModal();
         throw new FrakRpcError(
             RpcErrorCodes.invalidRequest,
@@ -73,7 +73,17 @@ export const handleDisplayModal = async (
         stepsPrepared,
     });
 
-    // Create a new deferred for this modal request
+    // Nothing left to show: answer without superseding the modal on screen
+    if (currentStep >= stepsPrepared.length) {
+        return currentResult as ModalRpcStepsResultType;
+    }
+
+    // A newer request of either type arrived meanwhile and owns the UI
+    if (!isLatest()) {
+        throw supersededError();
+    }
+    settleDisplayed?.();
+
     const deferred = new Deferred<ModalRpcStepsResultType>();
 
     // Save the new modal
@@ -86,7 +96,6 @@ export const handleDisplayModal = async (
     });
 
     // Subscribe to modal state changes for THIS specific modal
-    // This subscription will be cleaned up when modal completes or new modal opens
     const unsubscribe = modalStore.subscribe((state) => {
         // If modal was cleared (no steps), ignore this state change
         if (!state.steps) return;
@@ -112,8 +121,10 @@ export const handleDisplayModal = async (
             unsubscribe();
         }
     });
-
-    activeUnsubscribe = unsubscribe;
+    settleDisplayed = () => {
+        unsubscribe();
+        deferred.reject(supersededError());
+    };
 
     const metadata = params[1] ?? {};
     const configMetadata = params[2] ?? {};

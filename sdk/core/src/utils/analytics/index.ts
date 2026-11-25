@@ -7,4 +7,5 @@ export type {
     SdkReferralEventMap,
 } from "./events";
 export { createSdkOpenPanel } from "./openPanel";
+export { createPostHogMirror } from "./postHogMirror";
 export { trackEvent } from "./trackEvent";
