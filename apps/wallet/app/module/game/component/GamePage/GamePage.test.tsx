@@ -3,34 +3,23 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-    currentGame,
-    gameHistory,
-    navigate,
-    trackEvent,
-    maybeAskForReview,
-    referral,
-} = vi.hoisted(() => ({
-    referral: {
-        data: undefined as
-            | { ownedCode: { code: string; createdAt: string } | null }
-            | undefined,
-    },
-    navigate: vi.fn(),
-    trackEvent: vi.fn(),
-    maybeAskForReview: vi.fn(),
-    currentGame: {
-        data: undefined as unknown,
-        isError: false,
-        refetch: vi.fn(() => Promise.resolve()),
-    },
-    gameHistory: {
-        data: [] as unknown[],
-        isLoading: false,
-        isError: false,
-        refetch: vi.fn(() => Promise.resolve()),
-    },
-}));
+const { currentGame, gameHistory, navigate, trackEvent, maybeAskForReview } =
+    vi.hoisted(() => ({
+        navigate: vi.fn(),
+        trackEvent: vi.fn(),
+        maybeAskForReview: vi.fn(),
+        currentGame: {
+            data: undefined as unknown,
+            isError: false,
+            refetch: vi.fn(() => Promise.resolve()),
+        },
+        gameHistory: {
+            data: [] as unknown[],
+            isLoading: false,
+            isError: false,
+            refetch: vi.fn(() => Promise.resolve()),
+        },
+    }));
 
 vi.mock("@tanstack/react-router", () => ({
     Navigate: ({ to }: { to: string }) => <p>navigate:{to}</p>,
@@ -60,7 +49,6 @@ vi.mock("react-i18next", () => ({
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => ({
     ...(await importOriginal<object>()),
     trackEvent,
-    useReferralStatus: () => referral,
 }));
 vi.mock("@/module/common/utils/maybeAskForReview", () => ({
     maybeAskForReview,
@@ -131,9 +119,6 @@ const player = (
 
 describe("GamePage", () => {
     beforeEach(() => {
-        referral.data = {
-            ownedCode: { code: "STORY1", createdAt: "2026-10-20" },
-        };
         gameHistory.data = [];
         gameHistory.isLoading = false;
         gameHistory.isError = false;
@@ -311,16 +296,6 @@ describe("GamePage", () => {
             "/explorer",
             "/profile/referral/share",
         ]);
-    });
-
-    it("offers the player's referral link under the missions", () => {
-        currentGame.data = player(4, true);
-        render(<GamePage />);
-
-        expect(screen.getByText("game.page.invite.title")).toBeInTheDocument();
-        expect(
-            screen.getByText("wallet-test.frak.id/r/STORY1")
-        ).toBeInTheDocument();
     });
 
     it("locks the tickets of a player with no Instagram and gates the first mission", () => {

@@ -1128,14 +1128,6 @@
                     "friends_other": "{{count}} purchases by friends"
                 }
             },
-            "invite": {
-                "title": "Your friends bring you luck!",
-                "description_one": "Each friend who downloads Frak through your link earns you {{count}} extra ticket.",
-                "description_other": "Each friend who downloads Frak through your link earns you {{count}} extra tickets.",
-                "noCode_one": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra ticket.",
-                "noCode_other": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra tickets.",
-                "share": "Share my link"
-            },
             "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!"
         },
         "result": {
