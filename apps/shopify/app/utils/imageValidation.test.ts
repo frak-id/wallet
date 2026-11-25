@@ -3,6 +3,7 @@ import {
     ACCEPTED_IMAGE_TYPES,
     MAX_UPLOAD_BYTES,
     validateImageFile,
+    validateImageType,
 } from "./imageValidation";
 
 function makeFile(name: string, type: string, sizeBytes: number): File {
@@ -44,5 +45,20 @@ describe("validateImageFile", () => {
     it("accepts a file exactly at the size cap", () => {
         const file = makeFile("exact.png", "image/png", MAX_UPLOAD_BYTES);
         expect(validateImageFile(file)).toEqual({ valid: true });
+    });
+});
+
+describe("validateImageType", () => {
+    it("accepts an oversized image, which a crop can still shrink", () => {
+        const file = makeFile("huge.png", "image/png", MAX_UPLOAD_BYTES + 1);
+        expect(validateImageType(file)).toEqual({ valid: true });
+    });
+
+    it("rejects an unsupported file type", () => {
+        const file = makeFile("doc.pdf", "application/pdf", 1024);
+        expect(validateImageType(file)).toEqual({
+            valid: false,
+            reason: { code: "unsupportedType", fileName: "doc.pdf" },
+        });
     });
 });

@@ -38,6 +38,7 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Campaign list](./campaigns-list.md) — status tabs, search, detail sheet.
 - [Campaign wizard](./campaign-wizard.md) — create a campaign, resume a draft, walk the steps.
 - [Settings](./settings.md) — currency, language, demo mode, from the header's demo badge.
+- [Merchant Explorer images](./merchant-explorer.md) — hero/slider/logo uploads, the crop dialog, in-field previews and the slider grid.
 - Layout across all of the above: the audit in [SKILL.md](../SKILL.md#layout-audit).
 
-Not mapped yet (add a file when you first verify one): merchants dashboard and merchant edit tabs (`/m/$id/merchant`: Identity & SDK, Explorer App, Integration, Manage your team), funding (`Manage budget`), members and push notifications, campaign data overview (`/m/$id/campaigns`), billing, login (`--logged-out` reaches `/login`: `heading "Access and discover Frak Ad Manager"`, `button "Connect to Frak Ad Manager"`, `button "Email"`, `button "Shopify"`, none of which can complete offline).
+Not mapped yet (add a file when you first verify one): merchants dashboard and merchant edit tabs other than Explorer App images (`/m/$id/merchant`: Identity & SDK, Integration, Manage your team), funding (`Manage budget`), members and push notifications, campaign data overview (`/m/$id/campaigns`), billing, login (`--logged-out` reaches `/login`: `heading "Access and discover Frak Ad Manager"`, `button "Connect to Frak Ad Manager"`, `button "Email"`, `button "Shopify"`, none of which can complete offline).

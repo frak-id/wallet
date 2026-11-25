@@ -2,10 +2,12 @@ import {
     ACCEPTED_IMAGE_TYPES,
     imageValidationMessage,
     validateImageFile,
+    validateImageType,
 } from "app/utils/imageValidation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import { useImageCrop } from "../ImageCrop";
 
 type MultiHeroImagesFieldProps = {
     label: string;
@@ -57,11 +59,20 @@ export function MultiHeroImagesField({
         [uploadFetcher]
     );
 
+    const { prepareImage, cropPanel } = useImageCrop("hero");
     const [validationError, setValidationError] = useState<string | null>(null);
     const handleDropZoneChange = useCallback(
-        (files: File[]) => {
-            const file = files[0];
-            if (!file || reachedLimit) return;
+        async (files: File[]) => {
+            const dropped = files[0];
+            if (!dropped || reachedLimit) return;
+            const typeCheck = validateImageType(dropped);
+            if (!typeCheck.valid) {
+                setValidationError(imageValidationMessage(typeCheck.reason, t));
+                return;
+            }
+            setValidationError(null);
+            const file = await prepareImage(dropped);
+            if (!file) return;
             const validation = validateImageFile(file);
             if (!validation.valid) {
                 setValidationError(
@@ -69,10 +80,9 @@ export function MultiHeroImagesField({
                 );
                 return;
             }
-            setValidationError(null);
             uploadFile(file);
         },
-        [reachedLimit, uploadFile, t]
+        [reachedLimit, uploadFile, prepareImage, t]
     );
 
     // Removal only drops the pending reference; the storage delete is
@@ -112,18 +122,20 @@ export function MultiHeroImagesField({
             {/* `s-drop-zone`'s built-in "Accepts .png, ..." caption stays
                 English (no caption/slot prop, Shadow DOM) — the localized
                 `<s-text>` sibling below carries that info instead. */}
-            <s-drop-zone
-                label={label}
-                accept={acceptAttr}
-                error={errorMessage ?? undefined}
-                disabled={isPending || reachedLimit || undefined}
-                onChange={(e) => {
-                    const target = e.currentTarget as unknown as {
-                        files: File[];
-                    };
-                    handleDropZoneChange(Array.from(target.files ?? []));
-                }}
-            />
+            {cropPanel ?? (
+                <s-drop-zone
+                    label={label}
+                    accept={acceptAttr}
+                    error={errorMessage ?? undefined}
+                    disabled={isPending || reachedLimit || undefined}
+                    onChange={(e) => {
+                        const target = e.currentTarget as unknown as {
+                            files: File[];
+                        };
+                        handleDropZoneChange(Array.from(target.files ?? []));
+                    }}
+                />
+            )}
             <s-text color="subdued">
                 {reachedLimit
                     ? t("appearance.explorer.heroExtrasLimitReached")

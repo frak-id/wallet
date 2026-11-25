@@ -513,6 +513,17 @@
             "validation": {
                 "unsupportedType": "{{fileName}} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).",
                 "tooLarge": "{{fileName}} is {{size}} MB — images must stay under {{max}} MB."
+            },
+            "crop": {
+                "title": "Crop your image",
+                "description": "This image is outside the accepted ratio ({{min}} to {{max}}). Drag and zoom to choose the part to keep.",
+                "descriptionFits": "Drag and zoom to frame your image, or use it as is.",
+                "ratio": "Ratio",
+                "zoom": "Zoom",
+                "cancel": "Cancel",
+                "confirm": "Crop and upload",
+                "useAsIs": "Use as is",
+                "failed": "Could not crop this image. Try another file."
             }
         },
         "shareButton": {

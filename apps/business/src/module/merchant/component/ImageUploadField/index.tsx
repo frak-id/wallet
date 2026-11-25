@@ -1,3 +1,4 @@
+import type { ImageKind } from "@frak-labs/app-essentials/media/imageRatio";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
@@ -5,22 +6,28 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CloseIcon, UploadIcon } from "@frak-labs/design-system/icons";
+import {
+    CloseIcon,
+    PencilIcon,
+    UploadIcon,
+} from "@frak-labs/design-system/icons";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
 import clsx from "clsx";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
+import { useImageCrop } from "@/module/merchant/hook/useImageCrop";
 import {
     useMediaList,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
 import { getUploadErrorMessage } from "@/module/merchant/utils/uploadError";
 import * as styles from "../edit-fields.css";
+import { ImagePreview } from "./ImagePreview";
 
 type ImageUploadFieldProps = {
     merchantId: string;
-    type: "logo" | "hero" | "icon";
+    type: ImageKind;
     /** `hero-extra` stores under a new `hero-{hash}` key instead of overwriting `hero`. */
     uploadType?: "hero-extra";
     value: string;
@@ -58,19 +65,37 @@ export function ImageUploadField({
         isSuccess,
         reset: resetUpload,
     } = useMediaUpload();
+    const { prepareImage, cropDialog } = useImageCrop(type);
+    const [isEditing, setIsEditing] = useState(false);
+    const showEditor = !value || isEditing;
 
     const onDrop = useCallback(
-        (files: File[]) => {
-            const file = files[0];
-            if (!file) return;
+        async (files: File[]) => {
+            const picked = files[0];
+            if (!picked) return;
 
             resetUpload();
+            const file = await prepareImage(picked);
+            if (!file) return;
             upload(
                 { merchantId, image: file, type: uploadType ?? type },
-                { onSuccess: (data) => onUploadSuccess(data.url) }
+                {
+                    onSuccess: (data) => {
+                        onUploadSuccess(data.url);
+                        setIsEditing(false);
+                    },
+                }
             );
         },
-        [merchantId, type, uploadType, upload, resetUpload, onUploadSuccess]
+        [
+            merchantId,
+            type,
+            uploadType,
+            upload,
+            resetUpload,
+            onUploadSuccess,
+            prepareImage,
+        ]
     );
 
     // Clearing only updates the form value — the bucket file is kept so
@@ -90,6 +115,38 @@ export function ImageUploadField({
     });
 
     const errorMessage = getUploadErrorMessage(uploadError, t);
+
+    if (!showEditor) {
+        return (
+            <Stack space="m">
+                <FieldLabel hint={hint}>
+                    <ImagePreview
+                        src={value}
+                        size={type === "hero" ? "large" : "small"}
+                        onRemove={handleClear}
+                        start={
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="small"
+                                width="auto"
+                                icon={<PencilIcon width={16} height={16} />}
+                                onClick={() => setIsEditing(true)}
+                            >
+                                {t("merchantEdit.explorer.editImage")}
+                            </Button>
+                        }
+                    />
+                </FieldLabel>
+                {cropDialog}
+                {isSuccess && (
+                    <Text variant="caption" color="success">
+                        {t("merchantEdit.explorer.uploaded")}
+                    </Text>
+                )}
+            </Stack>
+        );
+    }
 
     return (
         <Stack space="m">
@@ -160,14 +217,10 @@ export function ImageUploadField({
                     </Text>
                 </Stack>
             </div>
+            {cropDialog}
             {errorMessage && (
                 <Text variant="caption" color="error">
                     {errorMessage}
-                </Text>
-            )}
-            {isSuccess && (
-                <Text variant="caption" color="success">
-                    {t("merchantEdit.explorer.uploaded")}
                 </Text>
             )}
             <ExistingFilePicker
@@ -177,8 +230,22 @@ export function ImageUploadField({
                 onPick={(url) => {
                     onChange(url);
                     onUploadSuccess(url);
+                    setIsEditing(false);
                 }}
             />
+            {value && (
+                <Inline space="none" align="right">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        width="auto"
+                        onClick={() => setIsEditing(false)}
+                    >
+                        {t("merchantEdit.explorer.doneEditing")}
+                    </Button>
+                </Inline>
+            )}
         </Stack>
     );
 }
@@ -190,7 +257,7 @@ function ExistingFilePicker({
     onPick,
 }: {
     merchantId: string;
-    type: "logo" | "hero" | "icon";
+    type: ImageKind;
     currentValue: string;
     onPick: (url: string) => void;
 }) {
