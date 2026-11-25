@@ -487,24 +487,16 @@ export default defineConfig(async () => {
                             //   the Modal. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
                             // • `lazy-shared` → design-system + sonner +
-                            //   lucide + listener shared components +
-                            //   Toast/Markdown/etc + pairing UI. Pulled by
-                            //   any lazy boundary that needs UI primitives.
-                            //   `minShareCount: 1` ensures it materialises
-                            //   even when only one boundary uses a given file.
+                            //   lucide + the SharingPage tree. Only what the
+                            //   sharing page reaches belongs here: Modal-only
+                            //   modules (SsoButton, pairing UI, Markdown)
+                            //   fall into the Modal chunk.
                             //
-                            // NOTE: SharingPage does NOT get a chunk of its
-                            // own — `lazy-shared`'s regex claims it. And
-                            // `lazy-shared` statically imports BOTH
-                            // `ui-vendor` and `blockchain-vendor`, because it
-                            // also hosts Modal-only code (SsoButton,
-                            // ToastLoading, Markdown, the pairing UI). So a
-                            // first sharing-page display currently costs
-                            // ~204 KB gz, not the ~56 KB this grouping
-                            // implies. Narrowing the `lazy-shared` regex to
-                            // the genuinely sharing-reachable set is the open
-                            // win here; measure with
-                            // `bun run chunk:closure` before/after.
+                            // NOTE: SharingPage has no chunk of its own, it
+                            // is hosted in `lazy-shared`. A Modal-only module
+                            // added to that regex drags `blockchain-vendor`
+                            // onto the sharing page; check with
+                            // `bun run chunk:closure`.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
@@ -544,7 +536,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "lazy-shared",
-                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/](?:clients|types)))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:common[\\/]component[\\/]ExternalLink|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
                                 priority: 25,
                                 minShareCount: 1,
                             },
