@@ -154,18 +154,13 @@ describe("useRegisterFlow", () => {
         expect(startFlow).toHaveBeenCalledTimes(2);
     });
 
-    test("tracks game_step_viewed with its step", () => {
+    test("tracks game_step_viewed on the game reward step", () => {
         const { result } = renderHook(() => useRegisterFlow({}));
         act(() => result.current.goToStep("gameReward"));
-        act(() => result.current.goToStep("gameRules"));
 
         expect(result.current.flowRef.current?.track).toHaveBeenCalledWith(
             "game_step_viewed",
             { step: "reward" }
-        );
-        expect(result.current.flowRef.current?.track).toHaveBeenCalledWith(
-            "game_step_viewed",
-            { step: "rules" }
         );
     });
 });

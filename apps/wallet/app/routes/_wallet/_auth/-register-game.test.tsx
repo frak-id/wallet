@@ -107,16 +107,6 @@ vi.mock("@/module/onboarding/component/OnboardingStep", () => ({
         </div>
     ),
 }));
-vi.mock("@/module/game/component/GameRules", () => ({
-    GameRules: ({ onContinue }: { onContinue: () => void }) => (
-        <div>
-            <span>game-rules</span>
-            <button type="button" onClick={onContinue}>
-                continue
-            </button>
-        </div>
-    ),
-}));
 vi.mock("@/module/game/component/GameReward", () => ({
     GameReward: ({
         onContinue,
@@ -218,15 +208,12 @@ describe("RegisterPage — Frak Game onboarding", () => {
         return view;
     };
 
-    test("an applied code leads to the reward, then the rules, then notifications", () => {
+    test("an applied code leads to the reward, then notifications", () => {
         reachReferralCode();
 
         click("apply");
         expect(screen.getByText("game-reward")).toBeInTheDocument();
         expect(screen.getByText("game-prize")).toBeInTheDocument();
-
-        click("continue");
-        expect(screen.getByText("game-rules")).toBeInTheDocument();
 
         click("continue");
         expect(screen.getByText("notification-step")).toBeInTheDocument();
@@ -242,10 +229,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
             tracked.filter(([name]) => name === "referral_code_resolved")
         ).toHaveLength(1);
         expect(tracked.filter(([name]) => name === "game_step_viewed")).toEqual(
-            [
-                ["game_step_viewed", "reward"],
-                ["game_step_viewed", "rules"],
-            ]
+            [["game_step_viewed", "reward"]]
         );
     });
 
@@ -260,10 +244,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         redeem.result = result;
         reachReferralCode();
         click("apply");
-        if ("game" in result) {
-            click("continue");
-            click("continue");
-        }
+        if ("game" in result) click("continue");
 
         click("enable");
         click("onboarding.welcome.button");
@@ -308,7 +289,7 @@ describe("RegisterPage — Frak Game onboarding", () => {
         { name: "a game code", kind: "frak" },
         { name: "a friend's code", kind: "user" },
     ] as const)(
-        "$name that joins a game without a reward still shows the game screens",
+        "$name that joins a game without a reward still shows the game screen",
         ({ kind }) => {
             redeem.result = { kind, game: { prizeDescription: "game-prize" } };
             reachReferralCode();
@@ -316,13 +297,10 @@ describe("RegisterPage — Frak Game onboarding", () => {
             click("apply");
             expect(screen.getByText("reward-0")).toBeInTheDocument();
             expect(screen.getByText("game-prize")).toBeInTheDocument();
-
-            click("continue");
-            expect(screen.getByText("game-rules")).toBeInTheDocument();
         }
     );
 
-    test("a friend's bonus with no game open skips the game rules", () => {
+    test("a friend's bonus with no game open shows the reward, then notifications", () => {
         redeem.result = { kind: "user", signupReward: 1.5 };
         reachReferralCode();
 
@@ -330,7 +308,6 @@ describe("RegisterPage — Frak Game onboarding", () => {
         expect(screen.getByText("reward-1.5")).toBeInTheDocument();
 
         click("continue");
-        expect(screen.queryByText("game-rules")).not.toBeInTheDocument();
         expect(screen.getByText("notification-step")).toBeInTheDocument();
     });
 

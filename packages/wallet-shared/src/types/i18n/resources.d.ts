@@ -1105,25 +1105,6 @@ export default interface Resources {
             "sponsor": "Offered by {{name}}"
           },
           "title": "You're in the game!"
-        },
-        "rules": {
-          "description": "Collect tickets: a random draw picks the winner when the game ends.",
-          "follow": {
-            "description": "Follow <igLink>@frak_fr</igLink>, then add your @: your tickets count in the draw. Connect your account for 1 more ticket. Drawn without having connected it? You have 24 h to do it, otherwise another winner is drawn.",
-            "title": "Activate your tickets with Instagram"
-          },
-          "howItWorks": "How it works",
-          "invite": {
-            "description": "2 tickets per friend who signs up with your code, and 2 per friend with a Frak wallet who opens your share of a brand.",
-            "reward": "You each earn {{reward}}.",
-            "rewardSplit": "You earn {{referrer}}, your friend {{referee}}.",
-            "title": "Share and earn tickets"
-          },
-          "purchase": {
-            "description": "Your purchase, or one by a friend you referred.",
-            "title": "Shop at a partner brand"
-          },
-          "title": "The Frak Game"
         }
       },
       "keypass": {

@@ -49,6 +49,14 @@ export const MISSION_REWARDS = {
     purchase: TICKET_AMOUNTS.purchase,
 } as const satisfies Record<Mission["id"], number>;
 
+/** Each mission's title before any progress; instagram's is the one shown while nothing is linked. */
+export const MISSION_TITLES = {
+    join: "game.page.missions.join.title",
+    instagram: "game.page.missions.instagram.none.title",
+    friend: "game.page.missions.friend.title",
+    purchase: "game.page.missions.purchase.title",
+} as const satisfies Record<Mission["id"], DefaultTranslationKey>;
+
 function instagramOf({ instagram, eligible }: Me): Mission {
     const reward = MISSION_REWARDS.instagram;
     const base = { id: "instagram", reward, earned: 0 } as const;
@@ -81,7 +89,7 @@ function instagramOf({ instagram, eligible }: Me): Mission {
         route,
         title: notFollowing
             ? "game.page.missions.instagram.notFollowing.title"
-            : "game.page.missions.instagram.none.title",
+            : MISSION_TITLES.instagram,
         hint: {
             key: notFollowing
                 ? "game.page.missions.instagram.notFollowing.hint"
@@ -111,7 +119,7 @@ function friendOf({ ticketsBySource: t }: Me): Mission {
         id: "friend",
         status: earned > 0 ? "done" : "todo",
         route: "/profile/referral/share",
-        title: "game.page.missions.friend.title",
+        title: MISSION_TITLES.friend,
         hint:
             earned > 0
                 ? { key: "game.page.missions.friend.hintEarned", parts }
@@ -143,7 +151,7 @@ function purchaseOf({ ticketsBySource: t }: Me): Mission {
         id: "purchase",
         status: earned > 0 ? "done" : "todo",
         route: "/explorer",
-        title: "game.page.missions.purchase.title",
+        title: MISSION_TITLES.purchase,
         hint:
             earned > 0
                 ? {
@@ -163,7 +171,7 @@ export function missionsOf(me: Me): Mission[] {
         {
             id: "join",
             status: "done",
-            title: "game.page.missions.join.title",
+            title: MISSION_TITLES.join,
             hint: { key: "game.page.missions.join.hint" },
             reward: MISSION_REWARDS.join,
             earned: MISSION_REWARDS.join,

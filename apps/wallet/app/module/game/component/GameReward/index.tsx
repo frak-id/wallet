@@ -18,6 +18,8 @@ import {
 import { GameTaskRow } from "@/module/game/component/GameTaskRow";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
+import { ICONS } from "@/module/game/utils/gameMissionDisplay";
+import { MISSION_TITLES } from "@/module/game/utils/gameMissions";
 import { prizeToWinOf } from "@/module/game/utils/gamePrize";
 import { TICKET_AMOUNTS } from "@/module/game/utils/ticketAmounts";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
@@ -88,6 +90,31 @@ function BonusHero({ amount }: { amount: string }) {
     );
 }
 
+const MISSIONS = ["instagram", "friend", "purchase"] as const;
+
+function MissionTitles() {
+    const { t } = useTranslation();
+
+    return (
+        <Stack space="xs">
+            <Text weight="semiBold">{t("game.page.missions.title")}</Text>
+            <Card variant="muted" padding="none">
+                {MISSIONS.map((id) => {
+                    const Icon = ICONS[id];
+                    return (
+                        <GameTaskRow
+                            key={id}
+                            icon={<Icon width={18} height={18} />}
+                            tone="action"
+                            title={t(MISSION_TITLES[id])}
+                        />
+                    );
+                })}
+            </Card>
+        </Stack>
+    );
+}
+
 export function GameReward({ onContinue, reward, game }: GameRewardProps) {
     const { t, i18n } = useTranslation();
     useConfettiBurst();
@@ -128,6 +155,7 @@ export function GameReward({ onContinue, reward, game }: GameRewardProps) {
                         {t("onboarding.game.reward.descriptionJoinOnly")}
                     </Text>
                 )}
+                {game && <MissionTitles />}
             </Stack>
         </PageLayout>
     );

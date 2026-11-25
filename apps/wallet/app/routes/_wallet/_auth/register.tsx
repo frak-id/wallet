@@ -21,7 +21,6 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { GameReward } from "@/module/game/component/GameReward";
-import { GameRules } from "@/module/game/component/GameRules";
 import { gameRewardOf } from "@/module/game/utils/gameRewardOf";
 import { redeemCodeRoute } from "@/module/game/utils/redeemCodeRoute";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
@@ -541,15 +540,6 @@ function RegisterPage() {
                 <GameReward
                     reward={gameRewardOf(gameRedeem)}
                     game={gameRedeem.game}
-                    onContinue={() =>
-                        goToStep(gameRedeem.game ? "gameRules" : "notification")
-                    }
-                />
-            )}
-            {step === "gameRules" && gameRedeem && (
-                <GameRules
-                    reward={gameRewardOf(gameRedeem)}
-                    invite={gameRedeem.inviteRewards}
                     onContinue={() => goToStep("notification")}
                 />
             )}
