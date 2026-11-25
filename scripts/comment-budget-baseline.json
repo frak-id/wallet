@@ -94,7 +94,7 @@
     "apps/listener/app/uiBus.ts": 1,
     "apps/listener/app/uiRuntime.ts": 1,
     "apps/listener/tests/vitest-setup.ts": 1,
-    "apps/listener/vite.config.ts": 15,
+    "apps/listener/vite.config.ts": 14,
     "apps/shopify/app/components/AppError/index.tsx": 1,
     "apps/shopify/app/components/Appearance/ExplorerTab.tsx": 1,
     "apps/shopify/app/components/Appearance/ImageUploadField/index.tsx": 1,

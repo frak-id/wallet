@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -11,6 +12,7 @@ import {
     assertBundleEsVersion,
     assertEagerBundleBudget,
     BROWSER_TARGET,
+    collectEagerClosure,
     getSandboxEnv,
     getSstResource,
     inlineFontFaces,
@@ -209,6 +211,33 @@ function assertNoLazyCssLeak(htmlSource: string) {
     }
 }
 
+/** The sharing page is hosted in `lazy-shared`; fail if its closure reaches viem. */
+function assertSharingPageSkipsBlockchain() {
+    return {
+        name: "assert-sharing-page-skips-blockchain",
+        apply: "build" as const,
+        writeBundle({ dir }: { dir?: string }) {
+            if (!dir) return;
+            const host = readdirSync(path.join(dir, "assets")).find((f) =>
+                /^lazy-shared-[A-Za-z0-9_-]+\.js$/.test(f)
+            );
+            if (!host) {
+                throw new Error(
+                    "No lazy-shared chunk emitted: cannot check the sharing page closure."
+                );
+            }
+            const leaked = [
+                ...collectEagerClosure(dir, [`assets/${host}`]).keys(),
+            ].find((key) => key.includes("blockchain-vendor-"));
+            if (leaked) {
+                throw new Error(
+                    `The sharing page now loads ${leaked}: a Modal-only module matches the lazy-shared regex.`
+                );
+            }
+        },
+    };
+}
+
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
 
@@ -349,6 +378,7 @@ export default defineConfig(async () => {
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 assertHtml: assertNoLazyCssLeak,
             }),
+            assertSharingPageSkipsBlockchain(),
             assertBundleEsVersion({
                 subdir: "assets",
                 // @radix-ui/react-collection defines `toSorted` on its own
@@ -480,31 +510,9 @@ export default defineConfig(async () => {
                             // • `blockchain-vendor` → viem + wagmi +
                             //   permissionless + BaseProvider + provider glue.
                             //   Modal only.
-                            // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
-                            //   qr, @tanstack/markdown). radix + alert-dialog are
-                            //   Modal-only; qr + markdown land here through
-                            //   wallet-shared pairing/Markdown, reachable from
-                            //   the Modal. SharingPage pulls @radix-ui/react-accordion
-                            //   via design-system Accordion (FAQ section).
-                            // • `lazy-shared` → design-system + sonner +
-                            //   lucide + listener shared components +
-                            //   Toast/Markdown/etc + pairing UI. Pulled by
-                            //   any lazy boundary that needs UI primitives.
-                            //   `minShareCount: 1` ensures it materialises
-                            //   even when only one boundary uses a given file.
-                            //
-                            // NOTE: SharingPage does NOT get a chunk of its
-                            // own — `lazy-shared`'s regex claims it. And
-                            // `lazy-shared` statically imports BOTH
-                            // `ui-vendor` and `blockchain-vendor`, because it
-                            // also hosts Modal-only code (SsoButton,
-                            // ToastLoading, Markdown, the pairing UI). So a
-                            // first sharing-page display currently costs
-                            // ~204 KB gz, not the ~56 KB this grouping
-                            // implies. Narrowing the `lazy-shared` regex to
-                            // the genuinely sharing-reachable set is the open
-                            // win here; measure with
-                            // `bun run chunk:closure` before/after.
+                            // • `ui-vendor` → @radix-ui: alert-dialog for the
+                            //   Modal, Accordion for the SharingPage FAQ.
+                            //   Modal-only markdown stays in the Modal chunk.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
@@ -530,21 +538,13 @@ export default defineConfig(async () => {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](?:@radix-ui|@tanstack[\\/]markdown|qr)[\\/]/,
                                 priority: 30,
-                                // No explicit minShareCount: `@radix-ui` is
-                                // reached from BOTH boundaries (Modal via
-                                // alert-dialog, SharingPage via design-system
-                                // Accordion in the FAQ), so the group
-                                // materialises on the default. Leave it that
-                                // way — forcing 1 additionally hoists
-                                // markdown/qr (single-consumer, Modal-only)
-                                // out of `lazy-shared` into this chunk, and
-                                // since `lazy-shared` statically imports
-                                // `ui-vendor` anyway that moves ~8 KB gz ONTO
-                                // the sharing page. Measured, don't guess.
+                                // Default minShareCount on purpose: forcing 1
+                                // also hoists Modal-only markdown into this
+                                // chunk, which the sharing page loads.
                             },
                             {
                                 name: "lazy-shared",
-                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/](?:clients|types)))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:common[\\/]component[\\/]ExternalLink|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
                                 priority: 25,
                                 minShareCount: 1,
                             },
