@@ -204,5 +204,18 @@ describe("GameReward", () => {
         expect(
             screen.queryByText(/reward\.game\.endsAt/)
         ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("game.page.missions.title")
+        ).not.toBeInTheDocument();
+    });
+
+    it("lists the three missions' titles under the joined game", () => {
+        render(<GameReward reward={0} game={game} onContinue={vi.fn()} />);
+
+        for (const id of ["instagram", "friend", "purchase"]) {
+            expect(
+                screen.getByText(`onboarding.game.missions.${id}`)
+            ).toBeInTheDocument();
+        }
     });
 });

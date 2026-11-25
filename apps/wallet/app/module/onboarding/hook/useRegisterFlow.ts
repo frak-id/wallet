@@ -16,7 +16,6 @@ export type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
 
 export type FlowStep =
     | OnboardingFlowStep
-    | "gameRules"
     | "gameReward"
     | "emailInput"
     | "emailAlreadyUsed"
@@ -130,12 +129,10 @@ export function useRegisterFlow({
         });
     }, [step]);
 
-    // Fire `game_step_viewed` once we land on a Frak Game step
+    // Fire `game_step_viewed` once we land on the Frak Game step
     useEffect(() => {
-        if (step === "gameRules" || step === "gameReward") {
-            flowRef.current?.track("game_step_viewed", {
-                step: step === "gameRules" ? "rules" : "reward",
-            });
+        if (step === "gameReward") {
+            flowRef.current?.track("game_step_viewed", { step: "reward" });
         }
     }, [step]);
 

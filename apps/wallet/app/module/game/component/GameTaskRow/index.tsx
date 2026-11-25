@@ -12,7 +12,7 @@ type GameTaskRowProps = {
     icon: ReactNode;
     tone: "neutral" | "action";
     title: string;
-    hint: ReactNode;
+    hint?: ReactNode;
     badge?: { label: string; variant: "info" | "success" | "warning" };
     gate?: boolean;
     /** For a long hint: the badge moves under it, so the text gets the row's width. */
@@ -49,13 +49,15 @@ export function GameTaskRow({
             </IconCircle>
             <Stack space="none" className={styles.text}>
                 <Text weight="semiBold">{title}</Text>
-                <Text
-                    variant="bodySmall"
-                    color="secondary"
-                    className={styles.hint}
-                >
-                    {hint}
-                </Text>
+                {hint && (
+                    <Text
+                        variant="bodySmall"
+                        color="secondary"
+                        className={styles.hint}
+                    >
+                        {hint}
+                    </Text>
+                )}
                 {stacked && tag}
             </Stack>
             {!stacked && tag}
