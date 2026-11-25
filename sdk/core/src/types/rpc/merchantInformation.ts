@@ -134,21 +134,33 @@ export type ConditionGroup = {
  */
 export type RuleConditions = RuleCondition[] | ConditionGroup;
 
+/** What earns a plan step after the first payment. @group RPC Schema */
+export type SubscriptionStepBy = "cycle" | "amount" | "duration";
+
+/** One reward per side on every step of a range. @group RPC Schema */
+export type SubscriptionStepRewards = {
+    /** First plan step of the range; step 1 is the first payment. */
+    from: number;
+    /** Last plan step of the range, inclusive. */
+    to: number;
+    referrer?: EstimatedReward;
+    referee?: EstimatedReward;
+};
+
 /**
- * What a subscription campaign pays: one reward per paid billing cycle, the
- * checkout being the first. On the offer, `referrer` and `referee` stay the
- * first payment, so a reader unaware of subscriptions still shows a valid reward.
+ * What a subscription campaign pays on each plan step. On the offer, `referrer`
+ * and `referee` stay the first payment, so a reader unaware of subscriptions
+ * still shows a valid reward.
  * @group RPC Schema
  */
 export type SubscriptionRewards = {
-    /** Rewards of the first payment, the subscription checkout. */
-    firstPayment: { referrer?: EstimatedReward; referee?: EstimatedReward };
-    /** Rewards of each renewal that follows. */
-    renewal: { referrer?: EstimatedReward; referee?: EstimatedReward };
-    /** Number of renewals rewarded after the first payment. */
-    renewals: number;
-    /** Days without a paid cycle before the unpaid steps expire. */
-    inactivityDays?: number;
+    /** Rewards by step range, in order; an amount step's percentage comes as its fixed amount. */
+    steps: SubscriptionStepRewards[];
+    /**
+     * What earns the steps after the first payment: each paid cycle, each
+     * amount paid, or each period of active subscription. Absent means cycle.
+     */
+    stepBy?: SubscriptionStepBy;
 };
 
 /**
@@ -189,7 +201,7 @@ export type MerchantReward = {
     merchantMaxRewardsPerUser?: number;
     /** ISO-8601 campaign end date, or `null` when open-ended. */
     expiresAt?: string | null;
-    /** Set on a subscription campaign: its rewards by moment, per paid cycle. */
+    /** Set on a subscription campaign: its rewards by plan step range and what earns each step. */
     subscription?: SubscriptionRewards;
 };
 

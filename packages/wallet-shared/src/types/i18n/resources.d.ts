@@ -1217,6 +1217,30 @@ export default interface Resources {
         "onItsWay": "On its way",
         "onItsWayDisclaimer": "This reward is on its way to your wallet. You'll be able to collect it very soon."
       },
+      "plan": {
+        "paid": "Paid",
+        "pending": "Still to come",
+        "progressSteps_one": "{{count}} of {{total}} rewards",
+        "progressSteps_other": "{{count}} of {{total}} rewards",
+        "progress_one": "{{count}} of {{total}} payments",
+        "progress_other": "{{count}} of {{total}} payments",
+        "step": {
+          "expired": "Expired",
+          "label": "Payment {{step}}",
+          "labelReward": "Reward {{step}}",
+          "paid": "Paid",
+          "paidOn": "Paid on {{date}}",
+          "unlockingOn": "Unlocking on {{date}}",
+          "unlockingSoon": "Unlocking soon",
+          "upcoming": "Unlocks at the next renewal",
+          "upcomingAmount": "Unlocks as the subscription continues",
+          "upcomingAmountReferee": "Unlocks as your subscription continues",
+          "upcomingDuration_one": "Unlocks after {{count}} day of subscription",
+          "upcomingDuration_other": "Unlocks after {{count}} days of subscription",
+          "upcomingReferee": "Unlocks at your next renewal"
+        },
+        "total": "Plan total"
+      },
       "status": {
         "bank_depleted": "Awaiting funding by the brand",
         "cancelled": "Cancelled",

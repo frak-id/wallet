@@ -99,6 +99,8 @@ export type {
     SiweAuthenticationParams,
     SsoMetadata,
     SubscriptionRewards,
+    SubscriptionStepBy,
+    SubscriptionStepRewards,
     TokenAmountType,
     // Tracking
     TrackArrivalParams,

@@ -1,12 +1,20 @@
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { render } from "@testing-library/react";
 import { vi } from "vitest";
+import {
+    eur,
+    makePlan,
+    makeStep,
+} from "@/module/history/utils/rewardPlan.fixtures";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 import { RewardHistoryItem } from "./index";
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
-        t: (key: string) => key,
+        t: (key: string, opts?: Record<string, unknown>) =>
+            typeof opts?.count === "number"
+                ? `${key}:${JSON.stringify(opts)}`
+                : key,
         i18n: { language: "en" },
     }),
 }));
@@ -83,5 +91,72 @@ describe("RewardHistoryItem", () => {
         );
 
         expect(getByText(label)).toBeInTheDocument();
+    });
+
+    describe("subscription plan", () => {
+        const steps = [
+            makeStep(1, { status: "paid" }),
+            makeStep(2, { status: "paid" }),
+            makeStep(3),
+        ];
+
+        test("shows the plan total like any reward amount", () => {
+            const { getByText } = render(
+                <RewardHistoryItem
+                    item={makeItem({
+                        amount: eur(25),
+                        plan: makePlan(steps),
+                    })}
+                />
+            );
+
+            expect(getByText("+\u20ac25.00")).toBeInTheDocument();
+        });
+
+        test("puts a ≈ in front of the total when the plan is estimated", () => {
+            const { getByText } = render(
+                <RewardHistoryItem
+                    item={makeItem({
+                        amount: eur(25),
+                        plan: makePlan(steps, { estimated: true }),
+                    })}
+                />
+            );
+
+            expect(getByText("\u2248 +\u20ac25.00")).toBeInTheDocument();
+        });
+
+        test("hints how many payments of the plan are earned", () => {
+            const { getByText } = render(
+                <RewardHistoryItem item={makeItem({ plan: makePlan(steps) })} />
+            );
+
+            expect(
+                getByText('reward.plan.progress:{"count":2,"total":3}')
+            ).toBeInTheDocument();
+        });
+
+        test("keeps the merchant and the role label of a plan row", () => {
+            const { getByText } = render(
+                <RewardHistoryItem
+                    item={makeItem({
+                        role: "welcome_bonus",
+                        plan: makePlan(steps),
+                    })}
+                />
+            );
+
+            expect(getByText("Brand")).toBeInTheDocument();
+            expect(getByText("reward.frakBonus.label")).toBeInTheDocument();
+        });
+
+        test("shows no progress hint and no ≈ on a reward without a plan", () => {
+            const { queryByText, container } = render(
+                <RewardHistoryItem item={makeItem()} />
+            );
+
+            expect(queryByText(/reward\.plan\.progress/)).toBeNull();
+            expect(container.textContent).not.toContain("\u2248");
+        });
     });
 });

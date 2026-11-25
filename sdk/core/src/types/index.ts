@@ -63,6 +63,8 @@ export type {
     RuleConditions,
     RuleField,
     SubscriptionRewards,
+    SubscriptionStepBy,
+    SubscriptionStepRewards,
     TokenAmountType,
 } from "./rpc/merchantInformation";
 export type {

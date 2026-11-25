@@ -1,6 +1,7 @@
 import {
     authenticatedWalletApi,
     type RewardHistoryItem,
+    type RewardPlan,
     rewardsKey,
 } from "@frak-labs/wallet-shared";
 import {
@@ -22,6 +23,26 @@ function toTimestamp(value: Date | string): number {
     const date = value instanceof Date ? value : new Date(value);
     const time = date.getTime();
     return Number.isNaN(time) ? 0 : time;
+}
+
+type WirePlan = Omit<RewardPlan, "steps"> & {
+    steps: (Omit<RewardPlan["steps"][number], "availableAt" | "settledAt"> & {
+        availableAt?: Date | string;
+        settledAt?: Date | string;
+    })[];
+};
+
+function toPlan(plan: WirePlan): RewardPlan {
+    return {
+        ...plan,
+        steps: plan.steps.map((step) => ({
+            ...step,
+            availableAt: step.availableAt
+                ? toTimestamp(step.availableAt)
+                : undefined,
+            settledAt: step.settledAt ? toTimestamp(step.settledAt) : undefined,
+        })),
+    };
 }
 
 /**
@@ -70,6 +91,7 @@ export function useGetRewardHistory() {
                     availableAt: item.availableAt
                         ? toTimestamp(item.availableAt)
                         : undefined,
+                    plan: item.plan ? toPlan(item.plan) : undefined,
                 })),
                 totalCount: data?.totalCount ?? 0,
             };

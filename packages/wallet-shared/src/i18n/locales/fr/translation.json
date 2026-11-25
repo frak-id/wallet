@@ -1397,6 +1397,30 @@
             "lockedExplanation": "Se débloque dès que tu connectes ton Instagram et suis @frak_fr, ou dès ta première récompense chez une marque partenaire.",
             "lockedOnFriendExplanation": "Se débloque dès que ton ami connecte son Instagram et suit @frak_fr, ou dès sa première récompense chez une marque partenaire."
         },
+        "plan": {
+            "total": "Total du plan",
+            "paid": "Déjà versé",
+            "pending": "À venir",
+            "progress_one": "{{count}} paiement sur {{total}}",
+            "progress_other": "{{count}} paiements sur {{total}}",
+            "progressSteps_one": "{{count}} récompense sur {{total}}",
+            "progressSteps_other": "{{count}} récompenses sur {{total}}",
+            "step": {
+                "label": "Paiement {{step}}",
+                "labelReward": "Récompense {{step}}",
+                "paid": "Versé",
+                "paidOn": "Versé le {{date}}",
+                "unlockingOn": "Se débloque le {{date}}",
+                "unlockingSoon": "Bientôt débloqué",
+                "upcoming": "Se débloque au prochain renouvellement",
+                "upcomingReferee": "Se débloque à ton prochain renouvellement",
+                "upcomingAmount": "Se débloque au fil de l'abonnement",
+                "upcomingAmountReferee": "Se débloque au fil de ton abonnement",
+                "upcomingDuration_one": "Se débloque après {{count}} jour d'abonnement",
+                "upcomingDuration_other": "Se débloque après {{count}} jours d'abonnement",
+                "expired": "Expiré"
+            }
+        },
         "frakBonus": {
             "label": "Bonus de bienvenue",
             "detailTitle": "Ton bonus de bienvenue",

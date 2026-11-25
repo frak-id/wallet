@@ -7,8 +7,10 @@ import { type CountdownCopy, countdownCopy } from "./countdown";
 import { type OpenInAppCopy, openInAppCopy } from "./openInApp";
 import { type PostPurchaseCopy, postPurchaseCopy } from "./postPurchase";
 import { type RewardReminderCopy, rewardReminderCopy } from "./rewardReminder";
+import { type RewardWordingCopy, rewardWordingCopy } from "./rewardWording";
 
 type ComponentCopy = {
+    rewardWording: RewardWordingCopy;
     buttonShare: ButtonShareCopy;
     postPurchase: PostPurchaseCopy;
     openInApp: OpenInAppCopy;
@@ -19,6 +21,7 @@ type ComponentCopy = {
 };
 
 const forLanguage = (lang: Language): ComponentCopy => ({
+    rewardWording: rewardWordingCopy[lang],
     buttonShare: buttonShareCopy[lang],
     postPurchase: postPurchaseCopy[lang],
     openInApp: openInAppCopy[lang],

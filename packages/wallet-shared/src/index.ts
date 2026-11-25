@@ -281,6 +281,8 @@ export type {
     PurchaseInfo,
     RecipientType,
     RewardHistoryItem,
+    RewardPlan,
+    RewardPlanStep,
     SdkSession,
     SdkSessionPayload,
     Session,

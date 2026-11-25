@@ -1,7 +1,7 @@
 import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import { renderHook, waitFor } from "@testing-library/preact";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReward } from "./useReward";
 
 // Tests share `getMerchantInformation` mock state and window.FrakSetup.client;
@@ -9,6 +9,10 @@ import { useReward } from "./useReward";
 describe("useReward", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        document.documentElement.lang = "";
     });
 
     it("should return undefined reward initially", () => {
@@ -488,4 +492,60 @@ describe("useReward", () => {
             expect(result.current.reward).toContain("5");
         });
     });
+
+    it.each([
+        ["en", "up to "],
+        ["fr", "jusqu'à "],
+    ] as const)(
+        "words a subscription plan as a ceiling in %s",
+        async (lang, prefix) => {
+            document.documentElement.lang = lang;
+            vi.mocked(getMerchantInformation).mockResolvedValue({
+                id: "merchant-1",
+                onChainMetadata: { name: "Test", domain: "test.com" },
+                rewards: [
+                    {
+                        campaignId: "sub",
+                        name: "Sub",
+                        conditions: [],
+                        interactionTypeKey: "purchase",
+                        referrer: {
+                            payoutType: "fixed",
+                            amount: {
+                                amount: 10,
+                                eurAmount: 10,
+                                usdAmount: 10,
+                                gbpAmount: 10,
+                            },
+                        },
+                        subscription: {
+                            steps: [
+                                {
+                                    from: 1,
+                                    to: 3,
+                                    referrer: {
+                                        payoutType: "fixed",
+                                        amount: {
+                                            amount: 10,
+                                            eurAmount: 10,
+                                            usdAmount: 10,
+                                            gbpAmount: 10,
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                ],
+            });
+
+            const { result } = renderHook(() => useReward(true, undefined));
+
+            await waitFor(() => {
+                expect(result.current.reward).toMatch(
+                    new RegExp(`^${prefix}30\\u00a0€$`)
+                );
+            });
+        }
+    );
 });

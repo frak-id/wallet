@@ -1,17 +1,32 @@
 import type { InteractionTypeKey, ProductDetails } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import {
+    type BestReward,
     type RewardAudience,
     selectBestReward,
 } from "@frak-labs/core-sdk/rewards";
 import { useEffect, useState } from "preact/hooks";
+import {
+    type RewardWordingCopy,
+    rewardWordingCopy,
+} from "@/i18n/rewardWording";
+import { useLang } from "./useLang";
+
+function wordReward(
+    best: Pick<BestReward, "formatted" | "upTo">,
+    wording: RewardWordingCopy
+): string {
+    return best.upTo
+        ? wording.upTo.replaceAll("{REWARD}", () => best.formatted)
+        : best.formatted;
+}
 
 /**
  * Hook to fetch and format the best reward for a given interaction type.
  *
  * Calls `getMerchantInformation`, picks the highest-value reward across all
  * matching live campaigns for the requested `audience` side, and returns it as
- * a formatted string.
+ * a formatted string, worded in the active language ("up to …" for plans).
  *
  * @param shouldUseReward - Whether to fetch the reward at all
  * @param targetInteraction - Optional filter by interaction type (e.g. "purchase")
@@ -28,6 +43,7 @@ export function useReward(
     audience?: RewardAudience,
     products?: ProductDetails[]
 ) {
+    const wording = rewardWordingCopy[useLang()];
     const [reward, setReward] = useState<string | undefined>(undefined);
     const [hasReward, setHasReward] = useState(false);
 
@@ -48,13 +64,13 @@ export function useReward(
                 setHasReward(best !== undefined);
                 // Percentage rewards carry no concrete amount to advertise.
                 if (best && best.payoutType !== "percentage") {
-                    setReward(best.formatted);
+                    setReward(wordReward(best, wording));
                 }
             })
             .catch(() => {
                 // Silently swallow — reward text is non-critical
             });
-    }, [shouldUseReward, targetInteraction, audience, products]);
+    }, [shouldUseReward, targetInteraction, audience, products, wording]);
 
     return { reward, hasReward };
 }

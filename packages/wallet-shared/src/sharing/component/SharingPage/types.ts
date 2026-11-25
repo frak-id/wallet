@@ -23,6 +23,8 @@ export type SharingReward =
     | {
           status: "ready";
           payoutType?: EstimatedReward["payoutType"];
+          /** The headline is a ceiling (a subscription plan's whole value). */
+          upTo?: boolean;
           /** Already formatted with the merchant currency (e.g. `"10 €"`). */
           minPurchaseAmount?: string;
           isProductScoped?: boolean;
