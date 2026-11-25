@@ -15,7 +15,10 @@ import type {
 } from "../../../../domain/purchases/dto/ShopifyWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
-import { hasRenewalSignal, pendingSubscription } from "./subscriptionSignals";
+import {
+    hasProviderRenewalSignal,
+    pendingSubscription,
+} from "./subscriptionSignals";
 
 // Oldest payload verified against; later versions keep every order field read here.
 const MIN_SHOPIFY_API_VERSION = "2024-10";
@@ -117,7 +120,10 @@ export const shopifyWebhook = new Elysia()
                 "Handling new shopify webhook event"
             );
 
-            const renewalSignal = hasRenewalSignal(webhookData);
+            const renewalSignal = hasProviderRenewalSignal(
+                resolved.webhook.subscriptionProvider,
+                webhookData
+            );
             const subscription = await pendingSubscription({
                 provider: resolved.webhook.subscriptionProvider,
                 order: webhookData,

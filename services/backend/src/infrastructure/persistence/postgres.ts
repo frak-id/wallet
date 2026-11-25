@@ -166,3 +166,26 @@ export async function tryWithAdvisoryLock<T>(
         connection.release();
     }
 }
+
+/**
+ * Run `task` while holding a session-level advisory lock derived from `name`,
+ * waiting for any other holder first. Unlike {@link tryWithAdvisoryLock} it
+ * serialises callers instead of skipping them, so the name should be narrow
+ * (one subscriber at one merchant), not a whole job.
+ */
+export async function withAdvisoryLock<T>(
+    name: string,
+    task: () => Promise<T>
+): Promise<T> {
+    const connection = await postgresDb.reserve();
+    try {
+        await connection`SELECT pg_advisory_lock(hashtextextended(${name}, 0))`;
+        try {
+            return await task();
+        } finally {
+            await connection`SELECT pg_advisory_unlock(hashtextextended(${name}, 0))`;
+        }
+    } finally {
+        connection.release();
+    }
+}

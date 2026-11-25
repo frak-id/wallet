@@ -632,7 +632,7 @@
     "services/backend/src/domain/pairing/repositories/PairingSignatureRepository.ts": 1,
     "services/backend/src/domain/purchases/db/schema.ts": 1,
     "services/backend/src/domain/purchases/repositories/PurchaseClaimRepository.ts": 1,
-    "services/backend/src/domain/purchases/repositories/PurchaseRepository.ts": 3,
+    "services/backend/src/domain/purchases/repositories/PurchaseRepository.ts": 2,
     "services/backend/src/domain/referral-code/repositories/ReferralCodeRepository.ts": 1,
     "services/backend/src/domain/referral-code/services/ReferralCodeService.ts": 2,
     "services/backend/src/domain/rewards/repositories/AssetLogRepository.ts": 10,

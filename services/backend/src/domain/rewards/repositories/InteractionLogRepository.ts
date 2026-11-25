@@ -1,5 +1,8 @@
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { db } from "../../../infrastructure/persistence/postgres";
+import {
+    db,
+    type PgRunner,
+} from "../../../infrastructure/persistence/postgres";
 import {
     type InteractionLogInsert,
     type InteractionLogSelect,
@@ -10,8 +13,19 @@ import type {
     CreateReferralLinkPayload,
     InteractionSubscription,
     InteractionType,
+    PurchasePayload,
 } from "../types";
 import { purchaseExternalEventId } from "../utils";
+
+/** One paid billing cycle of a subscriber, from the interaction ledger. */
+export type SubscriptionCycle = {
+    interactionLogId: string;
+    kind: "checkout" | "renewal";
+    paidAt: Date;
+    cyclesCovered: number;
+    merchandiseAmount: number;
+    currency: string;
+};
 
 export class InteractionLogRepository {
     async createIdempotent(
@@ -232,5 +246,50 @@ export class InteractionLogRepository {
             )
             .returning({ id: interactionLogsTable.id });
         return rows.length > 0;
+    }
+
+    /** The referee's counted, uncancelled subscription cycles at a merchant, oldest first. */
+    async findCountedCycles(
+        merchantId: string,
+        identityGroupId: string,
+        runner: PgRunner = db
+    ): Promise<SubscriptionCycle[]> {
+        const rows = await runner
+            .select({
+                id: interactionLogsTable.id,
+                createdAt: interactionLogsTable.createdAt,
+                subscription: sql<
+                    PurchasePayload["subscription"]
+                >`${interactionLogsTable.payload}->'subscription'`,
+                currency: sql<
+                    PurchasePayload["currency"]
+                >`${interactionLogsTable.payload}->>'currency'`,
+            })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, merchantId),
+                    eq(interactionLogsTable.identityGroupId, identityGroupId),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt),
+                    sql`${interactionLogsTable.payload}->'subscription'->>'counted' = 'true'`
+                )
+            )
+            .orderBy(interactionLogsTable.createdAt);
+
+        return rows.flatMap((row) => {
+            const { subscription } = row;
+            if (subscription?.state !== "resolved") return [];
+            return [
+                {
+                    interactionLogId: row.id,
+                    kind: subscription.kind,
+                    paidAt: row.createdAt,
+                    cyclesCovered: subscription.cyclesCovered,
+                    merchandiseAmount: subscription.merchandiseAmount,
+                    currency: row.currency,
+                },
+            ];
+        });
     }
 }

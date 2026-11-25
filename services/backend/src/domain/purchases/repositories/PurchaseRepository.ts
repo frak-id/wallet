@@ -4,10 +4,14 @@ import {
     and,
     desc,
     eq,
+    exists,
     inArray,
     isNotNull,
     isNull,
+    lt,
+    not,
     notExists,
+    type SQL,
     sql,
 } from "drizzle-orm";
 import {
@@ -26,6 +30,35 @@ import type { PurchaseSubscription } from "../subscription/types";
 
 // Self-join alias: the NOT EXISTS probes the same table the UPDATE writes.
 const taken = aliasedTable(purchaseItemsTable, "taken");
+const linkedOrder = aliasedTable(purchasesTable, "linked_order");
+
+const isPendingSubscription = sql`${purchasesTable.subscription}->>'state' = 'pending'`;
+
+/** A Frak-linked subscription order of the same customer: the only way a renewal reaches a plan. */
+function hasLinkedSubscriptionOrder(): SQL {
+    return exists(
+        db
+            .select({ one: sql`1` })
+            .from(linkedOrder)
+            .where(
+                and(
+                    eq(linkedOrder.webhookId, purchasesTable.webhookId),
+                    eq(
+                        linkedOrder.externalCustomerId,
+                        purchasesTable.externalCustomerId
+                    ),
+                    isNotNull(linkedOrder.identityGroupId),
+                    sql`${linkedOrder.subscription}->>'state' = 'resolved'`,
+                    sql`${linkedOrder.subscription}->>'kind' IN ('checkout', 'renewal', 'prepaid_shipment')`
+                )
+            )
+    );
+}
+
+/** Linked to an identity (it has an interaction) or placed by a linked subscriber. */
+function isWorthResolving(): SQL {
+    return sql`(${isNotNull(purchasesTable.identityGroupId)} or ${hasLinkedSubscriptionOrder()})`;
+}
 
 type PurchaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -367,7 +400,10 @@ export class PurchaseRepository {
             .where(eq(purchaseItemsTable.purchaseId, purchaseId));
     }
 
-    /** Pending subscription orders whose next resolution attempt is due, oldest first. */
+    /**
+     * Pending subscription orders due for a resolution attempt, oldest first.
+     * Orders nobody can be rewarded for are left out: see `dropUnclaimedSubscriptions`.
+     */
     async findDueSubscriptionResolutions(
         now: Date,
         limit: number
@@ -377,12 +413,36 @@ export class PurchaseRepository {
             .from(purchasesTable)
             .where(
                 and(
-                    sql`${purchasesTable.subscription}->>'state' = 'pending'`,
-                    sql`coalesce(${purchasesTable.subscription}->>'nextAttemptAt', '') <= ${now.toISOString()}`
+                    isPendingSubscription,
+                    sql`coalesce(${purchasesTable.subscription}->>'nextAttemptAt', '') <= ${now.toISOString()}`,
+                    isWorthResolving()
                 )
             )
             .orderBy(purchasesTable.createdAt)
             .limit(limit);
+    }
+
+    /** Pending orders older than `cutoff` that never got linked: plain purchases, the provider is never asked. */
+    async dropUnclaimedSubscriptions(cutoff: Date): Promise<number> {
+        const rows = await db
+            .update(purchasesTable)
+            .set({
+                subscription: {
+                    state: "unresolved",
+                    attempts: 0,
+                    nextAttemptAt: null,
+                },
+                updatedAt: new Date(),
+            })
+            .where(
+                and(
+                    isPendingSubscription,
+                    lt(purchasesTable.createdAt, cutoff),
+                    not(isWorthResolving())
+                )
+            )
+            .returning({ id: purchasesTable.id });
+        return rows.length;
     }
 
     async updateSubscription(
@@ -449,32 +509,37 @@ export class PurchaseRepository {
             .where(inArray(merchantWebhooksTable.id, ids));
     }
 
-    /** `null` clears the connection. False when the merchant has no webhook row. */
+    /** `null` clears the connection. */
     async setSubscriptionConnection(
         merchantId: string,
         connection: {
             provider: SubscriptionProvider;
             credentials: string;
         } | null
-    ): Promise<boolean> {
-        const rows = await db
+    ): Promise<void> {
+        await db
             .update(merchantWebhooksTable)
             .set({
                 subscriptionProvider: connection?.provider ?? null,
                 subscriptionCredentials: connection?.credentials ?? null,
             })
-            .where(eq(merchantWebhooksTable.merchantId, merchantId))
-            .returning({ id: merchantWebhooksTable.id });
-        return rows.length > 0;
+            .where(eq(merchantWebhooksTable.merchantId, merchantId));
     }
 
+    /** No-op when the stored credentials differ from `expected`: the merchant reconnected meanwhile. */
     async setSubscriptionCredentials(
         merchantId: string,
+        expected: string,
         credentials: string
     ): Promise<void> {
         await db
             .update(merchantWebhooksTable)
             .set({ subscriptionCredentials: credentials })
-            .where(eq(merchantWebhooksTable.merchantId, merchantId));
+            .where(
+                and(
+                    eq(merchantWebhooksTable.merchantId, merchantId),
+                    eq(merchantWebhooksTable.subscriptionCredentials, expected)
+                )
+            );
     }
 }

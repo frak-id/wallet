@@ -11,7 +11,7 @@ const RENEWAL_SOURCE_NAMES = new Set(["subscription_contract"]);
 const PROVIDER_NOTE_PREFIX = "rc_";
 
 /** A line sold through a selling plan: the order may be a subscription checkout. */
-export function hasSellingPlan(order: Pick<Order, "line_items">): boolean {
+function hasSellingPlan(order: Pick<Order, "line_items">): boolean {
     // TODO(spike): confirm where a selling plan shows on the order webhook (selling_plan_id vs selling_plan_allocation)
     return order.line_items.some(
         (line) =>
@@ -23,16 +23,22 @@ export function hasSellingPlan(order: Pick<Order, "line_items">): boolean {
  * Strong signal only: a false positive would stop a real purchase from being
  * attributed, so provider note attributes alone never qualify.
  */
-export function hasRenewalSignal(order: Pick<Order, "source_name">): boolean {
+function hasRenewalSignal(order: Pick<Order, "source_name">): boolean {
     return (
         order.source_name != null && RENEWAL_SOURCE_NAMES.has(order.source_name)
     );
 }
 
-/** Weak signal: enough to ask the provider, not enough to skip attribution. */
-export function hasProviderNote(
-    order: Pick<Order, "note_attributes">
+/** Only a merchant with a provider can have the order classified, so only then may the signal skip attribution. */
+export function hasProviderRenewalSignal(
+    provider: string | null,
+    order: Pick<Order, "source_name">
 ): boolean {
+    return provider !== null && hasRenewalSignal(order);
+}
+
+/** Weak signal: enough to ask the provider, not enough to skip attribution. */
+function hasProviderNote(order: Pick<Order, "note_attributes">): boolean {
     return (order.note_attributes ?? []).some((attribute) =>
         attribute.name.startsWith(PROVIDER_NOTE_PREFIX)
     );

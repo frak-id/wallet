@@ -1,8 +1,10 @@
-import { log } from "@backend-infrastructure";
+import { log, productEvents } from "@backend-infrastructure";
 import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { CancellationReason } from "../domain/rewards/schemas";
+import type { PurchasePayload } from "../domain/rewards/types";
+import type { SubscriptionPlanOrchestrator } from "./reward";
 
 type CancelForRefundParams = {
     merchantId: string;
@@ -41,7 +43,8 @@ export class RewardLifecycleOrchestrator {
     constructor(
         private readonly assetLogRepository: AssetLogRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly campaignRuleRepository: CampaignRuleRepository
+        private readonly campaignRuleRepository: CampaignRuleRepository,
+        private readonly subscriptionPlanOrchestrator: SubscriptionPlanOrchestrator
     ) {}
 
     /**
@@ -75,6 +78,7 @@ export class RewardLifecycleOrchestrator {
                 [cancelledInteraction.id],
                 "refund"
             );
+        await this.resyncRefundedCycle(cancelledInteraction);
 
         return this.finalize(terminated, "refund", {
             ...params,
@@ -90,7 +94,61 @@ export class RewardLifecycleOrchestrator {
     async expireOverdueRewards(): Promise<LifecycleResult> {
         const terminated =
             await this.assetLogRepository.expirePendingPastDeadline();
+        this.trackExpiredPlans(terminated);
         return this.finalize(terminated, "expired", { scope: "expiration" });
+    }
+
+    /** A refunded cycle takes its step back while the step is unpaid. */
+    private async resyncRefundedCycle(interaction: {
+        merchantId: string | null;
+        identityGroupId: string | null;
+        payload: unknown;
+    }): Promise<void> {
+        const { subscription } = interaction.payload as PurchasePayload;
+        if (
+            subscription?.state !== "resolved" ||
+            !interaction.merchantId ||
+            !interaction.identityGroupId
+        ) {
+            return;
+        }
+        try {
+            await this.subscriptionPlanOrchestrator.syncPlan(
+                interaction.merchantId,
+                interaction.identityGroupId,
+                { rehold: true }
+            );
+        } catch (error) {
+            log.warn(
+                { error },
+                "Failed to resync the plan of a refunded cycle"
+            );
+        }
+    }
+
+    private trackExpiredPlans(
+        terminated: {
+            campaignRuleId: string | null;
+            identityGroupId: string;
+            planStep: number | null;
+        }[]
+    ): void {
+        const byCampaign = new Map<string, { group: string; steps: number }>();
+        for (const row of terminated) {
+            if (row.planStep === null || !row.campaignRuleId) continue;
+            const entry = byCampaign.get(row.campaignRuleId) ?? {
+                group: row.identityGroupId,
+                steps: 0,
+            };
+            entry.steps++;
+            byCampaign.set(row.campaignRuleId, entry);
+        }
+        for (const [campaignId, { group, steps }] of byCampaign) {
+            productEvents.track("subscription_plan_expired", group, {
+                campaign_id: campaignId,
+                steps,
+            });
+        }
     }
 
     /** Restore campaign budgets and emit a structured log. */

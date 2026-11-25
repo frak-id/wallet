@@ -135,6 +135,23 @@ export type ConditionGroup = {
 export type RuleConditions = RuleCondition[] | ConditionGroup;
 
 /**
+ * What a subscription campaign pays: one reward per paid billing cycle, the
+ * checkout being the first. On the offer, `referrer` and `referee` stay the
+ * first payment, so a reader unaware of subscriptions still shows a valid reward.
+ * @group RPC Schema
+ */
+export type SubscriptionRewards = {
+    /** Rewards of the first payment, the subscription checkout. */
+    firstPayment: { referrer?: EstimatedReward; referee?: EstimatedReward };
+    /** Rewards of each renewal that follows. */
+    renewal: { referrer?: EstimatedReward; referee?: EstimatedReward };
+    /** Number of renewals rewarded after the first payment. */
+    renewals: number;
+    /** Days without a paid cycle before the unpaid steps expire. */
+    inactivityDays?: number;
+};
+
+/**
  * A reward offer exposed by a merchant campaign.
  *
  * Mirrors the backend `EstimatedRewardItem` one-to-one, enforced by
@@ -172,6 +189,8 @@ export type MerchantReward = {
     merchantMaxRewardsPerUser?: number;
     /** ISO-8601 campaign end date, or `null` when open-ended. */
     expiresAt?: string | null;
+    /** Set on a subscription campaign: its rewards by moment, per paid cycle. */
+    subscription?: SubscriptionRewards;
 };
 
 /**

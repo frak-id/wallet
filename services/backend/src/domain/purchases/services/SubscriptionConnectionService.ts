@@ -78,8 +78,8 @@ export class SubscriptionConnectionService {
         return "connected";
     }
 
-    async disconnect(merchantId: string): Promise<boolean> {
-        return this.purchaseRepository.setSubscriptionConnection(
+    async disconnect(merchantId: string): Promise<void> {
+        await this.purchaseRepository.setSubscriptionConnection(
             merchantId,
             null
         );
@@ -121,16 +121,23 @@ export class SubscriptionConnectionService {
         }
     }
 
+    /** Whether the stored token was already rejected: the provider is not worth calling. */
+    hasAuthError(webhook: MerchantWebhook): boolean {
+        return parseStored(webhook.subscriptionCredentials)?.lastError != null;
+    }
+
     /** Kept on the webhook row so the Shopify app card can show it. */
     async recordAuthError(webhook: MerchantWebhook): Promise<void> {
-        const stored = parseStored(webhook.subscriptionCredentials);
-        if (!stored || stored.lastError) return;
+        const raw = webhook.subscriptionCredentials;
+        const stored = parseStored(raw);
+        if (!(raw && stored) || stored.lastError) return;
         const credentials = JSON.stringify({
             ...stored,
-            lastError: { code: "unauthorized", at: new Date().toISOString() },
+            lastError: { at: new Date().toISOString() },
         } satisfies StoredCredentials);
         await this.purchaseRepository.setSubscriptionCredentials(
             webhook.merchantId,
+            raw,
             credentials
         );
     }

@@ -1,27 +1,28 @@
+import { createHash } from "node:crypto";
 import { log } from "@backend-infrastructure/external/logger";
 
 const RECHARGE_URL = "https://api.rechargeapps.com";
-export const RECHARGE_API_VERSION = "2021-11";
+const RECHARGE_API_VERSION = "2021-11";
 const TIMEOUT_MS = 8_000;
+/** Recharge leaks 2 calls per second from a 40-call bucket per token. */
+const MIN_CALL_INTERVAL_MS = 500;
+/** Recharge asks for at least 2 seconds before retrying a throttled call. */
+const DEFAULT_RETRY_AFTER_MS = 2_000;
 
-export type RechargeLineItem = {
+type RechargeLineItem = {
     purchase_item_id: number | string;
     purchase_item_type: string;
-    quantity?: number;
-    total_price?: string;
 };
 
 export type RechargeOrder = {
     id: number;
     type: string;
     is_prepaid?: boolean;
-    status?: string;
     subtotal_price?: string;
-    total_price?: string;
     line_items?: RechargeLineItem[];
 };
 
-export type RechargeSubscription = {
+type RechargeSubscription = {
     id: number;
     order_interval_frequency?: number | string;
     charge_interval_frequency?: number | string;
@@ -31,11 +32,23 @@ export type RechargeLookup<T> =
     | { kind: "found"; value: T }
     | { kind: "missing" }
     | { kind: "unauthorized" }
+    | { kind: "rate_limited"; retryAfterMs: number }
     | { kind: "unavailable" };
+
+function retryAfterMs(response: Response): number {
+    const seconds = Number(response.headers.get("Retry-After"));
+    return Number.isFinite(seconds) && seconds > 0
+        ? seconds * 1000
+        : DEFAULT_RETRY_AFTER_MS;
+}
+
+const wait = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** Recharge API v2 (`2021-11`), read-only, authenticated by the merchant's own token. */
 export class RechargeClient {
-    constructor(private readonly baseUrl: string = RECHARGE_URL) {}
+    /** Next free call slot per token hash, so one process stays under the leak rate. */
+    private readonly nextSlot = new Map<string, number>();
 
     /** Whether the token can read orders: the cheapest call that needs `read_orders`. */
     async checkToken(
@@ -89,6 +102,12 @@ export class RechargeClient {
         if (response.status === 401 || response.status === 403) {
             return { kind: "unauthorized" };
         }
+        if (response.status === 429) {
+            return {
+                kind: "rate_limited",
+                retryAfterMs: retryAfterMs(response),
+            };
+        }
         if (response.status === 404) return { kind: "missing" };
         if (!response.ok) {
             log.warn({ status: response.status, path }, "Recharge call failed");
@@ -98,8 +117,20 @@ export class RechargeClient {
         return value ? { kind: "found", value } : { kind: "unavailable" };
     }
 
-    private get(path: string, token: string): Promise<Response | null> {
-        return fetch(`${this.baseUrl}${path}`, {
+    private async throttle(token: string): Promise<void> {
+        const now = Date.now();
+        for (const [key, next] of this.nextSlot) {
+            if (next <= now) this.nextSlot.delete(key);
+        }
+        const key = createHash("sha256").update(token).digest("hex");
+        const slot = Math.max(now, this.nextSlot.get(key) ?? 0);
+        this.nextSlot.set(key, slot + MIN_CALL_INTERVAL_MS);
+        if (slot > now) await wait(slot - now);
+    }
+
+    private async get(path: string, token: string): Promise<Response | null> {
+        await this.throttle(token);
+        return fetch(`${RECHARGE_URL}${path}`, {
             headers: {
                 "X-Recharge-Access-Token": token,
                 "X-Recharge-Version": RECHARGE_API_VERSION,

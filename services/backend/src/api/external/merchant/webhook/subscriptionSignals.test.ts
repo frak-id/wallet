@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-    hasProviderNote,
-    hasRenewalSignal,
-    hasSellingPlan,
+    hasProviderRenewalSignal,
     pendingSubscription,
 } from "./subscriptionSignals";
 
@@ -24,22 +22,24 @@ const order = (over: Record<string, unknown> = {}) =>
         ...over,
     }) as never;
 
-describe("subscription signals", () => {
-    it("sees a selling plan on a line", () => {
-        expect(hasSellingPlan(order())).toBe(false);
+describe("hasProviderRenewalSignal", () => {
+    it("treats only a contract source as a renewal", () => {
         expect(
-            hasSellingPlan(
-                order({ line_items: [line({ selling_plan_id: 42 })] })
-            )
+            hasProviderRenewalSignal("recharge", {
+                source_name: "subscription_contract",
+            })
         ).toBe(true);
+        expect(
+            hasProviderRenewalSignal("recharge", { source_name: "web" })
+        ).toBe(false);
+        expect(hasProviderRenewalSignal("recharge", {})).toBe(false);
     });
 
-    it("treats only a contract source as a renewal", () => {
-        expect(hasRenewalSignal({ source_name: "subscription_contract" })).toBe(
-            true
-        );
-        expect(hasRenewalSignal({ source_name: "web" })).toBe(false);
-        expect(hasRenewalSignal({})).toBe(false);
+    it("lets a contract source skip attribution only for a merchant with a provider", () => {
+        const contract = { source_name: "subscription_contract" };
+
+        expect(hasProviderRenewalSignal("recharge", contract)).toBe(true);
+        expect(hasProviderRenewalSignal(null, contract)).toBe(false);
     });
 
     it("reads a provider note as a hint, not a renewal", () => {
@@ -47,8 +47,7 @@ describe("subscription signals", () => {
             note_attributes: [{ name: "rc_subscription_ids", value: "1" }],
         });
 
-        expect(hasProviderNote(withNote)).toBe(true);
-        expect(hasRenewalSignal(withNote)).toBe(false);
+        expect(hasProviderRenewalSignal("recharge", withNote)).toBe(false);
     });
 });
 
@@ -74,6 +73,34 @@ describe("pendingSubscription", () => {
             pendingSubscription({
                 provider: "recharge",
                 order: order({ line_items: [line({ selling_plan_id: 1 })] }),
+                renewalSignal: false,
+                hasKnownSubscriber: vi.fn(),
+            })
+        ).resolves.toEqual(pending);
+    });
+
+    it("marks an order carrying a selling plan allocation", async () => {
+        await expect(
+            pendingSubscription({
+                provider: "recharge",
+                order: order({
+                    line_items: [line({ selling_plan_allocation: {} })],
+                }),
+                renewalSignal: false,
+                hasKnownSubscriber: vi.fn(),
+            })
+        ).resolves.toEqual(pending);
+    });
+
+    it("marks an order carrying a provider note", async () => {
+        await expect(
+            pendingSubscription({
+                provider: "recharge",
+                order: order({
+                    note_attributes: [
+                        { name: "rc_subscription_ids", value: "1" },
+                    ],
+                }),
                 renewalSignal: false,
                 hasKnownSubscriber: vi.fn(),
             })

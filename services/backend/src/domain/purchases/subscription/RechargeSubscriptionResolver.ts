@@ -1,15 +1,32 @@
 import type {
     RechargeClient,
+    RechargeLookup,
     RechargeOrder,
 } from "../../../infrastructure/integrations/recharge";
 import {
     type ResolvedSubscriptionOrder,
     SubscriptionAuthError,
+    SubscriptionRateLimitError,
     type SubscriptionResolver,
+    SubscriptionUnavailableError,
     type TokenCheck,
 } from "./types";
 
 const SUBSCRIPTION_LINE = "subscription";
+
+/** Credential, throttling and availability failures stop the resolution; the job decides what to retry. */
+function assertUsable<T>(
+    lookup: RechargeLookup<T>
+): asserts lookup is Exclude<
+    RechargeLookup<T>,
+    { kind: "unauthorized" | "rate_limited" | "unavailable" }
+> {
+    if (lookup.kind === "unauthorized") throw new SubscriptionAuthError();
+    if (lookup.kind === "rate_limited") {
+        throw new SubscriptionRateLimitError(lookup.retryAfterMs);
+    }
+    if (lookup.kind === "unavailable") throw new SubscriptionUnavailableError();
+}
 
 function toAmount(value: string | undefined): number {
     const amount = Number(value);
@@ -56,7 +73,7 @@ export class RechargeSubscriptionResolver implements SubscriptionResolver {
             order.externalId,
             token
         );
-        if (lookup.kind === "unauthorized") throw new SubscriptionAuthError();
+        assertUsable(lookup);
         if (lookup.kind !== "found") return "retry";
 
         const providerSubscriptionIds = subscriptionIds(lookup.value);
@@ -103,8 +120,7 @@ export class RechargeSubscriptionResolver implements SubscriptionResolver {
     ): Promise<number | "retry"> {
         if (!subscriptionId) return 1;
         const lookup = await this.client.getSubscription(subscriptionId, token);
-        if (lookup.kind === "unauthorized") throw new SubscriptionAuthError();
-        if (lookup.kind === "unavailable") return "retry";
+        assertUsable(lookup);
         return lookup.kind === "found" ? prepaidRatio(lookup.value) : 1;
     }
 }

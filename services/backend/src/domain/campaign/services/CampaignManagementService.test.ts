@@ -862,3 +862,60 @@ describe("CampaignManagementService percentage min/max bounds", () => {
         ).resolves.toBeDefined();
     });
 });
+
+describe("CampaignManagementService subscription cycle ranges", () => {
+    const ranged = (
+        cycles: { from: number; to: number }[]
+    ): CampaignRuleDefinition => ({
+        trigger: "purchase",
+        conditions: [],
+        subscription: {},
+        rewards: cycles.map((range) => ({
+            recipient: "referrer" as const,
+            type: "token" as const,
+            amountType: "fixed" as const,
+            amount: 5,
+            cycles: range,
+        })),
+    });
+
+    it("saves a draft whose ranges are valid", async () => {
+        const { service, update } = serviceWith(draftCampaign);
+
+        await service.update("campaign-1", {
+            rule: ranged([
+                { from: 1, to: 1 },
+                { from: 2, to: 5 },
+            ]),
+        });
+
+        expect(update).toHaveBeenCalledOnce();
+    });
+
+    it("rejects overlapping ranges on save", async () => {
+        const { service, update } = serviceWith(draftCampaign);
+
+        await expect(
+            service.update("campaign-1", {
+                rule: ranged([
+                    { from: 1, to: 3 },
+                    { from: 2, to: 5 },
+                ]),
+            })
+        ).rejects.toThrow("must not overlap");
+        expect(update).not.toHaveBeenCalled();
+    });
+
+    it("rejects a range on a campaign that is not a subscription", async () => {
+        const { service } = serviceWith(draftCampaign);
+
+        await expect(
+            service.update("campaign-1", {
+                rule: {
+                    ...ranged([{ from: 1, to: 1 }]),
+                    subscription: undefined,
+                },
+            })
+        ).rejects.toThrow("only valid on a subscription campaign");
+    });
+});

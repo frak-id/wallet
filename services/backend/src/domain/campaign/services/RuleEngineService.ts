@@ -1,8 +1,10 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
+import { roundAmount } from "../../../utils/numeric";
 import type { AssetLogRepository } from "../../rewards/repositories/AssetLogRepository";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
+import { DEFAULT_SUBSCRIPTION_INACTIVITY_DAYS } from "../schemas";
 import type {
     CalculatedReward,
     CampaignTrigger,
@@ -14,7 +16,6 @@ import type {
     TimeContext,
 } from "../types";
 import type { RewardCalculator } from "./RewardCalculator";
-import { roundAmount } from "./RewardCalculator";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type SingleCampaignResult = {
@@ -44,6 +45,21 @@ function holdIfRequired(
 ): CalculatedReward[] {
     if (!campaign.rule.holdUntilReleased) return rewards;
     return rewards.map((reward) => ({ ...reward, held: true }));
+}
+
+/** A plan prices every step on one billing cycle, not on the whole order. */
+function withCycleAmount(context: RuleContext): RuleContext {
+    const { purchase } = context;
+    if (!purchase?.subscription) return context;
+    return {
+        ...context,
+        purchase: { ...purchase, amount: purchase.subscription.cycleAmount },
+    };
+}
+
+/** Only the first step of a plan counts toward the per-user caps. */
+function countsTowardCaps(reward: CalculatedReward): boolean {
+    return reward.planStep === undefined || reward.planStep === 1;
 }
 
 function collectScopeMiss(
@@ -194,7 +210,9 @@ export class RuleEngineService {
             // earlier ones, or the cap is overshot by (matching campaigns − 1).
             if (merchantRewardCount !== undefined) {
                 merchantRewardCount += result.rewards.filter(
-                    (reward) => reward.recipient === "referee"
+                    (reward) =>
+                        reward.recipient === "referee" &&
+                        countsTowardCaps(reward)
                 ).length;
             }
         }
@@ -248,6 +266,83 @@ export class RuleEngineService {
         };
     }
 
+    /** The merchant-wide cap spans every campaign, the per-campaign one only when set. */
+    private isCapReached(
+        campaign: CampaignRuleSelect,
+        context: RuleContext,
+        merchantRewardCount: number | undefined,
+        campaignRefereeCounts: Map<string, number> | undefined
+    ): boolean {
+        const { merchantMaxRewardsPerUser, maxRewardsPerUser } = campaign.rule;
+        const identityGroupId = context.user.identityGroupId;
+
+        if (
+            merchantMaxRewardsPerUser !== undefined &&
+            merchantRewardCount !== undefined &&
+            merchantRewardCount >= merchantMaxRewardsPerUser
+        ) {
+            log.debug(
+                {
+                    campaignId: campaign.id,
+                    identityGroupId,
+                    merchantRewardCount,
+                    merchantMaxRewardsPerUser,
+                },
+                "Merchant-wide per-user reward cap reached"
+            );
+            return true;
+        }
+
+        const userRewardCount = campaignRefereeCounts?.get(campaign.id) ?? 0;
+        if (
+            maxRewardsPerUser !== undefined &&
+            userRewardCount >= maxRewardsPerUser
+        ) {
+            log.debug(
+                {
+                    campaignId: campaign.id,
+                    identityGroupId,
+                    userRewardCount,
+                    maxPerUser: maxRewardsPerUser,
+                },
+                "Per-campaign per-user reward cap reached"
+            );
+            return true;
+        }
+        return false;
+    }
+
+    /** A subscription campaign prices a whole plan; any other prices one payout. */
+    private priceRewards(
+        campaign: CampaignRuleSelect,
+        context: RuleContext,
+        referralChain: ReferralChainMember[] | undefined,
+        merchantDefaultToken: Address | undefined
+    ) {
+        const { rule } = campaign;
+        if (rule.subscription) {
+            return this.rewardCalculator.calculatePlan({
+                rewards: rule.rewards,
+                context: withCycleAmount(context),
+                campaignRuleId: campaign.id,
+                inactivityDays:
+                    rule.subscription.inactivityDays ??
+                    DEFAULT_SUBSCRIPTION_INACTIVITY_DAYS,
+                subscription: rule.subscription,
+                merchantDefaultToken,
+            });
+        }
+        return this.rewardCalculator.calculateAll(
+            rule.rewards,
+            context,
+            campaign.id,
+            referralChain,
+            rule.pendingRewardExpirationDays,
+            rule.defaultLockupSeconds,
+            merchantDefaultToken
+        );
+    }
+
     private async evaluateSingleCampaign(
         campaign: CampaignRuleSelect,
         context: RuleContext,
@@ -257,6 +352,11 @@ export class RuleEngineService {
         fetchReferralChain?: ReferralChainFetcher,
         merchantDefaultToken?: Address
     ): Promise<SingleCampaignResult> {
+        // A subscription campaign only ever pays on a counted subscription checkout.
+        if (campaign.rule.subscription && !context.purchase?.subscription) {
+            return campaignResult();
+        }
+
         const conditionsMatch = this.conditionEvaluator.evaluate(
             campaign.rule.conditions,
             context
@@ -290,42 +390,15 @@ export class RuleEngineService {
             return campaignResult();
         }
 
-        // Check merchant-wide per-user cap (across all campaigns for this merchant)
         if (
-            campaign.rule.merchantMaxRewardsPerUser !== undefined &&
-            merchantRewardCount !== undefined &&
-            merchantRewardCount >= campaign.rule.merchantMaxRewardsPerUser
+            this.isCapReached(
+                campaign,
+                context,
+                merchantRewardCount,
+                campaignRefereeCounts
+            )
         ) {
-            log.debug(
-                {
-                    campaignId: campaign.id,
-                    identityGroupId: context.user.identityGroupId,
-                    merchantRewardCount,
-                    merchantMaxRewardsPerUser:
-                        campaign.rule.merchantMaxRewardsPerUser,
-                },
-                "Merchant-wide per-user reward cap reached"
-            );
             return campaignResult({ matched: true });
-        }
-
-        // Check per-campaign per-user cap (only if explicitly set)
-        if (campaign.rule.maxRewardsPerUser !== undefined) {
-            const userRewardCount =
-                campaignRefereeCounts?.get(campaign.id) ?? 0;
-
-            if (userRewardCount >= campaign.rule.maxRewardsPerUser) {
-                log.debug(
-                    {
-                        campaignId: campaign.id,
-                        identityGroupId: context.user.identityGroupId,
-                        userRewardCount,
-                        maxPerUser: campaign.rule.maxRewardsPerUser,
-                    },
-                    "Per-campaign per-user reward cap reached"
-                );
-                return campaignResult({ matched: true });
-            }
         }
 
         const hasChainedReward = campaign.rule.rewards.some(
@@ -347,13 +420,10 @@ export class RuleEngineService {
         }
 
         const { calculated, errors, deferForUnpriceableReward, deferReason } =
-            await this.rewardCalculator.calculateAll(
-                campaign.rule.rewards,
+            await this.priceRewards(
+                campaign,
                 scopedContext,
-                campaign.id,
                 referralChain,
-                campaign.rule.pendingRewardExpirationDays,
-                campaign.rule.defaultLockupSeconds,
                 merchantDefaultToken
             );
 

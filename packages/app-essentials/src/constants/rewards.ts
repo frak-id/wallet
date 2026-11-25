@@ -21,3 +21,12 @@ export const REWARD_LOCKUP = {
     /** Seconds equivalent of MAX_DAYS — used for backend schema validation. */
     MAX_SECONDS: MAX_DAYS * SECONDS_PER_DAY,
 } as const;
+
+/** Limits of a progressive subscription plan, checked by the dashboard and at publish. */
+export const SUBSCRIPTION_PLAN = {
+    /** Steps in a plan, the first payment included. */
+    MAX_STEPS: 24,
+    DEFAULT_INACTIVITY_DAYS: 90,
+    MAX_INACTIVITY_DAYS: 365,
+    MAX_STEP_DAYS: 365,
+} as const;

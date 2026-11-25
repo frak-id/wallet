@@ -1,4 +1,4 @@
-import { eventEmitter, log } from "@backend-infrastructure";
+import { eventEmitter, log, productEvents } from "@backend-infrastructure";
 import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
@@ -23,12 +23,13 @@ import type {
     CreateAssetLogParams,
     PurchasePayload,
 } from "../domain/rewards/types";
-import { db } from "../infrastructure/persistence/postgres";
+import { db, withAdvisoryLock } from "../infrastructure/persistence/postgres";
 import type { IdentityOrchestrator } from "./identity";
 import {
     applyFrakReferralPolicy,
     type InteractionContextBuilder,
     type PolicyReward,
+    type SubscriptionPlanOrchestrator,
 } from "./reward";
 
 type BatchProcessResult = {
@@ -69,6 +70,18 @@ type MerchantGroupResult = Pick<
 // are independent and run concurrently.
 const MERCHANT_CONCURRENCY = 5;
 
+function isCountedSubscriptionCheckout(
+    interaction: InteractionLogSelect
+): boolean {
+    if (interaction.type !== "purchase") return false;
+    const { subscription } = interaction.payload as PurchasePayload;
+    return (
+        subscription?.state === "resolved" &&
+        subscription.kind === "checkout" &&
+        subscription.counted
+    );
+}
+
 export class BatchRewardOrchestrator {
     constructor(
         private readonly interactionLogRepository: InteractionLogRepository,
@@ -78,7 +91,8 @@ export class BatchRewardOrchestrator {
         private readonly identityOrchestrator: IdentityOrchestrator,
         private readonly contextBuilder: InteractionContextBuilder,
         private readonly merchantRepository: MerchantRepository,
-        private readonly campaignRuleRepository: CampaignRuleRepository
+        private readonly campaignRuleRepository: CampaignRuleRepository,
+        private readonly subscriptionPlanOrchestrator: SubscriptionPlanOrchestrator
     ) {}
 
     async processPendingInteractions(options: {
@@ -202,6 +216,21 @@ export class BatchRewardOrchestrator {
         interaction: InteractionLogSelect,
         merchantId: string
     ): Promise<ProcessSingleResult> {
+        const { identityGroupId } = interaction;
+        if (identityGroupId && isCountedSubscriptionCheckout(interaction)) {
+            // Two checkouts of one subscriber must not both open a plan.
+            return withAdvisoryLock(
+                `subscription-plan:${merchantId}:${identityGroupId}`,
+                () => this.evaluateInteraction(interaction, merchantId)
+            );
+        }
+        return this.evaluateInteraction(interaction, merchantId);
+    }
+
+    private async evaluateInteraction(
+        interaction: InteractionLogSelect,
+        merchantId: string
+    ): Promise<ProcessSingleResult> {
         // Budget consumed during rule evaluation must be released on any path
         // that does not persist the matching rewards; declared out here so the
         // catch can compensate too. Success and catch paths are mutually
@@ -216,8 +245,11 @@ export class BatchRewardOrchestrator {
                 };
             }
 
-            const subscriptionResult =
-                await this.handleSubscriptionInteraction(interaction);
+            const subscriptionResult = await this.handleSubscriptionInteraction(
+                interaction,
+                merchantId,
+                interaction.identityGroupId
+            );
             if (subscriptionResult) return subscriptionResult;
 
             const walletAddress =
@@ -356,6 +388,12 @@ export class BatchRewardOrchestrator {
                 consumedByCampaign,
                 txOutcome.createdAssets
             );
+            await this.startPlans(
+                txOutcome.createdAssets,
+                merchantId,
+                interaction.identityGroupId,
+                interaction.id
+            );
 
             if (txOutcome.createdAssets.length > 0) {
                 try {
@@ -421,11 +459,14 @@ export class BatchRewardOrchestrator {
     }
 
     /**
-     * A pending order waits for its provider; a renewal is a billing cycle of
-     * an existing subscription, never a purchase to evaluate.
+     * A pending order waits for its provider. A renewal, or a checkout of a
+     * subscriber who already holds a plan, is a billing cycle: it is never
+     * evaluated, it moves the plan forward.
      */
     private async handleSubscriptionInteraction(
-        interaction: InteractionLogSelect
+        interaction: InteractionLogSelect,
+        merchantId: string,
+        identityGroupId: string
     ): Promise<ProcessSingleResult | null> {
         if (interaction.type !== "purchase") return null;
         const { subscription } = interaction.payload as PurchasePayload;
@@ -438,7 +479,22 @@ export class BatchRewardOrchestrator {
             );
             return { success: true, rewardsCreated: 0, deferred: true };
         }
-        if (subscription.kind !== "renewal") return null;
+
+        const isCycle =
+            subscription.kind === "renewal" ||
+            (await this.subscriptionPlanOrchestrator.hasPlan(
+                merchantId,
+                identityGroupId
+            ));
+        if (!isCycle) return null;
+
+        const sync = await this.subscriptionPlanOrchestrator.syncPlan(
+            merchantId,
+            identityGroupId
+        );
+        if (sync.deferred) {
+            return { success: true, rewardsCreated: 0, deferred: true };
+        }
 
         await db
             .update(interactionLogsTable)
@@ -454,6 +510,27 @@ export class BatchRewardOrchestrator {
 
     /** Skips the claim lookup unless Frak is among the recipients (hot path). */
     private async resolveFrakReferralRewards(params: {
+        rewards: CalculatedReward[];
+        userIdentityGroupId: string;
+        merchantId: string;
+        trigger: CampaignTrigger;
+        directReferrerId: string | null;
+    }): Promise<PolicyReward[]> {
+        // Plan steps skip the welcome-bonus redirect: Frak's share is dropped.
+        const planRewards = params.rewards.filter(
+            (reward) =>
+                reward.planStep !== undefined &&
+                reward.recipientIdentityGroupId !==
+                    FRAK_REFERRAL_IDENTITY_GROUP_ID
+        );
+        const rewards = params.rewards.filter(
+            (reward) => reward.planStep === undefined
+        );
+        const regular = await this.applyFrakPolicy({ ...params, rewards });
+        return [...regular, ...planRewards];
+    }
+
+    private async applyFrakPolicy(params: {
         rewards: CalculatedReward[];
         userIdentityGroupId: string;
         merchantId: string;
@@ -599,14 +676,75 @@ export class BatchRewardOrchestrator {
                 expirationDays: reward.expirationDays,
                 lockupSeconds: reward.lockupSeconds,
                 held: reward.held,
+                planStep: reward.planStep,
             });
         }
 
         return params;
     }
 
+    /**
+     * The plan's first cycle is already paid: release what it earned, without a
+     * second announcement. A deferred or failed release reopens the checkout, so
+     * the cron's plan-holder path syncs it again.
+     */
+    private async startPlans(
+        created: AssetLogSelect[],
+        merchantId: string,
+        refereeGroupId: string,
+        interactionId: string
+    ): Promise<void> {
+        const stepsByCampaign = new Map<string, Set<number>>();
+        for (const asset of created) {
+            if (asset.planStep === null || !asset.campaignRuleId) continue;
+            const steps =
+                stepsByCampaign.get(asset.campaignRuleId) ?? new Set();
+            steps.add(asset.planStep);
+            stepsByCampaign.set(asset.campaignRuleId, steps);
+        }
+        if (stepsByCampaign.size === 0) return;
+
+        for (const [campaignId, steps] of stepsByCampaign) {
+            productEvents.track("subscription_plan_created", refereeGroupId, {
+                campaign_id: campaignId,
+                steps: steps.size,
+            });
+        }
+        let released = false;
+        try {
+            const sync = await this.subscriptionPlanOrchestrator.syncPlan(
+                merchantId,
+                refereeGroupId,
+                { notifyUnlocks: false }
+            );
+            released = !sync.deferred;
+        } catch (error) {
+            log.warn({ error }, "Failed to release the first plan step");
+        }
+        if (released) return;
+
+        try {
+            await db
+                .update(interactionLogsTable)
+                .set({ processedAt: null })
+                .where(eq(interactionLogsTable.id, interactionId));
+        } catch (error) {
+            log.error(
+                { error, interactionLogId: interactionId },
+                "Failed to reopen a checkout whose first plan step is held"
+            );
+        }
+    }
+
     private async sendRewardPendingNotifications(
-        assets: { identityGroupId: string }[],
+        assets: Pick<
+            AssetLogSelect,
+            | "identityGroupId"
+            | "planStep"
+            | "campaignRuleId"
+            | "interactionLogId"
+            | "recipientType"
+        >[],
         merchantId: string
     ) {
         if (assets.length === 0) return;
@@ -623,10 +761,17 @@ export class BatchRewardOrchestrator {
             })
         );
 
+        // The steps of one plan are one reward, not five.
+        const countedPlans = new Set<string>();
         const walletCounts = new Map<Address, number>();
         for (const asset of assets) {
             const wallet = walletByGroupId.get(asset.identityGroupId);
             if (!wallet) continue;
+            if (asset.planStep !== null) {
+                const planKey = `${wallet}:${asset.campaignRuleId}:${asset.interactionLogId}:${asset.recipientType}`;
+                if (countedPlans.has(planKey)) continue;
+                countedPlans.add(planKey);
+            }
             walletCounts.set(wallet, (walletCounts.get(wallet) ?? 0) + 1);
         }
 

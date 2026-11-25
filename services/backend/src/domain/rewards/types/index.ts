@@ -31,6 +31,10 @@ export type DetailedAssetLog = {
     availableAt: Date | null;
     /** Held and not released yet. */
     held: boolean;
+    /** 1-based step of a subscription plan; null on any other reward. */
+    planStep: number | null;
+    campaignRuleId: string | null;
+    interactionLogId: string | null;
 
     cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;

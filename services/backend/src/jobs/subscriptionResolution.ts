@@ -21,12 +21,9 @@ CronRegistry.register(
             );
             if (!outcome.ran) return;
 
-            const { resolved, retry, unresolved } = outcome.result;
-            if (resolved + retry + unresolved > 0) {
-                logger.info(
-                    { resolved, retry, unresolved },
-                    "Subscription resolution job completed"
-                );
+            const counts = outcome.result;
+            if (Object.values(counts).some((count) => count > 0)) {
+                logger.info(counts, "Subscription resolution job completed");
             }
         },
     })

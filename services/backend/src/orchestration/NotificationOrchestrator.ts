@@ -66,6 +66,47 @@ function formatEuros(amount: number, locale: string) {
     }).format(amount);
 }
 
+function stepUnlockedMessage(
+    merchantName: string,
+    role: "referrer" | "referee",
+    eurAmount: number | undefined
+) {
+    const en =
+        eurAmount === undefined
+            ? "A reward"
+            : `+${formatEuros(eurAmount, "en")}`;
+    const fr =
+        eurAmount === undefined
+            ? "Une récompense"
+            : `+${formatEuros(eurAmount, "fr")}`;
+    const data = { url: walletNotificationUrl };
+    return role === "referrer"
+        ? {
+              en: {
+                  title: "Reward unlocked!",
+                  body: `Your friend is still subscribed: ${en} unlocked at ${merchantName}.`,
+                  data,
+              },
+              fr: {
+                  title: "Récompense débloquée !",
+                  body: `Ton ami est toujours abonné : ${fr} débloqué chez ${merchantName}.`,
+                  data,
+              },
+          }
+        : {
+              en: {
+                  title: "Reward unlocked!",
+                  body: `${en} unlocked at ${merchantName}.`,
+                  data,
+              },
+              fr: {
+                  title: "Récompense débloquée !",
+                  body: `${fr} débloqué chez ${merchantName}.`,
+                  data,
+              },
+          };
+}
+
 function gameWonMessage(prizeAmount: number) {
     const data = { url: walletNotificationUrl };
     return {
@@ -257,12 +298,26 @@ export class NotificationOrchestrator {
 
             const merchantName =
                 merchantNames[notification.merchantId] ?? "a merchant";
-            const payload = notificationMessages[event.type](
-                merchantName,
-                notification.rewardCount
-            );
+            const payload =
+                "role" in notification && event.type === "reward_step_unlocked"
+                    ? stepUnlockedMessage(
+                          merchantName,
+                          notification.role,
+                          notification.eurAmount
+                      )
+                    : this.pushMessage(event.type, merchantName, notification);
             await this.send(notification.wallets, payload, event.type);
         }
+    }
+
+    private pushMessage(
+        type: "reward_pending" | "reward_settled" | "reward_step_unlocked",
+        merchantName: string,
+        notification: NotificationEventItem
+    ) {
+        return notificationMessages[
+            type === "reward_settled" ? "reward_settled" : "reward_pending"
+        ](merchantName, notification.rewardCount);
     }
 
     private async send(

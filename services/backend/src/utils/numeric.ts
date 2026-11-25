@@ -21,6 +21,11 @@ export function toNumber(value: string | number | null | undefined): number {
  * `denom > 0 ? num / denom : 0` pattern used by every derived ratio
  * (CPA, ROI, sharing rate, conversion %, etc.).
  */
+/** Rounds to 6 decimals, dropping sub-cent float drift from summed amounts. */
+export function roundAmount(amount: number): number {
+    return Math.round(amount * 1_000_000) / 1_000_000;
+}
+
 export function safeRatio(num: number, denom: number): number {
     if (!denom || !Number.isFinite(num) || !Number.isFinite(denom)) return 0;
     const value = num / denom;

@@ -545,6 +545,7 @@ vi.mock("@backend-infrastructure", () => ({
         on: vi.fn(),
         off: vi.fn(),
     },
+    productEvents: { track: vi.fn() },
     businessMetrics: {
         settlementRewards: vi.fn(),
         settlementTx: vi.fn(),

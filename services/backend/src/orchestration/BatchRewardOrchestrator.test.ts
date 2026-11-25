@@ -34,6 +34,8 @@ vi.mock("../infrastructure/persistence/postgres", () => {
                 fn(tx),
             update: tx.update,
         },
+        withAdvisoryLock: async (_name: string, task: () => Promise<unknown>) =>
+            task(),
     };
 });
 
@@ -75,6 +77,8 @@ function makeOrchestrator(opts: {
     referrer: string | null;
     bonusAlreadyClaimed?: boolean;
     payload?: unknown;
+    hasPlan?: boolean;
+    syncDeferred?: boolean;
 }) {
     const assetLogRepository = {
         hasLiveWelcomeBonus: vi
@@ -87,7 +91,14 @@ function makeOrchestrator(opts: {
                 recipientType: p.recipientType,
                 amount: p.amount.toString(),
                 held: p.held,
+                planStep: p.planStep,
             })),
+    };
+    const planOrchestrator = {
+        hasPlan: vi.fn().mockResolvedValue(opts.hasPlan ?? false),
+        syncPlan: vi.fn().mockResolvedValue({
+            deferred: opts.syncDeferred ?? false,
+        }),
     };
     const campaignRuleRepository = { restoreBudget: vi.fn() };
     const ruleEngine = {
@@ -124,7 +135,8 @@ function makeOrchestrator(opts: {
             }),
         } as never,
         { getDefaultRewardToken: vi.fn().mockResolvedValue(TOKEN) } as never,
-        campaignRuleRepository as never
+        campaignRuleRepository as never,
+        planOrchestrator as never
     );
 
     return {
@@ -132,6 +144,7 @@ function makeOrchestrator(opts: {
         assetLogRepository,
         campaignRuleRepository,
         ruleEngine,
+        planOrchestrator,
     };
 }
 
@@ -211,23 +224,28 @@ describe("BatchRewardOrchestrator subscription interactions", () => {
         txUpdate.mockResolvedValue(undefined);
     });
 
-    const resolvedPayload = (kind: "checkout" | "renewal") => ({
+    const resolvedPayload = (kind: "checkout" | "renewal", counted = true) => ({
         subscription: {
             state: "resolved",
             kind,
             cyclesCovered: 1,
             merchandiseAmount: 30,
-            counted: true,
+            counted,
             providerSubscriptionIds: ["sub-1"],
         },
     });
 
+    const planReward = (step: number, over: Partial<CalculatedReward> = {}) =>
+        reward({ planStep: step, held: true, ...over });
+
     it("defers an interaction whose subscription is still pending", async () => {
-        const { orchestrator, ruleEngine } = makeOrchestrator({
-            rewards: [refereeReward],
-            referrer: null,
-            payload: { subscription: { state: "pending" } },
-        });
+        const { orchestrator, ruleEngine, planOrchestrator } = makeOrchestrator(
+            {
+                rewards: [refereeReward],
+                referrer: null,
+                payload: { subscription: { state: "pending" } },
+            }
+        );
 
         const result = await orchestrator.processPendingInteractions({
             limit: 10,
@@ -235,37 +253,153 @@ describe("BatchRewardOrchestrator subscription interactions", () => {
 
         expect(result).toMatchObject({ deferredCount: 1, processedCount: 0 });
         expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
-        expect(txInsert).not.toHaveBeenCalled();
+        expect(planOrchestrator.syncPlan).not.toHaveBeenCalled();
     });
 
-    it("never evaluates a renewal as a purchase", async () => {
-        const { orchestrator, ruleEngine } = makeOrchestrator({
-            rewards: [refereeReward],
+    it("moves the plan forward on a renewal instead of evaluating it", async () => {
+        const { orchestrator, ruleEngine, planOrchestrator } = makeOrchestrator(
+            {
+                rewards: [refereeReward],
+                referrer: null,
+                payload: resolvedPayload("renewal"),
+            }
+        );
+
+        const result = await orchestrator.processPendingInteractions({
+            limit: 10,
+        });
+
+        expect(result).toMatchObject({ processedCount: 1, rewardsCreated: 0 });
+        expect(planOrchestrator.syncPlan).toHaveBeenCalledWith(MERCHANT, USER);
+        expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
+        expect(txUpdate).toHaveBeenCalledOnce();
+    });
+
+    it("leaves a renewal unprocessed while a step cannot be priced", async () => {
+        const { orchestrator } = makeOrchestrator({
+            rewards: [],
             referrer: null,
             payload: resolvedPayload("renewal"),
+            syncDeferred: true,
         });
 
         const result = await orchestrator.processPendingInteractions({
             limit: 10,
         });
 
-        expect(result).toMatchObject({
-            processedCount: 1,
-            rewardsCreated: 0,
-        });
-        expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
-        expect(txUpdate).toHaveBeenCalledOnce();
+        expect(result).toMatchObject({ deferredCount: 1, processedCount: 0 });
+        expect(txUpdate).not.toHaveBeenCalled();
     });
 
-    it("still evaluates a subscription checkout as a purchase", async () => {
-        const { orchestrator, ruleEngine } = makeOrchestrator({
-            rewards: [refereeReward],
+    it("counts the checkout of a resubscriber as a cycle, without evaluating", async () => {
+        const { orchestrator, ruleEngine, planOrchestrator } = makeOrchestrator(
+            {
+                rewards: [refereeReward],
+                referrer: null,
+                payload: resolvedPayload("checkout"),
+                hasPlan: true,
+            }
+        );
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(planOrchestrator.hasPlan).toHaveBeenCalledWith(MERCHANT, USER);
+        expect(planOrchestrator.syncPlan).toHaveBeenCalledWith(MERCHANT, USER);
+        expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
+    });
+
+    it("evaluates the first checkout of a subscriber and opens the plan", async () => {
+        const { orchestrator, ruleEngine, planOrchestrator } = makeOrchestrator(
+            {
+                rewards: [planReward(1), planReward(2)],
+                referrer: null,
+                payload: resolvedPayload("checkout"),
+            }
+        );
+
+        const result = await orchestrator.processPendingInteractions({
+            limit: 10,
+        });
+
+        expect(ruleEngine.evaluateRules).toHaveBeenCalledOnce();
+        expect(result.rewardsCreated).toBe(2);
+        expect(txInsert).toHaveBeenCalledWith([
+            expect.objectContaining({ planStep: 1, held: true }),
+            expect.objectContaining({ planStep: 2, held: true }),
+        ]);
+        expect(planOrchestrator.syncPlan).toHaveBeenCalledWith(MERCHANT, USER, {
+            notifyUnlocks: false,
+        });
+    });
+
+    it("leaves the checkout to the cron when its first release is deferred", async () => {
+        const { orchestrator } = makeOrchestrator({
+            rewards: [planReward(1)],
+            referrer: null,
+            payload: resolvedPayload("checkout"),
+            syncDeferred: true,
+        });
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(txUpdate).toHaveBeenCalledTimes(2);
+    });
+
+    it("leaves the checkout to the cron when its first release fails", async () => {
+        const { orchestrator, planOrchestrator } = makeOrchestrator({
+            rewards: [planReward(1)],
+            referrer: null,
+            payload: resolvedPayload("checkout"),
+        });
+        planOrchestrator.syncPlan.mockRejectedValue(new Error("boom"));
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(txUpdate).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps the checkout processed when its first step was released", async () => {
+        const { orchestrator } = makeOrchestrator({
+            rewards: [planReward(1)],
             referrer: null,
             payload: resolvedPayload("checkout"),
         });
 
         await orchestrator.processPendingInteractions({ limit: 10 });
 
+        expect(txUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it("evaluates a checkout that earned nothing like a plain purchase", async () => {
+        const { orchestrator, ruleEngine } = makeOrchestrator({
+            rewards: [],
+            referrer: null,
+            payload: resolvedPayload("checkout", false),
+        });
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
         expect(ruleEngine.evaluateRules).toHaveBeenCalledOnce();
+    });
+
+    it("drops the Frak share of a plan instead of redirecting it", async () => {
+        const { orchestrator, assetLogRepository } = makeOrchestrator({
+            rewards: [
+                planReward(1),
+                planReward(1, {
+                    recipient: "referrer",
+                    recipientIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+                }),
+            ],
+            referrer: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+            payload: resolvedPayload("checkout"),
+        });
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(txInsert).toHaveBeenCalledWith([
+            expect.objectContaining({ recipientType: "referee", planStep: 1 }),
+        ]);
+        expect(assetLogRepository.hasLiveWelcomeBonus).not.toHaveBeenCalled();
     });
 });

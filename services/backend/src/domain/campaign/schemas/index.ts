@@ -1,5 +1,8 @@
 import { t } from "@backend-utils";
-import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
+import {
+    REWARD_LOCKUP,
+    SUBSCRIPTION_PLAN,
+} from "@frak-labs/app-essentials/constants/rewards";
 import type { Static, TSchema } from "elysia";
 import { DistributionStatusSchema } from "../../campaign-bank/schemas";
 import {
@@ -7,7 +10,12 @@ import {
     type InteractionType,
     InteractionTypeSchema,
     RecipientTypeSchema,
+    type SubscriptionStepBy,
+    SubscriptionStepBySchema,
+    subscriptionStepBy,
 } from "../../rewards/schemas";
+
+export { type SubscriptionStepBy, subscriptionStepBy };
 
 export const CampaignStatusSchema = t.Union([
     t.Literal("draft"),
@@ -110,6 +118,15 @@ export const RewardTierSchema = t.Union([
 ]);
 export type RewardTier = Static<typeof RewardTierSchema>;
 
+export const MAX_REWARD_CYCLES = SUBSCRIPTION_PLAN.MAX_STEPS;
+
+// Billing cycles a reward definition pays for, both ends included: a
+// subscription campaign pays one step per paid cycle.
+const RewardCyclesSchema = t.Object({
+    from: t.Integer({ minimum: 1, maximum: MAX_REWARD_CYCLES }),
+    to: t.Integer({ minimum: 1, maximum: MAX_REWARD_CYCLES }),
+});
+
 const FixedRewardDefinitionSchema = t.Object({
     recipient: RecipientTypeSchema,
     type: AssetTypeSchema,
@@ -118,6 +135,7 @@ const FixedRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
+    cycles: t.Optional(RewardCyclesSchema),
 });
 export type FixedRewardDefinition = Static<typeof FixedRewardDefinitionSchema>;
 
@@ -135,6 +153,7 @@ const PercentageRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
+    cycles: t.Optional(RewardCyclesSchema),
 });
 export type PercentageRewardDefinition = Static<
     typeof PercentageRewardDefinitionSchema
@@ -149,6 +168,7 @@ const TieredRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
+    cycles: t.Optional(RewardCyclesSchema),
 });
 export type TieredRewardDefinition = Static<
     typeof TieredRewardDefinitionSchema
@@ -160,6 +180,34 @@ export const RewardDefinitionSchema = t.Union([
     TieredRewardDefinitionSchema,
 ]);
 export type RewardDefinition = Static<typeof RewardDefinitionSchema>;
+
+export const DEFAULT_SUBSCRIPTION_INACTIVITY_DAYS =
+    SUBSCRIPTION_PLAN.DEFAULT_INACTIVITY_DAYS;
+const MAX_SUBSCRIPTION_INACTIVITY_DAYS = SUBSCRIPTION_PLAN.MAX_INACTIVITY_DAYS;
+export const MAX_SUBSCRIPTION_STEP_DAYS = SUBSCRIPTION_PLAN.MAX_STEP_DAYS;
+
+/**
+ * Switches a purchase campaign to progressive subscription rewards: it matches
+ * subscription checkouts only, which pay step 1; `stepBy` earns the others.
+ */
+const SubscriptionRuleSchema = t.Object({
+    /** Days without a counted cycle before the unpaid steps expire. */
+    inactivityDays: t.Optional(
+        t.Integer({
+            minimum: 1,
+            maximum: MAX_SUBSCRIPTION_INACTIVITY_DAYS,
+        })
+    ),
+    /** Defaults to `cycle`. */
+    stepBy: t.Optional(SubscriptionStepBySchema),
+    /** `amount` only: paid after the first cycle per step, in reward-token units. */
+    stepAmount: t.Optional(t.Number({ exclusiveMinimum: 0 })),
+    /** `duration` only: days of active subscription per step. */
+    stepDays: t.Optional(
+        t.Integer({ minimum: 1, maximum: MAX_SUBSCRIPTION_STEP_DAYS })
+    ),
+});
+export type SubscriptionRule = Static<typeof SubscriptionRuleSchema>;
 
 export const CampaignRuleDefinitionSchema = t.Object({
     trigger: CampaignTriggerSchema,
@@ -183,6 +231,7 @@ export const CampaignRuleDefinitionSchema = t.Object({
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
     /** Rewards are created held and pay only once something releases them. */
     holdUntilReleased: t.Optional(t.Boolean()),
+    subscription: t.Optional(SubscriptionRuleSchema),
 });
 // Manual type def needed - recursive ConditionGroupSchema breaks Static<> inference
 export type CampaignRuleDefinition = {
@@ -195,6 +244,7 @@ export type CampaignRuleDefinition = {
     maxRewardsPerUser?: number;
     merchantMaxRewardsPerUser?: number;
     holdUntilReleased?: boolean;
+    subscription?: SubscriptionRule;
 };
 
 const BudgetConfigItemSchema = t.Object({
@@ -220,6 +270,7 @@ const CampaignGoalSchema = t.Union([
     t.Literal("traffic"),
     t.Literal("registration"),
     t.Literal("sales"),
+    t.Literal("subscription"),
     t.Literal("retention"),
 ]);
 export type CampaignGoal = Static<typeof CampaignGoalSchema>;
@@ -276,6 +327,25 @@ const EstimatedRewardSchema = t.Union([
 ]);
 export type EstimatedReward = Static<typeof EstimatedRewardSchema>;
 
+/** Rewards of plan steps `from` to `to`; an amount step's percentage comes as its fixed amount. */
+const SubscriptionStepRewardsSchema = t.Object({
+    from: t.Number(),
+    to: t.Number(),
+    referrer: t.Optional(EstimatedRewardSchema),
+    referee: t.Optional(EstimatedRewardSchema),
+});
+
+// A subscription campaign's rewards by step range, step 1 being the first
+// payment. On the item, `referrer` and `referee` stay the first payment, which
+// is what a client unaware of subscriptions reads.
+const SubscriptionEstimatedRewardsSchema = t.Object({
+    steps: t.Array(SubscriptionStepRewardsSchema),
+    stepBy: t.Optional(SubscriptionStepBySchema),
+});
+export type SubscriptionEstimatedRewards = Static<
+    typeof SubscriptionEstimatedRewardsSchema
+>;
+
 const EstimatedRewardItemSchema = t.Object({
     token: t.Optional(t.Address()),
     campaignId: t.String(),
@@ -290,6 +360,7 @@ const EstimatedRewardItemSchema = t.Object({
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
     expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
+    subscription: t.Optional(SubscriptionEstimatedRewardsSchema),
 });
 export type EstimatedRewardItem = Omit<
     Static<typeof EstimatedRewardItemSchema>,
@@ -321,6 +392,7 @@ const BestRewardSchema = t.Object({
     lockupDurationDays: t.Optional(t.Number()),
     referrerReward: t.Optional(EstimatedRewardSchema),
     refereeReward: t.Optional(EstimatedRewardSchema),
+    subscription: t.Optional(SubscriptionEstimatedRewardsSchema),
     minPurchaseValue: t.Optional(t.Number()),
     // The gate, not the reward's basis — a product-gated campaign can still pay a
     // percentage of the whole basket. See `BestReward.isProductScoped` in sdk/core.

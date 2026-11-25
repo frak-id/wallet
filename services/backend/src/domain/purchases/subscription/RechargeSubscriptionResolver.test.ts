@@ -4,24 +4,24 @@ import type {
     RechargeOrder,
 } from "../../../infrastructure/integrations/recharge";
 import { RechargeSubscriptionResolver } from "./RechargeSubscriptionResolver";
-import { SubscriptionAuthError } from "./types";
+import {
+    SubscriptionAuthError,
+    SubscriptionRateLimitError,
+    SubscriptionUnavailableError,
+} from "./types";
 
 const TOKEN = "recharge-token";
 
 const subscriptionLine = {
     purchase_item_id: 98765,
     purchase_item_type: "subscription",
-    quantity: 1,
-    total_price: "30.00",
 };
 
 const checkoutOrder: RechargeOrder = {
     id: 1234567,
     type: "CHECKOUT",
     is_prepaid: false,
-    status: "SUCCESS",
     subtotal_price: "27.00",
-    total_price: "32.00",
     line_items: [subscriptionLine],
 };
 
@@ -37,7 +37,6 @@ const prepaidShipment: RechargeOrder = {
     ...renewalOrder,
     is_prepaid: true,
     subtotal_price: "0.00",
-    total_price: "0.00",
 };
 
 const threeMonthPrepaid = {
@@ -137,7 +136,7 @@ describe("RechargeSubscriptionResolver", () => {
         });
     });
 
-    it("retries a prepaid order while its subscription cannot be read", async () => {
+    it("raises an unavailable error while a prepaid order's subscription cannot be read", async () => {
         const resolver = makeResolver({
             ...found(prepaidCheckout),
             getSubscription: vi.fn().mockResolvedValue({ kind: "unavailable" }),
@@ -145,7 +144,7 @@ describe("RechargeSubscriptionResolver", () => {
 
         await expect(
             resolver.resolve({ externalId: "1" }, TOKEN)
-        ).resolves.toBe("retry");
+        ).rejects.toBeInstanceOf(SubscriptionUnavailableError);
     });
 
     it("answers none for an order without a subscription line", async () => {
@@ -163,18 +162,29 @@ describe("RechargeSubscriptionResolver", () => {
         expect(result).toMatchObject({ kind: "none" });
     });
 
-    it.each(["missing", "unavailable"])(
-        "retries when the order is %s",
-        async (kind) => {
-            const resolver = makeResolver({
-                findOrderByExternalId: vi.fn().mockResolvedValue({ kind }),
-            });
+    it("retries when the order is missing", async () => {
+        const resolver = makeResolver({
+            findOrderByExternalId: vi
+                .fn()
+                .mockResolvedValue({ kind: "missing" }),
+        });
 
-            await expect(
-                resolver.resolve({ externalId: "1" }, TOKEN)
-            ).resolves.toBe("retry");
-        }
-    );
+        await expect(
+            resolver.resolve({ externalId: "1" }, TOKEN)
+        ).resolves.toBe("retry");
+    });
+
+    it("raises an unavailable error when the provider cannot be reached", async () => {
+        const resolver = makeResolver({
+            findOrderByExternalId: vi
+                .fn()
+                .mockResolvedValue({ kind: "unavailable" }),
+        });
+
+        await expect(
+            resolver.resolve({ externalId: "1" }, TOKEN)
+        ).rejects.toBeInstanceOf(SubscriptionUnavailableError);
+    });
 
     it("raises an auth error when Recharge rejects the token", async () => {
         const resolver = makeResolver({
@@ -186,6 +196,36 @@ describe("RechargeSubscriptionResolver", () => {
         await expect(
             resolver.resolve({ externalId: "1" }, TOKEN)
         ).rejects.toBeInstanceOf(SubscriptionAuthError);
+    });
+
+    it("raises a rate-limit error with Recharge's retry delay", async () => {
+        const resolver = makeResolver({
+            findOrderByExternalId: vi.fn().mockResolvedValue({
+                kind: "rate_limited",
+                retryAfterMs: 4000,
+            }),
+        });
+
+        await expect(
+            resolver.resolve({ externalId: "1" }, TOKEN)
+        ).rejects.toMatchObject({
+            name: "SubscriptionRateLimitError",
+            retryAfterMs: 4000,
+        });
+    });
+
+    it("raises a rate-limit error when the prepaid lookup is throttled", async () => {
+        const resolver = makeResolver({
+            ...found(prepaidCheckout),
+            getSubscription: vi.fn().mockResolvedValue({
+                kind: "rate_limited",
+                retryAfterMs: 2000,
+            }),
+        });
+
+        await expect(
+            resolver.resolve({ externalId: "1" }, TOKEN)
+        ).rejects.toBeInstanceOf(SubscriptionRateLimitError);
     });
 
     it("delegates the token check", async () => {

@@ -1,8 +1,8 @@
 import type { SubscriptionProvider } from "../schemas";
 
-export type SubscriptionResolutionState = "pending" | "resolved" | "unresolved";
+type SubscriptionResolutionState = "pending" | "resolved" | "unresolved";
 
-export type SubscriptionOrderKind =
+type SubscriptionOrderKind =
     | "none"
     | "checkout"
     | "renewal"
@@ -40,7 +40,6 @@ export type SubscriptionResolver = {
 };
 
 export type SubscriptionConnectionError = {
-    code: "unauthorized";
     at: string;
 };
 
@@ -54,5 +53,21 @@ export class SubscriptionAuthError extends Error {
     constructor() {
         super("Subscription provider rejected the stored credentials");
         this.name = "SubscriptionAuthError";
+    }
+}
+
+/** Raised by a resolver when the provider cannot be reached or answers with a server error. */
+export class SubscriptionUnavailableError extends Error {
+    constructor() {
+        super("Subscription provider is unavailable");
+        this.name = "SubscriptionUnavailableError";
+    }
+}
+
+/** Raised by a resolver when the provider throttles the merchant's token. */
+export class SubscriptionRateLimitError extends Error {
+    constructor(readonly retryAfterMs: number) {
+        super("Subscription provider throttled the merchant's token");
+        this.name = "SubscriptionRateLimitError";
     }
 }

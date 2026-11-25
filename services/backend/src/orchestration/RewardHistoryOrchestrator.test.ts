@@ -1,4 +1,6 @@
+import { log as logger } from "@backend-infrastructure";
 import { describe, expect, it, vi } from "vitest";
+import { RewardHistoryService } from "../domain/rewards/services/RewardHistoryService";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 
 vi.mock("@backend-infrastructure", () => ({ log: { warn: vi.fn() } }));
@@ -190,5 +192,130 @@ describe("RewardHistoryOrchestrator.getMerchantRewardSummary", () => {
         await expect(
             orchestrator.getMerchantRewardSummary(params)
         ).resolves.toEqual({ linked: false, pending: null, earned: null });
+    });
+});
+
+describe("RewardHistoryOrchestrator.getHistory with a subscription plan", () => {
+    const log = (step: number, role: "referrer" | "referee") => ({
+        id: `${role}-${step}`,
+        amount: "5",
+        tokenAddress: EURE,
+        status: "pending",
+        recipientType: role,
+        createdAt: new Date("2026-10-01"),
+        settledAt: null,
+        availableAt: null,
+        held: step > 1,
+        planStep: step,
+        campaignRuleId: "campaign-1",
+        interactionLogId: "interaction-1",
+        cancellationReason: null,
+        onchainTxHash: null,
+        interactionType: "purchase",
+        interactionPayload: null,
+        referralLinkId: null,
+        identityGroupId: "group-1",
+        merchantId: "merchant-1",
+        merchantName: "Brand",
+        merchantDomain: "brand.com",
+        merchantExplorerConfig: null,
+    });
+
+    function setup(role: "referrer" | "referee", campaignMissing = false) {
+        const findPlanSteps = vi
+            .fn()
+            .mockResolvedValue([log(2, role), log(3, role)]);
+        const findById = vi.fn().mockResolvedValue(
+            campaignMissing
+                ? null
+                : {
+                      id: "campaign-1",
+                      rule: {
+                          rewards: [
+                              {
+                                  recipient: role,
+                                  type: "token",
+                                  amountType: "percentage",
+                                  percent: 10,
+                                  percentOf: "purchase_amount",
+                                  cycles: { from: 1, to: 3 },
+                              },
+                          ],
+                      },
+                  }
+        );
+        const orchestrator = new RewardHistoryOrchestrator(
+            {
+                findDetailedByIdentityGroup: vi
+                    .fn()
+                    .mockResolvedValue([log(1, role)]),
+                countByIdentityGroup: vi.fn().mockResolvedValue(1),
+                findPlanSteps,
+            } as never,
+            {
+                findGroupByIdentity: vi
+                    .fn()
+                    .mockResolvedValue({ id: "group-1" }),
+            } as never,
+            {} as never,
+            {
+                getTokenMetadataBatch: vi.fn().mockResolvedValue(new Map()),
+            } as never,
+            {
+                getTokenPrice: vi.fn().mockResolvedValue({
+                    eur: 1,
+                    usd: 1,
+                    gbp: 1,
+                }),
+            } as never,
+            new RewardHistoryService(),
+            {} as never,
+            {} as never,
+            { findById } as never
+        );
+        return { orchestrator, findPlanSteps, findById };
+    }
+
+    it("fetches the later steps of the plans on the page and collapses them", async () => {
+        const { orchestrator, findPlanSteps, findById } = setup("referee");
+
+        const { items, totalCount } = await orchestrator.getHistory(WALLET, {
+            limit: 20,
+            offset: 0,
+        });
+
+        expect(findPlanSteps).toHaveBeenCalledWith("group-1", [
+            "interaction-1",
+        ]);
+        expect(findById).toHaveBeenCalledWith("campaign-1");
+        expect(totalCount).toBe(1);
+        expect(items).toHaveLength(1);
+        expect(items[0]?.plan).toMatchObject({
+            stepsTotal: 3,
+            estimated: true,
+        });
+    });
+
+    it("does not tell a referrer they are waiting on their friend's mission", async () => {
+        const { orchestrator } = setup("referrer");
+
+        const { items } = await orchestrator.getHistory(WALLET, {
+            limit: 20,
+            offset: 0,
+        });
+
+        expect(items[0]?.status).toBe("pending");
+        expect(items[0]).not.toHaveProperty("waitsOnFriend");
+    });
+
+    it("warns when a plan row's campaign no longer exists", async () => {
+        const { orchestrator } = setup("referee", true);
+
+        await orchestrator.getHistory(WALLET, { limit: 20, offset: 0 });
+
+        expect(logger.warn).toHaveBeenCalledWith(
+            { campaignIds: ["campaign-1"] },
+            "Plan rows reference missing campaigns"
+        );
     });
 });

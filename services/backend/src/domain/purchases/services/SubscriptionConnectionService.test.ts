@@ -28,7 +28,7 @@ function setup(options: {
 }) {
     const repository = {
         getWebhookByMerchantId: vi.fn().mockResolvedValue(options.webhook),
-        setSubscriptionConnection: vi.fn().mockResolvedValue(true),
+        setSubscriptionConnection: vi.fn().mockResolvedValue(undefined),
         setSubscriptionCredentials: vi.fn().mockResolvedValue(undefined),
     };
     const resolver = {
@@ -140,7 +140,7 @@ describe("SubscriptionConnectionService status", () => {
         const { service, repository, row } = await connected();
         await service.recordAuthError(row);
         const credentials = repository.setSubscriptionCredentials.mock
-            .calls[0]?.[1] as string;
+            .calls[0]?.[2] as string;
         repository.getWebhookByMerchantId.mockResolvedValue({
             ...row,
             subscriptionCredentials: credentials,
@@ -149,7 +149,7 @@ describe("SubscriptionConnectionService status", () => {
         const status = await service.getStatus(MERCHANT);
 
         expect(status.provider).toBe("recharge");
-        expect(status.lastError).toMatchObject({ code: "unauthorized" });
+        expect(status.lastError).toMatchObject({ at: expect.any(String) });
     });
 
     it("reports nothing for a disconnected merchant", async () => {
@@ -165,7 +165,7 @@ describe("SubscriptionConnectionService status", () => {
         const { service, repository, row } = await connected();
         await service.recordAuthError(row);
         const credentials = repository.setSubscriptionCredentials.mock
-            .calls[0]?.[1] as string;
+            .calls[0]?.[2] as string;
 
         await service.recordAuthError({
             ...row,
@@ -173,6 +173,33 @@ describe("SubscriptionConnectionService status", () => {
         });
 
         expect(repository.setSubscriptionCredentials).toHaveBeenCalledOnce();
+    });
+
+    it("writes the error only over the credentials it read", async () => {
+        const { service, repository, row } = await connected();
+
+        await service.recordAuthError(row);
+
+        expect(repository.setSubscriptionCredentials).toHaveBeenCalledWith(
+            MERCHANT,
+            row.subscriptionCredentials,
+            expect.any(String)
+        );
+    });
+
+    it("reports a stored authentication error", async () => {
+        const { service, repository, row } = await connected();
+        await service.recordAuthError(row);
+        const credentials = repository.setSubscriptionCredentials.mock
+            .calls[0]?.[2] as string;
+
+        expect(service.hasAuthError(row)).toBe(false);
+        expect(
+            service.hasAuthError({
+                ...row,
+                subscriptionCredentials: credentials,
+            })
+        ).toBe(true);
     });
 
     it("clears the connection on disconnect", async () => {

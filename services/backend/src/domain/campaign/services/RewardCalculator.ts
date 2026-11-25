@@ -1,6 +1,8 @@
 import type { PricingRepository } from "@backend-infrastructure";
 import type { Address } from "viem";
+import { roundAmount } from "../../../utils/numeric";
 import type { RecipientType } from "../../rewards/schemas";
+import { subscriptionStepBy } from "../schemas";
 import type {
     CalculatedReward,
     FixedRewardDefinition,
@@ -9,11 +11,28 @@ import type {
     RewardChaining,
     RewardDefinition,
     RuleContext,
+    SubscriptionRule,
     TieredRewardDefinition,
 } from "../types";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 export type { ReferralChainMember };
+
+type PlanParams = {
+    rewards: RewardDefinition[];
+    context: RuleContext;
+    campaignRuleId: string;
+    inactivityDays: number;
+    subscription: SubscriptionRule;
+    merchantDefaultToken?: Address;
+};
+
+type PlanCalculation = {
+    calculated: CalculatedReward[];
+    errors: string[];
+    deferForUnpriceableReward: boolean;
+    deferReason?: string;
+};
 
 type RewardCalculationResult =
     | { success: true; amount: number; token: Address | null }
@@ -251,8 +270,50 @@ async function calculateTieredReward(
 
 const PERCENT_BASE = 100;
 
-export function roundAmount(amount: number): number {
-    return Math.round(amount * 1_000_000) / 1_000_000;
+/** What a plan step is priced on: the checkout cycle, or the plan's own step size. */
+type StepBasis = "checkout" | "step";
+
+function stepBasis(step: number, subscription: SubscriptionRule): StepBasis {
+    return step === 1 || subscriptionStepBy({ subscription }) === "cycle"
+        ? "checkout"
+        : "step";
+}
+
+/** A later step of an amount or duration plan; `stepAmount` is already in reward-token units. */
+function calculateStepReward(
+    reward: RewardDefinition,
+    subscription: SubscriptionRule,
+    merchantDefaultToken: Address | undefined
+): RewardCalculationResult {
+    if (reward.amountType === "fixed") return calculateFixedReward(reward);
+    if (subscriptionStepBy({ subscription }) === "duration") {
+        return {
+            success: false,
+            error: "Duration steps only pay a fixed amount",
+        };
+    }
+    const { stepAmount } = subscription;
+    if (reward.amountType !== "percentage" || stepAmount === undefined) {
+        return {
+            success: false,
+            error: "Only fixed or percentage rewards can pay amount steps",
+        };
+    }
+    const token = reward.token ?? merchantDefaultToken;
+    if (!token) {
+        return {
+            success: false,
+            error: "No token to price percentage reward against",
+        };
+    }
+    let amount = (stepAmount * reward.percent) / PERCENT_BASE;
+    if (reward.minAmount !== undefined)
+        amount = Math.max(amount, reward.minAmount);
+    if (reward.maxAmount !== undefined)
+        amount = Math.min(amount, reward.maxAmount);
+    return amount > 0
+        ? { success: true, amount: roundAmount(amount), token }
+        : { success: false, error: "Calculated amount is zero or negative" };
 }
 
 function distributeChainedRewards(params: {
@@ -419,6 +480,113 @@ export class RewardCalculator {
         }
 
         return { calculated, errors, deferForUnpriceableReward, deferReason };
+    }
+
+    /**
+     * Prices every step of a subscription plan. Step 1, and every step of a
+     * cycle plan, prices on the checkout cycle (later cycle steps are re-priced
+     * when paid); the later steps of an amount or duration plan are exact.
+     */
+    async calculatePlan(params: PlanParams): Promise<PlanCalculation> {
+        const calculated: CalculatedReward[] = [];
+        const errors: string[] = [];
+        let deferForUnpriceableReward = false;
+        let deferReason: string | undefined;
+
+        for (const reward of params.rewards) {
+            const outcome = await this.planReward(reward, params);
+            if ("error" in outcome) {
+                errors.push(outcome.error);
+            } else if ("deferReason" in outcome) {
+                deferForUnpriceableReward = true;
+                deferReason ??= outcome.deferReason;
+            } else {
+                calculated.push(...outcome.rewards);
+            }
+        }
+
+        return { calculated, errors, deferForUnpriceableReward, deferReason };
+    }
+
+    /** One held, numbered reward per step of the definition's range. */
+    private async planReward(
+        reward: RewardDefinition,
+        params: PlanParams
+    ): Promise<
+        | { rewards: CalculatedReward[] }
+        | { error: string }
+        | { deferReason: string }
+    > {
+        const { context, subscription } = params;
+        if (!reward.cycles) {
+            return { error: `${reward.recipient}: Missing cycle range` };
+        }
+
+        const prices = await this.priceStepBases(reward, params);
+        for (const result of prices.values()) {
+            if (result.success) continue;
+            return "defer" in result
+                ? {
+                      deferReason: `${result.reason} (${reward.recipient} ${reward.amountType} reward, currency=${context.purchase?.currency})`,
+                  }
+                : { error: `${reward.recipient}: ${result.error}` };
+        }
+
+        const recipient = this.resolveRecipient(reward.recipient, context);
+        if (!recipient) {
+            return {
+                error: `${reward.recipient}: Could not resolve recipient`,
+            };
+        }
+
+        const rewards: CalculatedReward[] = [];
+        for (let step = reward.cycles.from; step <= reward.cycles.to; step++) {
+            const result = prices.get(stepBasis(step, subscription));
+            if (!result?.success) continue;
+            rewards.push({
+                recipient: reward.recipient,
+                recipientIdentityGroupId: recipient.identityGroupId,
+                type: reward.type,
+                amount: result.amount,
+                token: result.token,
+                campaignRuleId: params.campaignRuleId,
+                description: reward.description,
+                expirationDays: params.inactivityDays,
+                held: true,
+                planStep: step,
+            });
+        }
+        return { rewards };
+    }
+
+    /** A price per basis the range spans: the checkout, the step size, or both. */
+    private async priceStepBases(
+        reward: RewardDefinition,
+        params: PlanParams
+    ): Promise<Map<StepBasis, RewardCalculationResult>> {
+        const { subscription, merchantDefaultToken } = params;
+        const prices = new Map<StepBasis, RewardCalculationResult>();
+        const range = reward.cycles ?? { from: 1, to: 1 };
+        for (const basis of new Set([
+            stepBasis(range.from, subscription),
+            stepBasis(range.to, subscription),
+        ])) {
+            prices.set(
+                basis,
+                basis === "checkout"
+                    ? await this.calculate(
+                          reward,
+                          params.context,
+                          merchantDefaultToken
+                      )
+                    : calculateStepReward(
+                          reward,
+                          subscription,
+                          merchantDefaultToken
+                      )
+            );
+        }
+        return prices;
     }
 
     private resolveRecipient(

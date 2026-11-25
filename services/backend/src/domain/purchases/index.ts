@@ -29,7 +29,9 @@ export {
 export type {
     PurchaseSubscription,
     ResolvedSubscriptionOrder,
-    SubscriptionOrderKind,
-    SubscriptionStatus,
 } from "./subscription/types";
-export { SubscriptionAuthError } from "./subscription/types";
+export {
+    SubscriptionAuthError,
+    SubscriptionRateLimitError,
+    SubscriptionUnavailableError,
+} from "./subscription/types";
