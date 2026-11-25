@@ -20,6 +20,9 @@ type OnDisplayModalRequest = RpcPromiseHandler<
  */
 export function createDisplayModalHandler(): OnDisplayModalRequest {
     return async (params, _context) => {
+        // Claim before the lazy import so arrival order, not chunk load order,
+        // decides which request owns the screen.
+        const isLatest = uiBus.claim();
         // Trigger Ring 1 mount (preact + provider tree) in parallel with
         // the impl import. uiBus.request queues the request until the
         // provider attaches, so we don't need to await the runtime.
@@ -27,6 +30,9 @@ export function createDisplayModalHandler(): OnDisplayModalRequest {
         const { handleDisplayModal } = await import(
             "@/module/modal/component/Modal"
         );
-        return handleDisplayModal(params, { setRequest: uiBus.request });
+        return handleDisplayModal(params, {
+            setRequest: uiBus.request,
+            isLatest,
+        });
     };
 }

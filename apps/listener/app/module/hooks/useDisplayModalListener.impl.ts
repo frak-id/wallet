@@ -25,6 +25,7 @@ import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
+import { supersededError } from "@/uiBus";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -32,19 +33,13 @@ type OnDisplayModalRequest = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-// The listener is mounted once for the iframe lifetime. Only the newest request
-// may take the UI; the displayed one stays live until it is replaced.
-let latestRequest: object | null = null;
+// The listener is mounted once for the iframe lifetime. The displayed modal
+// stays live until a newer request of either type replaces it.
 let settleDisplayed: (() => void) | null = null;
-
-const superseded = () =>
-    new FrakRpcError(
-        RpcErrorCodes.internalError,
-        "New modal request superseded previous request"
-    );
 
 type DisplayModalDeps = {
     setRequest: (request: UIRequest) => void;
+    isLatest: () => boolean;
 };
 
 /**
@@ -54,12 +49,9 @@ type DisplayModalDeps = {
  */
 export const handleDisplayModal = async (
     params: Parameters<OnDisplayModalRequest>[0],
-    { setRequest }: DisplayModalDeps
+    { setRequest, isLatest }: DisplayModalDeps
 ): Promise<ModalRpcStepsResultType> => {
     const backendConfig = resolvingContextStore.getState().backendSdkConfig;
-
-    const request = {};
-    latestRequest = request;
 
     // If no modal to display, early exit
     const steps = coerceFinalActionToReward(params[0]);
@@ -81,9 +73,9 @@ export const handleDisplayModal = async (
         stepsPrepared,
     });
 
-    // A newer request arrived during the refresh: it owns the store and the UI
-    if (latestRequest !== request) {
-        throw superseded();
+    // A newer request of either type arrived meanwhile and owns the UI
+    if (!isLatest()) {
+        throw supersededError();
     }
     settleDisplayed?.();
 
@@ -126,7 +118,7 @@ export const handleDisplayModal = async (
     });
     settleDisplayed = () => {
         unsubscribe();
-        deferred.reject(superseded());
+        deferred.reject(supersededError());
     };
 
     const metadata = params[1] ?? {};
