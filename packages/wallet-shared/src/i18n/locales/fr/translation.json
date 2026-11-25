@@ -1128,14 +1128,6 @@
                     "friends_other": "{{count}} achats d'amis"
                 }
             },
-            "invite": {
-                "title": "Tes ami·e·s te portent chance !",
-                "description_one": "Chaque ami·e qui télécharge Frak grâce à ton lien te rapporte {{count}} ticket supplémentaire.",
-                "description_other": "Chaque ami·e qui télécharge Frak grâce à ton lien te rapporte {{count}} tickets supplémentaires.",
-                "noCode_one": "Crée ton code pour obtenir ton lien. Chaque ami·e qui télécharge Frak grâce à ce lien te rapporte {{count}} ticket supplémentaire.",
-                "noCode_other": "Crée ton code pour obtenir ton lien. Chaque ami·e qui télécharge Frak grâce à ce lien te rapporte {{count}} tickets supplémentaires.",
-                "share": "Partager mon lien"
-            },
             "intro": "Accomplis des missions, cumule des tickets et tente de remporter {{prize}} au tirage !"
         },
         "result": {

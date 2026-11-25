@@ -13,7 +13,6 @@ import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
 import { maybeAskForReview } from "@/module/common/utils/maybeAskForReview";
 import { GameHero } from "@/module/game/component/GameHero";
-import { GameInviteCard } from "@/module/game/component/GameInviteCard";
 import { GameMissions } from "@/module/game/component/GameMissions";
 import { PastGames } from "@/module/game/component/GameResult";
 import { GameResultView } from "@/module/game/component/GameResultView";
@@ -186,7 +185,6 @@ export function GamePage() {
                         missions={missionsOf(me)}
                         gameId={top.game.id}
                     />
-                    <GameInviteCard />
                 </>
             )}
             {top.kind !== "loading" && (

@@ -575,14 +575,6 @@ export default interface Resources {
           "unlocked_other": "Your {{count}} tickets are unlocked"
         },
         "intro": "Complete missions, collect tickets and try to win {{prize}} in the draw!",
-        "invite": {
-          "description_one": "Each friend who downloads Frak through your link earns you {{count}} extra ticket.",
-          "description_other": "Each friend who downloads Frak through your link earns you {{count}} extra tickets.",
-          "noCode_one": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra ticket.",
-          "noCode_other": "Create your code to get your link. Each friend who downloads Frak through it earns you {{count}} extra tickets.",
-          "share": "Share my link",
-          "title": "Your friends bring you luck!"
-        },
         "missions": {
           "allDone": "All missions are done. Every friend and every purchase still adds tickets.",
           "friend": {
