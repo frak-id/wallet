@@ -3,6 +3,7 @@ import {
     ACCEPTED_IMAGE_TYPES,
     imageValidationMessage,
     validateImageFile,
+    validateImageType,
 } from "app/utils/imageValidation";
 import {
     useCallback,
@@ -14,6 +15,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import { useImageCrop } from "../ImageCrop";
 
 type MediaFile = { type: string; url: string };
 
@@ -101,10 +103,19 @@ export function ImageUploadField({
         [type, mediaFetcher]
     );
 
+    const { prepareImage, cropPanel } = useImageCrop(type);
     const [validationError, setValidationError] = useState<string | null>(null);
     const handleDropZoneChange = useCallback(
-        (files: File[]) => {
-            const file = files[0];
+        async (files: File[]) => {
+            const dropped = files[0];
+            if (!dropped) return;
+            const typeCheck = validateImageType(dropped);
+            if (!typeCheck.valid) {
+                setValidationError(imageValidationMessage(typeCheck.reason, t));
+                return;
+            }
+            setValidationError(null);
+            const file = await prepareImage(dropped);
             if (!file) return;
             const validation = validateImageFile(file);
             if (!validation.valid) {
@@ -113,10 +124,9 @@ export function ImageUploadField({
                 );
                 return;
             }
-            setValidationError(null);
             uploadFile(file);
         },
-        [uploadFile, t]
+        [uploadFile, prepareImage, t]
     );
 
     // Removal only clears the pending reference; the storage delete is
@@ -174,18 +184,20 @@ export function ImageUploadField({
                 DropZone, which exposes it. Its built-in "Accepts .png, ..."
                 caption stays English (no caption/slot prop, Shadow DOM) — the
                 localized `<s-text>` sibling below carries that info instead. */}
-            <s-drop-zone
-                label={t("appearance.upload.dropzoneLabel")}
-                accept={acceptAttr}
-                error={dropZoneError ?? undefined}
-                disabled={isPending || undefined}
-                onChange={(e) => {
-                    const target = e.currentTarget as unknown as {
-                        files: File[];
-                    };
-                    handleDropZoneChange(Array.from(target.files ?? []));
-                }}
-            />
+            {cropPanel ?? (
+                <s-drop-zone
+                    label={t("appearance.upload.dropzoneLabel")}
+                    accept={acceptAttr}
+                    error={dropZoneError ?? undefined}
+                    disabled={isPending || undefined}
+                    onChange={(e) => {
+                        const target = e.currentTarget as unknown as {
+                            files: File[];
+                        };
+                        handleDropZoneChange(Array.from(target.files ?? []));
+                    }}
+                />
+            )}
 
             <s-text color="subdued">
                 {t(`appearance.upload.restrictions.${type}`)}

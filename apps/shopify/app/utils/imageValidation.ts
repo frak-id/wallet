@@ -28,17 +28,24 @@ export type ImageValidationResult =
     | { valid: true }
     | { valid: false; reason: ImageValidationError };
 
-/**
- * Validate a single file against the accepted image types and the upload
- * size cap. Does not inspect file contents — only type and size.
- */
-export function validateImageFile(file: File): ImageValidationResult {
+/** Runs before the crop; the size cap applies to what the crop produces. */
+export function validateImageType(file: File): ImageValidationResult {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
         return {
             valid: false,
             reason: { code: "unsupportedType", fileName: file.name },
         };
     }
+    return { valid: true };
+}
+
+/**
+ * Validate a single file against the accepted image types and the upload
+ * size cap. Does not inspect file contents — only type and size.
+ */
+export function validateImageFile(file: File): ImageValidationResult {
+    const typeCheck = validateImageType(file);
+    if (!typeCheck.valid) return typeCheck;
     if (file.size > MAX_UPLOAD_BYTES) {
         return {
             valid: false,
