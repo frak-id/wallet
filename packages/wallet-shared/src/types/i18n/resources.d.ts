@@ -607,7 +607,6 @@ export default interface Resources {
             "hint": "Done, welcome!",
             "title": "Join the game"
           },
-          "progress": "{{done}} of {{total}}",
           "purchase": {
             "friends_one": "{{count}} purchase by a friend",
             "friends_other": "{{count}} purchases by friends",
