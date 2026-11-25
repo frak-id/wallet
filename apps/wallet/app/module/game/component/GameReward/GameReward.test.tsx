@@ -209,13 +209,15 @@ describe("GameReward", () => {
         ).not.toBeInTheDocument();
     });
 
-    it("lists the three missions' titles under the joined game", () => {
+    it("lists the game page's mission titles under the joined game", () => {
         render(<GameReward reward={0} game={game} onContinue={vi.fn()} />);
 
-        for (const id of ["instagram", "friend", "purchase"]) {
-            expect(
-                screen.getByText(`onboarding.game.missions.${id}`)
-            ).toBeInTheDocument();
+        for (const key of [
+            "game.page.missions.instagram.none.title",
+            "game.page.missions.friend.title",
+            "game.page.missions.purchase.title",
+        ]) {
+            expect(screen.getByText(key)).toBeInTheDocument();
         }
     });
 });

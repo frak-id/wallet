@@ -980,11 +980,6 @@
             "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
         },
         "game": {
-            "missions": {
-                "instagram": "Active tes tickets avec Instagram",
-                "friend": "Partage et gagne des tickets",
-                "purchase": "Achète chez une marque partenaire"
-            },
             "bonus": {
                 "title": "Ton bonus de {{reward}}",
                 "description": "Il se débloque dès que tu connectes ton Instagram, ou dès ta première récompense chez une marque partenaire.",

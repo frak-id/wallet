@@ -19,6 +19,7 @@ import { GameTaskRow } from "@/module/game/component/GameTaskRow";
 import { useConfettiBurst } from "@/module/game/hook/useConfettiBurst";
 import { formatGameAmount } from "@/module/game/utils/formatGameAmount";
 import { ICONS } from "@/module/game/utils/gameMissionDisplay";
+import { MISSION_TITLES } from "@/module/game/utils/gameMissions";
 import { prizeToWinOf } from "@/module/game/utils/gamePrize";
 import { TICKET_AMOUNTS } from "@/module/game/utils/ticketAmounts";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
@@ -105,7 +106,7 @@ function MissionTitles() {
                             key={id}
                             icon={<Icon width={18} height={18} />}
                             tone="action"
-                            title={t(`onboarding.game.missions.${id}`)}
+                            title={t(MISSION_TITLES[id])}
                         />
                     );
                 })}

@@ -980,11 +980,6 @@
             "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>"
         },
         "game": {
-            "missions": {
-                "instagram": "Activate your tickets with Instagram",
-                "friend": "Share and earn tickets",
-                "purchase": "Shop at a partner brand"
-            },
             "bonus": {
                 "title": "Your {{reward}} bonus",
                 "description": "It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",

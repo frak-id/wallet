@@ -1096,11 +1096,6 @@ export default interface Resources {
           "pending": "Pending",
           "title": "Your {{reward}} bonus"
         },
-        "missions": {
-          "friend": "Share and earn tickets",
-          "instagram": "Activate your tickets with Instagram",
-          "purchase": "Shop at a partner brand"
-        },
         "reward": {
           "bonusTitle": "Code applied, your reward is waiting!",
           "description": "Your reward is pending. It unlocks as soon as you connect your Instagram, or with your first reward from a partner brand.",
