@@ -1087,13 +1087,13 @@
                         "hint": "Your Instagram stays connected. Follow @frak_fr again and your tickets count right away."
                     },
                     "none": {
-                        "title": "Unlock your tickets",
-                        "hint": "Connect your Instagram and follow @frak_fr to enter the draw."
+                        "title": "Join us on Instagram",
+                        "hint": "Follow @frak_fr."
                     }
                 },
                 "friend": {
-                    "title": "Get your friends to download the app",
-                    "hint": "With your code or through a brand",
+                    "title": "Get friends on the app",
+                    "hint": "Share it with as many friends as you can.",
                     "hintEarned": "{{parts}}. Invite another one.",
                     "withCode": "{{count}} with your code",
                     "viaBrand": "{{count}} via a brand"
