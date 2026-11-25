@@ -117,6 +117,43 @@ describe("handleDisplayModal", () => {
         await expect(second).resolves.toEqual({ login: { wallet: "0x2" } });
     });
 
+    it("resolves a login-only modal at once for a logged-in user", async () => {
+        sessionHolder.session = { address: "0xabc" };
+        vi.mocked(ensureFreshSdkSession).mockResolvedValue({
+            status: "stale",
+            sdk: null,
+        });
+        const setRequest = vi.fn();
+
+        await expect(
+            handleDisplayModal(params, arrive(setRequest))
+        ).resolves.toEqual({ login: { wallet: "0xabc" } });
+        expect(setRequest).not.toHaveBeenCalled();
+    });
+
+    it("leaves the displayed modal live when a login-only request resolves at once", async () => {
+        const setRequest = vi.fn();
+        const displayed = handleDisplayModal(params, arrive(setRequest));
+        await vi.waitFor(() => expect(setRequest).toHaveBeenCalledTimes(1));
+
+        sessionHolder.session = { address: "0xabc" };
+        vi.mocked(ensureFreshSdkSession).mockResolvedValue({
+            status: "stale",
+            sdk: null,
+        });
+        await expect(
+            handleDisplayModal(params, arrive(setRequest))
+        ).resolves.toEqual({ login: { wallet: "0xabc" } });
+        expect(setRequest).toHaveBeenCalledTimes(1);
+
+        await setRequest.mock.calls[0][0].emitter({
+            result: { login: { wallet: "0xdef" } },
+        });
+        await expect(displayed).resolves.toEqual({
+            login: { wallet: "0xdef" },
+        });
+    });
+
     it.each([
         { resolvesFirst: "earlier", order: [0, 1] },
         { resolvesFirst: "newer", order: [1, 0] },
