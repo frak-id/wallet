@@ -1,13 +1,19 @@
-import { useCallback, useState } from "react";
-import {
-    ImageCropDialog,
-    type ImageCropRequest,
-} from "@/module/merchant/component/ImageCropDialog";
-import { loadImage } from "@/module/merchant/utils/cropImage";
-import { type ImageKind, planCrop } from "@/module/merchant/utils/imageRatio";
+import type { CropSource } from "@frak-labs/app-essentials/media/cropImage";
+import type { ImageKind } from "@frak-labs/app-essentials/media/imageRatio";
+import { lazy, Suspense, useCallback, useState } from "react";
 
-type PendingCrop = ImageCropRequest & {
-    resolve: (file: File | null) => void;
+// Both load on the first drop and share the `image-crop-lazy` chunk; a static
+// import of either would pull that chunk into the merchant pages.
+const loadCropImage = () => import("@frak-labs/app-essentials/media/cropImage");
+const ImageCropDialog = lazy(() =>
+    import("@/module/merchant/component/ImageCropDialog").then((module) => ({
+        default: module.ImageCropDialog,
+    }))
+);
+
+type PendingCrop = {
+    source: CropSource;
+    settle: (file: File | null) => void;
 };
 
 /**
@@ -20,40 +26,34 @@ export function useImageCrop(kind: ImageKind) {
 
     const prepareImage = useCallback(
         async (file: File): Promise<File | null> => {
-            // SVGs skip the backend ratio check, and a crop would rasterise them.
-            if (file.type === "image/svg+xml") return file;
-
-            const src = URL.createObjectURL(file);
-            // Unreadable files go up as-is so the backend reports why.
-            const image = await loadImage(src).catch(() => null);
-            const size = image && {
-                width: image.naturalWidth,
-                height: image.naturalHeight,
-            };
-            const plan = size && planCrop(size, kind);
-            if (!size || !plan) {
-                URL.revokeObjectURL(src);
-                return file;
-            }
-
+            const { readCropSource, releaseCropSource } = await loadCropImage();
+            const source = await readCropSource(file, kind);
+            if (!source) return file;
             return new Promise((resolve) =>
-                setPending({ ...plan, file, src, size, resolve })
+                setPending({
+                    source,
+                    settle: (output) => {
+                        releaseCropSource(source);
+                        resolve(output);
+                    },
+                })
             );
         },
         [kind]
     );
 
     const cropDialog = pending && (
-        <ImageCropDialog
-            key={pending.src}
-            request={pending}
-            kind={kind}
-            onSettle={(file) => {
-                URL.revokeObjectURL(pending.src);
-                setPending(null);
-                pending.resolve(file);
-            }}
-        />
+        <Suspense fallback={null}>
+            <ImageCropDialog
+                key={pending.source.src}
+                request={pending.source}
+                kind={kind}
+                onSettle={(file) => {
+                    setPending(null);
+                    pending.settle(file);
+                }}
+            />
+        </Suspense>
     );
 
     return { prepareImage, cropDialog };

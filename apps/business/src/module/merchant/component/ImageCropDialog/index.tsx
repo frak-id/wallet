@@ -1,3 +1,12 @@
+import {
+    type CropSource,
+    cropImageFile,
+} from "@frak-labs/app-essentials/media/cropImage";
+import {
+    type ImageKind,
+    maxCropZoom,
+    ratioRangeLabels,
+} from "@frak-labs/app-essentials/media/imageRatio";
 import { Button } from "@frak-labs/design-system/components/Button";
 import {
     Dialog,
@@ -16,23 +25,10 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useId, useState } from "react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
 import { useTranslation } from "react-i18next";
-import { cropImageFile } from "@/module/merchant/utils/cropImage";
-import {
-    type CropPlan,
-    type ImageKind,
-    maxCropZoom,
-    ratioRangeLabels,
-} from "@/module/merchant/utils/imageRatio";
 import * as styles from "./image-crop-dialog.css";
 
-export type ImageCropRequest = CropPlan & {
-    file: File;
-    src: string;
-    size: { width: number; height: number };
-};
-
 type ImageCropDialogProps = {
-    request: ImageCropRequest;
+    request: CropSource;
     kind: ImageKind;
     /** `null` when the merchant cancels: the upload is dropped. */
     onSettle: (file: File | null) => void;
@@ -68,8 +64,7 @@ export function ImageCropDialog({
         try {
             onSettle(
                 await cropImageFile({
-                    file: request.file,
-                    src: request.src,
+                    source: request,
                     area,
                     aspect: preset.value,
                     kind,

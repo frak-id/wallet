@@ -144,6 +144,14 @@ function buildChunkGroups() {
             priority: 22,
             minShareCount: 1,
         },
+        // The image cropper, loaded on the first image drop. Above
+        // `feature-restricted`, which would otherwise take the dialog module.
+        {
+            name: "image-crop-lazy",
+            test: /node_modules[\\/](?:react-easy-crop|normalize-wheel)[\\/]|[\\/]src[\\/]module[\\/]merchant[\\/]component[\\/]ImageCropDialog[\\/]/,
+            priority: 21,
+            minShareCount: 1,
+        },
         // Everything behind the `_restricted` auth gate (dashboard, campaigns,
         // members, merchant, settings).
         {

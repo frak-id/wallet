@@ -1,3 +1,4 @@
+import type { ImageKind } from "@frak-labs/app-essentials/media/imageRatio";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
@@ -26,7 +27,7 @@ import { ImagePreview } from "./ImagePreview";
 
 type ImageUploadFieldProps = {
     merchantId: string;
-    type: "logo" | "hero" | "icon";
+    type: ImageKind;
     /** `hero-extra` stores under a new `hero-{hash}` key instead of overwriting `hero`. */
     uploadType?: "hero-extra";
     value: string;
@@ -256,7 +257,7 @@ function ExistingFilePicker({
     onPick,
 }: {
     merchantId: string;
-    type: "logo" | "hero" | "icon";
+    type: ImageKind;
     currentValue: string;
     onPick: (url: string) => void;
 }) {

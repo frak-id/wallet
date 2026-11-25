@@ -41,7 +41,7 @@ const ratioRules: Record<ImageKind, RatioRule> = {
 };
 
 const MAX_ZOOM = 4;
-// The backend never stores more than 1200px, this only keeps the upload under its 10 MB cap.
+// The backend never stores more than 1200px, this only keeps the upload under the size caps.
 const MAX_OUTPUT_SIDE = 2048;
 
 export type CropPlan = {
