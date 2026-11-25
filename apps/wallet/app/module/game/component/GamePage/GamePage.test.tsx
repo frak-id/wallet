@@ -215,17 +215,14 @@ describe("GamePage", () => {
         expect(screen.queryByText("game.page.hero.labelPending")).toBeNull();
     });
 
-    it("shows how many missions are done and only the ones left to do", () => {
+    it("shows the missions title and only the missions left to do", () => {
         currentGame.data = player(4, true);
         const { container } = render(<GamePage />);
 
         expect(
-            screen.getByText("game.page.missions.progress")
+            screen.getByText("game.page.missions.title")
         ).toBeInTheDocument();
-        expect(screen.getByRole("progressbar")).toHaveAttribute(
-            "aria-valuenow",
-            "75"
-        );
+        expect(screen.queryByRole("progressbar")).toBeNull();
         expect(
             screen.getByRole("link", {
                 name: /game.page.missions.friend.title/,
@@ -265,10 +262,6 @@ describe("GamePage", () => {
         currentGame.data = data;
         const { container } = render(<GamePage />);
 
-        expect(screen.getByRole("progressbar")).toHaveAttribute(
-            "aria-valuenow",
-            "100"
-        );
         expect(
             screen.getByText("game.page.missions.allDone")
         ).toBeInTheDocument();

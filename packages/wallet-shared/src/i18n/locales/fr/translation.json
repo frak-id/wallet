@@ -1080,7 +1080,6 @@
             },
             "missions": {
                 "title": "Missions",
-                "progress": "{{done}} sur {{total}}",
                 "allDone": "Toutes les missions sont faites. Chaque ami invité et chaque achat te rapportent encore des tickets.",
                 "reward_one": "+{{count}} ticket",
                 "reward_other": "+{{count}} tickets",
