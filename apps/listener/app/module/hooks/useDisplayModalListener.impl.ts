@@ -73,6 +73,11 @@ export const handleDisplayModal = async (
         stepsPrepared,
     });
 
+    // Nothing left to show: answer without superseding the modal on screen
+    if (currentStep >= stepsPrepared.length) {
+        return currentResult as ModalRpcStepsResultType;
+    }
+
     // A newer request of either type arrived meanwhile and owns the UI
     if (!isLatest()) {
         throw supersededError();
