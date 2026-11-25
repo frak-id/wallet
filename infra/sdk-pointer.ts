@@ -31,6 +31,7 @@ if (!isSdkPointerStage(stage)) {
 // (one 304 round trip, usually hidden behind parsing since the script is
 // deferred) so every browser is on the new version by the next page load.
 const CACHE_CONTROL = "public, max-age=300, stale-if-error=604800";
+const JS_CONTENT_TYPE = "text/javascript; charset=utf-8";
 const SHIM_KEY = "components.js";
 const AMBASSADOR_KEY = "shopify/ambassador";
 
@@ -52,6 +53,10 @@ const loaderUrl = `https://cdn.jsdelivr.net/npm/@frak-labs/components@${version}
 // Same statement `sdk/components/src/components.ts` builds to for this version.
 const shim = `import("${loaderUrl}");\n`;
 
+// What `/loader.js` serves for integrations to modulepreload. Must be a body, not
+// a redirect: a redirected preload is not reused by the shim's import().
+const loaderWrapper = `export * from "${loaderUrl}";\n`;
+
 // The bucket route never forwards Origin, so S3 CORS cannot answer;
 // `<script type="module">` integrations and the modulepreload need these from the edge.
 const edgeHeaders = Object.entries({
@@ -72,7 +77,7 @@ const shimObject = new aws.s3.BucketObjectv2("SdkPointerShim", {
     bucket: bucket.name,
     key: SHIM_KEY,
     content: shim,
-    contentType: "text/javascript; charset=utf-8",
+    contentType: JS_CONTENT_TYPE,
     cacheControl: CACHE_CONTROL,
 });
 
@@ -98,15 +103,15 @@ const router = new sst.aws.Router("SdkPointerRouter", {
         // Runs before route matching. Shopify forwards child paths and appends a
         // per-request timestamp + signature, which would make every request a miss.
         viewerRequest: {
-            // The module map is keyed by the requested URL and the base URL is the
-            // final one, so the preload lands in the HTTP cache the shim's import()
-            // reads, and loader.js's relative chunks still resolve on jsDelivr.
+            // The loader must stay keyed by its jsDelivr URL: the chunks import it as
+            // `./loader.js`, so any other key would evaluate it a second time.
             injection: `
 if (event.request.uri === "/loader.js") {
     return {
-        statusCode: 302,
-        statusDescription: "Found",
-        headers: ${cfHeaders([["location", loaderUrl], ["cache-control", CACHE_CONTROL], ...edgeHeaders])},
+        statusCode: 200,
+        statusDescription: "OK",
+        headers: ${cfHeaders([["content-type", JS_CONTENT_TYPE], ["cache-control", CACHE_CONTROL], ...edgeHeaders])},
+        body: { encoding: "text", data: ${JSON.stringify(loaderWrapper)} },
     };
 }
 if (event.request.uri.startsWith("/${AMBASSADOR_KEY}")) {
