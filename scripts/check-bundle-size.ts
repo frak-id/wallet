@@ -58,7 +58,7 @@ export const BUDGETS: Budget[] = [
         label: "Listener sharing page",
         dir: "apps/listener/dist/assets",
         entry: { kind: "chunk", name: "lazy-shared" },
-        maxGzipBytes: 217 * 1024,
+        maxGzipBytes: 115 * 1024,
         why: "the sharing page lives in the lazy-shared chunk; a listener chunking change that moves it must update this entry",
         buildCommand: BUILD_LISTENER,
     },
