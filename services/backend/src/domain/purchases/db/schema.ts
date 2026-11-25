@@ -1,7 +1,9 @@
+import { sql } from "drizzle-orm";
 import {
     decimal,
     index,
     integer,
+    jsonb,
     pgTable,
     serial,
     text,
@@ -11,7 +13,12 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-import type { PurchaseStatus, WebhookPlatform } from "../schemas";
+import type {
+    PurchaseStatus,
+    SubscriptionProvider,
+    WebhookPlatform,
+} from "../schemas";
+import type { PurchaseSubscription } from "../subscription/types";
 
 export const merchantWebhooksTable = pgTable(
     "merchant_webhooks",
@@ -24,6 +31,12 @@ export const merchantWebhooksTable = pgTable(
             .$type<WebhookPlatform>()
             .notNull()
             .default("shopify"),
+        /** Provider that resolves this merchant's subscription orders. */
+        subscriptionProvider: text(
+            "subscription_provider"
+        ).$type<SubscriptionProvider>(),
+        /** JSON `{ v, token (encrypted), lastError }`, see `SubscriptionCredentialsCipher`. */
+        subscriptionCredentials: text("subscription_credentials"),
     },
     (table) => [
         uniqueIndex("merchant_webhooks_merchant_id_idx").on(table.merchantId),
@@ -44,6 +57,7 @@ export const purchasesTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
         identityGroupId: uuid("identity_group_id"),
+        subscription: jsonb("subscription").$type<PurchaseSubscription>(),
     },
     (table) => [
         uniqueIndex("purchases_external_id_webhook_idx").on(
@@ -55,6 +69,13 @@ export const purchasesTable = pgTable(
             table.purchaseToken
         ),
         index("purchases_identity_group_idx").on(table.identityGroupId),
+        index("purchases_webhook_customer_idx").on(
+            table.webhookId,
+            table.externalCustomerId
+        ),
+        index("purchases_subscription_pending_idx")
+            .on(table.createdAt)
+            .where(sql`"subscription"->>'state' = 'pending'`),
     ]
 );
 

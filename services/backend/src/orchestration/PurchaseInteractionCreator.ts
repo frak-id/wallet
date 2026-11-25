@@ -1,8 +1,12 @@
 import { eventEmitter, log } from "@backend-infrastructure";
-import { resolveLineTotal } from "../domain/purchases";
+import {
+    type PurchaseSubscription,
+    resolveLineTotal,
+} from "../domain/purchases";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
 import { purchaseExternalEventId } from "../domain/rewards/utils";
+import { toInteractionSubscription } from "./subscriptionInteraction";
 
 type PurchaseInteractionParams = {
     purchaseId: string;
@@ -29,6 +33,8 @@ type PurchaseInteractionParams = {
      * them — we still create the row for audit/idempotency.
      */
     cancelled?: boolean;
+    /** Resolution state of the order, copied into the payload. */
+    subscription?: PurchaseSubscription | null;
 };
 
 /**
@@ -65,6 +71,7 @@ export class PurchaseInteractionCreator {
                 sku: item.sku ?? undefined,
             })),
             purchaseId: params.purchaseId,
+            subscription: toInteractionSubscription(params.subscription),
         };
 
         const externalEventId = purchaseExternalEventId(params.externalId);

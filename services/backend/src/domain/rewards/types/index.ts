@@ -31,6 +31,7 @@ export type DetailedAssetLog = {
     availableAt: Date | null;
     /** Held and not released yet. */
     held: boolean;
+
     cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
@@ -73,6 +74,22 @@ export type CreateReferralLinkPayload = {
 };
 
 /**
+ * What a purchase interaction knows about its subscription order. `pending`
+ * waits on the provider; a resolved checkout or renewal is one billing cycle,
+ * `counted` only when the merchant earned something on it.
+ */
+export type InteractionSubscription =
+    | { state: "pending" }
+    | {
+          state: "resolved";
+          kind: "checkout" | "renewal";
+          cyclesCovered: number;
+          merchandiseAmount: number;
+          counted: boolean;
+          providerSubscriptionIds: string[];
+      };
+
+/**
  * Payload for purchase interaction.
  */
 export type PurchasePayload = {
@@ -89,6 +106,7 @@ export type PurchasePayload = {
         sku?: string;
     }[];
     purchaseId: string;
+    subscription?: InteractionSubscription;
 };
 
 export type CustomPayload = {
@@ -161,4 +179,6 @@ export type CreateAssetLogParams = {
     lockupSeconds?: number;
     /** Create the reward held: it pays only once released. */
     held?: boolean;
+    /** Step of a subscription plan this reward pays for. */
+    planStep?: number;
 };

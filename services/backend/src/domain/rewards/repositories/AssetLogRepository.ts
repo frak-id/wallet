@@ -140,6 +140,7 @@ export class AssetLogRepository {
                 ),
                 availableAt,
                 heldAt: p.held ? new Date() : undefined,
+                planStep: p.planStep,
             };
         });
     }

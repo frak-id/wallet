@@ -19,7 +19,10 @@ import {
 } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
-import type { CreateAssetLogParams } from "../domain/rewards/types";
+import type {
+    CreateAssetLogParams,
+    PurchasePayload,
+} from "../domain/rewards/types";
 import { db } from "../infrastructure/persistence/postgres";
 import type { IdentityOrchestrator } from "./identity";
 import {
@@ -212,6 +215,10 @@ export class BatchRewardOrchestrator {
                     error: "No identityGroupId on interaction",
                 };
             }
+
+            const subscriptionResult =
+                await this.handleSubscriptionInteraction(interaction);
+            if (subscriptionResult) return subscriptionResult;
 
             const walletAddress =
                 await this.identityOrchestrator.getWalletForGroup(
@@ -411,6 +418,38 @@ export class BatchRewardOrchestrator {
                 error: errorMessage,
             };
         }
+    }
+
+    /**
+     * A pending order waits for its provider; a renewal is a billing cycle of
+     * an existing subscription, never a purchase to evaluate.
+     */
+    private async handleSubscriptionInteraction(
+        interaction: InteractionLogSelect
+    ): Promise<ProcessSingleResult | null> {
+        if (interaction.type !== "purchase") return null;
+        const { subscription } = interaction.payload as PurchasePayload;
+        if (!subscription) return null;
+
+        if (subscription.state === "pending") {
+            log.info(
+                { interactionLogId: interaction.id },
+                "Deferred interaction: subscription order not resolved yet"
+            );
+            return { success: true, rewardsCreated: 0, deferred: true };
+        }
+        if (subscription.kind !== "renewal") return null;
+
+        await db
+            .update(interactionLogsTable)
+            .set({ processedAt: new Date() })
+            .where(
+                and(
+                    eq(interactionLogsTable.id, interaction.id),
+                    isNull(interactionLogsTable.processedAt)
+                )
+            );
+        return { success: true, rewardsCreated: 0 };
     }
 
     /** Skips the claim lookup unless Frak is among the recipients (hot path). */

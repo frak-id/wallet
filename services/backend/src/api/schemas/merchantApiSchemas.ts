@@ -4,6 +4,7 @@ import {
     ExplorerConfigSchema,
     PlatformSchema,
 } from "../../domain/merchant/schemas";
+import { SubscriptionProviderSchema } from "../../domain/purchases/schemas";
 
 export {
     type MerchantResolveResponse,
@@ -57,6 +58,10 @@ export const MerchantDetailResponseSchema = t.Object({
         t.Literal("none"),
     ]),
     affiliate: t.Union([AffiliateBrandInfoSchema, t.Null()]),
+    // Absent on older backends; the dashboard shows the Subscriptions switch when set.
+    subscriptionProvider: t.Optional(
+        t.Union([SubscriptionProviderSchema, t.Null()])
+    ),
 });
 export type MerchantDetailResponse = Static<
     typeof MerchantDetailResponseSchema

@@ -17,3 +17,6 @@ export const PurchaseStatusSchema = t.Union([
     t.Literal("refunded"),
 ]);
 export type PurchaseStatus = Static<typeof PurchaseStatusSchema>;
+
+export const SubscriptionProviderSchema = t.Literal("recharge");
+export type SubscriptionProvider = Static<typeof SubscriptionProviderSchema>;

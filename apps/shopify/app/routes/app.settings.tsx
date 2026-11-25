@@ -7,6 +7,7 @@ import { LegacyInstall } from "app/components/LegacyInstall";
 import { Pixel } from "app/components/Pixel";
 import { Skeleton } from "app/components/Skeleton";
 import { Stepper } from "app/components/Stepper";
+import { Subscriptions } from "app/components/Subscriptions";
 import { ExternalLink } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
 import {
@@ -23,6 +24,7 @@ import {
     resolveMerchantInfo,
 } from "app/services.server/merchant";
 import { getLegacyInstallDismissed } from "app/services.server/metafields";
+import { getSubscriptionStatus } from "app/services.server/subscriptions";
 import {
     doesThemeHasFrakActivated,
     doesThemeSupportAppEmbed,
@@ -40,50 +42,58 @@ import type { loader as appLoader } from "./app";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
 
-    const [merchantInfo, webPixel, merchantId, frakWebhook, webhooks, theme] =
-        await Promise.all([
-            resolveMerchantInfo(context),
-            getWebPixel(context).catch((error) => {
-                log.error({ err: error }, "web pixel fetch failed");
-                return null;
-            }),
-            resolveMerchantId(context),
-            getFrakWebhookStatus(context, request),
-            getWebhooks(context),
-            (async () => {
-                try {
-                    const [
-                        isThemeHasFrakActivated,
-                        mainTheme,
-                        legacyInstallDismissed,
-                        supportsAppEmbed,
-                    ] = await Promise.all([
-                        doesThemeHasFrakActivated(context),
-                        getMainThemeId(context),
-                        getLegacyInstallDismissed(context),
-                        doesThemeSupportAppEmbed(context),
-                    ]);
-                    return {
-                        isThemeHasFrakActivated,
-                        theme: mainTheme,
-                        legacyInstallDismissed,
-                        supportsAppEmbed,
-                    };
-                } catch (error) {
-                    // Degrade gracefully instead of bouncing to a full-page
-                    // error. Fail open on app-embed support — it is
-                    // near-universal, so never hide the Listener flow on a
-                    // detection hiccup.
-                    log.error({ err: error }, "settings theme loader failed");
-                    return {
-                        isThemeHasFrakActivated: false,
-                        theme: undefined,
-                        legacyInstallDismissed: false,
-                        supportsAppEmbed: true,
-                    };
-                }
-            })(),
-        ]);
+    const [
+        merchantInfo,
+        webPixel,
+        merchantId,
+        frakWebhook,
+        webhooks,
+        subscriptionStatus,
+        theme,
+    ] = await Promise.all([
+        resolveMerchantInfo(context),
+        getWebPixel(context).catch((error) => {
+            log.error({ err: error }, "web pixel fetch failed");
+            return null;
+        }),
+        resolveMerchantId(context),
+        getFrakWebhookStatus(context, request),
+        getWebhooks(context),
+        getSubscriptionStatus(context, request),
+        (async () => {
+            try {
+                const [
+                    isThemeHasFrakActivated,
+                    mainTheme,
+                    legacyInstallDismissed,
+                    supportsAppEmbed,
+                ] = await Promise.all([
+                    doesThemeHasFrakActivated(context),
+                    getMainThemeId(context),
+                    getLegacyInstallDismissed(context),
+                    doesThemeSupportAppEmbed(context),
+                ]);
+                return {
+                    isThemeHasFrakActivated,
+                    theme: mainTheme,
+                    legacyInstallDismissed,
+                    supportsAppEmbed,
+                };
+            } catch (error) {
+                // Degrade gracefully instead of bouncing to a full-page
+                // error. Fail open on app-embed support — it is
+                // near-universal, so never hide the Listener flow on a
+                // detection hiccup.
+                log.error({ err: error }, "settings theme loader failed");
+                return {
+                    isThemeHasFrakActivated: false,
+                    theme: undefined,
+                    legacyInstallDismissed: false,
+                    supportsAppEmbed: true,
+                };
+            }
+        })(),
+    ]);
 
     return data({
         merchantInfo,
@@ -91,14 +101,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         merchantId,
         frakWebhook,
         webhooks,
+        subscriptionStatus,
         theme,
     });
 };
 
 export default function SettingsIndex() {
     const { t } = useTranslation();
-    const { merchantInfo, webPixel, merchantId, frakWebhook, webhooks, theme } =
-        useLoaderData<typeof loader>();
+    const {
+        merchantInfo,
+        webPixel,
+        merchantId,
+        frakWebhook,
+        webhooks,
+        subscriptionStatus,
+        theme,
+    } = useLoaderData<typeof loader>();
 
     return (
         <s-page heading={t("settings.title")}>
@@ -145,6 +163,10 @@ export default function SettingsIndex() {
                         frakWebhook={frakWebhook}
                         merchantId={merchantId}
                     />
+                </s-section>
+
+                <s-section heading={t("navigation.settings.subscriptions")}>
+                    <Subscriptions status={subscriptionStatus} />
                 </s-section>
 
                 <s-stack gap="base">

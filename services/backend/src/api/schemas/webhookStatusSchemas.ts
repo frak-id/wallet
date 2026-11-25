@@ -1,5 +1,8 @@
 import { t } from "@backend-utils";
-import { WebhookPlatformSchema } from "../../domain/purchases/schemas";
+import {
+    SubscriptionProviderSchema,
+    WebhookPlatformSchema,
+} from "../../domain/purchases/schemas";
 
 export const WebhookStatusResponseSchema = t.Union([
     t.Object({
@@ -19,3 +22,11 @@ export const WebhookStatusResponseSchema = t.Union([
         ),
     }),
 ]);
+
+export const SubscriptionStatusResponseSchema = t.Object({
+    provider: t.Union([SubscriptionProviderSchema, t.Null()]),
+    lastError: t.Union([
+        t.Object({ code: t.Literal("unauthorized"), at: t.String() }),
+        t.Null(),
+    ]),
+});

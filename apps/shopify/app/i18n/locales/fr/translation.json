@@ -26,6 +26,7 @@
             "general": "Général",
             "pixel": "Pixel d'application",
             "webhook": "Webhook",
+            "subscriptions": "Abonnements",
             "theme": "Thème"
         }
     },
@@ -228,6 +229,40 @@
                 "setup": "Le tracker de commande Frak est configuré",
                 "frakSetupError": "Erreur de connexion du tracker de commande Frak"
             }
+        }
+    },
+    "subscriptions": {
+        "description": "Connectez votre application d'abonnements pour que Frak reconnaisse les commandes d'abonnement et récompense les abonnés tant qu'ils continuent de payer. Le jeton doit avoir les permissions read_orders et read_subscriptions. Cette étape est facultative.",
+        "unavailable": "Le statut des abonnements n'a pas pu être chargé. Veuillez actualiser la page dans quelques secondes.",
+        "connected": "{{provider}} est connecté.",
+        "connectedTokenRejected": "{{provider}} est connecté mais son jeton a été rejeté.",
+        "providers": {
+            "recharge": "Recharge"
+        },
+        "fields": {
+            "token": "Jeton d'API Recharge",
+            "tokenDetails": "Créez-le dans Recharge sous Tools & apps > API tokens, avec les permissions read_orders et read_subscriptions. Frak le stocke chiffré et ne l'affiche plus ensuite."
+        },
+        "actions": {
+            "connect": "Connecter",
+            "reconnect": "Reconnecter",
+            "disconnect": "Déconnecter"
+        },
+        "messages": {
+            "connected": "Fournisseur d'abonnements connecté",
+            "disconnected": "Fournisseur d'abonnements déconnecté"
+        },
+        "lastError": {
+            "heading": "Recharge a rejeté le jeton, collez un nouveau jeton",
+            "body": "Les commandes d'abonnement ne sont pas reconnues tant que vous n'avez pas collé un jeton valide.",
+            "bodyAt": "Recharge a rejeté le jeton le {{date}} (UTC). Les commandes d'abonnement ne sont pas reconnues tant que vous n'avez pas collé un jeton valide."
+        },
+        "errors": {
+            "invalidToken": "Recharge a rejeté ce jeton. Vérifiez qu'il est correct et qu'il a les permissions read_orders et read_subscriptions.",
+            "webhookMissing": "Configurez d'abord le tracker de commande Frak dans la section Webhook, puis réessayez.",
+            "unavailable": "Recharge est injoignable. Veuillez réessayer dans quelques secondes.",
+            "failed": "La connexion a échoué. Veuillez réessayer.",
+            "disconnect": "La déconnexion a échoué. Veuillez réessayer."
         }
     },
     "theme": {

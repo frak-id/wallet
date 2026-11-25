@@ -2,8 +2,10 @@ import { db, log } from "@backend-infrastructure";
 import {
     aliasedTable,
     and,
+    desc,
     eq,
     inArray,
+    isNotNull,
     isNull,
     notExists,
     sql,
@@ -19,6 +21,8 @@ import {
     purchasesTable,
 } from "../db/schema";
 import { formatLineAmount, resolveLineTotal } from "../dto/lineItem";
+import type { SubscriptionProvider } from "../schemas";
+import type { PurchaseSubscription } from "../subscription/types";
 
 // Self-join alias: the NOT EXISTS probes the same table the UPDATE writes.
 const taken = aliasedTable(purchaseItemsTable, "taken");
@@ -96,7 +100,11 @@ export class PurchaseRepository {
         purchase: PurchaseInsert;
         items: PurchaseItemInsert[];
         identityGroupId?: string;
-    }): Promise<{ purchaseId: string; items: PurchaseItemInsert[] }> {
+    }): Promise<{
+        purchaseId: string;
+        items: PurchaseItemInsert[];
+        subscription: PurchaseSubscription | null;
+    }> {
         const { purchase, items, identityGroupId } = params;
 
         return db.transaction(async (trx) => {
@@ -119,6 +127,13 @@ export class PurchaseRepository {
                         ...(purchase.purchaseToken
                             ? { purchaseToken: purchase.purchaseToken }
                             : {}),
+                        // First writer wins: a redelivery must never move a
+                        // resolved order back to pending.
+                        ...(purchase.subscription
+                            ? {
+                                  subscription: sql`coalesce(${purchasesTable.subscription}, ${JSON.stringify(purchase.subscription)}::jsonb)`,
+                              }
+                            : {}),
                         // First-writer-wins: Shopify/Magento redeliver `orders/updated`
                         // repeatedly (capture, fulfilment, refund), and this
                         // identityGroupId derives from a client-controlled
@@ -136,7 +151,10 @@ export class PurchaseRepository {
                             : {}),
                     },
                 })
-                .returning({ purchaseId: purchasesTable.id });
+                .returning({
+                    purchaseId: purchasesTable.id,
+                    subscription: purchasesTable.subscription,
+                });
 
             const purchaseId = inserted[0]?.purchaseId;
             if (!purchaseId) {
@@ -146,7 +164,11 @@ export class PurchaseRepository {
             const mergedItems = mergeDuplicateItems(items, purchaseId);
             await this.insertItems(trx, purchaseId, mergedItems);
 
-            return { purchaseId, items: mergedItems };
+            return {
+                purchaseId,
+                items: mergedItems,
+                subscription: inserted[0]?.subscription ?? null,
+            };
         });
     }
 
@@ -343,5 +365,116 @@ export class PurchaseRepository {
             .select()
             .from(purchaseItemsTable)
             .where(eq(purchaseItemsTable.purchaseId, purchaseId));
+    }
+
+    /** Pending subscription orders whose next resolution attempt is due, oldest first. */
+    async findDueSubscriptionResolutions(
+        now: Date,
+        limit: number
+    ): Promise<PurchaseSelect[]> {
+        return db
+            .select()
+            .from(purchasesTable)
+            .where(
+                and(
+                    sql`${purchasesTable.subscription}->>'state' = 'pending'`,
+                    sql`coalesce(${purchasesTable.subscription}->>'nextAttemptAt', '') <= ${now.toISOString()}`
+                )
+            )
+            .orderBy(purchasesTable.createdAt)
+            .limit(limit);
+    }
+
+    async updateSubscription(
+        purchaseId: string,
+        subscription: PurchaseSubscription
+    ): Promise<void> {
+        await db
+            .update(purchasesTable)
+            .set({ subscription, updatedAt: new Date() })
+            .where(eq(purchasesTable.id, purchaseId));
+    }
+
+    /** Whether the customer already has a resolved subscription order at this webhook. */
+    async hasSubscriptionOrder(params: {
+        webhookId: number;
+        externalCustomerId: string;
+    }): Promise<boolean> {
+        const [row] = await db
+            .select({ id: purchasesTable.id })
+            .from(purchasesTable)
+            .where(
+                and(
+                    eq(purchasesTable.webhookId, params.webhookId),
+                    eq(
+                        purchasesTable.externalCustomerId,
+                        params.externalCustomerId
+                    ),
+                    sql`${purchasesTable.subscription}->>'state' = 'resolved'`,
+                    sql`${purchasesTable.subscription}->>'kind' IN ('checkout', 'renewal', 'prepaid_shipment')`
+                )
+            )
+            .limit(1);
+        return row !== undefined;
+    }
+
+    /** The customer's resolved subscription orders with a known identity, latest first. */
+    async findLinkedSubscriptionOrders(params: {
+        webhookId: number;
+        externalCustomerId: string;
+    }): Promise<PurchaseSelect[]> {
+        return db
+            .select()
+            .from(purchasesTable)
+            .where(
+                and(
+                    eq(purchasesTable.webhookId, params.webhookId),
+                    eq(
+                        purchasesTable.externalCustomerId,
+                        params.externalCustomerId
+                    ),
+                    isNotNull(purchasesTable.identityGroupId),
+                    sql`${purchasesTable.subscription}->>'state' = 'resolved'`,
+                    sql`${purchasesTable.subscription}->>'kind' IN ('checkout', 'renewal', 'prepaid_shipment')`
+                )
+            )
+            .orderBy(desc(purchasesTable.createdAt));
+    }
+
+    async findWebhooksByIds(ids: number[]): Promise<MerchantWebhook[]> {
+        if (ids.length === 0) return [];
+        return db
+            .select()
+            .from(merchantWebhooksTable)
+            .where(inArray(merchantWebhooksTable.id, ids));
+    }
+
+    /** `null` clears the connection. False when the merchant has no webhook row. */
+    async setSubscriptionConnection(
+        merchantId: string,
+        connection: {
+            provider: SubscriptionProvider;
+            credentials: string;
+        } | null
+    ): Promise<boolean> {
+        const rows = await db
+            .update(merchantWebhooksTable)
+            .set({
+                subscriptionProvider: connection?.provider ?? null,
+                subscriptionCredentials: connection?.credentials ?? null,
+            })
+            .where(eq(merchantWebhooksTable.merchantId, merchantId))
+            .returning({ id: merchantWebhooksTable.id });
+        return rows.length > 0;
+    }
+
+    async setSubscriptionCredentials(
+        merchantId: string,
+        credentials: string
+    ): Promise<void> {
+        await db
+            .update(merchantWebhooksTable)
+            .set({ subscriptionCredentials: credentials })
+            .where(eq(merchantWebhooksTable.merchantId, merchantId));
     }
 }

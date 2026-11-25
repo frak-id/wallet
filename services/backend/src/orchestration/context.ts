@@ -67,6 +67,7 @@ import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
+import { SubscriptionResolutionOrchestrator } from "./SubscriptionResolutionOrchestrator";
 import { TakeAdsIngestionOrchestrator } from "./TakeAdsIngestionOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
@@ -160,6 +161,14 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     identityOrchestrator,
     rewardLifecycleOrchestrator
 );
+
+const subscriptionResolutionOrchestrator =
+    new SubscriptionResolutionOrchestrator(
+        PurchasesContext.repositories.purchase,
+        PurchasesContext.services.subscriptionConnection,
+        RewardsContext.repositories.interactionLog,
+        purchaseInteractionCreator
+    );
 
 const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
     AffiliateContext.repositories.affiliateAttribution,
@@ -378,6 +387,7 @@ export namespace OrchestrationContext {
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         rewardLifecycle: rewardLifecycleOrchestrator,
+        subscriptionResolution: subscriptionResolutionOrchestrator,
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,

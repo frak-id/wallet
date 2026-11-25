@@ -32,6 +32,7 @@ vi.mock("../infrastructure/persistence/postgres", () => {
         db: {
             transaction: async (fn: (t: typeof tx) => Promise<unknown>) =>
                 fn(tx),
+            update: tx.update,
         },
     };
 });
@@ -73,6 +74,7 @@ function makeOrchestrator(opts: {
     rewards: CalculatedReward[];
     referrer: string | null;
     bonusAlreadyClaimed?: boolean;
+    payload?: unknown;
 }) {
     const assetLogRepository = {
         hasLiveWelcomeBonus: vi
@@ -88,22 +90,27 @@ function makeOrchestrator(opts: {
             })),
     };
     const campaignRuleRepository = { restoreBudget: vi.fn() };
+    const ruleEngine = {
+        evaluateRules: vi.fn().mockResolvedValue({
+            rewards: opts.rewards,
+            budgetExceeded: false,
+            skippedCampaigns: [],
+            scopeMatchedNoItemCampaigns: [],
+            errors: [],
+            deferForUnpriceableReward: false,
+        }),
+    };
 
     const orchestrator = new BatchRewardOrchestrator(
         {
-            findUnprocessedForRewards: vi.fn().mockResolvedValue([purchase]),
+            findUnprocessedForRewards: vi
+                .fn()
+                .mockResolvedValue([
+                    { ...purchase, payload: opts.payload ?? purchase.payload },
+                ]),
         } as never,
         assetLogRepository as never,
-        {
-            evaluateRules: vi.fn().mockResolvedValue({
-                rewards: opts.rewards,
-                budgetExceeded: false,
-                skippedCampaigns: [],
-                scopeMatchedNoItemCampaigns: [],
-                errors: [],
-                deferForUnpriceableReward: false,
-            }),
-        } as never,
+        ruleEngine as never,
         { getReferralChain: vi.fn() } as never,
         { getWalletForGroup: vi.fn().mockResolvedValue(null) } as never,
         {
@@ -120,7 +127,12 @@ function makeOrchestrator(opts: {
         campaignRuleRepository as never
     );
 
-    return { orchestrator, assetLogRepository, campaignRuleRepository };
+    return {
+        orchestrator,
+        assetLogRepository,
+        campaignRuleRepository,
+        ruleEngine,
+    };
 }
 
 describe("BatchRewardOrchestrator Frak referral policy", () => {
@@ -190,4 +202,70 @@ describe("BatchRewardOrchestrator held rewards", () => {
             ]);
         }
     );
+});
+
+describe("BatchRewardOrchestrator subscription interactions", () => {
+    beforeEach(() => {
+        txInsert.mockImplementation(async (rows: AssetLogInsert[]) => rows);
+        txUpdate.mockReset();
+        txUpdate.mockResolvedValue(undefined);
+    });
+
+    const resolvedPayload = (kind: "checkout" | "renewal") => ({
+        subscription: {
+            state: "resolved",
+            kind,
+            cyclesCovered: 1,
+            merchandiseAmount: 30,
+            counted: true,
+            providerSubscriptionIds: ["sub-1"],
+        },
+    });
+
+    it("defers an interaction whose subscription is still pending", async () => {
+        const { orchestrator, ruleEngine } = makeOrchestrator({
+            rewards: [refereeReward],
+            referrer: null,
+            payload: { subscription: { state: "pending" } },
+        });
+
+        const result = await orchestrator.processPendingInteractions({
+            limit: 10,
+        });
+
+        expect(result).toMatchObject({ deferredCount: 1, processedCount: 0 });
+        expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
+        expect(txInsert).not.toHaveBeenCalled();
+    });
+
+    it("never evaluates a renewal as a purchase", async () => {
+        const { orchestrator, ruleEngine } = makeOrchestrator({
+            rewards: [refereeReward],
+            referrer: null,
+            payload: resolvedPayload("renewal"),
+        });
+
+        const result = await orchestrator.processPendingInteractions({
+            limit: 10,
+        });
+
+        expect(result).toMatchObject({
+            processedCount: 1,
+            rewardsCreated: 0,
+        });
+        expect(ruleEngine.evaluateRules).not.toHaveBeenCalled();
+        expect(txUpdate).toHaveBeenCalledOnce();
+    });
+
+    it("still evaluates a subscription checkout as a purchase", async () => {
+        const { orchestrator, ruleEngine } = makeOrchestrator({
+            rewards: [refereeReward],
+            referrer: null,
+            payload: resolvedPayload("checkout"),
+        });
+
+        await orchestrator.processPendingInteractions({ limit: 10 });
+
+        expect(ruleEngine.evaluateRules).toHaveBeenCalledOnce();
+    });
 });

@@ -28,6 +28,16 @@ export type ProductEventMap = {
         rank: number;
         prize_amount: number;
     };
+    subscription_order_resolved: { kind: string; provider: string };
+    subscription_plan_created: { campaign_id: string; steps: number };
+    subscription_step_unlocked: { recipient_type: string; step: number };
+    subscription_step_repriced: {
+        recipient_type: string;
+        step: number;
+        delta: number;
+    };
+    subscription_plan_expired: { campaign_id: string; steps: number };
+    subscription_plan_rearmed: { campaign_id: string; steps: number };
 };
 
 function createClient(): KyInstance | null {

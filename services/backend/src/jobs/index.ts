@@ -4,6 +4,7 @@ import "./installCode";
 import "./emailVerificationCode";
 import "./businessAuthCleanup";
 import "./rewardCalculation";
+import "./subscriptionResolution";
 import "./settlement";
 import "./gameDraw";
 import "./instagramToken";

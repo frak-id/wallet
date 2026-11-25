@@ -194,6 +194,7 @@ export class PurchaseLinkingOrchestrator {
             identityGroupId: finalIdentityGroupId,
             merchantId,
             cancelled: isCancelled,
+            subscription: purchase.subscription,
         });
 
         if (interactionLogId) {

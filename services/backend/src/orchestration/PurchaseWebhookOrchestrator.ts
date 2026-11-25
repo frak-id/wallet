@@ -15,6 +15,8 @@ type UpsertPurchaseParams = {
     merchantId: string;
     /** Anonymous client ID from Shopify cart note_attributes (ad-blocker-resistant identity) */
     clientId?: string;
+    /** A subscription renewal: stored for the record, never attributed as a purchase. */
+    skipAttribution?: boolean;
 };
 
 type UpsertPurchaseResult = {
@@ -39,6 +41,7 @@ export class PurchaseWebhookOrchestrator {
         purchaseItems,
         merchantId,
         clientId,
+        skipAttribution,
     }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
         // Refunded/cancelled purchases never produce active rewards. We still
         // run the full identity-resolution + interaction-creation flow so the
@@ -55,6 +58,10 @@ export class PurchaseWebhookOrchestrator {
                 merchantId,
                 externalId: purchase.externalId,
             });
+        }
+
+        if (skipAttribution) {
+            return this.storeWithoutAttribution(purchase, purchaseItems);
         }
 
         // Check if a claim exists for this purchase
@@ -126,7 +133,7 @@ export class PurchaseWebhookOrchestrator {
         const identityGroupId = claim.claimingIdentityGroupId;
         await this.purchaseClaimRepository.delete(claim.id);
 
-        const { purchaseId, items } =
+        const { purchaseId, items, subscription } =
             await this.purchaseRepository.upsertWithItems({
                 purchase,
                 items: purchaseItems,
@@ -143,6 +150,7 @@ export class PurchaseWebhookOrchestrator {
             identityGroupId,
             merchantId,
             cancelled: isCancelled,
+            subscription,
         });
 
         return {
@@ -178,7 +186,7 @@ export class PurchaseWebhookOrchestrator {
         const { finalGroupId: identityGroupId } =
             await this.identityOrchestrator.resolveAndAssociate([identityNode]);
 
-        const { purchaseId, items } =
+        const { purchaseId, items, subscription } =
             await this.purchaseRepository.upsertWithItems({
                 purchase,
                 items: purchaseItems,
@@ -195,6 +203,7 @@ export class PurchaseWebhookOrchestrator {
             identityGroupId,
             merchantId,
             cancelled,
+            subscription,
         });
 
         log.info(
@@ -214,6 +223,27 @@ export class PurchaseWebhookOrchestrator {
             interactionLogId,
             isDuplicate: interactionLogId === null,
             pendingClaim: false,
+        };
+    }
+
+    private async storeWithoutAttribution(
+        purchase: PurchaseInsert,
+        purchaseItems: PurchaseItemInsert[]
+    ): Promise<UpsertPurchaseResult> {
+        const { purchaseId } = await this.purchaseRepository.upsertWithItems({
+            purchase,
+            items: purchaseItems,
+        });
+        log.info(
+            { purchaseId, orderId: purchase.externalId },
+            "Renewal order stored without attribution"
+        );
+        return {
+            purchaseId,
+            identityGroupId: null,
+            interactionLogId: null,
+            isDuplicate: false,
+            pendingClaim: true,
         };
     }
 }

@@ -6,7 +6,11 @@ import {
     interactionLogsTable,
 } from "../db/schema";
 import { interactionTypes } from "../schemas";
-import type { CreateReferralLinkPayload, InteractionType } from "../types";
+import type {
+    CreateReferralLinkPayload,
+    InteractionSubscription,
+    InteractionType,
+} from "../types";
 import { purchaseExternalEventId } from "../utils";
 
 export class InteractionLogRepository {
@@ -178,5 +182,55 @@ export class InteractionLogRepository {
             )
             .returning();
         return row ?? null;
+    }
+
+    async findPurchaseByExternalId(params: {
+        merchantId: string;
+        externalId: string;
+    }): Promise<InteractionLogSelect | null> {
+        const [row] = await db
+            .select()
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, params.merchantId),
+                    eq(interactionLogsTable.type, "purchase"),
+                    eq(
+                        interactionLogsTable.externalEventId,
+                        purchaseExternalEventId(params.externalId)
+                    )
+                )
+            )
+            .limit(1);
+        return row ?? null;
+    }
+
+    /**
+     * Rewrites the subscription block of a purchase interaction that has not
+     * been processed yet; `null` drops it so the order proceeds as a plain
+     * purchase. `close` also marks the interaction processed, with no reward.
+     */
+    async setPurchaseSubscription(
+        interactionLogId: string,
+        subscription: InteractionSubscription | null,
+        options: { close?: boolean } = {}
+    ): Promise<boolean> {
+        const payload = subscription
+            ? sql`jsonb_set(${interactionLogsTable.payload}, '{subscription}', ${JSON.stringify(subscription)}::jsonb)`
+            : sql`${interactionLogsTable.payload} - 'subscription'`;
+        const rows = await db
+            .update(interactionLogsTable)
+            .set({
+                payload,
+                ...(options.close ? { processedAt: new Date() } : {}),
+            })
+            .where(
+                and(
+                    eq(interactionLogsTable.id, interactionLogId),
+                    isNull(interactionLogsTable.processedAt)
+                )
+            )
+            .returning({ id: interactionLogsTable.id });
+        return rows.length > 0;
     }
 }
