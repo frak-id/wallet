@@ -15,6 +15,7 @@ import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 import type { UIRequest } from "@/ui/ListenerUiProvider";
+import { supersededError } from "@/uiBus";
 
 type OnDisplaySharingPageRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -24,6 +25,7 @@ type OnDisplaySharingPageRequest = RpcPromiseHandler<
 
 type DisplaySharingPageDeps = {
     setRequest: (request: UIRequest) => void;
+    isLatest: () => boolean;
 };
 
 /**
@@ -32,7 +34,7 @@ type DisplaySharingPageDeps = {
  */
 export const handleDisplaySharingPage = async (
     params: Parameters<OnDisplaySharingPageRequest>[0],
-    { setRequest }: DisplaySharingPageDeps
+    { setRequest, isLatest }: DisplaySharingPageDeps
 ): Promise<DisplaySharingPageResultType> => {
     const backendConfig = resolvingContextStore.getState().backendSdkConfig;
 
@@ -72,6 +74,10 @@ export const handleDisplaySharingPage = async (
             deferred.resolve(response.result);
         }
     };
+
+    if (!isLatest()) {
+        throw supersededError();
+    }
 
     const resolved = resolveBackendMetadata(configMetadata, backendConfig);
 

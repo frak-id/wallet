@@ -17,12 +17,14 @@ type OnDisplaySharingPageRequest = RpcPromiseHandler<
  */
 export function createDisplaySharingPageHandler(): OnDisplaySharingPageRequest {
     return async (params, _context) => {
+        const isLatest = uiBus.claim();
         void ensureUiRuntime();
         const { handleDisplaySharingPage } = await import(
             "@/module/sharing/component/SharingPage"
         );
         return handleDisplaySharingPage(params, {
             setRequest: uiBus.request,
+            isLatest,
         });
     };
 }

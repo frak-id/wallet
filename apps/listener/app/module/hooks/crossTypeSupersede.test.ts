@@ -38,7 +38,11 @@ const modalParams: ModalParams = [
 ];
 const sharingParams: SharingParams = [{}, { name: "Test merchant" }];
 
-const deps = { setRequest: uiBus.request };
+// What the eager shells do on arrival, before their handler's code loads.
+const arrive = () => ({
+    setRequest: uiBus.request,
+    isLatest: uiBus.claim(),
+});
 
 // Records how a call ended so a hang shows up as a failed assertion, not a timeout.
 const track = <T>(call: Promise<T>) => {
@@ -74,12 +78,14 @@ afterEach(() => {
     vi.mocked(ensureFreshSdkSession).mockReset();
 });
 
-describe("a request replaced on screen by a newer one", () => {
+describe("the newest request to arrive owns the screen", () => {
     it("rejects a pending modal when a sharing page replaces it", async () => {
-        const modal = track(handleDisplayModal(modalParams, deps));
+        const modal = track(handleDisplayModal(modalParams, arrive()));
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
 
-        const sharing = track(handleDisplaySharingPage(sharingParams, deps));
+        const sharing = track(
+            handleDisplaySharingPage(sharingParams, arrive())
+        );
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(2));
 
         await vi.waitFor(() =>
@@ -97,10 +103,10 @@ describe("a request replaced on screen by a newer one", () => {
     });
 
     it("rejects a pending sharing page when another sharing page replaces it", async () => {
-        const first = track(handleDisplaySharingPage(sharingParams, deps));
+        const first = track(handleDisplaySharingPage(sharingParams, arrive()));
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
 
-        const second = track(handleDisplaySharingPage(sharingParams, deps));
+        const second = track(handleDisplaySharingPage(sharingParams, arrive()));
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(2));
 
         await vi.waitFor(() =>
@@ -118,10 +124,12 @@ describe("a request replaced on screen by a newer one", () => {
     });
 
     it("rejects a pending sharing page when a modal replaces it", async () => {
-        const sharing = track(handleDisplaySharingPage(sharingParams, deps));
+        const sharing = track(
+            handleDisplaySharingPage(sharingParams, arrive())
+        );
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
 
-        const modal = track(handleDisplayModal(modalParams, deps));
+        const modal = track(handleDisplayModal(modalParams, arrive()));
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(2));
 
         await vi.waitFor(() =>
@@ -159,14 +167,16 @@ describe("a request replaced on screen by a newer one", () => {
                     undefined,
                     { name: "Test merchant" },
                 ],
-                deps
+                arrive()
             )
         );
         await vi.waitFor(() =>
             expect(ensureFreshSdkSession).toHaveBeenCalledTimes(1)
         );
 
-        const sharing = track(handleDisplaySharingPage(sharingParams, deps));
+        const sharing = track(
+            handleDisplaySharingPage(sharingParams, arrive())
+        );
         await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
         const sharingRequest = shown(handler, 0);
         if (sharingRequest.type !== "sharing") throw new Error("not sharing");

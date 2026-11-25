@@ -1,6 +1,7 @@
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import type { FreshSdkResult } from "@frak-labs/wallet-shared/common/auth/ensureFreshSdkSession";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 const sessionHolder = vi.hoisted(
     (): { session: { address: string } | null } => ({ session: null })
@@ -21,10 +22,17 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
 const { ensureFreshSdkSession } = await import(
     "@frak-labs/wallet-shared/common/auth/ensureFreshSdkSession"
 );
+const { uiBus } = await import("@/uiBus");
 const { handleDisplayModal } = await import("./useDisplayModalListener.impl");
 
 type Params = Parameters<typeof handleDisplayModal>[0];
 const params: Params = [{ login: {} }, undefined, { name: "Test merchant" }];
+
+// What the eager shell does on arrival, before the handler's code loads.
+const arrive = (setRequest: (request: UIRequest) => void) => ({
+    setRequest,
+    isLatest: uiBus.claim(),
+});
 
 afterEach(() => {
     sessionHolder.session = null;
@@ -34,10 +42,10 @@ afterEach(() => {
 describe("handleDisplayModal", () => {
     it("rejects the pending request when a new one replaces it", async () => {
         const setRequest = vi.fn();
-        const first = handleDisplayModal(params, { setRequest });
+        const first = handleDisplayModal(params, arrive(setRequest));
         await vi.waitFor(() => expect(setRequest).toHaveBeenCalledTimes(1));
 
-        const second = handleDisplayModal(params, { setRequest });
+        const second = handleDisplayModal(params, arrive(setRequest));
 
         await expect(first).rejects.toMatchObject({
             code: RpcErrorCodes.internalError,
@@ -55,10 +63,13 @@ describe("handleDisplayModal", () => {
 
     it("rejects the displayed request when a newer one has no steps", async () => {
         const setRequest = vi.fn();
-        const first = handleDisplayModal(params, { setRequest });
+        const first = handleDisplayModal(params, arrive(setRequest));
         await vi.waitFor(() => expect(setRequest).toHaveBeenCalledTimes(1));
 
-        const empty = handleDisplayModal([{}, undefined, {}], { setRequest });
+        const empty = handleDisplayModal(
+            [{}, undefined, {}],
+            arrive(setRequest)
+        );
 
         await expect(empty).rejects.toMatchObject({
             code: RpcErrorCodes.invalidRequest,
@@ -70,7 +81,7 @@ describe("handleDisplayModal", () => {
 
     it("keeps the displayed modal live while a newer request refreshes", async () => {
         const setRequest = vi.fn();
-        const first = handleDisplayModal(params, { setRequest });
+        const first = handleDisplayModal(params, arrive(setRequest));
         await vi.waitFor(() => expect(setRequest).toHaveBeenCalledTimes(1));
 
         sessionHolder.session = { address: "0x1" };
@@ -87,7 +98,7 @@ describe("handleDisplayModal", () => {
                 undefined,
                 { name: "Newer merchant" },
             ],
-            { setRequest }
+            arrive(setRequest)
         );
         await vi.waitFor(() =>
             expect(ensureFreshSdkSession).toHaveBeenCalledTimes(1)
@@ -136,13 +147,13 @@ describe("handleDisplayModal", () => {
             ];
             const setRequest = vi.fn();
 
-            const first = handleDisplayModal(olderParams, { setRequest });
+            const first = handleDisplayModal(olderParams, arrive(setRequest));
             const firstOutcome = first.then(
                 () => undefined,
                 (error: unknown) => error
             );
             await vi.waitFor(() => expect(refreshes).toHaveLength(1));
-            const second = handleDisplayModal(newerParams, { setRequest });
+            const second = handleDisplayModal(newerParams, arrive(setRequest));
             await vi.waitFor(() => expect(refreshes).toHaveLength(2));
 
             for (const index of order) {
