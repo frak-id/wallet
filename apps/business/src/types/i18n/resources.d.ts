@@ -1942,19 +1942,35 @@ export default interface Resources {
         "title": "Edit merchant"
       },
       "explorer": {
+        "addImage": "Add image",
         "additionalHero": "Additional hero images",
         "additionalHeroHint": "Up to 4 extra images shown as a slider after the main one.",
         "browseFiles": "Browse files",
+        "crop": {
+          "cancel": "Cancel",
+          "confirm": "Crop and upload",
+          "description": "This image is outside the accepted ratio ({{min}} to {{max}}). Drag and zoom to choose the part to keep.",
+          "descriptionFits": "Drag and zoom to frame your image, or use it as is.",
+          "failed": "Could not crop this image. Try another file.",
+          "ratio": "Ratio",
+          "title": "Crop your image",
+          "useAsIs": "Use as is",
+          "zoom": "Zoom"
+        },
+        "currentImage": "Current image",
         "description": "Description",
         "descriptionPlaceholder": "Merchant description...",
+        "doneEditing": "Done",
         "dragAndDrop": "Drag and drop files here",
         "dropHere": "Drop image here",
+        "editImage": "Edit",
         "errors": {
           "fileRejected": "This file was rejected — check the requirements above.",
           "uploadFailed": "Upload failed"
         },
         "heroHint": "The main image shown at the top of your Explorer page.",
         "heroImage": "Hero image",
+        "imageUnavailable": "This image could not be displayed",
         "invalidUrl": "Enter a valid image URL (https://…)",
         "listed": "Listed in Explorer",
         "logo": "Logo",
@@ -1965,11 +1981,13 @@ export default interface Resources {
           "notListed": "Not listed"
         },
         "removeImage": "Remove image",
+        "removeSlide": "Remove image {{index}}",
         "restrictions": {
           "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
           "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)",
           "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)"
         },
+        "slide": "Slide {{index}}",
         "title": "Explorer",
         "uploaded": "Image uploaded",
         "uploading": "Uploading...",

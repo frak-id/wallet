@@ -1,86 +1,51 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, fontSize } from "@frak-labs/design-system/tokens";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
-export const list = style({
+// Two columns on the edit card, one on a phone; every row as tall as an image tile.
+export const grid = style({
     listStyle: "none",
     margin: 0,
     padding: 0,
-});
-
-export const item = style({
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gridAutoRows: "1fr",
     gap: alias.spacing.s,
-    padding: `${alias.spacing.xs} ${alias.spacing.s}`,
-    border: `1px solid ${vars.border.default}`,
-    borderRadius: alias.cornerRadius.m,
-    backgroundColor: vars.surface.muted,
 });
 
-export const thumb = style({
-    width: "48px",
-    height: "32px",
-    flexShrink: 0,
-    borderRadius: alias.cornerRadius.s,
-    overflow: "hidden",
-    backgroundColor: vars.surface.muted,
+export const addItem = style({
+    display: "flex",
 });
 
-// Shared by the thumbnail and hover-preview <img> elements.
-export const image = style({
-    display: "block",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-});
-
-export const url = style({
+export const addTile = style({
+    display: "flex",
     flex: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    fontSize: fontSize.xs,
-    color: vars.text.tertiary,
 });
 
-export const deleteButton = style([
+export const addButton = style([
     interactive,
     focusRing,
     {
         all: "unset",
         boxSizing: "border-box",
-        display: "inline-flex",
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        width: "24px",
-        height: "24px",
-        flexShrink: 0,
+        gap: alias.spacing.xs,
+        padding: alias.spacing.m,
+        borderRadius: alias.cornerRadius.m,
+        border: `1px dashed ${vars.border.default}`,
+        backgroundColor: vars.surface.muted,
         cursor: "pointer",
-        borderRadius: alias.cornerRadius.full,
-        color: vars.text.secondary,
         selectors: {
-            "&:hover": {
-                color: vars.text.primary,
+            "&:not(:disabled):hover, &[data-active]": {
+                borderColor: vars.border.focus,
+                backgroundColor: vars.surface.secondary,
             },
+            "&:disabled": { cursor: "default" },
         },
     },
 ]);
-
-export const preview = style({
-    position: "absolute",
-    left: "60px",
-    top: "calc(100% + 6px)",
-    zIndex: 10,
-    pointerEvents: "none",
-    width: "280px",
-    height: "160px",
-    borderRadius: alias.cornerRadius.m,
-    overflow: "hidden",
-    border: `1px solid ${vars.border.default}`,
-    backgroundColor: vars.surface.muted,
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
-});

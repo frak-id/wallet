@@ -1786,9 +1786,9 @@
             "title": "Explorer",
             "listed": "Listé dans l'Explorer",
             "previewDisabledHint": "Activer l'Explorer",
-            "heroImage": "Image hero",
+            "heroImage": "Image bannière",
             "heroHint": "L'image principale affichée en haut de votre page Explorer.",
-            "additionalHero": "Images hero supplémentaires",
+            "additionalHero": "Images bannière supplémentaires",
             "additionalHeroHint": "Jusqu'à 4 images supplémentaires affichées en carrousel après l'image principale.",
             "logo": "Logo",
             "description": "Description",
@@ -1799,6 +1799,13 @@
             "or": "ou",
             "browseFiles": "Parcourir les fichiers",
             "removeImage": "Supprimer l'image",
+            "editImage": "Modifier",
+            "doneEditing": "Terminé",
+            "currentImage": "Image actuelle",
+            "imageUnavailable": "Impossible d'afficher cette image",
+            "slide": "Image {{index}}",
+            "removeSlide": "Supprimer l'image {{index}}",
+            "addImage": "Ajouter une image",
             "useExisting": "Utiliser une image existante :",
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
@@ -1809,6 +1816,17 @@
             "errors": {
                 "fileRejected": "Ce fichier a été refusé — vérifiez les conditions ci-dessus.",
                 "uploadFailed": "Échec de l'envoi"
+            },
+            "crop": {
+                "title": "Recadrez votre image",
+                "description": "Cette image sort du ratio accepté ({{min}} à {{max}}). Déplacez et zoomez pour choisir la partie à garder.",
+                "descriptionFits": "Déplacez et zoomez pour cadrer votre image, ou utilisez-la telle quelle.",
+                "useAsIs": "Utiliser telle quelle",
+                "ratio": "Ratio",
+                "zoom": "Zoom",
+                "cancel": "Annuler",
+                "confirm": "Recadrer et envoyer",
+                "failed": "Impossible de recadrer cette image. Essayez un autre fichier."
             },
             "descriptionPlaceholder": "Description du marchand...",
             "readOnly": {

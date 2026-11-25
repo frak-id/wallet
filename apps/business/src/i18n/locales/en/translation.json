@@ -1799,6 +1799,13 @@
             "or": "or",
             "browseFiles": "Browse files",
             "removeImage": "Remove image",
+            "editImage": "Edit",
+            "doneEditing": "Done",
+            "currentImage": "Current image",
+            "imageUnavailable": "This image could not be displayed",
+            "slide": "Slide {{index}}",
+            "removeSlide": "Remove image {{index}}",
+            "addImage": "Add image",
             "useExisting": "Use an existing image:",
             "invalidUrl": "Enter a valid image URL (https://…)",
             "restrictions": {
@@ -1809,6 +1816,17 @@
             "errors": {
                 "fileRejected": "This file was rejected — check the requirements above.",
                 "uploadFailed": "Upload failed"
+            },
+            "crop": {
+                "title": "Crop your image",
+                "description": "This image is outside the accepted ratio ({{min}} to {{max}}). Drag and zoom to choose the part to keep.",
+                "descriptionFits": "Drag and zoom to frame your image, or use it as is.",
+                "ratio": "Ratio",
+                "zoom": "Zoom",
+                "cancel": "Cancel",
+                "confirm": "Crop and upload",
+                "useAsIs": "Use as is",
+                "failed": "Could not crop this image. Try another file."
             },
             "descriptionPlaceholder": "Merchant description...",
             "readOnly": {
