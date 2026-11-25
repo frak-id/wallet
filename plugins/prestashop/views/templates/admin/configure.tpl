@@ -10,7 +10,9 @@
    The brand + webhook secret + placement toggles share a single `<form>`
    so the merchant gets one Save button; the explicit operations (Refresh
    Merchant, Drain queue) submit to small dedicated forms because they are
-   stateful actions, not config writes.
+   stateful actions, not config writes. The Save button lives in the sticky
+   bar at the end of the page and reaches the settings form through its
+   `form` attribute, so it stays on screen over every section.
 *}
 
 {if $frak_env_dev || $frak_env_ignored !== null || $frak_env_domain !== ''}
@@ -86,7 +88,7 @@
     <div class="panel">
         <h3><i class="icon icon-cogs"></i> {l s='Purchase Tracking' mod='frakintegration'}</h3>
         <p class="help-block">
-            {l s='Order updates are delivered to Frak via an HMAC-SHA256 signed webhook. Generate the secret in your Frak business dashboard, paste it below, then make sure the merchant record below shows as resolved.' mod='frakintegration'}
+            {l s='Order updates are delivered to Frak via an HMAC-SHA256 signed webhook. Get the secret from your Frak business dashboard, paste it below, then make sure the merchant record below shows as connected.' mod='frakintegration'}
         </p>
 
         <div class="form-group">
@@ -98,7 +100,7 @@
                        placeholder="{l s='Paste the webhook secret from your Frak dashboard' mod='frakintegration'}"
                        class="form-control" />
                 <p class="help-block">
-                    {l s='Generate the secret in your Frak business dashboard (Merchant → Purchase Tracker → PrestaShop) and paste it here. Saving this form re-applies the new secret on every outbound webhook.' mod='frakintegration'}
+                    {l s='In your Frak business dashboard, open Merchant → Purchase Tracker, select Custom, copy the secret and click Register. Then paste it here and save: every webhook sent after that is signed with the new secret.' mod='frakintegration'}
                 </p>
             </div>
         </div>
@@ -160,16 +162,19 @@
     <div class="panel">
         <h3><i class="icon icon-bell"></i> {l s='Reward reminder' mod='frakintegration'}</h3>
         <div class="form-group">
-            <div class="col-lg-12">
+            <label class="control-label col-lg-3">{l s='Reminder badge' mod='frakintegration'}</label>
+            <div class="col-lg-9">
                 <input type="hidden" name="FRAK_REWARD_REMINDER__present" value="1" />
-                <label style="font-weight: normal; cursor: pointer;">
-                    <input type="checkbox"
-                           name="FRAK_REWARD_REMINDER"
-                           value="1"
-                           {if $reward_reminder_enabled}checked="checked"{/if} />
-                    <strong>{l s='Reward reminder' mod='frakintegration'}</strong>
-                </label>
-                <p class="help-block" style="margin: 4px 0 0 22px;">
+                <div class="checkbox frak-checkbox">
+                    <label>
+                        <input type="checkbox"
+                               name="FRAK_REWARD_REMINDER"
+                               value="1"
+                               {if $reward_reminder_enabled}checked="checked"{/if} />
+                        {l s='Show the reward reminder' mod='frakintegration'}
+                    </label>
+                </div>
+                <p class="help-block frak-checkbox-help">
                     {l s='Shows a small badge to shoppers who earned a reward on your store but haven\'t created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.' mod='frakintegration'}
                 </p>
             </div>
@@ -179,131 +184,130 @@
     {if !empty($placement_groups)}
         <div class="panel">
             <h3><i class="icon icon-puzzle-piece"></i> {l s='Component Placements' mod='frakintegration'}</h3>
-            <p class="help-block">
-                {l s='Pick which Frak components render automatically on which storefront surfaces. The legacy product / order placements are on by default; the auxiliary surfaces (cart, top banner, homepage banner, footer banner) are off by default to keep upgrades visually unchanged.' mod='frakintegration'}
+            <p class="help-block frak-panel-intro">
+                {l s='Pick which Frak components render automatically on which storefront surfaces. Every placement stays off until you tick it.' mod='frakintegration'}
                 <br>
                 {l s='Need a custom placement? Type one of these tags in a theme template or in a CMS page (Design → Pages): {frak_ambassador}, {frak_banner placement="hero"}, {frak_share_button text="Share & earn"}, {frak_post_purchase variant="referrer"}.' mod='frakintegration'}
             </p>
 
             {foreach from=$placement_groups key=component item=group}
-                <fieldset style="margin-top: 16px; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 4px;">
-                    <legend style="font-size: 14px; font-weight: 600; padding: 0 8px;">{$group.label|escape:'html':'UTF-8'}</legend>
-                    {foreach from=$group.items item=item}
-                        <div class="form-group" style="margin-bottom: 8px;">
-                            <div class="col-lg-12">
+                <div class="form-group frak-placement-group">
+                    <label class="control-label col-lg-3">{$group.label|escape:'html':'UTF-8'}</label>
+                    <div class="col-lg-9">
+                        {foreach from=$group.items item=item}
+                            <div class="frak-placement">
                                 {* Hidden marker so the controller can distinguish "checkbox unchecked" from "form did not include this placement" — see processPlacements() in AdminFrakIntegrationController.php. *}
                                 <input type="hidden" name="{$item.config_key|escape:'html':'UTF-8'}__present" value="1" />
-                                <label style="font-weight: normal; cursor: pointer;">
-                                    <input type="checkbox"
-                                           name="{$item.config_key|escape:'html':'UTF-8'}"
-                                           value="1"
-                                           {if $item.enabled}checked="checked"{/if} />
-                                    <strong>{$item.label|escape:'html':'UTF-8'}</strong>
-                                </label>
-                                <p class="help-block" style="margin: 4px 0 0 22px; font-size: 12px;">
-                                    {$item.description|escape:'html':'UTF-8'}
-                                    <br>
-                                    <small style="color: #888;">
-                                        {l s='Hook:' mod='frakintegration'} <code>{$item.hook|escape:'html':'UTF-8'}</code>
-                                        &nbsp;·&nbsp;
-                                        {l s='Placement:' mod='frakintegration'} <code>{$item.placement_attr|escape:'html':'UTF-8'}</code>
-                                    </small>
+                                <div class="checkbox frak-checkbox">
+                                    <label>
+                                        <input type="checkbox"
+                                               name="{$item.config_key|escape:'html':'UTF-8'}"
+                                               value="1"
+                                               {if $item.enabled}checked="checked"{/if} />
+                                        {$item.label|escape:'html':'UTF-8'}
+                                    </label>
+                                </div>
+                                <p class="help-block frak-checkbox-help">{$item.description|escape:'html':'UTF-8'}</p>
+                                <p class="frak-checkbox-help frak-placement__meta">
+                                    {l s='Hook:' mod='frakintegration'} <code>{$item.hook|escape:'html':'UTF-8'}</code>
+                                    &nbsp;·&nbsp;
+                                    {l s='Placement:' mod='frakintegration'} <code>{$item.placement_attr|escape:'html':'UTF-8'}</code>
                                 </p>
                                 {if !empty($item.options)}
-                                    {* Per-placement merchant-tunable options (e.g. share-button style preset, banner CSS class). Indentation matches the description block above so the inputs read as a sub-section of the placement card. *}
-                                    <div class="frak-placement-options" style="margin: 8px 0 0 22px;">
+                                    <div class="frak-checkbox-help frak-placement__options">
                                         {foreach from=$item.options item=option}
-                                            <div class="form-group" style="margin-bottom: 6px;">
-                                                <label class="control-label" style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 2px;">
-                                                    {$option.label|escape:'html':'UTF-8'}
-                                                </label>
+                                            <div class="frak-placement__option">
+                                                <label for="{$option.name|escape:'html':'UTF-8'}">{$option.label|escape:'html':'UTF-8'}</label>
                                                 {if $option.type == 'select'}
-                                                    <select name="{$option.name|escape:'html':'UTF-8'}" class="form-control" style="max-width: 320px;">
+                                                    <select id="{$option.name|escape:'html':'UTF-8'}" name="{$option.name|escape:'html':'UTF-8'}" class="form-control">
                                                         {foreach from=$option.choices item=choice}
                                                             <option value="{$choice.value|escape:'html':'UTF-8'}" {if $choice.value === $option.value}selected="selected"{/if}>{$choice.label|escape:'html':'UTF-8'}</option>
                                                         {/foreach}
                                                     </select>
                                                 {elseif $option.type == 'text'}
-                                                    <input type="text" name="{$option.name|escape:'html':'UTF-8'}" value="{$option.value|escape:'html':'UTF-8'}" class="form-control" style="max-width: 320px;" />
+                                                    <input type="text" id="{$option.name|escape:'html':'UTF-8'}" name="{$option.name|escape:'html':'UTF-8'}" value="{$option.value|escape:'html':'UTF-8'}" class="form-control" />
                                                 {/if}
                                                 {if $option.description}
-                                                    <p class="help-block" style="margin: 2px 0 0; font-size: 11px;">
-                                                        {$option.description|escape:'html':'UTF-8'}
-                                                    </p>
+                                                    <p class="help-block">{$option.description|escape:'html':'UTF-8'}</p>
                                                 {/if}
                                             </div>
                                         {/foreach}
                                     </div>
                                 {/if}
                             </div>
-                        </div>
-                    {/foreach}
-                </fieldset>
+                        {/foreach}
+                    </div>
+                </div>
             {/foreach}
         </div>
     {/if}
-
-    <div class="panel-footer">
-        <button type="submit" name="submitFrakSettings" class="btn btn-primary">
-            <i class="process-icon-save"></i> {l s='Save Settings' mod='frakintegration'}
-        </button>
-    </div>
 </form>
 
 {*
    Ambassador page state + create/restore action. Its own <form>, outside the
    settings form above, like the Maintenance actions.
 *}
-<div class="panel" id="frak_ambassador_panel">
+<div class="panel form-horizontal" id="frak_ambassador_panel">
     <h3><i class="icon icon-file-text"></i> {l s='Ambassador page' mod='frakintegration'}</h3>
-    {if $ambassador_page.type == 'live'}
-        <p class="frak-amb-status">
-            <span class="label label-success">{l s='✓ Live' mod='frakintegration'}</span>
-            <strong>{$ambassador_page.title|escape:'html':'UTF-8'}</strong>
-        </p>
-        {if !$ambassador_page.created}
-            <p class="help-block">
-                {l s='This page holds the {frak_ambassador} marker, which is why no Create button is offered. The page heading from your theme stays above the heading of the component.' mod='frakintegration'}
-            </p>
-        {/if}
-        <div class="frak-amb-actions">
-            <a href="{$ambassador_page.url|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
-                <i class="icon-external-link"></i> {l s='View page' mod='frakintegration'}
-            </a>
-            {if $ambassador_page.editUrl !== ''}
-                <a href="{$ambassador_page.editUrl|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
-                    <i class="icon-pencil"></i> {l s='Edit page' mod='frakintegration'}
-                </a>
-            {/if}
-        </div>
-    {else}
-        <form action="{$form_action}" method="post">
-            {if $ambassador_page.type == 'restorable'}
-                <p class="help-block">
-                    {l s='Your ambassador page exists but is inactive in Design → Pages. Restore it to publish it again at the same address.' mod='frakintegration'}
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Page' mod='frakintegration'}</label>
+        <div class="col-lg-9">
+            {if $ambassador_page.type == 'live'}
+                <p class="form-control-static frak-amb-status">
+                    <span class="label label-success">{l s='✓ Live' mod='frakintegration'}</span>
+                    <strong>{$ambassador_page.title|escape:'html':'UTF-8'}</strong>
                 </p>
+                {if !$ambassador_page.created}
+                    <p class="help-block">
+                        {l s='This page holds the {frak_ambassador} marker, which is why no Create button is offered. The page heading from your theme stays above the heading of the component.' mod='frakintegration'}
+                    </p>
+                {/if}
                 <div class="frak-amb-actions">
-                    <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
-                        <i class="icon-refresh"></i> {l s='Restore my ambassador page' mod='frakintegration'}
-                    </button>
+                    <a href="{$ambassador_page.url|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
+                        <i class="icon-external-link"></i> {l s='View page' mod='frakintegration'}
+                    </a>
+                    {if $ambassador_page.editUrl !== ''}
+                        <a href="{$ambassador_page.editUrl|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
+                            <i class="icon-pencil"></i> {l s='Edit page' mod='frakintegration'}
+                        </a>
+                    {/if}
                 </div>
             {else}
-                <p class="help-block">
-                    {l s='Publish a page that lists your campaign rewards and lets customers share and earn. It is a regular page you can edit in Design → Pages.' mod='frakintegration'}
-                </p>
-                <div class="frak-amb-actions">
-                    <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
-                        <i class="icon-plus"></i> {l s='Create my ambassador page' mod='frakintegration'}
-                    </button>
-                </div>
+                <form action="{$form_action}" method="post">
+                    {if $ambassador_page.type == 'restorable'}
+                        <p class="form-control-static frak-amb-status">
+                            <span class="label label-warning">{l s='Inactive' mod='frakintegration'}</span>
+                        </p>
+                        <p class="help-block">
+                            {l s='Your ambassador page exists but is inactive in Design → Pages. Restore it to publish it again at the same address.' mod='frakintegration'}
+                        </p>
+                        <div class="frak-amb-actions">
+                            <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
+                                <i class="icon-refresh"></i> {l s='Restore my ambassador page' mod='frakintegration'}
+                            </button>
+                        </div>
+                    {else}
+                        <p class="form-control-static frak-amb-status">
+                            <span class="label label-default">{l s='Not created' mod='frakintegration'}</span>
+                        </p>
+                        <p class="help-block">
+                            {l s='Publish a page that lists your campaign rewards and lets customers share and earn. It is a regular page you can edit in Design → Pages.' mod='frakintegration'}
+                        </p>
+                        <div class="frak-amb-actions">
+                            <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
+                                <i class="icon-plus"></i> {l s='Create my ambassador page' mod='frakintegration'}
+                            </button>
+                        </div>
+                    {/if}
+                </form>
             {/if}
-        </form>
-    {/if}
-    {if !$merchant_resolved}
-        <p class="help-block frak-amb-hint">
-            {l s='The page shows your campaign once this domain is connected to your Frak merchant account.' mod='frakintegration'}
-        </p>
-    {/if}
+            {if !$merchant_resolved}
+                <p class="help-block frak-amb-hint">
+                    {l s='The page shows your campaign once this domain is connected to your Frak merchant account.' mod='frakintegration'}
+                </p>
+            {/if}
+        </div>
+    </div>
 </div>
 
 {*
@@ -332,45 +336,39 @@
 
         <div class="col-lg-6">
             <h4>{l s='Webhook queue' mod='frakintegration'}</h4>
-            <table class="table" style="margin-bottom: 12px;">
-                <tbody>
-                    <tr>
-                        <th style="width: 50%;">{l s='Pending' mod='frakintegration'}</th>
-                        <td>
-                            <code>{$queue_stats.pending|escape:'html':'UTF-8'}</code>
-                            {if $queue_stats.oldest_pending_at}
-                                <br><small style="color: #888;">
-                                    {l s='Next attempt:' mod='frakintegration'} {$queue_stats.oldest_pending_at|escape:'html':'UTF-8'}
-                                </small>
-                            {/if}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{l s='Delivered' mod='frakintegration'}</th>
-                        <td><code>{$queue_stats.success|escape:'html':'UTF-8'}</code></td>
-                    </tr>
-                    <tr>
-                        <th>{l s='Parked (failed)' mod='frakintegration'}</th>
-                        <td>
-                            <code>{$queue_stats.failed|escape:'html':'UTF-8'}</code>
-                            {if $queue_stats.failed > 0}
-                                &nbsp;<span class="label label-danger">{l s='Investigate logs' mod='frakintegration'}</span>
-                            {/if}
-                        </td>
-                    </tr>
-                    {if $queue_stats.last_error}
-                        <tr>
-                            <th>{l s='Last error' mod='frakintegration'}</th>
-                            <td>
-                                <small style="color: #b94a48; word-break: break-word;">{$queue_stats.last_error|truncate:200:'…':true|escape:'html':'UTF-8'}</small>
-                                {if $queue_stats.last_error_at}
-                                    <br><small style="color: #888;">{$queue_stats.last_error_at|escape:'html':'UTF-8'}</small>
-                                {/if}
-                            </td>
-                        </tr>
+            <div class="frak-queue-stats">
+                <div class="frak-queue-stat">
+                    <span class="frak-queue-stat__value">{$queue_stats.pending|intval}</span>
+                    <span class="frak-queue-stat__label">{l s='Pending' mod='frakintegration'}</span>
+                </div>
+                <div class="frak-queue-stat">
+                    <span class="frak-queue-stat__value">{$queue_stats.success|intval}</span>
+                    <span class="frak-queue-stat__label">{l s='Delivered' mod='frakintegration'}</span>
+                </div>
+                <div class="frak-queue-stat{if $queue_stats.failed > 0} frak-queue-stat--alert{/if}">
+                    <span class="frak-queue-stat__value">{$queue_stats.failed|intval}</span>
+                    <span class="frak-queue-stat__label">{l s='Parked (failed)' mod='frakintegration'}</span>
+                </div>
+            </div>
+            {if $queue_stats.oldest_pending_at}
+                <p class="help-block frak-queue-note">
+                    {l s='Next attempt:' mod='frakintegration'} {$queue_stats.oldest_pending_at|escape:'html':'UTF-8'}
+                </p>
+            {/if}
+            {if $queue_stats.failed > 0}
+                <p class="help-block frak-queue-note">
+                    {l s='Parked deliveries are no longer retried. Check Advanced Parameters → Logs for entries prefixed FrakIntegration.' mod='frakintegration'}
+                </p>
+            {/if}
+            {if $queue_stats.last_error}
+                <div class="frak-queue-error">
+                    <strong>{l s='Last error' mod='frakintegration'}</strong>
+                    {if $queue_stats.last_error_at}
+                        <span class="frak-queue-error__time">{$queue_stats.last_error_at|escape:'html':'UTF-8'}</span>
                     {/if}
-                </tbody>
-            </table>
+                    <p>{$queue_stats.last_error|truncate:200:'…':true|escape:'html':'UTF-8'}</p>
+                </div>
+            {/if}
             <form action="{$form_action}" method="post" style="display: inline;">
                 <button type="submit" name="drainFrakQueue" class="btn btn-default">
                     <i class="icon-bolt"></i> {l s='Drain queue now' mod='frakintegration'}
@@ -378,4 +376,13 @@
             </form>
         </div>
     </div>
+</div>
+
+<div class="frak-save-bar">
+    <p class="frak-save-bar__hint">
+        {l s='Saves website information, purchase tracking, the reward reminder and component placements.' mod='frakintegration'}
+    </p>
+    <button type="submit" form="frak_settings_form" name="submitFrakSettings" class="btn btn-primary">
+        <i class="icon-save"></i> {l s='Save Settings' mod='frakintegration'}
+    </button>
 </div>

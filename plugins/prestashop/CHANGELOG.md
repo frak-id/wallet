@@ -11,6 +11,16 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **Settings page layout.** *Save Settings* moves to a bar that stays at the bottom of the screen while you scroll, and sits at the end of the page once you reach it. The Reward reminder, Component Placements and Ambassador page panels now use the same label-left layout as the other sections. The webhook queue counts show as three tiles, with a red tile when deliveries are parked and the last error in its own block.
+
+### Fixed
+
+- **Webhook secret instructions.** They pointed to *Merchant → Purchase Tracker → PrestaShop*, which the Frak dashboard does not have. They now say to select *Custom* and click *Register* before copying the secret.
+- **Placement option help showed `&quot;`.** Placement labels and descriptions were HTML-escaped twice; they now print quotes and ampersands as typed.
+- **Settings page kept the previous release's styles after an upgrade.** `admin.css` and `admin.js` were requested at the same URL in every release, so a browser that had cached them kept the old files. Both URLs now end in `?v=<module version>`.
+
 ## [1.1.1] - 2026-11-23
 
 ### Added
