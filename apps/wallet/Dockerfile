@@ -26,7 +26,7 @@ RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,id=apt-lib,target=/var/lib/apt,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg brotli \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs
 
@@ -85,15 +85,32 @@ RUN --mount=type=secret,id=DRPC_API_KEY \
     export ANDROID_SHA256_FINGERPRINT=$(cat /run/secrets/ANDROID_SHA256_FINGERPRINT) && \
     bun run build
 
-# Parallel gzip pre-compression — one process per CPU instead of serial -exec.
+# Parallel gzip + brotli pre-compression — one process per CPU instead of serial -exec.
 RUN find dist -type f \
     \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.json' \
        -o -name '*.svg' -o -name '*.txt' -o -name '*.xml' -o -name '*.ico' \) \
     -print0 \
-    | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
-    echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
+    | xargs -0 -P "$(nproc)" -n 32 sh -c 'gzip -9 -k "$@" && brotli -q 11 "$@"' _ && \
+    echo "Pre-compressed $(find dist \( -name '*.gz' -o -name '*.br' \) | wc -l) files (gzip + brotli)"
 
 FROM nginx:1.31.8-alpine
+# The module signature encodes PCRE, so pcre2-dev stays; gzip is dropped so zlib is not needed.
+RUN set -eux; \
+    apk add --no-cache --virtual .brotli-build build-base pcre2-dev; \
+    cd /tmp; \
+    wget -qO nginx.tar.gz "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"; \
+    wget -qO ngx_brotli.tar.gz https://codeload.github.com/google/ngx_brotli/tar.gz/53e0fb55f250f48fe80c0ddbf6c0f7103cdbaae1; \
+    echo "27a4352dae4ba4922f9f013f3f0d02359aceeef2701872efa42849c3ba05457a  ngx_brotli.tar.gz" | sha256sum -c -; \
+    mkdir nginx ngx_brotli; \
+    tar -xzf nginx.tar.gz -C nginx --strip-components=1; \
+    tar -xzf ngx_brotli.tar.gz -C ngx_brotli --strip-components=1; \
+    cd nginx; \
+    ./configure --with-compat --without-http_gzip_module --add-dynamic-module=../ngx_brotli/static; \
+    make modules; \
+    cp objs/ngx_http_brotli_static_module.so /usr/lib/nginx/modules/; \
+    sed -i '1i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf; \
+    cd /; rm -rf /tmp/*; \
+    apk del --no-cache .brotli-build
 COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
 COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf
 # `include`d by nginx.conf from every block that declares an
