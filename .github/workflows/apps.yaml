@@ -617,6 +617,8 @@ jobs:
       # <link rel=modulepreload> set, loaded on every merchant iframe boot.
       - name: "📏 Listener"
         run: bun run --cwd apps/listener build
+      - name: "📏 Bundle size budgets"
+        run: bun run check:bundle-size
       # SPA, service worker and the standalone /sharing + /install pages. The
       # standalone half repeats what `wallet-pages` builds; the SPA and the
       # service worker are built nowhere else before deploy.
