@@ -21,33 +21,47 @@ import {
 
 export function EmailPanel({ redirect }: { redirect?: string }) {
     const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+    const [showExistingAccountHint, setShowExistingAccountHint] =
+        useState(false);
+
+    const goTo = (next: typeof mode) => {
+        setShowExistingAccountHint(false);
+        setMode(next);
+    };
 
     if (mode === "register") {
         return (
             <RegisterForm
                 redirect={redirect}
-                onBackToLogin={() => setMode("login")}
+                onBackToLogin={() => goTo("login")}
+                onExistingAccount={() => {
+                    setShowExistingAccountHint(true);
+                    setMode("login");
+                }}
             />
         );
     }
     if (mode === "forgot") {
-        return <ForgotPasswordForm onBackToLogin={() => setMode("login")} />;
+        return <ForgotPasswordForm onBackToLogin={() => goTo("login")} />;
     }
     return (
         <LoginForm
             redirect={redirect}
-            onRegister={() => setMode("register")}
-            onForgotPassword={() => setMode("forgot")}
+            showExistingAccountHint={showExistingAccountHint}
+            onRegister={() => goTo("register")}
+            onForgotPassword={() => goTo("forgot")}
         />
     );
 }
 
 function LoginForm({
     redirect,
+    showExistingAccountHint,
     onRegister,
     onForgotPassword,
 }: {
     redirect?: string;
+    showExistingAccountHint: boolean;
     onRegister: () => void;
     onForgotPassword: () => void;
 }) {
@@ -75,6 +89,11 @@ function LoginForm({
 
     return (
         <Stack space="s">
+            {showExistingAccountHint && (
+                <Notice tone="info" role="status">
+                    {t("auth.login.email.existingAccountHint")}
+                </Notice>
+            )}
             <Input
                 variant="bare"
                 tone="muted"
@@ -97,7 +116,7 @@ function LoginForm({
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 error={Boolean(error)}
-                hint={error ? error.message : undefined}
+                hint={error ? t("auth.login.email.loginError") : undefined}
             />
             <Button
                 variant="primary"
@@ -190,7 +209,11 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     error={Boolean(requestError)}
-                    hint={requestError ? requestError.message : undefined}
+                    hint={
+                        requestError
+                            ? t("auth.login.email.resetRequestError")
+                            : undefined
+                    }
                 />
                 <Button
                     variant="primary"
@@ -267,9 +290,11 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
 function RegisterForm({
     redirect,
     onBackToLogin,
+    onExistingAccount,
 }: {
     redirect?: string;
     onBackToLogin: () => void;
+    onExistingAccount: () => void;
 }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -281,8 +306,8 @@ function RegisterForm({
     // Register → immediately log in with the same credentials → land on the
     // 2FA step (the first email OTP doubles as the email ownership proof).
     // The register response is enumeration-safe (generic 200 either way), so
-    // an already-taken email simply fails the login with "Invalid
-    // credentials" — no dead-end "check your email" screen.
+    // an already-taken email simply fails the login, and we point to the login
+    // form — no dead-end "check your email" screen.
     const onSubmit = () => {
         register(
             { email, password },
@@ -296,7 +321,7 @@ function RegisterForm({
                                     to: "/login/2fa",
                                     search: redirect ? { redirect } : {},
                                 }),
-                            onError: onBackToLogin,
+                            onError: onExistingAccount,
                         }
                     ),
             }
@@ -327,7 +352,9 @@ function RegisterForm({
                 autoComplete="new-password"
                 label={t("auth.login.email.newPasswordPlaceholder")}
                 hint={
-                    error ? error.message : t("auth.login.email.passwordHint")
+                    error
+                        ? t("auth.login.email.registerError")
+                        : t("auth.login.email.passwordHint")
                 }
                 error={Boolean(error)}
                 value={password}

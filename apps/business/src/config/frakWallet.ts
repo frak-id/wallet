@@ -35,22 +35,24 @@ export const frakWalletSdkConfig: Omit<FrakWalletSdkConfig, "domain"> = {
     customizations: {
         i18n: {
             fr: {
-                "sdk.modal.login.title": "Connectez-vous à votre compte Frak",
+                "sdk.modal.login.title": "Connectez-vous ou créez votre compte",
                 "sdk.modal.login.description":
-                    "Accédez à votre dashboard et suivez vos gains en temps réel.",
-                "sdk.modal.siweAuthenticate.title":
-                    "Connectez-vous à votre compte Frak",
+                    "Nouveau ici ? Nous créons votre compte. Vous en avez déjà un ? Vous le retrouvez. Il vous sert à gérer vos campagnes et vos récompenses.",
+                "sdk.modal.login.primaryAction": "Continuer",
+                "sdk.modal.siweAuthenticate.title": "Confirmez que c'est vous",
                 "sdk.modal.siweAuthenticate.description":
-                    "Accédez à votre dashboard et suivez vos gains en temps réel.",
+                    "Confirmez avec votre compte Frak pour continuer.",
+                "sdk.modal.siweAuthenticate.primaryAction": "Confirmer",
             },
             en: {
-                "sdk.modal.login.title": "Log in to your Frak account",
+                "sdk.modal.login.title": "Log in or create your account",
                 "sdk.modal.login.description":
-                    "Access your dashboard and track your earnings in real time.",
-                "sdk.modal.siweAuthenticate.title":
-                    "Log in to your Frak account",
+                    "New here? We create your account. Already have one? You get your account back. Use it to manage your campaigns and rewards.",
+                "sdk.modal.login.primaryAction": "Continue",
+                "sdk.modal.siweAuthenticate.title": "Confirm it's you",
                 "sdk.modal.siweAuthenticate.description":
-                    "Access your dashboard and track your earnings in real time.",
+                    "Confirm with your Frak account to continue.",
+                "sdk.modal.siweAuthenticate.primaryAction": "Confirm",
             },
         },
     },
