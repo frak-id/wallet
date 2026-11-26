@@ -37,6 +37,11 @@ export const popoverContentStyle = style({
     animationDuration: "400ms",
     animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
     willChange: "transform, opacity",
+    "@media": {
+        "(prefers-reduced-motion: reduce)": {
+            animationDuration: "0.01ms",
+        },
+    },
     color: vars.text.primary,
     selectors: {
         '&[data-state="open"][data-side="top"]': {
