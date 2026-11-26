@@ -77,51 +77,51 @@
       "type": "text",
       "id": "referral_title",
       "label": "Title",
-      "info": "Leave blank for the localized default (e.g. \"You've been referred!\")."
+      "info": "Leave blank to use the default text (for example \"You've been referred!\")."
     },
     {
       "type": "textarea",
       "id": "referral_description",
       "label": "Description",
-      "info": "Leave blank for the localized default."
+      "info": "Leave blank to use the default text."
     },
     {
       "type": "text",
       "id": "referral_cta",
       "label": "Button text",
-      "info": "Leave blank for the localized default (e.g. \"Got it\")."
+      "info": "Leave blank to use the default text (for example \"Got it\")."
     },
     {
       "type": "header",
-      "content": "In-app browser banner text"
+      "content": "Banner text inside Instagram or Facebook"
     },
     {
       "type": "text",
       "id": "inapp_title",
       "label": "Title",
-      "info": "Leave blank for the localized default (e.g. \"Open in your browser\")."
+      "info": "Leave blank to use the default text (for example \"Open in your browser\")."
     },
     {
       "type": "textarea",
       "id": "inapp_description",
       "label": "Description",
-      "info": "Leave blank for the localized default."
+      "info": "Leave blank to use the default text."
     },
     {
       "type": "text",
       "id": "inapp_cta",
       "label": "Button text",
-      "info": "Leave blank for the localized default (e.g. \"Open browser\")."
+      "info": "Leave blank to use the default text (for example \"Open browser\")."
     },
     {
       "type": "header",
-      "content": "In-app browser redirect"
+      "content": "Open in browser prompt"
     },
     {
       "type": "checkbox",
       "id": "allow_inapp_redirect",
-      "label": "Allow in-app browser redirect",
-      "info": "When enabled, the banner prompts users opening this page in Instagram or Facebook's in-app browser to switch to their system browser. Disabled by default \u2014 enable only if this surface drives users into a flow that requires WebAuthn (passkey login, transaction signing).",
+      "label": "Offer to open the page in the browser app",
+      "info": "When on, the banner invites people who open this page inside Instagram or Facebook to open it in their phone's browser instead. Off by default. Turn it on only if this page leads customers to log in to Frak or confirm a payment, which does not work inside those apps.",
       "default": false
     },
     {
@@ -132,7 +132,7 @@
       "type": "image_picker",
       "id": "image_url",
       "label": "Custom image",
-      "info": "Override the gift icon on the left of the banner. Drag-and-drop into the Files library, or pick an existing image. Leave empty to keep the default Frak icon. Any aspect ratio works — the SDK contains the image to a 40×40 slot."
+      "info": "Replaces the gift icon on the left of the banner. Drag and drop an image into the Files library, or pick an existing one. Leave empty to keep the default Frak icon. Any shape works: the image is fitted in a 40×40 px square."
     },
     {
       "type": "header",
@@ -142,14 +142,14 @@
       "type": "checkbox",
       "id": "enable_preview",
       "label": "Show preview in editor",
-      "info": "Display a banner preview while customizing the theme",
+      "info": "Shows a banner preview in the theme editor",
       "default": true
     },
     {
       "type": "select",
       "id": "preview_mode",
       "label": "Preview variant",
-      "info": "Choose which banner variant to preview in the theme editor",
+      "info": "Choose which banner to preview in the theme editor",
       "options": [
         {
           "value": "referral",
@@ -169,8 +169,8 @@
     {
       "type": "select",
       "id": "interaction",
-      "label": "Target interaction",
-      "info": "Filter rewards by interaction type. Default shows the best reward across all types",
+      "label": "Reward type (advanced)",
+      "info": "Choose which rewards the banner shows. Default shows the best reward available.",
       "options": [
         {
           "value": "default",
@@ -190,7 +190,7 @@
     {
       "type": "select",
       "id": "banner_style",
-      "label": "Banner Style",
+      "label": "Banner style",
       "options": [
         {
           "value": "default",
@@ -198,7 +198,7 @@
         },
         {
           "value": "custom",
-          "label": "Custom Colors"
+          "label": "Custom colors"
         }
       ],
       "default": "default"

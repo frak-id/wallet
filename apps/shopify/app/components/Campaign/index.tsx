@@ -7,9 +7,11 @@ import type {
     CampaignListResponse,
 } from "app/services.server/backendMerchant";
 import { campaignRewardCurrency } from "app/utils/rewardCurrency";
+import { buildBusinessDashboardUrl } from "app/utils/url";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
+import { ExternalButton } from "../ui/ExternalLink";
 
 export function CampaignStatus({
     campaigns,
@@ -42,13 +44,27 @@ function CampaignTable({
     bankDistributionStatus: DistributionStatus | null;
 }) {
     const { t } = useTranslation();
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
 
     if (campaigns.length === 0) {
+        const merchantId = rootData?.merchantId;
+        const createUrl = buildBusinessDashboardUrl({
+            businessUrl: rootData?.businessUrl ?? "",
+            shop: rootData?.shop?.myshopifyDomain,
+            target: merchantId
+                ? `/m/${merchantId}/campaigns/draft/new`
+                : "/campaigns/draft/new",
+        });
         return (
             <s-section>
-                <s-text tone="neutral">
-                    {t("status.campaign.noCampaigns")}
-                </s-text>
+                <s-stack gap="base" alignItems="start">
+                    <s-text tone="neutral">
+                        {t("status.campaign.noCampaigns")}
+                    </s-text>
+                    <ExternalButton variant="primary" href={createUrl}>
+                        {t("status.campaign.create")}
+                    </ExternalButton>
+                </s-stack>
             </s-section>
         );
     }
@@ -185,7 +201,7 @@ function CampaignTableRow({
         const label = firstBudget.label ? ` (${firstBudget.label})` : "";
         const base = `${formatAmount(remaining, currency)} / ${formatAmount(total, currency)}${label}`;
         return resetAt
-            ? `${base} — ${t("status.campaign.resetAt", { date: resetAt })}`
+            ? `${base}. ${t("status.campaign.resetAt", { date: resetAt })}`
             : base;
     }, [firstBudget, budgetUsage, currency, t]);
 

@@ -1,4 +1,8 @@
 import { isAddress } from "viem";
+import {
+    MAX_PURCHASE_AMOUNT,
+    MIN_PURCHASE_AMOUNT,
+} from "../utils/purchaseLimits";
 
 /**
  * Validate a purchase amount. Returns error message or null.
@@ -6,8 +10,10 @@ import { isAddress } from "viem";
 export function validatePurchaseAmount(rawAmount: string): string | null {
     const amount = Number(rawAmount);
     if (Number.isNaN(amount)) return "Amount must be a number";
-    if (amount < 10) return "Amount must be greater than 10";
-    if (amount > 1000) return "Amount must be less than 1000";
+    if (amount < MIN_PURCHASE_AMOUNT)
+        return `Amount must be at least ${MIN_PURCHASE_AMOUNT}`;
+    if (amount > MAX_PURCHASE_AMOUNT)
+        return `Amount must be at most ${MAX_PURCHASE_AMOUNT}`;
     return null;
 }
 

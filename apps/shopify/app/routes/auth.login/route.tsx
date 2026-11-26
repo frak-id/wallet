@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, Form, useActionData, useLoaderData } from "react-router";
 import { login } from "../../shopify.server";
@@ -23,6 +24,7 @@ export default function Auth() {
     const loaderData = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>();
     const [shop, setShop] = useState("");
+    const { t } = useTranslation();
     const { errors } = actionData || loaderData;
 
     return (
@@ -32,19 +34,21 @@ export default function Auth() {
                 <s-section>
                     <Form method="post">
                         <s-stack gap="base">
-                            <s-heading>Log in</s-heading>
+                            <s-heading>{t("login.title")}</s-heading>
                             <s-text-field
                                 name="shop"
-                                label="Shop domain"
-                                details="example.myshopify.com"
+                                label={t("login.shopLabel")}
+                                details={t("login.shopDetails")}
                                 value={shop}
                                 onChange={(e) =>
                                     setShop(e.currentTarget.value ?? "")
                                 }
                                 autocomplete="on"
-                                error={errors.shop}
+                                error={errors.shop ? t(errors.shop) : undefined}
                             />
-                            <s-button type="submit">Log in</s-button>
+                            <s-button type="submit">
+                                {t("login.submit")}
+                            </s-button>
                         </s-stack>
                     </Form>
                 </s-section>

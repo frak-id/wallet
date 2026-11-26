@@ -129,24 +129,19 @@ export function ExplorerTab({
 
     useEffect(() => {
         if (!fetcher.data) return;
-        const message =
-            "message" in fetcher.data &&
-            typeof fetcher.data.message === "string"
-                ? fetcher.data.message
-                : null;
         // On failure keep pending state intact (the save bar stays open) and
         // surface an error toast (Risks: Save-time partial failure).
         if (!fetcher.data.success) {
-            if (message) shopify.toast.show(message, { isError: true });
+            shopify.toast.show(t("customizations.error"), { isError: true });
             return;
         }
-        if (message) shopify.toast.show(message);
+        shopify.toast.show(t("customizations.saved"));
         // Mark the exact submitted snapshot as saved — not live `pending`,
         // which may have moved on if the merchant edited mid-flight or if
         // validation dropped invalid URLs before submit.
         if (submittedRef.current) setSaved(submittedRef.current);
         setPendingDeletedTypes([]);
-    }, [fetcher.data]);
+    }, [fetcher.data, t]);
 
     const handleDiscard = useCallback(() => {
         setEnabled(saved.enabled);

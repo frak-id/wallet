@@ -35,13 +35,29 @@ export function ButtonTab({
                                 {t("appearance.shareButton.link")}
                             </ExternalLink>
                         ) : (
-                            t("appearance.shareButton.noProduct")
+                            <NoProduct />
                         )}
                     </s-box>
                 </>
             )}
             {!isThemeHasFrakButton && <ButtonNotActivated />}
         </s-box>
+    );
+}
+
+function NoProduct() {
+    const { t } = useTranslation();
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+
+    return (
+        <s-stack gap="small" alignItems="start">
+            <s-text>{t("appearance.shareButton.noProduct")}</s-text>
+            <ExternalLink
+                href={`https://${rootData?.shop?.myshopifyDomain}/admin/products`}
+            >
+                {t("appearance.shareButton.noProductLink")}
+            </ExternalLink>
+        </s-stack>
     );
 }
 
@@ -65,7 +81,7 @@ function ButtonNotActivated() {
                     {t("appearance.shareButton.link")}
                 </ExternalLink>
             ) : (
-                t("appearance.shareButton.noProduct")
+                <NoProduct />
             )}
         </Instructions>
     );

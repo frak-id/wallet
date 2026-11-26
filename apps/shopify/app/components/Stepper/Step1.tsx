@@ -59,7 +59,7 @@ export function Step1({
                 </s-button>
             </s-stack>
             {fetcher.data?.error && (
-                <s-text tone="critical">{fetcher.data.error}</s-text>
+                <s-text tone="critical">{t("stepper.step1.error")}</s-text>
             )}
         </CollapsibleStep>
     );

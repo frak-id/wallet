@@ -6,8 +6,6 @@ type CurrencyMeta = {
     currencySymbol: string;
     currencyCode: string;
     locale: string;
-    provider: string;
-    providerDescription: string;
 };
 
 export const currencyMetadata: Record<Stablecoin, CurrencyMeta> = {
@@ -16,18 +14,12 @@ export const currencyMetadata: Record<Stablecoin, CurrencyMeta> = {
         currencySymbol: "EUR",
         currencyCode: "EUR",
         locale: "fr-FR",
-        provider: "Monerium",
-        providerDescription:
-            "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
     },
     usdc: {
         label: "USDC",
         currencySymbol: "USDC",
         currencyCode: "USD",
         locale: "en-US",
-        provider: "Circle",
-        providerDescription:
-            "Widely accepted digital dollar — users can spend rewards across apps and services",
     },
 };
 

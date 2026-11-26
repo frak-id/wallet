@@ -32,7 +32,7 @@ export function Step5({
             <s-text>
                 <Trans i18nKey="stepper.step5.description" />
             </s-text>
-            <img src={screenFrakListener} alt="" />
+            <img src={screenFrakListener} alt={t("stepper.step5.imageAlt")} />
             <ExternalButton
                 variant="primary"
                 href={`${editorUrl}?context=apps&appEmbed=${id}/listener`}

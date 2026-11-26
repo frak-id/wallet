@@ -36,7 +36,7 @@ export default function FundingPage() {
                 )}
                 {!bankStatus && (
                     <s-banner tone="info">
-                        <p>{t("status.bank.notDeployed")}</p>
+                        <p>{t("status.bank.loadError")}</p>
                     </s-banner>
                 )}
             </s-stack>

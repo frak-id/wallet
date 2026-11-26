@@ -89,7 +89,7 @@ describe("startupPurchase", () => {
         const ctx = makeMockCtx();
         await expect(
             startupPurchase(ctx, { amount: "5", bank: validBank })
-        ).rejects.toThrow("Amount must be greater than 10");
+        ).rejects.toThrow("Amount must be at least 10");
     });
 
     it("should throw when bank address is invalid", async () => {
@@ -121,7 +121,7 @@ describe("startupPurchase", () => {
         const ctx = makeMockCtx(successGraphqlResponse);
         await expect(
             startupPurchase(ctx, { amount: "100", bank: validBank })
-        ).rejects.toThrow("Shop already has more than 10 pending purchases");
+        ).rejects.toThrow("Shop already has 10 pending purchases");
     });
 
     it("creates a fake pending purchase off-prod without calling the Billing API", async () => {
@@ -327,13 +327,13 @@ describe("purchase validation", () => {
 
         it("rejects amount below 10", () => {
             expect(validatePurchaseAmount("5")).toBe(
-                "Amount must be greater than 10"
+                "Amount must be at least 10"
             );
         });
 
         it("rejects amount above 1000", () => {
             expect(validatePurchaseAmount("1001")).toBe(
-                "Amount must be less than 1000"
+                "Amount must be at most 1000"
             );
         });
 
@@ -351,7 +351,7 @@ describe("purchase validation", () => {
 
         it("rejects empty string (coerced to 0, below minimum)", () => {
             expect(validatePurchaseAmount("")).toBe(
-                "Amount must be greater than 10"
+                "Amount must be at least 10"
             );
         });
     });
@@ -376,10 +376,10 @@ describe("purchase validation", () => {
 });
 
 describe("purchase name generation", () => {
-    it("generates name with amount and timestamp", () => {
+    it("generates name with amount and currency", () => {
         const amount = 100;
-        const name = `Frak bank - ${amount.toFixed(2)}eur - ${new Date().toISOString()}`;
-        expect(name).toMatch(/^Frak bank - 100\.00eur - \d{4}-\d{2}-\d{2}/);
+        const name = `Frak reward budget top-up, ${amount.toFixed(2)} ${"eur".toUpperCase()}`;
+        expect(name).toBe("Frak reward budget top-up, 100.00 EUR");
     });
 });
 

@@ -48,18 +48,18 @@
       "type": "text",
       "id": "text",
       "label": "Button text",
-      "info": "Leave blank for the localized default (e.g. \"Share and earn!\"). Include {REWARD} to embed the estimated reward amount (e.g. \"Share and earn up to {REWARD}!\")."
+      "info": "Leave blank to use the default text (for example \"Share and earn!\"). Add {REWARD} to show the estimated reward (for example \"Share and earn up to {REWARD}!\")."
     },
     {
       "type": "text",
       "id": "no_reward_text",
       "label": "Fallback text (no reward)",
-      "info": "Shown when the button text contains {REWARD} but no reward is available. Leave blank for the localized default."
+      "info": "Shown when the button text contains {REWARD} but no reward is available. Leave blank to use the default text."
     },
     {
       "type": "select",
       "id": "button_style",
-      "label": "Button Style",
+      "label": "Button style",
       "options": [
         {
           "value": "primary",
@@ -71,7 +71,7 @@
         },
         {
           "value": "custom",
-          "label": "Custom Colors"
+          "label": "Custom colors"
         }
       ],
       "default": "primary"
@@ -79,7 +79,7 @@
     {
       "type": "checkbox",
       "id": "full_width",
-      "label": "Full Width",
+      "label": "Full width",
       "default": true
     },
     {
@@ -90,7 +90,7 @@
       "type": "checkbox",
       "id": "enable_preview",
       "label": "Show preview in editor",
-      "info": "Render the share button while customizing the theme (mirrors the runtime look; click is disabled).",
+      "info": "Shows the share button in the theme editor so you can see how it looks. Clicking it does nothing in the editor.",
       "default": false
     },
     {
@@ -100,8 +100,8 @@
     {
       "type": "text",
       "id": "target_interaction",
-      "label": "Target interaction",
-      "info": "Specific interaction type for reward calculation (e.g. custom.customerMeeting)"
+      "label": "Reward type (advanced)",
+      "info": "Leave blank unless a campaign uses a custom reward type (for example custom.customerMeeting)."
     },
     {
       "type": "color",

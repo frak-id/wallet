@@ -146,6 +146,7 @@ export default function CampaignsPage() {
                     </ExternalButton>
                 </s-stack>
             </s-stack>
+            <s-text color="subdued">{t("campaigns.description")}</s-text>
             {campaigns && bankStatus ? (
                 <s-stack gap="large">
                     <CampaignStatus campaigns={campaigns} />
