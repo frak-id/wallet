@@ -80,7 +80,6 @@ function recordText(record: GameRecord, t: TFunction, language: string) {
             return t("game.result.hero.record.new", {
                 count: record.mine,
                 tickets: format(record.mine),
-                previous: format(record.previous),
             });
         case "tied":
             return t("game.result.hero.record.tied", {

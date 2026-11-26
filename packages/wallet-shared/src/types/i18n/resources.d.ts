@@ -666,8 +666,8 @@ export default interface Resources {
             "first_other": "First game: {{tickets}} tickets, your record to beat",
             "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
             "held_other": "Your record: {{tickets}} tickets, in the {{date}} game",
-            "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
-            "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+            "new_one": "New record: {{tickets}} ticket",
+            "new_other": "New record: {{tickets}} tickets",
             "tied_one": "Record tied: {{tickets}} ticket, like the {{date}} game",
             "tied_other": "Record tied: {{tickets}} tickets, like the {{date}} game"
           },

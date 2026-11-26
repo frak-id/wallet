@@ -3,7 +3,7 @@ import { totalTickets } from "@/module/game/utils/ticketAmounts";
 
 export type GameRecord =
     | { kind: "first"; mine: number }
-    | { kind: "new"; mine: number; previous: number }
+    | { kind: "new"; mine: number }
     | { kind: "tied"; mine: number; bestAt: Date | string }
     | { kind: "held"; best: number; bestAt: Date | string };
 
@@ -21,8 +21,7 @@ export function recordOf(
     const [best] = older.sort((a, b) => earned(b) - earned(a));
     if (!best) return { kind: "first", mine };
     const bestAt = best.game.endsAt;
-    if (earned(best) < mine)
-        return { kind: "new", mine, previous: earned(best) };
+    if (earned(best) < mine) return { kind: "new", mine };
     if (earned(best) === mine) return { kind: "tied", mine, bestAt };
     return { kind: "held", best: earned(best), bestAt };
 }

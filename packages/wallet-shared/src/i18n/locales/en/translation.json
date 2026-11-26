@@ -1136,8 +1136,8 @@
                 "record": {
                     "first_one": "First game: {{tickets}} ticket, your record to beat",
                     "first_other": "First game: {{tickets}} tickets, your record to beat",
-                    "new_one": "New record: {{tickets}} ticket (before: {{previous}})",
-                    "new_other": "New record: {{tickets}} tickets (before: {{previous}})",
+                    "new_one": "New record: {{tickets}} ticket",
+                    "new_other": "New record: {{tickets}} tickets",
                     "tied_one": "Record tied: {{tickets}} ticket, like the {{date}} game",
                     "tied_other": "Record tied: {{tickets}} tickets, like the {{date}} game",
                     "held_one": "Your record: {{tickets}} ticket, in the {{date}} game",
