@@ -41,13 +41,33 @@ describe("frakWalletSdkConfig", () => {
 
         const i18n = frakWalletSdkConfig.customizations?.i18n as {
             fr: Record<string, string>;
+            en: Record<string, string>;
         };
         expect(i18n.fr["sdk.modal.login.title"]).toBe(
-            "Connectez-vous à votre compte Frak"
+            "Connectez-vous ou créez votre compte"
         );
+        expect(i18n.fr["sdk.modal.login.primaryAction"]).toBe("Continuer");
         expect(i18n.fr["sdk.modal.siweAuthenticate.title"]).toBe(
-            "Connectez-vous à votre compte Frak"
+            "Confirmez que c'est vous"
         );
+        expect(i18n.en["sdk.modal.login.title"]).toBe(
+            "Log in or create your account"
+        );
+        expect(i18n.en["sdk.modal.login.primaryAction"]).toBe("Continue");
+        expect(i18n.en["sdk.modal.siweAuthenticate.primaryAction"]).toBe(
+            "Confirm"
+        );
+    });
+
+    test("should not tell existing users to create an account", async () => {
+        const { frakWalletSdkConfig } = await import("./frakWallet");
+
+        const i18n = frakWalletSdkConfig.customizations?.i18n as Record<
+            string,
+            Record<string, string>
+        >;
+        expect(i18n.fr["sdk.modal.login.primaryAction"]).not.toMatch(/créer/i);
+        expect(i18n.en["sdk.modal.login.primaryAction"]).not.toMatch(/create/i);
     });
 
     test("should use the production stage when nothing is injected", async () => {

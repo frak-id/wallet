@@ -1,12 +1,12 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
 import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -33,14 +33,7 @@ export function WalletPanel({ redirect }: { redirect?: string }) {
                 });
 
                 if (response.error) {
-                    // Surface the failure like `EmailPanel` does, instead of
-                    // swallowing it into the console (§2.6).
-                    setError(
-                        extractAuthErrorMessage(
-                            response.error,
-                            t("auth.login.walletError")
-                        )
-                    );
+                    setError(t("auth.login.walletError"));
                     return;
                 }
 
@@ -55,10 +48,8 @@ export function WalletPanel({ redirect }: { redirect?: string }) {
                     navigate({ to: safeRedirectTarget(redirect) });
                 });
             },
-            onError: (err) => {
-                setError(
-                    extractAuthErrorMessage(err, t("auth.login.walletError"))
-                );
+            onError: () => {
+                setError(t("auth.login.walletError"));
             },
         },
     });
@@ -83,6 +74,9 @@ export function WalletPanel({ redirect }: { redirect?: string }) {
             >
                 {t("auth.login.connect")}
             </Button>
+            <Text variant="bodySmall" color="secondary">
+                {t("auth.login.connectHint")}
+            </Text>
             {error && (
                 <Notice tone="error" role="alert">
                     {error}
