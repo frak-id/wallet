@@ -18,6 +18,7 @@ import {
     type BudgetToken,
     splitTokensByFunding,
 } from "@/module/merchant/utils/budgetTokens";
+import { ActionFeedback } from "./ActionFeedback";
 import { LegacyBankMigration } from "./LegacyBankMigration";
 import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./manage-budget-sheet.css";
@@ -58,7 +59,6 @@ export function BudgetView({
 
     return (
         <Stack space="l">
-            {isWalletless && <LinkWalletNotice />}
             <BudgetContent
                 merchantId={merchantId}
                 bankAddress={data.bankAddress}
@@ -69,13 +69,18 @@ export function BudgetView({
                 onAddFunds={onAddFunds}
                 hideLegacyMigrationNotice={isWalletless}
             />
+            {isWalletless && <LinkWalletNotice />}
         </Stack>
     );
 }
 
 function SetupBudget({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
-    const { mutate: syncBank, isPending } = useSyncMerchantBank({ merchantId });
+    const {
+        mutate: syncBank,
+        isPending,
+        isError,
+    } = useSyncMerchantBank({ merchantId });
 
     return (
         <Card radius="m">
@@ -92,6 +97,7 @@ function SetupBudget({ merchantId }: { merchantId: string }) {
                 >
                     {t("funding.setup.cta")}
                 </Button>
+                <ActionFeedback isError={isError} />
             </Stack>
         </Card>
     );
@@ -201,28 +207,43 @@ function DistributionCell({
     isOpen: boolean;
 }) {
     const { t } = useTranslation();
-    const { setOpenStatus, isSettingOpenStatus } = useSetBankOpenStatus({
-        bankAddress,
-        merchantId,
-    });
+    const { setOpenStatus, isSettingOpenStatus, isOpenStatusError } =
+        useSetBankOpenStatus({
+            bankAddress,
+            merchantId,
+        });
 
     return (
-        <div className={styles.cell}>
-            <Inline as="span" space="xxs" alignY="center" wrap={false}>
-                <Text variant="body" weight="medium" color="primary" as="span">
-                    {t("funding.budget.distributing")}
-                </Text>
-                <Tooltip content={t("funding.budget.distributingTooltip")}>
-                    <InfoIcon className={styles.infoIcon} />
-                </Tooltip>
-            </Inline>
-            <Switch
-                checked={isOpen}
-                disabled={isSettingOpenStatus}
-                onCheckedChange={(checked) =>
-                    setOpenStatus({ isOpen: checked })
-                }
+        <Stack space="xxs">
+            <div className={styles.cell}>
+                <Inline as="span" space="xxs" alignY="center" wrap={false}>
+                    <Text
+                        variant="body"
+                        weight="medium"
+                        color="primary"
+                        as="span"
+                    >
+                        {t("funding.budget.distributing")}
+                    </Text>
+                    <Tooltip content={t("funding.budget.distributingTooltip")}>
+                        <InfoIcon className={styles.infoIcon} />
+                    </Tooltip>
+                </Inline>
+                <Switch
+                    checked={isOpen}
+                    disabled={isSettingOpenStatus}
+                    onCheckedChange={(checked) =>
+                        setOpenStatus({ isOpen: checked })
+                    }
+                />
+            </div>
+            <Text variant="caption" color="secondary">
+                {t("funding.budget.distributingHint")}
+            </Text>
+            <ActionFeedback
+                isPending={isSettingOpenStatus}
+                isError={isOpenStatusError}
             />
-        </div>
+        </Stack>
     );
 }
