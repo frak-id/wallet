@@ -27,7 +27,7 @@ Run first, and whenever anything looks off. Read-only.
 
 No line may be `FAIL` (exit 0). It checks bun, `vite` in `apps/business`, `@playwright/test` and its Chromium (borrowed from `apps/wallet`: business has no Playwright of its own), and that the demo route and demo data still exist. A missing browser is fixed with `(cd apps/wallet && bunx playwright install chromium)`. A missing WebKit is only a `warn`, since only `--webkit` needs it: `(cd apps/wallet && bunx playwright install webkit)`.
 
-Each `flow` run also does an instance doctor before driving: the listening port's process group must be the server it just launched, and the served `<title>` must be `Frak Business Hub | Manage Your Web3 Products`. Otherwise it refuses and exits 2. The result is in `instance.txt` (URL, server pid, commit, dirty file count).
+Each `flow` run also does an instance doctor before driving: the listening port's process group must be the server it just launched, and the served `<title>` must be `Frak | Dashboard for your store`. Otherwise it refuses and exits 2. The result is in `instance.txt` (URL, server pid, commit, dirty file count).
 
 ## Launch + drive
 
@@ -45,7 +45,7 @@ import { openFromSidebar } from "./nav.mjs";
 
 export default async ({ page, step, expect }) => {
     await openFromSidebar(page, "/campaigns/list");
-    await expect(page.getByRole("heading", { name: "List", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "All campaigns", level: 1 })).toBeVisible();
     await step("list");
 };
 ```

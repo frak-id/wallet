@@ -35,9 +35,9 @@ const fileInput = (page, caption) =>
         .locator("xpath=ancestor::div[.//input[@type='file']][1]")
         .locator("input[type=file]");
 
-const LOGO = /Min 128×128px/;
-const HERO = /800×450px.*10MB\)$/;
-const SLIDER = /800×450px.*— \d\/4$/;
+const LOGO = /At least 128×128 px/;
+const HERO = /800×450 px.*maximum\.$/;
+const SLIDER = /800×450 px.*\(\d\/4\)$/;
 
 const imageSize = (page, src) =>
     page.evaluate(async (s) => {
@@ -51,7 +51,7 @@ export default async ({ page, merchantId, step, expect }) => {
     await page
         .locator(`a[href$="/m/${merchantId}/merchant/customize"]`)
         .click();
-    await page.getByRole("tab", { name: "Explorer App" }).click();
+    await page.getByRole("tab", { name: "App listing" }).click();
     await expect(page).toHaveURL(/\/merchant\/explorer$/);
     await step("explorer");
 

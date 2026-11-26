@@ -9,7 +9,7 @@ export default async ({ page, step, expect }) => {
     await expect(page.getByRole("radio", { name: "English" })).toBeChecked();
     await step("settings");
 
-    await page.getByRole("radio", { name: "French" }).click();
+    await page.getByRole("radio", { name: "Français" }).click();
     await expect(
         page.getByRole("heading", { name: "Paramètres", level: 1 })
     ).toBeVisible();
