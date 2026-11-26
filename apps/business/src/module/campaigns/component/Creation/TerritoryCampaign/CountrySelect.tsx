@@ -159,7 +159,15 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                                         <button
                                             type="button"
                                             className={styles.chipRemove}
-                                            aria-label={`Remove ${NAME_BY_CODE.get(code) ?? code}`}
+                                            aria-label={t(
+                                                "campaigns.create.territory.card.remove",
+                                                {
+                                                    country:
+                                                        NAME_BY_CODE.get(
+                                                            code
+                                                        ) ?? code,
+                                                }
+                                            )}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleCountry(code);

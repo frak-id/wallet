@@ -30,10 +30,9 @@ function ErrorPanel({
     const { t } = useTranslation();
     const resolvedTitle = title ?? t("errors.generic.title");
     // A throw site can raise any value, so `error` is `unknown`; only a real
-    // Error carries a message and a stack worth rendering.
+    // Error carries a stack worth rendering, and only in development.
     const asError = error instanceof Error ? error : undefined;
-    const errorMessage =
-        message || asError?.message || t("errors.boundary.message");
+    const errorMessage = message || t("errors.boundary.message");
 
     const shouldShowTechnicalDetails =
         showTechnicalDetails &&
@@ -191,6 +190,7 @@ export function MerchantCreateError(props: ErrorComponentProps) {
         <RouteError
             {...props}
             title={t("errors.merchantCreate.title")}
+            message={t("errors.merchantCreate.message")}
             fallbackPath="/dashboard"
             fallbackLabel={t("errors.merchantCreate.back")}
         />
@@ -203,24 +203,40 @@ export function CampaignCreateError(props: ErrorComponentProps) {
         <RouteError
             {...props}
             title={t("errors.campaignCreate.title")}
+            message={t("errors.campaignCreate.message")}
             fallbackPath="/dashboard"
             fallbackLabel={t("errors.campaignCreate.back")}
         />
     );
 }
 
+type DataLoadResource =
+    | "members"
+    | "campaigns"
+    | "campaignOverview"
+    | "campaignConfig"
+    | "affiliateReport";
+
+/** `resource` is a translated noun; `resourceName` is a literal kept for callers not yet migrated. */
 export function DataLoadError({
-    resourceName = "data",
+    resource,
+    resourceName,
     ...props
 }: ErrorComponentProps & {
+    resource?: DataLoadResource;
     resourceName?: string;
 }) {
     const { t } = useTranslation();
+    const resolvedName =
+        resourceName ??
+        t(`errors.dataLoad.resource.${resource ?? "default"}` as const);
     return (
         <RouteError
             {...props}
             title={t("errors.dataLoad.title")}
-            message={t("errors.dataLoad.message", { resourceName })}
+            message={t("errors.dataLoad.message", {
+                resourceName: resolvedName,
+            })}
             showRetry={true}
         />
     );

@@ -1,4 +1,5 @@
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { StepperStep } from "@frak-labs/design-system/components/Stepper";
 import { ArrowLeftIcon, CheckIcon } from "@frak-labs/design-system/icons";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -8,6 +9,7 @@ import { Button } from "@/module/common/component/Button";
 import { WizardLayout } from "@/module/common/component/WizardLayout";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
+import { InfoBanner } from "../InfoBanner";
 import { ButtonCancel } from "../NewCampaign/ButtonCancel";
 import {
     isLastStep,
@@ -27,6 +29,10 @@ type WizardStepProps = {
     isValid?: boolean;
     /** Disable actions + spin Continue while the step is saving. */
     isPending?: boolean;
+    /** Show a "draft saved" notice: the last save succeeded and nothing changed since. */
+    isSaved?: boolean;
+    /** Show a notice that the last save failed. */
+    saveFailed?: boolean;
     /** Save-as-draft handler (header pill). */
     onSaveDraft?: () => void;
     /** Reset/cleanup before the cancel confirmation navigates away. */
@@ -44,6 +50,8 @@ export function WizardStep({
     formId,
     isValid = true,
     isPending = false,
+    isSaved = false,
+    saveFailed = false,
     onSaveDraft,
     onClose,
     hasUnsavedChanges = true,
@@ -134,7 +142,19 @@ export function WizardStep({
                 </Button>
             }
         >
-            {children}
+            <Stack space="m">
+                {saveFailed && (
+                    <InfoBanner tone="error">
+                        {t("campaigns.create.actions.saveError")}
+                    </InfoBanner>
+                )}
+                {isSaved && !saveFailed && (
+                    <InfoBanner>
+                        {t("campaigns.create.actions.draftSaved")}
+                    </InfoBanner>
+                )}
+                {children}
+            </Stack>
         </WizardLayout>
     );
 }

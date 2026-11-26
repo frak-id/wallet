@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { type Address, type Hex, slice } from "viem";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
 import { walletAddress } from "./hash-display.css";
@@ -23,13 +24,14 @@ export function WalletAddress({
     wallet: Address;
     copiedText?: string;
 }) {
+    const { t } = useTranslation();
     const { copied, copy } = useCopyToClipboardWithState();
 
     const hashedAddress = useMemo(
         () => formatHash({ hash: wallet, format: { start: 2, end: 3 } }),
         [wallet]
     );
-    const copiedMessage = copiedText ?? "Copied";
+    const copiedMessage = copiedText ?? t("common.copied");
 
     if (!wallet) return null;
     return (

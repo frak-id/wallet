@@ -98,7 +98,7 @@ describe("SdkIdentityPanel", () => {
         renderPanel();
 
         expect(
-            screen.getByText(/customize\.identity\.currency\.hint.*USDC/)
+            screen.getByText(/customize\.identity\.currency\.hint.*USD/)
         ).toBeTruthy();
     });
 

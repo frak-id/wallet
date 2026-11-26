@@ -13,22 +13,6 @@ type Ambassador = CampaignDetailsStats["topAmbassadors"][number];
 
 const columnHelper = createDataTableColumnHelper<Ambassador>();
 
-/**
- * Top-3 ranks show a medal; the rest show the number (Figma leaderboard).
- * The medal is exposed to assistive tech as its rank number so it reads
- * consistently with rows 4+.
- */
-function rankLabel(rank: number) {
-    if (rank > 3) {
-        return rank;
-    }
-    return (
-        <span role="img" aria-label={String(rank)}>
-            {["🥇", "🥈", "🥉"][rank - 1]}
-        </span>
-    );
-}
-
 export function TopAmbassadorsTable({
     topAmbassadors,
     currency,
@@ -46,7 +30,7 @@ export function TopAmbassadorsTable({
                     id: "rank",
                     size: 38,
                     header: t("campaigns.details.top.rank"),
-                    cell: ({ row }) => rankLabel(row.index + 1),
+                    cell: ({ row }) => row.index + 1,
                 }),
                 columnHelper.accessor("wallet", {
                     size: 150,
@@ -106,7 +90,7 @@ export function TopAmbassadorsTable({
         <DataTable
             data={topAmbassadors}
             columns={columns}
-            emptyMessage={t("common.table.empty")}
+            emptyMessage={t("campaigns.details.top.empty")}
             enableSorting={false}
         />
     );

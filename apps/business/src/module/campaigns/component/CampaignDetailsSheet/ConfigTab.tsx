@@ -17,6 +17,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import { useQuery } from "@tanstack/react-query";
 import { startOfDay } from "date-fns";
+import type { TFunction } from "i18next";
 import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
@@ -62,6 +63,7 @@ import { Section } from "./parts";
  * shared.
  */
 export function ConfigTab({ campaignId }: { campaignId: string }) {
+    const { t } = useTranslation();
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
     const {
@@ -83,7 +85,7 @@ export function ConfigTab({ campaignId }: { campaignId: string }) {
             <DataLoadError
                 error={error}
                 reset={() => refetch()}
-                resourceName="campaign configuration"
+                resourceName={t("campaigns.resources.config")}
             />
         );
     }
@@ -365,8 +367,14 @@ function RewardValue({
                         </Text>
                         <Text as="span" variant="bodySmall" weight="medium">
                             {"percent" in tier
-                                ? `${tier.percent}%`
-                                : `${tier.amount} ${currency}`}
+                                ? t(
+                                      "campaigns.details.config.rewards.tierPercent",
+                                      { percent: tier.percent }
+                                  )
+                                : t("campaigns.details.config.rewards.fixed", {
+                                      amount: tier.amount,
+                                      currency,
+                                  })}
                         </Text>
                     </div>
                 ))}
@@ -443,23 +451,6 @@ function ChainingNote({ chaining }: { chaining: RewardChaining }) {
     );
 }
 
-const operatorLabels: Record<string, string> = {
-    eq: "=",
-    neq: "≠",
-    gt: ">",
-    gte: "≥",
-    lt: "<",
-    lte: "≤",
-    in: "in",
-    not_in: "not in",
-    contains: "contains",
-    starts_with: "starts with",
-    ends_with: "ends with",
-    exists: "exists",
-    not_exists: "does not exist",
-    between: "between",
-};
-
 function isConditionGroup(
     condition: RuleCondition | ConditionGroup
 ): condition is ConditionGroup {
@@ -473,18 +464,54 @@ function isConditionsEmpty(conditions: RuleConditions): boolean {
     return conditions.conditions.length === 0;
 }
 
+type Translate = TFunction;
+
 // `in`/`not_in` carry a list of operands; every other operator a single one.
 function formatConditionValue(
-    value: string | number | boolean | (string | number | boolean)[] | null
+    value: string | number | boolean | (string | number | boolean)[] | null,
+    t: Translate
 ): string {
-    if (value === null) return "∅";
-    if (Array.isArray(value)) return value.map(formatConditionValue).join(", ");
-    if (typeof value === "boolean") return value ? "true" : "false";
+    if (value === null) return "–";
+    if (Array.isArray(value)) {
+        return value.map((item) => formatConditionValue(item, t)).join(", ");
+    }
+    if (typeof value === "boolean") {
+        return value
+            ? t("campaigns.details.config.conditions.yes")
+            : t("campaigns.details.config.conditions.no");
+    }
     return String(value);
 }
 
-function humanizeField(field: string): string {
-    return field.replace(/\./g, " › ");
+// A field outside the translated list renders as its raw path.
+function conditionFieldLabel(field: string, t: Translate): string {
+    return t(
+        `campaigns.details.config.conditions.field.${field.replace(/\./g, "_")}` as "campaigns.details.config.conditions.field.purchase_amount",
+        { defaultValue: field.replace(/\./g, " › ") }
+    );
+}
+
+function conditionText(
+    condition: RuleCondition,
+    field: string,
+    t: Translate
+): string {
+    const operator = t(
+        `campaigns.details.config.conditions.operator.${condition.operator}` as "campaigns.details.config.conditions.operator.eq",
+        { defaultValue: condition.operator }
+    );
+    let value = "";
+    if (condition.operator === "between") {
+        value = `${formatConditionValue(condition.value, t)} ${t(
+            "campaigns.details.config.conditions.and"
+        )} ${formatConditionValue(condition.valueTo ?? null, t)}`;
+    } else if (
+        condition.operator !== "exists" &&
+        condition.operator !== "not_exists"
+    ) {
+        value = formatConditionValue(condition.value, t);
+    }
+    return `${field} ${operator}${value ? ` ${value}` : ""}`;
 }
 
 /** Scope fields with a translated label; anything else renders raw. */
@@ -492,25 +519,11 @@ const PRODUCT_SCOPE_FIELD_KEYS = new Set<string>(PRODUCT_SCOPE_FIELDS);
 
 function ConditionChip({ condition }: { condition: RuleCondition }) {
     const { t } = useTranslation();
-    const operator = operatorLabels[condition.operator] ?? condition.operator;
-    const field = humanizeField(condition.field);
-
-    let value = "";
-    if (condition.operator === "between") {
-        value = `${formatConditionValue(condition.value)} ${t(
-            "campaigns.details.config.conditions.and"
-        )} ${formatConditionValue(condition.valueTo ?? null)}`;
-    } else if (
-        condition.operator !== "exists" &&
-        condition.operator !== "not_exists"
-    ) {
-        value = formatConditionValue(condition.value);
-    }
+    const field = conditionFieldLabel(condition.field, t);
 
     return (
         <Badge variant="neutral" size="small">
-            {field} {operator}
-            {value ? ` ${value}` : ""}
+            {conditionText(condition, field, t)}
         </Badge>
     );
 }
@@ -553,12 +566,10 @@ function ConditionGroupDisplay({ group }: { group: ConditionGroup }) {
 /**
  * Which cart line items the campaign covers. Unlike order-level conditions,
  * `productScope` fields are item-relative (`sku`, not `purchase.items.sku`),
- * so they get their own translated field labels rather than the raw
- * dot-path humanisation used for conditions.
+ * so they get their own translated field labels.
  */
 function ProductScopeChip({ condition }: { condition: RuleCondition }) {
     const { t } = useTranslation();
-    const operator = operatorLabels[condition.operator] ?? condition.operator;
     // Unknown fields can only come from a rule authored outside the app; fall
     // back to the raw name rather than render a missing translation key.
     const field = PRODUCT_SCOPE_FIELD_KEYS.has(condition.field)
@@ -567,22 +578,9 @@ function ProductScopeChip({ condition }: { condition: RuleCondition }) {
           )
         : condition.field;
 
-    let value = "";
-    if (condition.operator === "between") {
-        value = `${formatConditionValue(condition.value)} ${t(
-            "campaigns.details.config.conditions.and"
-        )} ${formatConditionValue(condition.valueTo ?? null)}`;
-    } else if (
-        condition.operator !== "exists" &&
-        condition.operator !== "not_exists"
-    ) {
-        value = formatConditionValue(condition.value);
-    }
-
     return (
         <Badge variant="neutral" size="small">
-            {field} {operator}
-            {value ? ` ${value}` : ""}
+            {conditionText(condition, field, t)}
         </Badge>
     );
 }
@@ -794,7 +792,10 @@ function BudgetRows({
                     )}
                 >
                     <ValueText>
-                        {item.amount} {currency}
+                        {t("campaigns.details.config.rewards.fixed", {
+                            amount: item.amount,
+                            currency,
+                        })}
                     </ValueText>
                 </DefinitionRow>
             ))}
@@ -918,7 +919,9 @@ function BudgetEditor({
                                     disabled={isPending}
                                 />
                                 <Text as="span" variant="bodySmall">
-                                    {t(`campaigns.create.budget.period.${p}`)}
+                                    {t(
+                                        `campaigns.details.config.budget.period.${p}`
+                                    )}
                                 </Text>
                             </label>
                         ))}
@@ -1190,6 +1193,9 @@ function ScheduleEditor({
                     ariaLabel={t("campaigns.details.config.schedule.starts")}
                     disabled={isPending}
                 />
+                <Text as="span" variant="caption" color="tertiary">
+                    {t("campaigns.details.config.schedule.startHint")}
+                </Text>
             </Stack>
             <Stack space="xs">
                 <Text as="span" variant="bodySmall" color="secondary">

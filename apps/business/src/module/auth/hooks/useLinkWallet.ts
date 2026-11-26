@@ -5,7 +5,6 @@ import type { TFunction } from "i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     AuthError,
-    authErrorMessage,
     extractAuthErrorCode,
     extractAuthErrorMessage,
 } from "@/module/auth/utils/authError";
@@ -29,20 +28,21 @@ const LINK_WALLET_CODE_KEYS = {
 } as const;
 
 /**
- * Map a `useLinkWallet` error to a translated, user-facing message. Anything
- * outside `LINK_WALLET_CODE_KEYS` falls back to the error's own message.
+ * Map a `useLinkWallet` error to a translated, user-facing message. Codes
+ * outside `LINK_WALLET_CODE_KEYS` get the generic text, never the raw backend
+ * string.
  */
 export function linkWalletErrorMessage(
     error: unknown,
     t: TFunction
 ): string | null {
     if (!error) return null;
-    return authErrorMessage(
-        error,
-        t,
-        extractAuthErrorMessage(error, ""),
-        LINK_WALLET_CODE_KEYS
-    );
+    const code =
+        error instanceof AuthError ? error.code : extractAuthErrorCode(error);
+    const key = code
+        ? LINK_WALLET_CODE_KEYS[code as keyof typeof LINK_WALLET_CODE_KEYS]
+        : undefined;
+    return t(key ?? "errors.linkWallet.generic");
 }
 
 /**

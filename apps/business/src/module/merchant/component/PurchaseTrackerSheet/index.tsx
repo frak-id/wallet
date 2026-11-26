@@ -120,7 +120,9 @@ function StatusCard({ status }: { status: WebhookStatus }) {
                 {status.setup && status.platform && (
                     <DetailCell
                         label={t("merchantEdit.purchaseTracker.platform")}
-                        value={status.platform}
+                        value={t(
+                            `merchantEdit.purchaseTracker.sheet.platforms.${status.platform}`
+                        )}
                     />
                 )}
             </DetailCells>
@@ -300,7 +302,7 @@ function RegisterButton({
                 onClick={onClick}
             >
                 {isUpdate
-                    ? t("merchantEdit.purchaseTracker.update")
+                    ? t("merchantEdit.purchaseTracker.sheet.update")
                     : t("merchantEdit.purchaseTracker.sheet.register")}
             </Button>
         </div>
@@ -512,9 +514,6 @@ function InternalRegistration() {
     );
 }
 
-const formatDate = (date?: Date) =>
-    date ? new Date(date).toLocaleString() : "N/A";
-
 function StatsCard({
     stats,
 }: {
@@ -525,7 +524,11 @@ function StatsCard({
         totalPurchaseHandled?: number;
     };
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const formatDate = (date?: Date) =>
+        date
+            ? new Date(date).toLocaleString(i18n.language)
+            : t("merchantEdit.purchaseTracker.sheet.stats.none");
 
     const rows = [
         {

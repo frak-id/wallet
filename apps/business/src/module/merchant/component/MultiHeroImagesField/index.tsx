@@ -242,7 +242,7 @@ function EmptyDropzone({ dropzone, isPending, progress }: DropzoneProps) {
                     {t("merchantEdit.explorer.browseFiles")}
                 </Button>
                 <Text variant="caption" color="disabled" align="center">
-                    {`${t("merchantEdit.explorer.restrictions.hero")} — ${progress}`}
+                    {`${t("merchantEdit.explorer.restrictions.hero")} (${progress})`}
                 </Text>
             </Stack>
         </div>

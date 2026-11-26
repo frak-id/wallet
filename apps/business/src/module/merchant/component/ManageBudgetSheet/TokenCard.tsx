@@ -12,7 +12,7 @@ import { useWalletStatus } from "@frak-labs/react-sdk";
 import { AlertTriangle, ArrowUpCircle, Download } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type Address, formatUnits, parseUnits } from "viem";
+import { type Address, formatUnits, maxUint256, parseUnits } from "viem";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import {
@@ -28,11 +28,18 @@ import {
     statusBadgeVariant,
     type TokenStatus,
 } from "@/module/merchant/utils/budgetTokens";
+import { ActionFeedback } from "./ActionFeedback";
 import { BalanceBreakdown } from "./BalanceBreakdown";
 import * as styles from "./manage-budget-sheet.css";
 
 function CurrencyLabel({ token }: { token: BudgetToken }) {
+    const { t } = useTranslation();
     const meta = currencyMetadata[token.symbol as Stablecoin];
+    const providerDescription = t(
+        meta.provider === "Monerium"
+            ? "forms.currencySelector.moneriumDescription"
+            : "forms.currencySelector.circleDescription"
+    );
     return (
         <Inline space="xs" alignY="center">
             <Text
@@ -43,7 +50,7 @@ function CurrencyLabel({ token }: { token: BudgetToken }) {
             >
                 {meta.currencySymbol}
             </Text>
-            <Tooltip content={meta.providerDescription}>
+            <Tooltip content={providerDescription}>
                 <Text variant="caption" color="disabled" as="span">
                     {meta.provider}
                 </Text>
@@ -173,16 +180,15 @@ function TokenStatusBadge({
     if (status === "empty") return null;
 
     const stablecoin = token.symbol as Stablecoin;
-    const allowanceLabel =
-        isBankOpen && token.allowance > 0n
-            ? t("funding.budget.allowanceTooltip", {
-                  amount: formatTokenBalance(
-                      token.allowance,
-                      stablecoin,
-                      decimals
-                  ),
-              })
-            : undefined;
+    const allowanceLabel = getAllowanceLabel();
+
+    function getAllowanceLabel() {
+        if (!isBankOpen || token.allowance === 0n) return undefined;
+        if (token.allowance === maxUint256) return t("funding.budget.noLimit");
+        return t("funding.budget.allowanceTooltip", {
+            amount: formatTokenBalance(token.allowance, stablecoin, decimals),
+        });
+    }
 
     const label =
         status === "active"
@@ -219,6 +225,15 @@ function TokenActions({
 }) {
     const { t } = useTranslation();
     const [action, setAction] = useState<"allowance" | "withdraw" | null>(null);
+    const {
+        mutate: revokeAllowance,
+        isPending: isRevoking,
+        isError: isRevokeError,
+    } = useBankAllowanceMutation({
+        bankAddress,
+        merchantId,
+        action: "revoke",
+    });
 
     if (action === "allowance") {
         return (
@@ -245,80 +260,62 @@ function TokenActions({
     }
 
     return (
-        <div className={styles.actionsRow}>
-            {needsAllowanceIncrease && (
-                <Notice
-                    display="inline"
-                    tone="warning"
-                    icon={<AlertTriangle width={14} height={14} />}
-                    className={styles.warningChipOverride}
-                >
-                    {t("funding.budget.limitTooLow")}
-                </Notice>
-            )}
-            {needsAllowanceIncrease && (
-                <Button
-                    size="small"
-                    variant="secondary"
-                    width="auto"
-                    icon={<ArrowUpCircle size={16} />}
-                    onClick={() => setAction("allowance")}
-                >
-                    {t("funding.budget.actions.increaseLimit")}
-                </Button>
-            )}
-            {isBankOpen && token.allowance > 0n && (
-                <PauseRewardsButton
-                    token={token}
-                    merchantId={merchantId}
-                    bankAddress={bankAddress}
-                />
-            )}
-            {!isBankOpen && token.balance > 0n && (
-                <Tooltip content={t("funding.budget.actions.withdrawTooltip")}>
+        <Stack space="xxs">
+            <div className={styles.actionsRow}>
+                {needsAllowanceIncrease && (
+                    <Notice
+                        display="inline"
+                        tone="warning"
+                        icon={<AlertTriangle width={14} height={14} />}
+                        className={styles.warningChipOverride}
+                    >
+                        {t("funding.budget.limitTooLow")}
+                    </Notice>
+                )}
+                {needsAllowanceIncrease && (
                     <Button
                         size="small"
                         variant="secondary"
                         width="auto"
-                        icon={<Download size={16} />}
-                        onClick={() => setAction("withdraw")}
+                        icon={<ArrowUpCircle size={16} />}
+                        onClick={() => setAction("allowance")}
                     >
-                        {t("funding.budget.actions.withdrawCta")}
+                        {t("funding.budget.actions.increaseLimit")}
                     </Button>
-                </Tooltip>
-            )}
-        </div>
-    );
-}
-
-function PauseRewardsButton({
-    token,
-    merchantId,
-    bankAddress,
-}: {
-    token: BudgetToken;
-    merchantId: string;
-    bankAddress: Address;
-}) {
-    const { t } = useTranslation();
-    const { mutate: revokeAllowance, isPending } = useBankAllowanceMutation({
-        bankAddress,
-        merchantId,
-        action: "revoke",
-    });
-
-    return (
-        <Button
-            size="small"
-            variant="secondary"
-            width="auto"
-            loading={isPending}
-            disabled={isPending}
-            icon={<PauseIcon width={16} height={16} />}
-            onClick={() => revokeAllowance({ token: token.address })}
-        >
-            {t("funding.pause.title")}
-        </Button>
+                )}
+                {isBankOpen && token.allowance > 0n && (
+                    <Button
+                        size="small"
+                        variant="secondary"
+                        width="auto"
+                        loading={isRevoking}
+                        disabled={isRevoking}
+                        icon={<PauseIcon width={16} height={16} />}
+                        onClick={() =>
+                            revokeAllowance({ token: token.address })
+                        }
+                    >
+                        {t("funding.pause.title")}
+                    </Button>
+                )}
+                {!isBankOpen && token.balance > 0n && (
+                    <Tooltip
+                        content={t("funding.budget.actions.withdrawTooltip")}
+                    >
+                        <Button
+                            size="small"
+                            variant="secondary"
+                            width="auto"
+                            icon={<Download size={16} />}
+                            onClick={() => setAction("withdraw")}
+                        >
+                            {t("funding.budget.actions.withdrawCta")}
+                        </Button>
+                    </Tooltip>
+                )}
+            </div>
+            <ActionFeedback isPending={isRevoking} isError={isRevokeError} />
+        </Stack>
     );
 }
 
@@ -338,51 +335,61 @@ function AllowanceEditor({
     const { t } = useTranslation();
     const defaultValue = formatUnits(token.balance * 10n, decimals);
     const [value, setValue] = useState(defaultValue);
-    const { mutate: updateAllowance, isPending } = useBankAllowanceMutation({
+    const {
+        mutate: updateAllowance,
+        isPending,
+        isError,
+    } = useBankAllowanceMutation({
         bankAddress,
         merchantId,
         action: "update",
     });
 
     return (
-        <div className={styles.actionsRow}>
-            <Input
-                type="number"
-                placeholder={t("funding.budget.actions.amountPlaceholder")}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className={styles.inlineInput}
-                autoFocus
-            />
-            <Button
-                size="small"
-                variant="primary"
-                width="auto"
-                disabled={!value || isPending}
-                loading={isPending}
-                onClick={() =>
-                    value &&
-                    updateAllowance(
-                        {
-                            token: token.address,
-                            amount: parseUnits(value, decimals),
-                        },
-                        { onSuccess: onDone }
-                    )
-                }
-            >
-                {t("funding.budget.actions.confirm")}
-            </Button>
-            <Button
-                size="small"
-                variant="ghost"
-                width="auto"
-                disabled={isPending}
-                onClick={onDone}
-            >
-                {t("funding.budget.actions.cancel")}
-            </Button>
-        </div>
+        <Stack space="xxs">
+            <div className={styles.actionsRow}>
+                <Input
+                    type="number"
+                    placeholder={t("funding.budget.actions.amountPlaceholder")}
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    className={styles.inlineInput}
+                    autoFocus
+                />
+                <Button
+                    size="small"
+                    variant="primary"
+                    width="auto"
+                    disabled={!value || isPending}
+                    loading={isPending}
+                    onClick={() =>
+                        value &&
+                        updateAllowance(
+                            {
+                                token: token.address,
+                                amount: parseUnits(value, decimals),
+                            },
+                            { onSuccess: onDone }
+                        )
+                    }
+                >
+                    {t("funding.budget.actions.confirm")}
+                </Button>
+                <Button
+                    size="small"
+                    variant="ghost"
+                    width="auto"
+                    disabled={isPending}
+                    onClick={onDone}
+                >
+                    {t("funding.budget.actions.cancel")}
+                </Button>
+            </div>
+            <Text variant="caption" color="secondary">
+                {t("funding.budget.actions.limitHint")}
+            </Text>
+            <ActionFeedback isPending={isPending} isError={isError} />
+        </Stack>
     );
 }
 
@@ -401,7 +408,11 @@ function WithdrawEditor({
 }) {
     const { t } = useTranslation();
     const [value, setValue] = useState("");
-    const { mutate: withdraw, isPending } = useWithdrawFromBank({
+    const {
+        mutate: withdraw,
+        isPending,
+        isError,
+    } = useWithdrawFromBank({
         bankAddress,
         merchantId,
     });
@@ -409,51 +420,60 @@ function WithdrawEditor({
     const walletAddress = walletStatusData?.wallet;
 
     return (
-        <div className={styles.actionsRow}>
-            <Input
-                type="number"
-                placeholder={t("funding.budget.actions.withdrawPlaceholder", {
-                    amount: formatTokenBalance(
-                        token.balance,
-                        token.symbol as Stablecoin,
-                        decimals
-                    ),
-                })}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className={styles.inlineInput}
-                autoFocus
-            />
-            <Button
-                size="small"
-                variant="primary"
-                width="auto"
-                disabled={!value || isPending}
-                loading={isPending}
-                onClick={() =>
-                    value &&
-                    walletAddress &&
-                    withdraw(
+        <Stack space="xxs">
+            <div className={styles.actionsRow}>
+                <Input
+                    type="number"
+                    placeholder={t(
+                        "funding.budget.actions.withdrawPlaceholder",
                         {
-                            token: token.address,
-                            amount: parseUnits(value, decimals),
-                            to: walletAddress,
-                        },
-                        { onSuccess: onDone }
-                    )
-                }
-            >
-                {t("funding.budget.actions.withdraw")}
-            </Button>
-            <Button
-                size="small"
-                variant="ghost"
-                width="auto"
-                disabled={isPending}
-                onClick={onDone}
-            >
-                {t("funding.budget.actions.cancel")}
-            </Button>
-        </div>
+                            amount: formatTokenBalance(
+                                token.balance,
+                                token.symbol as Stablecoin,
+                                decimals
+                            ),
+                        }
+                    )}
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    className={styles.inlineInput}
+                    autoFocus
+                />
+                <Button
+                    size="small"
+                    variant="primary"
+                    width="auto"
+                    disabled={!value || isPending}
+                    loading={isPending}
+                    onClick={() =>
+                        value &&
+                        walletAddress &&
+                        withdraw(
+                            {
+                                token: token.address,
+                                amount: parseUnits(value, decimals),
+                                to: walletAddress,
+                            },
+                            { onSuccess: onDone }
+                        )
+                    }
+                >
+                    {t("funding.budget.actions.withdraw")}
+                </Button>
+                <Button
+                    size="small"
+                    variant="ghost"
+                    width="auto"
+                    disabled={isPending}
+                    onClick={onDone}
+                >
+                    {t("funding.budget.actions.cancel")}
+                </Button>
+            </div>
+            <Text variant="caption" color="secondary">
+                {t("funding.budget.actions.withdrawHint")}
+            </Text>
+            <ActionFeedback isPending={isPending} isError={isError} />
+        </Stack>
     );
 }

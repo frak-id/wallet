@@ -11,12 +11,6 @@ import { currencyStore } from "@/stores/currencyStore";
 
 const DEFAULT_REVENUE_CURRENCY = "EUR";
 
-// Shown on a KPI card when its value comes from the Postgres summary rather
-// than the accurate OpenPanel count — before analytics loads, or when
-// OpenPanel returns 0 and we fall back. Cleared per-card once OpenPanel
-// supplies a non-zero accurate count.
-const APPROXIMATE_HINT = "Approximate";
-
 type Props = {
     kpis: OverviewKpis;
     from?: string;
@@ -25,6 +19,8 @@ type Props = {
 
 export function KpiCardsRow({ kpis, from, to }: Props) {
     const { t, i18n } = useTranslation();
+    // Shown while a value still comes from the summary, not the accurate count.
+    const approximateHint = t("campaigns.overview.kpi.approximate");
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
     // Non-suspense read: KpiCardsRow renders immediately with the
@@ -102,7 +98,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(ambassadors.current)}
                 delta={percentDelta(ambassadors.current, ambassadors.previous)}
-                hint={ambassadorsAccurate ? undefined : APPROXIMATE_HINT}
+                hint={ambassadorsAccurate ? undefined : approximateHint}
                 empty={ambassadors.current === 0}
             />
             <KpiCard
@@ -110,7 +106,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(shares.current)}
                 delta={percentDelta(shares.current, shares.previous)}
-                hint={sharesAccurate ? undefined : APPROXIMATE_HINT}
+                hint={sharesAccurate ? undefined : approximateHint}
                 empty={shares.current === 0}
             />
             <KpiCard
@@ -131,7 +127,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 hint={
                     ambassadorsAccurate && sharesAccurate
                         ? undefined
-                        : APPROXIMATE_HINT
+                        : approximateHint
                 }
                 empty={sharingRate.current === 0}
             />

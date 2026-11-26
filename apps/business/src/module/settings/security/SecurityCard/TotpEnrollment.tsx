@@ -148,7 +148,9 @@ export function TotpEnrollment() {
                     maxLength={6}
                     label={t("auth.twoFactor.codePlaceholder")}
                     error={Boolean(activateError)}
-                    hint={activateError ? activateError.message : undefined}
+                    hint={
+                        activateError ? t("errors.auth.invalidCode") : undefined
+                    }
                     value={code}
                     onChange={(event) => setCode(event.target.value)}
                 />
@@ -188,7 +190,11 @@ export function TotpEnrollment() {
             >
                 {t("settings.security.totp.enable")}
             </Button>
-            {setupError && <FieldError>{setupError.message}</FieldError>}
+            {setupError && (
+                <FieldError>
+                    {t("settings.security.totp.setupError")}
+                </FieldError>
+            )}
         </Stack>
     );
 }
@@ -204,7 +210,7 @@ function RecoveryCodes({ codes }: { codes: string[] }) {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = "frak-recovery-codes.txt";
+        anchor.download = "frak-backup-codes.txt";
         anchor.click();
         URL.revokeObjectURL(url);
     };

@@ -26,9 +26,17 @@ const METHOD_LABEL_KEY = {
 
 export function SessionsList() {
     const { t } = useTranslation();
-    const { data: sessions, isLoading } = useAuthSessions();
+    const { data: sessions, isLoading, isError } = useAuthSessions();
 
     if (isLoading) return <Spinner />;
+
+    if (isError) {
+        return (
+            <Text variant="bodySmall" color="error">
+                {t("settings.security.sessions.loadError")}
+            </Text>
+        );
+    }
 
     if (!sessions?.length) {
         return (
@@ -54,7 +62,11 @@ type Session = NonNullable<ReturnType<typeof useAuthSessions>["data"]>[number];
 function SessionRow({ session }: { session: Session }) {
     const { t } = useTranslation();
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const { mutate: revoke, isPending: isRevoking } = useRevokeSession();
+    const {
+        mutate: revoke,
+        isPending: isRevoking,
+        isError: isRevokeError,
+    } = useRevokeSession();
 
     const device = parseUserAgent(session.userAgent);
     const methodKey =
@@ -103,6 +115,13 @@ function SessionRow({ session }: { session: Session }) {
                     confirmLabel={t("settings.security.sessions.revoke")}
                     confirmTone="destructive"
                     isConfirming={isRevoking}
+                    error={
+                        isRevokeError ? (
+                            <Text variant="caption" color="error">
+                                {t("settings.security.sessions.revokeError")}
+                            </Text>
+                        ) : undefined
+                    }
                     onConfirm={() =>
                         revoke(session.id, {
                             onSuccess: () => setConfirmOpen(false),

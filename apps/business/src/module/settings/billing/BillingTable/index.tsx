@@ -27,6 +27,7 @@ import {
 } from "@/api/backendClient";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
+import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import {
     getDateTimeFormat,
     getNumberFormat,
@@ -36,6 +37,11 @@ import type { BillingEntry } from "../types";
 import { useVoidDocument } from "../useBillingAdmin";
 import { useBillingInfo } from "../useBillingInfo";
 import * as styles from "./billing-table.css";
+
+function displayCurrencyCode(currency: string): string {
+    const meta = currencyMetadata[currency as keyof typeof currencyMetadata];
+    return meta?.currencyCode ?? currency.toUpperCase();
+}
 
 /** Badge variant per entry kind — invoice (paid) / deposit / withdraw each get a distinct tag. */
 function badgeVariantFor(kind: BillingEntry["kind"]) {
@@ -133,12 +139,12 @@ function EntriesTable({
         });
         return {
             formatDate: (iso: string) => dateFmt.format(new Date(iso)),
-            // Stablecoin currencies (eure/usdc) aren't ISO-4217 codes,
-            // so `Intl.NumberFormat({ style: "currency" })` can't be used here.
+            // Stablecoin ids (eure/usdc) aren't ISO-4217 codes, so show the
+            // matching EUR / USD code instead of the raw id.
             formatAmount: (amount: number | null, currency: string) =>
                 amount === null
                     ? "—"
-                    : `${numberFmt.format(amount)} ${currency.toUpperCase()}`,
+                    : `${numberFmt.format(amount)} ${displayCurrencyCode(currency)}`,
         };
     }, [i18n.language]);
 

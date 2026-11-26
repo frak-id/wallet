@@ -250,7 +250,9 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                             })}
                         </DetailValue>
                     ) : (
-                        <DetailValue muted>{EMPTY}</DetailValue>
+                        <DetailValue>
+                            {t("campaigns.create.validation.lockupNone")}
+                        </DetailValue>
                     )}
                 </DetailRow>
             )}
@@ -345,19 +347,32 @@ function RewardRows({
                 >
                     <Stack space="xs" align="right">
                         {tiers.map((tier, i) => {
-                            const isLast = i === tiers.length - 1;
                             const unit =
                                 tier.unit === "percent" ? "%" : currencyGlyph;
-                            const upper =
-                                tier.to === "" ? (isLast ? "∞" : "") : tier.to;
                             const from = tier.from === "" ? 0 : tier.from;
+                            const range = {
+                                from,
+                                to: tier.to,
+                                currency: currencyGlyph,
+                                cost: `${tier.cpa}${unit}`,
+                            };
                             return (
                                 <Stack
                                     key={`${tier.from}-${tier.to}`}
                                     space="xxs"
                                     align="right"
                                 >
-                                    <DetailValue>{`${from} → ${upper} · ${tier.cpa}${unit}`}</DetailValue>
+                                    <DetailValue>
+                                        {tier.to === ""
+                                            ? t(
+                                                  "campaigns.create.validation.tierRangeOpen",
+                                                  range
+                                              )
+                                            : t(
+                                                  "campaigns.create.validation.tierRange",
+                                                  range
+                                              )}
+                                    </DetailValue>
                                     <Text
                                         variant="caption"
                                         weight="medium"

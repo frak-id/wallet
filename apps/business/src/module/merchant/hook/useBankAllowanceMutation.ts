@@ -5,6 +5,7 @@ import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
+import { walletPromptMetadata } from "@/module/merchant/utils/walletPromptMetadata";
 
 type BankAllowanceMutationParams = {
     merchantId: string;
@@ -60,21 +61,11 @@ export function useBankAllowanceMutation({
                             args: [token],
                         }),
                     },
-                    metadata: {
-                        header: {
-                            title: "Revoke allowance",
-                        },
-                        i18n: {
-                            fr: {
-                                "sdk.modal.sendTransaction.description":
-                                    "Révoquer l'allocation de distribution",
-                            },
-                            en: {
-                                "sdk.modal.sendTransaction.description":
-                                    "Revoke distribution allowance",
-                            },
-                        },
-                    },
+                    metadata: await walletPromptMetadata({
+                        titleKey: "funding.walletPrompt.revokeLimit.title",
+                        descriptionKey:
+                            "funding.walletPrompt.revokeLimit.description",
+                    }),
                 });
 
                 await waitForTxAndInvalidateQueries({
@@ -92,21 +83,11 @@ export function useBankAllowanceMutation({
                             args: [token, amount],
                         }),
                     },
-                    metadata: {
-                        header: {
-                            title: "Update allowance",
-                        },
-                        i18n: {
-                            fr: {
-                                "sdk.modal.sendTransaction.description":
-                                    "Mettre à jour l'allocation de distribution",
-                            },
-                            en: {
-                                "sdk.modal.sendTransaction.description":
-                                    "Update distribution allowance",
-                            },
-                        },
-                    },
+                    metadata: await walletPromptMetadata({
+                        titleKey: "funding.walletPrompt.updateLimit.title",
+                        descriptionKey:
+                            "funding.walletPrompt.updateLimit.description",
+                    }),
                 });
 
                 await waitForTxAndInvalidateQueries({

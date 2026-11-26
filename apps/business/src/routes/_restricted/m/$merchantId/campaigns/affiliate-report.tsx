@@ -62,7 +62,7 @@ export const Route = createFileRoute(
     },
     component: AffiliateReportPage,
     errorComponent: (props) => (
-        <DataLoadError {...props} resourceName="affiliate report" />
+        <DataLoadError {...props} resource="affiliateReport" />
     ),
 });
 

@@ -39,6 +39,7 @@ import {
     draftToReferralChainForm,
     hasReferrerReward,
     isReferralChainFormValid,
+    MAX_DEPERDITION_PER_LEVEL,
     MAX_REWARDED_LEVELS,
     MIN_DEPERDITION_PER_LEVEL,
     type ReferralChainFormValues,
@@ -163,8 +164,11 @@ function ChainPreview({
     // of rendering a misleading preview.
     if (decrease > 0 && !inRange) {
         return (
-            <InfoBanner>
-                {t("campaigns.create.referralChain.decrease.outOfRange")}
+            <InfoBanner tone="error">
+                {t("campaigns.create.referralChain.decrease.outOfRange", {
+                    min: MIN_DEPERDITION_PER_LEVEL,
+                    max: MAX_DEPERDITION_PER_LEVEL,
+                })}
             </InfoBanner>
         );
     }
@@ -395,6 +399,8 @@ export function ReferralChainCampaign() {
             formId={FORM_ID}
             isValid={isValid}
             isPending={saveCampaign.isPending}
+            isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
+            saveFailed={saveCampaign.isError}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
             hasUnsavedChanges={form.formState.isDirty}
@@ -460,7 +466,11 @@ export function ReferralChainCampaign() {
                                                 "campaigns.create.referralChain.decrease.label"
                                             )}
                                             hint={t(
-                                                "campaigns.create.referralChain.decrease.hint"
+                                                "campaigns.create.referralChain.decrease.hint",
+                                                {
+                                                    min: MIN_DEPERDITION_PER_LEVEL,
+                                                    max: MAX_DEPERDITION_PER_LEVEL,
+                                                }
                                             )}
                                             placeholder={t(
                                                 "campaigns.create.referralChain.decrease.placeholder"
@@ -483,7 +493,8 @@ export function ReferralChainCampaign() {
                                                 "campaigns.create.referralChain.maxLevels.label"
                                             )}
                                             hint={t(
-                                                "campaigns.create.referralChain.maxLevels.hint"
+                                                "campaigns.create.referralChain.maxLevels.hint",
+                                                { max: MAX_REWARDED_LEVELS }
                                             )}
                                             placeholder={t(
                                                 "campaigns.create.referralChain.maxLevels.placeholder"

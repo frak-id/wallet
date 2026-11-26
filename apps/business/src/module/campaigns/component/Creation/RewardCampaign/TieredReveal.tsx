@@ -1,6 +1,7 @@
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { PlusIcon } from "@frak-labs/design-system/icons";
 import { Fragment } from "react";
 import {
@@ -227,6 +228,10 @@ export function TieredReveal({
                     {t("campaigns.create.reward.tiered.addTier")}
                 </Button>
             </Inline>
+
+            <Text variant="caption" color="tertiary">
+                {t("campaigns.create.reward.tiered.rewardsRequired")}
+            </Text>
 
             {incomplete ? (
                 <FieldError>

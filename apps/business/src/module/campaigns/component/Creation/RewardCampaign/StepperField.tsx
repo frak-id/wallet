@@ -2,6 +2,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { DoubleChevronIcon, PercentIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import type { ControllerRenderProps } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { InputNumber } from "@/module/forms/InputNumber";
 import { useCurrencyGlyph } from "./currencyGlyph";
 import * as styles from "./reward.css";
@@ -29,6 +30,7 @@ export function NumberStepper({
     onChange: (next: number) => void;
     step?: number;
 }) {
+    const { t } = useTranslation();
     const current = typeof value === "number" ? value : Number(value) || 0;
     return (
         <span className={styles.stepper}>
@@ -40,14 +42,14 @@ export function NumberStepper({
             <button
                 type="button"
                 tabIndex={-1}
-                aria-label="increment"
+                aria-label={t("campaigns.create.stepper.increase")}
                 className={styles.stepperUp}
                 onClick={() => onChange(current + step)}
             />
             <button
                 type="button"
                 tabIndex={-1}
-                aria-label="decrement"
+                aria-label={t("campaigns.create.stepper.decrease")}
                 className={styles.stepperDown}
                 onClick={() => onChange(Math.max(0, current - step))}
             />

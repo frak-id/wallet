@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ParseKeys } from "i18next";
+import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { merchantSetupStatusQueryKey } from "@/module/merchant/queries/queryKeys";
 import { useGetMerchantAdministrators } from "./useGetMerchantAdministrators";
@@ -10,13 +12,27 @@ type SetupStatusItemKey =
     | "running-bank"
     | "add-campaign";
 
-export type MerchantSetupStatusItem = {
+type SetupStep = {
     key: SetupStatusItemKey;
-    name: string;
-    description: string;
-    isGood: boolean;
+    nameKey: ParseKeys;
+    descriptionKey: ParseKeys;
     documentationLink?: string;
     resolvingPage: string;
+};
+
+type SetupStepStatus = SetupStep & { isGood: boolean };
+
+type SetupStatusData = {
+    items: SetupStepStatus[];
+    hasWarning: boolean;
+};
+
+export type MerchantSetupStatusItem = Omit<
+    SetupStepStatus,
+    "nameKey" | "descriptionKey"
+> & {
+    name: string;
+    description: string;
 };
 
 export type MerchantSetupStatus = {
@@ -24,42 +40,35 @@ export type MerchantSetupStatus = {
     hasWarning: boolean;
 };
 
-const BASE_STEPS: Record<
-    SetupStatusItemKey,
-    Omit<MerchantSetupStatusItem, "isGood">
-> = {
+const BASE_STEPS: Record<SetupStatusItemKey, SetupStep> = {
     "other-admin": {
         key: "other-admin",
-        name: "Add an Additional Admin",
-        description:
-            "Enhance your merchant's security and manageability by adding another admin. This will help ensure multiple team members can oversee the merchant's settings, campaigns, and integrations, maintaining continuity and strengthening access control.",
+        nameKey: "merchant.setupStatus.steps.otherAdmin.name",
+        descriptionKey: "merchant.setupStatus.steps.otherAdmin.description",
         documentationLink:
             "https://docs.frak.id/business/product/config/team#adding-a-new-member",
         resolvingPage: "/merchant/[merchantId]/team",
     },
     "add-funding": {
         key: "add-funding",
-        name: "Add Merchant Funding",
-        description:
-            "Fund your merchant to activate campaigns and provide rewards for successful engagements. By adding funds, you set up the financial backbone for your campaigns, ensuring users are rewarded for their interactions and contributions.",
+        nameKey: "merchant.setupStatus.steps.addFunding.name",
+        descriptionKey: "merchant.setupStatus.steps.addFunding.description",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#adding-funds",
         resolvingPage: "/merchant/[merchantId]/funding",
     },
     "running-bank": {
         key: "running-bank",
-        name: "Activate Funding Bank",
-        description:
-            "Initialize the funding bank to make funds available for campaigns, allowing the system to allocate rewards automatically. Activating your funding bank ensures that your campaigns are ready to incentivize users as soon as they engage with your merchant.",
+        nameKey: "merchant.setupStatus.steps.runningBank.name",
+        descriptionKey: "merchant.setupStatus.steps.runningBank.description",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#campaigns-funding-status",
         resolvingPage: "/merchant/[merchantId]/funding",
     },
     "add-campaign": {
         key: "add-campaign",
-        name: "Launch Campaign",
-        description:
-            "Kick off a word-of-mouth acquisition campaign to drive user engagement and expand merchant reach. Campaigns let you harness the power of referrals by rewarding users for sharing your merchant, turning satisfied customers into active promoters.",
+        nameKey: "merchant.setupStatus.steps.addCampaign.name",
+        descriptionKey: "merchant.setupStatus.steps.addCampaign.description",
         documentationLink: "https://docs.frak.id/business/campaign/create",
         resolvingPage: "/campaigns/new",
     },
@@ -73,6 +82,7 @@ const MOCK_SETUP_STATUS: Record<SetupStatusItemKey, boolean> = {
 };
 
 export function useMerchantSetupStatus({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
 
     const { data: administrators, isSuccess: isAdministratorsSuccess } =
@@ -83,21 +93,22 @@ export function useMerchantSetupStatus({ merchantId }: { merchantId: string }) {
 
     return useQuery({
         queryKey: merchantSetupStatusQueryKey(merchantId, isDemoMode),
-        queryFn: async (): Promise<MerchantSetupStatus> => {
+        queryFn: async (): Promise<SetupStatusData> => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
 
-                const items: MerchantSetupStatusItem[] = Object.entries(
-                    BASE_STEPS
-                ).map(([key, step]) => ({
-                    ...step,
-                    isGood:
-                        MOCK_SETUP_STATUS[key as SetupStatusItemKey] ?? false,
-                    resolvingPage: step.resolvingPage.replace(
-                        "[merchantId]",
-                        merchantId
-                    ),
-                }));
+                const items: SetupStepStatus[] = Object.entries(BASE_STEPS).map(
+                    ([key, step]) => ({
+                        ...step,
+                        isGood:
+                            MOCK_SETUP_STATUS[key as SetupStatusItemKey] ??
+                            false,
+                        resolvingPage: step.resolvingPage.replace(
+                            "[merchantId]",
+                            merchantId
+                        ),
+                    })
+                );
 
                 return {
                     items,
@@ -105,7 +116,7 @@ export function useMerchantSetupStatus({ merchantId }: { merchantId: string }) {
                 };
             }
 
-            const steps: MerchantSetupStatusItem[] = [];
+            const steps: SetupStepStatus[] = [];
 
             // Check if there's more than one admin (owner)
             const hasOtherAdmin =
@@ -158,6 +169,14 @@ export function useMerchantSetupStatus({ merchantId }: { merchantId: string }) {
                 hasWarning: steps.some((step) => !step.isGood),
             };
         },
+        select: (data): MerchantSetupStatus => ({
+            hasWarning: data.hasWarning,
+            items: data.items.map(({ nameKey, descriptionKey, ...item }) => ({
+                ...item,
+                name: t(nameKey),
+                description: t(descriptionKey),
+            })),
+        }),
         enabled: !!merchantId && isAdministratorsSuccess && isBankSuccess,
     });
 }

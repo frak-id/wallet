@@ -13,6 +13,7 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMigrateLegacyBank } from "@/module/merchant/hook/useMigrateLegacyBank";
 import { computeProductId } from "@/module/merchant/utils/computeProductId";
 import { legacyBankMap } from "@/module/merchant/utils/legacyBanks";
+import { ActionFeedback } from "./ActionFeedback";
 import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./legacy-bank-migration.css";
 
@@ -61,7 +62,11 @@ function LegacyBankMigrationContent({
         oldBankAddress,
     });
     const { data: tokenMeta } = useTokenMetadata(status?.token);
-    const { mutate: migrate, isPending } = useMigrateLegacyBank({
+    const {
+        mutate: migrate,
+        isPending,
+        isError,
+    } = useMigrateLegacyBank({
         merchantId,
     });
 
@@ -151,6 +156,7 @@ function LegacyBankMigrationContent({
                     {t("funding.legacy.migrate")}
                 </Button>
             </Box>
+            <ActionFeedback isPending={isPending} isError={isError} />
         </div>
     );
 }

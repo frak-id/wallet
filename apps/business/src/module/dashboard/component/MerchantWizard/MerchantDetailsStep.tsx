@@ -342,7 +342,12 @@ export function MerchantDetailsStep({
                                                 label={t(
                                                     "merchant.create.fields.domain.nameLabel"
                                                 )}
-                                                placeholder="example.com"
+                                                placeholder={t(
+                                                    "merchant.create.fields.domain.placeholder"
+                                                )}
+                                                hint={t(
+                                                    "merchant.create.fields.domain.hint"
+                                                )}
                                                 {...field}
                                             />
                                         </FormControl>

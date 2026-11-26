@@ -2,61 +2,67 @@ export default interface Resources {
   "translation": {
     "auth": {
       "invite": {
-        "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
-        "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
-        "askToResend": "Ask your admin to resend the invitation.",
-        "goToLogin": "Go to sign in",
-        "invalidToken": "This invitation link is invalid or has expired",
-        "openDashboard": "Open dashboard",
-        "signOutFirst": "Sign out to accept this invitation",
+        "alreadyAuthenticated": "You are logged in with another account. Log out to accept the invitation for {{email}}.",
+        "alreadyClaimed": "This invitation was already used. Log in with {{email}} instead.",
+        "askToResend": "Ask the person who invited you to send a new invitation.",
+        "genericError": "We could not accept the invitation. Check your password and try again. If it keeps failing, ask for a new invitation.",
+        "goToLogin": "Go to log in",
+        "invalidToken": "This invitation link is invalid or has expired.",
+        "openDashboard": "Go to the dashboard",
+        "signOutFirst": "Log out to accept this invitation",
         "submit": "Accept invitation",
-        "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+        "subtitle": "Invited by {{inviterName}}. Choose a password to join the team.",
         "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak"
       },
       "login": {
         "back": "Back",
-        "connect": "Connect to Frak Ad Manager",
-        "dashboardImageAlt": "Frak Ad Manager dashboard preview",
+        "connect": "Continue with Frak",
+        "connectHint": "New here? We create your account. Already have one? You get your account back.",
+        "dashboardImageAlt": "Preview of the Frak dashboard",
         "email": {
-          "backToLogin": "Back to sign in",
+          "backToLogin": "Back to log in",
           "emailPlaceholder": "Email address",
+          "existingAccountHint": "If this email already has an account, log in with its password or reset it.",
           "forgotPassword": "Forgot your password?",
-          "newPasswordPlaceholder": "Create a password",
+          "loginError": "We could not log you in. Check your email and password, or reset your password.",
+          "newPasswordPlaceholder": "New password",
           "noAccount": "No account yet?",
           "passwordHint": "At least 10 characters.",
           "passwordPlaceholder": "Password",
-          "registerCta": "Register",
+          "registerCta": "Create account",
+          "registerError": "We could not create your account. Check your email and password, then try again.",
           "registerSubmit": "Create account",
           "resetCodePlaceholder": "Reset code",
-          "resetInstructions": "Enter your account email and we'll send you a reset code.",
-          "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+          "resetInstructions": "Enter the email of your account. We send you a code to reset your password.",
+          "resetRequestError": "We could not send the code. Check your email address and try again.",
+          "resetSent": "If an account exists for this email, we sent you a code. It is valid for 10 minutes. Check your spam folder if you do not see it. Enter it below with your new password.",
           "resetSubmit": "Reset password",
-          "resetSuccess": "Your password has been reset. You can now sign in.",
+          "resetSuccess": "Your password has been reset. You can now log in.",
           "sendResetCode": "Send reset code",
-          "submit": "Sign in"
+          "submit": "Log in"
         },
         "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
-        "footerPrivacy": "Privacy Policy",
-        "footerTerms": "Terms & Conditions",
+        "footerPrivacy": "Privacy policy",
+        "footerTerms": "Terms and conditions",
         "frakLabsLogoAlt": "Frak Labs",
-        "heroSubtitle": "Register in a second.",
-        "heroTitleLine1": "Access and discover",
-        "heroTitleLine2": "Frak Ad Manager",
+        "heroSubtitle": "Manage your campaigns and rewards in one place.",
+        "heroTitleLine1": "Welcome to the",
+        "heroTitleLine2": "Frak dashboard",
         "methods": {
-          "email": "Email",
-          "shopify": "Shopify",
-          "wallet": "Wallet"
+          "email": "Continue with email",
+          "shopify": "Continue with Shopify",
+          "wallet": "Frak account"
         },
         "or": "or",
-        "sessionError": "We couldn't finish signing you in. Please try again.",
+        "sessionError": "We could not finish logging you in. Try again. If it keeps failing, use another method or email hello@frak-labs.com.",
         "shopify": {
-          "invalidDomain": "Enter a valid myshopify.com domain",
-          "label": "Shopify store domain",
-          "redirecting": "Signing you in with Shopify…",
+          "invalidDomain": "Enter your store address, like my-store.myshopify.com.",
+          "label": "Shopify store address",
+          "redirecting": "Taking you to Shopify…",
           "submit": "Continue with Shopify"
         },
-        "ssoError": "We couldn't sign you in with Shopify. Please try again.",
-        "walletError": "We couldn't sign you in with your wallet. Please try again."
+        "ssoError": "We could not log you in with Shopify. Try again. If it keeps failing, use another method or email hello@frak-labs.com.",
+        "walletError": "We could not log you in with your Frak account. Try again. If it keeps failing, use another method or email hello@frak-labs.com."
       },
       "twoFactor": {
         "codePlaceholder": "6-digit code",
@@ -66,53 +72,55 @@ export default interface Resources {
           "sendCode": "Send code by email",
           "sentHint": "Enter the code we sent to your email."
         },
-        "genericError": "Verification failed. Please try again.",
+        "genericError": "The verification failed. Try again.",
         "method": {
           "email": "Email code",
-          "siwe": "Wallet",
+          "siwe": "Frak wallet",
           "totp": "Authenticator app"
         },
         "noMethods": {
-          "cta": "Go to security settings",
-          "description": "This action is protected. Set up two-factor authentication in your settings before continuing.",
-          "title": "Two-factor authentication required"
+          "cta": "Go to settings",
+          "description": "This action needs an extra check, and your account has none yet. In Settings, set up 2-step verification with an authenticator app, then come back.",
+          "title": "Add a way to confirm it's you"
         },
-        "pendingHint": "Verifying your session…",
+        "pendingHint": "Checking your login…",
         "siwe": {
-          "cta": "Sign with wallet",
-          "hint": "Sign a message with your wallet to confirm it's you."
+          "cta": "Confirm with my Frak wallet",
+          "hint": "Your Frak wallet opens. Approve to confirm it's you. Nothing is charged."
         },
-        "subtitle": "Confirm it's you before continuing.",
-        "title": "Verify your identity",
+        "subtitle": "Confirm it's you to continue.",
+        "title": "2-step verification",
         "totp": {
-          "hint": "Enter the code from your authenticator app.",
-          "recoveryHint": "Enter one of your recovery codes.",
-          "recoveryNotice": "You're entering a one-time recovery code, not your 6-digit authenticator app code.",
-          "recoveryPlaceholder": "Recovery code",
+          "hint": "Enter the 6-digit code from your authenticator app (Google Authenticator, Authy).",
+          "recoveryHint": "Enter one of your backup codes.",
+          "recoveryNotice": "Each backup code works once. This is not the 6-digit code from your authenticator app.",
+          "recoveryPlaceholder": "Backup code",
           "useCode": "Use your authenticator app",
-          "useRecovery": "Use a recovery code"
+          "useRecovery": "Use a backup code"
         },
         "verify": "Verify"
       },
       "verifyEmail": {
         "continue": "Continue",
-        "hint": "Enter the code we sent to your email address.",
-        "resend": "Resend code",
+        "hint": "We use a code sent by email to confirm your address.",
+        "resend": "Send a new code",
         "resent": "Code sent",
-        "sendCode": "Send verification code",
+        "sendCode": "Send code",
+        "sendError": "We could not send the code. Wait a moment, then try again.",
         "success": "Your email is verified.",
-        "title": "Verify your email"
+        "title": "Verify your email",
+        "verifyError": "That code did not work. Check it, or ask for a new one."
       }
     },
     "bank": {
       "banner": {
         "ctaAddFunds": "Add funds",
-        "ctaManageBank": "Manage bank",
-        "ctaSetup": "Set up",
-        "depleted": "Your reward bank is empty - rewards can't be distributed.",
-        "notDeployed": "Your reward bank isn't set up yet.",
-        "paused": "Your reward bank is paused - distribution is stopped.",
-        "warning": "Your reward bank needs attention - check your balance and spending authorization."
+        "ctaManageBank": "Manage budget",
+        "ctaSetup": "Set up budget",
+        "depleted": "Your reward budget is empty. Rewards can't be paid.",
+        "notDeployed": "Your reward budget isn't set up yet. Set it up to add funds and pay rewards.",
+        "paused": "Rewards are paused, so no reward is paid. Open your budget to turn them back on.",
+        "warning": "Your reward budget is running low, or your spending limit is lower than your budget. Open your budget to fix it."
       }
     },
     "campaigns": {
@@ -120,14 +128,18 @@ export default interface Resources {
         "archive": "Archive",
         "archiveTitle": "Archive campaign",
         "cancel": "Cancel",
-        "confirmArchive": "Are you sure you want to archive the campaign <strong>{{name}}</strong>?",
-        "confirmDelete": "Are you sure you want to delete the campaign <strong>{{name}}</strong>?",
-        "confirmPause": "Are you sure you want to pause the campaign <strong>{{name}}</strong>?",
-        "confirmResume": "Are you sure you want to resume the campaign <strong>{{name}}</strong>?",
+        "confirmArchive": "Archive <strong>{{name}}</strong>? It stops running and you can't resume or edit it later.",
+        "confirmDelete": "Delete <strong>{{name}}</strong>? This can't be undone.",
+        "confirmPause": "Pause <strong>{{name}}</strong>? It stops earning rewards until you resume it.",
+        "confirmResume": "Resume <strong>{{name}}</strong>? It earns rewards again.",
         "delete": "Delete",
         "deleteTitle": "Delete campaign",
-        "error": "An error occurred, try again",
-        "newCampaign": "Create new campaign",
+        "error": "The action failed. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "errorArchive": "The campaign was not archived. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "errorDelete": "The campaign was not deleted. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "errorPause": "The campaign was not paused. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "errorResume": "The campaign was not resumed. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "newCampaign": "Create campaign",
         "pause": "Pause",
         "pauseTitle": "Pause campaign",
         "resume": "Resume",
@@ -136,75 +148,79 @@ export default interface Resources {
       "affiliateReport": {
         "actionsOverTime": "Actions per day",
         "brand": {
-          "title": "TakeAds brand #{{id}}"
+          "title": "TakeAds store #{{id}}"
         },
         "clicksOverTime": "Clicks per day",
         "kpi": {
           "actions": "Actions",
           "clicks": "Clicks",
-          "conversion": "Click → action",
-          "sales": "Sales"
+          "conversion": "Click to action rate",
+          "sales": "Orders"
         },
-        "noData": "No data yet",
+        "noData": "No data for this period. Choose a longer period.",
         "revenue": {
           "commission": "Commission",
           "currency": "Currency",
-          "orders": "Order volume",
-          "title": "Revenue by currency"
+          "orders": "Order amount",
+          "title": "Sales by currency"
         },
         "status": {
           "canceled": "Canceled",
           "confirmed": "Confirmed",
           "pending": "Pending",
-          "settled": "Settled"
+          "settled": "Paid"
         },
         "statusBreakdown": "Actions by status",
-        "truncated": "Showing partial data — the reporting window is large and results were capped. Narrow the date range for complete figures."
+        "truncated": "Some data is missing because the period is too long. Choose a shorter period."
       },
       "bulk": {
         "archive": "Archive",
         "archiveTitle": "Archive campaigns",
-        "clear": "Clear",
-        "confirmArchive_one": "Are you sure you want to archive <strong>{{count}}</strong> campaign?",
-        "confirmArchive_other": "Are you sure you want to archive <strong>{{count}}</strong> campaigns?",
-        "confirmDelete_one": "Are you sure you want to delete <strong>{{count}}</strong> campaign?",
-        "confirmDelete_other": "Are you sure you want to delete <strong>{{count}}</strong> campaigns?",
-        "confirmPause_one": "Are you sure you want to pause <strong>{{count}}</strong> campaign?",
-        "confirmPause_other": "Are you sure you want to pause <strong>{{count}}</strong> campaigns?",
+        "clear": "Deselect all",
+        "confirmArchive_one": "Archive <strong>{{count}}</strong> campaign? You can't resume or edit it later.",
+        "confirmArchive_other": "Archive <strong>{{count}}</strong> campaigns? You can't resume or edit them later.",
+        "confirmDelete_one": "Delete <strong>{{count}}</strong> campaign? This can't be undone.",
+        "confirmDelete_other": "Delete <strong>{{count}}</strong> campaigns? This can't be undone.",
+        "confirmPause_one": "Pause <strong>{{count}}</strong> campaign? It stops earning rewards until you resume it.",
+        "confirmPause_other": "Pause <strong>{{count}}</strong> campaigns? They stop earning rewards until you resume them.",
         "delete": "Delete",
         "deleteTitle": "Delete campaigns",
         "pause": "Pause",
         "pauseTitle": "Pause campaigns",
         "selected_one": "{{count}} selected",
-        "selected_other": "{{count}} selected"
+        "selected_other": "{{count}} selected",
+        "skipped_one": "{{count}} selected campaign can't take this action and is skipped.",
+        "skipped_other": "{{count}} selected campaigns can't take this action and are skipped."
       },
       "create": {
         "actions": {
           "back": "Back",
           "continue": "Continue",
+          "draftSaved": "Draft saved.",
           "publish": "Publish",
-          "saveDraft": "Save as draft"
+          "saveDraft": "Save as draft",
+          "saveError": "We could not save. Try again. If it keeps failing, email hello@frak-labs.com."
         },
         "basics": {
           "currency": {
             "chooseAnother": "Choose another currency",
-            "chooseAnotherDescription": "Override the merchant default for this campaign",
+            "chooseAnotherDescription": "Use a different currency for this campaign only",
             "defaults": {
-              "eure": "Euro (EUR) via Monerium",
-              "fallback": "Merchant default",
-              "usdc": "USD Coin (USDC) via Circle"
+              "eure": "Euro (EUR)",
+              "fallback": "Your store’s default currency",
+              "usdc": "US dollar (USDC)"
             },
-            "description": "The currency your ambassadors will receive as rewards.",
-            "label": "Reward currency (what users earn)",
+            "description": "Ambassadors are paid in this currency.",
+            "label": "Reward currency",
             "recommended": "Recommended",
-            "useDefault": "Use merchant default"
+            "useDefault": "Use your store’s default currency"
           },
           "merchant": {
-            "label": "Merchant",
-            "placeholder": "Select a merchant"
+            "label": "Store",
+            "placeholder": "Select a store"
           },
           "title": {
-            "hint": "Only visible by you.",
+            "hint": "Only you can see this name.",
             "label": "Campaign title",
             "placeholder": "E.g. Summer sales 2026",
             "required": "Enter a campaign title"
@@ -213,67 +229,71 @@ export default interface Resources {
         "budget": {
           "cap": {
             "commission": "Frak commission",
-            "hint": "Total budget for the entire campaign. Stops when exhausted.",
-            "label": "Budget cap",
+            "hint": "Maximum you can spend on the whole campaign, Frak commission included. The campaign stops when you reach it.",
+            "hintDaily": "Maximum you can spend per day, Frak commission included.",
+            "hintMonthly": "Maximum you can spend per month (30 days), Frak commission included.",
+            "hintWeekly": "Maximum you can spend per week, Frak commission included.",
+            "label": "Budget amount",
             "placeholder": "E.g. 1000",
-            "required": "Set a budget above 0",
-            "rewards": "Rewards distributed"
+            "required": "Enter a budget above 0",
+            "rewards": "Rewards paid"
           },
           "period": {
-            "daily": "Daily",
-            "global": "Global",
+            "daily": "Per day",
+            "global": "Whole campaign",
             "label": "Budget period",
-            "monthly": "Monthly",
-            "weekly": "Weekly"
+            "monthly": "Per month",
+            "weekly": "Per week"
           },
           "schedule": {
             "datePlaceholder": "dd/mm/yyyy",
-            "description": "If you don’t set an end date, the campaign stops when the budget is exhausted.",
+            "description": "If you do not set an end date, the campaign stops when the budget is used up.",
             "endDate": "End date",
-            "endDateInvalid": "End date must be on or after the start date",
+            "endDateInvalid": "The end date cannot be before the start date",
             "endDateRequired": "Select an end date",
             "immediate": {
-              "description": "Goes live immediately on publish",
+              "description": "Starts as soon as you publish",
               "title": "Start immediately"
             },
             "invalidDate": "Enter a valid date",
             "label": "Schedule",
             "openCalendar": "Open calendar",
             "range": {
-              "description": "Set a fixed campaign window",
-              "title": "Start + End date"
+              "description": "The campaign runs between two dates",
+              "title": "Start and end dates"
             },
-            "required": "Choose when the campaign runs",
+            "required": "Choose when the campaign starts",
             "startDate": "Start date",
             "startDateRequired": "Select a start date",
             "startOnly": {
-              "description": "Schedule a starting date",
+              "description": "Choose a start date",
               "title": "Start date only"
             }
           }
         },
         "cancel": {
-          "confirm": "Yes, close",
-          "description": "Closing this draft without saving it means you will lose all the information you filled up.",
-          "dismiss": "Cancel",
-          "title": "Close draft without saving it?"
+          "close": "Close",
+          "confirm": "Close without saving",
+          "description": "Changes on this step will be lost. Steps you already completed stay in your draft.",
+          "dismiss": "Stay",
+          "title": "Close without saving this step?"
         },
         "goals": {
-          "info": "You can only choose one goal per campaign, it determines which action triggers reward distribution.",
+          "info": "Choose one goal. It decides which action earns a reward.",
           "options": {
             "registration": {
-              "description": "Create more registrations on your website for more qualified data.",
-              "tags": "CRM · Qualified data",
+              "description": "Reward ambassadors for sign-ups on your store.",
+              "tags": "Account creation",
               "title": "Registration"
             },
             "sales": {
-              "description": "Find people likely to subscribe or buy product on a pay-per-view basis.",
-              "tags": "Subscription · Revenue · Conversion",
+              "description": "Reward ambassadors when a customer places an order.",
+              "tags": "Online sales",
               "title": "Sales"
             },
             "traffic": {
-              "description": "Redirect to a destination, such as your website, application...",
-              "tags": "Link clicks · Landing page views",
+              "description": "Reward ambassadors when someone arrives on your store through their link.",
+              "tags": "Store visits",
               "title": "Traffic"
             }
           },
@@ -281,24 +301,24 @@ export default interface Resources {
         },
         "products": {
           "addValue": "Add a value",
-          "advanced": "This product targeting was set up outside the wizard. It is shown read-only and left unchanged.",
+          "advanced": "This product selection was set up outside this form. You can see it here, but you cannot change it.",
           "field": {
             "name": "Product name",
             "productId": "Product ID",
             "quantity": "Quantity",
             "sku": "SKU",
-            "totalPrice": "Line total",
+            "totalPrice": "Total for this product",
             "unitPrice": "Unit price"
           },
           "fieldLabel": "Field",
           "mode": {
             "all": {
-              "description": "Any order triggers the campaign.",
+              "description": "Every order earns a reward.",
               "title": "All products"
             },
             "specific": {
-              "description": "Only orders containing a matching product trigger the campaign.",
-              "title": "Specific products"
+              "description": "Only orders containing a matching product earn a reward.",
+              "title": "Selected products"
             }
           },
           "operator": {
@@ -316,272 +336,279 @@ export default interface Resources {
           },
           "operatorLabel": "Condition",
           "placeholder": {
-            "name": "e.g. Eco Sneaker",
-            "productId": "e.g. prod-123",
-            "quantity": "e.g. 2",
-            "sku": "e.g. WIDGET-BLUE-S",
-            "totalPrice": "e.g. 99.80",
-            "unitPrice": "e.g. 49.90"
+            "name": "E.g. Eco Sneaker",
+            "productId": "E.g. prod-123",
+            "quantity": "E.g. 2",
+            "sku": "E.g. WIDGET-BLUE-S",
+            "totalPrice": "E.g. 99.80",
+            "unitPrice": "E.g. 49.90"
           },
           "predicate": {
-            "description": "Applied to each line item in the order.",
-            "label": "Matching rule"
+            "description": "Checked for each product in the order.",
+            "label": "Which products?"
           },
-          "purchaseOnly": "Product targeting is only available on purchase-triggered campaigns.",
+          "purchaseOnly": "Choosing products is only available for the Sales goal.",
           "removeValue": "Remove this value",
-          "saveError": "Could not save the product targeting. Check that your reward model is compatible with an exclusion.",
+          "saveError": "We could not save the products. Try again. If you exclude products, the reward must be a percentage or ranges. Check it in the Rewards step.",
           "scope": {
-            "description": "The campaign only triggers when the order contains a matching product.",
+            "description": "An order earns a reward only if it contains a matching product.",
             "label": "Products covered"
           },
           "valueAt": "Value {{index}}",
           "valueToLabel": "Upper value",
-          "valueToPlaceholder": "e.g. 150",
+          "valueToPlaceholder": "E.g. 150",
           "values": {
             "label": "Value"
           }
         },
         "referralChain": {
           "cac": {
-            "label": "CAC",
+            "label": "Cost per order (set in the Rewards step)",
             "placeholder": "Not available",
-            "placeholderTiered": "Varies by tier"
+            "placeholderTiered": "Varies by range"
           },
           "decrease": {
-            "hint": "Each level receives this percentage less than the previous level. Minimum 50%.",
-            "label": "Reward decrease per level (%)",
-            "outOfRange": "Decrease must be between 50% and 99%: below 50% deeper levels receive more than the direct ambassador; at 100% they receive nothing.",
-            "placeholder": "Enter level"
+            "hint": "Each level earns this percentage less than the level before. Enter a value from {{min}} to {{max}}.",
+            "label": "Decrease per level (%)",
+            "outOfRange": "Enter a percentage from {{min}} to {{max}}.",
+            "placeholder": "E.g. 80"
           },
           "enable": {
-            "description": "Distribute referrer rewards across multiple levels of the referral chain",
-            "title": "Enable chain rewards"
+            "description": "The ambassador reward is also shared with the ambassadors who referred them, level by level.",
+            "title": "Enable multi-level referral"
           },
           "maxLevels": {
-            "hint": "Maximum number of referrer levels eligible for rewards.",
-            "label": "Maximum rewarded levels",
-            "placeholder": "Enter level"
+            "hint": "Maximum number of levels that earn a reward, up to {{max}}. Leave empty for no limit.",
+            "label": "Maximum levels",
+            "placeholder": "E.g. 5"
           },
           "model": {
-            "description": "When a purchase is made, rewards are shared across the referral chain.",
-            "label": "How rewards are distributed"
+            "description": "When the reward is earned, it is split between the ambassador and the ambassadors above them.",
+            "label": "How the reward is shared"
           },
-          "noReferrer": "Configure a referrer (ambassador) reward in the Reward setup step before enabling chain rewards.",
+          "noReferrer": "To turn this on, first set an ambassador reward in the Rewards step.",
           "preview": {
-            "caption": "Each level receives {{percent}}% less than the previous level.",
-            "chainReward": "Referral chain reward",
+            "caption": "Each level earns {{percent}}% less than the level before.",
+            "chainReward": "Multi-level reward",
             "direct": "Direct ambassador",
             "directReward": "Direct reward",
             "level": "Level {{n}} ambassador",
-            "purchase": "1st Purchase",
+            "purchase": "Rewarded action",
             "rowDirect": "Direct",
             "rowLevel": "Level {{n}}",
             "tableAmount": "Amount",
             "tableLevel": "Level",
-            "title": "Reward distribution chain"
+            "title": "How the reward is shared"
           }
         },
         "reward": {
           "basis": {
             "basket": {
-              "description": "The reward is calculated on the full basket.",
+              "description": "The reward is calculated on the whole order total.",
               "title": "Whole order total"
             },
             "description": "Which amount the reward is calculated on.",
-            "fixedNotAllowed": "A fixed reward cannot be used with exclusion-based product targeting. Pick a percentage or tiered reward, or express the targeting positively.",
+            "fixedNotAllowed": "A fixed amount does not work when you exclude products. Choose a percentage or ranges, or pick the products to include instead.",
             "label": "Reward basis",
-            "lockedNote": "Your product targeting is an exclusion, so the reward must be calculated on the eligible products only.",
+            "lockedNote": "You are excluding products, so the reward is calculated only on the products that are not excluded.",
             "matchedItems": {
-              "description": "The reward is calculated only on the targeted products.",
-              "title": "Eligible products only"
+              "description": "The reward is calculated only on the products you selected.",
+              "title": "Selected products only"
             }
           },
           "campaignType": {
-            "description": "Who qualifies for a reward",
-            "label": "Campaign type",
+            "description": "Who can earn a reward",
+            "label": "Who qualifies",
             "referral": {
-              "description": "Only reward users who were referred by another user",
-              "title": "Referral campaign"
+              "description": "Only rewards customers who were referred by an ambassador.",
+              "title": "Referred customers only"
             }
           },
           "cpa": {
-            "applyReco": "Apply reco",
+            "applyReco": "Apply 80/20",
             "frakCommission": "Frak commission",
-            "hint": "Total cost you pay per confirmed conversion. Frak takes 20% - the rest goes to your users.",
-            "reco": "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.",
-            "rewardsDistributed": "Rewards distributed",
-            "splitMismatch": "Ambassador + Referee must add up to {{amount}} (the rewards pool)."
+            "hint": "Total you pay per order. Frak keeps {{percent}}%. The rest goes to the ambassador and the referred customer.",
+            "reco": "Frak recommends an <highlight>80/20</highlight> split: 80% for the ambassador, 20% for the referred customer.",
+            "rewardsDistributed": "Rewards paid",
+            "splitMismatch": "The two rewards must add up to {{amount}}. Change one of them."
           },
           "eligibility": {
-            "description": "Which purchases qualify for a reward",
-            "label": "Eligibility",
-            "minPurchaseHint": "Set to 0 to accept any order value.",
-            "minPurchaseLabel": "Minimum purchase amount",
+            "description": "Which orders earn a reward",
+            "label": "Eligible orders",
+            "minPurchaseHint": "Enter 0 to accept any order total.",
+            "minPurchaseLabel": "Minimum order total",
             "minPurchasePlaceholder": "E.g. 5"
           },
           "fixed": {
-            "cpaLabel": "Target CPA",
+            "cpaLabel": "Cost per order",
             "cpaPlaceholder": "E.g. 10",
-            "percentOfPool": "{{percent}}% of pool"
+            "percentOfPool": "{{percent}}% of the amount to share"
           },
           "lockup": {
-            "description": "Refund protection - delay before rewards are released",
-            "durationHint": "Set to 0 to release rewards immediately after purchase.",
-            "durationLabel": "Lockup duration (days)",
+            "description": "Wait before paying rewards, to protect you against refunds",
+            "durationHint": "Enter 0 to pay rewards right after the order.",
+            "durationLabel": "Payout delay (days)",
             "durationPlaceholder": "E.g. 14",
-            "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out - protecting your campaign budget.",
-            "label": "Reward lockup",
+            "info": "Rewards are paid after this delay. If the order is refunded during the delay, no reward is paid. This protects your campaign budget.",
+            "label": "Payout delay",
             "unit": "days"
           },
           "model": {
-            "description": "How rewards are calculated for each successful referral",
+            "description": "How each reward is calculated",
             "fixed": {
-              "description": "Set a fixed reward per conversion",
+              "description": "The same reward every time.",
               "title": "Fixed amount"
             },
-            "label": "Reward model",
+            "label": "Reward type",
             "percentage": {
-              "description": "Reward scales with order value",
-              "title": "% of basket"
+              "description": "The reward follows the order total.",
+              "title": "% of the order total"
             },
-            "salesOnly": "Only available on Sales campaigns — other reward models need a purchase amount to compute on.",
+            "salesOnly": "Only available for the Sales goal, because the amount depends on the order.",
             "tiered": {
-              "description": "Higher basket = higher reward",
-              "title": "Tiered rewards"
+              "description": "The higher the order total, the higher the reward.",
+              "title": "Rewards by range"
             }
           },
           "percentage": {
-            "cpaLabel": "Target CPA (% of referee's basket)",
+            "cpaLabel": "Cost per order (% of the order total)",
             "cpaPlaceholder": "E.g. 10",
-            "recipientHint": "% of the order value paid to this person."
+            "recipientHint": "% of the order total paid to this person.",
+            "tooHigh": "The cost per order cannot be above 100%."
           },
           "recipient": {
             "ambassadorPlaceholder": "E.g. 6",
             "ambassadorReward": "Ambassador reward",
             "refereePlaceholder": "E.g. 2",
-            "refereeReward": "Referee reward"
+            "refereeReward": "Referred customer reward"
           },
-          "saveError": "Could not save the reward. Check that it is compatible with the product targeting.",
+          "saveError": "We could not save the reward. Try again. If you exclude products, choose a percentage or ranges.",
           "tiered": {
-            "addTier": "Add a tier",
-            "basketRange": "Basket Range ({{glyph}})",
+            "addTier": "Add a range",
+            "basketRange": "Order total range ({{glyph}})",
             "cpaPlaceholder": "E.g. 5",
             "fromPlaceholder": "E.g. 0",
-            "globalCpaTitle": "Target CPA",
-            "incomplete": "Each tier needs a basket range and a CPA above 0",
-            "inverted": "Each tier's upper bound must be higher than its lower bound.",
-            "overlap": "Tiers can't overlap - each basket range must start where the previous one ends.",
-            "removeTier": "Remove tier",
+            "globalCpaTitle": "Cost per order",
+            "incomplete": "Each range needs a start amount, an end amount (except the last one) and a cost per order above 0.",
+            "inverted": "The end of each range must be higher than its start.",
+            "overlap": "Ranges cannot overlap. Each range must start where the previous one ends.",
+            "removeTier": "Remove range",
             "rewardPlaceholder": "E.g. 5",
-            "tierLabel": "Tier {{n}}",
+            "rewardsRequired": "Each range needs a reward above 0 for the ambassador and for the referred customer.",
+            "tierLabel": "Range {{n}}",
             "toPlaceholder": "E.g. 50",
-            "unit": "Unit"
+            "unit": "Reward unit"
           },
           "trigger": {
             "create_referral_link": "Referral link created",
-            "custom": "Custom",
+            "custom": "Registration",
             "game_join": "Game joined",
-            "purchase": "Purchase completed",
-            "referral": "Referral",
-            "referral_signup": "Referred signup"
+            "purchase": "Order placed",
+            "referral": "Visit through a referral link",
+            "referral_signup": "Sign-up through a referral link"
           },
-          "triggeredOn": "Triggered on {{trigger}}",
+          "triggeredOn": "Rewarded action: {{trigger}}",
           "value": {
-            "description": "How much each person receives per conversion",
-            "label": "Reward value"
+            "description": "How much each person receives.",
+            "label": "Reward amount"
           }
+        },
+        "stepper": {
+          "decrease": "Decrease",
+          "increase": "Increase"
         },
         "steps": {
           "basics": {
-            "hint": "Name, merchant & currency",
+            "hint": "Name, store and currency",
             "label": "Campaign basics",
-            "subtitle": "Name your campaign and choose the merchant it belongs to."
+            "subtitle": "Name your campaign and choose the store it belongs to."
           },
           "budget": {
-            "hint": "Amount, period & dates",
-            "label": "Budget & schedule",
-            "subtitle": "Set your campaign budget and timeline. Frak takes a 20% commission on the total budget."
+            "hint": "Amount, period and dates",
+            "label": "Budget and schedule",
+            "subtitle": "Set the campaign budget and its dates. Frak keeps 20% of the budget as its commission."
           },
           "goals": {
-            "hint": "What action triggers rewards",
-            "label": "Goals",
-            "subtitle": "The choice of your goal defines the event that generates the distribution of rewards."
+            "hint": "What earns a reward",
+            "label": "Goal",
+            "subtitle": "Choose the action that earns a reward."
           },
           "products": {
-            "hint": "Which products qualify",
+            "hint": "Products that earn a reward",
             "label": "Products",
-            "subtitle": "Choose which products trigger this campaign. By default the whole order qualifies."
+            "subtitle": "Choose which products earn a reward. By default, every order counts."
           },
           "referralChain": {
-            "hint": "Multi-level ambassador",
-            "label": "Referral chain",
-            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels - not just the direct referrer."
+            "hint": "Optional",
+            "label": "Multi-level referral",
+            "subtitle": "Also reward the ambassadors who referred your ambassador. This step is optional."
           },
           "reward": {
-            "hint": "Model, value & distribution",
-            "label": "Reward setup",
-            "subtitle": "Choose how rewards are calculated and who qualifies."
+            "hint": "Amount and who receives it",
+            "label": "Rewards",
+            "subtitle": "Choose how rewards are calculated and who receives them."
           },
           "territory": {
-            "hint": "Countries & Ad categories",
-            "label": "Territory & categories",
-            "subtitle": "Choose where your campaign will run and declare any special advertising categories."
+            "hint": "Countries you target",
+            "label": "Countries",
+            "subtitle": "Choose the countries your campaign targets."
           },
           "validation": {
-            "hint": "Review & publish",
-            "label": "Campaign validation",
-            "subtitle": "Review all settings before publishing. All fields are read-only at this stage."
+            "hint": "Check and publish",
+            "label": "Review",
+            "subtitle": "Check your campaign before you publish it. To change something, use the Back button."
           }
         },
         "success": {
-          "communicationGuide": "Communication guide",
-          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign - they can start sharing immediately.",
+          "communicationGuide": "Communication guide (opens in a new tab)",
+          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign. They can start sharing immediately.",
           "notifyTitle": "Frak ambassadors will be notified",
-          "subtitle": "‘{{name}}’ is now live.",
-          "tip1Desc": "Add a sharing CTA right on the product page.",
-          "tip1Title": "Product Page",
+          "subtitle": "‘{{name}}’ is live.",
+          "tip1Desc": "Add a share button on the product page.",
+          "tip1Title": "Product page",
           "tip2Desc": "Add the sharing banner right after checkout.",
           "tip2Title": "Order confirmation page",
-          "tip3Desc": "Announce the campaign to your existing customer base.",
-          "tip3Title": "Newsletter",
-          "tipsSubtitle": "The most effective campaigns use multiple touchpoints. Make sure you're activating all the levers:",
-          "tipsTitle": "Maximise your results",
-          "title": "Campaign launched!",
+          "tip3Desc": "Announce the campaign to your existing customers.",
+          "tip3Title": "Email",
+          "tipsSubtitle": "Mention the campaign in several places:",
+          "tipsTitle": "Tell your customers",
+          "title": "Campaign published",
           "viewAllCampaigns": "View all campaigns",
-          "viewPerformance": "View performance"
+          "viewPerformance": "View campaign"
         },
         "territory": {
           "card": {
-            "description": "Choose one or several countries where your campaign will be displayed.",
-            "label": "Territory",
+            "description": "Choose the countries your campaign targets.",
+            "label": "Countries",
             "noResults": {
               "clear": "Clear search",
-              "description": "No results found for “{{query}}”",
-              "title": "No result found"
+              "description": "No country matches “{{query}}”.",
+              "title": "No country found"
             },
-            "placeholder": "Select country",
-            "required": "Select a country",
+            "placeholder": "Choose countries",
+            "remove": "Remove {{country}}",
+            "required": "Choose at least one country",
             "search": "Search"
           },
           "special": {
-            "description": "Declare whether your ads concern credit, employment, housing or a social, electoral or political issue.",
-            "label": "Special advertising categories",
-            "notSupported": "Special advertising categories are not supported yet",
+            "description": "These categories are not available yet. Leave them unticked to continue.",
+            "label": "Special categories",
+            "notSupported": "This category is not available yet. Untick it to continue.",
             "options": {
               "credit": {
-                "description": "Advertisements for credit card offers, car loans, long-term financing or similar offers.",
+                "description": "Credit card offers, car loans, long-term financing or similar offers.",
                 "title": "Credit"
               },
               "housing": {
-                "description": "Advertisements for real estate ads, home insurance, mortgages or similar offers.",
+                "description": "Real estate listings, home insurance, mortgages or similar offers.",
                 "title": "Housing"
               },
               "jobs": {
-                "description": "Advertisements for job offers, internships, professional certification programs or other similar offers.",
+                "description": "Job offers, internships, professional certification programs or similar offers.",
                 "title": "Jobs"
               },
               "social": {
-                "description": "Advertisements concerning social issues, elections, or political figures or campaigns.",
+                "description": "Social issues, elections, political figures or campaigns.",
                 "title": "Social, electoral or political issues"
               }
             }
@@ -590,73 +617,103 @@ export default interface Resources {
         "validation": {
           "ambassador": "Ambassador: {{value}}",
           "budgetAmount": "Budget amount",
-          "budgetBreakdown": "Distributed: {{distributed}}{{currency}} · Frak: {{frak}}{{currency}}",
+          "budgetBreakdown": "Rewards: {{distributed}}{{currency}} · Frak: {{frak}}{{currency}}",
           "budgetPeriod": "Budget period",
           "campaignTitle": "Campaign title",
           "frak": "Frak: {{value}}",
           "goal": "Campaign goal",
+          "lockupNone": "No delay",
           "lockupValue": "{{count}} days",
+          "lockupValue_one": "{{count}} day",
+          "lockupValue_other": "{{count}} days",
           "noEndDate": "No end date",
           "products": "Products",
           "productsAdvanced": "Custom selection",
           "productsAll": "All products",
-          "publishError": "Couldn’t publish the campaign. Please try again.",
-          "referee": "Referee: {{value}}",
-          "rewardBasis": "Reward basis",
-          "rewardLockup": "Reward lockup",
+          "publishError": "We could not publish the campaign. Check each step, then try again. If it keeps failing, email hello@frak-labs.com.",
+          "referee": "Referred customer: {{value}}",
+          "rewardBasis": "Reward calculated on",
+          "rewardLockup": "Payout delay",
           "rewards": "Rewards",
           "schedule": "Schedule",
           "specialCategories": "Special categories",
           "startImmediately": "Start immediately",
-          "targetCpa": "Target CPA",
-          "territories": "Territories",
-          "tieredTiers": "{{count}} tiers",
-          "trigger": "Trigger"
+          "targetCpa": "Cost per order",
+          "territories": "Countries",
+          "tierRange": "{{from}} {{currency}} to {{to}} {{currency}}: {{cost}}",
+          "tierRangeOpen": "{{from}} {{currency}} and above: {{cost}}",
+          "tieredTiers": "{{count}} ranges",
+          "tieredTiers_one": "{{count}} range",
+          "tieredTiers_other": "{{count}} ranges",
+          "trigger": "Rewarded action"
         }
       },
       "details": {
         "close": "Close campaign details",
         "config": {
           "budget": {
-            "amountLabel": "Budget cap",
+            "amountLabel": "Amount",
             "cancel": "Cancel",
-            "edit": "Edit budget",
-            "error": "Could not update the budget. Please try again.",
-            "none": "No budget cap configured.",
+            "edit": "Edit limit",
+            "error": "The limit was not saved. Try again.",
+            "none": "No campaign limit set.",
             "period": {
-              "daily": "Daily budget",
-              "global": "Total budget",
-              "monthly": "Monthly budget",
-              "weekly": "Weekly budget"
+              "daily": "Daily limit",
+              "global": "Total limit",
+              "monthly": "Monthly limit",
+              "weekly": "Weekly limit"
             },
-            "periodLabel": "Budget period",
+            "periodLabel": "Limit period",
             "save": "Save",
-            "title": "Budget"
+            "title": "Campaign limit"
           },
           "conditions": {
             "all": "All of the following",
             "and": "and",
             "any": "Any of the following",
             "description": "Extra rules that must be met for the reward to apply.",
-            "none": "No extra conditions - rewards apply to every qualifying action.",
+            "field": {
+              "purchase_amount": "Order total",
+              "purchase_matchedAmount": "Eligible products total",
+              "purchase_matchedQuantity": "Eligible products quantity"
+            },
+            "no": "No",
+            "none": "No extra conditions. Every qualifying action earns a reward.",
             "noneOf": "None of the following",
-            "title": "Conditions"
+            "operator": {
+              "between": "is between",
+              "contains": "contains",
+              "ends_with": "ends with",
+              "eq": "equals",
+              "exists": "is set",
+              "gt": "is greater than",
+              "gte": "is at least",
+              "in": "is one of",
+              "lt": "is less than",
+              "lte": "is at most",
+              "neq": "does not equal",
+              "not_exists": "is not set",
+              "not_in": "is not one of",
+              "starts_with": "starts with"
+            },
+            "title": "Conditions",
+            "yes": "Yes"
           },
           "limits": {
-            "lockup": "Reward lockup",
-            "lockupNone": "No lockup",
-            "lockupValue": "{{duration}} before settlement",
-            "maxRewardsPerUser": "Max rewards per user (this campaign)",
-            "merchantMaxRewardsPerUser": "Max rewards per user (all campaigns)",
+            "lockup": "Payout delay",
+            "lockupNone": "No delay",
+            "lockupValue": "{{duration}} before the reward is paid",
+            "maxRewardsPerUser": "Maximum rewards per person (this campaign)",
+            "merchantMaxRewardsPerUser": "Maximum rewards per person (all campaigns)",
             "pendingExpiration": "Reward claim window",
             "pendingExpirationValue_one": "{{count}} day to claim",
             "pendingExpirationValue_other": "{{count}} days to claim",
-            "title": "Limits & timing",
+            "title": "Limits and timing",
             "unlimited": "Unlimited"
           },
           "productScope": {
-            "all": "All products — every qualifying order triggers the reward.",
-            "description": "The campaign only triggers when the order contains a matching product.",
+            "all": "All products. Every qualifying order earns a reward.",
+            "description": "The campaign only applies when the order contains a matching product.",
             "title": "Products covered"
           },
           "rewards": {
@@ -667,18 +724,18 @@ export default interface Resources {
             "bounds": "Between {{min}} and {{max}} {{currency}}",
             "boundsMax": "Up to {{max}} {{currency}}",
             "boundsMin": "At least {{min}} {{currency}}",
-            "chaining": "Multi-level rewards",
-            "chainingDetail": "{{decay}}% decay per level · up to {{depth}} levels",
-            "chainingDetailNoDepth": "{{decay}}% decay per level · unlimited levels",
+            "chaining": "Multi-level referral",
+            "chainingDetail": "Each level gets {{decay}}% of what is left, up to {{depth}} levels.",
+            "chainingDetailNoDepth": "Each level gets {{decay}}% of what is left, with no level limit.",
             "empty": "No rewards configured yet.",
             "fixed": "{{amount}} {{currency}}",
             "percentage": "{{percent}}% of {{base}}",
             "recipient": {
-              "referee": "Referred friend",
+              "referee": "Referred customer",
               "referrer": "Ambassador"
             },
             "recipientHint": {
-              "referee": "The new customer who was referred",
+              "referee": "The customer who came through the link",
               "referrer": "The person who shared and brought in the customer"
             },
             "tierField": {
@@ -686,23 +743,25 @@ export default interface Resources {
               "purchase.matchedAmount": "the eligible products total",
               "purchase.matchedQuantity": "the eligible products quantity"
             },
+            "tierPercent": "{{percent}}%",
             "tierRow": "{{range}} → {{amount}} {{currency}}",
-            "tiered": "Tiered by {{field}}",
+            "tiered": "Reward by range, based on {{field}}",
             "title": "Rewards"
           },
           "schedule": {
             "cancel": "Cancel",
             "edit": "Edit dates",
             "endBeforeStart": "The end date must be after the start date",
-            "error": "Could not update the schedule. The start date can only be moved forward.",
-            "expires": "Ends on",
+            "error": "The dates were not saved. Try again.",
+            "expires": "End date",
             "immediate": "Immediately",
             "noExpiration": "No end date",
             "notPublished": "Not published yet",
             "published": "Published on",
             "save": "Save",
-            "starts": "Starts on",
-            "title": "Schedule"
+            "startHint": "The start date can only be moved later.",
+            "starts": "Start date",
+            "title": "Dates"
           },
           "targeting": {
             "allTerritories": "All countries",
@@ -725,54 +784,54 @@ export default interface Resources {
             "title": "Targeting"
           },
           "trigger": {
-            "create_referral_link": "A user creates a sharing link",
-            "custom": "A custom interaction is tracked",
-            "description": "The action a customer must complete for rewards to be distributed.",
-            "game_join": "A user joins a Frak Game",
-            "purchase": "A customer completes a purchase",
-            "referral": "A referred friend is converted",
-            "referral_signup": "A referred user creates their Frak account",
+            "create_referral_link": "An ambassador creates a share link",
+            "custom": "A custom action is tracked",
+            "description": "The action that earns a reward.",
+            "game_join": "A customer joins a Frak Game",
+            "purchase": "A customer places an order",
+            "referral": "A referral is completed",
+            "referral_signup": "A referred customer creates their Frak account",
             "title": "What earns a reward"
           }
         },
         "cpa": {
           "ambassador": "Ambassador",
-          "costPerAction": "cost per action",
+          "costPerAction": "per order",
           "frak": "Frak",
-          "legendItem": "{{label}} ({{percent}}) · {{amount}}",
-          "referee": "Referee",
-          "title": "CPA breakdown"
+          "legendItem": "{{label}}: {{amount}} ({{percent}})",
+          "referee": "Referred customer",
+          "title": "Cost per order breakdown"
         },
         "economic": {
-          "attributedGMV": "Attributed revenue",
-          "attributedGMVSub": "GMV from attributed purchases",
-          "avgBasketSub": "Per attributed sale",
-          "avgBasketValue": "Avg. basket value",
+          "attributedGMV": "Sales generated",
+          "attributedGMVSub": "Total of the orders made through this campaign",
+          "avgBasketSub": "Per order generated by this campaign",
+          "avgBasketValue": "Average order total",
           "cheaperThanMeta": "{{percent}} cheaper than Meta",
-          "conversionsCpa": "{{conversions}} conversions · {{cpa}} CPA",
-          "conversionsCpaMeta": "{{conversions}} conversions · ~{{cpa}} CPA on Meta",
-          "equivalentMeta": "Equivalent cost on Meta",
+          "conversionsCpa": "Orders: {{conversions}}. Cost per order: {{cpa}}.",
+          "conversionsCpaMeta": "Orders: {{conversions}}. Estimated cost per order on Meta: {{cpa}}.",
+          "equivalentMeta": "Estimated cost on Meta",
           "frakTag": "(Frak)",
-          "savedVsMeta": "{{amount}} saved vs Meta",
-          "title": "Economic value - Frak vs Meta",
+          "savedVsMeta": "{{amount}} saved compared with Meta",
+          "title": "What you paid vs Meta Ads (estimate)",
           "yourSpend": "Your spend"
         },
         "efficiency": {
-          "ambassadors": "Ambassadors",
-          "avgRewardEarned": "Avg Reward Earned",
-          "ofCampaignRev": "{{wallet}} of campaign rev.",
+          "ambassadors": "Return on spend",
+          "avgRewardEarned": "Average reward earned",
+          "ofCampaignRev": "Share of the campaign's sales: {{wallet}}",
           "perActiveAmbassador": "Per active ambassador",
-          "revenueBudgetSpent": "Revenue/budget spent",
+          "revenueBudgetSpent": "Sales generated compared with what you spent",
           "roi": "ROI",
-          "title": "Campaign Efficiency",
-          "topPerformer": "Top Performer"
+          "title": "Campaign efficiency",
+          "topPerformer": "Best ambassador"
         },
-        "export": "Export",
+        "export": "Export (not available yet)",
         "stats": {
-          "activeUsers": "% Active users",
+          "activeUsers": "Active ambassadors",
           "ambassadors": "Ambassadors",
-          "clicksToPurchase": "Clicks → Purchase",
-          "refereesConverted": "% Referees Converted",
+          "clicksToPurchase": "From click to order",
+          "refereesConverted": "Referred customers who ordered",
           "registered": "Registered",
           "sharedAtLeastOnce": "Shared at least once",
           "total": "total"
@@ -784,17 +843,22 @@ export default interface Resources {
         "tabs": {
           "ambassadors": "Ambassadors",
           "configuration": "Configuration",
-          "funnelRoi": "Funnel & ROI"
+          "funnelRoi": "Results"
         },
         "top": {
           "earned": "Earned",
-          "generatedRevenue": "Generated revenue",
+          "empty": "No ambassador to show yet.",
+          "generatedRevenue": "Sales generated",
           "rank": "#",
-          "sales": "Sales",
+          "sales": "Orders",
           "shares": "Shares",
-          "title": "Top Ambassadors",
-          "wallet": "Wallet"
+          "title": "Top ambassadors",
+          "wallet": "Ambassador"
         }
+      },
+      "empty": {
+        "filtered": "No campaign matches these filters. Select “Reset filters” to see all your campaigns.",
+        "none": "No campaign yet. Create your first one to reward your ambassadors."
       },
       "filter": {
         "dateRange": "Date range",
@@ -803,56 +867,57 @@ export default interface Resources {
       },
       "overview": {
         "empty": {
-          "noData": "No data to display yet."
+          "noData": "No data yet. Choose a longer period or wait for the first shares."
         },
         "footer": {
           "viewAll": "View all campaigns"
         },
         "funnel": {
-          "global": "Global funnel · {{variant}}",
+          "global": "Customer journey, all campaigns: {{variant}}",
           "steps": {
-            "brandPageOpened": "Brand page opened",
-            "converted": "Converted",
-            "explorerImpressions": "Explorer impressions",
+            "brandPageOpened": "App listing opened",
+            "converted": "Orders",
+            "explorerImpressions": "Seen in the Frak app",
             "linkShared": "Link shared",
-            "referred": "Referred",
-            "shareCtaSeen": "Share CTA seen",
-            "shareInitiated": "Share initiated"
+            "referred": "Referred customers",
+            "shareCtaSeen": "Share button seen",
+            "shareInitiated": "Share started"
           },
-          "walletFrak": "Wallet Frak",
+          "walletFrak": "Frak app",
           "website": "Website"
         },
         "kpi": {
           "ambassadors": "Ambassadors",
-          "avgCpa": "Avg. CPA",
+          "approximate": "Estimate",
+          "avgCpa": "Average cost per order",
           "descriptorAllCampaigns": "All campaigns",
           "descriptorTotal": "total",
           "noData": "No data yet",
-          "revenue": "Generated Revenue",
+          "revenue": "Sales generated",
           "shares": "Shares",
           "sharingRate": "Sharing rate"
         },
         "projected": {
-          "actual": "Actual revenue",
-          "forecast": "Forecast revenue",
-          "subtitle": "Based on current growth trend",
-          "title": "Projected revenue"
+          "actual": "Sales so far",
+          "forecast": "Forecast",
+          "subtitle": "The forecast extends the last 3 periods.",
+          "title": "Sales so far, plus forecast"
         },
         "purchases": {
-          "avgPerMonth": "{{value}}\navg/mo",
-          "title": "Purchases generated",
-          "tooltip": "Purchases"
+          "avgPerMonth": "{{value}}\nper month",
+          "title": "Orders generated",
+          "tooltip": "Orders"
         },
         "sharing": {
           "device": "Device",
           "platform": "Platform",
           "sources": {
             "desktop": "Desktop",
-            "merchantSite": "Merchant Site",
+            "merchantSite": "Your store",
             "mobile": "Mobile",
             "other": "Other",
             "tablet": "Tablet",
-            "walletApp": "Wallet App"
+            "walletApp": "Frak app"
           },
           "title": "Sharing by source"
         },
@@ -860,20 +925,28 @@ export default interface Resources {
           "title": "Status"
         },
         "top": {
+          "empty": "No campaign to show yet.",
           "name": "Campaign name",
           "rank": "#",
           "title": "Top campaigns"
         }
+      },
+      "resources": {
+        "affiliateReport": "the affiliate report",
+        "config": "the campaign settings",
+        "details": "the campaign results",
+        "list": "your campaigns",
+        "overview": "the campaigns overview"
       },
       "rowMenu": {
         "archive": "Archive",
         "ariaActions": "Actions for {{name}}",
         "delete": "Delete",
         "edit": "Edit campaign",
-        "openPerformance": "Open performance",
+        "openPerformance": "View results",
         "pause": "Pause",
         "resume": "Resume",
-        "viewParameters": "View parameters"
+        "viewParameters": "View settings"
       },
       "status": {
         "active": "Active",
@@ -881,17 +954,17 @@ export default interface Resources {
         "draft": "Draft",
         "ended": "Ended",
         "paused": "Paused",
-        "unknown": "Unknown"
+        "unknown": "Status unavailable"
       },
       "table": {
-        "budgetSpend": "Budget & Spend",
+        "budgetSpend": "Spent / limit",
         "campaign": "Campaign",
-        "ctr": "CTR",
+        "ctr": "Click rate",
         "endDate": "End date",
         "noEndDate": "No end date",
-        "published": "Published",
-        "revenue": "Revenue",
-        "rewards": "Rewards",
+        "published": "Published on",
+        "revenue": "Sales generated",
+        "rewards": "Number of rewards",
         "sharingRate": "Sharing rate",
         "status": "Status"
       },
@@ -909,7 +982,7 @@ export default interface Resources {
       "clearAll": "Clear all",
       "close": "Close",
       "copied": "Copied",
-      "copy": "Copy to clipboard",
+      "copy": "Copy",
       "dateField": {
         "openCalendar": "Open calendar",
         "placeholder": "dd/mm/yyyy"
@@ -926,29 +999,29 @@ export default interface Resources {
       },
       "hidePassword": "Hide password",
       "pagination": {
-        "label": "pagination",
+        "label": "Pagination",
         "morePages": "More pages",
         "next": "Go to next page",
         "previous": "Go to previous page",
-        "showing": "Showing {{from}}-{{to}} from {{total}}"
+        "showing": "Showing {{from}} to {{to}} of {{total}}"
       },
       "search": {
         "placeholder": "Search"
       },
       "showPassword": "Show password",
       "table": {
-        "empty": "No results"
+        "empty": "Nothing to show yet. If you use filters, reset them."
       }
     },
     "customize": {
       "ambassador": {
         "accent": {
           "automatic": "Automatic",
-          "hint": "Leave empty to follow your theme's button colour. The text on the buttons switches between black and white on its own.",
-          "invalid": "Enter a colour as #rrggbb",
-          "label": "Button colour"
+          "hint": "Leave empty to use your theme's button color. The text on the buttons switches between black and white by itself.",
+          "invalid": "Enter a color as #rrggbb",
+          "label": "Button color"
         },
-        "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+        "description": "The photo and texts of your ambassador page. An empty field keeps the default text.",
         "fields": {
           "faq1Answer": "Answer 1",
           "faq1Question": "Question 1",
@@ -980,15 +1053,15 @@ export default interface Resources {
         "photo": {
           "custom": "Other image",
           "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle.",
-          "default": "Explorer image",
-          "defaultHint": "Uses the main image of your Explorer profile.",
-          "label": "Hero photo",
-          "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
+          "default": "App listing image",
+          "defaultHint": "Uses the main cover image of your app listing.",
+          "label": "Main photo",
+          "noExplorerHint": "Your app listing has no cover image yet, so the page shows no photo.",
           "none": "No photo"
         },
         "preview": "Preview of the top of the page",
         "title": "Ambassador page",
-        "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward.",
+        "tokenHint": "You can insert {BRAND} (your store name) and {REWARD} (the campaign reward).",
         "tonePresets": {
           "casual": "Casual",
           "classic": "Classic",
@@ -1000,32 +1073,32 @@ export default interface Resources {
         "advanced": "Advanced settings",
         "banner": "Banner",
         "bannerGroups": {
-          "inapp": "In-app",
+          "inapp": "Open in browser",
           "pending": "Unclaimed reward",
           "referral": "Referral"
         },
         "buttonShare": "Share button",
-        "description": "Placements are component variants for a specific spot on your site.",
+        "description": "A placement is a specific spot on your store where you want a different style or text.",
         "fields": {
           "badgeText": "Badge text",
           "claimCtaText": "Claim button text",
-          "css": "Component CSS",
-          "ctaNoRewardText": "CTA text (no reward)",
-          "ctaText": "CTA text",
-          "inappCta": "In-app CTA",
-          "inappDescription": "In-app description",
-          "inappTitle": "In-app title",
+          "css": "Style code (CSS)",
+          "ctaNoRewardText": "Button text (no reward)",
+          "ctaText": "Button text",
+          "inappCta": "Open in browser button text",
+          "inappDescription": "Open in browser description",
+          "inappTitle": "Open in browser title",
           "noRewardText": "Button text (no reward)",
-          "pendingCta": "Unclaimed reward CTA",
+          "pendingCta": "Unclaimed reward button text",
           "pendingDescription": "Unclaimed reward description",
           "pendingTitle": "Unclaimed reward title",
-          "refereeNoRewardText": "Referee message (no reward)",
-          "refereeText": "Referee message",
-          "referralCta": "Referral CTA",
+          "refereeNoRewardText": "Message to referred customers (no reward)",
+          "refereeText": "Message to referred customers",
+          "referralCta": "Referral button text",
           "referralDescription": "Referral description",
           "referralTitle": "Referral title",
-          "referrerNoRewardText": "Referrer message (no reward)",
-          "referrerText": "Referrer message",
+          "referrerNoRewardText": "Message to ambassadors (no reward)",
+          "referrerText": "Message to ambassadors",
           "text": "Button text"
         },
         "image": {
@@ -1033,40 +1106,40 @@ export default interface Resources {
           "hint": "Paste an image URL or upload one below.",
           "label": "Illustration"
         },
-        "pendingTokensHint": "Shown to visitors with an unclaimed reward. Placeholders: {REWARD}, {DAYS}, {DATE}.",
-        "postPurchase": "Post Purchase",
+        "pendingTokensHint": "Shown to visitors with an unclaimed reward. You can insert: {REWARD}, {DAYS}, {DATE}.",
+        "postPurchase": "After checkout",
         "postPurchaseGroups": {
-          "referee": "Referee message",
-          "referrer": "Referrer message",
-          "shared": "Badge & CTA"
+          "referee": "Message to referred customers",
+          "referrer": "Message to ambassadors",
+          "shared": "Badge and button"
         },
         "postPurchasePreview": {
-          "referee": "Referee view",
-          "referrer": "Referrer view"
+          "referee": "Referred customer view",
+          "referrer": "Ambassador view"
         },
         "preview": "Preview",
         "rewardToken": {
           "copy": "Copy {REWARD}",
-          "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
+          "hint": "You can insert <token>{REWARD}</token> in any text. It shows the current campaign reward."
         },
         "style": {
           "background": "Background",
-          "borderColor": "Border colour",
+          "borderColor": "Border color",
           "borderWidth": "Border thickness (px)",
           "boxMargin": "Margin",
-          "boxPadding": "Padding",
-          "case_capitalize": "Capitalised",
+          "boxPadding": "Inner margin",
+          "case_capitalize": "Capitalized",
           "case_lowercase": "lowercase",
           "case_none": "As typed",
           "case_theme": "From theme",
           "case_uppercase": "UPPERCASE",
-          "clear": "Clear",
-          "clearAll": "Clear all",
-          "defaultTierHint": "These values apply to every share button on a page as soon as at least one of them defines a placement in your integration. If none does, the page keeps your theme's styling.",
-          "groupColors": "Colours and border",
-          "inheritNotice": "The share button renders inside your storefront and inherits your theme's button styling — font, corner radius, hover and focus states. What you set here overrides only the properties it touches, so the live button will not match this preview exactly.",
+          "clear": "Reset",
+          "clearAll": "Reset all",
+          "defaultTierHint": "These settings apply to every share button on a page as soon as one of them is set up with a placement. Otherwise the page keeps your theme's style.",
+          "groupColors": "Colors and border",
+          "inheritNotice": "The share button is shown inside your store and uses your theme's button style (font, rounded corners, hover and focus). What you set here only replaces the settings you change, so the real button may differ from this preview.",
           "linkMargin": "Link all margins",
-          "linkPadding": "Link padding axes",
+          "linkPadding": "Link all inner margins",
           "look": "Look",
           "look_custom": "Custom",
           "look_outline": "Outline",
@@ -1077,24 +1150,24 @@ export default interface Resources {
           "marginRight": "Right margin",
           "marginTop": "Top margin",
           "none": "None",
-          "paddingBottom": "Bottom padding",
-          "paddingLeft": "Left padding",
-          "paddingRight": "Right padding",
-          "paddingTop": "Top padding",
+          "paddingBottom": "Bottom inner margin",
+          "paddingLeft": "Left inner margin",
+          "paddingRight": "Right inner margin",
+          "paddingTop": "Top inner margin",
           "section": "Visual settings",
           "size": "Size",
           "size_l": "Large",
           "size_m": "Medium",
           "size_s": "Small",
           "spacing": "Spacing",
-          "swatchLabel": "Colour picker: {{label}}",
-          "textCase": "Case",
-          "textColor": "Colour",
+          "swatchLabel": "Color picker: {{label}}",
+          "textCase": "Capital letters",
+          "textColor": "Color",
           "textSize": "Text size (px)",
-          "textWeight": "Weight",
+          "textWeight": "Boldness",
           "title": "Button style",
           "unitMargin": "Margin unit",
-          "unitPadding": "Padding unit",
+          "unitPadding": "Inner margin unit",
           "weight_400": "Regular",
           "weight_500": "Medium",
           "weight_600": "Semi-bold",
@@ -1103,71 +1176,71 @@ export default interface Resources {
         },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
-          "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
-          "label": "Target interaction"
+          "hint": "Name of the action that earns a reward on this placement, such as purchase_completed or signup.",
+          "label": "Rewarded action"
         },
-        "title": "SDK components"
+        "title": "Frak elements on your store"
       },
       "globalCss": {
-        "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
-        "title": "Global CSS",
+        "description": "Style code (CSS) applied to every Frak element in every placement. The CSS of a placement can override it.",
+        "title": "CSS for all placements",
         "toggle": "Custom CSS"
       },
       "identity": {
         "currency": {
           "auto": "Auto",
-          "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
+          "hint": "Currency used to show amounts to customers. Rewards are still paid in {{token}}.",
           "label": "Display currency"
         },
-        "description": "What your customers see in Frak components.",
+        "description": "What your customers see in Frak buttons and banners.",
         "displayed": {
-          "description": "When off, the SDK is completely hidden from visitors",
-          "title": "Frak SDK displayed"
+          "description": "When off, no Frak element appears on your store.",
+          "title": "Show Frak on my store"
         },
         "homepage": {
-          "hint": "Your website URL, used when visitors click your brand name",
+          "hint": "Your website address. It opens when a customer clicks your name.",
           "invalid": "Enter a valid URL (https://…)",
-          "label": "Homepage Link"
+          "label": "Homepage link"
         },
         "lang": {
-          "auto": "Auto (Browser detection)",
+          "auto": "Auto (browser language)",
           "en": "English",
-          "fr": "French",
-          "hint": "Language for SDK text. Auto detects from the visitor's browser.",
+          "fr": "Français",
+          "hint": "Language of the Frak texts. With Auto, we use the customer's browser language.",
           "label": "Language"
         },
         "logo": {
-          "hint": "Your logo image, displayed alongside your name in SDK components",
+          "hint": "Shown next to your name on Frak buttons and banners.",
           "label": "Logo"
         },
         "name": {
           "hint": "Left empty, your store's name is used.",
           "label": "Display name"
         },
-        "title": "Your brand for visitors"
+        "title": "How customers see your store"
       },
       "placements": {
         "add": "+ Add a placement",
         "css": {
-          "description": "Global CSS overrides for this placement. Styles defined here apply to all SDK components within this placement.",
-          "title": "Placement CSS · {{placementId}}"
+          "description": "Style code (CSS) for this placement only. It applies to every Frak element in this placement.",
+          "title": "CSS of placement {{placementId}}"
         },
         "delete": {
           "action": "Delete {{placementId}}",
           "cancel": "Cancel",
           "confirm": "Delete placement",
-          "description": "This will remove all overrides for placement {{placementId}}.",
+          "description": "This removes every setting of placement {{placementId}}.",
           "dialogTitle": "Delete placement",
-          "hint": "This removes all overrides for this placement.",
-          "title": "Delete placement · {{placementId}}"
+          "hint": "This removes every setting of this placement.",
+          "title": "Delete placement {{placementId}}"
         },
         "dialog": {
           "cancel": "Cancel",
           "create": "Create placement",
           "errorExists": "This placement already exists.",
-          "errorFormat": "Use 3-16 chars (letters, numbers, _ or -).",
+          "errorFormat": "Use 3 to 16 characters: letters, numbers, _ or -.",
           "errorMax": "Maximum 10 placements allowed.",
-          "hint": "Placement id must be unique and use 3 to 16 characters.",
+          "hint": "Choose a unique name of 3 to 16 characters.",
           "title": "Create placement"
         },
         "globalDefault": "Global default",
@@ -1175,7 +1248,7 @@ export default interface Resources {
       },
       "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront.",
       "rewardReminder": {
-        "description": "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it.",
+        "description": "Shows customers who earned a reward but have no Frak wallet yet a small reminder with the amount and the days left before it expires. A reward that is never claimed is never paid. Other visitors never see it.",
         "enabled": "Show the reward reminder",
         "fields": {
           "cta": "Button text",
@@ -1188,15 +1261,15 @@ export default interface Resources {
           "right": "Right"
         },
         "title": "Reward reminder",
-        "tokensHint": "Placeholders: {REWARD}, {DAYS}, {DATE}, {BRAND}. An empty field keeps the default text."
+        "tokensHint": "You can insert: {REWARD} (the reward), {DAYS} (days left), {DATE} (the date), {BRAND} (your store name). An empty field keeps the default text."
       },
       "save": "Save",
       "sharing": {
-        "description": "The title and text shown when a visitor shares through their phone or messaging app.",
+        "description": "The title and text shown when a customer shares through their phone or messaging app.",
         "fields": {
           "text": {
             "hint": "Sent alongside the shared link.",
-            "label": "Share message"
+            "label": "Share text"
           },
           "title": {
             "hint": "Used as the subject in email and as the preview header.",
@@ -1205,82 +1278,97 @@ export default interface Resources {
         },
         "preview": "Preview",
         "title": "Share message"
+      },
+      "wordingLang": {
+        "default": "All languages"
       }
     },
     "dashboard": {
       "actions": {
-        "edit": "Edit",
+        "edit": "Edit store",
         "manageBudget": "Manage budget"
       },
       "empty": {
-        "description": "You don't have any merchant yet. Add one to start running campaigns.",
+        "description": "Add your store to create your first campaign.",
         "title": "Welcome to Frak"
       }
     },
     "errors": {
       "auth": {
-        "invalidCode": "Invalid or expired code.",
-        "invalidMethod": "This verification method isn't available.",
-        "invalidTwoFactorCode": "Invalid code. Please try again.",
-        "invalidTwoFactorProof": "Verification failed. Please try again.",
-        "otpThrottled": "Too many attempts. Retry in {{seconds}}s."
+        "invalidCode": "This code is wrong or has expired. Check it or ask for a new one.",
+        "invalidMethod": "This option isn't available. Pick another way to confirm.",
+        "invalidTwoFactorCode": "This code is wrong or has expired. Check it or ask for a new one.",
+        "invalidTwoFactorProof": "The verification failed. Try again.",
+        "otpThrottled": "Too many tries. Wait {{seconds}} seconds, then try again."
       },
       "boundary": {
-        "goBack": "Go Back",
-        "message": "An unexpected error occurred",
-        "retry": "Try Again",
+        "goBack": "Go back",
+        "message": "This page could not be displayed. Try again. If it keeps happening, email hello@frak-labs.com.",
+        "retry": "Try again",
         "retryAria": "Try again to reload this content",
-        "technicalDetails": "Technical Details (Development Only)"
+        "technicalDetails": "Technical details (development only)"
       },
       "campaign": {
-        "back": "Back to Campaigns",
-        "message": "The campaign you're looking for doesn't exist or you don't have access to it.",
-        "title": "Campaign Not Found"
+        "back": "Back to campaigns",
+        "message": "This campaign does not exist, or you do not have access to it.",
+        "title": "Campaign not found"
       },
       "campaignCreate": {
-        "back": "Back to Dashboard",
-        "title": "Failed to Create Campaign"
+        "back": "Back to the dashboard",
+        "message": "The campaign was not created. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "title": "Could not create the campaign"
       },
       "critical": {
-        "back": "Go to Dashboard",
-        "message": "A critical error occurred. Please try again or contact support if the problem persists.",
-        "title": "Critical Error"
+        "back": "Go to the dashboard",
+        "message": "Try again. If it keeps happening, email hello@frak-labs.com.",
+        "title": "The dashboard could not load"
       },
       "dataLoad": {
-        "message": "Unable to load {{resourceName}}. Please check your connection and try again.",
-        "title": "Failed to Load Data"
+        "message": "We could not load {{resourceName}}. Check your connection and try again.",
+        "resource": {
+          "affiliateReport": "the TakeAds report",
+          "campaignConfig": "the campaign settings",
+          "campaignOverview": "the campaign overview",
+          "campaigns": "campaigns",
+          "default": "the data",
+          "members": "members"
+        },
+        "title": "Could not load the data"
       },
       "generic": {
         "title": "Something went wrong"
       },
       "linkWallet": {
-        "signatureCancelled": "Wallet signature cancelled.",
-        "stepUpRequired": "Recent two-factor verification required. Please verify again, then retry.",
-        "walletTaken": "This wallet is already linked to another account."
+        "generic": "We could not link your wallet. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "signatureCancelled": "You closed the Frak wallet window. Nothing was linked. Try again when you're ready.",
+        "stepUpRequired": "We need to check it's you first. Confirm your identity, then try again.",
+        "walletTaken": "This Frak wallet is already linked to another account. Use a different wallet, or log in with the account that has it."
       },
       "merchantCreate": {
-        "back": "Back to Dashboard",
-        "title": "Failed to Add Merchant"
+        "back": "Back to the dashboard",
+        "message": "The store was not added. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "title": "Could not add the store"
       },
       "merchantNotFound": {
-        "back": "Back to Dashboard",
-        "message": "The merchant you're looking for doesn't exist or you don't have access to it.",
-        "title": "Merchant Not Found"
+        "back": "Back to the dashboard",
+        "message": "This store does not exist, or you do not have access to it.",
+        "title": "Store not found"
       },
       "notFound": {
-        "action": "Go to Dashboard",
-        "description": "The page you're looking for doesn't exist or has been moved.",
-        "title": "Page Not Found"
+        "action": "Go to the dashboard",
+        "description": "This page does not exist or has moved.",
+        "title": "Page not found"
       },
       "pushCreate": {
-        "back": "Back to Members",
-        "title": "Failed to Create Push Notification"
+        "back": "Back to members",
+        "message": "The notification was not created. Try again. If it keeps failing, email hello@frak-labs.com.",
+        "title": "Could not create the push notification"
       }
     },
     "forms": {
       "currencySelector": {
-        "circleDescription": "Best for blockchain-native users. Widely used across DeFi platforms and exchanges.",
-        "moneriumDescription": "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.",
+        "circleDescription": "US dollars. For customers who already use crypto apps and exchanges.",
+        "moneriumDescription": "Euros. Your customers can send their rewards to their bank account. Best choice if they don't use crypto.",
         "recommendedTooltip": "Recommended"
       },
       "multiSelect": {
@@ -1295,69 +1383,103 @@ export default interface Resources {
     },
     "funding": {
       "addFunds": {
-        "balanceLabel": "Current balance",
-        "stripe": "Add funds via Stripe",
-        "testTokens": "Fund with Test Tokens"
+        "balanceLabel": "Current budget",
+        "stripe": "Add funds with Stripe",
+        "testTokens": "Add test funds"
       },
       "budget": {
         "actions": {
-          "amountPlaceholder": "Amount",
+          "amountPlaceholder": "New spending limit",
           "cancel": "Cancel",
           "confirm": "Confirm",
-          "increaseLimit": "Increase limit",
+          "increaseLimit": "Increase spending limit",
+          "limitHint": "The most Frak can pay out as rewards from your budget. Keep it at or above your budget.",
           "withdraw": "Withdraw",
           "withdrawCta": "Withdraw funds",
+          "withdrawHint": "The funds are sent to your Frak wallet. It opens so you can confirm.",
           "withdrawPlaceholder": "Max {{amount}}",
-          "withdrawTooltip": "Sends your bank's available funds back to your wallet. Available because reward distribution is off."
+          "withdrawTooltip": "Sends your available funds to your Frak wallet. You can only withdraw while rewards are paused."
         },
         "addFunds": "Add funds",
-        "allowanceTooltip": "Up to {{amount}} authorized for distribution",
+        "allowanceTooltip": "Spending limit: {{amount}}",
         "breakdown": {
           "distributable": "Available for rewards",
           "frakFee": "Frak fees ({{rate}}%)",
           "vat": "VAT ({{rate}}%)"
         },
-        "distributing": "Distributing Rewards",
-        "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
-        "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
-        "limitTooLow": "Distribution limit too low",
-        "noFundsCaption": "No funds - add funds to start distributing rewards.",
-        "sectionLabel": "Reward Budget",
+        "distributing": "Pay rewards",
+        "distributingHint": "When off, no reward is paid. You can then withdraw your funds.",
+        "distributingTooltip": "When on, Frak pays rewards from your budget through your active campaigns. When off, no new reward is paid.",
+        "emptyWarning": "Your budget is empty. Active campaigns can't pay rewards until you add funds.",
+        "limitTooLow": "Spending limit lower than your budget",
+        "noFundsCaption": "No funds yet.",
+        "noLimit": "No spending limit",
+        "sectionLabel": "Reward budget",
         "status": {
-          "actionNeeded": "Action needed",
+          "actionNeeded": "Limit too low",
           "active": "Active",
-          "paused": "Paused"
+          "paused": "Rewards paused"
         },
-        "totalExclVat": "total budget, incl. Frak fees",
-        "totalInclVat": "total budget, incl. VAT and Frak fees"
+        "totalExclVat": "total budget, Frak fees included",
+        "totalInclVat": "total budget, VAT and Frak fees included"
       },
-      "error": "Failed to load reward budget data.",
+      "error": "We could not load your budget. Check your connection and try again.",
+      "errors": {
+        "action": "The action did not go through. Try again. If it keeps failing, email hello@frak-labs.com."
+      },
       "header": {
-        "addFundsDescription": "Top up your reward budget. Stripe handles the amount and payment method.",
+        "addFundsDescription": "You pay on Stripe, in a new tab. The amount you pay includes Frak fees, and VAT if it applies to you. Your budget updates once the payment goes through.",
         "addFundsTitle": "Add funds",
         "back": "Back",
-        "budgetTitle": "Manage Budget",
+        "budgetTitle": "Manage budget",
         "close": "Close"
       },
       "legacy": {
-        "description": "Your old campaign bank still holds funds. Migrate them to your new bank to continue distributing rewards.",
-        "migrate": "Migrate funds to new bank",
-        "pending": "Pending rewards (locked)",
-        "title": "Legacy Bank Migration",
-        "totalBalance": "Total balance",
-        "withdrawable": "Available to migrate"
+        "description": "Your old budget still holds funds. Move them to your new budget to keep paying rewards. You confirm once in your Frak wallet.",
+        "migrate": "Move funds",
+        "pending": "Pending rewards (not moved)",
+        "title": "Move funds from your old budget",
+        "totalBalance": "Total in old budget",
+        "withdrawable": "Available to move"
       },
       "linkWallet": {
-        "cta": "Link a Frak wallet",
-        "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
-        "title": "Link a wallet to manage funds"
+        "cta": "Link wallet",
+        "description": "Needed to turn rewards on or off, change the spending limit, withdraw funds or move funds from your old budget. You confirm each of these in your Frak wallet. Adding funds and viewing your budget work without it.",
+        "title": "Link your Frak wallet (optional)"
       },
       "pause": {
-        "title": "Pause rewards"
+        "title": "Pause this currency"
       },
+      "pending": "Confirm in your Frak wallet. The change appears here once it is recorded.",
       "setup": {
-        "cta": "Set Up Budget",
-        "description": "Set up your reward budget to start distributing rewards to your users."
+        "cta": "Set up budget",
+        "description": "Set up your reward budget. You can then add funds and start paying rewards."
+      },
+      "walletPrompt": {
+        "migrate": {
+          "description": "Move the available funds from your old budget to your new budget.",
+          "title": "Move funds"
+        },
+        "payRewardsOff": {
+          "description": "Stop paying rewards from your budget.",
+          "title": "Pause rewards"
+        },
+        "payRewardsOn": {
+          "description": "Allow Frak to pay rewards from your budget.",
+          "title": "Turn on rewards"
+        },
+        "revokeLimit": {
+          "description": "Set the spending limit to zero. No reward is paid in this currency until you raise it.",
+          "title": "Pause this currency"
+        },
+        "updateLimit": {
+          "description": "Change the most Frak can pay out as rewards from your budget.",
+          "title": "Change spending limit"
+        },
+        "withdraw": {
+          "description": "Send funds from your budget to your Frak wallet.",
+          "title": "Withdraw funds"
+        }
       }
     },
     "internal": {
@@ -1745,37 +1867,45 @@ export default interface Resources {
     },
     "members": {
       "audience": {
-        "minMember": "You need at least 1 member to continue",
+        "minMember": "No member matches. Widen the dates or the number of interactions.",
         "reach": "You will reach {{count}} members",
-        "required": "Push audience is required",
+        "required": "Select a filter below to choose who receives this notification.",
         "title": "Audience"
       },
       "columns": {
         "interactions": "Interactions",
-        "memberFrom": "Member from",
-        "merchants": "Merchants",
-        "rewards": "Rewards ({{currency}})",
-        "wallet": "Wallet"
+        "memberFrom": "Member since",
+        "merchants": "Store",
+        "rewards": "Rewards earned ({{currency}})",
+        "wallet": "Customer"
+      },
+      "empty": {
+        "filtered": "No member matches these filters. Change the dates or the number of interactions.",
+        "none": "No member yet. Customers appear here after their first interaction with your store."
       },
       "filters": {
         "button": "Filters",
         "from": "From",
         "interactions": "Interactions",
         "max": "Max",
-        "maxGreaterThanMinError": "Max interactions should be greater than minimum",
-        "maxInteractions": "Max interactions",
+        "maxGreaterThanMinError": "Max must be higher than min.",
+        "maxInteractions": "No maximum",
         "maxInteractionsError": "Maximum interactions can't be negative",
-        "membershipDate": "Membership Date",
+        "membershipDate": "Member since",
         "min": "Min",
-        "minInteractions": "Min interactions",
+        "minInteractions": "0",
         "minInteractionsError": "Minimum interactions can't be negative",
         "pickDate": "Pick a date",
-        "reset": "Reset filter",
+        "reset": "Reset filters",
         "segment": "Segment",
         "to": "To"
       },
-      "platformAdminNotice": "Member data is not available in platform-admin read-only mode.",
-      "sendPushNotification": "Send Push Notification",
+      "intro": "Members are customers who interacted with your store through Frak. An interaction is a tracked action, such as sharing a link, arriving through a link or placing an order.",
+      "platformAdminNotice": "Member data is hidden in read-only mode.",
+      "resources": {
+        "list": "your members"
+      },
+      "sendPushNotification": "Send push notification",
       "tabs": {
         "members": "Members",
         "push": "Push notifications"
@@ -1783,8 +1913,8 @@ export default interface Resources {
     },
     "merchant": {
       "affiliate": {
-        "brandId": "TakeAds brand ID",
-        "description": "This merchant earns through its affiliate (TakeAds) integration.",
+        "brandId": "TakeAds ID",
+        "description": "This store earns through its TakeAds affiliate connection.",
         "title": "Affiliate configuration",
         "trackingLink": "Tracking link"
       },
@@ -1793,159 +1923,185 @@ export default interface Resources {
         "actions": {
           "back": "Back",
           "close": "Close",
-          "completeRegistration": "Complete Registration",
+          "completeRegistration": "Register my store",
           "continue": "Continue"
         },
         "currencyInfo": {
-          "circleDescription": "Best for blockchain-native users. Widely used across DeFi platforms and exchanges.",
-          "circleName": "Circle (USDC):",
-          "moneriumDescription": "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.",
-          "moneriumName": "Monerium:"
+          "circleDescription": "Rewards are paid in USDC, a digital dollar. Best if your customers already use cryptocurrencies.",
+          "circleName": "USDC (Circle):",
+          "moneriumDescription": "Rewards are paid in euros. Customers can send them to their bank account (IBAN).",
+          "moneriumName": "EUR (Monerium):"
         },
         "dns": {
           "copy": "Copy",
-          "helpBody": "Adding a DNS TXT record verifies that you own this domain. The process varies depending on your DNS provider (e.g., Cloudflare, GoDaddy, Namecheap). For detailed step-by-step instructions, please visit our documentation:",
-          "helpCta": "View DNS Setup Guide",
-          "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
-          "helper": "Add this TXT record to your domain's DNS settings:",
-          "title": "DNS TXT Record Required",
-          "verifiedViaShopify": "Domain verified thanks to your Shopify session"
+          "helpBody": "The steps depend on who manages your domain (for example Cloudflare, GoDaddy or Namecheap). Our guide explains them one by one.",
+          "helpCta": "Open the guide",
+          "helpQuestion": "How do I add this record?",
+          "helper": "Where you manage your domain, add a TXT record with this value. It can take time to appear. Then click Continue.",
+          "title": "Prove this domain is yours",
+          "verifiedViaShopify": "Domain verified through your Shopify account. Nothing to add."
         },
         "fields": {
           "currency": {
-            "description": "The default currency for your campaigns",
-            "label": "Currency"
+            "description": "The default currency for your campaign rewards. You can change it later.",
+            "label": "Reward currency"
           },
           "domain": {
-            "alreadyRegistered": "A merchant already exists for the domain {{domain}}",
-            "dnsNotSet": "The DNS TXT record is not set, or the setup code is invalid",
-            "invalid": "Please enter a valid domain (e.g., example.com)",
-            "label": "Domain Configuration",
-            "nameLabel": "Domain Name",
-            "required": "Domain name is required",
-            "verifyFailed": "Failed to verify domain"
+            "alreadyRegistered": "{{domain}} is already registered. If it should be yours, contact hello@frak-labs.com.",
+            "dnsNotSet": "We cannot find the TXT record yet, or the setup code is not valid. Changes to a domain can take time to appear. Check the value and the code, wait a little, then click Continue again.",
+            "hint": "The address your customers use, like myshop.com. No https://.",
+            "invalid": "Enter a domain like myshop.com",
+            "label": "Your store's domain",
+            "nameLabel": "Domain",
+            "placeholder": "myshop.com",
+            "required": "Enter your store's domain",
+            "verifyFailed": "We could not check your domain. Try again in a moment."
           },
           "name": {
-            "label": "Enter a Merchant Name",
-            "minLength": "Merchant name must be at least 2 characters",
-            "placeholder": "Merchant name",
-            "required": "Merchant name is required"
+            "label": "Store name",
+            "minLength": "The store name must have at least 2 characters",
+            "placeholder": "Store name",
+            "required": "Enter your store name"
           },
           "setupCode": {
-            "label": "Setup Code (optional)",
-            "placeholder": "Setup code..."
+            "label": "Setup code (only if Frak gave you one)",
+            "placeholder": "Setup code"
           }
         },
         "instructions": {
-          "approve": "You'll be asked to approve the transaction using your wallet.",
-          "duration": "Registration usually takes less than a minute",
-          "onChain": "Your merchant will be registered on-chain."
+          "approve": "Confirm in your Frak wallet. No money moves.",
+          "duration": "This usually takes less than a minute.",
+          "onChain": "Your store is saved on the blockchain, a public record."
         },
         "platformAdmin": {
-          "description": "Advanced options available to Frak platform admins.",
-          "label": "Platform admin options",
+          "description": "Advanced options for the Frak team.",
+          "label": "Frak admin options",
           "skipDomain": {
-            "description": "Register without the DNS ownership check. The signature is still required.",
+            "description": "Register without the domain ownership check. The confirmation is still required.",
             "title": "Skip domain verification"
           },
           "takeadsMerchantId": {
-            "label": "TakeAds brand ID",
-            "mustBeInteger": "Please enter a positive whole number",
+            "label": "TakeAds ID",
+            "mustBeInteger": "Enter a positive whole number",
             "placeholder": "e.g. 12345"
           },
           "takeadsTrackingLink": {
-            "invalidUrl": "Please enter a valid URL",
+            "invalidUrl": "Enter a valid URL",
             "label": "TakeAds tracking link",
             "placeholder": "https://tatrck.com/h/..."
           },
           "useFrakBank": {
-            "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one.",
-            "title": "Use Frak campaign bank"
+            "description": "Link this store to the shared Frak reward budget instead of creating a dedicated one.",
+            "title": "Use the shared Frak reward budget"
           }
         },
+        "progress": {
+          "confirm": "Confirm in your Frak wallet",
+          "done": "Your store is registered",
+          "failed": "We could not register your store. Try again. If it keeps failing, email hello@frak-labs.com.",
+          "registering": "Saving your store..."
+        },
         "registration": {
-          "description": "To complete registration:",
-          "label": "Complete registration"
+          "description": "When you register your store:",
+          "label": "What happens next"
         },
         "steps": {
           "details": {
-            "hint": "Set up your merchant information",
-            "label": "Add merchant details",
-            "subtitle": "Configure your merchant details.",
-            "title": "Add merchant details"
+            "hint": "Name, currency and domain",
+            "label": "Your store",
+            "subtitle": "Tell us about your store.",
+            "title": "Add a store"
           },
           "registration": {
-            "hint": "Register your merchant on-chain",
-            "label": "Merchant registration",
-            "subtitle": "Register your merchant on the blockchain",
-            "title": "Merchant registration"
+            "hint": "Check and confirm",
+            "label": "Confirmation",
+            "subtitle": "Frak saves your store on the blockchain, a public record.",
+            "title": "Confirm your store"
           }
         },
         "summary": {
           "currency": "Currency",
-          "description": "Review the information that will be registered on-chain.",
+          "description": "Check these details, then confirm.",
           "domain": "Domain",
           "label": "Summary",
-          "name": "Merchant Name",
-          "provider": "Provider"
+          "name": "Store name",
+          "provider": "Payment partner"
         }
       },
       "setupStatus": {
         "completeStep": "Complete this step",
-        "documentation": "Documentation",
-        "success": "Great job! Your merchant is set up correctly.",
-        "title": "Merchant setup status",
-        "warningLine1": "Some items need your attention.",
-        "warningLine2": "Please review and complete them."
+        "documentation": "Read the guide",
+        "steps": {
+          "addCampaign": {
+            "description": "Reward the ambassadors who share your store.",
+            "name": "Launch a campaign"
+          },
+          "addFunding": {
+            "description": "Rewards are paid from this budget.",
+            "name": "Add funds to your budget"
+          },
+          "otherAdmin": {
+            "description": "If you are away, someone else can still manage your store.",
+            "name": "Add another admin"
+          },
+          "runningBank": {
+            "description": "Rewards are paid only when this is on.",
+            "name": "Turn on reward payouts"
+          }
+        },
+        "success": "Your store is ready.",
+        "title": "Setup checklist",
+        "warningLine1": "Some steps are not done yet.",
+        "warningLine2": "Finish them to complete your setup."
       }
     },
     "merchantEdit": {
       "close": "Close",
       "details": {
-        "currency": "Rewards paid in",
+        "currency": "Reward currency",
         "domain": "Domain",
         "edit": "Edit",
-        "name": "Account name",
-        "title": "Your Frak account"
+        "name": "Store name",
+        "title": "Your store"
       },
       "discard": {
         "confirm": "Discard changes",
-        "description": "You have unsaved changes. Are you sure you want to discard them?",
+        "description": "You have unsaved changes. Discard them?",
         "keepEditing": "Keep editing",
         "title": "Discard changes?"
       },
       "domains": {
         "add": "Add domain",
-        "addError": "Failed to add the domain. Please try again.",
-        "additionalLabel": "Additional domain",
-        "claimed": "This domain is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
-        "description": "Additional domains authorized to access this merchant (e.g. Shopify myshopify.com domains).",
-        "empty": "No additional domains yet.",
-        "invalid": "Invalid domain format",
+        "addError": "We could not add the domain. Try again.",
+        "additionalLabel": "Extra domain",
+        "claimed": "This domain is already registered to another store. Contact <support>hello@frak-labs.com</support> to sort it out.",
+        "description": "Other addresses where your store runs, like your .myshopify.com address. Frak recognizes your store on these addresses and on your main domain.",
+        "empty": "No extra domains yet.",
+        "invalid": "Enter a domain like myshop.com",
         "manage": "Manage domains",
         "more": "+{{count}} more",
         "placeholder": "e.g. mystore.myshopify.com",
         "remove": "Remove",
-        "title": "Allowed domains"
+        "title": "Extra domains"
       },
       "editMerchant": {
         "cancel": "Cancel",
-        "currency": "Default reward currency",
-        "description": "Update your merchant name and default reward currency.",
-        "domain": "Domain name",
-        "infoCircle": "Circle (USDC):",
-        "infoMonerium": "Monerium:",
-        "name": "Merchant name",
-        "namePlaceholder": "Merchant name...",
-        "nameRequired": "Merchant name is required",
+        "currency": "Reward currency",
+        "description": "Update your store name and reward currency.",
+        "domain": "Domain",
+        "infoCircle": "USDC (Circle):",
+        "infoMonerium": "EUR (Monerium):",
+        "name": "Store name",
+        "namePlaceholder": "Store name",
+        "nameRequired": "Enter your store name",
         "save": "Save changes",
-        "title": "Edit merchant"
+        "title": "Edit your store"
       },
       "explorer": {
         "addImage": "Add image",
-        "additionalHero": "Additional hero images",
-        "additionalHeroHint": "Up to 4 extra images shown as a slider after the main one.",
-        "browseFiles": "Browse files",
+        "additionalHero": "More cover images",
+        "additionalHeroHint": "Up to 4 more, shown one after the other.",
+        "browseFiles": "Choose a file",
         "crop": {
           "cancel": "Cancel",
           "confirm": "Crop and upload",
@@ -1959,52 +2115,53 @@ export default interface Resources {
         },
         "currentImage": "Current image",
         "description": "Description",
-        "descriptionPlaceholder": "Merchant description...",
+        "descriptionPlaceholder": "Describe your store in a few lines",
         "doneEditing": "Done",
-        "dragAndDrop": "Drag and drop files here",
+        "dragAndDrop": "Drag and drop an image here",
         "dropHere": "Drop image here",
         "editImage": "Edit",
         "errors": {
-          "fileRejected": "This file was rejected — check the requirements above.",
-          "uploadFailed": "Upload failed"
+          "fileRejected": "This file does not meet the requirements above. Choose another image.",
+          "uploadFailed": "The upload failed. Try again."
         },
-        "heroHint": "The main image shown at the top of your Explorer page.",
-        "heroImage": "Hero image",
+        "heroHint": "The main image at the top of your app listing.",
+        "heroImage": "Cover image",
         "imageUnavailable": "This image could not be displayed",
+        "intro": "Your app listing is your store's page in the Frak app, where customers can discover your store.",
         "invalidUrl": "Enter a valid image URL (https://…)",
-        "listed": "Listed in Explorer",
+        "listed": "Show my store in the Frak app",
         "logo": "Logo",
         "or": "or",
-        "previewDisabledHint": "Enable the Explorer",
+        "previewDisabledHint": "Turn on \"Show my store in the Frak app\" to go live.",
         "readOnly": {
-          "listed": "Listed",
-          "notListed": "Not listed"
+          "listed": "Shown",
+          "notListed": "Not shown"
         },
         "removeImage": "Remove image",
         "removeSlide": "Remove image {{index}}",
         "restrictions": {
-          "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
-          "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)",
-          "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)"
+          "hero": "Formats: PNG, JPEG, WebP, SVG, GIF. At least 800×450 px. Width to height ratio between 4:3 and 2:1. 10 MB maximum.",
+          "icon": "Formats: PNG, JPEG, WebP, SVG, GIF. At least 64×64 px. Width to height ratio between 1:2 and 2:1. 10 MB maximum.",
+          "logo": "Formats: PNG, JPEG, WebP, SVG, GIF. At least 128×128 px. Width to height ratio between 1:2 and 2:1. 10 MB maximum."
         },
         "slide": "Slide {{index}}",
-        "title": "Explorer",
+        "title": "App listing",
         "uploaded": "Image uploaded",
         "uploading": "Uploading...",
         "useExisting": "Use an existing image:"
       },
       "newsletter": {
-        "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal, pre-filled with your current campaign rewards, so they can share and earn in one tap.",
+        "description": "Add this link to your newsletter or any marketing e-mail. It opens your store with the Frak sharing window, showing your current campaign rewards, so customers can share and earn right away.",
         "title": "Newsletter sharing link"
       },
       "packageIds": {
         "add": "Add app",
-        "addError": "Failed to add the app. Please try again.",
-        "additionalLabel": "Package id",
-        "claimed": "This app is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
-        "description": "Mobile apps authorized to resolve this merchant through the native SDK.",
-        "empty": "No apps yet.",
-        "invalid": "Invalid package id format",
+        "addError": "We could not add the app. Try again.",
+        "additionalLabel": "App ID",
+        "claimed": "This app is already registered to another store. Contact <support>hello@frak-labs.com</support> to sort it out.",
+        "description": "Mobile apps that can use your Frak setup. Your app developer gives you the ID.",
+        "empty": "No mobile apps yet.",
+        "invalid": "Enter an ID like com.mycompany.myapp",
         "manage": "Manage apps",
         "placeholder": {
           "android": "e.g. com.example.myapp",
@@ -2014,111 +2171,116 @@ export default interface Resources {
           "android": "Android",
           "ios": "iOS"
         },
-        "platformLabel": "Platform",
+        "platformLabel": "System",
         "remove": "Remove",
-        "title": "Allowed apps"
+        "title": "Mobile apps"
       },
       "purchaseTracker": {
-        "description": "Track purchases from your store to power campaigns and distribute rewards.",
-        "notRegistered": "Not registered",
-        "platform": "Platform",
-        "registered": "Webhook registered",
+        "description": "Frak needs to know about your orders to pay rewards. A webhook is a message your shop sends to Frak when an order changes. Connect your shop here.",
+        "notRegistered": "Not connected",
+        "platform": "Shop software",
+        "registered": "Connected",
         "sheet": {
           "change": {
-            "confirm": "Change platform",
-            "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
-            "internalWarning": "You won't be able to revert back from this dashboard - you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
-            "title": "Change platform?"
+            "confirm": "Change",
+            "description": "Order tracking can stop until the new connection is saved.",
+            "internalWarning": "You cannot go back from this dashboard. To reconnect, set up the connection again from the Frak app for Shopify or the Frak plugin for WordPress.",
+            "title": "Change shop software?"
           },
-          "description": "Configure how Frak receives purchase events from your store.",
+          "description": "Choose your shop software, then follow the steps. Frak then receives your orders.",
           "instructions": {
-            "custom": "To use this webhook on your website, please refer to the <doc>documentation</doc>.",
-            "internal1": "Your merchant is already registered on Frak using an internal webhook. This usually means you are using one of our third-party applications, like the Shopify app or the WordPress plugin.",
-            "internal2": "If you think that's a mistake, you can switch to a manual setup using the selector above.",
-            "magento": "To register the webhook on Adobe Commerce (Magento 2), install the <doc>frak-labs/magento2-module</doc> Composer package, then in your Magento admin console open <italic>Stores > Configuration > Frak > Webhook Secret</italic> and paste the secret below:",
-            "shopify": "To register the webhook on Shopify, go to your Shopify admin console, then <italic>Settings > Notifications > Webhook</italic>. Create a new webhook with the <italic>Order Updated</italic> event using the URL below:",
-            "woocommerce": "To register the webhook on WooCommerce, go to your WordPress admin console, then <italic>WooCommerce > Settings > Advanced > Webhooks</italic>. Create a new webhook with the <italic>Order Updated</italic> topic using the URL and secret below:"
+            "custom": "For a shop built by a developer. Give this page to your developer, who can follow the <doc>documentation</doc>.",
+            "internal1": "Your orders already reach Frak. This usually means you use the Frak app for Shopify or the Frak plugin for WordPress. Nothing to do.",
+            "internal2": "If this looks wrong, choose your shop software above to set up the connection yourself.",
+            "magento": "To connect Adobe Commerce (Magento 2), ask your developer to install the <doc>frak-labs/magento2-module</doc> package. Then open <italic>Stores > Configuration > Frak > Webhook Secret</italic> in your Magento admin and paste the secret below.",
+            "shopify": "In your Shopify admin, open <italic>Settings > Notifications > Webhook</italic>. Create a webhook for the <italic>Order Updated</italic> event and paste the URL below. Shopify then shows a signing key at the bottom of the webhooks list. Paste that key in the field below, then click Connect.",
+            "woocommerce": "In your WordPress admin, open <italic>WooCommerce > Settings > Advanced > Webhooks</italic>. Create a webhook with the topic <italic>Order Updated</italic>. Paste the URL and the secret below, then click Connect."
           },
-          "platformTitle": "Purchase platform",
+          "platformTitle": "Shop software",
           "platforms": {
-            "custom": "Custom",
-            "internal": "Internal",
+            "custom": "Other",
+            "internal": "Frak app or plugin",
             "magento": "Magento",
             "shopify": "Shopify",
             "woocommerce": "WooCommerce"
           },
-          "register": "Register webhook",
-          "registerHint": "Then register it on Frak with this button.",
+          "register": "Connect",
+          "registerHint": "Once the URL and secret are in your shop, click Connect. Keep this panel open until then.",
           "secretLabel": "Secret",
           "shopify": {
-            "keyLabel": "Webhook signature",
-            "keyPlaceholder": "Copy the signature shown at the bottom of the webhooks list in your Shopify panel",
-            "missingKey": "Missing signin key"
+            "keyLabel": "Signing key",
+            "keyPlaceholder": "Copy the signing key shown at the bottom of the webhooks list in your Shopify admin",
+            "missingKey": "Paste the signing key from Shopify"
           },
           "stats": {
-            "firstPurchase": "First purchase",
-            "lastPurchase": "Last purchase",
+            "firstPurchase": "First order",
+            "lastPurchase": "Last order",
             "lastUpdate": "Last update",
-            "title": "Stats"
+            "none": "None yet",
+            "title": "Figures"
           },
+          "update": "Save changes",
           "urlLabel": "URL"
         },
         "status": "Status",
-        "title": "Purchase tracker",
-        "tracked": "Purchases tracked",
-        "update": "Update webhook"
+        "title": "Order tracking",
+        "tracked": "Orders tracked",
+        "update": "Edit connection"
       },
       "saveAll": "Save all changes",
       "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
-        "affiliate": "Affiliate settings",
-        "explorer": "Explorer App",
-        "identity": "Identity & SDK",
-        "integration": "Integration",
-        "team": "Manage your team"
+        "affiliate": "Affiliation",
+        "explorer": "App listing",
+        "identity": "Appearance",
+        "integration": "Connections",
+        "team": "Team"
       },
       "team": {
         "add": {
           "addedSuccess": "{{email}} was added to the team",
-          "description": "Invite an admin to your team by wallet address or email.",
-          "emailInvalid": "Invalid email address",
-          "emailLabel": "Member email",
+          "description": "Add an admin by e-mail or by Frak wallet address. If they have no Frak account yet, we e-mail them an invitation.",
+          "emailInvalid": "Enter a valid e-mail address",
+          "emailLabel": "E-mail address",
           "emailPlaceholder": "name@company.com",
-          "error": "Could not add the admin. Try again.",
-          "invalid": "Invalid wallet address",
+          "error": "We could not add the admin. Try again.",
+          "invalid": "This is not a wallet address. It starts with 0x.",
           "invitedSuccess": "Invitation sent to {{email}}",
-          "label": "Member wallet",
-          "modeEmail": "Email",
-          "modeWallet": "Wallet",
+          "label": "Frak wallet address (starts with 0x)",
+          "modeEmail": "E-mail",
+          "modeWallet": "Frak wallet",
           "placeholder": "0x…",
-          "submit": "Add member",
-          "title": "Add a member"
+          "submit": "Add team member",
+          "title": "Add a team member"
         },
-        "addMember": "Add Team Member",
+        "addMember": "Add a team member",
         "headers": {
           "action": "Action",
           "role": "Role",
-          "wallet": "Wallet"
+          "wallet": "Member"
         },
-        "invited": "Invited",
-        "me": "Me:",
-        "removeMember": "Remove member",
-        "resendError": "Could not resend the invitation. Try again.",
-        "resendInvite": "Resend invite",
+        "invited": "Invitation sent",
+        "me": "You:",
+        "removalsHint": "Removals apply when you save.",
+        "removeMember": "Remove team member",
+        "resendError": "We could not resend the invitation. Try again.",
+        "resendInvite": "Resend invitation",
         "resendSuccess": "Invitation resent to {{email}}",
         "roles": {
           "admin": "Admin",
           "owner": "Owner"
         },
+        "rolesHint": "Owners and admins can both manage the store and its team. An owner cannot be removed here.",
         "saveAll": "Save all changes",
-        "saveError": "Some changes could not be saved. Try again.",
-        "undoRemove": "Undo remove",
-        "walletlessMember": "Walletless member"
+        "saveError": "We could not save some changes. Try again.",
+        "undoRemove": "Undo removal",
+        "walletlessMember": "Member (e-mail only)"
       },
-      "title": "Edit"
+      "title": "Edit your store"
     },
     "platformAdmin": {
-      "readOnlySectionTitle": "Read-only merchants",
+      "readOnlyBanner": "Read-only view. You can't make changes.",
+      "readOnlySectionTitle": "Read-only stores",
       "readOnlyTag": "Read-only"
     },
     "push": {
@@ -2126,28 +2288,29 @@ export default interface Resources {
         "audience": {
           "countError": "Couldn't count the members who match this audience.",
           "description": "Choose which members should receive this notification.",
-          "matched": "Audience matched: <0>{{total}}</0> members",
+          "matched": "Members who match: <0>{{total}}</0>",
           "title": "Audience"
         },
         "campaign": {
-          "hint": "Internal name used to identify this notification campaign. Members will not see it.",
-          "label": "Campaign name",
-          "maxLength": "The campaign name can't exceed 100 characters",
-          "minLength": "The campaign name requires at least 5 characters",
-          "placeholder": "E.g. Summer reactivation campaign",
-          "required": "Campaign name is required"
+          "hint": "A name for your own reference. Members do not see it.",
+          "label": "Internal name",
+          "maxLength": "The internal name can't exceed 100 characters",
+          "minLength": "The internal name requires at least 5 characters",
+          "placeholder": "E.g. Summer offer",
+          "required": "Internal name is required"
         },
         "charCount": "{{current}} / {{max}} characters",
         "close": "Close",
         "content": {
-          "description": "Create the push notification your members will receive.",
+          "description": "Write the notification your members will receive.",
           "image": {
-            "hint": "Optional. Display an image in the notification when supported by the device.",
-            "label": "Image URL",
+            "hint": "Optional. Shown in the notification when the device supports it.",
+            "label": "Image link",
             "placeholder": "https://..."
           },
           "launchUrl": {
-            "label": "Launch URL",
+            "hint": "Optional. The page opened when a member taps the notification. If empty, the Frak app opens.",
+            "label": "Link opened on tap",
             "placeholder": "https://..."
           },
           "message": {
@@ -2167,24 +2330,29 @@ export default interface Resources {
           "title": "Notification content"
         },
         "leave": {
-          "confirm": "Yes, leave",
-          "continueEditing": "Continue editing",
-          "description": "You've started creating a push notification. If you leave, any information you've entered will be lost.",
-          "title": "Leave notification setup?"
+          "confirm": "Leave",
+          "continueEditing": "Keep editing",
+          "description": "You started writing a notification. If you leave, what you entered is lost.",
+          "title": "Leave this page?"
         },
         "preview": {
           "message": "Your notification message will appear here.",
+          "now": "now",
           "title": "Your notification title"
         },
-        "publish": "Publish notification",
+        "publish": "Review and send",
         "review": {
           "audience": "Audience",
           "audienceValue": "{{total}} members",
-          "continueEditing": "Continue editing",
+          "audienceValue_one": "{{total}} member",
+          "audienceValue_other": "{{total}} members",
+          "continueEditing": "Back to editing",
           "delivery": "Delivery",
+          "error": "We could not send the notification. Try again. If it keeps failing, email hello@frak-labs.com.",
           "immediately": "Immediately",
-          "schedule": "Schedule notification",
-          "send": "Send notification",
+          "irreversible": "Once sent, a notification can't be edited or deleted.",
+          "schedule": "Schedule",
+          "send": "Send",
           "title": "Review notification"
         },
         "schedule": {
@@ -2193,54 +2361,64 @@ export default interface Resources {
           },
           "description": "Choose when this notification should be sent.",
           "later": {
-            "description": "Choose a date and time for delivery.",
+            "description": "Choose a date and time to send.",
             "label": "Schedule for later"
           },
           "now": {
-            "description": "Send as soon as it's published.",
+            "description": "Sent as soon as you confirm.",
             "label": "Send immediately"
           },
-          "required": "Pick a date and time for delivery",
+          "required": "Pick a date and time to send",
           "time": {
             "label": "Select time"
           },
-          "title": "Schedule"
+          "timezone": "Time zone: {{timezone}}",
+          "title": "When to send"
         },
-        "title": "Send Push Notification",
-        "update": "Update notification"
+        "title": "Send push notification",
+        "update": "Review changes"
       },
       "history": {
         "audience": {
           "all": "All members",
-          "members": "{{count}} members"
+          "members": "{{count}} members",
+          "members_one": "{{count}} member",
+          "members_other": "{{count}} members"
         },
         "columns": {
           "audience": "Audience",
           "notification": "Notification",
-          "scheduledFor": "Scheduled for",
-          "sentOpened": "Sent / Opened",
+          "scheduledFor": "Date",
+          "sentOpened": "Opened / sent",
           "status": "Status"
         },
         "delete": {
           "cancel": "Cancel",
           "confirm": "Delete",
-          "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
-          "error": "Couldn't delete the notification. Try again.",
-          "title": "Delete push notification"
+          "description": "Delete “{{title}}”? It will not be sent. This can't be undone.",
+          "error": "We could not delete the notification. Try again.",
+          "title": "Delete notification"
+        },
+        "empty": {
+          "filtered": "No notification matches these filters.",
+          "none": "You have not sent any notification yet."
         },
         "filters": {
           "button": "Filters",
-          "reset": "Reset"
+          "reset": "Reset filters"
         },
         "rowMenu": {
           "aria": "Actions for {{title}}",
           "delete": "Delete",
-          "edit": "Edit push notification"
+          "edit": "Edit"
         },
         "status": {
           "scheduled": "Scheduled",
           "sent": "Sent"
         }
+      },
+      "resources": {
+        "history": "your notification history"
       }
     },
     "settings": {
@@ -2258,7 +2436,7 @@ export default interface Resources {
             "frakFee": "Frak fee (20%)",
             "gifted": "Gifted amount",
             "gross": "Gross amount",
-            "hint": "Estimate - final VAT and fee are computed when the deposit is created.",
+            "hint": "Estimate. Final VAT and fee are computed when the deposit is created.",
             "net": "Net amount",
             "title": "Estimated breakdown",
             "vat": "VAT (20%)",
@@ -2277,8 +2455,8 @@ export default interface Resources {
             "trigger": "Add deposit"
           },
           "errors": {
-            "create": "Something went wrong while creating the document. Please try again.",
-            "void": "Something went wrong while voiding the document. Please try again."
+            "create": "We could not create the document. Try again.",
+            "void": "We could not void the document. Try again."
           },
           "fields": {
             "currency": {
@@ -2289,7 +2467,7 @@ export default interface Resources {
               "label": "Document date"
             },
             "giftedAmount": {
-              "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent.",
+              "hint": "Offered top-up added back to the net amount, to correct a deposit that was computed wrongly.",
               "label": "Gifted amount (optional)",
               "placeholder": "e.g. 200"
             },
@@ -2324,7 +2502,7 @@ export default interface Resources {
           },
           "panel": {
             "description": "Set the billing country and create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
-            "title": "Platform admin - billing"
+            "title": "Platform admin: billing"
           },
           "table": {
             "void": "Void",
@@ -2332,7 +2510,7 @@ export default interface Resources {
           },
           "void": {
             "confirm": "Void document",
-            "description": "This will void {{reference}}. Voided documents are kept for records but excluded from the merchant's billing history.",
+            "description": "This will void {{reference}}. Voided documents are kept for records but excluded from the store's billing history.",
             "title": "Void this document?"
           },
           "withdraw": {
@@ -2343,11 +2521,11 @@ export default interface Resources {
           }
         },
         "errors": {
-          "save": "Something went wrong while saving your billing information. Your changes were kept - please try again."
+          "save": "We could not save your invoice information. Your changes are still here. Try again."
         },
         "fields": {
           "billingEmail": {
-            "label": "Billing email",
+            "label": "Invoice email",
             "placeholder": "youremail@company.com"
           },
           "city": {
@@ -2377,12 +2555,13 @@ export default interface Resources {
         },
         "info": {
           "label": "Invoice information",
-          "missing": "Missing information",
-          "subtitle": "Billing details used across all campaign invoices and statements.",
+          "missing": "Invoice information missing",
+          "missingHint": "These details are used to generate your invoices.",
+          "subtitle": "Used on all your invoices.",
           "title": "Invoice information"
         },
         "segments": {
-          "deposit": "Deposit",
+          "deposit": "Deposits",
           "invoices": "Invoices"
         },
         "sheet": {
@@ -2392,7 +2571,7 @@ export default interface Resources {
         },
         "summary": {
           "address": "Address",
-          "billingEmail": "Billing email",
+          "billingEmail": "Invoice email",
           "companyName": "Company name",
           "country": "Country",
           "vatNumber": "VAT number"
@@ -2402,14 +2581,14 @@ export default interface Resources {
           "date": "Date",
           "description": "Description",
           "download": "Download PDF",
-          "downloadError": "Couldn't generate the PDF. Please try again.",
+          "downloadError": "We could not download the PDF. Try again.",
           "pdf": "PDF",
           "type": "Type"
         },
         "tag": {
           "deposit": "Deposit",
           "paid": "Paid",
-          "withdraw": "Withdraw"
+          "withdraw": "Withdrawal"
         },
         "validation": {
           "decimal": "Enter a valid decimal amount",
@@ -2419,7 +2598,7 @@ export default interface Resources {
         }
       },
       "currency": {
-        "label": "Choose your preferred currency",
+        "label": "Currency used to display amounts in this dashboard.",
         "options": {
           "eur": "EUR",
           "gbp": "GBP",
@@ -2428,77 +2607,83 @@ export default interface Resources {
         "title": "Currency"
       },
       "demo": {
-        "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data.",
-        "label": "Enable Demo Mode"
+        "description": "Shows example data instead of yours, for presentations. Turning it off logs you out.",
+        "label": "Demo mode"
       },
       "language": {
         "label": "Choose your preferred language",
         "options": {
           "en": "English",
-          "fr": "French"
+          "fr": "Français"
         },
         "title": "Language"
       },
       "security": {
         "credentials": {
-          "addPassword": "Add a password to also sign in with email.",
+          "addPassword": "Add a password to also log in with your email.",
           "addPasswordCta": "Add password",
-          "connected": "Verified",
-          "description": "Wallet, password, and connected accounts used to sign in.",
-          "emailMismatch": "This email doesn't match your account email.",
-          "emailTaken": "This email is already used by another account.",
-          "linkWallet": "Link a wallet",
-          "password": "Email & password",
+          "connected": "Email verified",
+          "description": "The ways you can log in to this account.",
+          "emailMismatch": "Use the email of your account.",
+          "emailTaken": "This email is already used by another account. Use another email, or log in with that account.",
+          "linkWallet": "Link wallet",
+          "linkWalletHint": "Needed to withdraw funds and change your spending limit.",
+          "password": "Email and password",
           "passwordAdded": "Password added and email verified.",
           "passwordExists": "This account already has a password.",
-          "pending": "Pending verification",
+          "pending": "Email not verified",
           "savePassword": "Save password",
-          "title": "Sign-in methods",
+          "title": "How you log in",
           "verifyBanner": {
-            "description": "Confirm your email to secure your account and make sure you can always sign back in.",
+            "description": "Confirm your email so you can always log back in.",
             "title": "Verify your email address"
           },
-          "wallet": "Wallet"
+          "wallet": "Frak wallet"
         },
         "sessions": {
-          "current": "this device",
-          "description": "Devices and browsers currently signed in to your account.",
-          "emptyDescription": "Devices signed in to your account will appear here.",
-          "emptyTitle": "No active sessions",
+          "current": "This device",
+          "description": "Devices and browsers currently logged in to your account.",
+          "emptyDescription": "Devices logged in to your account appear here.",
+          "emptyTitle": "No signed-in devices",
+          "loadError": "We could not load your devices. Check your connection and try again.",
           "method": {
-            "password": "Email & password",
+            "password": "Email and password",
             "shopify": "Shopify",
-            "wallet": "Wallet"
+            "wallet": "Frak wallet"
           },
-          "revoke": "Revoke",
-          "revokeDescription": "This device will need to sign in again to access your account.",
-          "revokeTitle": "Revoke this session?",
-          "title": "Active sessions"
+          "revoke": "Log out",
+          "revokeDescription": "This device will need to log in again to access your account.",
+          "revokeError": "We could not log out this device. Try again.",
+          "revokeTitle": "Log out this device?",
+          "title": "Signed-in devices"
         },
         "totp": {
           "confirm": "Confirm",
           "copyCodes": "Copy codes",
-          "downloadCodes": "Download",
-          "enable": "Enable authenticator app",
-          "enabled": "Authenticator app enabled",
-          "manualHint": "Can't scan? Enter this key manually instead:",
-          "recoveryHint": "Store these somewhere safe - each code can be used once if you lose access to your authenticator app.",
-          "recoveryTitle": "Save your recovery codes",
-          "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+          "downloadCodes": "Download as file",
+          "enable": "Set up authenticator app",
+          "enabled": "Authenticator app is on",
+          "manualHint": "Can't scan? Enter this setup key in the app instead:",
+          "recoveryHint": "Keep these codes safe. If you lose your phone, each one works once. We won't show them again.",
+          "recoveryTitle": "Save your backup codes",
+          "scanHint": "Scan this QR code with an authenticator app such as Google Authenticator or Authy, then enter the 6-digit code it shows.",
+          "setupError": "We could not start the setup. Try again.",
           "title": "Authenticator app"
         },
         "twoFactor": {
-          "description": "Add an extra layer of security to your sign-in with an authenticator app.",
-          "title": "Two-Factor Authentication"
+          "description": "Asks for a 6-digit code from an authenticator app on your phone when you log in and for sensitive actions, like publishing a campaign or managing your team.",
+          "title": "2-step verification"
         }
       },
       "tabs": {
         "billing": "Billing",
-        "usage": "Usage"
+        "usage": "General"
       },
       "wallet": {
         "copy": "Copy address",
-        "title": "Wallet address"
+        "empty": "No Frak wallet connected.",
+        "hint": "Your Frak wallet. Withdrawn funds are sent here.",
+        "title": "Frak wallet address"
       }
     },
     "shell": {
@@ -2507,7 +2692,7 @@ export default interface Resources {
           "logout": "Log out",
           "settings": "Settings"
         },
-        "addMerchant": "Add a new merchant",
+        "addMerchant": "Add a store",
         "breadcrumbLabel": "Breadcrumb",
         "demoBadge": "demo",
         "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
@@ -2515,7 +2700,7 @@ export default interface Resources {
         "myAccount": "My account"
       },
       "nav": {
-        "noMerchantHint": "Add a merchant first"
+        "noMerchantHint": "Add a store first"
       },
       "pages": {
         "billing": {
@@ -2528,17 +2713,17 @@ export default interface Resources {
           "nav": "TakeAds report"
         },
         "campaignsList": {
-          "nav": "List"
+          "nav": "All campaigns"
         },
         "campaignsOverview": {
-          "nav": "Data overview"
+          "nav": "Overview"
         },
         "dashboard": {
-          "nav": "My merchants",
-          "title": "My Merchants"
+          "nav": "My stores",
+          "title": "My stores"
         },
         "funding": {
-          "nav": "Funding"
+          "nav": "Budget"
         },
         "internal": {
           "nav": "Internal"
@@ -2560,10 +2745,10 @@ export default interface Resources {
         },
         "members": {
           "nav": "Members",
-          "title": "Members List"
+          "title": "Members"
         },
         "merchant": {
-          "nav": "Merchant"
+          "nav": "Store"
         },
         "push": {
           "nav": "Push"
@@ -2578,7 +2763,7 @@ export default interface Resources {
           "nav": "Setup status"
         },
         "wallet": {
-          "nav": "Wallet"
+          "nav": "Frak wallet"
         }
       },
       "sections": {
@@ -2588,9 +2773,9 @@ export default interface Resources {
       }
     },
     "welcomePopup": {
-      "cta": "Explore the new dashboard",
-      "description": "We've redesigned the Frak dashboard to make campaign management and performance tracking simpler than ever.",
-      "title": "🚀 Your new Frak dashboard is here"
+      "cta": "Got it",
+      "description": "Manage your campaigns and see their results from this dashboard.",
+      "title": "Welcome to the Frak dashboard"
     }
   }
 }

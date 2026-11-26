@@ -23,7 +23,10 @@ export function ExplorerSummary({ merchantId }: { merchantId: string }) {
 
     return (
         <>
-            <EditCard title={t("merchantEdit.explorer.title")}>
+            <EditCard
+                title={t("merchantEdit.explorer.title")}
+                description={t("merchantEdit.explorer.intro")}
+            >
                 <DetailCells>
                     <DetailCell
                         label={t("merchantEdit.explorer.listed")}

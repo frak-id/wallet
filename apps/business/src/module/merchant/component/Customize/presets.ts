@@ -59,8 +59,8 @@ export const POST_PURCHASE_PRESETS: readonly PostPurchasePreset[] = [
             fr: "{REWARD} gagnés jusqu'ici. Continuez à partager pour augmenter vos récompenses.",
         },
         referrer: {
-            en: "Share with friends to grow your rewards — earn {REWARD} each time.",
-            fr: "Partagez avec vos amis pour augmenter vos récompenses — gagnez {REWARD} à chaque fois.",
+            en: "Share with friends to grow your rewards. Earn {REWARD} each time.",
+            fr: "Partagez avec vos amis pour augmenter vos récompenses. Gagnez {REWARD} à chaque fois.",
         },
     },
     {
@@ -116,12 +116,12 @@ export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
     },
     {
         en: {
-            title: "A friend unlocked {REWARD} for you",
+            title: "A friend shared {REWARD} with you",
             description:
                 "Shop with {Brand} and collect your reward after purchase.",
         },
         fr: {
-            title: "Un ami vous a débloqué {REWARD}",
+            title: "Un ami a partagé {REWARD} avec vous",
             description:
                 "Achetez chez {Brand} et récupérez votre récompense après votre achat.",
         },
@@ -184,7 +184,7 @@ export const AMBASSADOR_TONE_PRESETS: readonly AmbassadorTonePreset[] = [
         en: {
             heroTitle: "Get paid to recommend {BRAND}",
             heroLede:
-                "Share your link with friends and earn a reward on every order they place. No cap, no fees.",
+                "Share your link with friends and earn a reward on every order they place.",
             heroRewardCaption: "to earn on every sale",
             rewardHeading: "Earn on every sale you bring in",
             rewardLede:
@@ -196,38 +196,38 @@ export const AMBASSADOR_TONE_PRESETS: readonly AmbassadorTonePreset[] = [
         fr: {
             heroTitle: "Faites-vous payer pour recommander {BRAND}",
             heroLede:
-                "Partagez votre lien avec vos proches et gagnez une récompense sur chacune de leurs commandes. Sans plafond, sans frais.",
+                "Partagez votre lien avec vos proches et gagnez une récompense sur chacune de leurs commandes.",
             heroRewardCaption: "à gagner sur chaque vente",
             rewardHeading: "Gagnez sur chaque vente que vous apportez",
             rewardLede:
                 "Chaque commande passée avec votre lien vous rapporte. Plus vos proches commandent, plus vous gagnez.",
             heroCtaLabel: "Commencer à gagner",
-            rewardCtaLabel: "Récupérer mon lien",
+            rewardCtaLabel: "Obtenir mon lien",
             referralCtaLabel: "Partager et gagner",
         },
     },
     {
         key: "trust",
         en: {
-            heroTitle: "Recommend {BRAND}, simply and safely",
+            heroTitle: "Recommend {BRAND} with your own link",
             heroLede:
                 "Your link is yours alone: every order it brings is tracked automatically, and {BRAND} funds your reward.",
             heroRewardCaption: "for you, on every confirmed sale",
             rewardHeading: "A reward for you on every confirmed sale",
             rewardLede:
-                "No password and no bank details to start: you sign in with your phone and follow your earnings in real time.",
+                "Every confirmed sale earns you a reward. You can follow your earnings in the Frak app.",
             heroCtaLabel: "Join the program",
             rewardCtaLabel: "Get my personal link",
             referralCtaLabel: "Share my personal link",
         },
         fr: {
-            heroTitle: "Recommandez {BRAND}, simplement et en toute sécurité",
+            heroTitle: "Recommandez {BRAND} avec votre propre lien",
             heroLede:
-                "Votre lien vous est propre\u00A0: chaque commande passée avec est enregistrée automatiquement, et c’est {BRAND} qui finance votre récompense.",
+                "Votre lien vous est propre\u00A0: chaque commande passée avec ce lien est enregistrée automatiquement, et c’est {BRAND} qui finance votre récompense.",
             heroRewardCaption: "pour vous, à chaque vente confirmée",
             rewardHeading: "Une récompense pour vous à chaque vente confirmée",
             rewardLede:
-                "Ni mot de passe ni coordonnées bancaires pour commencer\u00A0: vous vous connectez avec votre téléphone et suivez vos gains en temps réel.",
+                "Chaque vente confirmée vous rapporte une récompense. Vous suivez vos gains dans l’application Frak.",
             heroCtaLabel: "Rejoindre le programme",
             rewardCtaLabel: "Obtenir mon lien personnel",
             referralCtaLabel: "Partager mon lien personnel",
@@ -241,7 +241,7 @@ export const AMBASSADOR_TONE_PRESETS: readonly AmbassadorTonePreset[] = [
                 "Share your link with friends. They order, you get rewarded. That’s it.",
             heroRewardCaption: "for you, every time",
             rewardHeading: "A reward every time a friend orders",
-            rewardLede: "No limits, no catch. Share as much as you like.",
+            rewardLede: "Share as much as you like.",
             heroCtaLabel: "I’m in",
             rewardCtaLabel: "Grab my link",
             referralCtaLabel: "Send my link",
@@ -252,8 +252,7 @@ export const AMBASSADOR_TONE_PRESETS: readonly AmbassadorTonePreset[] = [
                 "Partage ton lien avec tes potes. Ils commandent, tu gagnes. C’est tout.",
             heroRewardCaption: "pour toi, à chaque fois",
             rewardHeading: "Une récompense à chaque commande d’un pote",
-            rewardLede:
-                "Pas de limite, pas de piège. Partage autant que tu veux.",
+            rewardLede: "Partage autant que tu veux.",
             heroCtaLabel: "Je me lance",
             rewardCtaLabel: "Je prends mon lien",
             referralCtaLabel: "Envoyer mon lien",
@@ -287,11 +286,11 @@ export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
     {
         en: {
             title: "A gift from {Brand}",
-            text: "I found this and thought of you — take a look.",
+            text: "I found this and thought of you. Take a look.",
         },
         fr: {
             title: "Un cadeau de la part de {Brand}",
-            text: "Je suis tombé·e là-dessus et j'ai pensé à toi — jette un œil.",
+            text: "Je suis tombé·e là-dessus et j'ai pensé à toi. Jette un œil.",
         },
     },
     {
@@ -307,11 +306,11 @@ export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
     {
         en: {
             title: "My pick from {Brand}",
-            text: "Worth a look — tell me what you think.",
+            text: "Worth a look. Tell me what you think.",
         },
         fr: {
             title: "Ma sélection chez {Brand}",
-            text: "Ça vaut le coup d'œil — dis-moi ce que tu en penses.",
+            text: "Ça vaut le coup d'œil. Dis-moi ce que tu en penses.",
         },
     },
 ];

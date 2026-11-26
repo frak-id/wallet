@@ -17,6 +17,7 @@ function CreatePushNotificationError(props: ErrorComponentProps) {
         <RouteError
             {...props}
             title={t("errors.pushCreate.title")}
+            message={t("errors.pushCreate.message")}
             fallbackPath={`/m/${merchantId}/members`}
             fallbackLabel={t("errors.pushCreate.back")}
         />

@@ -5,6 +5,7 @@ import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
+import { walletPromptMetadata } from "@/module/merchant/utils/walletPromptMetadata";
 
 export function useSetBankOpenStatus({
     bankAddress,
@@ -18,52 +19,53 @@ export function useSetBankOpenStatus({
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
 
-    const { mutate: setOpenStatus, isPending: isSettingOpenStatus } =
-        useMutation({
-            mutationKey: ["merchant", merchantId, "bank", "setOpen"],
-            mutationFn: async ({ isOpen }: { isOpen: boolean }) => {
-                if (isDemoMode) {
-                    await new Promise((resolve) => setTimeout(resolve, 300));
-                    await queryClient.invalidateQueries({
-                        queryKey: merchantBankQueryKey(merchantId),
-                    });
-                    return;
-                }
-
-                const { hash } = await sendTx({
-                    tx: {
-                        to: bankAddress,
-                        data: encodeFunctionData({
-                            abi: campaignBankAbi,
-                            functionName: "setOpen",
-                            args: [isOpen],
-                        }),
-                    },
-                    metadata: {
-                        header: {
-                            title: isOpen ? "Open bank" : "Close bank",
-                        },
-                        i18n: {
-                            fr: {
-                                "sdk.modal.sendTransaction.description": isOpen
-                                    ? "Ouvrir la banque pour la distribution"
-                                    : "Fermer la banque",
-                            },
-                            en: {
-                                "sdk.modal.sendTransaction.description": isOpen
-                                    ? "Open bank for distribution"
-                                    : "Close bank",
-                            },
-                        },
-                    },
-                });
-
-                await waitForTxAndInvalidateQueries({
-                    hash,
+    const {
+        mutate: setOpenStatus,
+        isPending: isSettingOpenStatus,
+        isError: isOpenStatusError,
+    } = useMutation({
+        mutationKey: ["merchant", merchantId, "bank", "setOpen"],
+        mutationFn: async ({ isOpen }: { isOpen: boolean }) => {
+            if (isDemoMode) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                await queryClient.invalidateQueries({
                     queryKey: merchantBankQueryKey(merchantId),
                 });
-            },
-        });
+                return;
+            }
 
-    return { setOpenStatus, isSettingOpenStatus };
+            const { hash } = await sendTx({
+                tx: {
+                    to: bankAddress,
+                    data: encodeFunctionData({
+                        abi: campaignBankAbi,
+                        functionName: "setOpen",
+                        args: [isOpen],
+                    }),
+                },
+                metadata: await walletPromptMetadata(
+                    isOpen
+                        ? {
+                              titleKey:
+                                  "funding.walletPrompt.payRewardsOn.title",
+                              descriptionKey:
+                                  "funding.walletPrompt.payRewardsOn.description",
+                          }
+                        : {
+                              titleKey:
+                                  "funding.walletPrompt.payRewardsOff.title",
+                              descriptionKey:
+                                  "funding.walletPrompt.payRewardsOff.description",
+                          }
+                ),
+            });
+
+            await waitForTxAndInvalidateQueries({
+                hash,
+                queryKey: merchantBankQueryKey(merchantId),
+            });
+        },
+    });
+
+    return { setOpenStatus, isSettingOpenStatus, isOpenStatusError };
 }

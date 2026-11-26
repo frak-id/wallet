@@ -101,7 +101,7 @@ function CurrencyRadioGroup({
                                         variant="body"
                                         weight="medium"
                                     >
-                                        {meta.label}
+                                        {meta.currencySymbol}
                                     </Text>
                                     <Text
                                         as="span"
@@ -308,7 +308,7 @@ export function MerchantEditSheet({
                                         )}{" "}
                                     </Text>
                                     {t(
-                                        "forms.currencySelector.moneriumDescription"
+                                        "merchant.create.currencyInfo.moneriumDescription"
                                     )}
                                 </Text>
                                 <Text
@@ -326,7 +326,7 @@ export function MerchantEditSheet({
                                         )}{" "}
                                     </Text>
                                     {t(
-                                        "forms.currencySelector.circleDescription"
+                                        "merchant.create.currencyInfo.circleDescription"
                                     )}
                                 </Text>
                             </Stack>

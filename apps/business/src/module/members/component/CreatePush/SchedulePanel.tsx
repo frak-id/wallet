@@ -17,6 +17,8 @@ import { FormControl, FormField } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 import * as styles from "./push-create.css";
 
+const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 /**
  * Schedule — send immediately or pick a delivery date + time.
  */
@@ -74,6 +76,11 @@ export function SchedulePanel() {
                     </RadioGroup>
                 )}
             />
+            {scheduleType === "later" && (
+                <Text variant={"bodySmall"} color={"secondary"}>
+                    {t("push.create.schedule.timezone", { timezone })}
+                </Text>
+            )}
             {scheduleType === "later" && (
                 <div className={styles.dateRow}>
                     <div className={styles.dateField}>

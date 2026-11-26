@@ -25,6 +25,9 @@ export const DEFAULT_MAX_DEPTH = 5;
  * out-earn the direct referrer and the distribution model no longer holds. */
 export const MIN_DEPERDITION_PER_LEVEL = 50;
 
+/** Highest accepted decrease: at 100% deeper levels receive nothing. */
+export const MAX_DEPERDITION_PER_LEVEL = 99;
+
 export const DEFAULT_REFERRAL_CHAIN_FORM: ReferralChainFormValues = {
     enabled: false,
     deperditionPerLevel: DEFAULT_DEPERDITION_PER_LEVEL,

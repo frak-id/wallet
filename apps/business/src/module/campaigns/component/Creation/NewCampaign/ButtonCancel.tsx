@@ -7,10 +7,8 @@ import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { campaignStore } from "@/stores/campaignStore";
 
 /**
- * Round glass "X" in the wizard header. Opens a "Close draft without saving it?"
- * confirmation before resetting the draft and leaving the wizard — but only
- * when there are unsaved edits. Right after "Save as draft" (nothing dirty) it
- * leaves straight away, since the warning would be misleading.
+ * Round glass "X" in the wizard header. Asks for confirmation only when the
+ * current step has unsaved edits. Steps already continued are saved already.
  */
 export function ButtonCancel({
     onClick,
@@ -41,7 +39,7 @@ export function ButtonCancel({
             <GlassButton
                 as="button"
                 disabled={disabled}
-                aria-label={t("campaigns.create.cancel.dismiss")}
+                aria-label={t("campaigns.create.cancel.close")}
                 icon={<CloseIcon width={22} height={22} />}
                 onClick={close}
             />
@@ -54,7 +52,7 @@ export function ButtonCancel({
                 <GlassButton
                     as="button"
                     disabled={disabled}
-                    aria-label={t("campaigns.create.cancel.dismiss")}
+                    aria-label={t("campaigns.create.cancel.close")}
                     icon={<CloseIcon width={22} height={22} />}
                 />
             }

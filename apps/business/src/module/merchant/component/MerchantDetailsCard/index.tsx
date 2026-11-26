@@ -40,7 +40,7 @@ export function MerchantDetailsCard({ merchantId }: { merchantId: string }) {
                 />
                 <DetailCell
                     label={t("merchantEdit.details.currency")}
-                    value={currency ? currency.label : "—"}
+                    value={currency ? currency.currencySymbol : "—"}
                 />
             </DetailCells>
             {!isReadOnly && (

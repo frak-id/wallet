@@ -55,6 +55,13 @@ const PERIODS = [
     { value: "monthly", labelKey: "campaigns.create.budget.period.monthly" },
 ] as const satisfies ReadonlyArray<{ value: BudgetType; labelKey: string }>;
 
+const CAP_HINT_KEYS = {
+    global: "campaigns.create.budget.cap.hint",
+    daily: "campaigns.create.budget.cap.hintDaily",
+    weekly: "campaigns.create.budget.cap.hintWeekly",
+    monthly: "campaigns.create.budget.cap.hintMonthly",
+} as const satisfies Record<BudgetType, string>;
+
 const SCHEDULE_OPTIONS = [
     {
         value: "immediate",
@@ -194,6 +201,7 @@ function NumberStepper({
     onChange: (next: number) => void;
     step?: number;
 }) {
+    const { t } = useTranslation();
     const current = typeof value === "number" ? value : Number(value) || 0;
     return (
         <span className={styles.stepper}>
@@ -205,14 +213,14 @@ function NumberStepper({
             <button
                 type="button"
                 tabIndex={-1}
-                aria-label="increment"
+                aria-label={t("campaigns.create.stepper.increase")}
                 className={styles.stepperUp}
                 onClick={() => onChange(current + step)}
             />
             <button
                 type="button"
                 tabIndex={-1}
-                aria-label="decrement"
+                aria-label={t("campaigns.create.stepper.decrease")}
                 className={styles.stepperDown}
                 onClick={() => onChange(Math.max(0, current - step))}
             />
@@ -228,6 +236,7 @@ export function BudgetCapField({
 }) {
     const { t } = useTranslation();
     const amount = useWatch({ control, name: "amount" });
+    const period = useWatch({ control, name: "period" });
     const currencyGlyph = useCampaignCurrencyGlyph();
 
     return (
@@ -251,7 +260,7 @@ export function BudgetCapField({
                                 error={showError}
                                 classNameWrapper={styles.capInputWrapper}
                                 label={t("campaigns.create.budget.cap.label")}
-                                hint={t("campaigns.create.budget.cap.hint")}
+                                hint={t(CAP_HINT_KEYS[period ?? "global"])}
                                 rightSection={
                                     <span className={styles.capRight}>
                                         <NumberStepper
@@ -526,6 +535,8 @@ export function BudgetCampaign() {
             formId={FORM_ID}
             isValid={form.formState.isValid}
             isPending={saveCampaign.isPending}
+            isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
+            saveFailed={saveCampaign.isError}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
             hasUnsavedChanges={form.formState.isDirty}

@@ -63,7 +63,7 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
                         <BigNumber
                             format={fmt.decimal1}
                             value={efficiency.roi}
-                            prefix="x"
+                            prefix="×"
                         />
                     </MetricCard>
                     <MetricCard

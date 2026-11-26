@@ -88,6 +88,11 @@ export function LinkedCredentials() {
                     </Button>
                 )}
             </DetailRow>
+            {!wallet && (
+                <Text variant="caption" color="tertiary">
+                    {t("settings.security.credentials.linkWalletHint")}
+                </Text>
+            )}
             {linkWalletErrorText && (
                 <Notice tone="error" role="alert">
                     {linkWalletErrorText}

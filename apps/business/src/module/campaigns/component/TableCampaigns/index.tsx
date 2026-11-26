@@ -73,7 +73,11 @@ export function TableCampaigns() {
                         className={styles.campaignsTable}
                         data={data}
                         columns={columns}
-                        emptyMessage={t("common.table.empty")}
+                        emptyMessage={
+                            data.length === 0
+                                ? t("campaigns.empty.none")
+                                : t("campaigns.empty.filtered")
+                        }
                         emptyPlaceholder="–"
                         enableSorting={true}
                         enableFiltering={true}

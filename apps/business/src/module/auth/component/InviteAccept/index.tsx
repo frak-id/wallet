@@ -18,20 +18,16 @@ import {
 } from "@/module/forms/PasswordInput";
 import { useAuthStore } from "@/stores/authStore";
 
-/**
- * Map the backend's typed error code to a translated message; falls back to
- * the raw (English) backend message for codes we don't special-case, same
- * pattern as `LinkedCredentials.tsx`'s `EMAIL_TAKEN` handling.
- */
+/** Translated message for an invite error, never the raw backend text. */
 function inviteErrorMessage(
     error: unknown,
-    t: (key: "auth.invite.invalidToken") => string
+    t: (key: "auth.invite.invalidToken" | "auth.invite.genericError") => string
 ): string | undefined {
     if (!(error instanceof Error)) return undefined;
     if (error instanceof AuthError && error.code === "INVALID_INVITATION") {
         return t("auth.invite.invalidToken");
     }
-    return error.message;
+    return t("auth.invite.genericError");
 }
 
 /**
@@ -167,19 +163,19 @@ function AlreadyAuthenticatedNotice({
             <Button
                 variant="primary"
                 width="auto"
-                onClick={() => navigate({ to: "/dashboard" })}
-            >
-                {t("auth.invite.openDashboard")}
-            </Button>
-            <Button
-                variant="ghost"
-                size="small"
-                width="auto"
                 onClick={() => {
                     useAuthStore.getState().clearAuth();
                 }}
             >
                 {t("auth.invite.signOutFirst")}
+            </Button>
+            <Button
+                variant="ghost"
+                size="small"
+                width="auto"
+                onClick={() => navigate({ to: "/dashboard" })}
+            >
+                {t("auth.invite.openDashboard")}
             </Button>
         </Stack>
     );

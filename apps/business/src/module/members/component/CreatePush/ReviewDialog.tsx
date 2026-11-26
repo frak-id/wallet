@@ -77,6 +77,7 @@ export function ReviewDialog({
                                 label={t("push.create.review.audience")}
                                 value={t("push.create.review.audienceValue", {
                                     total: targetCount,
+                                    count: targetCount,
                                 })}
                             />
                             <ReviewRow
@@ -84,6 +85,11 @@ export function ReviewDialog({
                                 value={delivery}
                             />
                         </div>
+                        {!scheduledAt && (
+                            <Text variant={"bodySmall"} color={"secondary"}>
+                                {t("push.create.review.irreversible")}
+                            </Text>
+                        )}
                     </Stack>
                 </Stack>
                 {error && (

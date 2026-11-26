@@ -53,7 +53,7 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/campaigns/")({
     },
     component: CampaignsOverviewPage,
     errorComponent: (props) => (
-        <DataLoadError {...props} resourceName="campaign overview data" />
+        <DataLoadError {...props} resource="campaignOverview" />
     ),
 });
 

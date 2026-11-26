@@ -65,6 +65,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
     const eligibleCount = confirm
         ? selected.filter((c) => eligible(confirm, c)).length
         : 0;
+    const skippedCount = selected.length - eligibleCount;
 
     return (
         <>
@@ -104,7 +105,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                     </Button>
                 </Inline>
                 <Button
-                    variant="primary"
+                    variant="secondary"
                     size="small"
                     rightIcon={<CloseIcon width={16} height={16} />}
                     onClick={() => clear()}
@@ -122,11 +123,21 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                     }}
                     title={t(confirmKeys.titleKey)}
                     description={
-                        <Trans
-                            i18nKey={confirmKeys.confirmKey}
-                            count={eligibleCount}
-                            components={{ strong: <strong /> }}
-                        />
+                        <>
+                            <Trans
+                                i18nKey={confirmKeys.confirmKey}
+                                count={eligibleCount}
+                                components={{ strong: <strong /> }}
+                            />
+                            {skippedCount > 0 && (
+                                <>
+                                    {" "}
+                                    {t("campaigns.bulk.skipped", {
+                                        count: skippedCount,
+                                    })}
+                                </>
+                            )}
+                        </>
                     }
                     cancel={
                         <Button variant="secondary">

@@ -57,15 +57,17 @@ export function CellRowMenu({ row, merchantId }: Props) {
     const navSection = (
         <RowMenuSection>
             {isDraft ? (
-                <Link
-                    to="/m/$merchantId/campaigns/draft/$campaignId"
-                    params={{ merchantId, campaignId: id }}
-                    onClick={() => reset()}
-                    className={rowMenu.item}
-                >
-                    <EyeIcon width={16} height={16} />
-                    <span>{t("campaigns.rowMenu.viewParameters")}</span>
-                </Link>
+                !actions.canEdit && (
+                    <Link
+                        to="/m/$merchantId/campaigns/draft/$campaignId"
+                        params={{ merchantId, campaignId: id }}
+                        onClick={() => reset()}
+                        className={rowMenu.item}
+                    >
+                        <EyeIcon width={16} height={16} />
+                        <span>{t("campaigns.rowMenu.viewParameters")}</span>
+                    </Link>
+                )
             ) : (
                 <Link
                     to="/m/$merchantId/campaigns/list"

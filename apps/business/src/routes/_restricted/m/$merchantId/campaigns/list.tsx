@@ -37,7 +37,7 @@ export const Route = createFileRoute(
     },
     component: CampaignsListPage,
     errorComponent: (props) => (
-        <DataLoadError {...props} resourceName="campaigns" />
+        <DataLoadError {...props} resource="campaigns" />
     ),
 });
 

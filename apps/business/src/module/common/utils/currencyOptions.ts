@@ -10,7 +10,6 @@ type CurrencyOption = {
     currencyCode: string;
     locale: string;
     provider: "Monerium" | "Circle";
-    providerDescription: string;
 };
 
 type CurrencyGroup = {
@@ -22,33 +21,29 @@ type CurrencyGroup = {
 export const currencyOptions: readonly CurrencyGroup[] = [
     {
         group: "Monerium",
-        description: "Best for easy IBAN transfer for end users",
+        description: "Euros, sent to a bank account",
         options: [
             {
                 value: "eure",
-                label: "EURe",
+                label: "EUR",
                 currencySymbol: "EUR",
                 currencyCode: "EUR",
                 locale: "fr-FR",
                 provider: "Monerium",
-                providerDescription:
-                    "Instant bank transfer — users can withdraw rewards to their IBAN in seconds",
             },
         ],
     },
     {
         group: "Circle",
-        description: "Best for blockchain usage for end users",
+        description: "US dollars, spent in crypto apps",
         options: [
             {
                 value: "usdc",
-                label: "USDC",
-                currencySymbol: "USDC",
+                label: "USD",
+                currencySymbol: "USD",
                 currencyCode: "USD",
                 locale: "en-US",
                 provider: "Circle",
-                providerDescription:
-                    "Widely accepted digital dollar — users can spend rewards across apps and services",
             },
         ],
     },

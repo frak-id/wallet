@@ -112,7 +112,7 @@ describe("matchBannerPreset", () => {
     it("matches the brand preset after substitution", () => {
         expect(
             matchBannerPreset(
-                "A friend unlocked {REWARD} for you",
+                "A friend shared {REWARD} with you",
                 "Shop with Nowa and collect your reward after purchase.",
                 "Nowa"
             )

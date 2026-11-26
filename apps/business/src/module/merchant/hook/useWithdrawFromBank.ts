@@ -5,6 +5,7 @@ import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
+import { walletPromptMetadata } from "@/module/merchant/utils/walletPromptMetadata";
 
 export function useWithdrawFromBank({
     bankAddress,
@@ -46,21 +47,10 @@ export function useWithdrawFromBank({
                         args: [token, amount, to],
                     }),
                 },
-                metadata: {
-                    header: {
-                        title: "Withdraw funds",
-                    },
-                    i18n: {
-                        fr: {
-                            "sdk.modal.sendTransaction.description":
-                                "Retirer les fonds de la banque",
-                        },
-                        en: {
-                            "sdk.modal.sendTransaction.description":
-                                "Withdraw funds from the bank",
-                        },
-                    },
-                },
+                metadata: await walletPromptMetadata({
+                    titleKey: "funding.walletPrompt.withdraw.title",
+                    descriptionKey: "funding.walletPrompt.withdraw.description",
+                }),
             });
 
             await waitForTxAndInvalidateQueries({
