@@ -26,14 +26,13 @@ describe("recordOf", () => {
         expect(recordOf(latest, [latest])).toEqual({ kind: "first", mine: 15 });
     });
 
-    it("announces a new record with the one it beats", () => {
+    it("announces a new record when this game beats every older one", () => {
         const latest = played("latest", 20);
         const history = [latest, played("a", 17), played("b", 5)];
 
         expect(recordOf(latest, history)).toEqual({
             kind: "new",
             mine: 21,
-            previous: 18,
         });
     });
 
@@ -84,7 +83,6 @@ describe("recordOf", () => {
         expect(recordOf(discarded, history)).toEqual({
             kind: "new",
             mine: 21,
-            previous: 11,
         });
     });
 });
