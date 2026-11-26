@@ -521,6 +521,7 @@ export default interface Resources {
         "gained_other": "{{count}} tickets since your last visit",
         "label": "Frak Game",
         "statusAllDone": "Every mission done",
+        "statusDetails": "See the details",
         "statusJoin": "Join the game",
         "statusResult": "See the result",
         "ticket_one": "ticket",
