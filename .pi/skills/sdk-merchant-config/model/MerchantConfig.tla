@@ -16,7 +16,8 @@ Backend(n) == [k |-> "backend", v |-> n] \* built from a /user/merchant/resolve 
 VARIABLES
     lsCfg, lsFresh, \* localStorage "frak-config-cache:<domain>:<lang>" and whether it is under CACHE_TTL
     glob,           \* window.__frakSdkConfig
-    page,           \* "off" | "connecting" | "fetchwait" | "merging" (setup done, fresh merge pending) | "done"
+    page,           \* "off" | "starting" (setupClient, iframe loading, no client yet) | "connecting" | "fetchwait"
+                    \* | "merging" (setup done, fresh merge pending) | "done"
     fetch,          \* configPromise: "none" (not started) | "inflight" | "ok" | "fail"
     fetchOks,       \* successful /resolve responses so far; each one is a newer backend config
     sentCached,     \* postConnectionSetup sent the cached config (used by the fix mutants)
@@ -57,12 +58,29 @@ Init ==
 Send(cfg, resolves) == chain' = Append(chain, [cfg |-> cfg, resolves |-> resolves])
 
 -----------------------------------------------------------------------------
-(* setupClient → loadCachedConfig (setCacheScope + reset: publish the cache whatever *)
-(* its age), then createIFrameFrakClient: fetch only when the cache is not fresh.    *)
-Create ==
+CacheFresh == lsCfg # Nothing /\ lsFresh
+
+(* setupClient before the iframe loads: loadCachedConfig (setCacheScope + reset: publish *)
+(* the cache whatever its age), then start the fetch unless the cache is fresh. There is *)
+(* no client yet, so Destroy and Request cannot happen.                                  *)
+Start ==
     /\ page = "off"
     /\ glob' = IF lsCfg = Nothing THEN Empty ELSE lsCfg
-    /\ fetch' = IF lsCfg # Nothing /\ lsFresh THEN "none" ELSE "inflight"
+    /\ fetch' = IF CacheFresh THEN "none" ELSE "inflight"
+    /\ page' = "starting"
+    /\ UNCHANGED << lsCfg, lsFresh, fetchOks, sentCached, chain, ctxSent, lctx, destroyed,
+                    detached, repushes, reloads, ghosts >>
+
+(* createIFrameFrakClient once the iframe has loaded: loadCachedConfig again (the same  *)
+(* object), then resolve() unless the cache is fresh. withCache reuses Start's request   *)
+(* in flight or after success; after a failure it either backs off (keeps the failure)  *)
+(* or retries. From "off" it is the React provider, which never calls setupClient.      *)
+Attach ==
+    /\ page \in {"off", "starting"}
+    /\ glob' = IF lsCfg = Nothing THEN Empty ELSE lsCfg
+    /\ fetch' \in CASE CacheFresh \/ fetch \in {"inflight", "ok"} -> {fetch}
+                  [] fetch = "none" -> {"inflight"}
+                  [] OTHER -> {"fail", "inflight"}
     /\ page' = "connecting"
     /\ UNCHANGED << lsCfg, lsFresh, fetchOks, sentCached, chain, ctxSent, lctx, destroyed,
                     detached, repushes, reloads, ghosts >>
@@ -127,7 +145,7 @@ Post == chain # << >> /\ PostAt(1)
 
 (* An RPC request passes the client middleware: connected, then `await contextSent`. *)
 Request ==
-    /\ page # "off" /\ page # "connecting" /\ ~detached /\ ctxSent
+    /\ page \in {"fetchwait", "merging", "done"} /\ ~detached /\ ctxSent
     /\ earlyRequest' = (earlyRequest \/ lctx = Nothing)
     /\ UNCHANGED << lsCfg, lsFresh, glob, page, fetch, fetchOks, sentCached, chain, ctxSent,
                     lctx, destroyed, detached, repushes, reloads, downgraded, writeAfterDestroy >>
@@ -143,7 +161,7 @@ Repush ==
 (* client.destroy(): cleanup; the full form also clearCache() then reset(), which finds *)
 (* no cache and publishes an empty config.                                              *)
 Destroy(full) ==
-    /\ page # "off" /\ ~destroyed
+    /\ page \notin {"off", "starting"} /\ ~destroyed
     /\ destroyed' = TRUE
     /\ detached' = TRUE
     /\ IF full
@@ -179,7 +197,7 @@ DestroyFull == Destroy(TRUE)
 DestroyDetach == Destroy(FALSE)
 
 Next ==
-    \/ Create \/ FetchOk \/ FetchFail \/ Connect \/ Merge \/ Post \/ Request \/ Repush
+    \/ Start \/ Attach \/ FetchOk \/ FetchFail \/ Connect \/ Merge \/ Post \/ Request \/ Repush
     \/ DestroyFull \/ DestroyDetach \/ CacheAges \/ Reload
 
 Spec == Init /\ [][Next]_vars
