@@ -16,7 +16,7 @@ Backend(n) == [k |-> "backend", v |-> n] \* built from a /user/merchant/resolve 
 VARIABLES
     lsCfg, lsFresh, \* localStorage "frak-config-cache:<domain>:<lang>" and whether it is under CACHE_TTL
     glob,           \* window.__frakSdkConfig
-    page,           \* "off" | "connecting" | "fetchwait" | "done"
+    page,           \* "off" | "connecting" | "fetchwait" | "merging" (setup done, fresh merge pending) | "done"
     fetch,          \* configPromise: "none" (not started) | "inflight" | "ok" | "fail"
     fetchOks,       \* successful /resolve responses so far; each one is a newer backend config
     sentCached,     \* postConnectionSetup sent the cached config (used by the fix mutants)
@@ -83,19 +83,22 @@ FetchFail ==
                     destroyed, detached, repushes, reloads, ghosts >>
 
 (* postConnectionSetup after `await lifecycleManager.isConnected`: send the cached *)
-(* config when the store is resolved, then wait for the fetch if one is running.   *)
+(* config when the store is resolved. A running fetch is awaited only when nothing  *)
+(* was sent; otherwise setup returns and the merge lands later.                   *)
 Connect ==
     /\ page = "connecting" /\ ~detached
     /\ IF glob.k # "empty" THEN Send(glob, TRUE) ELSE UNCHANGED chain
     /\ sentCached' = (glob.k # "empty")
-    /\ page' = IF fetch = "none" THEN "done" ELSE "fetchwait"
+    /\ page' = CASE fetch = "none" -> "done"
+                  [] glob.k # "empty" -> "merging"
+                  [] OTHER -> "fetchwait"
     /\ UNCHANGED << lsCfg, lsFresh, glob, fetch, fetchOks, ctxSent, lctx, destroyed, detached,
                     repushes, reloads, ghosts >>
 
-(* `await configPromise`, mergeAndSetConfig → sdkConfigStore.setConfig (global + *)
+(* configPromise settles: mergeAndSetConfig → sdkConfigStore.setConfig (global + *)
 (* writeCache, both unconditional on isResolved), then sendLifecycleConfig.        *)
 Merge ==
-    /\ page = "fetchwait" /\ fetch \in {"ok", "fail"}
+    /\ page \in {"fetchwait", "merging"} /\ fetch \in {"ok", "fail"}
     /\ LET cfg == IF fetch = "ok" THEN Backend(fetchOks) ELSE Fallback
        IN /\ glob' = cfg
           /\ lsCfg' = cfg
@@ -131,7 +134,7 @@ Request ==
 
 (* setupProofFreshnessRepush, installed once setup returns, stopped by destroy. *)
 Repush ==
-    /\ page = "done" /\ ~destroyed /\ glob.k # "empty" /\ repushes < MaxRepush
+    /\ page \in {"merging", "done"} /\ ~destroyed /\ glob.k # "empty" /\ repushes < MaxRepush
     /\ Send(glob, FALSE)
     /\ repushes' = repushes + 1
     /\ UNCHANGED << lsCfg, lsFresh, glob, page, fetch, fetchOks, sentCached, ctxSent, lctx,
@@ -188,7 +191,7 @@ NoTrustDowngrade == ~downgraded
 
 CacheOnlyBackend == lsCfg.k \in {"none", "backend"}
 
-Settled == page = "done" /\ chain = << >> /\ ~detached
+Settled == page \in {"merging", "done"} /\ chain = << >> /\ ~detached
 
 ListenerEndsOnLatest == (Settled /\ glob.k # "empty") => lctx = glob
 
