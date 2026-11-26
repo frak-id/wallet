@@ -303,7 +303,7 @@ async function collectImages(): Promise<InventoryItem[]> {
                 IMAGES[1].id,
                 IMAGES[1].repository,
                 nginxRef,
-                imageLocations(/^FROM nginx:/),
+                imageLocations(/^(FROM nginx:|ARG PREVIOUS_IMAGE=nginx:)/),
                 "Serves the wallet and business SPAs; the `-alpine` variant suffix is part of the pin and must survive the bump."
             )
         );

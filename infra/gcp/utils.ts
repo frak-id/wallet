@@ -1,4 +1,4 @@
-import type { Output } from "@pulumi/pulumi";
+import type { Input, Output } from "@pulumi/pulumi";
 import { isProd, normalizedStageName } from "../utils";
 
 export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
@@ -16,14 +16,16 @@ export const walletNamespace = new kubernetes.core.v1.Namespace(
 );
 
 const imageRetentionPeriod = isProd ? "30d" : "7d";
+const registryLocation = "europe-west1";
+const registryId = `wallet-${normalizedStageName}`;
 
 let registryPath: Output<string> | undefined;
 if (!$dev) {
     const registry = new gcp.artifactregistry.Repository("wallet-gcr", {
-        repositoryId: `wallet-${normalizedStageName}`,
+        repositoryId: registryId,
         format: "DOCKER",
         description: "Artifact registry for the wallet images",
-        location: "europe-west1",
+        location: registryLocation,
         project: gcp.config.project,
         cleanupPolicyDryRun: false,
         cleanupPolicies: [
@@ -55,7 +57,7 @@ if (!$dev) {
     });
     registryPath = registry.location.apply(
         (location) =>
-            `${location}-docker.pkg.dev/${gcp.config.project}/wallet-${normalizedStageName}`
+            `${location}-docker.pkg.dev/${gcp.config.project}/${registryId}`
     );
 }
 
@@ -68,6 +70,38 @@ export function getRegistryPath(image: string) {
             `${path}/${image}:${process.env.COMMIT_HASH ? `git-${process.env.COMMIT_HASH}` : "local-build"}`,
             `${path}/${image}:latest`,
         ]) ?? []
+    );
+}
+
+/**
+ * Adds `PREVIOUS_IMAGE` to the build args: the digest-pinned URI of the image's current
+ * `:latest`, so the Dockerfile can carry the previous release's assets. A bare tag could be
+ * served from BuildKit's cache. Left out when nothing was pushed yet (the Dockerfile default applies).
+ */
+export function withPreviousImage(
+    image: string,
+    buildArgs: Record<string, Input<string>>
+): Output<Record<string, string>> {
+    const previous = $dev
+        ? undefined
+        : gcp.artifactregistry
+              .getDockerImage({
+                  location: registryLocation,
+                  repositoryId: registryId,
+                  imageName: `${image}:latest`,
+                  project: gcp.config.project,
+              })
+              .then(
+                  (found) => found.selfLink,
+                  (error) => {
+                      $util.log.warn(
+                          `No ${image}:latest to carry assets from: ${error}`
+                      );
+                      return undefined;
+                  }
+              );
+    return $output({ args: buildArgs, previous }).apply(({ args, previous }) =>
+        previous ? { ...args, PREVIOUS_IMAGE: previous } : args
     );
 }
 

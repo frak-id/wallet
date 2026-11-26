@@ -4,6 +4,8 @@
 # for the full caching-strategy commentary.
 
 ARG BUN_VERSION=1.4.4
+# Image whose assets the new image also serves; the default (the base image) carries none.
+ARG PREVIOUS_IMAGE=nginx:1.31.8-alpine
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
@@ -72,6 +74,33 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 sh -c 'gzip -9 -k "$@" && brotli -q 11 "$@"' _ && \
     echo "Pre-compressed $(find dist \( -name '*.gz' -o -name '*.br' \) | wc -l) files (gzip + brotli)"
 
+RUN (cd dist && find assets -type f | sort) > /app/release-assets.txt \
+    && echo "Release assets: $(wc -l < /app/release-assets.txt) files"
+
+# A document cached from the previous release still imports that release's hashed chunks.
+# Rebuilding the same release carries what the image it replaces carried, so a redeploy keeps the window.
+# Images built before release-assets.txt existed carry everything under assets/.
+FROM ${PREVIOUS_IMAGE} AS previous
+COPY --from=app-builder /app/release-assets.txt /tmp/own-assets.txt
+RUN set -eu; \
+    mkdir /carry; \
+    cd /usr/share/nginx/html; \
+    : > /tmp/carried; \
+    if [ -f /usr/share/nginx/release-assets.txt ]; then \
+        if cmp -s /usr/share/nginx/release-assets.txt /tmp/own-assets.txt; then \
+            if [ -f /usr/share/nginx/previous-assets.txt ]; then cp /usr/share/nginx/previous-assets.txt /tmp/carried; fi; \
+        else \
+            cp /usr/share/nginx/release-assets.txt /tmp/carried; \
+        fi; \
+    elif [ -d assets ]; then \
+        find assets -type f > /tmp/carried; \
+    fi; \
+    LC_ALL=C sort -u /tmp/carried > /previous-assets.txt; \
+    if [ -s /previous-assets.txt ]; then \
+        tar -cf - -T /previous-assets.txt | tar -xf - -C /carry; \
+    fi; \
+    echo "Carrying $(wc -l < /previous-assets.txt) files from the previous release"
+
 FROM nginx:1.31.8-alpine
 # The module signature encodes PCRE, so pcre2-dev stays; gzip is dropped so zlib is not needed.
 RUN set -eux; \
@@ -90,7 +119,10 @@ RUN set -eux; \
     sed -i '1i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf; \
     cd /; rm -rf /tmp/*; \
     apk del --no-cache .brotli-build
+COPY --from=previous /carry/ /usr/share/nginx/html/
+COPY --from=previous /previous-assets.txt /usr/share/nginx/previous-assets.txt
 COPY --from=app-builder /app/apps/listener/dist /usr/share/nginx/html
+COPY --from=app-builder /app/release-assets.txt /usr/share/nginx/release-assets.txt
 COPY apps/listener/nginx.conf /etc/nginx/conf.d/default.conf
 COPY apps/listener/security-headers.conf /etc/nginx/snippets/security-headers.conf
 EXPOSE 80
