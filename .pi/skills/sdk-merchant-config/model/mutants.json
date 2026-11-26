@@ -1,0 +1,87 @@
+[
+    {
+        "name": "sends-race-instead-of-chaining",
+        "code": "sendLifecycleConfig: fire each send on its own instead of chaining onto sendChain, so signing time decides arrival order",
+        "expect": { "ListenerEndsOnLatest": "breaks" },
+        "edits": [
+            {
+                "find": "Post == chain # << >> /\\ PostAt(1)",
+                "replace": "Post == \\E i \\in 1..Len(chain) : PostAt(i)"
+            }
+        ]
+    },
+    {
+        "name": "context-resolved-at-send-call",
+        "code": "postConnectionSetup: contextSent.resolve() right after calling sendLifecycleConfig, not from its completion",
+        "expect": { "NoRequestBeforeContext": "breaks" },
+        "edits": [
+            {
+                "find": "    /\\ sentCached' = (glob.k # \"empty\")",
+                "replace": "    /\\ sentCached' = (glob.k # \"empty\")\n    /\\ ctxSent' = (ctxSent \\/ glob.k # \"empty\")"
+            },
+            {
+                "find": "    /\\ UNCHANGED << lsCfg, lsFresh, glob, fetch, fetchOks, ctxSent, lctx, destroyed, detached,\n                    repushes, reloads, ghosts >>",
+                "replace": "    /\\ UNCHANGED << lsCfg, lsFresh, glob, fetch, fetchOks, lctx, destroyed, detached,\n                    repushes, reloads, ghosts >>"
+            }
+        ]
+    },
+    {
+        "name": "naive-fra-444-fix",
+        "code": "postConnectionSetup: when configPromise yields undefined, skip mergeAndSetConfig and the send entirely",
+        "expect": {
+            "NoTrustDowngrade": "holds",
+            "ContextAlwaysArrives": "breaks"
+        },
+        "edits": [
+            {
+                "find": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN /\\ glob' = cfg",
+                "replace": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN IF fetch = \"fail\" THEN UNCHANGED << glob, lsCfg, lsFresh, chain >> ELSE\n          /\\ glob' = cfg"
+            }
+        ]
+    },
+    {
+        "name": "fra-444-candidate-fix",
+        "code": "FRA-444's candidate: on undefined, skip merge and send only when the cached config was already sent; otherwise keep today's fallback",
+        "expect": {
+            "NoTrustDowngrade": "holds",
+            "ContextAlwaysArrives": "holds",
+            "CacheOnlyBackend": "breaks"
+        },
+        "edits": [
+            {
+                "find": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN /\\ glob' = cfg",
+                "replace": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN IF fetch = \"fail\" /\\ sentCached THEN UNCHANGED << glob, lsCfg, lsFresh, chain >> ELSE\n          /\\ glob' = cfg"
+            }
+        ]
+    },
+    {
+        "name": "fra-444-full-fix",
+        "code": "As fra-444-candidate-fix, and the fallback is published but never written to the localStorage cache",
+        "expect": {
+            "NoTrustDowngrade": "holds",
+            "ContextAlwaysArrives": "holds",
+            "CacheOnlyBackend": "holds",
+            "ListenerEndsOnLatest": "holds"
+        },
+        "edits": [
+            {
+                "find": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN /\\ glob' = cfg\n          /\\ lsCfg' = cfg\n          /\\ lsFresh' = TRUE",
+                "replace": "    /\\ LET cfg == IF fetch = \"ok\" THEN Backend(fetchOks) ELSE Fallback\n       IN IF fetch = \"fail\" /\\ sentCached THEN UNCHANGED << glob, lsCfg, lsFresh, chain >> ELSE\n          /\\ glob' = cfg\n          /\\ IF fetch = \"ok\" THEN lsCfg' = cfg /\\ lsFresh' = TRUE ELSE UNCHANGED << lsCfg, lsFresh >>"
+            }
+        ]
+    },
+    {
+        "name": "setup-stops-when-destroyed",
+        "code": "postConnectionSetup: return before mergeAndSetConfig when destroy() already ran",
+        "expect": {
+            "NoWriteAfterDestroy": "holds",
+            "ContextAlwaysArrives": "holds"
+        },
+        "edits": [
+            {
+                "find": "    /\\ page = \"fetchwait\" /\\ fetch \\in {\"ok\", \"fail\"}\n",
+                "replace": "    /\\ page = \"fetchwait\" /\\ fetch \\in {\"ok\", \"fail\"} /\\ ~destroyed\n"
+            }
+        ]
+    }
+]

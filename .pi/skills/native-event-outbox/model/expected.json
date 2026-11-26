@@ -1,0 +1,7 @@
+{
+    "NoSilentLoss": "holds",
+    "NoLostWakeup": "holds",
+    "NoSendWhileOff": "holds",
+    "NoSendUnderResetId": "breaks",
+    "NoSendOfWithdrawnEvent": "breaks"
+}
