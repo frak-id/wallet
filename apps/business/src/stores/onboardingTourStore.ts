@@ -26,6 +26,8 @@ type OnboardingTourState = {
     startTour: (tourId: TourId) => void;
     setStep: (stepIndex: number) => void;
     closeTour: (outcome: "completed" | "dismissed") => void;
+    /** Closes the tour without recording an outcome, e.g. when it could not load. */
+    abortTour: () => void;
 };
 
 /**
@@ -44,6 +46,7 @@ export const onboardingTourStore = create<OnboardingTourState>()(
             stepIndex: 0,
             startTour: (tourId) => set({ activeTour: tourId, stepIndex: 0 }),
             setStep: (stepIndex) => set({ stepIndex }),
+            abortTour: () => set({ activeTour: null, stepIndex: 0 }),
             closeTour: (outcome) => {
                 const { activeTour, welcomeStatus } = get();
                 set({

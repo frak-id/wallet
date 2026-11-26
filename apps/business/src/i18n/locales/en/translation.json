@@ -2783,7 +2783,7 @@
         "progress": "Step {{current}} of {{total}}",
         "actions": {
             "skip": "Skip tour",
-            "close": "Close",
+            "close": "Close tour",
             "back": "Back",
             "next": "Next",
             "done": "Done",

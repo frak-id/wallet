@@ -44,6 +44,7 @@
         "clsx": "catalog:",
         "countries-list": "^3.4.1",
         "date-fns": "^4.4.0",
+        "driver.js": "^1.14.0",
         "i18next": "catalog:",
         "i18next-browser-languagedetector": "catalog:",
         "lucide-react": "catalog:",

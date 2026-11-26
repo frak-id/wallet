@@ -2783,7 +2783,7 @@
         "progress": "Étape {{current}} sur {{total}}",
         "actions": {
             "skip": "Passer la visite",
-            "close": "Fermer",
+            "close": "Fermer la visite",
             "back": "Retour",
             "next": "Suivant",
             "done": "Terminer",

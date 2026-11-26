@@ -1,14 +1,23 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    type Mock,
+    vi,
+} from "vitest";
+import type { StartTourOptions } from "@/module/onboarding/driverTour";
 
-const { pathnameMock, demoModeMock, bareShellMock, walletMock } = vi.hoisted(
-    () => ({
+const { pathnameMock, demoModeMock, bareShellMock, walletMock, startMock } =
+    vi.hoisted(() => ({
         pathnameMock: vi.fn(() => "/m/store-1/dashboard"),
         demoModeMock: vi.fn(() => false),
         bareShellMock: vi.fn(() => false),
         walletMock: vi.fn(() => true),
-    })
-);
+        startMock: vi.fn(),
+    }));
 
 vi.mock("@tanstack/react-router", () => ({
     useLocation: () => ({ pathname: pathnameMock() }),
@@ -21,6 +30,9 @@ vi.mock("@/module/common/hook/useIsBareShell", () => ({
 }));
 vi.mock("@/module/common/hook/useCapabilities", () => ({
     useCapabilities: () => ({ canOnchain: walletMock() }),
+}));
+vi.mock("@/module/onboarding/driverTour", () => ({
+    startDriverTour: startMock,
 }));
 
 import { onboardingTourStore } from "@/stores/onboardingTourStore";
@@ -36,9 +48,25 @@ const resetStores = (welcomeStatus: "pending" | "dismissed" = "pending") => {
     welcomePopupStore.setState({ hasSeenWelcome: true });
 };
 
+const flush = () =>
+    act(async () => {
+        await Promise.resolve();
+    });
+
 describe("OnboardingTour", () => {
+    let stopTour: Mock<() => void>;
+
+    const lastOptions = (): StartTourOptions => {
+        const call = startMock.mock.calls.at(-1);
+        if (!call) throw new Error("the tour was not started");
+        return call[0];
+    };
+
     beforeEach(() => {
         vi.useFakeTimers();
+        stopTour = vi.fn<() => void>();
+        startMock.mockReset();
+        startMock.mockImplementation(async () => stopTour);
         pathnameMock.mockReturnValue("/m/store-1/dashboard");
         demoModeMock.mockReturnValue(false);
         bareShellMock.mockReturnValue(false);
@@ -50,189 +78,171 @@ describe("OnboardingTour", () => {
         vi.useRealTimers();
     });
 
-    describe("opening", () => {
-        it("renders nothing when no tour is active", () => {
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-
-            expect(screen.queryByRole("dialog")).toBeNull();
-        });
-
-        it("exposes the step as a labelled dialog and focuses it", () => {
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("welcome"));
-
-            const dialog = screen.getByRole("dialog");
-            expect(dialog).toHaveAccessibleName(
-                "onboarding.welcome.intro.title"
-            );
-            expect(dialog).toHaveAccessibleDescription(
-                "onboarding.welcome.intro.body"
-            );
-            expect(dialog).toHaveFocus();
-            expect(screen.getByText("onboarding.progress")).toBeInTheDocument();
-        });
-    });
-
-    describe("navigation", () => {
-        let view: ReturnType<typeof render>;
-
+    describe("running a tour", () => {
         beforeEach(() => {
             resetStores("dismissed");
-            view = render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("welcome"));
         });
 
-        it("goes to the next and previous step with the buttons", () => {
-            fireEvent.click(screen.getByText("onboarding.actions.next"));
-            expect(screen.getByRole("dialog")).toHaveAccessibleName(
-                "onboarding.welcome.stores.title"
-            );
+        const open = async (tourId: "welcome" | "stores" = "welcome") => {
+            const view = render(<OnboardingTour />);
+            act(() => onboardingTourStore.getState().startTour(tourId));
+            await flush();
+            return view;
+        };
 
-            fireEvent.click(screen.getByText("onboarding.actions.back"));
-            expect(screen.getByRole("dialog")).toHaveAccessibleName(
-                "onboarding.welcome.intro.title"
-            );
+        it("starts nothing when no tour is active", async () => {
+            render(<OnboardingTour />);
+            await flush();
+
+            expect(startMock).not.toHaveBeenCalled();
         });
 
-        it("goes to the next and previous step with the arrow keys", () => {
-            fireEvent.keyDown(screen.getByRole("dialog"), {
-                key: "ArrowRight",
+        it("starts the welcome tour as skippable, without the full-tour link", async () => {
+            await open("welcome");
+
+            expect(startMock).toHaveBeenCalledTimes(1);
+            expect(lastOptions()).toMatchObject({
+                canSkip: true,
+                canOpenFullTour: false,
+                startIndex: 0,
             });
-            expect(onboardingTourStore.getState().stepIndex).toBe(1);
+            expect(lastOptions().steps).toHaveLength(8);
+        });
 
-            fireEvent.keyDown(screen.getByRole("dialog"), {
-                key: "ArrowLeft",
+        it("adds the optional wallet step when no wallet is linked", async () => {
+            walletMock.mockReturnValue(false);
+            await open("welcome");
+
+            const ids = lastOptions().steps.map((step) => step.id);
+            expect(ids).toHaveLength(9);
+            expect(ids).toContain("linkWallet");
+        });
+
+        it("starts a page tour with the full-tour link and no skip", async () => {
+            await open("stores");
+
+            expect(lastOptions()).toMatchObject({
+                canSkip: false,
+                canOpenFullTour: true,
             });
-            expect(onboardingTourStore.getState().stepIndex).toBe(0);
         });
 
-        it("keeps focus on the card when the step changes", () => {
-            screen.getByText("onboarding.actions.next").focus();
-            fireEvent.click(screen.getByText("onboarding.actions.next"));
+        it("gives the tour translated labels", async () => {
+            await open("welcome");
 
-            expect(screen.getByRole("dialog")).toHaveFocus();
+            const { labels } = lastOptions();
+            expect(labels.next).toBe("onboarding.actions.next");
+            expect(labels.skip).toBe("onboarding.actions.skip");
+            expect(labels.progress(2, 8)).toBe("onboarding.progress");
         });
 
-        it("closes on Escape and remembers the dismissal", () => {
-            fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+        it("mirrors the current step in the store", async () => {
+            await open("welcome");
 
-            expect(screen.queryByRole("dialog")).toBeNull();
-            expect(onboardingTourStore.getState().welcomeStatus).toBe(
-                "dismissed"
-            );
+            act(() => lastOptions().onStep(3));
+
+            expect(onboardingTourStore.getState().stepIndex).toBe(3);
         });
 
-        it("can be skipped", () => {
-            fireEvent.click(screen.getByText("onboarding.actions.skip"));
+        it("remembers completion", async () => {
+            await open("welcome");
 
-            expect(screen.queryByRole("dialog")).toBeNull();
-            expect(onboardingTourStore.getState().welcomeStatus).toBe(
-                "dismissed"
-            );
-        });
+            act(() => lastOptions().onEnd("completed"));
 
-        it("remembers completion on the last step", () => {
-            const lastStep = 8;
-            act(() => onboardingTourStore.getState().setStep(lastStep));
-
-            expect(
-                screen.queryByText("onboarding.actions.skip")
-            ).not.toBeInTheDocument();
-            fireEvent.click(screen.getByText("onboarding.actions.done"));
-
-            expect(screen.queryByRole("dialog")).toBeNull();
+            expect(onboardingTourStore.getState().activeTour).toBeNull();
             expect(onboardingTourStore.getState().welcomeStatus).toBe(
                 "completed"
             );
         });
 
-        it("closes when the user goes to another page", () => {
+        it("remembers a dismissal", async () => {
+            await open("welcome");
+
+            act(() => lastOptions().onEnd("dismissed"));
+
+            expect(onboardingTourStore.getState().welcomeStatus).toBe(
+                "dismissed"
+            );
+        });
+
+        it("keeps the welcome status when a page tour ends", async () => {
+            onboardingTourStore.setState({ welcomeStatus: "pending" });
+            await open("stores");
+
+            act(() => lastOptions().onEnd("completed"));
+
+            expect(onboardingTourStore.getState().welcomeStatus).toBe(
+                "pending"
+            );
+        });
+
+        it("opens the full tour from a page tour", async () => {
+            await open("stores");
+
+            act(() => lastOptions().onOpenFullTour());
+            await flush();
+
+            expect(onboardingTourStore.getState().activeTour).toBe("welcome");
+            expect(startMock).toHaveBeenCalledTimes(2);
+            expect(stopTour).toHaveBeenCalledTimes(1);
+        });
+
+        it("stops the tour when the component goes away", async () => {
+            const view = await open("welcome");
+
+            view.unmount();
+
+            expect(stopTour).toHaveBeenCalledTimes(1);
+        });
+
+        it("stops a tour that finished loading after it was closed", async () => {
+            let finishLoading: (stop: () => void) => void = () => undefined;
+            startMock.mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        finishLoading = resolve;
+                    })
+            );
+            await open("welcome");
+
+            act(() => onboardingTourStore.getState().closeTour("dismissed"));
+            await act(async () => finishLoading(stopTour));
+
+            expect(stopTour).toHaveBeenCalledTimes(1);
+        });
+
+        it("closes quietly when the tour cannot load", async () => {
+            onboardingTourStore.setState({ welcomeStatus: "pending" });
+            startMock.mockRejectedValue(new Error("chunk failed"));
+            await open("welcome");
+
+            expect(onboardingTourStore.getState().activeTour).toBeNull();
+            expect(onboardingTourStore.getState().welcomeStatus).toBe(
+                "pending"
+            );
+        });
+
+        it("closes when the user goes to another page", async () => {
+            const view = await open("welcome");
+
             pathnameMock.mockReturnValue("/m/store-1/members");
             view.rerender(<OnboardingTour />);
 
             expect(onboardingTourStore.getState().activeTour).toBeNull();
-        });
-    });
-
-    describe("steps", () => {
-        it("skips the wallet step when a wallet is linked", () => {
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("welcome"));
-            act(() => onboardingTourStore.getState().setStep(3));
-
-            expect(screen.getByRole("dialog")).toHaveAccessibleName(
-                "onboarding.welcome.payouts.title"
-            );
+            expect(stopTour).toHaveBeenCalled();
         });
 
-        it("adds the optional wallet step when no wallet is linked", () => {
-            walletMock.mockReturnValue(false);
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("welcome"));
-            act(() => onboardingTourStore.getState().setStep(3));
+        it("gives the focus back to where it was when the tour closes", async () => {
+            const opener = document.createElement("button");
+            document.body.append(opener);
+            opener.focus();
+            await open("welcome");
+            document.body.focus();
 
-            expect(screen.getByRole("dialog")).toHaveAccessibleName(
-                "onboarding.welcome.linkWallet.title"
-            );
-        });
+            act(() => lastOptions().onEnd("dismissed"));
 
-        const mountTarget = () => {
-            const target = document.createElement("button");
-            target.setAttribute("data-tour", "store-budget");
-            target.getBoundingClientRect = () =>
-                ({ top: 10, left: 20, width: 100, height: 30 }) as DOMRect;
-            target.scrollIntoView = vi.fn();
-            document.body.append(target);
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("stores"));
-            act(() => onboardingTourStore.getState().setStep(1));
-            act(() => {
-                vi.advanceTimersByTime(1000);
-            });
-            return target;
-        };
-
-        const setReducedMotion = (matches: boolean) =>
-            vi
-                .spyOn(window, "matchMedia")
-                .mockImplementation(
-                    (query) => ({ matches, media: query }) as MediaQueryList
-                );
-
-        it("scrolls smoothly to the target element once", () => {
-            setReducedMotion(false);
-            const target = mountTarget();
-
-            expect(target.scrollIntoView).toHaveBeenCalledTimes(1);
-            expect(target.scrollIntoView).toHaveBeenCalledWith(
-                expect.objectContaining({ behavior: "smooth" })
-            );
-            target.remove();
-        });
-
-        it("does not animate the scroll when the user prefers reduced motion", () => {
-            setReducedMotion(true);
-            const target = mountTarget();
-
-            expect(target.scrollIntoView).toHaveBeenCalledWith(
-                expect.objectContaining({ behavior: "auto" })
-            );
-            target.remove();
-        });
-
-        it("offers the full tour from a page tour", () => {
-            resetStores("dismissed");
-            render(<OnboardingTour />);
-            act(() => onboardingTourStore.getState().startTour("stores"));
-
-            fireEvent.click(screen.getByText("onboarding.actions.fullTour"));
-
-            expect(onboardingTourStore.getState().activeTour).toBe("welcome");
+            expect(opener).toHaveFocus();
+            opener.remove();
         });
     });
 
@@ -268,6 +278,55 @@ describe("OnboardingTour", () => {
             bareShellMock.mockReturnValue(true);
             pathnameMock.mockReturnValue("/m/store-1/campaigns/draft/new");
             expect(startsAfterDelay()).toBe(false);
+        });
+
+        it("does not start over the budget sheet", () => {
+            pathnameMock.mockReturnValue("/m/store-1/merchant/funding");
+            expect(startsAfterDelay()).toBe(false);
+        });
+    });
+
+    describe("with the real library", () => {
+        it("shows the card and moves through the steps", async () => {
+            vi.useRealTimers();
+            const real = await vi.importActual<
+                typeof import("@/module/onboarding/driverTour")
+            >("@/module/onboarding/driverTour");
+            startMock.mockImplementation(real.startDriverTour);
+            resetStores("dismissed");
+            const target = document.createElement("a");
+            target.setAttribute("data-tour", "nav-stores");
+            target.getBoundingClientRect = () =>
+                ({ width: 100, height: 30, top: 0, left: 0 }) as DOMRect;
+            target.scrollIntoView = vi.fn();
+            document.body.append(target);
+
+            render(<OnboardingTour />);
+            act(() => onboardingTourStore.getState().startTour("welcome"));
+
+            const dialog = await screen.findByRole("dialog");
+            expect(dialog).toHaveAccessibleName(
+                "onboarding.welcome.intro.title"
+            );
+
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: "onboarding.actions.next",
+                })
+            );
+            expect(onboardingTourStore.getState().stepIndex).toBe(1);
+
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: "onboarding.actions.skip",
+                })
+            );
+            expect(screen.queryByRole("dialog")).toBeNull();
+            expect(onboardingTourStore.getState().welcomeStatus).toBe(
+                "dismissed"
+            );
+            expect(onboardingTourStore.getState().activeTour).toBeNull();
+            target.remove();
         });
     });
 });

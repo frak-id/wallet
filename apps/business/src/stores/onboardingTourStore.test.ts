@@ -55,6 +55,16 @@ describe("onboardingTourStore", () => {
         expect(onboardingTourStore.getState().welcomeStatus).toBe("completed");
     });
 
+    it("closes a welcome tour that could not load without recording an outcome", () => {
+        onboardingTourStore.getState().startTour("welcome");
+        onboardingTourStore.getState().setStep(2);
+        onboardingTourStore.getState().abortTour();
+
+        expect(onboardingTourStore.getState().activeTour).toBeNull();
+        expect(onboardingTourStore.getState().stepIndex).toBe(0);
+        expect(onboardingTourStore.getState().welcomeStatus).toBe("pending");
+    });
+
     describe("first visit", () => {
         beforeEach(() => {
             localStorage.clear();
