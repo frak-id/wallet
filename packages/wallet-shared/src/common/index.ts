@@ -114,10 +114,7 @@ export { PaginationDots } from "./component/PaginationDots";
 export { rewardProductsForSelection } from "./hook/rewardProductsForSelection";
 // Hooks
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
-export {
-    estimatedRewardsQueryOptions,
-    selectFormattedReward,
-} from "./hook/useEstimatedReward";
+export { estimatedRewardsQueryOptions } from "./hook/useEstimatedReward";
 export { useFormattedEstimatedReward } from "./hook/useFormattedEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";

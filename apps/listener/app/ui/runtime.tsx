@@ -21,6 +21,7 @@ import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { drainPendingI18nOverrides } from "@/i18nOverrideQueue";
 import { ensureI18nBundle } from "@/i18nPreload";
+import { applyI18nEntry } from "@/ui/applyI18nEntry";
 import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
 import { RootProvider } from "@/ui/RootProvider";
@@ -49,7 +50,7 @@ export async function mountUiRuntime(): Promise<void> {
     await initI18n();
     await ensureI18nBundle(i18next.language, i18next);
 
-    drainPendingI18nOverrides(i18next);
+    drainPendingI18nOverrides((entry) => applyI18nEntry(i18next, entry));
 
     const root = document.getElementById("root");
     if (!root) {

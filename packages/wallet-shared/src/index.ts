@@ -131,7 +131,6 @@ export {
     type SharingSource,
     STORE_PACKAGE_ID,
     sdkKey,
-    selectFormattedReward,
     setInstallSource,
     startFlow,
     subscribeToWalletAuthExpired,
