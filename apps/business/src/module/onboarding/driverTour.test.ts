@@ -242,6 +242,52 @@ describe("startDriverTour", () => {
             expect(options.onEnd).toHaveBeenCalledWith("completed");
         });
 
+        it("does not open a tour cancelled while driver.js was loading", async () => {
+            const controller = new AbortController();
+            controller.abort();
+            await start({ signal: controller.signal });
+
+            expect(screen.queryByRole("dialog")).toBeNull();
+            expect(options.onEnd).not.toHaveBeenCalled();
+        });
+
+        it("keeps a newer tour open when an older one is cancelled while loading", async () => {
+            const older = new AbortController();
+            const olderEnd = vi.fn();
+            const olderTour = startDriverTour({
+                steps,
+                labels,
+                startIndex: 0,
+                canSkip: true,
+                canOpenFullTour: false,
+                onStep: vi.fn(),
+                onEnd: olderEnd,
+                onOpenFullTour: vi.fn(),
+                signal: older.signal,
+            });
+            older.abort();
+            await start();
+            await olderTour;
+            await settle();
+
+            expect(screen.getByRole("dialog")).toBeInTheDocument();
+            expect(olderEnd).not.toHaveBeenCalled();
+            expect(options.onEnd).not.toHaveBeenCalled();
+        });
+
+        it("does not report anything when another tour replaces it", async () => {
+            await start();
+            const replaced = options;
+            const stopReplaced = stop;
+            await start({ startIndex: 2 });
+            stopReplaced?.();
+
+            expect(replaced.onEnd).not.toHaveBeenCalled();
+            expect(screen.getByRole("dialog")).toHaveAccessibleName(
+                "Third step"
+            );
+        });
+
         it("does not report anything when it is stopped from code", async () => {
             await start();
 

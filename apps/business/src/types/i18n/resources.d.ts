@@ -994,13 +994,13 @@ export default interface Resources {
         "unknown": "Status unavailable"
       },
       "table": {
-        "budgetSpend": "Spent / limit",
+        "budgetSpend": "Budget & Spend",
         "campaign": "Campaign",
-        "ctr": "Click rate",
+        "ctr": "CTR",
         "endDate": "End date",
         "noEndDate": "No end date",
-        "published": "Published on",
-        "revenue": "Sales generated",
+        "published": "Published",
+        "revenue": "Revenue",
         "rewards": "Number of rewards",
         "sharingRate": "Sharing rate",
         "status": "Status"
@@ -2422,7 +2422,7 @@ export default interface Resources {
         }
       },
       "pageTour": {
-        "button": "Page tour"
+        "button": "Help"
       },
       "progress": "Step {{current}} of {{total}}",
       "push": {
@@ -2525,11 +2525,11 @@ export default interface Resources {
           "title": "Create a campaign"
         },
         "help": {
-          "body": "Select Page tour on any page to see what that page does. On pages with a sidebar, it can also show this full tour again.",
+          "body": "Select Help on any page to see what that page does. On pages with a sidebar, it can also show this full tour again.",
           "title": "Need help later?"
         },
         "intro": {
-          "body": "Connect your store, add funds to your budget, then create a campaign. To see this tour again, select Page tour, then Show the full tour.",
+          "body": "Connect your store, add funds to your budget, then create a campaign. To see this tour again, select Help, then Show the full tour.",
           "title": "Start paying rewards"
         },
         "linkWallet": {

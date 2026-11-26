@@ -240,6 +240,15 @@ describe("OnboardingTour", () => {
             expect(stopTour).toHaveBeenCalledTimes(1);
         });
 
+        it("cancels a tour that is still loading when it is closed", async () => {
+            startMock.mockImplementation(() => new Promise(() => undefined));
+            await open("welcome");
+
+            act(() => onboardingTourStore.getState().closeTour("dismissed"));
+
+            expect(lastOptions().signal?.aborted).toBe(true);
+        });
+
         it("closes quietly when the tour cannot load", async () => {
             onboardingTourStore.setState({ welcomeStatus: "pending" });
             startMock.mockRejectedValue(new Error("chunk failed"));

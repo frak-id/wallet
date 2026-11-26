@@ -28,6 +28,8 @@ export type StartTourOptions = {
     onStep: (index: number) => void;
     onEnd: (outcome: TourOutcome) => void;
     onOpenFullTour: () => void;
+    /** Aborted when the caller cancels this tour, possibly while driver.js loads. */
+    signal?: AbortSignal;
 };
 
 export function prefersReducedMotion(): boolean {
@@ -99,6 +101,8 @@ export async function startDriverTour(
         import("driver.js"),
         import("driver.js/dist/driver.css"),
     ]);
+    // driver.js keeps one live tour: creating a cancelled one would destroy the newer one.
+    if (options.signal?.aborted) return () => undefined;
 
     const isReducedMotion = prefersReducedMotion();
     let isStopped = false;
@@ -152,6 +156,8 @@ export async function startDriverTour(
         onDestroyed: (_element, _step, { reason }) => {
             if (isStopped) return;
             isStopped = true;
+            // The tour that replaced this one owns the outcome.
+            if (reason === "replaced") return;
             options.onEnd(reason === "done" ? "completed" : "dismissed");
         },
     });

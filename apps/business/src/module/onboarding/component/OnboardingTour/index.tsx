@@ -97,7 +97,7 @@ function TourRunner({ tourId }: { tourId: TourId }) {
     }, [pathname, closeTour]);
 
     useEffect(() => {
-        let isCancelled = false;
+        const controller = new AbortController();
         let stop: (() => void) | undefined;
         startDriverTour({
             steps,
@@ -111,16 +111,17 @@ function TourRunner({ tourId }: { tourId: TourId }) {
             onStep: setStep,
             onEnd: closeTour,
             onOpenFullTour: () => startTour("welcome"),
+            signal: controller.signal,
         })
             .then((stopTour) => {
-                if (isCancelled) stopTour();
+                if (controller.signal.aborted) stopTour();
                 else stop = stopTour;
             })
             .catch(() => {
-                if (!isCancelled) abortTour();
+                if (!controller.signal.aborted) abortTour();
             });
         return () => {
-            isCancelled = true;
+            controller.abort();
             stop?.();
         };
     }, [tourId, steps, labels, setStep, closeTour, abortTour, startTour]);

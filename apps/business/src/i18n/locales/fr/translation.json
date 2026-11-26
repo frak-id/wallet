@@ -1025,14 +1025,14 @@
         "table": {
             "campaign": "Campagne",
             "status": "Statut",
-            "published": "Publiée le",
+            "published": "Publiée",
             "endDate": "Date de fin",
             "noEndDate": "Pas de date de fin",
             "sharingRate": "Taux de partage",
             "rewards": "Nombre de récompenses",
-            "ctr": "Taux de clic",
-            "revenue": "Ventes générées",
-            "budgetSpend": "Dépensé / limite"
+            "ctr": "CTR",
+            "revenue": "Revenu",
+            "budgetSpend": "Budget & Dépenses"
         },
         "filter": {
             "dateRange": "Période",
@@ -2828,7 +2828,7 @@
     },
     "onboarding": {
         "pageTour": {
-            "button": "Visite de la page"
+            "button": "Aide"
         },
         "progress": "Étape {{current}} sur {{total}}",
         "actions": {
@@ -2842,7 +2842,7 @@
         "welcome": {
             "intro": {
                 "title": "Commencez à verser des récompenses",
-                "body": "Connectez votre boutique, ajoutez des fonds à votre budget, puis créez une campagne. Pour revoir cette visite, sélectionnez Visite de la page, puis Afficher la visite complète."
+                "body": "Connectez votre boutique, ajoutez des fonds à votre budget, puis créez une campagne. Pour revoir cette visite, sélectionnez Aide, puis Afficher la visite complète."
             },
             "stores": {
                 "title": "Vos boutiques",
@@ -2874,7 +2874,7 @@
             },
             "help": {
                 "title": "Besoin d'aide plus tard ?",
-                "body": "Sélectionnez Visite de la page sur n'importe quelle page pour voir à quoi elle sert. Sur les pages avec menu latéral, vous pouvez aussi y afficher la visite complète."
+                "body": "Sélectionnez Aide sur n'importe quelle page pour voir à quoi elle sert. Sur les pages avec menu latéral, vous pouvez aussi y afficher la visite complète."
             }
         },
         "stores": {

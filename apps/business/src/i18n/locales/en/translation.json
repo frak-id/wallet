@@ -1025,14 +1025,14 @@
         "table": {
             "campaign": "Campaign",
             "status": "Status",
-            "published": "Published on",
+            "published": "Published",
             "endDate": "End date",
             "noEndDate": "No end date",
             "sharingRate": "Sharing rate",
             "rewards": "Number of rewards",
-            "ctr": "Click rate",
-            "revenue": "Sales generated",
-            "budgetSpend": "Spent / limit"
+            "ctr": "CTR",
+            "revenue": "Revenue",
+            "budgetSpend": "Budget & Spend"
         },
         "filter": {
             "dateRange": "Date range",
@@ -2828,7 +2828,7 @@
     },
     "onboarding": {
         "pageTour": {
-            "button": "Page tour"
+            "button": "Help"
         },
         "progress": "Step {{current}} of {{total}}",
         "actions": {
@@ -2842,7 +2842,7 @@
         "welcome": {
             "intro": {
                 "title": "Start paying rewards",
-                "body": "Connect your store, add funds to your budget, then create a campaign. To see this tour again, select Page tour, then Show the full tour."
+                "body": "Connect your store, add funds to your budget, then create a campaign. To see this tour again, select Help, then Show the full tour."
             },
             "stores": {
                 "title": "Your stores",
@@ -2874,7 +2874,7 @@
             },
             "help": {
                 "title": "Need help later?",
-                "body": "Select Page tour on any page to see what that page does. On pages with a sidebar, it can also show this full tour again."
+                "body": "Select Help on any page to see what that page does. On pages with a sidebar, it can also show this full tour again."
             }
         },
         "stores": {
