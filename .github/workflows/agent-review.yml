@@ -1,7 +1,7 @@
 name: "🔬 Agent review (Atelier)"
 
 # The repo's PR reviewer: Atelier's agent-review action
-# (frak-id/atelier, actions/agent-review/README.md) reviews each non-draft
+# (KONFeature/atelier, actions/agent-review/README.md) reviews each non-draft
 # PR in an Atelier sandbox booted from this repo's prebuild at the PR's head.
 # Two pi agents review the merge base to the head, one after the other: one
 # for issues (critical/major become line comments and block), then one for
@@ -67,7 +67,7 @@ jobs:
       pull-requests: write
     steps:
       - name: "🔬 Review"
-        uses: frak-id/atelier/actions/agent-review@54d6feac790e51c8f4e02146c8b39e4115c61189 # main
+        uses: KONFeature/atelier/actions/agent-review@bcc0f041832403b5f5586a8c7ffd4cd7cfd381c3 # v3.1.0
         with:
           atelier-url: ${{ vars.ATELIER_URL }}
           api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}
@@ -78,7 +78,7 @@ jobs:
       # improvements, it also replaces the review's "on the way" line.
       - name: "🧹 Destroy the cancelled review's sandbox"
         if: cancelled()
-        uses: frak-id/atelier/actions/agent-review@54d6feac790e51c8f4e02146c8b39e4115c61189 # main
+        uses: KONFeature/atelier/actions/agent-review@bcc0f041832403b5f5586a8c7ffd4cd7cfd381c3 # v3.1.0
         with:
           atelier-url: ${{ vars.ATELIER_URL }}
           api-key: ${{ secrets.ATELIER_REVIEWER_API_KEY }}

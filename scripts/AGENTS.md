@@ -164,7 +164,7 @@ upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix t
 
 - **No script here: the review is Atelier's.** `.github/workflows/agent-review.yml` runs Atelier's
   agent-review action, which reviews each PR in an Atelier sandbox and posts as `github-actions[bot]`,
-  keeping its findings (F1, F2…) across pushes. Its logic lives in `frak-id/atelier`
+  keeping its findings (F1, F2…) across pushes. Its logic lives in `KONFeature/atelier`
   (`actions/agent-review/`), not in this repo. It stays off while `vars.ATELIER_URL` is empty, and then
   no PR is reviewed.
 - **What it is told about this repo is root `REVIEW.md`**, read on the PR's *target* branch, so an edit
