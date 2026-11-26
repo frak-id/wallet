@@ -159,6 +159,11 @@ deploy with `run_for deploy.yml "$MERGE_SHA"`. Report the result with its URL.
 A failed production deploy comes before anything else: show the failed log and
 stop.
 
+The listener HTML is cached for 5 minutes, so a listener release (hotfix
+included) reaches a returning user up to 5 minutes after the deploy is green.
+In that window, a lazy chunk of the previous build (modal, sharing page) that
+the user's browser has not cached returns 404, so that UI can fail to open.
+
 ## Phase 6: follow-up releases
 
 Build one multi-select from the facts and the checklist, pre-selecting what the
