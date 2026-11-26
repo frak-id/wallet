@@ -77,10 +77,10 @@ const LAZY_CHUNK_NAMES = [
 const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
 
 // Hard ceiling on the gzipped eager boot JS (transitive static-import closure
-// from the entry, walked by `assertEagerBundleBudget`). Measured ~28 KB; 32 KB
-// leaves headroom while failing the build if a lazy chunk leaks into the eager
-// path.
-const EAGER_JS_BUDGET_GZIP = 32 * 1024;
+// from the entry, walked by `assertEagerBundleBudget`). Sized on the deploy
+// build (~28 KB with OPEN_PANEL_* set, which pulls OpenPanel into `common`);
+// without those env vars, as in CI, it measures ~24.5 KB.
+const EAGER_JS_BUDGET_GZIP = 29 * 1024;
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
@@ -238,6 +238,48 @@ function assertSharingPageSkipsBlockchain() {
     };
 }
 
+// Ring 1 only: the byte budget misses the i18n applier (~0.5 KB gz) leaking back.
+const UI_ONLY_MODULES = [
+    /sdk[\\/]core[\\/]src[\\/]rewards[\\/]/,
+    /apps[\\/]listener[\\/]app[\\/]module[\\/]utils[\\/]i18nMapper\./,
+    /apps[\\/]listener[\\/]app[\\/]ui[\\/]applyI18nEntry\./,
+];
+
+function assertUiOnlyModulesStayLazy() {
+    type Chunk = { type?: string; isEntry?: boolean; moduleIds?: string[] };
+    return {
+        name: "assert-ui-only-modules-stay-lazy",
+        apply: "build" as const,
+        writeBundle({ dir }: { dir?: string }, bundle: Record<string, Chunk>) {
+            if (!dir) return;
+            const allIds = Object.values(bundle).flatMap(
+                (chunk) => chunk.moduleIds ?? []
+            );
+            const stale = UI_ONLY_MODULES.find(
+                (re) => !allIds.some((id) => re.test(id))
+            );
+            if (stale) {
+                throw new Error(
+                    `UI-only module pattern ${stale} matches nothing in the bundle: update UI_ONLY_MODULES after a rename.`
+                );
+            }
+            const entries = Object.keys(bundle).filter(
+                (key) => bundle[key].type === "chunk" && bundle[key].isEntry
+            );
+            for (const key of collectEagerClosure(dir, entries).keys()) {
+                const leaked = bundle[key]?.moduleIds?.find((id) =>
+                    UI_ONLY_MODULES.some((re) => re.test(id))
+                );
+                if (leaked) {
+                    throw new Error(
+                        `Eager chunk ${key} now bundles ${leaked}: a Ring 0 module imports UI-only code.`
+                    );
+                }
+            }
+        },
+    };
+}
+
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
 
@@ -379,6 +421,7 @@ export default defineConfig(async () => {
                 assertHtml: assertNoLazyCssLeak,
             }),
             assertSharingPageSkipsBlockchain(),
+            assertUiOnlyModulesStayLazy(),
             assertBundleEsVersion({
                 subdir: "assets",
                 // @radix-ui/react-collection defines `toSorted` on its own
@@ -594,7 +637,7 @@ export default defineConfig(async () => {
                                 // hook .impl chunks) out of this chunk — they
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|types|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|types|utils[\\/](?:deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 50,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts

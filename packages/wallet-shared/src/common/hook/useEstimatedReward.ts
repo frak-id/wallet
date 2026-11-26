@@ -1,14 +1,4 @@
-import type {
-    Currency,
-    InteractionTypeKey,
-    MerchantReward,
-    ProductDetails,
-} from "@frak-labs/core-sdk";
-import {
-    type BestReward,
-    type RewardAudience,
-    selectBestReward,
-} from "@frak-labs/core-sdk/rewards";
+import type { MerchantReward } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "../api/backendClient";
 import { merchantKey } from "../queryKeys/merchant";
 import { queryOptions } from "../utils/queryOptions";
@@ -33,41 +23,4 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
     });
-}
-
-/**
- * Select-function factory: picks the best reward for the given context and
- * resolves it to its formatted string plus `payoutType`, returning `undefined`
- * when nothing is worth advertising.
- *
- * Exposing the `payoutType` lets surfaces adapt their display (e.g. prefix a
- * tiered reward with "Up to").
- *
- * The `"referred"` context marks the viewer as the referee, so their reward
- * side is shown instead of the referrer's.
- *
- * `products` is advisory product context: a campaign scoped to none of them is
- * ranked below every campaign matching at least one. Omitting it preserves the
- * unscoped ranking.
- */
-export function selectFormattedReward({
-    currency,
-    targetInteraction,
-    context,
-    products,
-}: {
-    currency?: Currency;
-    targetInteraction?: InteractionTypeKey;
-    context?: string;
-    products?: ProductDetails[];
-}) {
-    const audience: RewardAudience =
-        context === "referred" ? "referee" : "referrer";
-    return (rewards: MerchantReward[]): BestReward | undefined =>
-        selectBestReward(rewards, {
-            currency,
-            targetInteraction,
-            audience,
-            products,
-        });
 }

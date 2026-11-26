@@ -354,7 +354,6 @@
     "packages/wallet-shared/src/common/component/CodeInput/index.tsx": 2,
     "packages/wallet-shared/src/common/component/ExternalLink/index.tsx": 1,
     "packages/wallet-shared/src/common/hook/rewardProductsForSelection.ts": 1,
-    "packages/wallet-shared/src/common/hook/useEstimatedReward.ts": 1,
     "packages/wallet-shared/src/common/hook/useGetSafeSdkSession.ts": 1,
     "packages/wallet-shared/src/common/lib/inApp.test.ts": 1,
     "packages/wallet-shared/src/common/lib/inApp.ts": 1,
