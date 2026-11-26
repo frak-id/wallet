@@ -10,9 +10,9 @@ import {
 } from "@/module/auth/hooks/useLinkWallet";
 
 /**
- * Walletless-owner CTA: shown wherever an onchain bank action (bank
- * open/close, allowance, withdraw, legacy migration) would otherwise render
- * — the explicit path out of the read-only state.
+ * Optional, secondary card for accounts without a linked wallet. Rendered
+ * below the budget so it never competes with "Add funds"; it is also the
+ * fallback wherever an on-chain bank action would otherwise appear.
  */
 export function LinkWalletNotice() {
     const { t } = useTranslation();
@@ -20,16 +20,17 @@ export function LinkWalletNotice() {
     const errorMessage = linkWalletErrorMessage(error, t);
 
     return (
-        <Card radius="m">
+        <Card variant="muted" radius="m" padding="compact">
             <Stack space="xs">
-                <Text variant="body" weight="medium">
+                <Text variant="bodySmall" weight="medium">
                     {t("funding.linkWallet.title")}
                 </Text>
-                <Text variant="bodySmall" color="secondary">
+                <Text variant="caption" color="secondary">
                     {t("funding.linkWallet.description")}
                 </Text>
                 <Button
-                    size="large"
+                    variant="secondary"
+                    size="small"
                     width="auto"
                     loading={isPending}
                     disabled={isPending}
