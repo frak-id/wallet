@@ -14,12 +14,19 @@ type SecurityCodeEmailParams = {
     link?: string;
 };
 
+const INTENT_COPY: Record<SecurityCodeEmailParams["intent"], string> = {
+    "sign in": "log in",
+    "confirm a sensitive action": "confirm it's you",
+    "verify your email": "verify your email",
+    "reset your password": "reset your password",
+};
+
 export function buildSecurityCodeEmail({
     code,
     intent,
     link,
 }: SecurityCodeEmailParams): { subject: string; html: string } {
-    const subject = "Your Frak Business security code";
+    const subject = "Your Frak security code";
     const linkButton = link
         ? `<tr><td align="center" style="padding:24px 0 0;">
               <a href="${link}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:9999px;">Continue on the dashboard</a>
@@ -32,11 +39,11 @@ export function buildSecurityCodeEmail({
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#ffffff;border-radius:16px;padding:32px;">
-            <tr><td style="font-size:20px;font-weight:600;padding-bottom:8px;">Security code</td></tr>
-            <tr><td style="font-size:14px;line-height:20px;color:#52525b;padding-bottom:24px;">Enter this code to ${intent} on the Frak Business dashboard. It expires in 10 minutes.</td></tr>
+            <tr><td style="font-size:20px;font-weight:600;padding-bottom:8px;">Your code</td></tr>
+            <tr><td style="font-size:14px;line-height:20px;color:#52525b;padding-bottom:24px;">Enter this code to ${INTENT_COPY[intent]} on the Frak dashboard. It expires in 10 minutes.</td></tr>
             <tr><td align="center" style="font-size:34px;font-weight:700;letter-spacing:8px;padding:16px 0;background:#f4f4f5;border-radius:12px;">${code}</td></tr>
             ${linkButton}
-            <tr><td style="font-size:12px;line-height:18px;color:#a1a1aa;padding-top:24px;">If you didn't request this code, someone may be trying to access your account — consider changing your password.</td></tr>
+            <tr><td style="font-size:12px;line-height:18px;color:#a1a1aa;padding-top:24px;">If you did not ask for this code, ignore this email. If it keeps happening, change your password.</td></tr>
           </table>
         </td>
       </tr>
