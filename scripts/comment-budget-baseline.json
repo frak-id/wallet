@@ -463,7 +463,7 @@
     "sdk/core/src/actions/wrapper/sendTransaction.ts": 1,
     "sdk/core/src/actions/wrapper/siweAuthenticate.ts": 3,
     "sdk/core/src/clients/createIFrameFrakClient.test.ts": 1,
-    "sdk/core/src/clients/createIFrameFrakClient.ts": 3,
+    "sdk/core/src/clients/createIFrameFrakClient.ts": 2,
     "sdk/core/src/config/clientId.ts": 3,
     "sdk/core/src/config/environment.ts": 2,
     "sdk/core/src/config/sdkConfigStore.ts": 1,
