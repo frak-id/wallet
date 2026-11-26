@@ -54,6 +54,7 @@ export function Navigation() {
                 <ul className={itemList}>
                     <NavigationItem
                         url={dashboardUrl}
+                        data-tour="nav-stores"
                         icon={<TabGridIcon width={20} height={20} />}
                     >
                         {pageNav(t, "dashboard")}
@@ -74,6 +75,7 @@ export function Navigation() {
                     />
                     <NavigationItem
                         url={membersUrl}
+                        data-tour="nav-members"
                         icon={<PeopleFilledIcon width={20} height={20} />}
                         disabled={isEmpty}
                         tooltip={noMerchantHint}

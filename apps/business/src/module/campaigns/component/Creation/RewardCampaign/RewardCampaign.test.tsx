@@ -11,6 +11,7 @@ vi.mock("react-i18next", () => ({
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => vi.fn(),
     useParams: () => ({}),
+    useLocation: () => ({ pathname: "/m/store-1/campaigns/draft/new" }),
 }));
 vi.mock("@/module/campaigns/hook/useSaveCampaign", () => ({
     useSaveCampaign: () => ({ isPending: false, isError: false }),

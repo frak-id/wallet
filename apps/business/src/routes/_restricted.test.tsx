@@ -18,6 +18,10 @@ vi.mock("@/module/common/component/Navigation", () => ({
     Navigation: () => <nav data-testid="navigation" />,
 }));
 
+vi.mock("@/module/onboarding/component/OnboardingTour", () => ({
+    OnboardingTour: () => <div data-testid="onboarding-tour" />,
+}));
+
 // Mock Outlet + the route matches consumed by useIsBareShell
 vi.mock("@tanstack/react-router", async () => {
     const actual = await vi.importActual("@tanstack/react-router");
@@ -57,6 +61,7 @@ describe("RestrictedLayoutRoute", () => {
 
         expect(screen.getByTestId("header")).toBeInTheDocument();
         expect(screen.getByTestId("navigation")).toBeInTheDocument();
+        expect(screen.getByTestId("onboarding-tour")).toBeInTheDocument();
     });
 
     it("should render main element wrapping Outlet", () => {
@@ -76,6 +81,7 @@ describe("RestrictedLayoutRoute", () => {
         expect(screen.queryByTestId("navigation")).toBeNull();
         expect(container.querySelector("main")).toBeInTheDocument();
         expect(screen.getByTestId("outlet")).toBeInTheDocument();
+        expect(screen.getByTestId("onboarding-tour")).toBeInTheDocument();
     });
 
     it("should redirect to /login when the session dies mid-render", () => {

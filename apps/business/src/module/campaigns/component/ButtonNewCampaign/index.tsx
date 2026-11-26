@@ -28,6 +28,7 @@ export function ButtonNewCampaign({ size }: Props = {}) {
             params={{ merchantId }}
             onClick={() => reset()}
             size={size}
+            data-tour="new-campaign"
             icon={<Plus size={16} />}
         >
             {t("campaigns.actions.newCampaign")}

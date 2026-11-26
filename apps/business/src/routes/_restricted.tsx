@@ -5,6 +5,7 @@ import { Header } from "@/module/common/component/Header";
 import { Navigation } from "@/module/common/component/Navigation";
 import { WelcomePopup } from "@/module/common/component/WelcomePopup";
 import { useIsBareShell } from "@/module/common/hook/useIsBareShell";
+import { OnboardingTour } from "@/module/onboarding/component/OnboardingTour";
 import { useAuthStore } from "@/stores/authStore";
 import "@/styles/restricted.css";
 import { main } from "./_restricted.css";
@@ -40,9 +41,12 @@ function RestrictedLayoutRoute() {
 
     if (isBare) {
         return (
-            <main>
-                <Outlet />
-            </main>
+            <>
+                <main>
+                    <Outlet />
+                </main>
+                <OnboardingTour />
+            </>
         );
     }
 
@@ -54,6 +58,7 @@ function RestrictedLayoutRoute() {
                 <Outlet />
             </main>
             <WelcomePopup />
+            <OnboardingTour />
         </>
     );
 }

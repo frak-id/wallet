@@ -8,6 +8,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
+import { PageTourButton } from "@/module/onboarding/component/PageTourButton";
 import { AccountMenu } from "./AccountMenu";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
@@ -76,6 +77,7 @@ export function Header() {
                         {showAddMerchant && (
                             <LinkButton
                                 to="/merchant/new"
+                                data-tour="add-store"
                                 variant="primary"
                                 size="small"
                                 icon={<Plus size={16} />}
@@ -84,6 +86,7 @@ export function Header() {
                             </LinkButton>
                         )}
                     </div>
+                    <PageTourButton />
                     <AccountMenu />
                 </div>
             </Spread>

@@ -50,6 +50,7 @@ export function AccountMenu() {
                     className={styles.trigger}
                     aria-label={accountLabel}
                     aria-haspopup="menu"
+                    data-tour="account-menu"
                 >
                     <span className={styles.triggerContent}>
                         <span className={styles.avatar}>

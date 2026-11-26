@@ -2775,5 +2775,217 @@
             "submit": "Générer",
             "result": "Code d'installation pour {{domain}}"
         }
+    },
+    "onboarding": {
+        "pageTour": {
+            "button": "Visite de la page"
+        },
+        "progress": "Étape {{current}} sur {{total}}",
+        "actions": {
+            "skip": "Passer la visite",
+            "close": "Fermer",
+            "back": "Retour",
+            "next": "Suivant",
+            "done": "Terminer",
+            "fullTour": "Afficher la visite complète"
+        },
+        "welcome": {
+            "intro": {
+                "title": "Commencez à verser des récompenses",
+                "body": "Pour commencer, connectez votre boutique, ajoutez des fonds à votre budget, activez le versement des récompenses et créez une campagne. Cette visite montre où se trouve chaque étape. Vous pouvez la passer et la rouvrir avec Visite de la page."
+            },
+            "stores": {
+                "title": "Vos boutiques",
+                "body": "Chaque boutique connectée à Frak est listée ici. Pour connecter une boutique Shopify, ouvrez l'app Frak dans votre admin Shopify. Vous pouvez aussi utiliser Ajouter une boutique."
+            },
+            "budget": {
+                "title": "Ajoutez des fonds à votre budget",
+                "body": "Les récompenses sont versées depuis votre budget de récompenses. Sur votre boutique, sélectionnez Gérer le budget, puis Ajouter des fonds."
+            },
+            "linkWallet": {
+                "title": "Liez votre porte-monnaie Frak (facultatif)",
+                "body": "Il faut un porte-monnaie Frak lié pour activer ou mettre en pause Verser les récompenses, changer la limite de dépense ou retirer des fonds. Ajouter des fonds n'en a pas besoin. Lier mon porte-monnaie se trouve en bas de Gérer le budget."
+            },
+            "payouts": {
+                "title": "Activez le versement des récompenses",
+                "body": "Dans Gérer le budget, activez Verser les récompenses. Frak ne verse des récompenses que si cette option est activée."
+            },
+            "campaigns": {
+                "title": "Créez une campagne",
+                "body": "Une campagne fixe la récompense que vos clients gagnent quand ils partagent votre boutique et que quelqu'un achète avec leur lien. Ouvrez Campagnes, puis sélectionnez Créer une campagne."
+            },
+            "members": {
+                "title": "Membres et notifications push",
+                "body": "Membres liste les clients qui ont interagi avec votre boutique via Frak. Vous pouvez leur envoyer une notification push depuis cette page."
+            },
+            "account": {
+                "title": "Votre compte",
+                "body": "Ce menu permet de changer de boutique, d'ouvrir les Paramètres ou de vous déconnecter."
+            },
+            "help": {
+                "title": "Besoin d'aide plus tard ?",
+                "body": "Sélectionnez Visite de la page sur n'importe quelle page pour voir à quoi elle sert. Vous pouvez y afficher de nouveau la visite complète."
+            }
+        },
+        "stores": {
+            "overview": {
+                "title": "Mes boutiques",
+                "body": "Chaque carte est une boutique. Vous gérez son budget et ses paramètres depuis cette page."
+            },
+            "budget": {
+                "title": "Gérer le budget",
+                "body": "Ajoutez des fonds et consultez votre budget. Vous pouvez aussi activer ou mettre en pause Verser les récompenses, changer la limite de dépense ou retirer des fonds. Ces trois actions demandent un porte-monnaie Frak lié."
+            },
+            "edit": {
+                "title": "Modifier la boutique",
+                "body": "Changez l'apparence de votre boutique, sa fiche dans l'app Frak, sa connexion de suivi des commandes et votre équipe."
+            },
+            "add": {
+                "title": "Ajouter une boutique",
+                "body": "Connectez une autre boutique à Frak. Vous saisissez son domaine et prouvez qu'il vous appartient."
+            }
+        },
+        "campaignsOverview": {
+            "overview": {
+                "title": "Vue d'ensemble des campagnes",
+                "body": "Voyez les résultats de vos campagnes : ambassadeurs, partages, ventes générées et coût moyen par commande."
+            },
+            "journey": {
+                "title": "Parcours client",
+                "body": "Suivez les clients depuis le bouton de partage jusqu'à la commande."
+            },
+            "top": {
+                "title": "Meilleures campagnes",
+                "body": "Vos meilleures campagnes sont listées ici. Sélectionnez Voir toutes les campagnes pour les afficher toutes."
+            },
+            "create": {
+                "title": "Créer une campagne",
+                "body": "Lancez une nouvelle campagne ici. Vous choisissez un objectif, des pays, un budget et une récompense, puis vous vérifiez et publiez."
+            }
+        },
+        "campaignsList": {
+            "list": {
+                "title": "Toutes les campagnes",
+                "body": "Chaque ligne est une campagne. Utilisez les onglets pour filtrer par statut : Active, En pause, Brouillon, Terminée ou Archivée."
+            },
+            "actions": {
+                "title": "Actions sur une campagne",
+                "body": "Le menu de la ligne permet de voir les résultats ou les réglages, de modifier, mettre en pause, reprendre, archiver ou supprimer une campagne. Une campagne archivée ne peut ni reprendre ni être modifiée."
+            },
+            "bulk": {
+                "title": "Plusieurs campagnes à la fois",
+                "body": "Sélectionnez des lignes pour mettre en pause, archiver ou supprimer plusieurs campagnes d'un coup."
+            },
+            "create": {
+                "title": "Créer une campagne",
+                "body": "Lancez une nouvelle campagne ici."
+            }
+        },
+        "campaignWizard": {
+            "steps": {
+                "title": "Étape par étape",
+                "body": "Chaque étape est enregistrée quand vous sélectionnez Continuer. Vous pouvez fermer la page et reprendre votre brouillon plus tard."
+            },
+            "reward": {
+                "title": "Objectif et récompense",
+                "body": "Choisissez l'action qui donne droit à une récompense, puis le montant versé et qui la reçoit."
+            },
+            "publish": {
+                "title": "Vérifier et publier",
+                "body": "Vérifiez votre campagne à la dernière étape, puis publiez-la. Les récompenses sont versées depuis votre budget : assurez-vous qu'il contient des fonds."
+            }
+        },
+        "storeWizard": {
+            "details": {
+                "title": "Ajouter une boutique",
+                "body": "Saisissez le nom et le domaine de votre boutique. Vous prouvez que le domaine vous appartient avant de continuer."
+            },
+            "confirm": {
+                "title": "Confirmez votre boutique",
+                "body": "Vérifiez les informations, puis terminez l'enregistrement. Ensuite, votre boutique apparaît dans Mes boutiques."
+            }
+        },
+        "members": {
+            "list": {
+                "title": "Membres",
+                "body": "Chaque ligne est un client qui a interagi avec votre boutique via Frak. Vous voyez sa date d'arrivée, ses interactions et les récompenses gagnées."
+            },
+            "filters": {
+                "title": "Filtres",
+                "body": "Utilisez Filtres pour affiner la liste par date d'arrivée ou nombre d'interactions."
+            },
+            "push": {
+                "title": "Notifications push",
+                "body": "Ouvrez l'onglet Notifications push pour voir les notifications passées et en envoyer une nouvelle."
+            }
+        },
+        "push": {
+            "history": {
+                "title": "Notifications push",
+                "body": "Les notifications passées et planifiées sont listées ici avec leur statut."
+            },
+            "send": {
+                "title": "Envoyer une notification push",
+                "body": "Sélectionnez Envoyer une notification push pour écrire un message et choisir qui le reçoit."
+            }
+        },
+        "pushCreate": {
+            "content": {
+                "title": "Rédigez la notification",
+                "body": "Ajoutez un titre et un message. L'image et le lien sont facultatifs."
+            },
+            "audience": {
+                "title": "Choisissez le public",
+                "body": "Choisissez les membres qui la reçoivent. Le nombre de membres concernés s'affiche."
+            },
+            "schedule": {
+                "title": "Choisissez quand l'envoyer",
+                "body": "Envoyez-la tout de suite ou planifiez-la. Vous vérifiez tout avant l'envoi."
+            }
+        },
+        "storeEdit": {
+            "tabs": {
+                "title": "Les réglages de votre boutique",
+                "body": "Utilisez les onglets pour passer d'Apparence à Fiche dans l'app, Connexions et Équipe."
+            },
+            "connections": {
+                "title": "Connexions",
+                "body": "Frak a besoin de vos commandes pour verser les récompenses. Connectez ici le logiciel de votre boutique."
+            },
+            "team": {
+                "title": "Équipe",
+                "body": "Ajoutez des administrateurs par e-mail ou par adresse de porte-monnaie Frak."
+            },
+            "close": {
+                "title": "Retour à vos boutiques",
+                "body": "Sélectionnez le bouton de fermeture en haut à gauche pour revenir à Mes boutiques."
+            }
+        },
+        "setupStatus": {
+            "checklist": {
+                "title": "Liste de configuration",
+                "body": "Chaque étape indique si elle est faite. Pour une étape à faire, sélectionnez Compléter cette étape."
+            }
+        },
+        "settings": {
+            "preferences": {
+                "title": "Langue et devise",
+                "body": "Choisissez votre langue et la devise utilisée pour afficher les montants dans ce tableau de bord."
+            },
+            "security": {
+                "title": "Sécurité",
+                "body": "Activez la vérification en deux étapes et consultez les appareils où vous êtes connecté."
+            }
+        },
+        "billing": {
+            "info": {
+                "title": "Informations de facturation",
+                "body": "Ajoutez le nom de votre société, votre numéro de TVA et votre adresse. Ils figurent sur toutes vos factures."
+            },
+            "history": {
+                "title": "Factures et dépôts",
+                "body": "Utilisez les onglets pour passer de vos factures à vos dépôts. Vous pouvez télécharger une facture en PDF."
+            }
+        }
     }
 }

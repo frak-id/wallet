@@ -2775,5 +2775,217 @@
             "submit": "Generate",
             "result": "Setup code for {{domain}}"
         }
+    },
+    "onboarding": {
+        "pageTour": {
+            "button": "Page tour"
+        },
+        "progress": "Step {{current}} of {{total}}",
+        "actions": {
+            "skip": "Skip tour",
+            "close": "Close",
+            "back": "Back",
+            "next": "Next",
+            "done": "Done",
+            "fullTour": "Show the full tour"
+        },
+        "welcome": {
+            "intro": {
+                "title": "Start paying rewards",
+                "body": "To start, connect your store, add funds to your budget, turn on reward payouts and create a campaign. This tour shows where each step is. You can skip it and open it again with Page tour."
+            },
+            "stores": {
+                "title": "Your stores",
+                "body": "Each store you connect to Frak is listed here. To connect a Shopify store, open the Frak app in your Shopify admin. You can also use Add a store."
+            },
+            "budget": {
+                "title": "Add funds to your budget",
+                "body": "Rewards are paid from your reward budget. On your store, select Manage budget, then Add funds."
+            },
+            "linkWallet": {
+                "title": "Link your Frak wallet (optional)",
+                "body": "You need a linked Frak wallet to turn Pay rewards on or off, change the spending limit or withdraw funds. Adding funds does not need it. Link wallet is at the bottom of Manage budget."
+            },
+            "payouts": {
+                "title": "Turn on reward payouts",
+                "body": "In Manage budget, turn on Pay rewards. Frak pays rewards only when this is on."
+            },
+            "campaigns": {
+                "title": "Create a campaign",
+                "body": "A campaign sets the reward your customers earn when they share your store and someone buys through their link. Open Campaigns, then select Create campaign."
+            },
+            "members": {
+                "title": "Members and push notifications",
+                "body": "Members lists the customers who interacted with your store through Frak. You can send them a push notification from here."
+            },
+            "account": {
+                "title": "Your account",
+                "body": "Use this menu to switch store, open Settings or log out."
+            },
+            "help": {
+                "title": "Need help later?",
+                "body": "Select Page tour on any page to see what that page does. You can show this full tour again from there."
+            }
+        },
+        "stores": {
+            "overview": {
+                "title": "My stores",
+                "body": "Each card is one store. You manage its budget and settings from here."
+            },
+            "budget": {
+                "title": "Manage budget",
+                "body": "Add funds and see your budget. You can also turn Pay rewards on or off, change the spending limit or withdraw funds. These last three need a linked Frak wallet."
+            },
+            "edit": {
+                "title": "Edit store",
+                "body": "Change your store's appearance, its listing in the Frak app, its order tracking connection and your team."
+            },
+            "add": {
+                "title": "Add a store",
+                "body": "Connect another store to Frak. You enter its domain and prove that you own it."
+            }
+        },
+        "campaignsOverview": {
+            "overview": {
+                "title": "Campaign overview",
+                "body": "See how your campaigns perform: ambassadors, shares, sales generated and average cost per order."
+            },
+            "journey": {
+                "title": "Customer journey",
+                "body": "Follow customers from the share button to the order."
+            },
+            "top": {
+                "title": "Top campaigns",
+                "body": "Your best campaigns are listed here. Select View all campaigns to see every campaign."
+            },
+            "create": {
+                "title": "Create campaign",
+                "body": "Start a new campaign here. You pick a goal, countries, a budget and a reward, then review and publish."
+            }
+        },
+        "campaignsList": {
+            "list": {
+                "title": "All campaigns",
+                "body": "Each row is a campaign. Use the tabs to filter by status: Active, Paused, Draft, Ended or Archived."
+            },
+            "actions": {
+                "title": "Actions on a campaign",
+                "body": "Use the row menu to view results or settings, edit, pause, resume, archive or delete a campaign. You can't resume or edit an archived campaign."
+            },
+            "bulk": {
+                "title": "Several campaigns at once",
+                "body": "Select rows to pause, archive or delete several campaigns at once."
+            },
+            "create": {
+                "title": "Create campaign",
+                "body": "Start a new campaign here."
+            }
+        },
+        "campaignWizard": {
+            "steps": {
+                "title": "Step by step",
+                "body": "Each step is saved when you select Continue. You can close the page and come back to your draft later."
+            },
+            "reward": {
+                "title": "Goal and reward",
+                "body": "Pick the action that earns a reward, then choose how much you pay and who receives it."
+            },
+            "publish": {
+                "title": "Review and publish",
+                "body": "Check your campaign on the last step, then publish it. Rewards are paid from your budget, so make sure it has funds."
+            }
+        },
+        "storeWizard": {
+            "details": {
+                "title": "Add a store",
+                "body": "Enter your store name and domain. You prove that you own the domain before you continue."
+            },
+            "confirm": {
+                "title": "Confirm your store",
+                "body": "Check the details, then complete the registration. After that, your store appears in My stores."
+            }
+        },
+        "members": {
+            "list": {
+                "title": "Members",
+                "body": "Each row is a customer who interacted with your store through Frak. You see when they joined, their interactions and the rewards they earned."
+            },
+            "filters": {
+                "title": "Filters",
+                "body": "Use Filters to narrow the list by join date or number of interactions."
+            },
+            "push": {
+                "title": "Push notifications",
+                "body": "Open the Push notifications tab to see past notifications and send a new one."
+            }
+        },
+        "push": {
+            "history": {
+                "title": "Push notifications",
+                "body": "Past and scheduled notifications are listed here with their status."
+            },
+            "send": {
+                "title": "Send push notification",
+                "body": "Select Send push notification to write a message and choose who receives it."
+            }
+        },
+        "pushCreate": {
+            "content": {
+                "title": "Write the notification",
+                "body": "Add a title and a message. The image and the link are optional."
+            },
+            "audience": {
+                "title": "Choose the audience",
+                "body": "Choose which members receive it. The number of matching members is shown."
+            },
+            "schedule": {
+                "title": "Choose when to send",
+                "body": "Send it now or schedule it for later. You review everything before it is sent."
+            }
+        },
+        "storeEdit": {
+            "tabs": {
+                "title": "Your store settings",
+                "body": "Use the tabs to switch between Appearance, App listing, Connections and Team."
+            },
+            "connections": {
+                "title": "Connections",
+                "body": "Frak needs your orders to pay rewards. Connect your shop software here."
+            },
+            "team": {
+                "title": "Team",
+                "body": "Add admins by e-mail or by Frak wallet address."
+            },
+            "close": {
+                "title": "Back to your stores",
+                "body": "Select the close button at the top left to go back to My stores."
+            }
+        },
+        "setupStatus": {
+            "checklist": {
+                "title": "Setup checklist",
+                "body": "Each step shows whether it is done. For a step that is not done, select Complete this step."
+            }
+        },
+        "settings": {
+            "preferences": {
+                "title": "Language and currency",
+                "body": "Choose your language and the currency used to show amounts in this dashboard."
+            },
+            "security": {
+                "title": "Security",
+                "body": "Set up 2-step verification and see the devices where you are logged in."
+            }
+        },
+        "billing": {
+            "info": {
+                "title": "Invoice information",
+                "body": "Add your company name, VAT number and address. They appear on all your invoices."
+            },
+            "history": {
+                "title": "Invoices and deposits",
+                "body": "Use the tabs to switch between your invoices and your deposits. You can download an invoice as a PDF."
+            }
+        }
     }
 }

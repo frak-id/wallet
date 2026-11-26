@@ -1,4 +1,5 @@
 import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import clsx from "clsx";
@@ -6,6 +7,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
 import * as layout from "@/module/merchant/component/EditPageLayout/edit-page-layout.css";
+import { PageTourButton } from "@/module/onboarding/component/PageTourButton";
 import * as styles from "./push-create-layout.css";
 
 /**
@@ -37,7 +39,10 @@ export function PushCreateLayout({
                     onClick={onClose}
                     aria-label={t("push.create.close")}
                 />
-                <Text as="h1">{title}</Text>
+                <Inline space="m" align="space-between" alignY="center">
+                    <Text as="h1">{title}</Text>
+                    <PageTourButton />
+                </Inline>
             </Stack>
             <div className={styles.row}>
                 <div className={styles.formColumn}>{children}</div>

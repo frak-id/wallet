@@ -1,5 +1,6 @@
 import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
@@ -12,6 +13,7 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { PageTourButton } from "@/module/onboarding/component/PageTourButton";
 import * as styles from "./edit-page-layout.css";
 
 export type EditPage =
@@ -79,7 +81,10 @@ export function EditPageLayout({
                     }
                     aria-label={t("merchantEdit.close")}
                 />
-                <Text as="h1">{t("merchantEdit.title")}</Text>
+                <Inline space="m" align="space-between" alignY="center">
+                    <Text as="h1">{t("merchantEdit.title")}</Text>
+                    <PageTourButton />
+                </Inline>
             </Stack>
             <div className={styles.gutter}>
                 <ContentBlock maxWidth="720px" align="left">

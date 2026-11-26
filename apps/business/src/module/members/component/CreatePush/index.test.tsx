@@ -30,6 +30,7 @@ vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
 }));
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => vi.fn(),
+    useLocation: () => ({ pathname: "/m/store-1/push/create" }),
 }));
 
 import { getMerchantsMembersCount } from "@/module/members/api/getMerchantMembers";

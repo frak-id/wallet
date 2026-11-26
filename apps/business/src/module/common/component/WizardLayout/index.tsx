@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/design-system/components/Stepper";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
+import { PageTourButton } from "@/module/onboarding/component/PageTourButton";
 import * as styles from "./wizardLayout.css";
 
 type WizardLayoutProps = {
@@ -63,11 +64,10 @@ export function WizardLayout({
                         wrap={false}
                     >
                         <div>{headerLeading}</div>
-                        {headerActions && (
-                            <Inline space="s" alignY="center" wrap={false}>
-                                {headerActions}
-                            </Inline>
-                        )}
+                        <Inline space="s" alignY="center" wrap={false}>
+                            {headerActions}
+                            <PageTourButton />
+                        </Inline>
                     </Inline>
                     <Stack space="xs">
                         <Text as="h1" variant="heading1">

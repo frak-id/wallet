@@ -59,6 +59,7 @@ export function NavigationCampaignsSwitcher({
     return isMobile ? (
         <NavigationItem
             url={listUrl}
+            data-tour="nav-campaigns"
             icon={<ChecklistIcon width={20} height={20} />}
         >
             {pageNav(t, "campaigns")}
@@ -102,6 +103,7 @@ function NavigationCampaigns({
             <Collapsible.Trigger asChild>
                 <NavigationItem
                     isActive={isCampaignsRoute}
+                    data-tour="nav-campaigns"
                     icon={<ChecklistIcon width={20} height={20} />}
                     rightSection={
                         isOpen ? (

@@ -64,6 +64,7 @@ export function MerchantItem({
                         variant="primary"
                         size="small"
                         width="auto"
+                        data-tour="store-budget"
                         onClick={onManageBudget}
                     >
                         {t("dashboard.actions.manageBudget")}
@@ -80,6 +81,7 @@ export function MerchantItem({
                         preload="intent"
                         variant="secondary"
                         size="small"
+                        data-tour="store-edit"
                     >
                         {t("dashboard.actions.edit")}
                     </LinkButton>
