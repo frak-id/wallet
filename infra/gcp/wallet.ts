@@ -19,7 +19,12 @@ import {
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 import { backendUpstreamTraffic, gatewayRoute } from "./gateway";
-import { cachedImage, getRegistryPath, walletNamespace } from "./utils";
+import {
+    cachedImage,
+    getRegistryPath,
+    walletNamespace,
+    withPreviousImage,
+} from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
 const backendServiceName = $dev
@@ -89,14 +94,14 @@ if (!$dev) {
             location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
         },
         // Non-secret build args
-        buildArgs: {
+        buildArgs: withPreviousImage("wallet-listener", {
             NODE_ENV: "production",
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-        },
+        }),
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
             DRPC_API_KEY: walletEnv.DRPC_API_KEY,
