@@ -39,8 +39,8 @@ Coverage, confirmed against the code at **sync commit `02ef48716`** (origin/dev,
 | --- | --- |
 | `Create` | `setupClient` → `loadCachedConfig` (`setCacheScope`, `reset`: publishes the cache whatever its age), then `createIFrameFrakClient`'s `isCacheFresh ? undefined : resolve(...)` |
 | `FetchOk`, `FetchFail` | `sdkConfigStore.resolve` → `fetchFromBackend`; any failure becomes `undefined` |
-| `Connect` | `postConnectionSetup` after `await lifecycleManager.isConnected`: the cached send when `sdkConfigStore.isResolved` |
-| `Merge` | `await configPromise`, `mergeAndSetConfig` (`setConfig`: global, `writeCache` when `isResolved`, which is always true here), then the fresh send |
+| `Connect` | `postConnectionSetup` after `await lifecycleManager.isConnected`: the cached send when `sdkConfigStore.isResolved`. With a fetch running, setup awaits it only when nothing was sent (`fetchwait`); otherwise it returns and the merge runs detached (`merging`) |
+| `Merge` | `applyFresh`: `configPromise` settles, `mergeAndSetConfig` (`setConfig`: global, `writeCache` when `isResolved`, which is always true here), then the fresh send |
 | `Post`, `PostAt` | `sendChain` in `sendLifecycleConfig`, `.then(contextSent.resolve)` for the two setup sends, and the listener's `handleResolvedConfig` (synchronous up to `setContext`, so one message is one atomic apply) |
 | `Request` | the `onRequest` middleware in `createIFrameFrakClient` (connected, then `await contextSent.promise`) |
 | `Repush` | `setupProofFreshnessRepush`, installed after setup and stopped by `destroy` |
@@ -66,7 +66,7 @@ Any commit listed there, or your own diff on those files, needs a look. Your cha
 
 CSS, i18n, backup pushes, proofs' contents and OpenPanel properties do not matter to it.
 
-**Pending:** `perf/fra-435-nonblocking-config-fetch` (FRA-435, not merged at the sync commit) changes `postConnectionSetup` so it no longer awaits `configPromise` once the cached config was sent. When it lands, update `Connect` and `Merge` to match and rerun.
+`Connect` and `Merge` already include FRA-435 (`perf(sdk/core): don't block setup on the config fetch when the cached config was sent`), which the command above lists: setup no longer awaits `configPromise` once the cached config was sent.
 
 ## When the check fails
 

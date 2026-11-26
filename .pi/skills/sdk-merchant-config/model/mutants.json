@@ -26,6 +26,17 @@
         ]
     },
     {
+        "name": "setup-skips-fetch-without-cache",
+        "code": "postConnectionSetup: return without awaiting configPromise even when no cached config was sent, so nothing resolves contextSent before setup ends",
+        "expect": { "ContextAlwaysArrives": "breaks" },
+        "edits": [
+            {
+                "find": "                  [] glob.k # \"empty\" -> \"merging\"",
+                "replace": "                  [] TRUE -> \"merging\""
+            }
+        ]
+    },
+    {
         "name": "naive-fra-444-fix",
         "code": "postConnectionSetup: when configPromise yields undefined, skip mergeAndSetConfig and the send entirely",
         "expect": {
@@ -79,8 +90,8 @@
         },
         "edits": [
             {
-                "find": "    /\\ page = \"fetchwait\" /\\ fetch \\in {\"ok\", \"fail\"}\n",
-                "replace": "    /\\ page = \"fetchwait\" /\\ fetch \\in {\"ok\", \"fail\"} /\\ ~destroyed\n"
+                "find": "    /\\ page \\in {\"fetchwait\", \"merging\"} /\\ fetch \\in {\"ok\", \"fail\"}\n",
+                "replace": "    /\\ page \\in {\"fetchwait\", \"merging\"} /\\ fetch \\in {\"ok\", \"fail\"} /\\ ~destroyed\n"
             }
         ]
     }

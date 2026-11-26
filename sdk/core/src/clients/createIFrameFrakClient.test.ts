@@ -55,16 +55,17 @@ let currentConfig: {
     allowedDomains: string[];
 };
 let resolveFreshConfig: (value: unknown) => void;
+let hasCachedConfig = true;
 
 vi.mock("../config/sdkConfigStore", () => ({
     sdkConfigStore: {
         setCacheScope: vi.fn(),
         reset: vi.fn(),
         clearCache: vi.fn(),
-        // Stale-but-present cache: both SWR branches in
+        // Stale-but-present cache by default: both SWR branches in
         // `postConnectionSetup` fire (cached send + fresh send).
         get isResolved() {
-            return true;
+            return hasCachedConfig;
         },
         get isCacheFresh() {
             return false;
@@ -88,6 +89,7 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         localStorage.clear();
+        hasCachedConfig = true;
 
         // Real hashing by default; only the unhashable-binding case overrides it.
         const { sha256: realSha256 } = await vi.importActual<
@@ -238,6 +240,68 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
             timeout: 1000,
         });
         expect(sendsWhenReleased).toBeGreaterThan(0);
+    });
+
+    test("settles setup on the cached config without waiting for the fetch, then sends the fresh one after it", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        let setupSettled = false;
+        void client.waitForSetup.then(() => {
+            setupSettled = true;
+        });
+
+        await vi.waitFor(() => expect(setupSettled).toBe(true));
+        await vi.waitFor(() => expect(resolvedConfigCalls()).toHaveLength(1));
+        expect(resolvedConfigCalls()[0].data.merchantId).toBe(
+            "cached-merchant"
+        );
+
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => expect(resolvedConfigCalls()).toHaveLength(2));
+        expect(resolvedConfigCalls()[1].data.merchantId).toBe("fresh-merchant");
+    });
+
+    test("keeps setup pending on the config fetch when no cached config was sent", async () => {
+        hasCachedConfig = false;
+        const { setupSsoUrlListener } = await import("./ssoUrlListener");
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        let setupSettled = false;
+        void client.waitForSetup.then(() => {
+            setupSettled = true;
+        });
+
+        await vi.waitFor(() => expect(setupSsoUrlListener).toHaveBeenCalled());
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(setupSettled).toBe(false);
+        expect(resolvedConfigCalls()).toHaveLength(0);
+
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => expect(setupSettled).toBe(true));
+        expect(resolvedConfigCalls()).toHaveLength(1);
+        expect(resolvedConfigCalls()[0].data.merchantId).toBe("fresh-merchant");
     });
 
     test("emits the execute proof under merge, and a distinct mergeSource", async () => {

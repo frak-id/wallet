@@ -520,19 +520,30 @@ async function postConnectionSetup({
     // synchronously after firing it: resolving early would release RPC
     // requests that then beat `resolved-config` to the listener, which
     // rejects them with "No resolving context available".
-    if (sdkConfigStore.isResolved) {
+    const sentCached = sdkConfigStore.isResolved;
+    if (sentCached) {
         void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
             contextSent.resolve
         );
     }
 
-    // If a fetch is running (stale/missing cache), wait for fresh data and update
+    // A fetch is running (stale/missing cache): apply and send the fresh data.
+    // Setup only waits for it when no cached config was sent, because
+    // `contextSent` then depends on this send.
     if (configPromise) {
-        const merchantConfig = await configPromise;
-        mergeAndSetConfig(merchantConfig);
-        void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
-            contextSent.resolve
-        );
+        const applyFresh = async () => {
+            mergeAndSetConfig(await configPromise);
+            void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
+                contextSent.resolve
+            );
+        };
+        if (sentCached) {
+            applyFresh().catch((error) =>
+                console.error("Failed to apply fresh merchant config", error)
+            );
+        } else {
+            await applyFresh();
+        }
     }
 
     async function pushCss() {
