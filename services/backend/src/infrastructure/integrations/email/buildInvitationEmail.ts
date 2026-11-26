@@ -45,11 +45,11 @@ export function buildInvitationEmail({
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#ffffff;border-radius:16px;padding:32px;">
             <tr><td style="font-size:20px;font-weight:600;padding-bottom:8px;">You're invited</td></tr>
-            <tr><td style="font-size:14px;line-height:20px;color:#52525b;padding-bottom:24px;">${safeInviterName} invited you to join <strong>${safeMerchantName}</strong> as an admin on the Frak Business dashboard.</td></tr>
+            <tr><td style="font-size:14px;line-height:20px;color:#52525b;padding-bottom:24px;">${safeInviterName} invited you to join <strong>${safeMerchantName}</strong> as an admin on the Frak dashboard. Choose a password to get access.</td></tr>
             <tr><td align="center" style="padding:8px 0 24px;">
               <a href="${link}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:9999px;">Accept invitation</a>
             </td></tr>
-            <tr><td style="font-size:12px;line-height:18px;color:#a1a1aa;padding-top:24px;">This invitation link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</td></tr>
+            <tr><td style="font-size:12px;line-height:18px;color:#a1a1aa;padding-top:24px;">This link works for 7 days. If you were not expecting this invitation, ignore this email.</td></tr>
           </table>
         </td>
       </tr>
