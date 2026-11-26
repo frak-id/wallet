@@ -26,9 +26,9 @@ bun .pi/skills/native-event-outbox/scripts/check.ts             # the rules, ~30
 bun .pi/skills/native-event-outbox/scripts/check.ts --mutants   # proof each check can fail, ~1 min
 ```
 
-It needs Java 11+ on `PATH` (the JDK 17 that `sdk/android` already requires). On the first run it downloads TLC 1.7.4 to `~/.cache/frak-tla/` and verifies its sha256. Add `--out <dir>` to keep TLC's output somewhere other than a temp dir. Exit 0 means every rule matched `expected.json`.
+Both commands go through the shared runner `.pi/tla/check.ts`, which `sdk-merchant-config` also uses. It needs Java 11+ on `PATH` (the JDK 17 that `sdk/android` already requires). On the first run it downloads TLC 1.7.4 to `~/.cache/frak-tla/` and verifies its sha256. Add `--out <dir>` to keep TLC's output somewhere other than a temp dir. Exit 0 means every rule matched `expected.json`.
 
-Each broken rule prints its shortest path as numbered steps with the variables that changed. Read it, and every result, with the `/statechart` skill: it tells a violation as a path in plain words and, when the model passes, draws how the outbox moves between states. Give it `model/EventOutbox.tla` and a config with the rule as an `INVARIANT`.
+Each broken rule prints its shortest path as numbered steps with the variables that changed. Read it, and every result, with the `/statechart` skill. It ships with the pstack plugin (`michael-denyer/pstack-claude`), not with this repo, so skip this step if you do not have it. It tells a violation as a path in plain words and, when the model passes, draws how the outbox moves between states. Give it `model/EventOutbox.tla` and a config with the rule as an `INVARIANT`.
 
 ## Does my change touch the verified code?
 

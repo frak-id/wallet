@@ -2,8 +2,9 @@
     {
         "name": "reconcile-writes-back-the-snapshot",
         "code": "EventOutbox.flush: queue.replace(pending minus delivered) instead of queue.reconcile(...)",
-        "rule": "NoSilentLoss",
-        "expect": "breaks",
+        "expect": {
+            "NoSilentLoss": "breaks"
+        },
         "edits": [
             {
                 "find": "disk' = IF durable THEN Reconciled(disk, delivered[f], retried[f]) ELSE disk",
@@ -14,8 +15,9 @@
     {
         "name": "drain-loop-ends-unconditionally",
         "code": "EventOutbox.scheduleFlush: drainState.set(IDLE) instead of while (!drainState.compareAndSet(DRAINING, IDLE))",
-        "rule": "NoLostWakeup",
-        "expect": "breaks",
+        "expect": {
+            "NoLostWakeup": "breaks"
+        },
         "edits": [
             {
                 "find": "    /\\ IF dstate = \"DRAINING\"\n       THEN dstate' = \"IDLE\"",
@@ -26,8 +28,9 @@
     {
         "name": "no-drain-again",
         "code": "EventOutbox.scheduleFlush: the DRAINING branch returns without setting DRAIN_AGAIN",
-        "rule": "NoLostWakeup",
-        "expect": "breaks",
+        "expect": {
+            "NoLostWakeup": "breaks"
+        },
         "edits": [
             {
                 "find": "          /\\ dstate' = \"DRAIN_AGAIN\"",
@@ -38,8 +41,9 @@
     {
         "name": "consent-checked-once-per-drain",
         "code": "EventOutbox.flush: delete the per-row `if (!trackingAllowed()) break`",
-        "rule": "NoSendWhileOff",
-        "expect": "breaks",
+        "expect": {
+            "NoSendWhileOff": "breaks"
+        },
         "edits": [
             {
                 "find": "    /\\ IF ~consent\n       THEN Break",
@@ -50,8 +54,9 @@
     {
         "name": "fix-read-the-id-per-row",
         "code": "EventOutbox.flush: call currentClientId() inside the loop, per row, instead of once before it",
-        "rule": "NoSendUnderResetId",
-        "expect": "holds",
+        "expect": {
+            "NoSendUnderResetId": "holds"
+        },
         "edits": [
             {
                 "find": "        stale == e.cid # NoId /\\ snapId[f] # NoId /\\ e.cid # snapId[f]\n        row == IF e.cid = NoId /\\ snapId[f] # NoId THEN [e EXCEPT !.cid = snapId[f]] ELSE e",

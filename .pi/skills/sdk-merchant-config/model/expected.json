@@ -1,0 +1,8 @@
+{
+    "ListenerEndsOnLatest": "holds",
+    "ContextAlwaysArrives": "holds",
+    "NoRequestBeforeContext": "holds",
+    "NoTrustDowngrade": "breaks",
+    "CacheOnlyBackend": "breaks",
+    "NoWriteAfterDestroy": "breaks"
+}
