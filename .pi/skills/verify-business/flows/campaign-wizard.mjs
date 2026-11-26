@@ -1,14 +1,14 @@
-// campaign-wizard: from the sidebar's campaign list, "Create new campaign" opens basics, a title enables Continue, and Continue reaches Goals.
+// campaign-wizard: from the sidebar's campaign list, "Create campaign" opens basics, a title enables Continue, and Continue reaches Goals.
 import { openFromSidebar } from "./nav.mjs";
 
 export default async ({ page, step, expect }) => {
     await openFromSidebar(page, "/campaigns/list");
     await expect(
-        page.getByRole("heading", { name: "List", level: 1 })
+        page.getByRole("heading", { name: "All campaigns", level: 1 })
     ).toBeVisible();
     await page
         .getByRole("main")
-        .getByRole("link", { name: "Create new campaign" })
+        .getByRole("link", { name: "Create campaign" })
         .click();
 
     await expect(
@@ -25,7 +25,7 @@ export default async ({ page, step, expect }) => {
     await next.click();
     await expect(page).toHaveURL(/\/campaigns\/draft\/[^/]+\/goals$/);
     await expect(
-        page.getByRole("heading", { name: "Goals", level: 1 })
+        page.getByRole("heading", { name: "Goal", level: 1 })
     ).toBeVisible();
     await expect(
         page.getByRole("listitem", {

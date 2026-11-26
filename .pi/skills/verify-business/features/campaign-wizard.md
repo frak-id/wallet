@@ -4,15 +4,15 @@ A full-screen, step-by-step form to create a campaign or resume a draft: basics,
 
 ## Sub-features
 
-- `wizard-new` opens empty basics from `link "Create new campaign"`; `button "Continue"` stays disabled until `textbox "Campaign title"` has a value.
+- `wizard-new` opens empty basics from `link "Create campaign"`; `button "Continue"` stays disabled until `textbox "Campaign title"` has a value.
 - `wizard-advance` moves to the next step on Continue and marks the previous one `completed` in the step list (`listitem "Step N: <name>, completed|current|upcoming"`).
 - `wizard-resume` reopens a draft with its saved values from the detail sheet's `link "Edit campaign"`.
-- `wizard-budget` sets the budget period (`radio "Global|Daily|Weekly|Monthly"`), `spinbutton "Budget cap"` and the schedule (`radio "Start immediately…"`, `"Start date only…"`, `"Start + End date…"`).
+- `wizard-budget` sets the budget period (`radio "Whole campaign|Per day|Per week|Per month"`), `spinbutton "Budget amount"` and the schedule (`radio "Start immediately…"`, `"Start date only…"`, `"Start + End date…"`).
 - `wizard-reward` sets the reward model and the ambassador / referee amounts.
 
 ## How to get to it (user POV)
 
-- Campaign list → `link "Create new campaign"` (in the page or in the header).
+- Campaign list → `link "Create campaign"` (in the page or in the header).
 - Campaign list → a draft row → detail sheet → `link "Edit campaign"`.
 - A step's URL directly: `/m/$id/campaigns/draft/<id>/<step>` with step `goals`, `territory`, `budget`, `products`, `reward`, `referral-chain`, `validation` (empty step = basics).
 
@@ -22,8 +22,8 @@ Preconditions:
 
 - `H doctor` is all `ok`; demo mode (default).
 
-- **New campaign.** `H flow F/campaign-wizard.mjs`. Verdict `PASS`, steps `01-basics-filled`, `02-goals`. From the list, `getByRole("main").getByRole("link", { name: "Create new campaign" }).click()` → `heading "Campaign basics"`, Continue disabled; fill the title → enabled; Continue → URL ends `/campaigns/draft/<new id>/goals`, `heading "Goals"`, `listitem "Step 1: Campaign basics, completed"`.
-- **Resume a draft to the budget step.** `H flow F/draft-resume.mjs` (add `--width 390` for the phone layout). Verdict `PASS`, steps `01-basics`, `02-budget`. Draft tab → cell "Draft Campaign - Registration Focus" → `dialog` → `link "Edit campaign"` → title prefilled; Continue three times through `Goals`, `Territory & categories` → `heading "Budget & schedule"`, URL `/campaigns/draft/camp_003/budget`, `radio "Weekly"` checked, `spinbutton "Budget cap"` = `750`.
+- **New campaign.** `H flow F/campaign-wizard.mjs`. Verdict `PASS`, steps `01-basics-filled`, `02-goals`. From the list, `getByRole("main").getByRole("link", { name: "Create campaign" }).click()` → `heading "Campaign basics"`, Continue disabled; fill the title → enabled; Continue → URL ends `/campaigns/draft/<new id>/goals`, `heading "Goal"`, `listitem "Step 1: Campaign basics, completed"`.
+- **Resume a draft to the budget step.** `H flow F/draft-resume.mjs` (add `--width 390` for the phone layout). Verdict `PASS`, steps `01-basics`, `02-budget`. Draft tab → cell "Draft Campaign - Registration Focus" → `dialog` → `link "Edit campaign"` → title prefilled; Continue three times through `Goals`, `Territory & categories` → `heading "Budget and schedule"`, URL `/campaigns/draft/camp_003/budget`, `radio "Per week"` checked, `spinbutton "Budget amount"` = `750`.
 - **Layout of every step.** `H flow F/split-words.mjs --width <w> --locale fr-FR` covers all steps of `camp_003`.
 
 ## Gotchas

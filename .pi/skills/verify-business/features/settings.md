@@ -23,7 +23,7 @@ Preconditions:
 
 - **Whole recipe.** `H flow F/settings.mjs`. Verdict `PASS`, steps `01-settings`, `02-settings-fr`.
 - **Open.** `getByRole("banner").getByRole("link", { name: "demo" }).click()`. URL ends `/settings`; `heading "Settings" [level=1]`; `radio "EUR"` and `radio "English"` checked.
-- **Language.** `getByRole("radio", { name: "French" }).click()`. `heading "Paramètres"`, `radio "Français"` checked, the sidebar reads "Mes marchands", "Campagnes".
+- **Language.** `getByRole("radio", { name: "Français" }).click()`. `heading "Paramètres"`, `radio "Français"` checked, the sidebar reads "Mes boutiques", "Campagnes".
 
 ## Gotchas
 

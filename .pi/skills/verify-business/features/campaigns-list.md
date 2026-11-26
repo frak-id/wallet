@@ -12,7 +12,7 @@ The merchant's campaigns in one table, filtered by status tabs and a search box;
 
 ## How to get to it (user POV)
 
-- Sidebar `Campaigns` → `List`.
+- Sidebar `Campaigns` → `All campaigns`.
 - Header `Breadcrumb` → `Campaigns` from any campaigns page.
 - A link to `/m/$id/campaigns/list?campaign=<id>` opens the list with that sheet already open.
 
@@ -23,7 +23,7 @@ Preconditions:
 - `H doctor` is all `ok`; demo mode (default).
 
 - **Whole recipe.** `H flow F/campaigns-list.mjs`. Verdict `PASS`, steps `01-list`, `02-draft-tab`, `03-search`, `04-details-sheet`.
-- **Open.** `openFromSidebar(page, "/campaigns/list")`. `heading "List" [level=1]`; the table's second rowgroup holds 2 rows.
+- **Open.** `openFromSidebar(page, "/campaigns/list")`. `heading "All campaigns" [level=1]`; the table's second rowgroup holds 2 rows.
 - **Status tab.** `getByRole("tab", { name: "Draft" }).click()`. The tab has `aria-selected="true"`; every row contains `Draft`.
 - **Search.** Back on `All`, `getByRole("textbox", { name: "Search" }).fill("Summer")`. One row, "Summer Referral Campaign".
 - **Detail sheet.** `getByRole("cell", { name: "Summer Referral Campaign", exact: true }).click()`. URL gains `?campaign=camp_001`; `dialog` shows "Summer Referral Campaign", "5550 ambassadors", tabs `Funnel & ROI`, `Ambassadors`, `Configuration`, and `button "Close campaign details"`.

@@ -4,7 +4,7 @@ import { openFromSidebar } from "./nav.mjs";
 export default async ({ page, step, expect }) => {
     await openFromSidebar(page, "/campaigns/list");
     await expect(
-        page.getByRole("heading", { name: "List", level: 1 })
+        page.getByRole("heading", { name: "All campaigns", level: 1 })
     ).toBeVisible();
     const rows = page
         .getByRole("table")

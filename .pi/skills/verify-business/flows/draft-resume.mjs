@@ -1,7 +1,7 @@
 // draft-resume: a draft's detail sheet → "Edit campaign" reopens the wizard with its saved values, and Continue walks it to Budget & schedule.
 import { openFromSidebar } from "./nav.mjs";
 
-const STEPS = ["Goals", "Territory & categories", "Budget & schedule"];
+const STEPS = ["Goal", "Countries", "Budget and schedule"];
 
 export default async ({ page, step, expect }) => {
     await openFromSidebar(page, "/campaigns/list");
@@ -33,9 +33,9 @@ export default async ({ page, step, expect }) => {
         ).toBeVisible();
     }
     await expect(page).toHaveURL(/\/campaigns\/draft\/camp_003\/budget$/);
-    await expect(page.getByRole("radio", { name: "Weekly" })).toBeChecked();
+    await expect(page.getByRole("radio", { name: "Per week" })).toBeChecked();
     await expect(
-        page.getByRole("spinbutton", { name: "Budget cap" })
+        page.getByRole("spinbutton", { name: "Budget amount" })
     ).toHaveValue("750");
     await step("budget");
 };

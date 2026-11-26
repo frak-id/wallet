@@ -8,7 +8,7 @@ BUSINESS="$REPO/apps/business"
 # apps/business has no Playwright of its own; the wallet's install is the repo's pinned one.
 PLAYWRIGHT_HOME="$REPO/apps/wallet"
 EVIDENCE_ROOT="$REPO/.pi/verify-evidence"
-TITLE="Frak Business Hub | Manage Your Web3 Products"
+TITLE="Frak | Dashboard for your store"
 SERVER_PID=""
 EVIDENCE=""
 
