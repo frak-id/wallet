@@ -105,8 +105,8 @@ function resolveEnvironment(env: FrakEnvironment): ResolvedEnvironment {
 
 /**
  * Publish the environment for every later reader. Called by the client
- * entrypoints (`createIframe` / `createIFrameFrakClient` / the React
- * provider), so it runs more than once per page in normal use.
+ * entrypoints (`setupClient` / `createIframe` / `createIFrameFrakClient` /
+ * the React provider), so it runs more than once per page in normal use.
  *
  * An omitted `env` is a no-op rather than "reset to production": a second
  * client built from a bare config would otherwise silently repoint the
