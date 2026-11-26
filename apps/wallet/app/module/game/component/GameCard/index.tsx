@@ -295,7 +295,7 @@ function DrawnGameCard({ result }: { result: GameResult }) {
 function EndedGameCard({ result }: { result: GameResult }) {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const { badge: Badge, face, title } = OUTCOME[result.outcome];
+    const { badge: Badge, face, title, status } = OUTCOME[result.outcome];
     const prize = formatGameAmount(result.game.prizeAmount, i18n.language);
     const tickets = totalTickets(result.ticketsBySource);
     const headline = t(title, { prize });
@@ -355,13 +355,7 @@ function EndedGameCard({ result }: { result: GameResult }) {
                 dismiss(result.game.id, result.outcome);
             }}
             headline={<Headline>{headline}</Headline>}
-            status={
-                <StatusRow
-                    tone="action"
-                    title={t("game.card.statusResult")}
-                    detail={null}
-                />
-            }
+            status={<StatusRow tone="action" title={t(status)} detail={null} />}
         />
     );
 }

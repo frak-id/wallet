@@ -92,13 +92,13 @@ describe("GameCard", () => {
     });
 
     it.each([
-        ["won", "game.result.won.title"],
-        ["lost", "game.result.lost.title"],
-        ["drawing", "game.result.drawing.title"],
-        ["no_winner", "game.result.noWinner.title"],
+        ["won", "game.result.won.title", "game.card.statusResult"],
+        ["lost", "game.result.lost.title", "game.card.statusResult"],
+        ["drawing", "game.result.drawing.title", "game.card.statusDetails"],
+        ["no_winner", "game.result.noWinner.title", "game.card.statusResult"],
     ] as const)(
         "shows a game that ended recently as a %s ticket",
-        (outcome, title) => {
+        (outcome, title, status) => {
             currentGame.data = { game: null, me: { participating: false } };
             gameHistory.data = [
                 endedDaysAgo(2, outcome),
@@ -108,9 +108,7 @@ describe("GameCard", () => {
 
             expect(screen.getByText(title)).toBeInTheDocument();
             expect(screen.getByText("game.history.gameOf")).toBeInTheDocument();
-            expect(
-                screen.getByText("game.card.statusResult")
-            ).toBeInTheDocument();
+            expect(screen.getByText(status)).toBeInTheDocument();
             expect(container.querySelectorAll("[role=button]")).toHaveLength(0);
             expect(screen.getAllByRole("button")).toHaveLength(2);
             fireEvent.click(

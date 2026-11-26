@@ -1025,7 +1025,8 @@
             "drawn": "You were drawn!",
             "drawnAriaLabel": "Frak Game: you were drawn for {{prize}}",
             "endedAriaLabel": "Frak Game of {{date}}: {{outcome}}",
-            "statusResult": "See the result"
+            "statusResult": "See the result",
+            "statusDetails": "See the details"
         },
         "page": {
             "none": {
