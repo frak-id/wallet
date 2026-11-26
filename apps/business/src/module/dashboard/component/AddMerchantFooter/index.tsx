@@ -10,6 +10,7 @@ export function AddMerchantFooter() {
         <FloatingFooter>
             <LinkButton
                 to="/merchant/new"
+                data-tour="add-store"
                 size="large"
                 width="auto"
                 icon={<PlusIcon width={24} height={24} />}

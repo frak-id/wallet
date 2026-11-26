@@ -594,6 +594,58 @@ function tieredSplitValid(values: RewardFormValues): boolean {
     );
 }
 
+export type RewardBlock = {
+    /** i18n key of the sentence explaining why Continue is disabled. */
+    key:
+        | "campaigns.create.reward.disabledReason.fixedNotAllowed"
+        | "campaigns.create.reward.disabledReason.tiered"
+        | "campaigns.create.reward.disabledReason.noModel"
+        | "campaigns.create.reward.disabledReason.noCost"
+        | "campaigns.create.reward.tiered.inverted"
+        | "campaigns.create.reward.tiered.overlap"
+        | "campaigns.create.reward.percentage.tooHigh"
+        | "campaigns.create.reward.cpa.splitMismatch";
+    /** Pool the two rewards must add up to, for the split sentence. */
+    amount?: number;
+};
+
+/** What blocks Continue, in the order a merchant meets it; `undefined` when nothing does. */
+export function rewardBlock(
+    values: RewardFormValues,
+    options?: { requiresMatchedBasis?: boolean }
+): RewardBlock | undefined {
+    if (isRewardFormValid(values, options)) return undefined;
+    if (options?.requiresMatchedBasis && values.model === "fixed") {
+        return {
+            key: "campaigns.create.reward.disabledReason.fixedNotAllowed",
+        };
+    }
+    if (values.model === "tiered") {
+        if (tieredRangeInverted(values.globalCpaTiers)) {
+            return { key: "campaigns.create.reward.tiered.inverted" };
+        }
+        if (tieredRangesOverlap(values.globalCpaTiers)) {
+            return { key: "campaigns.create.reward.tiered.overlap" };
+        }
+        return { key: "campaigns.create.reward.disabledReason.tiered" };
+    }
+    if (values.model !== "fixed" && values.model !== "percentage") {
+        return { key: "campaigns.create.reward.disabledReason.noModel" };
+    }
+    const cost =
+        values.model === "fixed" ? values.targetCpa : values.targetCpaPercent;
+    if (!(cost > 0)) {
+        return { key: "campaigns.create.reward.disabledReason.noCost" };
+    }
+    if (values.model === "percentage" && cost > 100) {
+        return { key: "campaigns.create.reward.percentage.tooHigh" };
+    }
+    return {
+        key: "campaigns.create.reward.cpa.splitMismatch",
+        amount: splitTargetCpa(cost).rewardsPool,
+    };
+}
+
 /**
  * Continue gating. Fixed/% require a positive Target CPA whose pool is fully
  * allocated (Ambassador + Referee + Frak commission = Target CPA). Tiered

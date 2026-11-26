@@ -22,6 +22,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     requiresMatchedBasis,
+    rewardBlock,
     rewardFormToDraft,
     supportsMatchedBasis,
 } from "./utils";
@@ -58,13 +59,18 @@ export function RewardCampaign() {
     const basisLocked = requiresMatchedBasis({ rule });
 
     const watched = useWatch({ control: form.control });
-    const isValid = isRewardFormValid(
-        {
-            ...DEFAULT_REWARD_FORM,
-            ...watched,
-        } as RewardFormValues,
-        { requiresMatchedBasis: basisLocked }
-    );
+    const currentValues = {
+        ...DEFAULT_REWARD_FORM,
+        ...watched,
+    } as RewardFormValues;
+    const blockOptions = { requiresMatchedBasis: basisLocked };
+    const isValid = isRewardFormValid(currentValues, blockOptions);
+    const block = rewardBlock(currentValues, blockOptions);
+    const disabledReason = block
+        ? t(block.key, {
+              amount: `${block.amount ?? 0}${model === "percentage" ? "%" : currencyGlyph}`,
+          })
+        : undefined;
 
     async function persist(values: RewardFormValues) {
         const { draft } = campaignStore.getState();
@@ -91,6 +97,7 @@ export function RewardCampaign() {
                 isValid={isValid}
                 isPending={saveCampaign.isPending}
                 isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
+                disabledReason={disabledReason}
                 onSaveDraft={handleSaveDraft}
                 onClose={() => form.reset(defaultValues)}
                 hasUnsavedChanges={form.formState.isDirty}
@@ -104,18 +111,7 @@ export function RewardCampaign() {
                         )}
                         <WizardFieldCard
                             space="xs"
-                            label={t(
-                                "campaigns.create.reward.campaignType.label"
-                            )}
-                            description={t(
-                                "campaigns.create.reward.campaignType.description"
-                            )}
-                        >
-                            <CampaignTypeField control={form.control} />
-                        </WizardFieldCard>
-
-                        <WizardFieldCard
-                            space="xs"
+                            dataTour="campaign-reward-model"
                             label={t("campaigns.create.reward.model.label")}
                             description={t(
                                 "campaigns.create.reward.model.description"
@@ -181,6 +177,18 @@ export function RewardCampaign() {
                                 <LockupField control={form.control} />
                             </WizardFieldCard>
                         )}
+
+                        <WizardFieldCard
+                            space="xs"
+                            label={t(
+                                "campaigns.create.reward.campaignType.label"
+                            )}
+                            description={t(
+                                "campaigns.create.reward.campaignType.description"
+                            )}
+                        >
+                            <CampaignTypeField control={form.control} />
+                        </WizardFieldCard>
                     </Stack>
                 </form>
             </WizardStep>

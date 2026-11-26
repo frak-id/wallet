@@ -18,11 +18,11 @@ import type { CampaignDraft } from "@/stores/campaignStore";
 import { WizardFieldCard } from "../WizardFieldCard";
 import * as styles from "./basics.css";
 
-/** Selectable tokens, in Figma order. Labels are currency codes (no i18n). */
+/** Selectable tokens, in Figma order. */
 const TOKENS = [
-    { stablecoin: "eure", label: "EUR" },
-    { stablecoin: "usdc", label: "USDC" },
-] as const satisfies ReadonlyArray<{ stablecoin: Stablecoin; label: string }>;
+    { stablecoin: "eure" },
+    { stablecoin: "usdc" },
+] as const satisfies ReadonlyArray<{ stablecoin: Stablecoin }>;
 
 /** Currency glyphs (24px full-colour flag/coin icons). */
 const CURRENCY_ICONS: Partial<Record<Stablecoin, ReactNode>> = {
@@ -189,7 +189,11 @@ export function FormRewardCurrency() {
                                                         variant="body"
                                                         weight="medium"
                                                     >
-                                                        {token.label}
+                                                        {t(
+                                                            DEFAULT_LABEL_KEYS[
+                                                                token.stablecoin
+                                                            ]
+                                                        )}
                                                     </Text>
                                                 </span>
                                             </label>

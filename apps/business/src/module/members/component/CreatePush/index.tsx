@@ -100,10 +100,18 @@ export function CreatePushNotification() {
                     preview={preview}
                 >
                     <Stack space={"l"}>
-                        <PushTitlePanel />
-                        <PushPayloadPanel />
-                        <AudiencePanel />
-                        <SchedulePanel />
+                        <div data-tour="push-content">
+                            <Stack space={"l"}>
+                                <PushTitlePanel />
+                                <PushPayloadPanel />
+                            </Stack>
+                        </div>
+                        <div data-tour="push-audience">
+                            <AudiencePanel />
+                        </div>
+                        <div data-tour="push-schedule">
+                            <SchedulePanel />
+                        </div>
                     </Stack>
                 </PushCreateLayout>
             </div>

@@ -87,7 +87,65 @@ describe("PredicateField", () => {
     });
 });
 
+describe("PredicateField hints", () => {
+    it("warns that excluding products rules out a fixed amount", () => {
+        render(<PredicateHarness defaults={{ operator: "not_in" }} />);
+
+        expect(
+            screen.getByText("campaigns.create.products.hint.negated")
+        ).toBeInTheDocument();
+    });
+
+    it("shows no hint for a plain inclusion on a SKU", () => {
+        render(<PredicateHarness />);
+
+        expect(screen.queryByText(/campaigns\.create\.products\.hint/)).toBe(
+            null
+        );
+    });
+
+    it("points to `contains` for a product name, until it is chosen", () => {
+        const { unmount } = render(
+            <PredicateHarness defaults={{ field: "name", operator: "eq" }} />
+        );
+        expect(
+            screen.getByText("campaigns.create.products.hint.partialName")
+        ).toBeInTheDocument();
+        unmount();
+
+        render(
+            <PredicateHarness
+                defaults={{ field: "name", operator: "contains" }}
+            />
+        );
+        expect(
+            screen.queryByText("campaigns.create.products.hint.partialName")
+        ).toBe(null);
+    });
+});
+
 describe("ValuesField", () => {
+    it("tells the merchant text values are matched exactly", () => {
+        render(<ValuesHarness defaults={{ operator: "eq" }} />);
+
+        expect(
+            screen.getByText("campaigns.create.products.hint.exactText")
+        ).toBeInTheDocument();
+    });
+
+    it("says numeric fields are checked per product line", () => {
+        render(
+            <ValuesHarness defaults={{ field: "quantity", operator: "gte" }} />
+        );
+
+        expect(
+            screen.getByText("campaigns.create.products.hint.numeric")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText("campaigns.create.products.hint.exactText")
+        ).toBe(null);
+    });
+
     it("renders a single labelled input for a scalar operator", () => {
         render(<ValuesHarness defaults={{ operator: "eq" }} />);
 

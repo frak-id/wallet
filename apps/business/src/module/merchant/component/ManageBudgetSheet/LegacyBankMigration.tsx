@@ -14,18 +14,14 @@ import { useMigrateLegacyBank } from "@/module/merchant/hook/useMigrateLegacyBan
 import { computeProductId } from "@/module/merchant/utils/computeProductId";
 import { legacyBankMap } from "@/module/merchant/utils/legacyBanks";
 import { ActionFeedback } from "./ActionFeedback";
-import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./legacy-bank-migration.css";
 
 export function LegacyBankMigration({
     merchantId,
     newBankAddress,
-    hideWalletlessNotice = false,
 }: {
     merchantId: string;
     newBankAddress: Address;
-    /** Parent already renders a `LinkWalletNotice` for this walletless session. */
-    hideWalletlessNotice?: boolean;
 }) {
     const { data: merchant } = useMerchant({ merchantId });
     const productId = merchant?.domain
@@ -40,7 +36,6 @@ export function LegacyBankMigration({
             merchantId={merchantId}
             oldBankAddress={oldBankAddress}
             newBankAddress={newBankAddress}
-            hideWalletlessNotice={hideWalletlessNotice}
         />
     );
 }
@@ -49,12 +44,10 @@ function LegacyBankMigrationContent({
     merchantId,
     oldBankAddress,
     newBankAddress,
-    hideWalletlessNotice,
 }: {
     merchantId: string;
     oldBankAddress: Address;
     newBankAddress: Address;
-    hideWalletlessNotice: boolean;
 }) {
     const { t } = useTranslation();
     const { canOnchain } = useCapabilities();
@@ -73,16 +66,27 @@ function LegacyBankMigrationContent({
     if (isLoading) return <Spinner />;
     if (!status || status.withdrawable === 0n) return null;
 
-    // A walletless session cannot sign the migration transaction — show the
-    // wallet-link CTA instead of the migrate button, unless the parent
-    // (BudgetView) already renders one for this session.
-    if (!canOnchain) return hideWalletlessNotice ? null : <LinkWalletNotice />;
-
     const decimals = tokenMeta?.decimals ?? 6;
     const symbol = tokenMeta?.symbol ?? "???";
     const formattedBalance = formatUnits(status.balance, decimals);
     const formattedPending = formatUnits(status.totalPending, decimals);
     const formattedWithdrawable = formatUnits(status.withdrawable, decimals);
+
+    if (!canOnchain) {
+        return (
+            <div className={styles.legacyPanel}>
+                <div className={styles.legacyPanelHeader}>
+                    <ArrowRightLeft width={16} height={16} />
+                    <span>{t("funding.legacy.title")}</span>
+                </div>
+                <p className={styles.legacyPanelDescription}>
+                    {t("funding.legacy.walletless", {
+                        amount: `${formattedWithdrawable} ${symbol}`,
+                    })}
+                </p>
+            </div>
+        );
+    }
 
     const handleMigrate = () => {
         migrate({

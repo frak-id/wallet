@@ -38,9 +38,8 @@ export const cell = style({
     paddingBlock: alias.spacing.s,
 });
 
-export const infoIcon = style({
-    color: vars.text.secondary,
-    flexShrink: 0,
+export const descriptionLine = style({
+    display: "block",
 });
 
 export const amount = style({

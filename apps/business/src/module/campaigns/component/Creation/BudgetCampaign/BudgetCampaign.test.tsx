@@ -10,7 +10,11 @@ vi.mock("@/module/campaigns/hook/useCampaignCurrencyGlyph", () => ({
     useCampaignCurrencyGlyph: () => "€",
 }));
 
-import { BudgetCapField, type BudgetFormValues } from "./index";
+import {
+    BudgetCapField,
+    type BudgetFormValues,
+    budgetContinueHintKey,
+} from "./index";
 
 function Harness({
     period = "global",
@@ -117,5 +121,25 @@ describe("BudgetCapField (WizardFieldCard label + hint delegated to DS InputNumb
         expect(
             await screen.findByText("campaigns.create.budget.cap.required")
         ).toBeInTheDocument();
+    });
+});
+
+describe("budgetContinueHintKey", () => {
+    it("asks for the amount first, even when the schedule is also missing", () => {
+        expect(budgetContinueHintKey({ amount: 0 })).toBe(
+            "campaigns.create.budget.continueHint.amount"
+        );
+    });
+
+    it("asks for the schedule once the amount is set", () => {
+        expect(budgetContinueHintKey({ amount: 500 })).toBe(
+            "campaigns.create.budget.continueHint.schedule"
+        );
+    });
+
+    it("points at the dates when amount and schedule are both set", () => {
+        expect(
+            budgetContinueHintKey({ amount: 500, scheduleMode: "range" })
+        ).toBe("campaigns.create.budget.continueHint.dates");
     });
 });

@@ -23,6 +23,7 @@ export function ButtonSendPush({
         <LinkButton
             to="/m/$merchantId/push/create"
             params={{ merchantId }}
+            data-tour="push-send"
             onClick={() => setForm(undefined)}
             icon={<Plus size={16} />}
             size={size}

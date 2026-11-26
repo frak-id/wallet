@@ -35,10 +35,16 @@ import * as styles from "./manage-budget-sheet.css";
 function CurrencyLabel({ token }: { token: BudgetToken }) {
     const { t } = useTranslation();
     const meta = currencyMetadata[token.symbol as Stablecoin];
+    const isEuro = meta.provider === "Monerium";
     const providerDescription = t(
-        meta.provider === "Monerium"
+        isEuro
             ? "forms.currencySelector.moneriumDescription"
             : "forms.currencySelector.circleDescription"
+    );
+    const currencyName = t(
+        isEuro
+            ? "funding.budget.currencyName.euros"
+            : "funding.budget.currencyName.dollars"
     );
     return (
         <Inline space="xs" alignY="center">
@@ -52,7 +58,7 @@ function CurrencyLabel({ token }: { token: BudgetToken }) {
             </Text>
             <Tooltip content={providerDescription}>
                 <Text variant="caption" color="disabled" as="span">
-                    {meta.provider}
+                    {currencyName}
                 </Text>
             </Tooltip>
         </Inline>
@@ -165,6 +171,13 @@ export function EmptyTokenCard({ token }: { token: BudgetToken }) {
     );
 }
 
+const statusLabelKey = {
+    active: "funding.budget.status.active",
+    warning: "funding.budget.status.actionNeeded",
+    paused: "funding.budget.status.paused",
+    stopped: "funding.budget.status.currencyStopped",
+} as const;
+
 function TokenStatusBadge({
     token,
     status,
@@ -190,12 +203,7 @@ function TokenStatusBadge({
         });
     }
 
-    const label =
-        status === "active"
-            ? t("funding.budget.status.active")
-            : status === "warning"
-              ? t("funding.budget.status.actionNeeded")
-              : t("funding.budget.status.paused");
+    const label = t(statusLabelKey[status]);
 
     const badge = (
         <Badge variant={statusBadgeVariant[status]} size="small">
@@ -314,6 +322,11 @@ function TokenActions({
                     </Tooltip>
                 )}
             </div>
+            {isBankOpen && (
+                <Text variant="caption" color="secondary">
+                    {t("funding.budget.actions.withdrawLocked")}
+                </Text>
+            )}
             <ActionFeedback isPending={isRevoking} isError={isRevokeError} />
         </Stack>
     );

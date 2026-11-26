@@ -1,9 +1,10 @@
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { StepperStep } from "@frak-labs/design-system/components/Stepper";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowLeftIcon, CheckIcon } from "@frak-labs/design-system/icons";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { WizardLayout } from "@/module/common/component/WizardLayout";
@@ -33,6 +34,11 @@ type WizardStepProps = {
     isSaved?: boolean;
     /** Show a notice that the last save failed. */
     saveFailed?: boolean;
+    /**
+     * One short sentence shown next to the button while Continue is disabled,
+     * so the user knows what is missing. Ignored when the step is valid.
+     */
+    disabledReason?: string;
     /** Save-as-draft handler (header pill). */
     onSaveDraft?: () => void;
     /** Reset/cleanup before the cancel confirmation navigates away. */
@@ -52,12 +58,14 @@ export function WizardStep({
     isPending = false,
     isSaved = false,
     saveFailed = false,
+    disabledReason,
     onSaveDraft,
     onClose,
     hasUnsavedChanges = true,
     children,
 }: WizardStepProps) {
     const { t } = useTranslation();
+    const reasonId = useId();
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
     const { campaignId } = useParams({ strict: false }) as {
@@ -81,6 +89,7 @@ export function WizardStep({
     });
 
     const current = stepI18n(stepKey);
+    const reason = !isValid && !isPending ? disabledReason : undefined;
 
     return (
         <WizardLayout
@@ -93,6 +102,7 @@ export function WizardStep({
                     <GlassButton
                         as="button"
                         aria-label={t("campaigns.create.actions.back")}
+                        title={t("campaigns.create.actions.back")}
                         icon={<ArrowLeftIcon width={22} height={22} />}
                         onClick={() => {
                             const to = previous.to
@@ -123,23 +133,36 @@ export function WizardStep({
                 </>
             }
             footer={
-                <Button
-                    type="submit"
-                    form={formId}
-                    variant="primary"
-                    size="large"
-                    loading={isPending}
-                    disabled={!isValid || isPending}
-                    rightIcon={
-                        lastStep ? (
-                            <CheckIcon width={16} height={16} />
-                        ) : undefined
-                    }
-                >
-                    {lastStep
-                        ? t("campaigns.create.actions.publish")
-                        : t("campaigns.create.actions.continue")}
-                </Button>
+                <>
+                    {reason && (
+                        <Text
+                            id={reasonId}
+                            variant="bodySmall"
+                            color="secondary"
+                        >
+                            {reason}
+                        </Text>
+                    )}
+                    <Button
+                        type="submit"
+                        form={formId}
+                        variant="primary"
+                        size="large"
+                        loading={isPending}
+                        disabled={!isValid || isPending}
+                        aria-describedby={reason ? reasonId : undefined}
+                        data-tour={lastStep ? "campaign-publish" : undefined}
+                        rightIcon={
+                            lastStep ? (
+                                <CheckIcon width={16} height={16} />
+                            ) : undefined
+                        }
+                    >
+                        {lastStep
+                            ? t("campaigns.create.actions.publish")
+                            : t("campaigns.create.actions.continue")}
+                    </Button>
+                </>
             }
         >
             <Stack space="m">

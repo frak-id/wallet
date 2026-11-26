@@ -4,6 +4,7 @@ import {
     computeChainPreview,
     DEFAULT_REFERRAL_CHAIN_FORM,
     draftToReferralChainForm,
+    isMaxDepthValid,
     isReferralChainFormValid,
     type ReferralChainFormValues,
     referralChainFormToDraft,
@@ -256,5 +257,20 @@ describe("computeChainPreview (backend-aligned, conserved split)", () => {
         expect(rows.map((r) => r.level)).toEqual([0, 1, 2, 3, 4]);
         const sum = rows.reduce((acc, r) => acc + r.amount, 0);
         expect(Math.round(sum * 100) / 100).toBe(10);
+    });
+});
+
+describe("isMaxDepthValid", () => {
+    it("accepts an empty field and whole numbers from 1 to the maximum", () => {
+        expect(isMaxDepthValid("")).toBe(true);
+        expect(isMaxDepthValid(1)).toBe(true);
+        expect(isMaxDepthValid(5)).toBe(true);
+    });
+
+    it("rejects zero, decimals, too large values and a missing value", () => {
+        expect(isMaxDepthValid(0)).toBe(false);
+        expect(isMaxDepthValid(2.5)).toBe(false);
+        expect(isMaxDepthValid(999)).toBe(false);
+        expect(isMaxDepthValid(undefined)).toBe(false);
     });
 });

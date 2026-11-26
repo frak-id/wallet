@@ -3,6 +3,7 @@ import {
     type BudgetToken,
     getTokenStatus,
     splitTokensByFunding,
+    statusBadgeVariant,
 } from "./budgetTokens";
 
 describe("getTokenStatus", () => {
@@ -11,8 +12,8 @@ describe("getTokenStatus", () => {
         expect(getTokenStatus(0n, 100n)).toBe("empty");
     });
 
-    it("returns paused when funded but allowance is zero", () => {
-        expect(getTokenStatus(100n, 0n)).toBe("paused");
+    it("returns stopped when funded but allowance is zero", () => {
+        expect(getTokenStatus(100n, 0n)).toBe("stopped");
     });
 
     it("returns warning when allowance is below balance", () => {
@@ -22,6 +23,18 @@ describe("getTokenStatus", () => {
     it("returns active when allowance covers the balance", () => {
         expect(getTokenStatus(100n, 100n)).toBe("active");
         expect(getTokenStatus(100n, 200n)).toBe("active");
+    });
+});
+
+describe("statusBadgeVariant", () => {
+    it("never paints an owner choice as an error", () => {
+        expect(statusBadgeVariant.paused).toBe("neutral");
+        expect(statusBadgeVariant.stopped).toBe("neutral");
+    });
+
+    it("keeps the limit warning amber and a healthy bank green", () => {
+        expect(statusBadgeVariant.warning).toBe("warning");
+        expect(statusBadgeVariant.active).toBe("success");
     });
 });
 

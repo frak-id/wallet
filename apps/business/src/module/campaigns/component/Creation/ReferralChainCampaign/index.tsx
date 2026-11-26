@@ -24,7 +24,6 @@ import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { Input } from "@/module/forms/Input";
 import { InputNumber } from "@/module/forms/InputNumber";
 import { campaignStore } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
@@ -38,6 +37,7 @@ import {
     DEFAULT_REFERRAL_CHAIN_FORM,
     draftToReferralChainForm,
     hasReferrerReward,
+    isMaxDepthValid,
     isReferralChainFormValid,
     MAX_DEPERDITION_PER_LEVEL,
     MAX_REWARDED_LEVELS,
@@ -261,9 +261,7 @@ function ChainPreview({
                     color="secondary"
                     className={styles.schemaHeader}
                 >
-                    {t("campaigns.create.referralChain.preview.caption", {
-                        percent: decrease,
-                    })}
+                    {t("campaigns.create.referralChain.preview.caption")}
                 </Text>
             </div>
 
@@ -361,21 +359,29 @@ export function ReferralChainCampaign() {
     );
 
     const hasReferrer = hasReferrerReward(draft);
-    // Both the preview base (ambassador reward) and the CAC come from the
-    // reward step's form — derive them from a single parse.
+    const decreaseValue = Number(
+        watched.deperditionPerLevel ??
+            DEFAULT_REFERRAL_CHAIN_FORM.deperditionPerLevel
+    );
+    const decreaseOk =
+        decreaseValue >= MIN_DEPERDITION_PER_LEVEL && decreaseValue < 100;
+    const disabledReason = enabled
+        ? !hasReferrer
+            ? t("campaigns.create.referralChain.noReferrer")
+            : !decreaseOk
+              ? t("campaigns.create.referralChain.disabledReason.decrease", {
+                    min: MIN_DEPERDITION_PER_LEVEL,
+                    max: MAX_DEPERDITION_PER_LEVEL,
+                })
+              : !isMaxDepthValid(watched.maxDepth)
+                ? t("campaigns.create.referralChain.disabledReason.levels", {
+                      max: MAX_REWARDED_LEVELS,
+                  })
+                : undefined
+        : undefined;
     const rewardForm = draftToRewardForm(draft);
-    const isFixed = rewardForm.model === "fixed";
-    const isPercentage = rewardForm.model === "percentage";
-    const isTiered = rewardForm.model === "tiered";
-    const rewardBase = isFixed ? rewardForm.ambassadorAmount : undefined;
-    // CAC (Target CPA) is held per reward model: a currency amount for the
-    // fixed model and a basket percentage for the percentage model. The tiered
-    // model has no single CAC, so the field falls back to its placeholder.
-    const cac = isFixed
-        ? rewardForm.targetCpa || undefined
-        : isPercentage
-          ? rewardForm.targetCpaPercent || undefined
-          : undefined;
+    const rewardBase =
+        rewardForm.model === "fixed" ? rewardForm.ambassadorAmount : undefined;
 
     async function persist(values: ReferralChainFormValues) {
         const updated = referralChainFormToDraft(values, draft);
@@ -400,6 +406,7 @@ export function ReferralChainCampaign() {
             isValid={isValid}
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
+            disabledReason={disabledReason}
             saveFailed={saveCampaign.isError}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
@@ -424,6 +431,11 @@ export function ReferralChainCampaign() {
                             <Text variant="bodySmall" color="secondary">
                                 {t(
                                     "campaigns.create.referralChain.enable.description"
+                                )}
+                            </Text>
+                            <Text variant="bodySmall" color="secondary">
+                                {t(
+                                    "campaigns.create.referralChain.enable.noExtraCost"
                                 )}
                             </Text>
                         </Stack>
@@ -503,39 +515,6 @@ export function ReferralChainCampaign() {
                                         />
                                     </Column>
                                 </Columns>
-
-                                <Input
-                                    variant="bare"
-                                    tone="muted"
-                                    readOnly
-                                    disabled
-                                    label={t(
-                                        "campaigns.create.referralChain.cac.label"
-                                    )}
-                                    placeholder={t(
-                                        isTiered
-                                            ? "campaigns.create.referralChain.cac.placeholderTiered"
-                                            : "campaigns.create.referralChain.cac.placeholder"
-                                    )}
-                                    value={cac !== undefined ? String(cac) : ""}
-                                    rightSection={
-                                        cac !== undefined ? (
-                                            isPercentage ? (
-                                                <PercentIcon
-                                                    width={24}
-                                                    height={24}
-                                                    className={styles.unitIcon}
-                                                />
-                                            ) : (
-                                                <span
-                                                    className={styles.unitGlyph}
-                                                >
-                                                    {glyph}
-                                                </span>
-                                            )
-                                        ) : undefined
-                                    }
-                                />
 
                                 <ChainPreview
                                     control={form.control}

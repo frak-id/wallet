@@ -30,18 +30,6 @@ export const field = style({ width: "100%", minWidth: 0 });
 /** Trailing percent glyph icon. */
 export const unitIcon = style({ color: vars.icon.tertiary, flexShrink: 0 });
 
-/** Trailing currency glyph, aligned to the 24px unit icons. */
-export const unitGlyph = style({
-    flexShrink: 0,
-    minWidth: "24px",
-    color: vars.icon.tertiary,
-    fontSize: "16px",
-    fontWeight: brand.typography.fontWeight.medium,
-    lineHeight: "24px",
-    textAlign: "center",
-    whiteSpace: "nowrap",
-});
-
 /* ---- reward distribution chain preview ---- */
 
 /** Preview surface: white fill with a dashed subtle border. */

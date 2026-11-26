@@ -13,7 +13,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { campaignStore } from "@/stores/campaignStore";
+import { formatDate } from "@/module/common/utils/formatDate";
+import { campaignStore, getStartDate } from "@/stores/campaignStore";
 import * as styles from "./campaign-launched.css";
 
 const COMMUNICATION_GUIDE_URL = "https://canva.link/9w9o1ld8415iywl";
@@ -33,6 +34,13 @@ const TIPS = [
     },
 ] as const;
 
+/** The start date when it is still ahead, so the subtitle never says "live" too early. */
+export function upcomingStartDate(startIso: string | undefined, now: Date) {
+    if (!startIso) return undefined;
+    const start = new Date(startIso);
+    return start > now ? start : undefined;
+}
+
 export function CampaignLaunched() {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -41,6 +49,7 @@ export function CampaignLaunched() {
     const reset = campaignStore((s) => s.reset);
 
     const campaignId = draft.id;
+    const startsOn = upcomingStartDate(getStartDate(draft.rule), new Date());
 
     function goToList() {
         reset();
@@ -81,9 +90,20 @@ export function CampaignLaunched() {
                                     color="secondary"
                                     align="center"
                                 >
-                                    {t("campaigns.create.success.subtitle", {
-                                        name: draft.name,
-                                    })}
+                                    {startsOn
+                                        ? t(
+                                              "campaigns.create.success.subtitleScheduled",
+                                              {
+                                                  name: draft.name,
+                                                  date: formatDate(startsOn),
+                                              }
+                                          )
+                                        : t(
+                                              "campaigns.create.success.subtitle",
+                                              {
+                                                  name: draft.name,
+                                              }
+                                          )}
                                 </Text>
                             </Stack>
                         </Stack>

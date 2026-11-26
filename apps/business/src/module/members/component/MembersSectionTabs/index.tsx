@@ -33,7 +33,11 @@ export function MembersSectionTabs({
                     </Link>
                 </TabsTrigger>
                 <TabsTrigger value="push" variant="navigation" asChild>
-                    <Link to="/m/$merchantId/push" params={{ merchantId }}>
+                    <Link
+                        to="/m/$merchantId/push"
+                        params={{ merchantId }}
+                        data-tour="members-push-tab"
+                    >
                         {t("members.tabs.push")}
                     </Link>
                 </TabsTrigger>

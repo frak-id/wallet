@@ -553,7 +553,7 @@
                 "validation": {
                     "label": "Review",
                     "hint": "Check and publish",
-                    "subtitle": "Check your campaign before you publish it. To change something, use the Back button."
+                    "subtitle": "Check your campaign before you publish it. To change something, use the back arrow at the top left."
                 }
             },
             "actions": {
@@ -588,14 +588,26 @@
                 "frak": "Frak: {{value}}",
                 "rewardLockup": "Payout delay",
                 "lockupValue": "{{count}} days",
-                "publishError": "We could not publish the campaign. Check each step, then try again. If it keeps failing, email hello@frak-labs.com.",
+                "publishError": "We could not publish the campaign. If the 2-step verification window opened, finish it and select Publish again. Otherwise check each step, then try again. If it keeps failing, email hello@frak-labs.com.",
                 "tieredTiers_one": "{{count}} range",
                 "tieredTiers_other": "{{count}} ranges",
                 "tierRange": "{{from}} {{currency}} to {{to}} {{currency}}: {{cost}}",
                 "tierRangeOpen": "{{from}} {{currency}} and above: {{cost}}",
                 "lockupValue_one": "{{count}} day",
                 "lockupValue_other": "{{count}} days",
-                "lockupNone": "No delay"
+                "lockupNone": "No delay",
+                "publishNote": "Publishing does not charge you. Rewards are paid from your budget.",
+                "store": "Store",
+                "whoQualifies": "Referred customers only",
+                "minPurchase": "Minimum order total",
+                "minPurchaseNone": "None",
+                "multiLevel": "Multi-level referral",
+                "multiLevelOff": "Off",
+                "multiLevelOn_one": "{{count}} level, {{percent}}% per level",
+                "multiLevelOn_other": "{{count}} levels, {{percent}}% per level",
+                "targetCpaReward": "Cost per reward",
+                "on": "On",
+                "off": "Off"
             },
             "success": {
                 "title": "Campaign published",
@@ -612,7 +624,8 @@
                 "tip3Desc": "Announce the campaign to your existing customers.",
                 "communicationGuide": "Communication guide (opens in a new tab)",
                 "viewAllCampaigns": "View all campaigns",
-                "viewPerformance": "View campaign"
+                "viewPerformance": "View campaign",
+                "subtitleScheduled": "The campaign ‘{{name}}’ is published. It starts on {{date}}."
             },
             "cancel": {
                 "title": "Close without saving this step?",
@@ -622,40 +635,40 @@
                 "close": "Close"
             },
             "goals": {
-                "info": "Choose one goal. It decides which action earns a reward.",
+                "info": "Ambassadors are the people who share your store. The goal sets which action earns them a reward.",
                 "required": "Select a goal",
                 "options": {
                     "sales": {
                         "title": "Sales",
-                        "description": "Reward ambassadors when a customer places an order.",
-                        "tags": "Online sales"
+                        "description": "A customer places an order through an ambassador’s link. You can reward a percentage of the order and choose products."
                     },
                     "traffic": {
                         "title": "Traffic",
-                        "description": "Reward ambassadors when someone arrives on your store through their link.",
-                        "tags": "Store visits"
+                        "description": "Someone visits your store through an ambassador’s link. The reward is a fixed amount."
                     },
                     "registration": {
                         "title": "Registration",
-                        "description": "Reward ambassadors for sign-ups on your store.",
-                        "tags": "Account creation"
+                        "description": "Someone signs up on your store. The reward is a fixed amount."
                     }
-                }
+                },
+                "continueHint": "Choose a goal to continue."
             },
             "basics": {
                 "title": {
                     "label": "Campaign title",
                     "placeholder": "E.g. Summer sales 2026",
                     "hint": "Only you can see this name.",
-                    "required": "Enter a campaign title"
+                    "required": "Enter a campaign title",
+                    "continueHint": "Enter a campaign title to continue."
                 },
                 "merchant": {
                     "label": "Store",
-                    "placeholder": "Select a store"
+                    "placeholder": "Select a store",
+                    "description": "Changing the store starts a new campaign."
                 },
                 "currency": {
                     "label": "Reward currency",
-                    "description": "Ambassadors are paid in this currency.",
+                    "description": "Ambassadors are paid in this currency. Keep your store’s default unless you need another.",
                     "useDefault": "Use your store’s default currency",
                     "recommended": "Recommended",
                     "chooseAnother": "Choose another currency",
@@ -670,7 +683,7 @@
             "territory": {
                 "card": {
                     "label": "Countries",
-                    "description": "Choose the countries your campaign targets.",
+                    "description": "Tick a continent to select all its countries, or open it to choose one by one.",
                     "placeholder": "Choose countries",
                     "search": "Search",
                     "required": "Choose at least one country",
@@ -683,8 +696,8 @@
                 },
                 "special": {
                     "label": "Special categories",
-                    "description": "These categories are not available yet. Leave them unticked to continue.",
-                    "notSupported": "This category is not available yet. Untick it to continue.",
+                    "description": "Campaigns on these topics are not supported yet. Leave all of them unticked.",
+                    "notSupported": "This category is not supported yet. Untick it to continue.",
                     "options": {
                         "credit": {
                             "title": "Credit",
@@ -703,7 +716,8 @@
                             "description": "Social issues, elections, political figures or campaigns."
                         }
                     }
-                }
+                },
+                "continueHint": "Choose at least one country to continue."
             },
             "budget": {
                 "period": {
@@ -711,29 +725,30 @@
                     "global": "Whole campaign",
                     "daily": "Per day",
                     "weekly": "Per week",
-                    "monthly": "Per month"
+                    "monthly": "Per month (30 days)",
+                    "description": "Choose Whole campaign for one total amount, or a limit per day, per week or per month."
                 },
                 "cap": {
                     "label": "Budget amount",
-                    "placeholder": "E.g. 1000",
-                    "hint": "Maximum you can spend on the whole campaign, Frak commission included. The campaign stops when you reach it.",
-                    "rewards": "Rewards paid",
+                    "placeholder": "E.g. 500",
+                    "hint": "The most this campaign can spend. It is not a deposit: rewards are paid from the budget you added to your store.",
+                    "rewards": "Rewards",
                     "commission": "Frak commission",
                     "required": "Enter a budget above 0",
-                    "hintDaily": "Maximum you can spend per day, Frak commission included.",
-                    "hintWeekly": "Maximum you can spend per week, Frak commission included.",
-                    "hintMonthly": "Maximum you can spend per month (30 days), Frak commission included."
+                    "hintDaily": "The most this campaign can spend per day. It is not a deposit: rewards are paid from the budget you added to your store.",
+                    "hintWeekly": "The most this campaign can spend per week. It is not a deposit: rewards are paid from the budget you added to your store.",
+                    "hintMonthly": "The most this campaign can spend per month. It is not a deposit: rewards are paid from the budget you added to your store."
                 },
                 "schedule": {
                     "label": "Schedule",
-                    "description": "If you do not set an end date, the campaign stops when the budget is used up.",
+                    "description": "Choose when the campaign starts. You can also set an end date.",
                     "immediate": {
                         "title": "Start immediately",
                         "description": "Starts as soon as you publish"
                     },
                     "startOnly": {
-                        "title": "Start date only",
-                        "description": "Choose a start date"
+                        "title": "Start on a date",
+                        "description": "Runs from the date you choose, with no end date"
                     },
                     "range": {
                         "title": "Start and end dates",
@@ -747,13 +762,20 @@
                     "startDateRequired": "Select a start date",
                     "endDateRequired": "Select an end date",
                     "endDateInvalid": "The end date cannot be before the start date",
-                    "invalidDate": "Enter a valid date"
+                    "invalidDate": "Enter a valid date",
+                    "descriptionRecurring": "Without an end date, the campaign has no scheduled end."
+                },
+                "continueHint": {
+                    "amount": "Enter a budget amount to continue.",
+                    "schedule": "Choose when the campaign starts to continue.",
+                    "dates": "Check the dates to continue."
                 }
             },
             "referralChain": {
                 "enable": {
                     "title": "Enable multi-level referral",
-                    "description": "The ambassador reward is also shared with the ambassadors who referred them, level by level."
+                    "description": "The ambassador reward is also shared with the ambassadors who referred them, level by level.",
+                    "noExtraCost": "This does not cost you more. The ambassador reward is split, not increased."
                 },
                 "noReferrer": "To turn this on, first set an ambassador reward in the Rewards step.",
                 "model": {
@@ -761,39 +783,37 @@
                     "description": "When the reward is earned, it is split between the ambassador and the ambassadors above them."
                 },
                 "decrease": {
-                    "label": "Decrease per level (%)",
-                    "hint": "Each level earns this percentage less than the level before. Enter a value from {{min}} to {{max}}.",
+                    "label": "Share for each level (%)",
+                    "hint": "The direct ambassador gets this share of the reward. The ambassador above gets the same share of what is left, and so on. Enter a value from {{min}} to {{max}}.",
                     "placeholder": "E.g. 80",
                     "outOfRange": "Enter a percentage from {{min}} to {{max}}."
                 },
                 "maxLevels": {
                     "label": "Maximum levels",
-                    "hint": "Maximum number of levels that earn a reward, up to {{max}}. Leave empty for no limit.",
+                    "hint": "Maximum number of levels that earn a reward, up to {{max}}. Leave empty to use 5.",
                     "placeholder": "E.g. 5"
-                },
-                "cac": {
-                    "label": "Cost per order (set in the Rewards step)",
-                    "placeholder": "Not available",
-                    "placeholderTiered": "Varies by range"
                 },
                 "preview": {
                     "title": "How the reward is shared",
                     "purchase": "Rewarded action",
                     "direct": "Direct ambassador",
                     "level": "Level {{n}} ambassador",
-                    "caption": "Each level earns {{percent}}% less than the level before.",
+                    "caption": "Shown for a full chain. If fewer ambassadors are above, the last one gets what is left.",
                     "directReward": "Direct reward",
                     "chainReward": "Multi-level reward",
                     "rowDirect": "Direct",
                     "rowLevel": "Level {{n}}",
                     "tableLevel": "Level",
                     "tableAmount": "Amount"
+                },
+                "disabledReason": {
+                    "decrease": "Enter a percentage from {{min}} to {{max}} to continue.",
+                    "levels": "Enter a number of levels from 1 to {{max}}, or leave it empty."
                 }
             },
             "products": {
                 "scope": {
-                    "label": "Products covered",
-                    "description": "An order earns a reward only if it contains a matching product."
+                    "label": "Products covered"
                 },
                 "mode": {
                     "all": {
@@ -848,9 +868,16 @@
                 "removeValue": "Remove this value",
                 "advanced": "This product selection was set up outside this form. You can see it here, but you cannot change it.",
                 "purchaseOnly": "Choosing products is only available for the Sales goal.",
-                "fieldLabel": "Field",
-                "operatorLabel": "Condition",
-                "saveError": "We could not save the products. Try again. If you exclude products, the reward must be a percentage or ranges. Check it in the Rewards step."
+                "fieldLabel": "Product detail",
+                "operatorLabel": "Match",
+                "saveError": "We could not save the products. Try again. If you exclude products, the reward must be a percentage or ranges. Check it in the Rewards step.",
+                "hint": {
+                    "exactText": "Type it exactly as in your store. Capital letters count.",
+                    "numeric": "Checked on each product line, not on the whole order.",
+                    "partialName": "To match part of a name, choose contains.",
+                    "negated": "The reward is then calculated only on the other products. A fixed amount is not possible."
+                },
+                "disabledReason": "Enter a value to continue."
             },
             "reward": {
                 "campaignType": {
@@ -879,7 +906,7 @@
                     }
                 },
                 "basis": {
-                    "label": "Reward basis",
+                    "label": "Calculated on",
                     "description": "Which amount the reward is calculated on.",
                     "basket": {
                         "title": "Whole order total",
@@ -903,17 +930,22 @@
                     "refereePlaceholder": "E.g. 2"
                 },
                 "cpa": {
-                    "hint": "Total you pay per order. Frak keeps {{percent}}%. The rest goes to the ambassador and the referred customer.",
+                    "hint": "What one order costs you. Frak keeps {{percent}}% of it. You split the rest between the ambassador and the referred customer.",
                     "rewardsDistributed": "Rewards paid",
                     "frakCommission": "Frak commission",
-                    "reco": "Frak recommends an <highlight>80/20</highlight> split: 80% for the ambassador, 20% for the referred customer.",
-                    "applyReco": "Apply 80/20",
-                    "splitMismatch": "The two rewards must add up to {{amount}}. Change one of them."
+                    "reco": "We suggest: <highlight>80%</highlight> of the rewards for the ambassador, <highlight>20%</highlight> for the referred customer.",
+                    "applyReco": "Use this split",
+                    "splitMismatch": "The two rewards must add up to {{amount}}. Change one of them.",
+                    "hintReward": "What one reward costs you. Frak keeps {{percent}}% of it. You split the rest between the ambassador and the referred customer.",
+                    "exampleFixed": "Example: each rewarded order pays {{ambassador}} to the ambassador and {{referee}} to the referred customer, whatever the order total.",
+                    "examplePercentage": "Example: for an order total of {{total}}, the ambassador gets {{ambassador}} and the referred customer gets {{referee}}."
                 },
                 "fixed": {
                     "cpaLabel": "Cost per order",
                     "cpaPlaceholder": "E.g. 10",
-                    "percentOfPool": "{{percent}}% of the amount to share"
+                    "percentOfPool": "{{percent}}% of the amount to share",
+                    "cpaLabelReward": "Cost per reward",
+                    "perOrderHint": "Paid once per order, not per product."
                 },
                 "percentage": {
                     "cpaLabel": "Cost per order (% of the order total)",
@@ -935,7 +967,7 @@
                     "incomplete": "Each range needs a start amount, an end amount (except the last one) and a cost per order above 0.",
                     "inverted": "The end of each range must be higher than its start.",
                     "overlap": "Ranges cannot overlap. Each range must start where the previous one ends.",
-                    "rewardsRequired": "Each range needs a reward above 0 for the ambassador and for the referred customer."
+                    "rewardsRequired": "An order outside every range earns no reward. Each range needs a reward above 0 for both people."
                 },
                 "eligibility": {
                     "label": "Eligible orders",
@@ -947,7 +979,6 @@
                 "lockup": {
                     "label": "Payout delay",
                     "description": "Wait before paying rewards, to protect you against refunds",
-                    "info": "Rewards are paid after this delay. If the order is refunded during the delay, no reward is paid. This protects your campaign budget.",
                     "durationLabel": "Payout delay (days)",
                     "durationPlaceholder": "E.g. 14",
                     "durationHint": "Enter 0 to pay rewards right after the order.",
@@ -962,7 +993,13 @@
                     "referral_signup": "Sign-up through a referral link",
                     "game_join": "Game joined"
                 },
-                "saveError": "We could not save the reward. Try again. If you exclude products, choose a percentage or ranges."
+                "saveError": "We could not save the reward. Try again. If you exclude products, choose a percentage or ranges.",
+                "disabledReason": {
+                    "noModel": "Choose a reward type to continue.",
+                    "noCost": "Enter the cost to continue.",
+                    "tiered": "Fill in every range.",
+                    "fixedNotAllowed": "Choose a percentage or ranges to continue."
+                }
             },
             "stepper": {
                 "increase": "Increase",
@@ -1377,8 +1414,8 @@
     "bank": {
         "banner": {
             "depleted": "Your reward budget is empty. Rewards can't be paid.",
-            "paused": "Rewards are paused, so no reward is paid. Open your budget to turn them back on.",
-            "warning": "Your reward budget is running low, or your spending limit is lower than your budget. Open your budget to fix it.",
+            "paused": "Rewards are paused, so no reward is paid. Open Manage budget. Turning Pay rewards back on needs a linked Frak wallet.",
+            "warning": "Your budget is low, or your spending limit is below your budget. Open Manage budget, then add funds or raise the limit.",
             "notDeployed": "Your reward budget isn't set up yet. Set it up to add funds and pay rewards.",
             "ctaAddFunds": "Add funds",
             "ctaManageBank": "Manage budget",
@@ -1389,16 +1426,15 @@
         "header": {
             "budgetTitle": "Manage budget",
             "addFundsTitle": "Add funds",
-            "addFundsDescription": "You pay on Stripe, in a new tab. The amount you pay includes Frak fees, and VAT if it applies to you. Your budget updates once the payment goes through.",
+            "addFundsDescription": "You pay on Stripe, in a new tab. The amount includes Frak fees, and VAT if it applies to you.",
             "close": "Close",
             "back": "Back"
         },
         "budget": {
             "sectionLabel": "Reward budget",
             "distributing": "Pay rewards",
-            "distributingTooltip": "When on, Frak pays rewards from your budget through your active campaigns. When off, no new reward is paid.",
-            "totalInclVat": "total budget, VAT and Frak fees included",
-            "totalExclVat": "total budget, Frak fees included",
+            "totalInclVat": "Total with VAT and Frak fees. Only 'Available for rewards' below can be used.",
+            "totalExclVat": "Total with Frak fees. Only 'Available for rewards' below can be used.",
             "breakdown": {
                 "distributable": "Available for rewards",
                 "frakFee": "Frak fees ({{rate}}%)",
@@ -1408,11 +1444,12 @@
             "addFunds": "Add funds",
             "emptyWarning": "Your budget is empty. Active campaigns can't pay rewards until you add funds.",
             "allowanceTooltip": "Spending limit: {{amount}}",
-            "limitTooLow": "Spending limit lower than your budget",
+            "limitTooLow": "Frak can only pay up to your limit. Raise it to use your whole budget.",
             "status": {
                 "active": "Active",
                 "actionNeeded": "Limit too low",
-                "paused": "Rewards paused"
+                "paused": "Rewards paused",
+                "currencyStopped": "Stopped in this currency"
             },
             "actions": {
                 "increaseLimit": "Increase spending limit",
@@ -1423,24 +1460,35 @@
                 "cancel": "Cancel",
                 "amountPlaceholder": "New spending limit",
                 "withdrawPlaceholder": "Max {{amount}}",
-                "limitHint": "The most Frak can pay out as rewards from your budget. Keep it at or above your budget.",
-                "withdrawHint": "The funds are sent to your Frak wallet. It opens so you can confirm."
+                "limitHint": "The most Frak can pay out as rewards. Keep it at or above 'Available for rewards'.",
+                "withdrawHint": "You can withdraw up to the amount available for rewards. The funds go to your Frak wallet, which opens so you can confirm.",
+                "withdrawLocked": "To withdraw, turn Pay rewards off first."
             },
-            "distributingHint": "When off, no reward is paid. You can then withdraw your funds.",
-            "noLimit": "No spending limit"
+            "noLimit": "No spending limit",
+            "intro": "Your budget is the money Frak uses to pay rewards to your ambassadors.",
+            "walletlessPayRewards": "Pay rewards needs a linked Frak wallet. Link it with the card below.",
+            "distributingHintOn": "Frak pays rewards from your budget through your active campaigns.",
+            "distributingHintOff": "No reward is paid while this is off. You can withdraw your funds.",
+            "currencyName": {
+                "euros": "Euros",
+                "dollars": "US dollars"
+            }
         },
         "setup": {
-            "description": "Set up your reward budget. You can then add funds and start paying rewards.",
-            "cta": "Set up budget"
+            "description": "Set up your reward budget. This can take a moment, so keep this window open. Then you can add funds.",
+            "cta": "Set up budget",
+            "pending": "Setting up your budget..."
         },
         "error": "We could not load your budget. Check your connection and try again.",
         "addFunds": {
             "balanceLabel": "Current budget",
             "stripe": "Add funds with Stripe",
-            "testTokens": "Add test funds"
+            "testTokens": "Add test funds",
+            "forStore": "Funds go to {{domain}}.",
+            "afterPay": "After you pay, come back here to see your budget."
         },
         "pause": {
-            "title": "Pause this currency"
+            "title": "Stop rewards in this currency"
         },
         "legacy": {
             "title": "Move funds from your old budget",
@@ -1448,28 +1496,29 @@
             "totalBalance": "Total in old budget",
             "pending": "Pending rewards (not moved)",
             "withdrawable": "Available to move",
-            "migrate": "Move funds"
+            "migrate": "Move funds",
+            "walletless": "Your old budget still holds {{amount}}. Link your Frak wallet to move it."
         },
         "linkWallet": {
-            "title": "Link your Frak wallet (optional)",
-            "description": "Needed to turn rewards on or off, change the spending limit, withdraw funds or move funds from your old budget. You confirm each of these in your Frak wallet. Adding funds and viewing your budget work without it.",
+            "title": "Link your Frak wallet",
+            "description": "You need it to turn Pay rewards on or off, change the spending limit and withdraw funds. Adding funds works without it.",
             "cta": "Link wallet"
         },
         "errors": {
-            "action": "The action did not go through. Try again. If it keeps failing, email hello@frak-labs.com."
+            "action": "The action did not go through. If you closed the Frak wallet window, try again. If it keeps failing, email hello@frak-labs.com."
         },
-        "pending": "Confirm in your Frak wallet. The change appears here once it is recorded.",
+        "pending": "Confirm in your Frak wallet if it is open. This screen updates once the change is saved.",
         "walletPrompt": {
             "payRewardsOn": {
-                "title": "Turn on rewards",
+                "title": "Turn on Pay rewards",
                 "description": "Allow Frak to pay rewards from your budget."
             },
             "payRewardsOff": {
-                "title": "Pause rewards",
+                "title": "Turn off Pay rewards",
                 "description": "Stop paying rewards from your budget."
             },
             "revokeLimit": {
-                "title": "Pause this currency",
+                "title": "Stop rewards in this currency",
                 "description": "Set the spending limit to zero. No reward is paid in this currency until you raise it."
             },
             "updateLimit": {
@@ -1484,7 +1533,8 @@
                 "title": "Move funds",
                 "description": "Move the available funds from your old budget to your new budget."
             }
-        }
+        },
+        "retry": "Try again"
     },
     "settings": {
         "tabs": {
@@ -1730,7 +1780,7 @@
                 "connected": "Email verified",
                 "pending": "Email not verified",
                 "addPasswordCta": "Add password",
-                "linkWalletHint": "Needed to withdraw funds and change your spending limit."
+                "linkWalletHint": "Needed to turn Pay rewards on or off, change your spending limit and withdraw funds."
             },
             "sessions": {
                 "title": "Signed-in devices",
@@ -1877,7 +1927,7 @@
             "documentation": "Read the guide",
             "steps": {
                 "otherAdmin": {
-                    "name": "Add another admin",
+                    "name": "Add another admin (recommended)",
                     "description": "If you are away, someone else can still manage your store."
                 },
                 "addFunding": {
@@ -1885,8 +1935,8 @@
                     "description": "Rewards are paid from this budget."
                 },
                 "runningBank": {
-                    "name": "Turn on reward payouts",
-                    "description": "Rewards are paid only when this is on."
+                    "name": "Turn on Pay rewards",
+                    "description": "Rewards are paid only when Pay rewards is on in Manage budget. This needs a linked Frak wallet."
                 },
                 "addCampaign": {
                     "name": "Launch a campaign",
@@ -2792,27 +2842,27 @@
         "welcome": {
             "intro": {
                 "title": "Start paying rewards",
-                "body": "To start, connect your store, add funds to your budget, turn on reward payouts and create a campaign. This tour shows where each step is. You can skip it and open it again with Page tour."
+                "body": "Connect your store, add funds to your budget, then create a campaign. To see this tour again, select Page tour, then Show the full tour."
             },
             "stores": {
                 "title": "Your stores",
-                "body": "Each store you connect to Frak is listed here. To connect a Shopify store, open the Frak app in your Shopify admin. You can also use Add a store."
+                "body": "Each connected store is listed here. Connect a Shopify store from the Frak app in your Shopify admin, or use Add a store."
             },
             "budget": {
                 "title": "Add funds to your budget",
-                "body": "Rewards are paid from your reward budget. On your store, select Manage budget, then Add funds."
+                "body": "Your budget is the money that pays rewards. Add funds in Manage budget."
             },
             "linkWallet": {
                 "title": "Link your Frak wallet (optional)",
-                "body": "You need a linked Frak wallet to turn Pay rewards on or off, change the spending limit or withdraw funds. Adding funds does not need it. Link wallet is at the bottom of Manage budget."
+                "body": "Pausing rewards, changing the spending limit and withdrawing funds need a linked Frak wallet. Select Link wallet in Manage budget."
             },
             "payouts": {
-                "title": "Turn on reward payouts",
-                "body": "In Manage budget, turn on Pay rewards. Frak pays rewards only when this is on."
+                "title": "Pause or resume rewards",
+                "body": "Use Pay rewards in Manage budget to pause or resume rewards."
             },
             "campaigns": {
                 "title": "Create a campaign",
-                "body": "A campaign sets the reward your customers earn when they share your store and someone buys through their link. Open Campaigns, then select Create campaign."
+                "body": "A campaign sets the reward an ambassador earns through their share link. Open Campaigns, then select Create campaign."
             },
             "members": {
                 "title": "Members and push notifications",
@@ -2824,7 +2874,7 @@
             },
             "help": {
                 "title": "Need help later?",
-                "body": "Select Page tour on any page to see what that page does. You can show this full tour again from there."
+                "body": "Select Page tour on any page to see what that page does. On pages with a sidebar, it can also show this full tour again."
             }
         },
         "stores": {
@@ -2834,7 +2884,7 @@
             },
             "budget": {
                 "title": "Manage budget",
-                "body": "Add funds and see your budget. You can also turn Pay rewards on or off, change the spending limit or withdraw funds. These last three need a linked Frak wallet."
+                "body": "Add funds and check your budget, the money that pays rewards. Turning Pay rewards on or off, changing the spending limit and withdrawing need a linked Frak wallet."
             },
             "edit": {
                 "title": "Edit store",
@@ -2852,15 +2902,15 @@
             },
             "journey": {
                 "title": "Customer journey",
-                "body": "Follow customers from the share button to the order."
+                "body": "Follow customers from the share button to the order, on your website or in the Frak app."
             },
             "top": {
                 "title": "Top campaigns",
-                "body": "Your best campaigns are listed here. Select View all campaigns to see every campaign."
+                "body": "The 10 campaigns with the most rewards in the chosen period. Select View all campaigns to see them all."
             },
             "create": {
                 "title": "Create campaign",
-                "body": "Start a new campaign here. You pick a goal, countries, a budget and a reward, then review and publish."
+                "body": "Choose a goal, countries, a budget amount and a reward, then review and publish."
             }
         },
         "campaignsList": {
@@ -2870,7 +2920,7 @@
             },
             "actions": {
                 "title": "Actions on a campaign",
-                "body": "Use the row menu to view results or settings, edit, pause, resume, archive or delete a campaign. You can't resume or edit an archived campaign."
+                "body": "Open the row menu to act on a campaign. Edit and Delete are for drafts, Pause for active campaigns, Resume for paused ones."
             },
             "bulk": {
                 "title": "Several campaigns at once",
@@ -2884,35 +2934,27 @@
         "campaignWizard": {
             "steps": {
                 "title": "Step by step",
-                "body": "Each step is saved when you select Continue. You can close the page and come back to your draft later."
-            },
-            "reward": {
-                "title": "Goal and reward",
-                "body": "Pick the action that earns a reward, then choose how much you pay and who receives it."
-            },
-            "publish": {
-                "title": "Review and publish",
-                "body": "Check your campaign on the last step, then publish it. Rewards are paid from your budget, so make sure it has funds."
+                "body": "The list shows where you are. Each step is saved when you select Continue, so you can leave and come back."
             }
         },
         "storeWizard": {
             "details": {
                 "title": "Add a store",
-                "body": "Enter your store name and domain. You prove that you own the domain before you continue."
+                "body": "Enter your store name, currency and domain. If a TXT record is shown, add it to prove the domain is yours, then select Continue."
             },
             "confirm": {
                 "title": "Confirm your store",
-                "body": "Check the details, then complete the registration. After that, your store appears in My stores."
+                "body": "Check the details, then select Register my store. You may be asked to confirm in your Frak wallet; no money moves."
             }
         },
         "members": {
             "list": {
                 "title": "Members",
-                "body": "Each row is a customer who interacted with your store through Frak. You see when they joined, their interactions and the rewards they earned."
+                "body": "Each row is a customer who interacted with your store through Frak. Columns show Member since, Interactions and Rewards earned."
             },
             "filters": {
                 "title": "Filters",
-                "body": "Use Filters to narrow the list by join date or number of interactions."
+                "body": "Use the date button to pick when customers joined. Use Filters to set a minimum or maximum number of interactions."
             },
             "push": {
                 "title": "Push notifications",
@@ -2922,7 +2964,7 @@
         "push": {
             "history": {
                 "title": "Push notifications",
-                "body": "Past and scheduled notifications are listed here with their status."
+                "body": "Sent and scheduled notifications are listed here with their status. Only a scheduled one can be edited or deleted."
             },
             "send": {
                 "title": "Send push notification",
@@ -2932,25 +2974,25 @@
         "pushCreate": {
             "content": {
                 "title": "Write the notification",
-                "body": "Add a title and a message. The image and the link are optional."
+                "body": "Give it an internal name only you see, then a title and a message. The image link and the tap link are optional."
             },
             "audience": {
                 "title": "Choose the audience",
-                "body": "Choose which members receive it. The number of matching members is shown."
+                "body": "Tick Member since or Interactions to choose who receives it. The number of matching members is shown."
             },
             "schedule": {
                 "title": "Choose when to send",
-                "body": "Send it now or schedule it for later. You review everything before it is sent."
+                "body": "Send it now or pick a date and time. Review and send shows the audience and time before anything goes out."
             }
         },
         "storeEdit": {
             "tabs": {
-                "title": "Your store settings",
-                "body": "Use the tabs to switch between Appearance, App listing, Connections and Team."
+                "title": "Edit your store",
+                "body": "Use the tabs to move between Appearance, App listing, Connections and Team."
             },
             "connections": {
                 "title": "Connections",
-                "body": "Frak needs your orders to pay rewards. Connect your shop software here."
+                "body": "Order tracking tells Frak about your orders, which it needs to pay rewards. Domains, mobile apps and the newsletter link are here too."
             },
             "team": {
                 "title": "Team",
@@ -2958,13 +3000,13 @@
             },
             "close": {
                 "title": "Back to your stores",
-                "body": "Select the close button at the top left to go back to My stores."
+                "body": "Select the close button (X) to go back to My stores. Save your changes first."
             }
         },
         "setupStatus": {
             "checklist": {
                 "title": "Setup checklist",
-                "body": "Each step shows whether it is done. For a step that is not done, select Complete this step."
+                "body": "Each step shows a check when it is done and a warning when it is not. Select Complete this step to do it."
             }
         },
         "settings": {
@@ -2980,11 +3022,29 @@
         "billing": {
             "info": {
                 "title": "Invoice information",
-                "body": "Add your company name, VAT number and address. They appear on all your invoices."
+                "body": "Add your company name, VAT number, address and invoice email. They appear on all your invoices."
             },
             "history": {
                 "title": "Invoices and deposits",
-                "body": "Use the tabs to switch between your invoices and your deposits. You can download an invoice as a PDF."
+                "body": "Once your invoice information is saved, your invoices and deposits are listed here in two tabs. Select the download icon to get a PDF."
+            }
+        },
+        "campaignWizardBudget": {
+            "amount": {
+                "title": "Budget amount",
+                "body": "This is the most this campaign can spend. It is not a deposit: rewards are paid from the budget you added to your store."
+            }
+        },
+        "campaignWizardReward": {
+            "cost": {
+                "title": "Cost of a reward",
+                "body": "This is the total you pay for each reward. Frak keeps {{percent}}% of it. You split the rest between the ambassador and the referred customer."
+            }
+        },
+        "campaignWizardReview": {
+            "publish": {
+                "title": "Before you publish",
+                "body": "Publishing does not charge you. You may be asked to confirm with 2-step verification first."
             }
         }
     }

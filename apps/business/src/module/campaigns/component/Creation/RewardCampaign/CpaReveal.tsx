@@ -1,5 +1,7 @@
+import { roundTo } from "@frak-labs/app-essentials";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import {
     type Control,
     Controller,
@@ -7,6 +9,7 @@ import {
     useWatch,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
 import { useCurrencyGlyph } from "./currencyGlyph";
 import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
@@ -19,6 +22,7 @@ import {
     recalcSplitOnCpaChange,
     recommendedSplit,
     splitTargetCpa,
+    supportsMatchedBasis,
 } from "./utils";
 
 export function RecipientBox({
@@ -78,6 +82,40 @@ export function RecipientBox({
     );
 }
 
+const EXAMPLE_ORDER_TOTAL = 100;
+
+/** One concrete line: what the two people get for a sample order. */
+export function RewardExample({
+    unit,
+    ambassador,
+    referee,
+    glyph,
+}: {
+    unit: UnitKind;
+    ambassador: number;
+    referee: number;
+    glyph: string;
+}) {
+    const { t } = useTranslation();
+    const money = (value: number) => `${roundTo(value)}${glyph}`;
+    return (
+        <Text variant="caption" color="primary">
+            {unit === "percent"
+                ? t("campaigns.create.reward.cpa.examplePercentage", {
+                      total: money(EXAMPLE_ORDER_TOTAL),
+                      ambassador: money(
+                          (EXAMPLE_ORDER_TOTAL * ambassador) / 100
+                      ),
+                      referee: money((EXAMPLE_ORDER_TOTAL * referee) / 100),
+                  })
+                : t("campaigns.create.reward.cpa.exampleFixed", {
+                      ambassador: money(ambassador),
+                      referee: money(referee),
+                  })}
+        </Text>
+    );
+}
+
 // Cleared inputs become "" (not 0); coerce so the empty checks hold.
 const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
 
@@ -119,6 +157,9 @@ export function CpaReveal({
     const cpa = num(useWatch({ control, name: cpaName }));
     const ambassador = num(useWatch({ control, name: ambName }));
     const referee = num(useWatch({ control, name: refName }));
+    const basis = useWatch({ control, name: "rewardBasis" });
+    const isPurchase = campaignStore((s) => isPurchaseCampaign(s.draft.rule));
+    const isScoped = campaignStore((s) => supportsMatchedBasis(s.draft));
     const { rewardsPool, frakCommission } = splitTargetCpa(cpa);
     const hasPool = rewardsPool > 0;
     const glyph = useCurrencyGlyph();
@@ -131,6 +172,13 @@ export function CpaReveal({
     const splitSum = ambassador + referee;
     const splitMismatch =
         hasPool && splitSum > 0 && Math.abs(splitSum - rewardsPool) >= 0.01;
+
+    // A percentage on matched items is not a share of the order total.
+    const showExample =
+        isPurchase &&
+        ambassador > 0 &&
+        referee > 0 &&
+        !(unit === "percent" && basis === "matchedItems");
 
     const cpaTooHigh = unit === "percent" && cpa > 100;
 
@@ -189,9 +237,12 @@ export function CpaReveal({
                         step={0.01}
                         placeholder={cpaPlaceholder}
                         label={cpaLabel}
-                        hint={t("campaigns.create.reward.cpa.hint", {
-                            percent: FRAK_COMMISSION_PERCENT,
-                        })}
+                        hint={t(
+                            isPurchase
+                                ? "campaigns.create.reward.cpa.hint"
+                                : "campaigns.create.reward.cpa.hintReward",
+                            { percent: FRAK_COMMISSION_PERCENT }
+                        )}
                     />
                 )}
             />
@@ -255,6 +306,21 @@ export function CpaReveal({
                 </div>
             )}
 
+            {showExample && (
+                <RewardExample
+                    unit={unit}
+                    ambassador={ambassador}
+                    referee={referee}
+                    glyph={glyph}
+                />
+            )}
+
+            {unit === "amount" && isPurchase && isScoped && hasPool && (
+                <Text variant="caption" color="tertiary">
+                    {t("campaigns.create.reward.fixed.perOrderHint")}
+                </Text>
+            )}
+
             {cpaTooHigh && (
                 <FieldError>
                     {t("campaigns.create.reward.percentage.tooHigh")}
@@ -282,6 +348,7 @@ export function FixedReveal({
     setValue: UseFormSetValue<RewardFormValues>;
 }) {
     const { t } = useTranslation();
+    const isPurchase = campaignStore((s) => isPurchaseCampaign(s.draft.rule));
     return (
         <CpaReveal
             control={control}
@@ -290,7 +357,11 @@ export function FixedReveal({
             cpaName="targetCpa"
             ambName="ambassadorAmount"
             refName="refereeAmount"
-            cpaLabel={t("campaigns.create.reward.fixed.cpaLabel")}
+            cpaLabel={t(
+                isPurchase
+                    ? "campaigns.create.reward.fixed.cpaLabel"
+                    : "campaigns.create.reward.fixed.cpaLabelReward"
+            )}
             cpaPlaceholder={t("campaigns.create.reward.fixed.cpaPlaceholder")}
             ambPlaceholder={t(
                 "campaigns.create.reward.recipient.ambassadorPlaceholder"

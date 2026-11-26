@@ -36,21 +36,18 @@ const GOALS = [
         icon: <CartIcon width={24} height={24} />,
         titleKey: "campaigns.create.goals.options.sales.title",
         descKey: "campaigns.create.goals.options.sales.description",
-        tagsKey: "campaigns.create.goals.options.sales.tags",
     },
     {
         id: "traffic",
         icon: <CommunityIcon width={24} height={24} />,
         titleKey: "campaigns.create.goals.options.traffic.title",
         descKey: "campaigns.create.goals.options.traffic.description",
-        tagsKey: "campaigns.create.goals.options.traffic.tags",
     },
     {
         id: "registration",
         icon: <BarChartIcon width={24} height={24} />,
         titleKey: "campaigns.create.goals.options.registration.title",
         descKey: "campaigns.create.goals.options.registration.description",
-        tagsKey: "campaigns.create.goals.options.registration.tags",
     },
 ] as const;
 
@@ -91,6 +88,7 @@ export function GoalsCampaign() {
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
             saveFailed={saveCampaign.isError}
+            disabledReason={t("campaigns.create.goals.continueHint")}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
             hasUnsavedChanges={form.formState.isDirty}
@@ -147,28 +145,12 @@ export function GoalsCampaign() {
                                                         >
                                                             {t(goal.titleKey)}
                                                         </Text>
-                                                        <span
-                                                            className={
-                                                                styles.textGroup
-                                                            }
+                                                        <Text
+                                                            variant="bodySmall"
+                                                            color="secondary"
                                                         >
-                                                            <Text
-                                                                variant="bodySmall"
-                                                                color="secondary"
-                                                            >
-                                                                {t(
-                                                                    goal.descKey
-                                                                )}
-                                                            </Text>
-                                                            <Text
-                                                                variant="bodySmall"
-                                                                color="tertiary"
-                                                            >
-                                                                {t(
-                                                                    goal.tagsKey
-                                                                )}
-                                                            </Text>
-                                                        </span>
+                                                            {t(goal.descKey)}
+                                                        </Text>
                                                     </span>
                                                 </label>
                                             ))}

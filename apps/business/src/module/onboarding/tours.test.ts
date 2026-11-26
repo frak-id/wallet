@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canAutoStartOn, resolveTourId } from "./tours";
+import type { TourId } from "@/stores/onboardingTourStore";
+import { canAutoStartOn, canOpenFullTour, resolveTourId } from "./tours";
 
 describe("resolveTourId", () => {
     it.each([
@@ -10,7 +11,16 @@ describe("resolveTourId", () => {
         ["/m/store-1/campaigns/", "campaignsOverview"],
         ["/m/store-1/campaigns/list", "campaignsList"],
         ["/m/store-1/campaigns/draft/new", "campaignWizard"],
-        ["/m/store-1/campaigns/draft/abc/budget", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc/goals", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc/territory", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc/products", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc/referral-chain", "campaignWizard"],
+        ["/m/store-1/campaigns/draft/abc/budget", "campaignWizardBudget"],
+        ["/m/store-1/campaigns/draft/abc/budget/", "campaignWizardBudget"],
+        ["/m/store-1/campaigns/draft/abc/reward", "campaignWizardReward"],
+        ["/m/store-1/campaigns/draft/abc/validation", "campaignWizardReview"],
+        ["/campaigns/draft/abc/validation", "campaignWizardReview"],
         ["/merchant/new", "storeWizard"],
         ["/m/store-1/members", "members"],
         ["/m/store-1/push", "push"],
@@ -25,6 +35,13 @@ describe("resolveTourId", () => {
         expect(resolveTourId(pathname)).toBe(tourId);
     });
 
+    it.each([
+        "/m/store-1/campaigns/affiliate-report",
+        "/m/store-1/campaigns/abc",
+    ])("has no tour on %s", (pathname) => {
+        expect(resolveTourId(pathname)).toBeNull();
+    });
+
     it("has no tour on Frak staff pages", () => {
         expect(resolveTourId("/internal")).toBeNull();
         expect(resolveTourId("/internal/bank")).toBeNull();
@@ -32,6 +49,34 @@ describe("resolveTourId", () => {
 
     it("falls back to the welcome tour on other pages", () => {
         expect(resolveTourId("/something-else")).toBe("welcome");
+    });
+});
+
+describe("canOpenFullTour", () => {
+    it.each<TourId>([
+        "stores",
+        "campaignsOverview",
+        "campaignsList",
+        "members",
+        "push",
+        "setupStatus",
+        "settings",
+        "billing",
+    ])("is offered on the %s tour", (tourId) => {
+        expect(canOpenFullTour(tourId)).toBe(true);
+    });
+
+    it.each<TourId>([
+        "welcome",
+        "campaignWizard",
+        "campaignWizardBudget",
+        "campaignWizardReward",
+        "campaignWizardReview",
+        "storeWizard",
+        "storeEdit",
+        "pushCreate",
+    ])("is not offered on the %s tour", (tourId) => {
+        expect(canOpenFullTour(tourId)).toBe(false);
     });
 });
 

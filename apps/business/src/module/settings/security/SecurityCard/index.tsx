@@ -21,25 +21,27 @@ export function SecurityCard() {
     if (!authMethod) return null;
 
     return (
-        <Stack space="l">
-            <SettingsCard
-                title={t("settings.security.credentials.title")}
-                description={t("settings.security.credentials.description")}
-            >
-                <LinkedCredentials />
-            </SettingsCard>
-            <SettingsCard
-                title={t("settings.security.twoFactor.title")}
-                description={t("settings.security.twoFactor.description")}
-            >
-                <TotpEnrollment />
-            </SettingsCard>
-            <SettingsCard
-                title={t("settings.security.sessions.title")}
-                description={t("settings.security.sessions.description")}
-            >
-                <SessionsList />
-            </SettingsCard>
-        </Stack>
+        <div data-tour="settings-security">
+            <Stack space="l">
+                <SettingsCard
+                    title={t("settings.security.credentials.title")}
+                    description={t("settings.security.credentials.description")}
+                >
+                    <LinkedCredentials />
+                </SettingsCard>
+                <SettingsCard
+                    title={t("settings.security.twoFactor.title")}
+                    description={t("settings.security.twoFactor.description")}
+                >
+                    <TotpEnrollment />
+                </SettingsCard>
+                <SettingsCard
+                    title={t("settings.security.sessions.title")}
+                    description={t("settings.security.sessions.description")}
+                >
+                    <SessionsList />
+                </SettingsCard>
+            </Stack>
+        </div>
     );
 }

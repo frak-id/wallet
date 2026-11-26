@@ -48,7 +48,7 @@ export function WizardLayout({
 }: WizardLayoutProps) {
     return (
         <div className={styles.root}>
-            <aside className={styles.rail}>
+            <aside className={styles.rail} data-tour="wizard-steps">
                 <Stepper
                     steps={steps}
                     activeStep={activeStep}

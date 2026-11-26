@@ -7,14 +7,14 @@ export type BudgetToken = {
     allowance: bigint;
 };
 
-export type TokenStatus = "empty" | "paused" | "warning" | "active";
+export type TokenStatus = "empty" | "paused" | "stopped" | "warning" | "active";
 
 export function getTokenStatus(
     balance: bigint,
     allowance: bigint
 ): TokenStatus {
     if (balance === 0n) return "empty";
-    if (allowance === 0n) return "paused";
+    if (allowance === 0n) return "stopped";
     if (allowance < balance) return "warning";
     return "active";
 }
@@ -22,7 +22,8 @@ export function getTokenStatus(
 export const statusBadgeVariant = {
     active: "success",
     warning: "warning",
-    paused: "error",
+    paused: "neutral",
+    stopped: "neutral",
 } as const;
 
 export function splitTokensByFunding(tokens: BudgetToken[]) {

@@ -4,7 +4,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { type Control, Controller, useForm } from "react-hook-form";
+import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
@@ -175,6 +175,11 @@ export function TerritoryCampaign() {
         mode: "onChange",
     });
 
+    const territories = useWatch({
+        control: form.control,
+        name: "metadata.territories",
+    });
+
     async function onSubmit(values: CampaignDraft) {
         const saved = await saveCampaign.mutateAsync({ ...values, merchantId });
         navigate({
@@ -195,6 +200,11 @@ export function TerritoryCampaign() {
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
             saveFailed={saveCampaign.isError}
+            disabledReason={
+                territories?.length
+                    ? undefined
+                    : t("campaigns.create.territory.continueHint")
+            }
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
             hasUnsavedChanges={form.formState.isDirty}

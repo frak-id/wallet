@@ -10,9 +10,8 @@ import {
 } from "@/module/auth/hooks/useLinkWallet";
 
 /**
- * Optional, secondary card for accounts without a linked wallet. Rendered
- * below the budget so it never competes with "Add funds"; it is also the
- * fallback wherever an on-chain bank action would otherwise appear.
+ * Secondary card for accounts without a linked wallet. Rendered below the
+ * budget so it never competes with "Add funds".
  */
 export function LinkWalletNotice() {
     const { t } = useTranslation();

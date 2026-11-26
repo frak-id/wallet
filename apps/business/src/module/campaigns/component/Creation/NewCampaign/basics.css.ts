@@ -2,6 +2,12 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
+/** Read-only store domain, inset to line up with the card label. */
+export const readOnlyValue = style({
+    paddingLeft: alias.spacing.m,
+    paddingRight: alias.spacing.m,
+});
+
 /* ---- reward currency ---- */
 
 /** Vertical list of currency option rows (flush, like the goal list). */

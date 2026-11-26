@@ -109,13 +109,22 @@ describe("OnboardingTour", () => {
             expect(lastOptions().steps).toHaveLength(8);
         });
 
-        it("adds the optional wallet step when no wallet is linked", async () => {
+        it("explains payouts, not wallet linking, once a wallet is linked", async () => {
+            await open("welcome");
+
+            const ids = lastOptions().steps.map((step) => step.id);
+            expect(ids).toContain("payouts");
+            expect(ids).not.toContain("linkWallet");
+        });
+
+        it("swaps the payouts step for the wallet step when no wallet is linked", async () => {
             walletMock.mockReturnValue(false);
             await open("welcome");
 
             const ids = lastOptions().steps.map((step) => step.id);
-            expect(ids).toHaveLength(9);
+            expect(ids).toHaveLength(8);
             expect(ids).toContain("linkWallet");
+            expect(ids).not.toContain("payouts");
         });
 
         it("starts a page tour with the full-tour link and no skip", async () => {
@@ -125,6 +134,26 @@ describe("OnboardingTour", () => {
                 canSkip: false,
                 canOpenFullTour: true,
             });
+        });
+
+        it("starts a wizard tour without the full-tour link", async () => {
+            pathnameMock.mockReturnValue(
+                "/m/store-1/campaigns/draft/abc/budget"
+            );
+            const view = render(<OnboardingTour />);
+            act(() =>
+                onboardingTourStore.getState().startTour("campaignWizardBudget")
+            );
+            await flush();
+
+            expect(lastOptions()).toMatchObject({
+                canSkip: false,
+                canOpenFullTour: false,
+            });
+            expect(lastOptions().steps.map((step) => step.id)).toEqual([
+                "amount",
+            ]);
+            view.unmount();
         });
 
         it("gives the tour translated labels", async () => {

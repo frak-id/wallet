@@ -5,11 +5,10 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { InfoIcon, PlusIcon } from "@frak-labs/design-system/icons";
+import { PlusIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { CallOut } from "@/module/common/component/CallOut";
-import { Tooltip } from "@/module/common/component/Tooltip";
 import { useCapabilities } from "@/module/common/hook/useCapabilities";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
@@ -21,6 +20,7 @@ import {
 import { ActionFeedback } from "./ActionFeedback";
 import { LegacyBankMigration } from "./LegacyBankMigration";
 import { LinkWalletNotice } from "./LinkWalletNotice";
+import { LoadError } from "./LoadError";
 import * as styles from "./manage-budget-sheet.css";
 import { EmptyTokenCard, FundedTokenCard } from "./TokenCard";
 
@@ -31,8 +31,9 @@ export function BudgetView({
     merchantId: string;
     onAddFunds: () => void;
 }) {
-    const { t } = useTranslation();
-    const { data, isLoading, isError } = useGetMerchantBank({ merchantId });
+    const { data, isLoading, isError, refetch } = useGetMerchantBank({
+        merchantId,
+    });
     // `managerRole === "no_wallet"` (server-derived) is the source of truth
     // for manager status; `canOnchain` is a redundant client-only check that
     // shows the same CTA immediately after a session change, before a bank
@@ -48,7 +49,13 @@ export function BudgetView({
     }
 
     if (isError || !data) {
-        return <p className={styles.errorText}>{t("funding.error")}</p>;
+        return (
+            <LoadError
+                onRetry={() => {
+                    refetch();
+                }}
+            />
+        );
     }
 
     if (!data.deployed || !data.bankAddress) {
@@ -67,7 +74,7 @@ export function BudgetView({
                 vatApplicable={data.vatApplicable}
                 tokens={data.tokens}
                 onAddFunds={onAddFunds}
-                hideLegacyMigrationNotice={isWalletless}
+                isWalletless={isWalletless}
             />
             {isWalletless && <LinkWalletNotice />}
         </Stack>
@@ -97,7 +104,11 @@ function SetupBudget({ merchantId }: { merchantId: string }) {
                 >
                     {t("funding.setup.cta")}
                 </Button>
-                <ActionFeedback isError={isError} />
+                <ActionFeedback
+                    isPending={isPending}
+                    isError={isError}
+                    pendingText={t("funding.setup.pending")}
+                />
             </Stack>
         </Card>
     );
@@ -111,7 +122,7 @@ function BudgetContent({
     vatApplicable,
     tokens,
     onAddFunds,
-    hideLegacyMigrationNotice,
+    isWalletless,
 }: {
     merchantId: string;
     bankAddress: Address;
@@ -120,7 +131,7 @@ function BudgetContent({
     vatApplicable: boolean;
     tokens: BudgetToken[];
     onAddFunds: () => void;
-    hideLegacyMigrationNotice: boolean;
+    isWalletless: boolean;
 }) {
     const { t } = useTranslation();
     const { funded, empty } = splitTokensByFunding(tokens);
@@ -131,8 +142,13 @@ function BudgetContent({
             <LegacyBankMigration
                 merchantId={merchantId}
                 newBankAddress={bankAddress}
-                hideWalletlessNotice={hideLegacyMigrationNotice}
             />
+
+            {allTokensEmpty && (
+                <Text variant="body" color="secondary">
+                    {t("funding.budget.intro")}
+                </Text>
+            )}
 
             {allTokensEmpty && isOpen && (
                 <CallOut variant="warning">
@@ -156,6 +172,11 @@ function BudgetContent({
                         bankAddress={bankAddress}
                         isOpen={isOpen}
                     />
+                )}
+                {!isManager && isWalletless && (
+                    <Text variant="caption" color="secondary">
+                        {t("funding.budget.walletlessPayRewards")}
+                    </Text>
                 )}
             </Stack>
 
@@ -216,20 +237,11 @@ function DistributionCell({
     return (
         <Stack space="xxs">
             <div className={styles.cell}>
-                <Inline as="span" space="xxs" alignY="center" wrap={false}>
-                    <Text
-                        variant="body"
-                        weight="medium"
-                        color="primary"
-                        as="span"
-                    >
-                        {t("funding.budget.distributing")}
-                    </Text>
-                    <Tooltip content={t("funding.budget.distributingTooltip")}>
-                        <InfoIcon className={styles.infoIcon} />
-                    </Tooltip>
-                </Inline>
+                <Text variant="body" weight="medium" color="primary" as="span">
+                    {t("funding.budget.distributing")}
+                </Text>
                 <Switch
+                    aria-label={t("funding.budget.distributing")}
                     checked={isOpen}
                     disabled={isSettingOpenStatus}
                     onCheckedChange={(checked) =>
@@ -238,7 +250,9 @@ function DistributionCell({
                 />
             </div>
             <Text variant="caption" color="secondary">
-                {t("funding.budget.distributingHint")}
+                {isOpen
+                    ? t("funding.budget.distributingHintOn")
+                    : t("funding.budget.distributingHintOff")}
             </Text>
             <ActionFeedback
                 isPending={isSettingOpenStatus}

@@ -553,7 +553,7 @@
                 "validation": {
                     "label": "Vérification",
                     "hint": "Vérifier et publier",
-                    "subtitle": "Vérifiez votre campagne avant de la publier. Pour modifier un réglage, utilisez le bouton Retour."
+                    "subtitle": "Vérifiez votre campagne avant de la publier. Pour modifier un réglage, utilisez la flèche de retour en haut à gauche."
                 }
             },
             "actions": {
@@ -588,14 +588,26 @@
                 "frak": "Frak : {{value}}",
                 "rewardLockup": "Délai avant versement",
                 "lockupValue": "{{count}} jours",
-                "publishError": "Impossible de publier la campagne. Vérifiez chaque étape, puis réessayez. Si le problème continue, écrivez à hello@frak-labs.com.",
+                "publishError": "Impossible de publier la campagne. Si la fenêtre de vérification en deux étapes s’est ouverte, terminez-la puis sélectionnez Publier à nouveau. Sinon, vérifiez chaque étape et réessayez. Si le problème continue, écrivez à hello@frak-labs.com.",
                 "tieredTiers_one": "{{count}} palier",
                 "tieredTiers_other": "{{count}} paliers",
                 "tierRange": "De {{from}} {{currency}} à {{to}} {{currency}} : {{cost}}",
                 "tierRangeOpen": "À partir de {{from}} {{currency}} : {{cost}}",
                 "lockupValue_one": "{{count}} jour",
                 "lockupValue_other": "{{count}} jours",
-                "lockupNone": "Aucun délai"
+                "lockupNone": "Aucun délai",
+                "publishNote": "La publication ne vous débite pas. Les récompenses sont versées depuis votre budget.",
+                "store": "Boutique",
+                "whoQualifies": "Clients parrainés uniquement",
+                "minPurchase": "Montant minimum de la commande",
+                "minPurchaseNone": "Aucun",
+                "multiLevel": "Parrainage multi-niveaux",
+                "multiLevelOff": "Désactivé",
+                "multiLevelOn_one": "{{count}} niveau, {{percent}} % par niveau",
+                "multiLevelOn_other": "{{count}} niveaux, {{percent}} % par niveau",
+                "targetCpaReward": "Coût par récompense",
+                "on": "Activé",
+                "off": "Désactivé"
             },
             "success": {
                 "title": "Campagne publiée",
@@ -612,7 +624,8 @@
                 "tip3Desc": "Annoncez la campagne à vos clients existants.",
                 "communicationGuide": "Guide de communication (s’ouvre dans un nouvel onglet)",
                 "viewAllCampaigns": "Voir toutes les campagnes",
-                "viewPerformance": "Voir la campagne"
+                "viewPerformance": "Voir la campagne",
+                "subtitleScheduled": "La campagne « {{name}} » est publiée. Elle démarre le {{date}}."
             },
             "cancel": {
                 "title": "Fermer sans enregistrer cette étape ?",
@@ -622,40 +635,40 @@
                 "close": "Fermer"
             },
             "goals": {
-                "info": "Choisissez un seul objectif. Il détermine l’action qui donne droit à une récompense.",
+                "info": "Les ambassadeurs sont les personnes qui partagent votre boutique. L’objectif détermine l’action qui leur donne droit à une récompense.",
                 "required": "Sélectionnez un objectif",
                 "options": {
                     "sales": {
                         "title": "Ventes",
-                        "description": "Récompensez les ambassadeurs quand un client passe une commande.",
-                        "tags": "Ventes en ligne"
+                        "description": "Un client passe une commande via le lien d’un ambassadeur. Vous pouvez récompenser un pourcentage de la commande et choisir les produits."
                     },
                     "traffic": {
                         "title": "Trafic",
-                        "description": "Récompensez les ambassadeurs quand quelqu’un arrive sur votre boutique via leur lien.",
-                        "tags": "Visites de la boutique"
+                        "description": "Une personne visite votre boutique via le lien d’un ambassadeur. La récompense est un montant fixe."
                     },
                     "registration": {
                         "title": "Inscription",
-                        "description": "Récompensez les ambassadeurs pour les inscriptions sur votre boutique.",
-                        "tags": "Création de compte"
+                        "description": "Une personne s’inscrit sur votre boutique. La récompense est un montant fixe."
                     }
-                }
+                },
+                "continueHint": "Choisissez un objectif pour continuer."
             },
             "basics": {
                 "title": {
                     "label": "Titre de la campagne",
                     "placeholder": "Ex. Soldes d’été 2026",
                     "hint": "Seul vous voyez ce nom.",
-                    "required": "Saisissez un titre de campagne"
+                    "required": "Saisissez un titre de campagne",
+                    "continueHint": "Saisissez un titre de campagne pour continuer."
                 },
                 "merchant": {
                     "label": "Boutique",
-                    "placeholder": "Choisir une boutique"
+                    "placeholder": "Choisir une boutique",
+                    "description": "Changer de boutique démarre une nouvelle campagne."
                 },
                 "currency": {
                     "label": "Devise des récompenses",
-                    "description": "Les ambassadeurs sont payés dans cette devise.",
+                    "description": "Les ambassadeurs sont payés dans cette devise. Gardez celle de votre boutique, sauf besoin contraire.",
                     "useDefault": "Utiliser la devise par défaut de votre boutique",
                     "recommended": "Recommandé",
                     "chooseAnother": "Choisir une autre devise",
@@ -670,7 +683,7 @@
             "territory": {
                 "card": {
                     "label": "Pays",
-                    "description": "Choisissez les pays visés par votre campagne.",
+                    "description": "Cochez un continent pour tout sélectionner, ou ouvrez-le pour choisir pays par pays.",
                     "placeholder": "Choisir des pays",
                     "search": "Rechercher",
                     "required": "Choisissez au moins un pays",
@@ -683,8 +696,8 @@
                 },
                 "special": {
                     "label": "Catégories spéciales",
-                    "description": "Ces catégories ne sont pas encore disponibles. Laissez-les décochées pour continuer.",
-                    "notSupported": "Cette catégorie n’est pas encore disponible. Décochez-la pour continuer.",
+                    "description": "Les campagnes sur ces sujets ne sont pas encore prises en charge. Laissez-les toutes décochées.",
+                    "notSupported": "Cette catégorie n’est pas encore prise en charge. Décochez-la pour continuer.",
                     "options": {
                         "credit": {
                             "title": "Crédit",
@@ -703,7 +716,8 @@
                             "description": "Sujets sociaux, élections, personnalités ou campagnes politiques."
                         }
                     }
-                }
+                },
+                "continueHint": "Choisissez au moins un pays pour continuer."
             },
             "budget": {
                 "period": {
@@ -711,29 +725,30 @@
                     "global": "Toute la campagne",
                     "daily": "Par jour",
                     "weekly": "Par semaine",
-                    "monthly": "Par mois"
+                    "monthly": "Par mois (30 jours)",
+                    "description": "Choisissez Toute la campagne pour un montant total, ou une limite par jour, par semaine ou par mois."
                 },
                 "cap": {
                     "label": "Montant du budget",
-                    "placeholder": "Ex. 1000",
-                    "hint": "Montant maximum que vous pouvez dépenser sur toute la campagne, commission Frak comprise. La campagne s’arrête quand il est atteint.",
-                    "rewards": "Récompenses versées",
+                    "placeholder": "Ex. 500",
+                    "hint": "Le maximum que cette campagne peut dépenser. Ce n’est pas un dépôt : les récompenses sont versées depuis le budget ajouté à votre boutique.",
+                    "rewards": "Récompenses",
                     "commission": "Commission Frak",
                     "required": "Saisissez un budget supérieur à 0",
-                    "hintDaily": "Montant maximum que vous pouvez dépenser par jour, commission Frak comprise.",
-                    "hintWeekly": "Montant maximum que vous pouvez dépenser par semaine, commission Frak comprise.",
-                    "hintMonthly": "Montant maximum que vous pouvez dépenser par mois (30 jours), commission Frak comprise."
+                    "hintDaily": "Le maximum que cette campagne peut dépenser par jour. Ce n’est pas un dépôt : les récompenses sont versées depuis le budget ajouté à votre boutique.",
+                    "hintWeekly": "Le maximum que cette campagne peut dépenser par semaine. Ce n’est pas un dépôt : les récompenses sont versées depuis le budget ajouté à votre boutique.",
+                    "hintMonthly": "Le maximum que cette campagne peut dépenser par mois. Ce n’est pas un dépôt : les récompenses sont versées depuis le budget ajouté à votre boutique."
                 },
                 "schedule": {
                     "label": "Calendrier",
-                    "description": "Si vous ne définissez pas de date de fin, la campagne s’arrête quand le budget est épuisé.",
+                    "description": "Choisissez quand la campagne démarre. Vous pouvez aussi définir une date de fin.",
                     "immediate": {
                         "title": "Démarrer immédiatement",
                         "description": "Démarre dès la publication"
                     },
                     "startOnly": {
-                        "title": "Date de début seulement",
-                        "description": "Choisir une date de début"
+                        "title": "Démarrer à une date",
+                        "description": "Démarre à la date choisie, sans date de fin"
                     },
                     "range": {
                         "title": "Dates de début et de fin",
@@ -747,13 +762,20 @@
                     "startDateRequired": "Sélectionnez une date de début",
                     "endDateRequired": "Sélectionnez une date de fin",
                     "endDateInvalid": "La date de fin ne peut pas précéder la date de début",
-                    "invalidDate": "Saisissez une date valide"
+                    "invalidDate": "Saisissez une date valide",
+                    "descriptionRecurring": "Sans date de fin, aucune fin n’est programmée pour la campagne."
+                },
+                "continueHint": {
+                    "amount": "Saisissez un montant de budget pour continuer.",
+                    "schedule": "Choisissez quand la campagne démarre pour continuer.",
+                    "dates": "Vérifiez les dates pour continuer."
                 }
             },
             "referralChain": {
                 "enable": {
                     "title": "Activer le parrainage multi-niveaux",
-                    "description": "La récompense de l’ambassadeur est aussi partagée avec les ambassadeurs qui l’ont parrainé, niveau par niveau."
+                    "description": "La récompense de l’ambassadeur est aussi partagée avec les ambassadeurs qui l’ont parrainé, niveau par niveau.",
+                    "noExtraCost": "Cela ne vous coûte pas plus cher. La récompense de l’ambassadeur est partagée, pas augmentée."
                 },
                 "noReferrer": "Pour l’activer, définissez d’abord une récompense pour l’ambassadeur à l’étape Récompenses.",
                 "model": {
@@ -761,39 +783,37 @@
                     "description": "Quand la récompense est gagnée, elle est répartie entre l’ambassadeur et les ambassadeurs qui l’ont parrainé."
                 },
                 "decrease": {
-                    "label": "Baisse par niveau (%)",
-                    "hint": "Chaque niveau reçoit ce pourcentage de moins que le niveau précédent. Saisissez une valeur de {{min}} à {{max}}.",
+                    "label": "Part pour chaque niveau (%)",
+                    "hint": "L’ambassadeur direct reçoit cette part de la récompense. L’ambassadeur au-dessus reçoit la même part de ce qui reste, et ainsi de suite. Saisissez une valeur de {{min}} à {{max}}.",
                     "placeholder": "Ex. 80",
                     "outOfRange": "Saisissez un pourcentage de {{min}} à {{max}}."
                 },
                 "maxLevels": {
                     "label": "Nombre maximum de niveaux",
-                    "hint": "Nombre maximum de niveaux récompensés, {{max}} au plus. Laissez vide pour ne pas fixer de limite.",
+                    "hint": "Nombre maximum de niveaux récompensés, {{max}} au plus. Laissez vide pour utiliser 5.",
                     "placeholder": "Ex. 5"
-                },
-                "cac": {
-                    "label": "Coût par commande (défini à l’étape Récompenses)",
-                    "placeholder": "Non disponible",
-                    "placeholderTiered": "Variable selon les paliers"
                 },
                 "preview": {
                     "title": "Répartition de la récompense",
                     "purchase": "Action récompensée",
                     "direct": "Ambassadeur direct",
                     "level": "Ambassadeur niveau {{n}}",
-                    "caption": "Chaque niveau reçoit {{percent}} % de moins que le niveau précédent.",
+                    "caption": "Affiché pour une chaîne complète. S’il y a moins d’ambassadeurs au-dessus, le dernier reçoit ce qui reste.",
                     "directReward": "Récompense directe",
                     "chainReward": "Récompense multi-niveaux",
                     "rowDirect": "Direct",
                     "rowLevel": "Niveau {{n}}",
                     "tableLevel": "Niveau",
                     "tableAmount": "Montant"
+                },
+                "disabledReason": {
+                    "decrease": "Saisissez un pourcentage de {{min}} à {{max}} pour continuer.",
+                    "levels": "Saisissez un nombre de niveaux de 1 à {{max}}, ou laissez vide."
                 }
             },
             "products": {
                 "scope": {
-                    "label": "Produits concernés",
-                    "description": "Une commande donne droit à une récompense seulement si elle contient un produit correspondant."
+                    "label": "Produits concernés"
                 },
                 "mode": {
                     "all": {
@@ -848,9 +868,16 @@
                 "removeValue": "Supprimer cette valeur",
                 "advanced": "Cette sélection de produits a été définie en dehors de ce formulaire. Vous pouvez la consulter ici, mais pas la modifier.",
                 "purchaseOnly": "Le choix des produits est disponible seulement pour l’objectif Ventes.",
-                "fieldLabel": "Champ",
-                "operatorLabel": "Condition",
-                "saveError": "Impossible d’enregistrer les produits. Réessayez. Si vous excluez des produits, la récompense doit être un pourcentage ou des paliers. Vérifiez-la à l’étape Récompenses."
+                "fieldLabel": "Information produit",
+                "operatorLabel": "Correspondance",
+                "saveError": "Impossible d’enregistrer les produits. Réessayez. Si vous excluez des produits, la récompense doit être un pourcentage ou des paliers. Vérifiez-la à l’étape Récompenses.",
+                "hint": {
+                    "exactText": "Saisissez-le exactement comme dans votre boutique. Les majuscules comptent.",
+                    "numeric": "Vérifié sur chaque ligne de produit, pas sur toute la commande.",
+                    "partialName": "Pour retrouver une partie du nom, choisissez contient.",
+                    "negated": "La récompense est alors calculée seulement sur les autres produits. Un montant fixe n’est pas possible."
+                },
+                "disabledReason": "Saisissez une valeur pour continuer."
             },
             "reward": {
                 "campaignType": {
@@ -879,7 +906,7 @@
                     }
                 },
                 "basis": {
-                    "label": "Base de calcul",
+                    "label": "Calculé sur",
                     "description": "Sur quel montant la récompense est calculée.",
                     "basket": {
                         "title": "Montant total de la commande",
@@ -903,17 +930,22 @@
                     "refereePlaceholder": "Ex. 2"
                 },
                 "cpa": {
-                    "hint": "Total que vous payez par commande. Frak garde {{percent}} %. Le reste va à l’ambassadeur et au client parrainé.",
+                    "hint": "Ce que vous coûte une commande. Frak en garde {{percent}} %. Vous répartissez le reste entre l’ambassadeur et le client parrainé.",
                     "rewardsDistributed": "Récompenses versées",
                     "frakCommission": "Commission Frak",
-                    "reco": "Frak recommande une répartition <highlight>80/20</highlight> : 80 % pour l’ambassadeur, 20 % pour le client parrainé.",
-                    "applyReco": "Appliquer 80/20",
-                    "splitMismatch": "Les deux récompenses doivent faire {{amount}} au total. Modifiez l’une des deux."
+                    "reco": "Nous suggérons : <highlight>80 %</highlight> des récompenses pour l’ambassadeur, <highlight>20 %</highlight> pour le client parrainé.",
+                    "applyReco": "Utiliser cette répartition",
+                    "splitMismatch": "Les deux récompenses doivent faire {{amount}} au total. Modifiez l’une des deux.",
+                    "hintReward": "Ce que vous coûte une récompense. Frak en garde {{percent}} %. Vous répartissez le reste entre l’ambassadeur et le client parrainé.",
+                    "exampleFixed": "Exemple : chaque commande récompensée verse {{ambassador}} à l’ambassadeur et {{referee}} au client parrainé, quel que soit le montant de la commande.",
+                    "examplePercentage": "Exemple : pour une commande de {{total}}, l’ambassadeur reçoit {{ambassador}} et le client parrainé {{referee}}."
                 },
                 "fixed": {
                     "cpaLabel": "Coût par commande",
                     "cpaPlaceholder": "Ex. 10",
-                    "percentOfPool": "{{percent}} % du montant à répartir"
+                    "percentOfPool": "{{percent}} % du montant à répartir",
+                    "cpaLabelReward": "Coût par récompense",
+                    "perOrderHint": "Versé une fois par commande, pas par produit."
                 },
                 "percentage": {
                     "cpaLabel": "Coût par commande (% du montant de la commande)",
@@ -935,7 +967,7 @@
                     "incomplete": "Chaque palier a besoin d’un montant de début, d’un montant de fin (sauf le dernier) et d’un coût par commande supérieur à 0.",
                     "inverted": "La fin de chaque palier doit être supérieure à son début.",
                     "overlap": "Les paliers ne doivent pas se chevaucher. Chaque palier commence là où le précédent se termine.",
-                    "rewardsRequired": "Chaque palier a besoin d’une récompense supérieure à 0 pour l’ambassadeur et pour le client parrainé."
+                    "rewardsRequired": "Une commande hors de tous les paliers ne donne aucune récompense. Chaque palier a besoin d’une récompense supérieure à 0 pour les deux personnes."
                 },
                 "eligibility": {
                     "label": "Commandes éligibles",
@@ -947,7 +979,6 @@
                 "lockup": {
                     "label": "Délai avant versement",
                     "description": "Attente avant de verser les récompenses, pour vous protéger des remboursements",
-                    "info": "Les récompenses sont versées après ce délai. Si la commande est remboursée pendant ce délai, aucune récompense n’est versée. Cela protège le budget de votre campagne.",
                     "durationLabel": "Délai avant versement (jours)",
                     "durationPlaceholder": "Ex. 14",
                     "durationHint": "Saisissez 0 pour verser les récompenses juste après la commande.",
@@ -962,7 +993,13 @@
                     "referral_signup": "Inscription via un lien de parrainage",
                     "game_join": "Participation au jeu Frak"
                 },
-                "saveError": "Impossible d’enregistrer la récompense. Réessayez. Si vous excluez des produits, choisissez un pourcentage ou des paliers."
+                "saveError": "Impossible d’enregistrer la récompense. Réessayez. Si vous excluez des produits, choisissez un pourcentage ou des paliers.",
+                "disabledReason": {
+                    "noModel": "Choisissez un type de récompense pour continuer.",
+                    "noCost": "Saisissez le coût pour continuer.",
+                    "tiered": "Remplissez chaque palier.",
+                    "fixedNotAllowed": "Choisissez un pourcentage ou des paliers pour continuer."
+                }
             },
             "stepper": {
                 "increase": "Augmenter",
@@ -1377,8 +1414,8 @@
     "bank": {
         "banner": {
             "depleted": "Votre budget de récompenses est vide. Les récompenses ne peuvent pas être versées.",
-            "paused": "Les récompenses sont en pause : aucune n'est versée. Ouvrez votre budget pour les réactiver.",
-            "warning": "Votre budget de récompenses est presque épuisé, ou votre limite de dépense est inférieure à votre budget. Ouvrez votre budget pour corriger cela.",
+            "paused": "Les récompenses sont en pause : aucune n'est versée. Ouvrez Gérer le budget. Réactiver Verser les récompenses demande un porte-monnaie Frak lié.",
+            "warning": "Votre budget est bas, ou votre limite de dépense est inférieure à votre budget. Ouvrez Gérer le budget, puis ajoutez des fonds ou augmentez la limite.",
             "notDeployed": "Votre budget de récompenses n'est pas encore configuré. Configurez-le pour ajouter des fonds et verser des récompenses.",
             "ctaAddFunds": "Ajouter des fonds",
             "ctaManageBank": "Gérer le budget",
@@ -1389,16 +1426,15 @@
         "header": {
             "budgetTitle": "Gérer le budget",
             "addFundsTitle": "Ajouter des fonds",
-            "addFundsDescription": "Vous payez sur Stripe, dans un nouvel onglet. Le montant payé comprend les frais Frak, et la TVA si elle s'applique à vous. Votre budget est mis à jour une fois le paiement effectué.",
+            "addFundsDescription": "Vous payez sur Stripe, dans un nouvel onglet. Le montant comprend les frais Frak, et la TVA si elle s'applique à vous.",
             "close": "Fermer",
             "back": "Retour"
         },
         "budget": {
             "sectionLabel": "Budget de récompenses",
             "distributing": "Verser les récompenses",
-            "distributingTooltip": "Activé, Frak verse les récompenses de votre budget grâce à vos campagnes actives. Désactivé, plus aucune nouvelle récompense n'est versée.",
-            "totalInclVat": "budget total, TVA et frais Frak inclus",
-            "totalExclVat": "budget total, frais Frak inclus",
+            "totalInclVat": "Total avec TVA et frais Frak. Seul « Disponible pour les récompenses » ci-dessous est utilisable.",
+            "totalExclVat": "Total avec frais Frak. Seul « Disponible pour les récompenses » ci-dessous est utilisable.",
             "breakdown": {
                 "distributable": "Disponible pour les récompenses",
                 "frakFee": "Frais Frak ({{rate}} %)",
@@ -1408,11 +1444,12 @@
             "addFunds": "Ajouter des fonds",
             "emptyWarning": "Votre budget est vide. Les campagnes actives ne peuvent pas verser de récompenses tant que vous n'ajoutez pas de fonds.",
             "allowanceTooltip": "Limite de dépense : {{amount}}",
-            "limitTooLow": "Limite de dépense inférieure au budget",
+            "limitTooLow": "Frak ne peut verser que jusqu'à votre limite. Augmentez-la pour utiliser tout votre budget.",
             "status": {
                 "active": "Actif",
                 "actionNeeded": "Limite trop basse",
-                "paused": "Récompenses en pause"
+                "paused": "Récompenses en pause",
+                "currencyStopped": "Arrêté dans cette devise"
             },
             "actions": {
                 "increaseLimit": "Augmenter la limite de dépense",
@@ -1423,24 +1460,35 @@
                 "cancel": "Annuler",
                 "amountPlaceholder": "Nouvelle limite de dépense",
                 "withdrawPlaceholder": "Max {{amount}}",
-                "limitHint": "Le maximum que Frak peut verser en récompenses depuis votre budget. Gardez-la égale ou supérieure à votre budget.",
-                "withdrawHint": "Les fonds sont envoyés vers votre porte-monnaie Frak. Il s'ouvre pour que vous confirmiez."
+                "limitHint": "Le maximum que Frak peut verser en récompenses. Gardez-la égale ou supérieure à « Disponible pour les récompenses ».",
+                "withdrawHint": "Vous pouvez retirer jusqu'au montant disponible pour les récompenses. Les fonds vont vers votre porte-monnaie Frak, qui s'ouvre pour que vous confirmiez.",
+                "withdrawLocked": "Pour retirer des fonds, désactivez d'abord Verser les récompenses."
             },
-            "distributingHint": "Désactivé, aucune récompense n'est versée. Vous pouvez alors retirer vos fonds.",
-            "noLimit": "Aucune limite de dépense"
+            "noLimit": "Aucune limite de dépense",
+            "intro": "Votre budget est l'argent que Frak utilise pour verser les récompenses à vos ambassadeurs.",
+            "walletlessPayRewards": "Verser les récompenses demande un porte-monnaie Frak lié. Liez-le avec la carte ci-dessous.",
+            "distributingHintOn": "Frak verse les récompenses de votre budget grâce à vos campagnes actives.",
+            "distributingHintOff": "Aucune récompense n'est versée tant que c'est désactivé. Vous pouvez retirer vos fonds.",
+            "currencyName": {
+                "euros": "Euros",
+                "dollars": "Dollars américains"
+            }
         },
         "setup": {
-            "description": "Configurez votre budget de récompenses. Vous pourrez ensuite ajouter des fonds et commencer à verser des récompenses.",
-            "cta": "Configurer le budget"
+            "description": "Configurez votre budget de récompenses. Cela peut prendre un moment, gardez cette fenêtre ouverte. Vous pourrez ensuite ajouter des fonds.",
+            "cta": "Configurer le budget",
+            "pending": "Configuration de votre budget..."
         },
         "error": "Impossible de charger votre budget. Vérifiez votre connexion et réessayez.",
         "addFunds": {
             "balanceLabel": "Budget actuel",
             "stripe": "Ajouter des fonds avec Stripe",
-            "testTokens": "Ajouter des fonds de test"
+            "testTokens": "Ajouter des fonds de test",
+            "forStore": "Les fonds sont ajoutés à {{domain}}.",
+            "afterPay": "Après le paiement, revenez ici pour voir votre budget."
         },
         "pause": {
-            "title": "Mettre cette devise en pause"
+            "title": "Arrêter les récompenses dans cette devise"
         },
         "legacy": {
             "title": "Déplacer les fonds de votre ancien budget",
@@ -1448,28 +1496,29 @@
             "totalBalance": "Total dans l'ancien budget",
             "pending": "Récompenses en attente (non déplacées)",
             "withdrawable": "Disponible à déplacer",
-            "migrate": "Déplacer les fonds"
+            "migrate": "Déplacer les fonds",
+            "walletless": "Votre ancien budget contient encore {{amount}}. Liez votre porte-monnaie Frak pour le déplacer."
         },
         "linkWallet": {
-            "title": "Liez votre porte-monnaie Frak (facultatif)",
-            "description": "Nécessaire pour activer ou mettre en pause les récompenses, changer la limite de dépense, retirer des fonds ou déplacer les fonds de votre ancien budget. Vous confirmez chacune de ces actions dans votre porte-monnaie Frak. Ajouter des fonds et consulter votre budget fonctionnent sans lui.",
+            "title": "Liez votre porte-monnaie Frak",
+            "description": "Il est nécessaire pour activer ou désactiver Verser les récompenses, changer la limite de dépense et retirer des fonds. Ajouter des fonds fonctionne sans lui.",
             "cta": "Lier mon porte-monnaie"
         },
         "errors": {
-            "action": "L'action n'a pas abouti. Réessayez. Si cela continue, écrivez à hello@frak-labs.com."
+            "action": "L'action n'a pas abouti. Si vous avez fermé la fenêtre du porte-monnaie Frak, réessayez. Si cela continue, écrivez à hello@frak-labs.com."
         },
-        "pending": "Confirmez dans votre porte-monnaie Frak. Le changement apparaît ici une fois enregistré.",
+        "pending": "Confirmez dans votre porte-monnaie Frak s'il est ouvert. Cet écran se met à jour une fois le changement enregistré.",
         "walletPrompt": {
             "payRewardsOn": {
-                "title": "Activer les récompenses",
+                "title": "Activer Verser les récompenses",
                 "description": "Autoriser Frak à verser des récompenses depuis votre budget."
             },
             "payRewardsOff": {
-                "title": "Mettre les récompenses en pause",
+                "title": "Désactiver Verser les récompenses",
                 "description": "Arrêter de verser des récompenses depuis votre budget."
             },
             "revokeLimit": {
-                "title": "Mettre cette devise en pause",
+                "title": "Arrêter les récompenses dans cette devise",
                 "description": "Mettre la limite de dépense à zéro. Aucune récompense n'est versée dans cette devise tant que vous ne l'augmentez pas."
             },
             "updateLimit": {
@@ -1484,7 +1533,8 @@
                 "title": "Déplacer les fonds",
                 "description": "Déplacer les fonds disponibles de votre ancien budget vers votre nouveau budget."
             }
-        }
+        },
+        "retry": "Réessayer"
     },
     "settings": {
         "tabs": {
@@ -1730,7 +1780,7 @@
                 "connected": "E-mail vérifié",
                 "pending": "E-mail à vérifier",
                 "addPasswordCta": "Ajouter un mot de passe",
-                "linkWalletHint": "Nécessaire pour retirer des fonds et changer votre limite de dépense."
+                "linkWalletHint": "Nécessaire pour activer ou désactiver Verser les récompenses, changer votre limite de dépense et retirer des fonds."
             },
             "sessions": {
                 "title": "Appareils connectés",
@@ -1877,7 +1927,7 @@
             "documentation": "Lire le guide",
             "steps": {
                 "otherAdmin": {
-                    "name": "Ajouter un autre administrateur",
+                    "name": "Ajouter un autre administrateur (conseillé)",
                     "description": "Si vous êtes absent, quelqu'un d'autre peut gérer votre boutique."
                 },
                 "addFunding": {
@@ -1885,8 +1935,8 @@
                     "description": "Les récompenses sont versées à partir de ce budget."
                 },
                 "runningBank": {
-                    "name": "Activer le versement des récompenses",
-                    "description": "Les récompenses ne sont versées que lorsque cette option est activée."
+                    "name": "Activer Verser les récompenses",
+                    "description": "Les récompenses ne sont versées que si Verser les récompenses est activé dans Gérer le budget. Cela demande un porte-monnaie Frak lié."
                 },
                 "addCampaign": {
                     "name": "Lancer une campagne",
@@ -2792,39 +2842,39 @@
         "welcome": {
             "intro": {
                 "title": "Commencez à verser des récompenses",
-                "body": "Pour commencer, connectez votre boutique, ajoutez des fonds à votre budget, activez le versement des récompenses et créez une campagne. Cette visite montre où se trouve chaque étape. Vous pouvez la passer et la rouvrir avec Visite de la page."
+                "body": "Connectez votre boutique, ajoutez des fonds à votre budget, puis créez une campagne. Pour revoir cette visite, sélectionnez Visite de la page, puis Afficher la visite complète."
             },
             "stores": {
                 "title": "Vos boutiques",
-                "body": "Chaque boutique connectée à Frak est listée ici. Pour connecter une boutique Shopify, ouvrez l'app Frak dans votre admin Shopify. Vous pouvez aussi utiliser Ajouter une boutique."
+                "body": "Chaque boutique connectée est listée ici. Connectez une boutique Shopify depuis l'app Frak dans votre admin Shopify, ou utilisez Ajouter une boutique."
             },
             "budget": {
                 "title": "Ajoutez des fonds à votre budget",
-                "body": "Les récompenses sont versées depuis votre budget de récompenses. Sur votre boutique, sélectionnez Gérer le budget, puis Ajouter des fonds."
+                "body": "Votre budget est l'argent qui paie les récompenses. Ajoutez des fonds dans Gérer le budget."
             },
             "linkWallet": {
                 "title": "Liez votre porte-monnaie Frak (facultatif)",
-                "body": "Il faut un porte-monnaie Frak lié pour activer ou mettre en pause Verser les récompenses, changer la limite de dépense ou retirer des fonds. Ajouter des fonds n'en a pas besoin. Lier mon porte-monnaie se trouve en bas de Gérer le budget."
+                "body": "Mettre les récompenses en pause, changer la limite de dépense et retirer des fonds demandent un porte-monnaie Frak lié. Sélectionnez Lier mon porte-monnaie dans Gérer le budget."
             },
             "payouts": {
-                "title": "Activez le versement des récompenses",
-                "body": "Dans Gérer le budget, activez Verser les récompenses. Frak ne verse des récompenses que si cette option est activée."
+                "title": "Pause ou reprise des récompenses",
+                "body": "Utilisez Verser les récompenses dans Gérer le budget pour mettre les récompenses en pause ou les reprendre."
             },
             "campaigns": {
                 "title": "Créez une campagne",
-                "body": "Une campagne fixe la récompense que vos clients gagnent quand ils partagent votre boutique et que quelqu'un achète avec leur lien. Ouvrez Campagnes, puis sélectionnez Créer une campagne."
+                "body": "Une campagne fixe la récompense qu'un ambassadeur gagne grâce à son lien de partage. Ouvrez Campagnes, puis sélectionnez Créer une campagne."
             },
             "members": {
                 "title": "Membres et notifications push",
-                "body": "Membres liste les clients qui ont interagi avec votre boutique via Frak. Vous pouvez leur envoyer une notification push depuis cette page."
+                "body": "La page Membres liste les clients qui ont interagi avec votre boutique via Frak. Vous pouvez leur envoyer une notification push depuis cette page."
             },
             "account": {
                 "title": "Votre compte",
-                "body": "Ce menu permet de changer de boutique, d'ouvrir les Paramètres ou de vous déconnecter."
+                "body": "Utilisez ce menu pour changer de boutique, ouvrir les Paramètres ou vous déconnecter."
             },
             "help": {
                 "title": "Besoin d'aide plus tard ?",
-                "body": "Sélectionnez Visite de la page sur n'importe quelle page pour voir à quoi elle sert. Vous pouvez y afficher de nouveau la visite complète."
+                "body": "Sélectionnez Visite de la page sur n'importe quelle page pour voir à quoi elle sert. Sur les pages avec menu latéral, vous pouvez aussi y afficher la visite complète."
             }
         },
         "stores": {
@@ -2834,7 +2884,7 @@
             },
             "budget": {
                 "title": "Gérer le budget",
-                "body": "Ajoutez des fonds et consultez votre budget. Vous pouvez aussi activer ou mettre en pause Verser les récompenses, changer la limite de dépense ou retirer des fonds. Ces trois actions demandent un porte-monnaie Frak lié."
+                "body": "Ajoutez des fonds et consultez votre budget, l'argent qui paie les récompenses. Activer ou désactiver Verser les récompenses, changer la limite de dépense et retirer des fonds demandent un porte-monnaie Frak lié."
             },
             "edit": {
                 "title": "Modifier la boutique",
@@ -2852,15 +2902,15 @@
             },
             "journey": {
                 "title": "Parcours client",
-                "body": "Suivez les clients depuis le bouton de partage jusqu'à la commande."
+                "body": "Suivez les clients du bouton de partage jusqu'à la commande, sur votre site ou dans l'app Frak."
             },
             "top": {
                 "title": "Meilleures campagnes",
-                "body": "Vos meilleures campagnes sont listées ici. Sélectionnez Voir toutes les campagnes pour les afficher toutes."
+                "body": "Les 10 campagnes avec le plus de récompenses sur la période choisie. Sélectionnez Voir toutes les campagnes pour les afficher toutes."
             },
             "create": {
                 "title": "Créer une campagne",
-                "body": "Lancez une nouvelle campagne ici. Vous choisissez un objectif, des pays, un budget et une récompense, puis vous vérifiez et publiez."
+                "body": "Choisissez un objectif, des pays, un montant de budget et une récompense, puis vérifiez et publiez."
             }
         },
         "campaignsList": {
@@ -2870,7 +2920,7 @@
             },
             "actions": {
                 "title": "Actions sur une campagne",
-                "body": "Le menu de la ligne permet de voir les résultats ou les réglages, de modifier, mettre en pause, reprendre, archiver ou supprimer une campagne. Une campagne archivée ne peut ni reprendre ni être modifiée."
+                "body": "Ouvrez le menu de la ligne pour agir sur une campagne. Modifier et Supprimer concernent les brouillons, Mettre en pause les campagnes actives, Reprendre celles en pause."
             },
             "bulk": {
                 "title": "Plusieurs campagnes à la fois",
@@ -2884,35 +2934,27 @@
         "campaignWizard": {
             "steps": {
                 "title": "Étape par étape",
-                "body": "Chaque étape est enregistrée quand vous sélectionnez Continuer. Vous pouvez fermer la page et reprendre votre brouillon plus tard."
-            },
-            "reward": {
-                "title": "Objectif et récompense",
-                "body": "Choisissez l'action qui donne droit à une récompense, puis le montant versé et qui la reçoit."
-            },
-            "publish": {
-                "title": "Vérifier et publier",
-                "body": "Vérifiez votre campagne à la dernière étape, puis publiez-la. Les récompenses sont versées depuis votre budget : assurez-vous qu'il contient des fonds."
+                "body": "La liste indique où vous en êtes. Chaque étape est enregistrée quand vous sélectionnez Continuer : vous pouvez partir et reprendre plus tard."
             }
         },
         "storeWizard": {
             "details": {
                 "title": "Ajouter une boutique",
-                "body": "Saisissez le nom et le domaine de votre boutique. Vous prouvez que le domaine vous appartient avant de continuer."
+                "body": "Saisissez le nom, la devise et le domaine de votre boutique. Si un enregistrement TXT s'affiche, ajoutez-le pour prouver que le domaine est le vôtre, puis sélectionnez Continuer."
             },
             "confirm": {
                 "title": "Confirmez votre boutique",
-                "body": "Vérifiez les informations, puis terminez l'enregistrement. Ensuite, votre boutique apparaît dans Mes boutiques."
+                "body": "Vérifiez les informations, puis sélectionnez Enregistrer ma boutique. Une confirmation dans votre porte-monnaie Frak peut être demandée ; aucun argent n'est déplacé."
             }
         },
         "members": {
             "list": {
                 "title": "Membres",
-                "body": "Chaque ligne est un client qui a interagi avec votre boutique via Frak. Vous voyez sa date d'arrivée, ses interactions et les récompenses gagnées."
+                "body": "Chaque ligne est un client qui a interagi avec votre boutique via Frak. Les colonnes montrent Membre depuis, Interactions et Récompenses gagnées."
             },
             "filters": {
                 "title": "Filtres",
-                "body": "Utilisez Filtres pour affiner la liste par date d'arrivée ou nombre d'interactions."
+                "body": "Utilisez le bouton de date pour choisir quand les clients sont arrivés. Utilisez Filtres pour fixer un minimum ou un maximum d'interactions."
             },
             "push": {
                 "title": "Notifications push",
@@ -2922,7 +2964,7 @@
         "push": {
             "history": {
                 "title": "Notifications push",
-                "body": "Les notifications passées et planifiées sont listées ici avec leur statut."
+                "body": "Les notifications envoyées et planifiées sont listées ici avec leur statut. Seule une notification planifiée peut être modifiée ou supprimée."
             },
             "send": {
                 "title": "Envoyer une notification push",
@@ -2932,25 +2974,25 @@
         "pushCreate": {
             "content": {
                 "title": "Rédigez la notification",
-                "body": "Ajoutez un titre et un message. L'image et le lien sont facultatifs."
+                "body": "Donnez-lui un nom interne que vous seul voyez, puis un titre et un message. Le lien de l'image et le lien au clic sont facultatifs."
             },
             "audience": {
                 "title": "Choisissez le public",
-                "body": "Choisissez les membres qui la reçoivent. Le nombre de membres concernés s'affiche."
+                "body": "Cochez Membre depuis ou Interactions pour choisir qui la reçoit. Le nombre de membres correspondants s'affiche."
             },
             "schedule": {
                 "title": "Choisissez quand l'envoyer",
-                "body": "Envoyez-la tout de suite ou planifiez-la. Vous vérifiez tout avant l'envoi."
+                "body": "Envoyez-la tout de suite ou choisissez une date et une heure. Vérifier et envoyer affiche l'audience et l'heure avant tout envoi."
             }
         },
         "storeEdit": {
             "tabs": {
-                "title": "Les réglages de votre boutique",
-                "body": "Utilisez les onglets pour passer d'Apparence à Fiche dans l'app, Connexions et Équipe."
+                "title": "Modifier votre boutique",
+                "body": "Utilisez les onglets pour passer d'une section à l'autre : Apparence, Fiche dans l'app, Connexions et Équipe."
             },
             "connections": {
                 "title": "Connexions",
-                "body": "Frak a besoin de vos commandes pour verser les récompenses. Connectez ici le logiciel de votre boutique."
+                "body": "Le suivi des commandes informe Frak de vos commandes, nécessaires pour verser les récompenses. Les domaines, les apps mobiles et le lien de newsletter sont aussi ici."
             },
             "team": {
                 "title": "Équipe",
@@ -2958,13 +3000,13 @@
             },
             "close": {
                 "title": "Retour à vos boutiques",
-                "body": "Sélectionnez le bouton de fermeture en haut à gauche pour revenir à Mes boutiques."
+                "body": "Sélectionnez le bouton de fermeture (X) pour revenir à Mes boutiques. Enregistrez d'abord vos modifications."
             }
         },
         "setupStatus": {
             "checklist": {
                 "title": "Liste de configuration",
-                "body": "Chaque étape indique si elle est faite. Pour une étape à faire, sélectionnez Compléter cette étape."
+                "body": "Chaque étape affiche une coche si elle est faite, un avertissement sinon. Sélectionnez Compléter cette étape pour la faire."
             }
         },
         "settings": {
@@ -2980,11 +3022,29 @@
         "billing": {
             "info": {
                 "title": "Informations de facturation",
-                "body": "Ajoutez le nom de votre société, votre numéro de TVA et votre adresse. Ils figurent sur toutes vos factures."
+                "body": "Ajoutez le nom de votre entreprise, votre numéro de TVA, votre adresse et l'e-mail de facturation. Ils figurent sur toutes vos factures."
             },
             "history": {
                 "title": "Factures et dépôts",
-                "body": "Utilisez les onglets pour passer de vos factures à vos dépôts. Vous pouvez télécharger une facture en PDF."
+                "body": "Une fois vos informations de facturation enregistrées, vos factures et vos dépôts sont listés ici dans deux onglets. L'icône de téléchargement donne un PDF."
+            }
+        },
+        "campaignWizardBudget": {
+            "amount": {
+                "title": "Montant du budget",
+                "body": "C'est le maximum que cette campagne peut dépenser. Ce n'est pas un dépôt : les récompenses sont versées depuis le budget ajouté à votre boutique."
+            }
+        },
+        "campaignWizardReward": {
+            "cost": {
+                "title": "Coût d'une récompense",
+                "body": "C'est le total que vous payez pour chaque récompense. Frak en garde {{percent}} %. Vous répartissez le reste entre l'ambassadeur et le client parrainé."
+            }
+        },
+        "campaignWizardReview": {
+            "publish": {
+                "title": "Avant de publier",
+                "body": "La publication ne vous débite pas. Une vérification en deux étapes peut d'abord vous être demandée."
             }
         }
     }

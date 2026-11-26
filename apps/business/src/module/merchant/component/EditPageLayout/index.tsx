@@ -89,50 +89,55 @@ export function EditPageLayout({
             <div className={styles.gutter}>
                 <ContentBlock maxWidth="720px" align="left">
                     <Stack space="l" className={styles.content}>
-                        <Tabs
-                            value={page}
-                            onValueChange={(value) =>
-                                guarded(() =>
-                                    navigate({
-                                        to: PAGE_ROUTES[value as EditPage],
-                                        params: { merchantId },
-                                    })
-                                )
-                            }
-                        >
-                            <TabsList variant="navigation">
-                                {isAffiliate ? (
+                        <div data-tour="edit-tabs">
+                            <Tabs
+                                value={page}
+                                onValueChange={(value) =>
+                                    guarded(() =>
+                                        navigate({
+                                            to: PAGE_ROUTES[value as EditPage],
+                                            params: { merchantId },
+                                        })
+                                    )
+                                }
+                            >
+                                <TabsList variant="navigation">
+                                    {isAffiliate ? (
+                                        <TabsTrigger
+                                            variant="navigation"
+                                            value="affiliate"
+                                        >
+                                            {t("merchantEdit.tabs.affiliate")}
+                                        </TabsTrigger>
+                                    ) : (
+                                        <TabsTrigger
+                                            variant="navigation"
+                                            value="customize"
+                                        >
+                                            {t("merchantEdit.tabs.identity")}
+                                        </TabsTrigger>
+                                    )}
                                     <TabsTrigger
                                         variant="navigation"
-                                        value="affiliate"
+                                        value="explorer"
                                     >
-                                        {t("merchantEdit.tabs.affiliate")}
+                                        {t("merchantEdit.tabs.explorer")}
                                     </TabsTrigger>
-                                ) : (
                                     <TabsTrigger
                                         variant="navigation"
-                                        value="customize"
+                                        value="integration"
                                     >
-                                        {t("merchantEdit.tabs.identity")}
+                                        {t("merchantEdit.tabs.integration")}
                                     </TabsTrigger>
-                                )}
-                                <TabsTrigger
-                                    variant="navigation"
-                                    value="explorer"
-                                >
-                                    {t("merchantEdit.tabs.explorer")}
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    variant="navigation"
-                                    value="integration"
-                                >
-                                    {t("merchantEdit.tabs.integration")}
-                                </TabsTrigger>
-                                <TabsTrigger variant="navigation" value="team">
-                                    {t("merchantEdit.tabs.team")}
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
+                                    <TabsTrigger
+                                        variant="navigation"
+                                        value="team"
+                                    >
+                                        {t("merchantEdit.tabs.team")}
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </div>
                         {children}
                     </Stack>
                 </ContentBlock>

@@ -7,7 +7,11 @@ import {
     startDriverTour,
     type TourLabels,
 } from "@/module/onboarding/driverTour";
-import { canAutoStartOn, useTours } from "@/module/onboarding/tours";
+import {
+    canAutoStartOn,
+    canOpenFullTour,
+    useTours,
+} from "@/module/onboarding/tours";
 import { onboardingTourStore, type TourId } from "@/stores/onboardingTourStore";
 import { welcomePopupStore } from "@/stores/welcomePopupStore";
 
@@ -103,7 +107,7 @@ function TourRunner({ tourId }: { tourId: TourId }) {
                 steps.length - 1
             ),
             canSkip: tourId === "welcome",
-            canOpenFullTour: tourId !== "welcome",
+            canOpenFullTour: canOpenFullTour(tourId),
             onStep: setStep,
             onEnd: closeTour,
             onOpenFullTour: () => startTour("welcome"),

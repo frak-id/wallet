@@ -69,6 +69,7 @@ export const footerInner = style({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: alias.spacing.s,
     padding: alias.spacing.l,
 });

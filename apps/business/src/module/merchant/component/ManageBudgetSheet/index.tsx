@@ -60,9 +60,29 @@ export function ManageBudgetSheet({
                                     : t("funding.header.addFundsTitle")}
                             </SheetTitle>
                             <SheetDescription className={styles.description}>
-                                {isBudget
-                                    ? merchant?.domain
-                                    : t("funding.header.addFundsDescription")}
+                                {isBudget ? (
+                                    merchant?.domain
+                                ) : (
+                                    <>
+                                        {merchant?.domain && (
+                                            <span
+                                                className={
+                                                    styles.descriptionLine
+                                                }
+                                            >
+                                                {t(
+                                                    "funding.addFunds.forStore",
+                                                    {
+                                                        domain: merchant.domain,
+                                                    }
+                                                )}
+                                            </span>
+                                        )}
+                                        {t(
+                                            "funding.header.addFundsDescription"
+                                        )}
+                                    </>
+                                )}
                             </SheetDescription>
                         </Stack>
                     </header>

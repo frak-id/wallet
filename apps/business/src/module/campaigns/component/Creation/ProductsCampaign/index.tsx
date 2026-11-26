@@ -107,6 +107,23 @@ export function ModeField({
     );
 }
 
+function predicateHintKey(
+    field: ProductScopeField,
+    operator: ProductScopeOperator
+) {
+    if (operator === "not_in" || operator === "neq") {
+        return "campaigns.create.products.hint.negated";
+    }
+    if (
+        field === "name" &&
+        operator !== "contains" &&
+        operator !== "starts_with"
+    ) {
+        return "campaigns.create.products.hint.partialName";
+    }
+    return undefined;
+}
+
 /**
  * Field + operator selects. Changing the field kind (text ↔ numeric) resets
  * the operator to that kind's first entry, so the pair is never incoherent —
@@ -121,79 +138,88 @@ export function PredicateField({
 }) {
     const { t } = useTranslation();
     const field = useWatch({ control, name: "field" });
+    const operator = useWatch({ control, name: "operator" });
     const operators = operatorsFor(field);
+    const operatorHint = predicateHintKey(field, operator);
 
     return (
-        <div className={styles.predicateRow}>
-            <FieldLabel
-                label={t("campaigns.create.products.fieldLabel")}
-                htmlFor="product-scope-field"
-                className={styles.select}
-            >
-                <Controller
-                    control={control}
-                    name="field"
-                    render={({ field: formField }) => (
-                        <Select
-                            value={formField.value}
-                            onValueChange={(value) => {
-                                // Items below are PRODUCT_SCOPE_FIELDS only.
-                                const next = value as ProductScopeField;
-                                formField.onChange(next);
-                                if (
-                                    isNumericField(next) !==
-                                    isNumericField(field)
-                                ) {
-                                    setOperator(operatorsFor(next)[0]);
-                                }
-                            }}
-                        >
-                            <SelectTrigger id="product-scope-field">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {PRODUCT_SCOPE_FIELDS.map((name) => (
-                                    <SelectItem key={name} value={name}>
-                                        {t(
-                                            `campaigns.create.products.field.${name}`
-                                        )}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-            </FieldLabel>
-            <FieldLabel
-                label={t("campaigns.create.products.operatorLabel")}
-                htmlFor="product-scope-operator"
-                className={styles.select}
-            >
-                <Controller
-                    control={control}
-                    name="operator"
-                    render={({ field: formField }) => (
-                        <Select
-                            value={formField.value}
-                            onValueChange={formField.onChange}
-                        >
-                            <SelectTrigger id="product-scope-operator">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {operators.map((operator) => (
-                                    <SelectItem key={operator} value={operator}>
-                                        {t(
-                                            `campaigns.create.products.operator.${operator}`
-                                        )}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-            </FieldLabel>
-        </div>
+        <Stack space="xs">
+            <div className={styles.predicateRow}>
+                <FieldLabel
+                    label={t("campaigns.create.products.fieldLabel")}
+                    htmlFor="product-scope-field"
+                    className={styles.select}
+                >
+                    <Controller
+                        control={control}
+                        name="field"
+                        render={({ field: formField }) => (
+                            <Select
+                                value={formField.value}
+                                onValueChange={(value) => {
+                                    // Items below are PRODUCT_SCOPE_FIELDS only.
+                                    const next = value as ProductScopeField;
+                                    formField.onChange(next);
+                                    if (
+                                        isNumericField(next) !==
+                                        isNumericField(field)
+                                    ) {
+                                        setOperator(operatorsFor(next)[0]);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="product-scope-field">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PRODUCT_SCOPE_FIELDS.map((name) => (
+                                        <SelectItem key={name} value={name}>
+                                            {t(
+                                                `campaigns.create.products.field.${name}`
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                </FieldLabel>
+                <FieldLabel
+                    label={t("campaigns.create.products.operatorLabel")}
+                    htmlFor="product-scope-operator"
+                    className={styles.select}
+                >
+                    <Controller
+                        control={control}
+                        name="operator"
+                        render={({ field: formField }) => (
+                            <Select
+                                value={formField.value}
+                                onValueChange={formField.onChange}
+                            >
+                                <SelectTrigger id="product-scope-operator">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {operators.map((item) => (
+                                        <SelectItem key={item} value={item}>
+                                            {t(
+                                                `campaigns.create.products.operator.${item}`
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                </FieldLabel>
+            </div>
+            {operatorHint && (
+                <Text variant="caption" color="tertiary">
+                    {t(operatorHint)}
+                </Text>
+            )}
+        </Stack>
     );
 }
 
@@ -213,6 +239,11 @@ export function ValuesField({
     const isList = isListOperator(operator);
     const inputType = isNumericField(field) ? "number" : "text";
     const placeholder = t(`campaigns.create.products.placeholder.${field}`);
+    const valuesHint = t(
+        isNumericField(field)
+            ? "campaigns.create.products.hint.numeric"
+            : "campaigns.create.products.hint.exactText"
+    );
 
     // Row identity, not row position: keyed by index, React reuses the removed
     // row's node for its successor and the caret lands on whatever shifted up.
@@ -265,6 +296,9 @@ export function ValuesField({
                             onBlur={formField.onBlur}
                             placeholder={placeholder}
                             label={t("campaigns.create.products.values.label")}
+                            hint={
+                                operator === "between" ? undefined : valuesHint
+                            }
                         />
                     )}
                 />
@@ -284,6 +318,7 @@ export function ValuesField({
                                 label={t(
                                     "campaigns.create.products.valueToLabel"
                                 )}
+                                hint={valuesHint}
                             />
                         )}
                     />
@@ -293,7 +328,10 @@ export function ValuesField({
     }
 
     return (
-        <FieldLabel label={t("campaigns.create.products.values.label")}>
+        <FieldLabel
+            label={t("campaigns.create.products.values.label")}
+            hint={valuesHint}
+        >
             <Stack space="s">
                 {values.map((_, index) => (
                     <div key={rowKeys[index]} className={styles.valueRow}>
@@ -433,6 +471,7 @@ export function ProductsCampaign() {
             isValid={isValid}
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
+            disabledReason={t("campaigns.create.products.disabledReason")}
             onSaveDraft={form.handleSubmit(persist)}
             onClose={() => form.reset(defaultValues)}
             hasUnsavedChanges={form.formState.isDirty}
@@ -471,9 +510,6 @@ export function ProductsCampaign() {
                                 space="xs"
                                 label={t(
                                     "campaigns.create.products.scope.label"
-                                )}
-                                description={t(
-                                    "campaigns.create.products.scope.description"
                                 )}
                             >
                                 <ModeField control={form.control} />

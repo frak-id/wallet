@@ -84,6 +84,20 @@ const SCHEDULE_OPTIONS = [
     descKey: string;
 }>;
 
+/** Names what keeps Continue disabled: the amount first, then the schedule, then its dates. */
+export function budgetContinueHintKey(values: {
+    amount?: number;
+    scheduleMode?: ScheduleMode;
+}) {
+    if (!((values.amount ?? 0) > 0)) {
+        return "campaigns.create.budget.continueHint.amount";
+    }
+    if (!values.scheduleMode) {
+        return "campaigns.create.budget.continueHint.schedule";
+    }
+    return "campaigns.create.budget.continueHint.dates";
+}
+
 function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     const budget = draft.budgetConfig[0];
     const startDate = getStartDate(draft.rule);
@@ -529,6 +543,11 @@ export function BudgetCampaign() {
 
     const handleSaveDraft = form.handleSubmit(persist);
 
+    const [period, amount, scheduleMode] = useWatch({
+        control: form.control,
+        name: ["period", "amount", "scheduleMode"],
+    });
+
     return (
         <WizardStep
             stepKey="budget"
@@ -537,6 +556,7 @@ export function BudgetCampaign() {
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
             saveFailed={saveCampaign.isError}
+            disabledReason={t(budgetContinueHintKey({ amount, scheduleMode }))}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
             hasUnsavedChanges={form.formState.isDirty}
@@ -546,11 +566,14 @@ export function BudgetCampaign() {
                     <WizardFieldCard
                         space="xs"
                         label={t("campaigns.create.budget.period.label")}
+                        description={t(
+                            "campaigns.create.budget.period.description"
+                        )}
                     >
                         <BudgetPeriodField control={form.control} />
                     </WizardFieldCard>
 
-                    <WizardFieldCard>
+                    <WizardFieldCard dataTour="campaign-budget-amount">
                         <BudgetCapField control={form.control} />
                     </WizardFieldCard>
 
@@ -558,7 +581,9 @@ export function BudgetCampaign() {
                         space="xs"
                         label={t("campaigns.create.budget.schedule.label")}
                         description={t(
-                            "campaigns.create.budget.schedule.description"
+                            period === "global"
+                                ? "campaigns.create.budget.schedule.description"
+                                : "campaigns.create.budget.schedule.descriptionRecurring"
                         )}
                     >
                         <ScheduleField control={form.control} />

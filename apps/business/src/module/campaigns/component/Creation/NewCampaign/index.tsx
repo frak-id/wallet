@@ -2,6 +2,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { FormMerchant } from "@/module/campaigns/component/Creation/NewCampaign/FormMerchant";
 import { FormRewardCurrency } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardCurrency";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
@@ -15,6 +16,7 @@ import { WizardStep } from "../WizardStep";
 const FORM_ID = "campaign-basics-form";
 
 export function NewCampaign() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
@@ -59,6 +61,7 @@ export function NewCampaign() {
             isPending={saveCampaign.isPending}
             isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
             saveFailed={saveCampaign.isError}
+            disabledReason={t("campaigns.create.basics.title.continueHint")}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
             hasUnsavedChanges={form.formState.isDirty}

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { FRAK_COMMISSION_PERCENT } from "@/module/campaigns/component/Creation/RewardCampaign/utils";
 import { useCapabilities } from "@/module/common/hook/useCapabilities";
 import type { TourId } from "@/stores/onboardingTourStore";
 
@@ -17,9 +18,22 @@ const STORE_PREFIX = "(?:/m/[^/]+)?";
 const PAGE_TOURS: ReadonlyArray<readonly [RegExp, TourId | null]> = [
     [/^\/internal(\/|$)/, null],
     [/^\/merchant\/new$/, "storeWizard"],
+    [
+        new RegExp(`^${STORE_PREFIX}/campaigns/draft/[^/]+/budget$`),
+        "campaignWizardBudget",
+    ],
+    [
+        new RegExp(`^${STORE_PREFIX}/campaigns/draft/[^/]+/reward$`),
+        "campaignWizardReward",
+    ],
+    [
+        new RegExp(`^${STORE_PREFIX}/campaigns/draft/[^/]+/validation$`),
+        "campaignWizardReview",
+    ],
     [new RegExp(`^${STORE_PREFIX}/campaigns/draft(/|$)`), "campaignWizard"],
     [new RegExp(`^${STORE_PREFIX}/campaigns$`), "campaignsOverview"],
-    [new RegExp(`^${STORE_PREFIX}/campaigns/.+`), "campaignsList"],
+    [new RegExp(`^${STORE_PREFIX}/campaigns/list$`), "campaignsList"],
+    [new RegExp(`^${STORE_PREFIX}/campaigns/.+`), null],
     [new RegExp(`^${STORE_PREFIX}/(dashboard|merchant/funding)$`), "stores"],
     [new RegExp(`^${STORE_PREFIX}/members$`), "members"],
     [new RegExp(`^${STORE_PREFIX}/push$`), "push"],
@@ -38,6 +52,22 @@ export function resolveTourId(pathname: string): TourId | null {
         if (pattern.test(path)) return tourId;
     }
     return "welcome";
+}
+
+/** Tours of pages with no sidebar or header, where the full tour has nothing to point at. */
+const BARE_SHELL_TOURS: ReadonlySet<TourId> = new Set([
+    "campaignWizard",
+    "campaignWizardBudget",
+    "campaignWizardReward",
+    "campaignWizardReview",
+    "storeWizard",
+    "storeEdit",
+    "pushCreate",
+]);
+
+/** Whether a tour card offers the link that opens the welcome tour. */
+export function canOpenFullTour(tourId: TourId): boolean {
+    return tourId !== "welcome" && !BARE_SHELL_TOURS.has(tourId);
 }
 
 /** Pages where the welcome tour may start by itself. Not over a sheet or a wizard. */
@@ -78,20 +108,17 @@ export function useTours(): Record<TourId, TourStep[]> {
                     title: t("onboarding.welcome.budget.title"),
                     body: t("onboarding.welcome.budget.body"),
                 },
-                ...(canOnchain
-                    ? []
-                    : [
-                          {
-                              id: "linkWallet",
-                              title: t("onboarding.welcome.linkWallet.title"),
-                              body: t("onboarding.welcome.linkWallet.body"),
-                          },
-                      ]),
-                {
-                    id: "payouts",
-                    title: t("onboarding.welcome.payouts.title"),
-                    body: t("onboarding.welcome.payouts.body"),
-                },
+                canOnchain
+                    ? {
+                          id: "payouts",
+                          title: t("onboarding.welcome.payouts.title"),
+                          body: t("onboarding.welcome.payouts.body"),
+                      }
+                    : {
+                          id: "linkWallet",
+                          title: t("onboarding.welcome.linkWallet.title"),
+                          body: t("onboarding.welcome.linkWallet.body"),
+                      },
                 {
                     id: "campaigns",
                     target: "nav-campaigns",
@@ -200,18 +227,39 @@ export function useTours(): Record<TourId, TourStep[]> {
             campaignWizard: [
                 {
                     id: "steps",
+                    target: "wizard-steps",
+                    side: "right",
                     title: t("onboarding.campaignWizard.steps.title"),
                     body: t("onboarding.campaignWizard.steps.body"),
                 },
+            ],
+            campaignWizardBudget: [
                 {
-                    id: "reward",
-                    title: t("onboarding.campaignWizard.reward.title"),
-                    body: t("onboarding.campaignWizard.reward.body"),
+                    id: "amount",
+                    target: "campaign-budget-amount",
+                    side: "bottom",
+                    title: t("onboarding.campaignWizardBudget.amount.title"),
+                    body: t("onboarding.campaignWizardBudget.amount.body"),
                 },
+            ],
+            campaignWizardReward: [
+                {
+                    id: "cost",
+                    target: "campaign-reward-model",
+                    side: "bottom",
+                    title: t("onboarding.campaignWizardReward.cost.title"),
+                    body: t("onboarding.campaignWizardReward.cost.body", {
+                        percent: FRAK_COMMISSION_PERCENT,
+                    }),
+                },
+            ],
+            campaignWizardReview: [
                 {
                     id: "publish",
-                    title: t("onboarding.campaignWizard.publish.title"),
-                    body: t("onboarding.campaignWizard.publish.body"),
+                    target: "campaign-publish",
+                    side: "top",
+                    title: t("onboarding.campaignWizardReview.publish.title"),
+                    body: t("onboarding.campaignWizardReview.publish.body"),
                 },
             ],
             storeWizard: [
@@ -239,6 +287,8 @@ export function useTours(): Record<TourId, TourStep[]> {
                 },
                 {
                     id: "push",
+                    target: "members-push-tab",
+                    side: "bottom",
                     title: t("onboarding.members.push.title"),
                     body: t("onboarding.members.push.body"),
                 },
@@ -251,6 +301,8 @@ export function useTours(): Record<TourId, TourStep[]> {
                 },
                 {
                     id: "send",
+                    target: "push-send",
+                    side: "top",
                     title: t("onboarding.push.send.title"),
                     body: t("onboarding.push.send.body"),
                 },
@@ -258,16 +310,19 @@ export function useTours(): Record<TourId, TourStep[]> {
             pushCreate: [
                 {
                     id: "content",
+                    target: "push-content",
                     title: t("onboarding.pushCreate.content.title"),
                     body: t("onboarding.pushCreate.content.body"),
                 },
                 {
                     id: "audience",
+                    target: "push-audience",
                     title: t("onboarding.pushCreate.audience.title"),
                     body: t("onboarding.pushCreate.audience.body"),
                 },
                 {
                     id: "schedule",
+                    target: "push-schedule",
                     title: t("onboarding.pushCreate.schedule.title"),
                     body: t("onboarding.pushCreate.schedule.body"),
                 },
@@ -275,6 +330,8 @@ export function useTours(): Record<TourId, TourStep[]> {
             storeEdit: [
                 {
                     id: "tabs",
+                    target: "edit-tabs",
+                    side: "bottom",
                     title: t("onboarding.storeEdit.tabs.title"),
                     body: t("onboarding.storeEdit.tabs.body"),
                 },
@@ -309,6 +366,7 @@ export function useTours(): Record<TourId, TourStep[]> {
                 },
                 {
                     id: "security",
+                    target: "settings-security",
                     title: t("onboarding.settings.security.title"),
                     body: t("onboarding.settings.security.body"),
                 },
@@ -316,11 +374,15 @@ export function useTours(): Record<TourId, TourStep[]> {
             billing: [
                 {
                     id: "info",
+                    target: "billing-info",
+                    side: "bottom",
                     title: t("onboarding.billing.info.title"),
                     body: t("onboarding.billing.info.body"),
                 },
                 {
                     id: "history",
+                    target: "billing-history",
+                    side: "top",
                     title: t("onboarding.billing.history.title"),
                     body: t("onboarding.billing.history.body"),
                 },

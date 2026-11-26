@@ -55,9 +55,3 @@ export const main = style({
     gap: alias.spacing.xxs,
     minWidth: 0,
 });
-
-/** Description + tags sit directly under each other (no gap). */
-export const textGroup = style({
-    display: "flex",
-    flexDirection: "column",
-});

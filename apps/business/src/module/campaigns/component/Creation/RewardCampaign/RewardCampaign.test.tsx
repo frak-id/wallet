@@ -184,12 +184,12 @@ describe("LockupField (StepperField label/hint passthrough)", () => {
         );
     });
 
-    it("still renders the InfoBanner above the field (outer Stack untouched)", () => {
+    it("does not repeat the hint in a banner above the field", () => {
         render(<Harness />);
 
         expect(
-            screen.getByText("campaigns.create.reward.lockup.info")
-        ).toBeInTheDocument();
+            screen.queryByText("campaigns.create.reward.lockup.info")
+        ).not.toBeInTheDocument();
     });
 });
 

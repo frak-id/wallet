@@ -5,11 +5,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { campaignStore } from "@/stores/campaignStore";
 import { WizardFieldCard } from "../WizardFieldCard";
+import * as styles from "./basics.css";
 
 /**
  * Merchant selector for step 0. Routes are merchant-scoped, so switching
@@ -32,11 +34,26 @@ export function FormMerchant({ merchantId }: { merchantId: string }) {
         });
     }
 
+    if (merchants.length === 1 && selectedMerchant) {
+        return (
+            <WizardFieldCard
+                insetLabel
+                space="xs"
+                label={t("campaigns.create.basics.merchant.label")}
+            >
+                <Text variant="body" className={styles.readOnlyValue}>
+                    {selectedMerchant.domain}
+                </Text>
+            </WizardFieldCard>
+        );
+    }
+
     return (
         <WizardFieldCard
             insetLabel
             space="xs"
             label={t("campaigns.create.basics.merchant.label")}
+            description={t("campaigns.create.basics.merchant.description")}
         >
             <Select
                 value={merchantId || undefined}

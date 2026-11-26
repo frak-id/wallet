@@ -74,6 +74,16 @@ export function referralChainFormToDraft(
     return { ...draft, rule: setChaining(draft.rule, chaining) };
 }
 
+/** Empty is accepted (the backend then uses its default depth). */
+export function isMaxDepthValid(maxDepth: number | "" | undefined): boolean {
+    if (maxDepth === undefined) return false;
+    if (maxDepth === "") return true;
+    const depth = Number(maxDepth);
+    return (
+        Number.isInteger(depth) && depth >= 1 && depth <= MAX_REWARDED_LEVELS
+    );
+}
+
 /** Continue gating: OFF always valid; ON needs decrease in [50,100), a valid
  * max level, and a referrer reward. */
 export function isReferralChainFormValid(
@@ -83,11 +93,11 @@ export function isReferralChainFormValid(
     if (!values.enabled) return true;
     const decrease = Number(values.deperditionPerLevel);
     const decreaseOk = decrease >= MIN_DEPERDITION_PER_LEVEL && decrease < 100;
-    const depth = Number(values.maxDepth);
-    const depthOk =
-        values.maxDepth === "" ||
-        (Number.isInteger(depth) && depth >= 1 && depth <= MAX_REWARDED_LEVELS);
-    return decreaseOk && depthOk && hasReferrerReward(draft);
+    return (
+        decreaseOk &&
+        isMaxDepthValid(values.maxDepth) &&
+        hasReferrerReward(draft)
+    );
 }
 
 export type ChainPreviewRow = {

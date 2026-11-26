@@ -17,6 +17,8 @@ type WizardFieldCardProps = {
     space?: "m" | "xs" | "none";
     /** Inset the header 16px to align with an input field's text. */
     insetLabel?: boolean;
+    /** Value of `data-tour`, so a guided-tour step can point at this card. */
+    dataTour?: string;
     children: ReactNode;
 };
 
@@ -29,18 +31,19 @@ export function WizardFieldCard({
     description,
     space = "m",
     insetLabel = false,
+    dataTour,
     children,
 }: WizardFieldCardProps) {
     if (!label && !description) {
         return (
-            <Card radius="m">
+            <Card radius="m" data-tour={dataTour}>
                 <Stack space={space}>{children}</Stack>
             </Card>
         );
     }
     const headerClass = insetLabel ? styles.inset : undefined;
     return (
-        <Card radius="m">
+        <Card radius="m" data-tour={dataTour}>
             <Stack space={space}>
                 <Stack space="xxs">
                     {label ? (

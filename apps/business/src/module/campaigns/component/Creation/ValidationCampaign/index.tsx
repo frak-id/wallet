@@ -11,6 +11,7 @@ import {
     editableScopeCondition,
     isAdvancedScope,
 } from "@/module/campaigns/component/Creation/ProductsCampaign/utils";
+import { DEFAULT_PREVIEW_DEPTH } from "@/module/campaigns/component/Creation/ReferralChainCampaign/utils";
 import {
     draftToRewardForm,
     splitTargetCpa,
@@ -23,11 +24,16 @@ import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { getCountryName } from "@/module/common/utils/countries";
 import { formatDate } from "@/module/common/utils/formatDate";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import {
     type CampaignDraft,
     campaignStore,
+    getChaining,
+    getMinPurchaseAmount,
+    getReferralOnly,
     getStartDate,
     isPurchaseCampaign,
 } from "@/stores/campaignStore";
@@ -108,6 +114,9 @@ export function ValidationCampaign() {
                             <DetailRows draft={draft} />
                         </Box>
                     </Card>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("campaigns.create.validation.publishNote")}
+                    </Text>
                 </Stack>
             </form>
         </WizardStep>
@@ -118,6 +127,8 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
     const { t } = useTranslation();
     const currencyGlyph = useCampaignCurrencyGlyph();
     const reward = useMemo(() => draftToRewardForm(draft), [draft]);
+    const merchantId = useActiveMerchantId();
+    const { data: merchant } = useMerchant({ merchantId });
 
     const goal = draft.metadata.goal;
     const territories = draft.metadata.territories ?? [];
@@ -141,6 +152,12 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
             <DetailRow label={t("campaigns.create.validation.campaignTitle")}>
                 <DetailValue>{draft.name}</DetailValue>
             </DetailRow>
+
+            {merchant?.domain && (
+                <DetailRow label={t("campaigns.create.validation.store")}>
+                    <DetailValue>{merchant.domain}</DetailValue>
+                </DetailRow>
+            )}
 
             <DetailRow label={t("campaigns.create.validation.goal")}>
                 {goal ? (
@@ -226,7 +243,11 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                 </Stack>
             </DetailRow>
 
-            <RewardRows reward={reward} currencyGlyph={currencyGlyph} />
+            <RewardRows
+                reward={reward}
+                currencyGlyph={currencyGlyph}
+                isPurchase={isPurchase}
+            />
 
             {/* Basis only exists for computed rewards on a scoped campaign. */}
             {draft.rule.productScope && reward.model !== "fixed" && (
@@ -235,6 +256,52 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                         {t(
                             `campaigns.create.reward.basis.${reward.rewardBasis}.title` as "campaigns.create.reward.basis.basket.title"
                         )}
+                    </DetailValue>
+                </DetailRow>
+            )}
+
+            <ConditionRows
+                draft={draft}
+                reward={reward}
+                currencyGlyph={currencyGlyph}
+                isPurchase={isPurchase}
+            />
+        </>
+    );
+}
+
+/** Who qualifies, minimum order, payout delay and multi-level settings. */
+function ConditionRows({
+    draft,
+    reward,
+    currencyGlyph,
+    isPurchase,
+}: {
+    draft: CampaignDraft;
+    reward: ReturnType<typeof draftToRewardForm>;
+    currencyGlyph: string;
+    isPurchase: boolean;
+}) {
+    const { t } = useTranslation();
+    const minPurchase = getMinPurchaseAmount(draft.rule);
+    const chaining = getChaining(draft.rule);
+
+    return (
+        <>
+            <DetailRow label={t("campaigns.create.validation.whoQualifies")}>
+                <DetailValue>
+                    {getReferralOnly(draft.rule)
+                        ? t("campaigns.create.validation.on")
+                        : t("campaigns.create.validation.off")}
+                </DetailValue>
+            </DetailRow>
+
+            {isPurchase && reward.model !== "tiered" && (
+                <DetailRow label={t("campaigns.create.validation.minPurchase")}>
+                    <DetailValue>
+                        {minPurchase > 0
+                            ? `${minPurchase} ${currencyGlyph}`
+                            : t("campaigns.create.validation.minPurchaseNone")}
                     </DetailValue>
                 </DetailRow>
             )}
@@ -256,6 +323,17 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                     )}
                 </DetailRow>
             )}
+
+            <DetailRow label={t("campaigns.create.validation.multiLevel")}>
+                <DetailValue>
+                    {chaining
+                        ? t("campaigns.create.validation.multiLevelOn", {
+                              count: chaining.maxDepth ?? DEFAULT_PREVIEW_DEPTH,
+                              percent: chaining.deperditionPerLevel,
+                          })
+                        : t("campaigns.create.validation.multiLevelOff")}
+                </DetailValue>
+            </DetailRow>
         </>
     );
 }
@@ -324,17 +402,24 @@ function ProductScopeRow({ draft }: { draft: CampaignDraft }) {
 function RewardRows({
     reward,
     currencyGlyph,
+    isPurchase,
 }: {
     reward: ReturnType<typeof draftToRewardForm>;
     currencyGlyph: string;
+    isPurchase: boolean;
 }) {
     const { t } = useTranslation();
+    const costLabel = t(
+        isPurchase
+            ? "campaigns.create.validation.targetCpa"
+            : "campaigns.create.validation.targetCpaReward"
+    );
 
     if (reward.model === "tiered") {
         const tiers = reward.globalCpaTiers;
         return (
             <>
-                <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+                <DetailRow label={costLabel}>
                     <DetailValue>
                         {t("campaigns.create.validation.tieredTiers", {
                             count: tiers.length,
@@ -415,7 +500,7 @@ function RewardRows({
 
         return (
             <>
-                <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+                <DetailRow label={costLabel}>
                     <DetailValue>{`${cpa}${unit}`}</DetailValue>
                 </DetailRow>
                 <DetailRow
@@ -450,7 +535,7 @@ function RewardRows({
 
     return (
         <>
-            <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+            <DetailRow label={costLabel}>
                 <DetailValue muted>{EMPTY}</DetailValue>
             </DetailRow>
             <DetailRow label={t("campaigns.create.validation.rewards")}>

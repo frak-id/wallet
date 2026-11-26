@@ -20,11 +20,12 @@ import type { BudgetToken } from "@/module/merchant/utils/budgetTokens";
 import { buildOnRampUrl } from "@/module/merchant/utils/onRampUrl";
 import { useAccountCredentials } from "@/module/settings/security/useSecuritySettings";
 import { ActionFeedback } from "./ActionFeedback";
+import { LoadError } from "./LoadError";
 import * as styles from "./manage-budget-sheet.css";
 
 export function AddFundsView({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
-    const { data, isLoading } = useGetMerchantBank({ merchantId });
+    const { data, isLoading, refetch } = useGetMerchantBank({ merchantId });
     const { data: account } = useAccountCredentials();
 
     if (isLoading) {
@@ -36,7 +37,13 @@ export function AddFundsView({ merchantId }: { merchantId: string }) {
     }
 
     if (!data?.bankAddress) {
-        return <p className={styles.errorText}>{t("funding.error")}</p>;
+        return (
+            <LoadError
+                onRetry={() => {
+                    refetch();
+                }}
+            />
+        );
     }
 
     return (
@@ -81,6 +88,9 @@ export function AddFundsView({ merchantId }: { merchantId: string }) {
                     {t("funding.addFunds.stripe")}
                 </Button>
             </Inline>
+            <Text variant="caption" color="secondary">
+                {t("funding.addFunds.afterPay")}
+            </Text>
         </Stack>
     );
 }
