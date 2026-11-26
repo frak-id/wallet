@@ -154,6 +154,7 @@ export function WebhookList({
     return (
         <s-stack gap="base">
             <s-heading>{t("webhook.list.title")}</s-heading>
+            <s-text tone="neutral">{t("webhook.list.turnOffWarning")}</s-text>
             {webhooks.map(({ node }) => (
                 <s-section key={node.id}>
                     <s-stack gap="small">

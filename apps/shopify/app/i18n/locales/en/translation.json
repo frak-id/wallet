@@ -1,15 +1,15 @@
 {
     "common": {
-        "title": "Frak configuration",
-        "goToDashboard": "Go to dashboard",
+        "title": "Home",
+        "goToDashboard": "Open Frak dashboard",
         "loading": "Loading...",
-        "loadingTimeout": "The loading has expired. Please try again.",
-        "allSet": "Frak application is correctly set up",
-        "getStarted": "Start application setup",
-        "dashboardDataUnavailableTitle": "Dashboard data is temporarily unavailable.",
-        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds.",
-        "invalidUrl": "Please enter a valid URL.",
-        "invalidUrlToast": "Fix the invalid image URL before saving.",
+        "loadingTimeout": "The page took too long to load. Try again.",
+        "allSet": "Frak is set up in your store",
+        "getStarted": "Start setup",
+        "dashboardDataUnavailableTitle": "We could not load your campaigns and reward budget.",
+        "dashboardDataUnavailableDescription": "Refresh the page in a few seconds. If it keeps failing, email hello@frak-labs.com.",
+        "invalidUrl": "Enter a valid web address.",
+        "invalidUrlToast": "Fix the invalid image address before saving.",
         "removeImage": "Remove image",
         "imageUploaded": "Image uploaded",
         "useExistingImage": "Use an existing image",
@@ -20,63 +20,69 @@
         "campaigns": "Campaigns",
         "appearance": "Appearance",
         "ambassador": "Ambassador page",
-        "funding": "Funding",
+        "funding": "Reward budget",
         "settings": {
             "title": "Settings",
             "general": "General",
-            "pixel": "Application pixel",
-            "webhook": "Webhook",
+            "pixel": "Order tracking",
+            "webhook": "Order updates",
             "theme": "Theme"
-        }
+        },
+        "home": "Home"
     },
     "stepper": {
         "title": "Setup guide",
-        "description": "Use this guide to setup your Frak app.",
-        "completedStep": "{{completedStep}} of {{totalSteps}} tasks completed",
-        "footer": "If you experience any issues or have any questions, just send us an email to <a />.",
+        "description": "Follow these steps to set up Frak in your store. Steps 2 to 4 take one click each.",
+        "completedStep": "{{completedStep}} of {{totalSteps}} steps done",
+        "footer": "Need help? Email <a />.",
         "step1": {
-            "title": "Connection Status",
-            "description": "You need to connect your shop to the Frak ecosystem."
+            "title": "Connect your store to Frak",
+            "description": "This creates your Frak account for this store. It takes a few seconds. Step 2 opens when it is done.",
+            "error": "We could not connect your store. Try again. If it keeps failing, email hello@frak-labs.com."
         },
         "step2": {
-            "title": "Application pixel",
-            "description": "You need to connect your pixel to your store to track your customers purchases."
+            "title": "Turn on order tracking",
+            "description": "Frak needs to see the orders placed in your store to pay rewards. This adds a pixel (a small piece of tracking code) to your store. Step 3 opens when it is done."
         },
         "step3": {
-            "title": "Shopify Webhook",
-            "description": "You are going to connect your Shopify webhook to your store."
+            "title": "Connect order tracking to Shopify",
+            "description": "Shopify will send each order update to Frak, so rewards are paid on real orders. In Shopify this is called a webhook. Step 4 opens when it is done."
         },
         "step4": {
-            "title": "Frak Webhook",
-            "description": "You are going to connect your Frak webhook to your store."
+            "title": "Connect order tracking to Frak",
+            "description": "This lets Frak accept the order updates sent by Shopify. The next step opens when it is done."
         },
         "step5": {
-            "title": "Setup Frak embedded app within your theme",
-            "link": "Activate Frak embedded application in your theme",
-            "description": "Please activate the <strong>Frak Listener</strong> using the switch as shown below"
+            "title": "Turn on Frak in your theme",
+            "link": "Open the theme editor",
+            "description": "In the theme editor, switch on <strong>Frak Listener</strong>, then click Save at the top right. Frak Listener lets your store show rewards and the sharing window. Come back here: this step ticks by itself.",
+            "imageAlt": "The Frak Listener switch in the theme editor"
         },
         "step6": {
             "title": "Add the share button in your theme",
-            "descriptionShare": "Please add <strong>Frak Sharing Button</strong> as shown below",
-            "linkShare": "Add the Frak Sharing Button to your product page"
+            "descriptionShare": "In the theme editor, add the <strong>Frak Sharing Button</strong> to your product page as shown below, then click Save at the top right.",
+            "linkShare": "Open the theme editor",
+            "imageAlt": "The Frak Sharing Button in the theme editor",
+            "noProduct": "Add a product to your store first. Then come back to add the share button.",
+            "noProductLink": "Open your products"
         },
         "step7": {
             "title": "Add the banner in your theme",
-            "description": "Add the <strong>Frak Banner</strong> to display referral promotions across your store",
-            "link": "Add the Frak Banner to your theme"
+            "description": "In the theme editor, add the <strong>Frak Banner</strong> to a page (for example the Home page), then click Save at the top right. It tells customers who arrive from a referral link what they earn.",
+            "link": "Open the theme editor"
         }
     },
     "optionalSetup": {
-        "title": "Finish your setup with end-user UI components",
-        "description": "Your store is live and can already distribute rewards. These optional storefront components unlock organic sharing, referee conversion and a page that recruits ambassadors. Add them when you are ready.",
+        "title": "Finish your setup",
+        "description": "Your store is live and can already pay rewards. These optional steps help more customers share your store. Add them when you are ready.",
         "shareButton": {
             "title": "Add the share button to your product pages",
-            "description": "Adds a one-click share button on every product page. Visitors share the page with their network, and the link automatically carries their referral identity so they earn a reward when someone they invited buys.",
+            "description": "Adds a share button to each product page. When a visitor shares and a friend buys, the visitor earns a reward.",
             "cta": "Open the theme editor"
         },
         "banner": {
-            "title": "Add the referee banner to your theme",
-            "description": "Shown only to visitors who land on your store through a referral link. The banner confirms they were invited, explains the reward they will earn for buying, and turns a cold visit into a primed conversion.",
+            "title": "Add the referral banner to your theme",
+            "description": "Shown only to people who arrive from a referral link. It tells them they were invited and what they earn if they buy.",
             "cta": "Open the theme editor"
         },
         "ambassador": {
@@ -126,7 +132,7 @@
         },
         "hide": {
             "heading": "Hide the page",
-            "intro": "Take the page offline. You can publish it again at any time.",
+            "intro": "Take the page offline.",
             "body": "Visitors will see a “Page not found” message and the menu links to your page will be removed. You can publish it again at any time.",
             "action": "Hide my page",
             "confirmHeading": "Hide your page?",
@@ -142,7 +148,7 @@
         "health": {
             "embedOff": {
                 "heading": "Frak is switched off in your theme",
-                "body": "Your page can’t show its content until Frak is switched back on.",
+                "body": "Your page cannot show its content until Frak is switched back on. In the theme editor, switch it on and click Save.",
                 "action": "Switch Frak on"
             },
             "noCampaign": {
@@ -164,7 +170,7 @@
             "repointFailed": "Some menu links still lead to your old page. You can change them in Online Store > Navigation.",
             "oldPageHideFailed": "Your old page is still visible. You can hide it in Online Store > Pages.",
             "redirectFailed": "Visitors who open your old page’s address aren’t sent to the new page. You can add a redirect in Online Store > Navigation > URL Redirects.",
-            "recordFailed": "Your new page is live, but part of the change wasn’t saved. If something looks wrong, contact us."
+            "recordFailed": "Your new page is live, but part of the change was not saved. If something looks wrong, email hello@frak-labs.com."
         },
         "toast": {
             "published": "Your page is live",
@@ -173,130 +179,141 @@
             "menuAdded": "Link added to your main menu",
             "menuFailed": "Your page is live, but we couldn’t add the link to your menu.",
             "permissionNeeded": "Nothing was changed. Accept Shopify’s request to continue.",
-            "failed": "Something went wrong. Please try again."
+            "failed": "We could not do this. Try again. If it keeps failing, email hello@frak-labs.com."
         },
         "loadError": {
             "heading": "We couldn’t load your ambassador page",
-            "body": "Please try again in a few seconds.",
+            "body": "Try again in a few seconds.",
             "retry": "Try again"
         }
     },
     "pixel": {
-        "title": "Application pixel",
-        "connected": "Your pixel is connected to your store.",
-        "notConnected": "Your pixel is not connected to your store.",
-        "needConnection": "You need to connect your pixel to your store to track your customers purchases.",
+        "title": "Order tracking",
+        "connected": "Order tracking is on in your store.",
+        "notConnected": "Order tracking is off in your store.",
+        "needConnection": "Turn on order tracking so Frak can see your customers' orders and pay rewards. This adds a pixel (a small piece of tracking code) to your store.",
         "actions": {
             "cta": {
-                "connect": "Connect application pixel",
-                "disconnect": "Disconnect application pixel"
+                "connect": "Turn on order tracking",
+                "disconnect": "Turn off order tracking"
             },
             "messages": {
-                "connect": "Application pixel connected successfully",
-                "disconnect": "Application pixel disconnected successfully",
-                "error": "Application pixel deletion error"
+                "connect": "Order tracking is on",
+                "disconnect": "Order tracking is off",
+                "error": "We could not change order tracking. Try again. If it keeps failing, email hello@frak-labs.com.",
+                "createError": "We could not turn on order tracking. Try again. If it keeps failing, email hello@frak-labs.com.",
+                "deleteError": "We could not turn off order tracking. Try again. If it keeps failing, email hello@frak-labs.com."
             }
-        }
+        },
+        "disconnectWarning": "Turning this off stops order tracking. Rewards stop until you turn it back on."
     },
     "webhook": {
-        "title": "Webhook",
-        "connected": "Your Shopify webhook is connected to your store.",
-        "notConnected": "Your Shopify webhook is not connected to your store.",
-        "frakConnected": "Your Frak purchase tracker is connected to your store.",
-        "frakNotConnected": "Your Frak purchase tracker is not connected to your store.",
-        "needConnection": "You need to connect your Shopify webhook to your store to track your customers purchases.",
-        "needFrakConnection": "You need to connect your Frak purchase tracker to your store to track your customers purchases.",
-        "noWebhooks": "No webhooks configured.",
+        "title": "Order updates",
+        "connected": "Order tracking is connected to Shopify.",
+        "notConnected": "Order tracking is not connected to Shopify yet.",
+        "frakConnected": "Order tracking is connected to Frak.",
+        "frakNotConnected": "Order tracking is not connected to Frak yet.",
+        "needConnection": "Connect order tracking to Shopify so Frak receives every order update.",
+        "needFrakConnection": "Connect order tracking to Frak so it can accept the order updates sent by Shopify.",
+        "noWebhooks": "Shopify does not send order updates to Frak yet.",
         "list": {
-            "title": "Active Webhooks",
-            "topic": "Topic",
-            "endpoint": "Endpoint",
-            "noEndpoint": "No endpoint configured"
+            "title": "Order updates sent to Frak",
+            "topic": "Event",
+            "endpoint": "Address",
+            "noEndpoint": "No address set",
+            "turnOffWarning": "Turning this off stops order tracking. Rewards stop until you turn it back on."
         },
         "actions": {
             "cta": {
-                "connect": "Connect Shopify webhook",
-                "disconnect": "Disconnect Shopify webhook",
-                "frakConnect": "Connect Frak purchase tracker",
-                "delete": "Delete"
+                "connect": "Connect order tracking to Shopify",
+                "disconnect": "Disconnect order tracking from Shopify",
+                "frakConnect": "Connect order tracking to Frak",
+                "delete": "Turn off"
             },
             "messages": {
-                "connect": "Shopify webhook connected successfully",
-                "disconnect": "Shopify webhook disconnected successfully",
-                "createError": "Webhook connection error",
-                "deleteError": "Webhook deletion error",
-                "setup": "Frak purchase tracker is setup",
-                "frakSetupError": "Error connecting Frak purchase tracker"
+                "connect": "Order tracking is connected to Shopify",
+                "disconnect": "Shopify no longer sends order updates to Frak",
+                "createError": "We could not connect order tracking to Shopify. Try again. If it keeps failing, email hello@frak-labs.com.",
+                "deleteError": "We could not turn off order updates. Try again. If it keeps failing, email hello@frak-labs.com.",
+                "setup": "Order tracking is connected to Frak",
+                "frakSetupError": "We could not connect order tracking to Frak. Try again. If it keeps failing, email hello@frak-labs.com."
             }
         }
     },
     "theme": {
         "title": "Theme",
-        "connected": "Frak application is activated",
-        "notConnected": "Frak application is not activated",
-        "link": "Configuring Frak application in your theme",
-        "todo": "Please activate the Frak application in your theme by following the instructions below",
+        "connected": "Frak is on in your theme",
+        "notConnected": "Frak is off in your theme",
+        "link": "Open the theme editor",
+        "todo": "In the theme editor, switch on Frak Listener, then click Save at the top right.",
         "intermediate": {
-            "banner": "Your theme supports app embeds but not in-page app blocks",
-            "bannerDescription": "The Frak Listener runs globally through an app embed - no manual code needed. The share button and banner can't be dropped into your pages automatically; add them from the Appearance tab.",
-            "embedTitle": "Enable the Frak Listener"
+            "banner": "Frak works with your theme. The share button and banner need a few extra steps.",
+            "bannerDescription": "Frak is on. To add the share button and the banner, copy the code from the Appearance page.",
+            "embedTitle": "Turn on Frak Listener"
         },
         "legacy": {
-            "upgradeWarning": "Your theme does not support Online Store 2.0",
-            "upgradeDescription": "Upgrade to an OS 2.0 theme for the best experience and one-click app block setup.",
-            "snippetTitle": "Manual installation",
-            "snippetDescription": "Paste this snippet before </head> in your theme.liquid file to enable Frak on your store.",
-            "copySnippet": "Copy snippet",
-            "copyButton": "Copy the tag",
-            "copied": "Copied!",
-            "copyError": "Couldn't copy automatically - select the snippet above and copy it manually.",
-            "noMerchantId": "Your merchant ID is not yet set up. Please complete the onboarding steps first.",
+            "upgradeWarning": "Your theme is too old for one-click setup",
+            "upgradeDescription": "Switch to a newer Shopify theme to add Frak in a few clicks. Or follow the manual steps below.",
+            "snippetTitle": "Manual setup",
+            "snippetDescription": "Paste this code just before </head> in your theme.liquid file. In Shopify: Online Store > Themes > Edit code > layout/theme.liquid. Then click Save.",
+            "copySnippet": "Copy the code",
+            "copyButton": "Copy the button code",
+            "copied": "Copied",
+            "copyError": "We could not copy it. Select the code above and copy it yourself.",
+            "noMerchantId": "Finish the steps of the setup guide above first. The code appears when step 1 is done.",
             "steps": "Next steps:",
-            "step1": "Paste the snippet before </head> in theme.liquid.",
+            "step1": "Paste the code before </head> in theme.liquid, then click Save.",
             "step1Link": "Edit theme.liquid",
-            "step2": "Add the tag where you want the share button (usually near the Add to cart button).",
-            "step2ClassHint": "Replace <code>btn</code> with your theme's button class so it matches your store - inspect one of your existing buttons to find it (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
-            "step2SectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
+            "step2": "Paste the button code where you want the share button (usually near the Add to cart button), then click Save.",
+            "step2ClassHint": "If the button does not look like your other buttons, ask your theme's support for its button class name and replace <code>btn</code> with it.",
+            "step2SectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (for example <code>sections/product-template.liquid</code>).",
             "step2Link": "Edit product template",
-            "step3": "Personalise logo, wording and rewards in the Frak editor:",
-            "step3Link": "Open Frak editor",
-            "markInstalled": "I've added the snippet",
-            "installed": "Manual install confirmed"
+            "step3": "Customize the logo, wording and rewards in the Frak dashboard:",
+            "step3Link": "Open the Frak dashboard",
+            "markInstalled": "I pasted the code",
+            "installed": "Manual setup confirmed"
         }
     },
     "login": {
-        "withFrak": "Login with Frak"
+        "withFrak": "Log in to Frak",
+        "title": "Log in",
+        "shopLabel": "Store domain",
+        "shopDetails": "For example: example.myshopify.com",
+        "submit": "Log in",
+        "errors": {
+            "missingShop": "Enter your store domain to log in.",
+            "invalidShop": "Enter a valid store domain to log in, like example.myshopify.com."
+        }
     },
     "status": {
         "connected": "Connected to Frak",
         "connectedShop": {
-            "title": "Your Shop on Frak",
-            "merchantName": "Merchant Name",
+            "title": "Your store on Frak",
+            "merchantName": "Store name",
             "domain": "Domain",
-            "merchantId": "Merchant ID",
-            "description": "Your shop is successfully connected to the Frak ecosystem and ready to use all features."
+            "merchantId": "Frak store ID",
+            "description": "Your store is connected to Frak. You can use all features."
         },
         "connectionStatus": {
-            "title": "Connection Status",
-            "loading": "Checking Connection Status...",
-            "checking": "We're checking if your shop is connected to the Frak ecosystem.",
-            "connected": "Your shop is successfully connected to the Frak ecosystem.",
-            "notConnected": "Your shop is not yet connected to the Frak ecosystem. Follow the instructions below to complete setup."
+            "title": "Connect your store to Frak",
+            "loading": "Checking your connection...",
+            "checking": "We are checking if your store is connected to Frak.",
+            "connected": "Your store is connected to Frak.",
+            "notConnected": "Your store is not connected to Frak yet. Follow the steps below to finish setup."
         },
         "modal": {
-            "button": "Register your shop in the Frak ecosystem"
+            "button": "Connect my store"
         },
         "newsletterShare": {
             "title": "Newsletter sharing link",
-            "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal, pre-filled with your current campaign rewards, so they can share and earn in one tap.",
+            "description": "Paste this link in your newsletter or any marketing email. When a customer clicks it, your store opens with the Frak sharing window, filled with your current campaign rewards, so they can share and earn in one tap.",
             "copy": "Copy link",
-            "copied": "Sharing link copied to clipboard",
-            "copyError": "Could not copy link. Please copy it manually."
+            "copied": "Sharing link copied",
+            "copyError": "We could not copy the link. Copy it yourself."
         },
-
         "campaign": {
             "title": "Campaigns",
-            "description": "The campaigns are the core parts of your monetization strategy with Frak. It will define what rewards will be distributed to end users.",
+            "description": "Campaigns set the rewards your customers earn when they share and a friend buys.",
             "name": "Name",
             "type": "Type",
             "active": "Active",
@@ -306,18 +323,18 @@
             "actionsColumn": "Actions",
             "rewardsColumn": "Rewards",
             "resetAt": "Resets {{date}}",
-            "referrer": "Referrer",
-            "referee": "Referee",
-            "tiered": "Tiered",
+            "referrer": "Ambassador",
+            "referee": "Referred customer",
+            "tiered": "Varies by order total",
             "viewDetails": "View details",
             "statusDraft": "Draft",
             "statusActive": "Active",
             "statusPaused": "Paused",
             "statusArchived": "Archived",
             "bankDepleted": "No funds",
-            "bankPaused": "Paused",
-            "bankWarning": "Needs attention",
-            "bankNotDeployed": "Setup needed",
+            "bankPaused": "Rewards paused",
+            "bankWarning": "Spending limit too low",
+            "bankNotDeployed": "Budget not set up",
             "noBudget": "-",
             "pause": "Pause",
             "resume": "Resume",
@@ -327,11 +344,12 @@
             "resuming": "Resuming...",
             "archiving": "Archiving...",
             "deleting": "Deleting...",
-            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards."
+            "noCampaigns": "No campaigns yet. Create your first campaign so customers can earn rewards. Add funds to your reward budget so Frak can pay them.",
+            "create": "Create a campaign"
         },
         "bank": {
-            "title": "Reward Budget",
-            "description": "Your reward budget is the source of funds used to distribute rewards to end users across all your campaigns.",
+            "title": "Reward budget",
+            "description": "Your reward budget is the money set aside to pay rewards across all your campaigns.",
             "totalInclVat": "total budget, incl. VAT and Frak fees",
             "totalExclVat": "total budget, incl. Frak fees",
             "breakdown": {
@@ -340,60 +358,80 @@
                 "vat": "VAT ({{rate}}%)"
             },
             "address": "Address",
-            "notDeployed": "Your reward budget is not deployed yet. Complete the setup wizard to get started.",
-            "emptyWarning": "Your budget has no funds. Active campaigns cannot distribute rewards until you add funds.",
-            "connectWallet": "Connect your Frak wallet to manage distribution settings, allowances, and withdrawals.",
-            "distribution": "Distribution",
-            "distributionActive": "Active",
+            "notDeployed": "Your reward budget is not ready yet. Finish step 1 of the setup guide on the Home page. If it is already done, email hello@frak-labs.com.",
+            "emptyWarning": "Your reward budget is empty. Customers cannot earn rewards until you add funds. Add funds from the Reward budget page.",
+            "connectWallet": "Log in to Frak to turn rewards on or off, change your spending limit or withdraw funds. A Frak window opens.",
+            "distribution": "Pay rewards",
+            "distributionActive": "On",
             "distributionPaused": "Paused",
-            "enableDistribution": "Enable",
-            "disableDistribution": "Disable",
+            "enableDistribution": "Turn on",
+            "disableDistribution": "Turn off",
             "tokenEmpty": "No funds",
             "tokenActive": "Active",
-            "tokenWarning": "Action needed",
+            "tokenWarning": "Spending limit too low",
             "tokenPaused": "Paused",
-            "increaseLimit": "Increase limit",
+            "increaseLimit": "Raise spending limit",
             "pauseRewards": "Pause rewards",
-            "withdraw": "Withdraw",
-            "setAllowanceFor": "Set distribution limit for {{token}}",
+            "withdraw": "Withdraw funds",
+            "setAllowanceFor": "Set the spending limit for {{token}}",
             "withdrawFrom": "Withdraw {{token}}",
-            "allowanceAmount": "Distribution limit",
+            "allowanceAmount": "Spending limit",
             "withdrawAmount": "Amount to withdraw",
-            "withdrawMax": "Up to {{amount}} available for rewards can be withdrawn.",
+            "withdrawMax": "You can withdraw up to {{amount}}.",
             "confirm": "Confirm",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "loadError": "We could not load your reward budget. Refresh the page. If it keeps failing, email hello@frak-labs.com.",
+            "withdrawHint": "To withdraw funds, turn off Pay rewards first.",
+            "currency": {
+                "eure": "Euro budget",
+                "usdc": "Dollar budget"
+            },
+            "currencyHint": {
+                "eure": "Rewards are paid in euros. Ambassadors can withdraw them to their bank account in seconds.",
+                "usdc": "Rewards are paid in USDC, a digital dollar. Ambassadors can spend them across apps and services."
+            },
+            "modal": {
+                "rewardsOnTitle": "Turn rewards on",
+                "rewardsOffTitle": "Turn rewards off",
+                "limitTitle": "Change spending limit",
+                "pauseTitle": "Pause rewards",
+                "withdrawTitle": "Withdraw funds"
+            }
         },
         "purchase": {
-            "title": "Purchase",
-            "description": "By making a Purchase you will add funds to the bank. The fund will be be used to distribute rewards to end users.",
-            "twoStepNotice": "Confirming here does not charge you immediately. You'll validate the charge on Shopify's own billing screen, and your purchase is then processed within 2-5 business days.",
-            "activePurchases": "Active Purchases",
+            "title": "Add funds",
+            "description": "Add money to your reward budget. Frak uses it to pay the rewards your customers earn.",
+            "twoStepNotice": "Clicking Add funds does not charge you yet. Next, you confirm the payment on Shopify's billing screen. Frak then adds the funds to your reward budget within 2 to 5 business days.",
+            "activePurchases": "Payments",
             "amount": "Amount",
             "status": "Status",
-            "txHash": "Tx Hash",
-            "createdAt": "Created At",
+            "txHash": "Payment reference",
+            "createdAt": "Created",
             "actions": "Actions",
-            "selectBank": "Select bank to fund",
-            "amountToFund": "Amount to fund",
-            "fundBank": "Fund bank",
-            "confirm": "Confirm",
-            "confirmPurchase": "Confirm the purchase",
-            "errorInvalidAmount": "Please enter a valid amount.",
-
-            "errorBilling": "Failed to start billing process.",
+            "selectBank": "Reward budget",
+            "amountToFund": "Amount to add",
+            "fundBank": "Add funds",
+            "confirm": "Confirm in Shopify",
+            "confirmPurchase": "Confirm in Shopify",
+            "errorInvalidAmount": "Enter an amount between {{min}} and {{max}} {{currency}}.",
+            "errorBilling": "We could not start the payment. Try again. If it keeps failing, email hello@frak-labs.com.",
             "done": "Done",
-            "pendingProcessing": "Pending processing",
+            "pendingProcessing": "Processing",
             "declined": "Declined",
             "expired": "Expired",
-            "waitingConfirmation": "Waiting your confirmation",
-            "pending": "Pending"
+            "waitingConfirmation": "Waiting for your confirmation",
+            "pending": "Pending",
+            "amountRules": "Between {{min}} and {{max}} {{currency}}.",
+            "confirmNow": "Now confirm the payment in Shopify.",
+            "notAvailableYet": "Not available yet",
+            "errorTooManyPending": "You already have {{max}} payments waiting for your confirmation. Confirm one of them in Shopify, then try again."
         }
     },
     "customizations": {
         "description": "Customize the text displayed in Frak modals for different languages. These customizations will override the default text for your store.",
-        "save": "Save Customizations",
-        "saved": "Customizations saved successfully!",
-        "error": "Error saving customizations",
+        "save": "Save",
+        "saved": "Saved",
+        "error": "We could not save. Try again. If it keeps failing, email hello@frak-labs.com.",
         "french": "French (fr) Translations",
         "english": "English (en) Translations",
         "languageMode": {
@@ -413,8 +451,8 @@
             "description": "Customize the text that appears when your content is shared on social media or messaging apps."
         },
         "logo": {
-            "title": "Brand Logo",
-            "description": "Add your logo to personalize the sharing page shown to visitors."
+            "title": "Logo shown on the sharing page",
+            "description": "Add your logo. It is shown on the page your customers see when they share."
         },
         "sharingPage": {
             "title": "Sharing Page Customization",
@@ -429,9 +467,9 @@
         },
         "fields": {
             "logoUrl": {
-                "label": "Logo URL",
+                "label": "Logo",
                 "description": "The URL of the logo displayed on the sharing page. Overrides the default logo.",
-                "placeholder": "Example: 'https://example.com/logo.png'"
+                "placeholder": "https://example.com/logo.png"
             },
             "sharing.title": {
                 "label": "Social Sharing Title",
@@ -487,98 +525,113 @@
     },
     "campaigns": {
         "title": "Campaigns",
-        "description": "Manage your marketing campaigns and track their performance. Create new campaigns to distribute rewards to users and grow your customer base.",
+        "description": "Campaigns set what customers earn when they share your store and a friend buys. You create and edit them in the Frak dashboard, which opens in a new tab.",
         "viewAll": "View all campaigns",
-        "createNew": "Create new campaign"
+        "createNew": "Create a campaign"
     },
     "appearance": {
         "title": "Appearance",
-        "description": "Customize the look and feel of your Frak integration across your store.",
+        "description": "Choose how Frak looks in your store.",
         "tabs": {
-            "customizations": "Text shown to customers",
-            "shareButton": "Share Button",
+            "customizations": "Logo",
+            "shareButton": "Share button",
             "banner": "Banner",
-            "checkoutExtension": "Checkout Extension",
+            "checkoutExtension": "Thank-you page card",
             "onYourSite": "On your site",
             "inFrakApp": "In the Frak app"
         },
         "upload": {
             "dropzoneLabel": "Upload image",
             "restrictions": {
-                "logo": "Min 128×128px — Ratio 1:2 to 2:1 — Max 4MB",
-                "hero": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB"
+                "logo": "At least 128×128 px. The longer side can be at most twice the shorter side. Max 4 MB.",
+                "hero": "At least 800×450 px. Landscape: the width is 1.33 to 2 times the height. Max 4 MB."
             },
-            "failed": "Upload failed. Please try again.",
-            "failedLarge": "Upload failed. The image may be too large or the network was interrupted.",
+            "failed": "We could not upload the image. Check the size and shape listed under the field, then try again.",
+            "failedLarge": "We could not upload the image. It may be too large, or your connection was interrupted. Try again.",
             "validation": {
-                "unsupportedType": "{{fileName}} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).",
-                "tooLarge": "{{fileName}} is {{size}} MB — images must stay under {{max}} MB."
+                "unsupportedType": "{{fileName}} is not a supported image format. Use PNG, JPEG, WebP, SVG or GIF.",
+                "tooLarge": "{{fileName}} is {{size}} MB. The limit is {{max}} MB."
             }
         },
         "shareButton": {
-            "link": "Configure button in your product page",
-            "noProduct": "You need to add a product to your store to add the sharing button",
-            "activated": "Share button is on your product page",
-            "notActivated": "Share button is not in your product page",
-            "todo": "Please add the button as shown below"
+            "link": "Edit the share button in the theme editor",
+            "noProduct": "Add a product to your store first. Then you can add the share button.",
+            "activated": "The share button is on your product page",
+            "notActivated": "The share button is not on your product page",
+            "todo": "In the theme editor, add the Frak Sharing Button to your product page as shown below, then click Save at the top right.",
+            "noProductLink": "Open your products"
         },
         "banner": {
-            "link": "Configure banner in your theme",
-            "activated": "Banner is active in your theme",
-            "notActivated": "Banner is not active in your theme",
-            "todo": "Please add the Frak Banner to your theme to display referral promotions"
+            "link": "Edit the banner in the theme editor",
+            "activated": "The banner is in your theme",
+            "notActivated": "The banner is not in your theme",
+            "todo": "In the theme editor, add the Frak Banner to a page, then click Save at the top right."
         },
         "checkoutExtension": {
-            "description": "The Frak Post Purchase extension displays a sharing card on the checkout thank-you page and order status page, encouraging customers to share after purchasing.",
-            "link": "Configure in checkout editor"
+            "description": "The Frak Post Purchase extension adds a share card to the thank-you page and the order status page. It encourages customers to share after they buy.",
+            "link": "Open the checkout editor"
         },
         "explorer": {
-            "description": "Once enabled, your store will be displayed in the Frak app, helping users discover your referral campaigns.",
-            "enabledLabel": "Listed in Frak Explorer",
-            "enabledHint": "Make your store discoverable in the Frak app.",
-            "previewDisabledLabel": "Not listed",
-            "previewDisabledHint": "Enable the Explorer",
-            "logoLabel": "Logo URL",
-            "heroLabel": "Hero image URL",
-            "heroExtrasLabel": "Additional hero images",
-            "heroExtraAlt": "Additional hero image",
-            "heroExtrasRestrictions": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB ({{current}}/{{max}})",
-            "heroExtrasLimitReached": "Maximum of 4 additional hero images reached. Remove one to add another.",
+            "description": "Show your store in the Frak app so people can find your campaigns.",
+            "enabledLabel": "Show my store in the Frak app",
+            "enabledHint": "Make your store easy to find in the Frak app.",
+            "previewDisabledLabel": "Not shown",
+            "previewDisabledHint": "Turn on the switch to show your store",
+            "logoLabel": "Logo",
+            "heroLabel": "Cover image",
+            "heroExtrasLabel": "More cover images",
+            "heroExtraAlt": "Additional cover image",
+            "heroExtrasRestrictions": "At least 800×450 px. Landscape: the width is 1.33 to 2 times the height. Max 4 MB ({{current}}/{{max}}).",
+            "heroExtrasLimitReached": "You can add up to 4 more cover images. Remove one to add another.",
             "descriptionLabel": "Store description",
-            "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
+            "descriptionPlaceholder": "Describe your store for the Frak app...",
             "save": "Save"
         },
         "legacy": {
-            "customizationsNote": "Your theme does not support Shopify app blocks. Logo, wording and reward settings are managed in the Frak editor on the business dashboard.",
-            "openEditor": "Open Frak editor"
+            "customizationsNote": "Your theme is too old to change these settings here. Use the Frak dashboard.",
+            "openEditor": "Open the Frak dashboard"
         },
         "manual": {
-            "buttonDescription": "Your theme doesn't support in-page app blocks. Paste this tag where you want the share button (usually near the Add to cart button).",
-            "bannerDescription": "Your theme doesn't support in-page app blocks. Paste this tag where you want the referral banner to appear (e.g. near the top of your theme.liquid).",
-            "classHint": "Replace <code>btn</code> with your theme's button class so it matches your store (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
-            "sectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
+            "buttonDescription": "Your theme is too old for one-click setup. Paste this button code where you want the share button (usually near the Add to cart button), then click Save.",
+            "bannerDescription": "Your theme is too old for one-click setup. Paste this code where you want the referral banner (for example near the top of your theme.liquid), then click Save.",
+            "classHint": "If the button does not look like your other buttons, ask your theme's support for its button class name and replace <code>btn</code> with it.",
+            "sectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (for example <code>sections/product-template.liquid</code>).",
             "editProductTemplate": "Edit product template",
             "editTheme": "Edit theme.liquid",
-            "customizeNote": "Personalise wording, colors and rewards in the Frak editor:",
-            "openEditor": "Open Frak editor",
-            "copyTag": "Copy the tag",
-            "copied": "Copied!",
-            "copyError": "Couldn't copy automatically - select the tag above and copy it manually."
+            "customizeNote": "Customize wording, colors and rewards in the Frak dashboard:",
+            "openEditor": "Open the Frak dashboard",
+            "copyTag": "Copy the code",
+            "copied": "Copied",
+            "copyError": "We could not copy it. Select the code above and copy it yourself."
         }
     },
     "funding": {
-        "title": "Funding",
-        "description": "Manage your funding sources and purchase history. Add funds to your banks to ensure your campaigns can distribute rewards to users."
+        "title": "Reward budget",
+        "description": "Add funds to your reward budget and follow your payments. Campaigns can only pay rewards while your budget has funds."
     },
     "settings": {
         "title": "Settings"
     },
     "error": {
         "title": "Something went wrong",
-        "description": "An unexpected error occurred while loading this page. Please refresh in a few seconds. If the problem persists, contact Frak support with the details below.",
-        "refresh": "Refresh",
+        "description": "Something went wrong while loading this page. Refresh the page. If it happens again, email hello@frak-labs.com and include the reference below.",
+        "refresh": "Refresh the page",
         "detailsLabel": "Technical details",
         "reference": "Reference",
-        "referenceHint": "share this with Frak support"
+        "referenceHint": "include it in your email"
+    },
+    "purchasePage": {
+        "close": "Close",
+        "logoAlt": "Frak logo",
+        "thanks": "Thank you for your payment of {{amount}}",
+        "processing": "Frak will add the funds to your reward budget within 2 to 5 business days.",
+        "track": "You can follow the status on the <fundingLink>Reward budget page</fundingLink>.",
+        "questions": "Questions? Email <mailLink>hello@frak-labs.com</mailLink>.",
+        "details": "Payment details",
+        "amount": "Amount",
+        "status": "Status",
+        "reference": "Payment reference",
+        "notFound": "Payment not found",
+        "notFoundHelp": "If this looks wrong, email <mailLink>hello@frak-labs.com</mailLink>."
     }
 }

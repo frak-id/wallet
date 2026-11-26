@@ -2,7 +2,12 @@ import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { useMutation } from "@tanstack/react-query";
 import type { loader as rootLoader } from "app/routes/app";
 import type { BankStatus } from "app/services.server/backendMerchant";
-import type { BadgeTone } from "app/types/polaris";
+import {
+    MAX_PENDING_PURCHASES,
+    MAX_PURCHASE_AMOUNT,
+    MIN_PURCHASE_AMOUNT,
+} from "app/utils/purchaseLimits";
+import { mapPurchaseStatus } from "app/utils/purchaseStatus";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
@@ -74,7 +79,10 @@ function ActivePurchases({
                 </s-table-header-row>
                 <s-table-body>
                     {currentPurchases.map((purchase) => {
-                        const { status, variant } = mapStatus(purchase, t);
+                        const { status, variant } = mapPurchaseStatus(
+                            purchase,
+                            t
+                        );
                         return (
                             <s-table-row key={purchase.id}>
                                 <s-table-cell>
@@ -87,14 +95,15 @@ function ActivePurchases({
                                     <s-badge tone={variant}>{status}</s-badge>
                                 </s-table-cell>
                                 <s-table-cell>
-                                    {purchase.txHash ?? "N/A"}
+                                    {purchase.txHash ??
+                                        t("status.purchase.notAvailableYet")}
                                 </s-table-cell>
                                 <s-table-cell>
                                     {purchase.createdAt
                                         ? new Date(
                                               purchase.createdAt
                                           ).toLocaleString()
-                                        : "N/A"}
+                                        : "-"}
                                 </s-table-cell>
                                 <s-table-cell>
                                     {purchase.status === "pending" && (
@@ -122,7 +131,14 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
     const [amount, setAmount] = useState("");
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const [error, setError] = useState<string | null>(null);
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const currency = rootData?.shop.preferredCurrency ?? "EUR";
+    const formatNumber = new Intl.NumberFormat(i18n.language).format;
+    const amountLimits = {
+        min: formatNumber(MIN_PURCHASE_AMOUNT),
+        max: formatNumber(MAX_PURCHASE_AMOUNT),
+        currency,
+    };
 
     const {
         data: confirmationUrl,
@@ -134,12 +150,26 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
             setError(null);
             const amountNumber = Number(amount);
             if (!amount || Number.isNaN(amountNumber) || amountNumber <= 0) {
-                setError(t("status.purchase.errorInvalidAmount"));
+                setError(t("status.purchase.errorInvalidAmount", amountLimits));
                 return;
             }
             try {
                 const url = `/api/purchase?amount=${amount}&bank=${bankAddress}`;
                 const response = await fetch(url);
+                if (response.status === 400) {
+                    setError(
+                        t("status.purchase.errorInvalidAmount", amountLimits)
+                    );
+                    return;
+                }
+                if (response.status === 409) {
+                    setError(
+                        t("status.purchase.errorTooManyPending", {
+                            max: MAX_PENDING_PURCHASES,
+                        })
+                    );
+                    return;
+                }
                 if (!response.ok) {
                     throw new Error("Failed to start billing process.");
                 }
@@ -154,18 +184,16 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
     return (
         <s-stack gap="small">
             <s-stack direction="inline" gap="small">
-                <s-text>
-                    {t("status.purchase.selectBank")}: {bankAddress}
-                </s-text>
                 <s-number-field
                     label={t("status.purchase.amountToFund")}
+                    details={t("status.purchase.amountRules", amountLimits)}
                     value={amount}
                     onChange={(e) => setAmount(e.currentTarget.value ?? "")}
                     autocomplete="off"
                     min={0}
                     step={0.5}
                     disabled={isLoading || !!confirmationUrl}
-                    suffix={rootData?.shop.preferredCurrency ?? "EUR"}
+                    suffix={currency}
                 />
                 <s-button
                     onClick={() => handleSubmit()}
@@ -180,56 +208,13 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
             {error && <s-text tone="critical">{error}</s-text>}
 
             {confirmationUrl && (
-                <ExternalButton href={confirmationUrl} variant="primary">
-                    {t("status.purchase.confirmPurchase")}
-                </ExternalButton>
+                <>
+                    <s-text>{t("status.purchase.confirmNow")}</s-text>
+                    <ExternalButton href={confirmationUrl} variant="primary">
+                        {t("status.purchase.confirmPurchase")}
+                    </ExternalButton>
+                </>
             )}
         </s-stack>
     );
-}
-
-function mapStatus(
-    purchase: PurchaseTable["$inferSelect"],
-    t: (key: string) => string
-): {
-    status: string;
-    variant: BadgeTone;
-} {
-    if (purchase.txStatus === "confirmed") {
-        return {
-            status: t("status.purchase.done"),
-            variant: "success",
-        };
-    }
-    if (purchase.txStatus === "pending" || purchase.status === "active") {
-        return {
-            status: t("status.purchase.pendingProcessing"),
-            variant: "info",
-        };
-    }
-
-    if (purchase.status === "declined") {
-        return {
-            status: t("status.purchase.declined"),
-            variant: "warning",
-        };
-    }
-    if (purchase.status === "expired") {
-        return {
-            status: t("status.purchase.expired"),
-            variant: "warning",
-        };
-    }
-
-    if (purchase.status === "pending") {
-        return {
-            status: t("status.purchase.waitingConfirmation"),
-            variant: "info",
-        };
-    }
-
-    return {
-        status: t("status.purchase.pending"),
-        variant: "info",
-    };
 }

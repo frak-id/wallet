@@ -149,12 +149,12 @@
     {
       "type": "image_picker",
       "id": "logo",
-      "label": "Logo that will be displayed on the modal"
+      "label": "Logo shown in the sharing window"
     },
     {
       "type": "select",
       "id": "modal_lng",
-      "label": "Sharing modal language",
+      "label": "Sharing window language",
       "options": [
         {
           "value": "en",
@@ -166,7 +166,7 @@
         },
         {
           "value": "default",
-          "label": "Default user language"
+          "label": "Same as the customer's language"
         }
       ],
       "default": "default"
@@ -176,13 +176,13 @@
       "id": "show_reward_reminder",
       "label": "Reward reminder",
       "default": true,
-      "info": "Shows a small badge to shoppers who earned a reward on your store but haven't created their Frak wallet yet, with the amount and the days left before it expires. Unclaimed rewards are never paid out. Other visitors never see it."
+      "info": "Shows a small badge to customers who earned a reward in your store but have not created their Frak wallet (the account that receives rewards) yet. The badge shows the amount and the days left before the reward expires. Unclaimed rewards are never paid. Other visitors never see it."
     },
     {
       "type": "textarea",
       "id": "custom_javascript",
       "label": "Custom JavaScript",
-      "info": "Enter custom JavaScript code to be injected"
+      "info": "Only for developers. This code runs on every page of your store."
     }
   ]
 }

@@ -58,9 +58,9 @@ export type AmbassadorPageRecordV1 = {
 
 const FRAK_I18N_METAOBJECT_TYPE = "frak_i18n";
 const FRAK_I18N_SINGLETON_HANDLE = "default";
-const FRAK_I18N_DEFINITION_NAME = "Frak Translations";
+const FRAK_I18N_DEFINITION_NAME = "Frak texts";
 const FRAK_I18N_DEFINITION_DESCRIPTION =
-    "Per-locale text used by the Frak banner, share button, and post-purchase card. Edit non-default languages via Translate & Adapt.";
+    "Per-language texts for the Frak banner, share button and thank-you card. Use Translate & Adapt for other languages.";
 const FRAK_I18N_FR_LOCALE = "fr";
 
 export type FrakI18nFieldDefinition = {
@@ -79,7 +79,7 @@ export type FrakI18nFieldDefinition = {
 export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     {
         key: "banner_referral_title",
-        name: "Banner — Referral title",
+        name: "Banner: referral title",
         description:
             "Referral banner heading shown to referred storefront visitors.",
         type: "single_line_text_field",
@@ -90,7 +90,7 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "banner_referral_description",
-        name: "Banner — Referral description",
+        name: "Banner: referral description",
         description: "Referral banner body shown under the heading.",
         type: "multi_line_text_field",
         defaults: {
@@ -100,14 +100,14 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "banner_referral_cta",
-        name: "Banner — Referral button",
+        name: "Banner: referral button",
         description: "Referral banner call-to-action label.",
         type: "single_line_text_field",
         defaults: { en: "Got it", fr: "Compris" },
     },
     {
         key: "banner_inapp_title",
-        name: "Banner — In-app browser title",
+        name: "Banner: in-app browser title",
         description:
             "Heading shown when the storefront opens in Instagram or Facebook's in-app browser.",
         type: "single_line_text_field",
@@ -118,7 +118,7 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "banner_inapp_description",
-        name: "Banner — In-app browser description",
+        name: "Banner: in-app browser description",
         description:
             "Body shown when the storefront opens in an in-app browser.",
         type: "multi_line_text_field",
@@ -129,14 +129,14 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "banner_inapp_cta",
-        name: "Banner — In-app browser button",
+        name: "Banner: in-app browser button",
         description: "Call-to-action label for the in-app browser banner.",
         type: "single_line_text_field",
         defaults: { en: "Open browser", fr: "Ouvrir le navigateur" },
     },
     {
         key: "button_share_text",
-        name: "Share button — Label",
+        name: "Share button: label",
         description:
             "Storefront share button label. Use {REWARD} to embed the reward amount.",
         type: "single_line_text_field",
@@ -144,7 +144,7 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "button_share_no_reward_text",
-        name: "Share button — Fallback label",
+        name: "Share button: fallback label",
         description:
             "Label shown when rewards are enabled on the share button but no reward is available.",
         type: "single_line_text_field",
@@ -152,7 +152,7 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "post_purchase_message",
-        name: "Post-purchase — Heading",
+        name: "Post-purchase: heading",
         description: "Heading on the post-purchase sharing card.",
         type: "single_line_text_field",
         defaults: {
@@ -162,7 +162,7 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "post_purchase_description",
-        name: "Post-purchase — Description",
+        name: "Post-purchase: description",
         description: "Body copy on the post-purchase sharing card.",
         type: "multi_line_text_field",
         defaults: {
@@ -172,14 +172,14 @@ export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     },
     {
         key: "post_purchase_cta_text",
-        name: "Post-purchase — Button",
+        name: "Post-purchase: button",
         description: "Call-to-action label on the post-purchase sharing card.",
         type: "single_line_text_field",
         defaults: { en: "Share & earn", fr: "Partager & gagner" },
     },
     {
         key: "post_purchase_badge_text",
-        name: "Post-purchase — Badge",
+        name: "Post-purchase: badge",
         description:
             "Optional pill label above the heading. Leave empty to hide.",
         type: "single_line_text_field",

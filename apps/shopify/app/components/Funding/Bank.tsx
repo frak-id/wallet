@@ -85,6 +85,10 @@ function BankView({
                 />
             )}
 
+            {isManager && isOpen && (
+                <s-text color="subdued">{t("status.bank.withdrawHint")}</s-text>
+            )}
+
             {isManager && !isLoggedIn && (
                 <s-banner tone="info">
                     <s-stack gap="small">
@@ -167,6 +171,7 @@ function DistributionToggle({
 }
 
 function CurrencyLabel({ token }: { token: TokenData }) {
+    const { t } = useTranslation();
     const meta = currencyMetadata[token.symbol as Stablecoin];
     const tooltipId = `bank-provider-${token.symbol}`;
 
@@ -174,9 +179,11 @@ function CurrencyLabel({ token }: { token: TokenData }) {
         <s-stack direction="inline" gap="small-300" alignItems="baseline">
             <s-text type="strong">{meta.currencySymbol}</s-text>
             <s-text color="subdued" interestFor={tooltipId}>
-                {meta.provider}
+                {t(`status.bank.currency.${token.symbol}`)}
             </s-text>
-            <s-tooltip id={tooltipId}>{meta.providerDescription}</s-tooltip>
+            <s-tooltip id={tooltipId}>
+                {t(`status.bank.currencyHint.${token.symbol}`)}
+            </s-tooltip>
         </s-stack>
     );
 }

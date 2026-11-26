@@ -206,10 +206,12 @@ function Navigation({
 }
 
 function NavigationRoot({ children }: { children: ReactNode }) {
+    const { t } = useTranslation();
+
     return (
         <ui-nav-menu>
             <Link to="/app" rel="home">
-                Home
+                {t("navigation.home")}
             </Link>
             {children}
         </ui-nav-menu>

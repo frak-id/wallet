@@ -6,7 +6,7 @@ import {
 import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
-import { ExternalButton } from "../ui/ExternalLink";
+import { ExternalButton, ExternalLink } from "../ui/ExternalLink";
 import { CollapsibleStep } from "./CollapsibleStep";
 
 export function Step6({
@@ -28,6 +28,16 @@ export function Step6({
             completed={isCompleted}
             title={t("stepper.step6.title")}
         >
+            {!isThemeHasFrakButton && !firstProduct && (
+                <s-stack gap="small" alignItems="start">
+                    <s-text>{t("stepper.step6.noProduct")}</s-text>
+                    <ExternalLink
+                        href={`https://${rootData?.shop?.myshopifyDomain}/admin/products`}
+                    >
+                        {t("stepper.step6.noProductLink")}
+                    </ExternalLink>
+                </s-stack>
+            )}
             <s-grid gridTemplateColumns="1fr 1fr" gap="base">
                 {!isThemeHasFrakButton && firstProduct && (
                     <div>
@@ -35,7 +45,10 @@ export function Step6({
                             <s-text>
                                 <Trans i18nKey="stepper.step6.descriptionShare" />
                             </s-text>
-                            <img src={screenShareButton} alt="" />
+                            <img
+                                src={screenShareButton}
+                                alt={t("stepper.step6.imageAlt")}
+                            />
                             <ExternalButton
                                 variant="primary"
                                 href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}

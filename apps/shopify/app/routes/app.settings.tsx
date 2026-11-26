@@ -131,7 +131,9 @@ export default function SettingsIndex() {
                             )}
                         </s-box>
                         <s-text>
-                            {!webPixel && t("pixel.needConnection")}
+                            {webPixel
+                                ? t("pixel.disconnectWarning")
+                                : t("pixel.needConnection")}
                         </s-text>
                         <s-text>
                             <Pixel id={webPixel?.id} />

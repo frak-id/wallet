@@ -2,15 +2,16 @@ import type { LoginError } from "@shopify/shopify-app-react-router/server";
 import { LoginErrorType } from "@shopify/shopify-app-react-router/server";
 
 type LoginErrorMessage = {
-    shop?: string;
+    shop?: "login.errors.missingShop" | "login.errors.invalidShop";
 };
 
+/** Returns the i18n key of the login error, translated by the route component. */
 export function loginErrorMessage(loginErrors: LoginError): LoginErrorMessage {
     if (loginErrors?.shop === LoginErrorType.MissingShop) {
-        return { shop: "Please enter your shop domain to log in" };
+        return { shop: "login.errors.missingShop" };
     }
     if (loginErrors?.shop === LoginErrorType.InvalidShop) {
-        return { shop: "Please enter a valid shop domain to log in" };
+        return { shop: "login.errors.invalidShop" };
     }
 
     return {};

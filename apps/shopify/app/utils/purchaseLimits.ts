@@ -1,0 +1,3 @@
+export const MIN_PURCHASE_AMOUNT = 10;
+export const MAX_PURCHASE_AMOUNT = 1000;
+export const MAX_PENDING_PURCHASES = 10;

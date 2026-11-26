@@ -3,6 +3,7 @@ import { purchaseTable } from "../../db/schema/purchaseTable";
 import { drizzleDb } from "../db.server";
 import type { AuthenticatedContext } from "../types/context";
 import { isProd } from "../utils/env";
+import { MAX_PENDING_PURCHASES } from "../utils/purchaseLimits";
 import { log } from "./logger";
 import {
     parseShopifyGid,
@@ -49,15 +50,15 @@ export async function startupPurchase(
     const pendingPurchases = currentPurchases.filter(
         (p) => p.status === "pending"
     );
-    if (pendingPurchases.length > 9) {
+    if (pendingPurchases.length >= MAX_PENDING_PURCHASES) {
         throw new PurchaseError(
-            "Shop already has more than 10 pending purchases",
+            `Shop already has ${MAX_PENDING_PURCHASES} pending purchases`,
             409
         );
     }
 
     // Start the one time purchase
-    const generatedName = `Frak bank - ${amount.toFixed(2)}${info.preferredCurrency ?? "eur"} - ${new Date().toISOString()}`;
+    const generatedName = `Frak reward budget top-up, ${amount.toFixed(2)} ${(info.preferredCurrency ?? "eur").toUpperCase()}`;
     const trimmedShopId = parseShopifyGid(info.id, "Shop");
 
     // Non-prod stages run as a Shopify *custom* app, which Shopify blocks from

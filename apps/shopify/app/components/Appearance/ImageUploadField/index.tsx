@@ -213,9 +213,9 @@ function resolveUploadError(
 ): string | null {
     if (data === undefined || data === null) return null;
     if (typeof data === "object") {
-        const d = data as { success?: boolean; error?: string };
+        const d = data as { success?: boolean };
         if (d.success === false) {
-            return d.error ?? t("appearance.upload.failed");
+            return t("appearance.upload.failed");
         }
         return null;
     }

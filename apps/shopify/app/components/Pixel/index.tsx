@@ -3,7 +3,7 @@ import type {
     CreateWebPixelReturnType,
     DeleteWebPixelReturnType,
 } from "app/services.server/webPixel";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 
@@ -15,6 +15,7 @@ export function Pixel({ id }: { id?: string }) {
     >();
     const { t } = useTranslation();
     const refresh = useRefreshData();
+    const lastIntentRef = useRef<IntentWebPixel>("createWebPixel");
 
     useEffect(() => {
         if (!fetcher.data) return;
@@ -26,9 +27,11 @@ export function Pixel({ id }: { id?: string }) {
             .deletedWebPixelId;
 
         if (userErrors?.length > 0) {
-            window.shopify?.toast.show(t("pixel.actions.messages.error"), {
-                isError: true,
-            });
+            const errorKey =
+                lastIntentRef.current === "deleteWebPixel"
+                    ? "pixel.actions.messages.deleteError"
+                    : "pixel.actions.messages.createError";
+            window.shopify?.toast.show(t(errorKey), { isError: true });
         }
 
         if (webPixel) {
@@ -43,6 +46,7 @@ export function Pixel({ id }: { id?: string }) {
     }, [fetcher.data, t, refresh]);
 
     const handleAction = async (intent: IntentWebPixel) => {
+        lastIntentRef.current = intent;
         fetcher.submit(
             { intent },
             { method: "POST", action: "/app/settings/pixel" }

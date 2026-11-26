@@ -87,21 +87,16 @@ export function CustomizationsTab({
 
     useEffect(() => {
         if (!fetcher.data) return;
-        const message =
-            "message" in fetcher.data &&
-            typeof fetcher.data.message === "string"
-                ? fetcher.data.message
-                : null;
         // On failure keep pending state intact (the save bar stays open) and
         // surface an error toast.
         if (!fetcher.data.success) {
-            if (message) shopify.toast.show(message, { isError: true });
+            shopify.toast.show(t("customizations.error"), { isError: true });
             return;
         }
-        if (message) shopify.toast.show(message);
+        shopify.toast.show(t("customizations.saved"));
         setSavedLogoUrl(submittedLogoRef.current);
         setPendingDeletedTypes([]);
-    }, [fetcher.data]);
+    }, [fetcher.data, t]);
 
     const handleDiscard = useCallback(() => {
         setLogoUrl(savedLogoUrl);

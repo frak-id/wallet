@@ -63,7 +63,7 @@ export function AppError({
                 <p className={styles.description}>
                     {t("error.description", {
                         defaultValue:
-                            "An unexpected error occurred while loading this page. Please refresh in a few seconds. If the problem persists, contact Frak support with the details below.",
+                            "Something went wrong while loading this page. Refresh the page. If it happens again, email hello@frak-labs.com and include the reference below.",
                     })}
                 </p>
                 {requestId && (
@@ -73,7 +73,7 @@ export function AppError({
                         <span className={styles.referenceHint}>
                             (
                             {t("error.referenceHint", {
-                                defaultValue: "share this with Frak support",
+                                defaultValue: "include it in your email",
                             })}
                             )
                         </span>
@@ -88,7 +88,7 @@ export function AppError({
                         }
                     }}
                 >
-                    {t("error.refresh", { defaultValue: "Refresh" })}
+                    {t("error.refresh", { defaultValue: "Refresh the page" })}
                 </button>
                 <details className={styles.details}>
                     <summary className={styles.detailsSummary}>

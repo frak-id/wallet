@@ -1,6 +1,7 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { type Address, encodeFunctionData } from "viem";
 import { useWaitForTxAndInvalidateQueries } from "./useWaitForTxAndInvalidateQueries";
 
@@ -15,6 +16,7 @@ export function useSetBankOpenStatus({
 }) {
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
+    const { t } = useTranslation();
 
     const { mutate: setOpenStatus, isPending: isSettingOpenStatus } =
         useMutation({
@@ -31,18 +33,20 @@ export function useSetBankOpenStatus({
                     },
                     metadata: {
                         header: {
-                            title: isOpen ? "Open bank" : "Close bank",
+                            title: isOpen
+                                ? t("status.bank.modal.rewardsOnTitle")
+                                : t("status.bank.modal.rewardsOffTitle"),
                         },
                         i18n: {
                             fr: {
                                 "sdk.modal.sendTransaction.description": isOpen
-                                    ? "Ouvrir la banque pour la distribution"
-                                    : "Fermer la banque",
+                                    ? "Autoriser Frak à verser les récompenses depuis votre budget de récompenses"
+                                    : "Arrêter de verser les récompenses depuis votre budget de récompenses",
                             },
                             en: {
                                 "sdk.modal.sendTransaction.description": isOpen
-                                    ? "Open bank for distribution"
-                                    : "Close bank",
+                                    ? "Allow Frak to pay rewards from your reward budget"
+                                    : "Stop paying rewards from your reward budget",
                             },
                         },
                     },
@@ -65,6 +69,7 @@ export function useUpdateBankAllowance({
 }) {
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
+    const { t } = useTranslation();
 
     return useMutation({
         mutationKey: ["bank", bankAddress, "updateAllowance"],
@@ -86,16 +91,16 @@ export function useUpdateBankAllowance({
                 },
                 metadata: {
                     header: {
-                        title: "Update allowance",
+                        title: t("status.bank.modal.limitTitle"),
                     },
                     i18n: {
                         fr: {
                             "sdk.modal.sendTransaction.description":
-                                "Mettre à jour l'allocation de distribution",
+                                "Modifier le maximum que Frak peut verser en récompenses depuis votre budget",
                         },
                         en: {
                             "sdk.modal.sendTransaction.description":
-                                "Update distribution allowance",
+                                "Change the most Frak can pay as rewards from your budget",
                         },
                     },
                 },
@@ -116,6 +121,7 @@ export function useRevokeBankAllowance({
 }) {
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
+    const { t } = useTranslation();
 
     return useMutation({
         mutationKey: ["bank", bankAddress, "revokeAllowance"],
@@ -131,16 +137,16 @@ export function useRevokeBankAllowance({
                 },
                 metadata: {
                     header: {
-                        title: "Revoke allowance",
+                        title: t("status.bank.modal.pauseTitle"),
                     },
                     i18n: {
                         fr: {
                             "sdk.modal.sendTransaction.description":
-                                "Révoquer l'allocation de distribution",
+                                "Mettre la limite de dépense à zéro. Les récompenses s'arrêtent jusqu'à ce que vous l'augmentiez",
                         },
                         en: {
                             "sdk.modal.sendTransaction.description":
-                                "Revoke distribution allowance",
+                                "Set the spending limit to zero. Rewards stop until you raise it again",
                         },
                     },
                 },
@@ -157,6 +163,7 @@ export function useRevokeBankAllowance({
 export function useWithdrawFromBank({ bankAddress }: { bankAddress: Address }) {
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
+    const { t } = useTranslation();
 
     return useMutation({
         mutationKey: ["bank", bankAddress, "withdraw"],
@@ -180,16 +187,16 @@ export function useWithdrawFromBank({ bankAddress }: { bankAddress: Address }) {
                 },
                 metadata: {
                     header: {
-                        title: "Withdraw funds",
+                        title: t("status.bank.modal.withdrawTitle"),
                     },
                     i18n: {
                         fr: {
                             "sdk.modal.sendTransaction.description":
-                                "Retirer les fonds de la banque",
+                                "Retirer des fonds de votre budget de récompenses vers votre porte-monnaie Frak",
                         },
                         en: {
                             "sdk.modal.sendTransaction.description":
-                                "Withdraw funds from the bank",
+                                "Withdraw funds from your reward budget to your Frak wallet",
                         },
                     },
                 },
