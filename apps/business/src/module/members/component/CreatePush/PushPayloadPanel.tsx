@@ -150,6 +150,7 @@ export function PushPayloadPanel() {
                                     "push.create.content.launchUrl.placeholder"
                                 )}
                                 label={t("push.create.content.launchUrl.label")}
+                                hint={t("push.create.content.launchUrl.hint")}
                                 {...field}
                             />
                         </FormControl>

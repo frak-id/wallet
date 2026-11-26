@@ -130,7 +130,10 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
     return (
         <>
             <Form {...form}>
-                <EditCard title={t("merchantEdit.explorer.title")}>
+                <EditCard
+                    title={t("merchantEdit.explorer.title")}
+                    description={t("merchantEdit.explorer.intro")}
+                >
                     <FormField
                         control={form.control}
                         name="enabled"

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import glass from "./assets/notification-glass.webp";
 import iconPlaceholder from "./assets/notification-icon-placeholder.webp";
 import phone1x from "./assets/wallet-2x1.webp";
@@ -15,6 +16,7 @@ type PushPreviewProps = {
  * exported wallpaper frame.
  */
 export function PushPreview({ title, message, icon }: PushPreviewProps) {
+    const { t } = useTranslation();
     return (
         <div className={styles.phone}>
             <img
@@ -45,7 +47,9 @@ export function PushPreview({ title, message, icon }: PushPreviewProps) {
                         <p className={styles.title}>{title}</p>
                         <p className={styles.message}>{message}</p>
                     </div>
-                    <span className={styles.time}>now</span>
+                    <span className={styles.time}>
+                        {t("push.create.preview.now")}
+                    </span>
                 </div>
             </div>
         </div>

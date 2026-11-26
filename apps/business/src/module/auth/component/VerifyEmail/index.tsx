@@ -74,7 +74,9 @@ export function VerifyEmail({
             embedded={embedded}
             code={code}
             onCodeChange={setCode}
-            verifyError={verifyError?.message}
+            verifyError={
+                verifyError ? t("auth.verifyEmail.verifyError") : undefined
+            }
             isVerifying={isVerifying}
             isSending={isSending}
             onVerify={() => verify({ method: "email", proof: code.trim() })}
@@ -83,7 +85,7 @@ export function VerifyEmail({
     );
     const errorNotice = sendError ? (
         <Notice tone="error" role="alert">
-            {sendError.message}
+            {t("auth.verifyEmail.sendError")}
         </Notice>
     ) : null;
 

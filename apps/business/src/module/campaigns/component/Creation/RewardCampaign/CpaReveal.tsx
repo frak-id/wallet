@@ -13,6 +13,7 @@ import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
 import * as styles from "./reward.css";
 import { StepperField, type UnitKind } from "./StepperField";
 import {
+    FRAK_COMMISSION_PERCENT,
     type RewardFormValues,
     recalcCpaFromSplit,
     recalcSplitOnCpaChange,
@@ -131,6 +132,8 @@ export function CpaReveal({
     const splitMismatch =
         hasPool && splitSum > 0 && Math.abs(splitSum - rewardsPool) >= 0.01;
 
+    const cpaTooHigh = unit === "percent" && cpa > 100;
+
     const poolPercent = (value: number) =>
         hasPool ? Math.round((value / rewardsPool) * 100) : 0;
 
@@ -186,7 +189,9 @@ export function CpaReveal({
                         step={0.01}
                         placeholder={cpaPlaceholder}
                         label={cpaLabel}
-                        hint={t("campaigns.create.reward.cpa.hint")}
+                        hint={t("campaigns.create.reward.cpa.hint", {
+                            percent: FRAK_COMMISSION_PERCENT,
+                        })}
                     />
                 )}
             />
@@ -248,6 +253,12 @@ export function CpaReveal({
                         }
                     />
                 </div>
+            )}
+
+            {cpaTooHigh && (
+                <FieldError>
+                    {t("campaigns.create.reward.percentage.tooHigh")}
+                </FieldError>
             )}
 
             {splitMismatch && (

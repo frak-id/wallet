@@ -130,7 +130,11 @@ export function CreatePushNotification() {
                 schedule={values.schedule}
                 targetCount={values.targetCount ?? 0}
                 isPending={sendMutation.isPending}
-                error={sendMutation.error?.message}
+                error={
+                    sendMutation.error
+                        ? t("push.create.review.error")
+                        : undefined
+                }
                 onConfirm={() => sendMutation.mutate(form.getValues())}
             />
             <ConfirmDialog

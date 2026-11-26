@@ -6,6 +6,7 @@ import { NumberBadgeIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { WizardFieldCard } from "@/module/campaigns/component/Creation/WizardFieldCard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
+import { useAuthStore } from "@/stores/authStore";
 import type { MerchantNew } from "@/types/Merchant";
 import * as styles from "./merchantWizard.css";
 
@@ -22,6 +23,7 @@ export function MerchantRegistrationStep({
 }: MerchantRegistrationStepProps) {
     const { t } = useTranslation();
     const meta = currencyMetadata[values.currency];
+    const hasWallet = useAuthStore((state) => state.wallet !== null);
 
     const summary = [
         { label: t("merchant.create.summary.name"), value: values.name },
@@ -33,9 +35,10 @@ export function MerchantRegistrationStep({
         { label: t("merchant.create.summary.provider"), value: meta.provider },
     ];
 
+    // Only wallet accounts are asked for a confirmation; e-mail accounts are not.
     const instructions = [
         t("merchant.create.instructions.onChain"),
-        t("merchant.create.instructions.approve"),
+        ...(hasWallet ? [t("merchant.create.instructions.approve")] : []),
         t("merchant.create.instructions.duration"),
     ];
 
@@ -102,7 +105,18 @@ export function MerchantRegistrationStep({
                 </Stack>
             </WizardFieldCard>
 
-            {error && <FieldError>{error.message}</FieldError>}
+            {error && (
+                <Stack space="xxs">
+                    <FieldError>
+                        {t("merchant.create.progress.failed")}
+                    </FieldError>
+                    {error.message !== t("merchant.create.progress.failed") && (
+                        <Text variant="caption" color="secondary">
+                            {error.message}
+                        </Text>
+                    )}
+                </Stack>
+            )}
             {infoTxt && (
                 <Text variant="bodySmall" color="secondary">
                     {infoTxt}

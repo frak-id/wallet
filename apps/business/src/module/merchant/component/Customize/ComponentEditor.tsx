@@ -29,11 +29,7 @@ import type {
 } from "./types";
 import { COMPONENT_TYPES, SUPPORTED_WORDING_LANGS } from "./types";
 
-const WORDING_LANG_LABELS: Record<WordingLang, string> = {
-    default: "Default",
-    en: "English",
-    fr: "Français",
-};
+const LANGUAGE_NAMES = { en: "English", fr: "Français" } as const;
 
 export function WordingLangTabs({
     selected,
@@ -42,11 +38,16 @@ export function WordingLangTabs({
     selected: WordingLang;
     onSelect: (lang: WordingLang) => void;
 }) {
+    const { t } = useTranslation();
     return (
         <SegmentedTabs
             value={selected}
             options={SUPPORTED_WORDING_LANGS}
-            labelFor={(lang) => WORDING_LANG_LABELS[lang]}
+            labelFor={(lang) =>
+                lang === "default"
+                    ? t("customize.wordingLang.default")
+                    : LANGUAGE_NAMES[lang]
+            }
             onSelect={onSelect}
         />
     );

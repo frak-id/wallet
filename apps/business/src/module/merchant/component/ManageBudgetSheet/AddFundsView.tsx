@@ -19,6 +19,7 @@ import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import type { BudgetToken } from "@/module/merchant/utils/budgetTokens";
 import { buildOnRampUrl } from "@/module/merchant/utils/onRampUrl";
 import { useAccountCredentials } from "@/module/settings/security/useSecuritySettings";
+import { ActionFeedback } from "./ActionFeedback";
 import * as styles from "./manage-budget-sheet.css";
 
 export function AddFundsView({ merchantId }: { merchantId: string }) {
@@ -119,20 +120,22 @@ function BalanceRow({
 
 function TestFundButton({ bankAddress }: { bankAddress: Address }) {
     const { t } = useTranslation();
-    const { mutate: fundTestBank, isPending } = useFundTestBank();
+    const { mutate: fundTestBank, isPending, isError } = useFundTestBank();
 
     return (
-        <Button
-            variant="secondary"
-            size="large"
-            width="auto"
-            icon={<WalletIcon width={24} height={24} />}
-            className={styles.flexButton}
-            disabled={isPending}
-            loading={isPending}
-            onClick={() => fundTestBank({ bank: bankAddress })}
-        >
-            {t("funding.addFunds.testTokens")}
-        </Button>
+        <Stack space="xxs" className={styles.flexButton}>
+            <Button
+                variant="secondary"
+                size="large"
+                width="full"
+                icon={<WalletIcon width={24} height={24} />}
+                disabled={isPending}
+                loading={isPending}
+                onClick={() => fundTestBank({ bank: bankAddress })}
+            >
+                {t("funding.addFunds.testTokens")}
+            </Button>
+            <ActionFeedback isError={isError} />
+        </Stack>
     );
 }

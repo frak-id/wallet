@@ -12,9 +12,13 @@ vi.mock("@/module/campaigns/hook/useCampaignCurrencyGlyph", () => ({
 
 import { BudgetCapField, type BudgetFormValues } from "./index";
 
-function Harness() {
+function Harness({
+    period = "global",
+}: {
+    period?: BudgetFormValues["period"];
+}) {
     const form = useForm<BudgetFormValues>({
-        defaultValues: { period: "global", amount: 0 },
+        defaultValues: { period, amount: 0 },
         mode: "onChange",
     });
 
@@ -48,6 +52,17 @@ describe("BudgetCapField (WizardFieldCard label + hint delegated to DS InputNumb
         expect(
             screen.getByLabelText("campaigns.create.budget.cap.label")
         ).toHaveAccessibleDescription("campaigns.create.budget.cap.hint");
+    });
+
+    it("shows the per-period hint when the budget resets each day", () => {
+        render(<Harness period="daily" />);
+
+        expect(
+            screen.getByText("campaigns.create.budget.cap.hintDaily")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText("campaigns.create.budget.cap.hint")
+        ).not.toBeInTheDocument();
     });
 
     it("renders exactly one label — the DS control's, not a second WizardFieldCard header", () => {

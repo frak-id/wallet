@@ -90,6 +90,7 @@ export function RewardCampaign() {
                 formId={FORM_ID}
                 isValid={isValid}
                 isPending={saveCampaign.isPending}
+                isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
                 onSaveDraft={handleSaveDraft}
                 onClose={() => form.reset(defaultValues)}
                 hasUnsavedChanges={form.formState.isDirty}

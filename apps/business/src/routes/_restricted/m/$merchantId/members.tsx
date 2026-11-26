@@ -40,9 +40,7 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
         );
     },
     component: MembersListPage,
-    errorComponent: (props) => (
-        <DataLoadError {...props} resourceName="members" />
-    ),
+    errorComponent: (props) => <DataLoadError {...props} resource="members" />,
 });
 
 function MembersListPage() {

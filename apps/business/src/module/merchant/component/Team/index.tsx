@@ -73,6 +73,9 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
                     page="team"
                     guardNavigate={guardNavigate}
                 >
+                    <Text variant="caption" color="secondary">
+                        {t("merchantEdit.team.rolesHint")}
+                    </Text>
                     <TableTeam
                         merchantId={merchantId}
                         stagedRemovals={staged}
@@ -85,6 +88,11 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
                                 {t("merchantEdit.team.addMember")}
                             </Button>
                         </ButtonAddTeam>
+                    )}
+                    {staged.length > 0 && (
+                        <Text variant="caption" color="secondary">
+                            {t("merchantEdit.team.removalsHint")}
+                        </Text>
                     )}
                     {saveError && (
                         <Text variant="caption" color="error">

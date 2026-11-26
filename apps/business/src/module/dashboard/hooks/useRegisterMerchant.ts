@@ -9,6 +9,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
@@ -31,6 +32,7 @@ export function useRegisterMerchant(
         }
     >
 ) {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { mutateAsync: siweAuthenticate } = useSiweAuthenticate();
     const [infoTxt, setInfoTxt] = useState<string | undefined>();
@@ -65,11 +67,11 @@ export function useRegisterMerchant(
             } | null = null;
             if (wallet) {
                 const statement = `I authorize registration of merchant "${domain}" to wallet ${wallet}`;
-                setInfoTxt("Please sign the registration message");
+                setInfoTxt(t("merchant.create.progress.confirm"));
                 siweProof = await siweAuthenticate({ siwe: { statement } });
             }
 
-            setInfoTxt("Registering your merchant");
+            setInfoTxt(t("merchant.create.progress.registering"));
 
             const { data, error } =
                 await authenticatedBackendApi.merchant.register.post({
@@ -86,11 +88,14 @@ export function useRegisterMerchant(
                 });
             if (error) {
                 throw new Error(
-                    extractAuthErrorMessage(error, "Registration failed")
+                    extractAuthErrorMessage(
+                        error,
+                        t("merchant.create.progress.failed")
+                    )
                 );
             }
 
-            setInfoTxt("Registration complete");
+            setInfoTxt(t("merchant.create.progress.done"));
             return {
                 merchantId: data.merchantId,
                 verifiedViaShopify: data.verifiedViaShopify,

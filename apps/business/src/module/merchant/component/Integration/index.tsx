@@ -170,7 +170,9 @@ function PurchaseTrackerSummary({
                     {webhookStatus.setup && (
                         <DetailCell
                             label={t("merchantEdit.purchaseTracker.platform")}
-                            value={webhookStatus.platform}
+                            value={t(
+                                `merchantEdit.purchaseTracker.sheet.platforms.${webhookStatus.platform}`
+                            )}
                         />
                     )}
                     {webhookStatus.setup && webhookStatus.stats && (

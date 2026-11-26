@@ -191,7 +191,7 @@ export function MultiHeroImagesField({
                             {t("merchantEdit.explorer.browseFiles")}
                         </Button>
                         <Text variant="caption" color="disabled" align="center">
-                            {`${t("merchantEdit.explorer.restrictions.hero")} — ${values.length}/${MAX_IMAGES}`}
+                            {`${t("merchantEdit.explorer.restrictions.hero")} (${values.length}/${MAX_IMAGES})`}
                         </Text>
                     </Stack>
                 </div>

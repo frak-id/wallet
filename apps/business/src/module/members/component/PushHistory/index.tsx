@@ -9,6 +9,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import { pushHistoryStore } from "@/stores/pushHistoryStore";
@@ -29,7 +30,13 @@ const columnHelper = createDataTableColumnHelper<PushHistoryItem>();
 export function PushHistory() {
     const { t, i18n } = useTranslation();
     const merchantId = useActiveMerchantId();
-    const { data: history, isPending } = usePushHistory(merchantId);
+    const {
+        data: history,
+        isPending,
+        isError,
+        error,
+        refetch,
+    } = usePushHistory(merchantId);
     const filters = pushHistoryStore((state) => state.filters);
 
     const rows = useMemo(
@@ -67,7 +74,7 @@ export function PushHistory() {
                 columnHelper.accessor("scheduledAt", {
                     header: () => t("push.history.columns.scheduledFor"),
                     cell: ({ getValue }) =>
-                        format(getValue(), "MMM d, yyyy - HH:mm", {
+                        format(getValue(), "PPp", {
                             locale: getDateFnsLocale(i18n.language),
                         }),
                 }),
@@ -101,13 +108,27 @@ export function PushHistory() {
         return <Skeleton variant="rect" height={250} />;
     }
 
+    if (isError) {
+        return (
+            <DataLoadError
+                error={error}
+                reset={() => refetch()}
+                resourceName={t("push.resources.history")}
+            />
+        );
+    }
+
     return (
         <Stack space="l">
             <PushHistoryFilters />
             <DataTable
                 data={rows}
                 columns={columns}
-                emptyMessage={t("common.table.empty")}
+                emptyMessage={
+                    history?.length
+                        ? t("push.history.empty.filtered")
+                        : t("push.history.empty.none")
+                }
                 emptyPlaceholder="–"
                 enableSorting={false}
                 fixedLayout={true}

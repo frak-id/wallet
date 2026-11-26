@@ -1,4 +1,5 @@
 import { Sheet, SheetContent } from "@frak-labs/design-system/components/Sheet";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import {
     Tabs,
     TabsContent,
@@ -11,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { campaignDetailsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
@@ -77,7 +79,7 @@ function CampaignDetailsContent({
     // gate CellRowMenu applies. `canEdit` already implies a draft campaign.
     const isReadOnly = useReadOnlyMerchant({ merchantId });
     const canEdit = !isReadOnly && campaign.actions.canEdit;
-    const { data } = useQuery(
+    const { data, isPending, isError, error, refetch } = useQuery(
         campaignDetailsQueryOptions({
             merchantId,
             campaignId: campaign.id,
@@ -128,7 +130,21 @@ function CampaignDetailsContent({
                 }
             />
 
-            {!data ? null : (
+            {isPending && (
+                <div className={styles.body}>
+                    <Skeleton variant="rect" height={320} />
+                </div>
+            )}
+            {isError && (
+                <div className={styles.body}>
+                    <DataLoadError
+                        error={error}
+                        reset={() => refetch()}
+                        resourceName={t("campaigns.resources.details")}
+                    />
+                </div>
+            )}
+            {data && (
                 <div className={styles.body}>
                     <Tabs
                         value={tab ?? "funnel"}

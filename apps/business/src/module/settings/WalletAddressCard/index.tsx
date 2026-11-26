@@ -14,10 +14,13 @@ export function WalletAddressCard() {
     const { copied, copy } = useCopyToClipboardWithState();
 
     return (
-        <SettingsCard title={t("settings.wallet.title")}>
+        <SettingsCard
+            title={t("settings.wallet.title")}
+            description={t("settings.wallet.hint")}
+        >
             <div className={styles.row}>
                 <Text as="span" variant="bodySmall" className={styles.address}>
-                    {address}
+                    {address || t("settings.wallet.empty")}
                 </Text>
                 <button
                     type="button"

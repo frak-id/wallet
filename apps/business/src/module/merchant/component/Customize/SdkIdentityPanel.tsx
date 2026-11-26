@@ -43,7 +43,7 @@ export function SdkIdentityPanel({
     const rewardToken = merchant
         ? currencyMetadata[
               detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure"
-          ]?.label
+          ]?.currencySymbol
         : undefined;
     const { mutateAsync: editSdkConfig, isSuccess: isSuccessUpdate } =
         useMerchantUpdate({ merchantId, target: "sdk-config" });

@@ -103,24 +103,18 @@ export function TableCampaignFilters({
                                             <>
                                                 {format(
                                                     currentDate.from,
-                                                    "LLL dd, y",
+                                                    "PP",
                                                     { locale }
                                                 )}{" "}
                                                 -{" "}
-                                                {format(
-                                                    currentDate.to,
-                                                    "LLL dd, y",
-                                                    { locale }
-                                                )}
+                                                {format(currentDate.to, "PP", {
+                                                    locale,
+                                                })}
                                             </>
                                         ) : (
-                                            format(
-                                                currentDate.from,
-                                                "LLL dd, y",
-                                                {
-                                                    locale,
-                                                }
-                                            )
+                                            format(currentDate.from, "PP", {
+                                                locale,
+                                            })
                                         )
                                     ) : (
                                         t("campaigns.filter.dateRange")

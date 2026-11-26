@@ -7,7 +7,7 @@ import { Input } from "@/module/forms/Input";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 
 /**
- * Campaign name — single inset field (the label aligns with the input text).
+ * Internal name — single inset field (the label aligns with the input text).
  */
 export function PushTitlePanel() {
     const { t } = useTranslation();

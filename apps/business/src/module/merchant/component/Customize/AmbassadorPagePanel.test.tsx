@@ -441,7 +441,7 @@ describe("AmbassadorPagePanel", () => {
             AMBASSADOR_TONE_PRESETS.length
         );
         expect(
-            screen.getByText("Recommend Nowa, simply and safely")
+            screen.getByText("Recommend Nowa with your own link")
         ).toBeInTheDocument();
     });
 
@@ -460,7 +460,7 @@ describe("AmbassadorPagePanel", () => {
 
         const phone = within(view.getByTestId("ambassador-phone-preview"));
         expect(
-            phone.getByText("Recommend My Store, simply and safely")
+            phone.getByText("Recommend My Store with your own link")
         ).toBeInTheDocument();
         const components = await view.save();
         const trust = AMBASSADOR_TONE_PRESETS[2];

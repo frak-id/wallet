@@ -24,7 +24,7 @@ const banner = {
     warning: {
         variant: "warning",
         messageKey: "bank.banner.warning",
-        ctaKey: "bank.banner.ctaAddFunds",
+        ctaKey: "bank.banner.ctaManageBank",
     },
     not_deployed: {
         variant: "warning",

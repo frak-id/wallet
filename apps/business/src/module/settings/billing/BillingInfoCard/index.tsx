@@ -40,6 +40,9 @@ export function BillingInfoCard() {
                             />
                         </Inline>
                     </DetailRow>
+                    <Text variant="caption" color="tertiary">
+                        {t("settings.billing.info.missingHint")}
+                    </Text>
                     <div>
                         <BillingInfoSheet
                             mode="add"

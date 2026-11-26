@@ -58,7 +58,9 @@ export function ModalPause({
             }
             text={
                 isError ? (
-                    <Text color="error">{t("campaigns.actions.error")}</Text>
+                    <Text color="error">
+                        {t("campaigns.actions.errorPause")}
+                    </Text>
                 ) : undefined
             }
             cancel={
@@ -131,7 +133,9 @@ export function ModalResume({
             }
             text={
                 isError ? (
-                    <Text color="error">{t("campaigns.actions.error")}</Text>
+                    <Text color="error">
+                        {t("campaigns.actions.errorResume")}
+                    </Text>
                 ) : undefined
             }
             cancel={
@@ -204,7 +208,9 @@ export function ModalArchive({
             }
             text={
                 isError ? (
-                    <Text color="error">{t("campaigns.actions.error")}</Text>
+                    <Text color="error">
+                        {t("campaigns.actions.errorArchive")}
+                    </Text>
                 ) : undefined
             }
             cancel={
@@ -277,7 +283,9 @@ export function ModalDelete({
             }
             text={
                 isError ? (
-                    <Text color="error">{t("campaigns.actions.error")}</Text>
+                    <Text color="error">
+                        {t("campaigns.actions.errorDelete")}
+                    </Text>
                 ) : undefined
             }
             cancel={

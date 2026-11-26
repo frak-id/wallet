@@ -432,6 +432,7 @@ export function ProductsCampaign() {
             formId={FORM_ID}
             isValid={isValid}
             isPending={saveCampaign.isPending}
+            isSaved={saveCampaign.isSuccess && !form.formState.isDirty}
             onSaveDraft={form.handleSubmit(persist)}
             onClose={() => form.reset(defaultValues)}
             hasUnsavedChanges={form.formState.isDirty}

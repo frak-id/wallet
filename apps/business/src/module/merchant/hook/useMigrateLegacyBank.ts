@@ -8,6 +8,7 @@ import {
     merchantBankQueryKey,
 } from "@/module/merchant/queries/queryKeys";
 import { legacyCampaignBankAbi } from "@/module/merchant/utils/legacyBanks";
+import { walletPromptMetadata } from "@/module/merchant/utils/walletPromptMetadata";
 
 type MigrateLegacyBankParams = {
     oldBankAddress: Address;
@@ -72,21 +73,10 @@ export function useMigrateLegacyBank({ merchantId }: { merchantId: string }) {
 
             const { hash } = await sendTx({
                 tx: txs,
-                metadata: {
-                    header: {
-                        title: "Migrate legacy bank",
-                    },
-                    i18n: {
-                        fr: {
-                            "sdk.modal.sendTransaction.description":
-                                "Migrer les fonds de l'ancienne banque vers la nouvelle",
-                        },
-                        en: {
-                            "sdk.modal.sendTransaction.description":
-                                "Migrate funds from legacy bank to new bank",
-                        },
-                    },
-                },
+                metadata: await walletPromptMetadata({
+                    titleKey: "funding.walletPrompt.migrate.title",
+                    descriptionKey: "funding.walletPrompt.migrate.description",
+                }),
             });
 
             await waitForTxAndInvalidateQueries({

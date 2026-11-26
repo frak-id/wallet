@@ -17,8 +17,6 @@ import { StatusLegendBar } from "./StatusLegendBar";
 
 const columnHelper = createDataTableColumnHelper<OverviewTopCampaign>();
 
-const numberFormatter = new Intl.NumberFormat("en-US");
-
 const badgeVariantForStatus: Record<
     OverviewTopCampaign["status"],
     "success" | "warning" | "disabled" | "neutral"
@@ -49,7 +47,11 @@ export function TopCampaignsCard({
     topCampaigns: OverviewTopCampaign[];
     statusBreakdown: OverviewStatusBreakdown;
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const numberFormatter = useMemo(
+        () => new Intl.NumberFormat(i18n.language),
+        [i18n.language]
+    );
     const columns = useMemo(
         () =>
             columnHelper.columns([
@@ -111,7 +113,7 @@ export function TopCampaignsCard({
                     meta: { align: "right" },
                 }),
             ]),
-        [t]
+        [t, numberFormatter]
     );
 
     return (
@@ -123,7 +125,7 @@ export function TopCampaignsCard({
                 <DataTable
                     data={topCampaigns}
                     columns={columns}
-                    emptyMessage={t("common.table.empty")}
+                    emptyMessage={t("campaigns.overview.top.empty")}
                     enableSorting={false}
                 />
                 <StatusLegendBar breakdown={statusBreakdown} />

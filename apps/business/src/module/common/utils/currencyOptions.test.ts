@@ -35,7 +35,6 @@ describe("currencyOptions", () => {
                 "currencyCode",
                 "locale",
                 "provider",
-                "providerDescription",
             ];
 
             for (const group of currencyOptions) {

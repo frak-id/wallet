@@ -5,6 +5,7 @@ import {
 } from "@frak-labs/design-system/components/DataTable";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
@@ -26,7 +27,7 @@ import { membersStore } from "@/stores/membersStore";
 const columnHelper = createDataTableColumnHelper<GetMembersPageItem>();
 
 export function TableMembers() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const filters = membersStore((state) => state.tableFilters);
     const setFilters = membersStore((state) => state.setTableFilters);
     const isDemoMode = useIsDemoMode();
@@ -126,7 +127,7 @@ export function TableMembers() {
                     cell: ({ getValue }) =>
                         new Date(
                             Number.parseInt(getValue(), 10) * 1000
-                        ).toLocaleDateString(),
+                        ).toLocaleDateString(i18n.language),
                 }),
                 columnHelper.accessor("totalInteractions", {
                     enableSorting: true,
@@ -142,7 +143,12 @@ export function TableMembers() {
                     cell: ({ getValue }) => formatAmount(getValue(), currency),
                 }),
             ]),
-        [currency, t]
+        [currency, t, i18n.language]
+    );
+
+    const hasFilters = Boolean(
+        filters.filter?.interactions ||
+            filters.filter?.firstInteractionTimestamp
     );
 
     if (isError) {
@@ -152,7 +158,7 @@ export function TableMembers() {
                 <DataLoadError
                     error={error}
                     reset={() => refetch()}
-                    resourceName="members"
+                    resourceName={t("members.resources.list")}
                 />
             </Stack>
         );
@@ -164,12 +170,19 @@ export function TableMembers() {
 
     return (
         <Stack space="l">
+            <Text variant="bodySmall" color="secondary">
+                {t("members.intro")}
+            </Text>
             <TableMembersFilters />
             {page && (
                 <DataTable
                     data={page.members}
                     columns={columns}
-                    emptyMessage={t("common.table.empty")}
+                    emptyMessage={
+                        hasFilters
+                            ? t("members.empty.filtered")
+                            : t("members.empty.none")
+                    }
                     emptyPlaceholder="–"
                     manualPagination={true}
                     manualSorting={true}

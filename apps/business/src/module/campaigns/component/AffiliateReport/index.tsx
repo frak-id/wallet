@@ -47,11 +47,19 @@ export function AffiliateReport({ from, to }: WindowProps) {
         [i18n.language]
     );
 
+    const percentFormatter = useMemo(
+        () =>
+            new Intl.NumberFormat(i18n.language, {
+                style: "percent",
+                maximumFractionDigits: 1,
+            }),
+        [i18n.language]
+    );
+
     const { actions, clicks, brand } = data;
     const truncated = actions.truncated || clicks.truncated;
     // clicks → actions conversion (guard div-by-zero).
-    const conversionRate =
-        clicks.total > 0 ? (actions.total / clicks.total) * 100 : 0;
+    const conversionRate = clicks.total > 0 ? actions.total / clicks.total : 0;
 
     return (
         <div className={styles.page}>
@@ -91,7 +99,7 @@ export function AffiliateReport({ from, to }: WindowProps) {
                     />
                     <KpiCard
                         label={t("campaigns.affiliateReport.kpi.conversion")}
-                        amount={`${conversionRate.toFixed(1)}%`}
+                        amount={percentFormatter.format(conversionRate)}
                     />
                 </Tiles>
 
