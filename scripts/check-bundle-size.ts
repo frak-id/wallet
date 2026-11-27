@@ -84,16 +84,19 @@ function resolveEntry(
     } catch {
         return { reason: "output directory does not exist" };
     }
-    const prefix = `${entry.name}-`;
+    // Vite names chunks `<name>-<hash>.js`, tsdown `<name>.<hash>.js`.
+    const prefixes = [`${entry.name}-`, `${entry.name}.`];
     const matches =
         entry.kind === "file"
             ? files.filter((f) => f === entry.name)
-            : files.filter(
-                  (f) =>
-                      f.startsWith(prefix) &&
-                      f.endsWith(".js") &&
-                      f.length ===
-                          prefix.length + CHUNK_HASH_LENGTH + ".js".length
+            : files.filter((f) =>
+                  prefixes.some(
+                      (prefix) =>
+                          f.startsWith(prefix) &&
+                          f.endsWith(".js") &&
+                          f.length ===
+                              prefix.length + CHUNK_HASH_LENGTH + ".js".length
+                  )
               );
     if (matches.length === 0) {
         return { reason: `no ${entry.kind} "${entry.name}" in the output` };
