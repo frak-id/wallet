@@ -1,0 +1,11 @@
+language js
+
+or {
+    `import $_ from $source`,
+    `export { $_ } from $source`,
+    `export * from $source`,
+    `import($source)`
+} where {
+    $source <: r"[\"'].*i18n/defaults[\"']",
+    register_diagnostic(span=$source, message="i18n/defaults holds every component's copy for the npm export; a component importing it ships all of it in its CDN chunk. Import its own block instead (@/i18n/<block>).")
+}
