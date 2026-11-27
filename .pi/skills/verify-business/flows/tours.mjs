@@ -130,11 +130,20 @@ export default async ({ page, step, expect }) => {
 
     await openFromSidebar(page, "/members");
     await openTour(3);
-    await walkTour("members", [null, null, "members-push-tab"]);
+    await walkTour("members", [
+        "members-table",
+        "members-filters",
+        "members-push-tab",
+    ]);
 
     await openFromSidebar(page, "/campaigns/list");
     await openTour(4);
-    await walkTour("campaigns-list", [null, null, null, "new-campaign"]);
+    await walkTour("campaigns-list", [
+        "campaigns-tabs",
+        "campaigns-table",
+        "campaigns-table",
+        "new-campaign",
+    ]);
 
     await page.getByRole("tab", { name: t.draft }).click();
     await page.getByRole("cell", { name: DRAFT, exact: true }).click();
