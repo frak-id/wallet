@@ -95,8 +95,10 @@ function ActivePurchases({
                                     <s-badge tone={variant}>{status}</s-badge>
                                 </s-table-cell>
                                 <s-table-cell>
-                                    {purchase.txHash ??
-                                        t("status.purchase.notAvailableYet")}
+                                    {/* Table cells never wrap: a full hash pushes the Actions column out of the card. */}
+                                    {purchase.txHash
+                                        ? `${purchase.txHash.slice(0, 10)}…${purchase.txHash.slice(-8)}`
+                                        : t("status.purchase.notAvailableYet")}
                                 </s-table-cell>
                                 <s-table-cell>
                                     {purchase.createdAt
