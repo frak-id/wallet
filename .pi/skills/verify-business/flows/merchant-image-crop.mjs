@@ -51,7 +51,9 @@ export default async ({ page, merchantId, step, expect }) => {
     await page
         .locator(`a[href$="/m/${merchantId}/merchant/customize"]`)
         .click();
-    await page.getByRole("tab", { name: "App listing" }).click();
+    await page
+        .getByRole("tab", { name: "App listing", exact: true })
+        .click();
     await expect(page).toHaveURL(/\/merchant\/explorer$/);
     await step("explorer");
 
