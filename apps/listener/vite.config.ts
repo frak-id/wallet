@@ -78,8 +78,8 @@ const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
 
 // Hard ceiling on the gzipped eager boot JS (transitive static-import closure
 // from the entry, walked by `assertEagerBundleBudget`). Sized on the deploy
-// build (~28 KB with OPEN_PANEL_* set, which pulls OpenPanel into `common`);
-// without those env vars, as in CI, it measures ~24.5 KB.
+// build (~28 KB): OPEN_PANEL_* pulls OpenPanel into `common` (+3 KB), and CI
+// sets it too. Without it the build measures ~24.5 KB.
 const EAGER_JS_BUDGET_GZIP = 29 * 1024;
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
