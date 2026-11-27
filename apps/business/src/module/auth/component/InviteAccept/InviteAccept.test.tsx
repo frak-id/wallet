@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { AuthError } from "@/module/auth/utils/authError";
+import { AuthError, toAuthError } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 
@@ -269,5 +269,41 @@ describe("InviteAccept", () => {
         );
         const submit = screen.getByText("auth.invite.submit").closest("button");
         expect(submit).toBeDisabled();
+    });
+
+    test("an unreachable backend on preview says to retry, not to check a password", () => {
+        mockPreview.mockReturnValue(
+            previewState({
+                isError: true,
+                error: toAuthError(
+                    { status: 503, value: new TypeError("Failed to fetch") },
+                    "x"
+                ),
+            })
+        );
+        mockClaim.mockReturnValue({ mutate: vi.fn(), isPending: false });
+
+        render(<InviteAccept token="tok" />);
+
+        expect(screen.getByText("errors.auth.unavailable")).toBeInTheDocument();
+        expect(
+            screen.queryByText("auth.invite.genericError")
+        ).not.toBeInTheDocument();
+    });
+
+    test.each([
+        [400, "auth.invite.genericError"],
+        [503, "errors.auth.unavailable"],
+    ])("a claim failing with %i shows %s", (status, message) => {
+        mockPreview.mockReturnValue(previewState({ data: VALID_PREVIEW }));
+        mockClaim.mockReturnValue({
+            mutate: vi.fn(),
+            isPending: false,
+            error: toAuthError({ status, value: "Backend text" }, "x"),
+        });
+
+        render(<InviteAccept token="tok" />);
+
+        expect(screen.getByText(message)).toBeInTheDocument();
     });
 });

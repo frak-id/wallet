@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractAuthErrorMessage } from "./authError";
+import {
+    extractAuthErrorMessage,
+    isRejectedInput,
+    toAuthError,
+} from "./authError";
 
 describe("extractAuthErrorMessage", () => {
     it("reads the `error` field of an Eden HttpError payload", () => {
@@ -28,5 +32,31 @@ describe("extractAuthErrorMessage", () => {
             "generic"
         );
         expect(extractAuthErrorMessage(undefined, "generic")).toBe("generic");
+    });
+});
+
+describe("isRejectedInput", () => {
+    it.each([
+        [400, true],
+        [401, true],
+        [403, true],
+        [429, false],
+        [500, false],
+        [503, false],
+    ])("classifies an Eden %i as rejected input: %s", (status, expected) => {
+        const error = toAuthError({ status, value: "Backend text" }, "x");
+        expect(isRejectedInput(error)).toBe(expected);
+    });
+
+    it("treats an unreachable backend (Eden's 503 TypeError) as not rejected", () => {
+        const error = toAuthError(
+            { status: 503, value: new TypeError("Failed to fetch") },
+            "x"
+        );
+        expect(isRejectedInput(error)).toBe(false);
+    });
+
+    it("is false for an error with no HTTP status", () => {
+        expect(isRejectedInput(new Error("boom"))).toBe(false);
     });
 });
