@@ -20,14 +20,23 @@ function js(value: unknown): string {
 const JSDELIVR_ORIGIN = "https://cdn.jsdelivr.net";
 
 /**
- * The pointer's own fetch is no-cors, so its preconnect must not carry
- * `crossorigin`; the shim's `import()` is CORS-mode, so jsDelivr's must.
+ * A preconnect serves only its own credentials mode: the pointer script and
+ * the wallet navigation send credentials (no `crossorigin`); the jsDelivr
+ * `import()` and the backend fetch do not (`crossorigin`).
  */
-function preconnectLinks(pointerOrigin: string): string {
-    return `<link rel="dns-prefetch" href="${pointerOrigin}">
+function preconnectLinks(pointerOrigin: string, env: FrakEnvironment): string {
+    const links = `<link rel="dns-prefetch" href="${pointerOrigin}">
 <link rel="preconnect" href="${pointerOrigin}">
 <link rel="dns-prefetch" href="${JSDELIVR_ORIGIN}">
 <link rel="preconnect" href="${JSDELIVR_ORIGIN}" crossorigin>`;
+    if (typeof env === "string") return links;
+    const wallet = new URL(env.wallet).origin;
+    const backend = new URL(env.backend).origin;
+    return `${links}
+<link rel="dns-prefetch" href="${wallet}">
+<link rel="preconnect" href="${wallet}">
+<link rel="dns-prefetch" href="${backend}">
+<link rel="preconnect" href="${backend}" crossorigin>`;
 }
 
 /**
@@ -50,7 +59,7 @@ export function buildFrakSnippet({
     componentsUrl: string;
 }): string {
     return `<!-- Frak SDK -->
-${preconnectLinks(new URL(componentsUrl).origin)}
+${preconnectLinks(new URL(componentsUrl).origin, env)}
 <link rel="modulepreload" href="${new URL("/loader.js", componentsUrl)}">
 <script src="${componentsUrl}" defer="defer" onerror="${onErrorFallback(componentsUrl)}"></script>
 <script type="text/javascript">

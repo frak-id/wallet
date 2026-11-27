@@ -121,10 +121,10 @@ class Frak_Frontend {
 	}
 
 	/**
-	 * DNS-prefetch / preconnect hints for the pointer and jsDelivr. The pointer
-	 * script is a classic no-cors fetch, so its preconnect must NOT carry
-	 * `crossorigin`; the shim's `import()` is a CORS-mode module fetch, so
-	 * jsDelivr's must — a socket is only reused when the credentials mode matches.
+	 * Resource hints for the SDK hosts, wallet and backend. A preconnect serves
+	 * only its own credentials mode: the pointer script and the wallet navigation
+	 * send credentials (no `crossorigin`); the jsDelivr `import()` and the backend
+	 * fetch do not (`crossorigin`).
 	 *
 	 * @param array<int, string|array<string, string>> $hints    Existing hints from core.
 	 * @param string                                   $relation Relation type being filtered.
@@ -134,11 +134,18 @@ class Frak_Frontend {
 		if ( 'dns-prefetch' === $relation ) {
 			$hints[] = Frak_Sdk_Urls::pointer_host();
 			$hints[] = Frak_Sdk_Urls::JSDELIVR_HOST;
+			$hints[] = Frak_Env::wallet_origin();
+			$hints[] = Frak_Env::backend_base();
 		}
 		if ( 'preconnect' === $relation ) {
 			$hints[] = Frak_Sdk_Urls::pointer_host();
 			$hints[] = array(
 				'href'        => Frak_Sdk_Urls::JSDELIVR_HOST,
+				'crossorigin' => 'anonymous',
+			);
+			$hints[] = Frak_Env::wallet_origin();
+			$hints[] = array(
+				'href'        => Frak_Env::backend_base(),
 				'crossorigin' => 'anonymous',
 			);
 		}

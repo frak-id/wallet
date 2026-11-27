@@ -62,8 +62,11 @@ export async function createIframe({
 
     // Publish the environment before anything reads it back: `initClientId`
     // below already needs the backend origin.
-    // Set src BEFORE appending to DOM to avoid about:blank load event
     const walletUrl = setEnvironment(config?.env).wallet;
+
+    // For partner sites whose <head> does not warm them.
+    preconnect(walletUrl, false);
+    preconnect(getBackendUrl(), true);
 
     // Key generation happens here, once ever per browser, before `iframe.src`
     // is assigned — every other `getClientId()` call site runs after this
@@ -76,12 +79,8 @@ export async function createIframe({
         return undefined;
     });
 
-    // Preconnect to the wallet + backend origins so the handshake doesn't pay
-    // for a cold DNS/TLS round-trip on partner sites that didn't warm them.
-    preconnect(walletUrl);
-    preconnect(getBackendUrl());
-
     observeIframeBoot(iframe, walletUrl);
+    // Set src BEFORE appending to DOM to avoid about:blank load event
     iframe.src = buildListenerUrl({
         walletUrl,
         clientId,
@@ -241,9 +240,10 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
 /**
  * Inject a `<link rel="preconnect">` for the given origin. Idempotent — browsers
  * de-duplicate preconnects per origin automatically, but we also guard on a data
- * attribute to avoid spamming the <head> in SPA re-inits.
+ * attribute to avoid spamming the <head> in SPA re-inits. A socket is only reused
+ * by requests in the same credentials mode, hence `crossOrigin`.
  */
-function preconnect(url: string): void {
+function preconnect(url: string, crossOrigin: boolean): void {
     if (typeof document === "undefined") return;
     try {
         const origin = new URL(url).origin;
@@ -252,7 +252,7 @@ function preconnect(url: string): void {
         const link = document.createElement("link");
         link.rel = "preconnect";
         link.href = origin;
-        link.crossOrigin = "";
+        if (crossOrigin) link.crossOrigin = "";
         link.dataset.frakPreconnect = origin;
         document.head.appendChild(link);
     } catch {

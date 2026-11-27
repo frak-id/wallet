@@ -5,7 +5,12 @@ import { describe, expect, it } from "vitest";
 const BLOCKS_DIR = resolve(__dirname, "../extensions/theme-components/blocks");
 
 // Literals generated into listener.liquid by scripts/stageArtifacts.ts, never merchant input.
-const STAGE_CONSTANTS = new Set(["frak_sdk_origin", "frak_sdk_fallback_tag"]);
+const STAGE_CONSTANTS = new Set([
+    "frak_sdk_origin",
+    "frak_sdk_fallback_tag",
+    "frak_wallet_origin",
+    "frak_backend_origin",
+]);
 
 type Finding = { line: number; expression: string; fix: string };
 

@@ -29,6 +29,47 @@ describe("buildFrakSnippet", () => {
         );
     });
 
+    it("preconnects to the wallet without crossorigin and to the backend with it", () => {
+        const snippet = buildFrakSnippet(BASE);
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://wallet.frak.id">'
+        );
+        expect(snippet).toContain(
+            '<link rel="dns-prefetch" href="https://wallet.frak.id">'
+        );
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://backend.frak.id" crossorigin>'
+        );
+        expect(snippet).toContain(
+            '<link rel="dns-prefetch" href="https://backend.frak.id">'
+        );
+    });
+
+    it("hints the env's own origins, reduced to the origin", () => {
+        const snippet = buildFrakSnippet({
+            ...BASE,
+            env: {
+                wallet: "https://wallet-dev.frak.id/",
+                backend: "https://backend.gcp-dev.frak.id",
+            },
+        });
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://wallet-dev.frak.id">'
+        );
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://backend.gcp-dev.frak.id" crossorigin>'
+        );
+        expect(snippet).not.toContain('href="https://wallet.frak.id"');
+    });
+
+    it("adds no wallet or backend hint for a preset name", () => {
+        const snippet = buildFrakSnippet({ ...BASE, env: "dev" });
+        expect(snippet).not.toContain(
+            '<link rel="preconnect" href="https://wallet'
+        );
+        expect(snippet).toContain('env: "dev"');
+    });
+
     it("preconnects to the dev pointer when that is the resolved URL", () => {
         const snippet = buildFrakSnippet({ ...BASE, componentsUrl: DEV_URL });
         expect(snippet).toContain(
