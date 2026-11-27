@@ -2921,7 +2921,7 @@
             },
             "actions": {
                 "title": "Actions on a campaign",
-                "body": "Open the row menu to act on a campaign. Edit and Delete are for drafts, Pause for active campaigns, Resume for paused ones."
+                "body": "Hover a row to show its ⋯ menu, which also opens results and settings. Edit and Delete are for drafts, Pause for active campaigns, Resume for paused ones, Archive for active or paused ones."
             },
             "bulk": {
                 "title": "Several campaigns at once",
@@ -2941,11 +2941,7 @@
         "storeWizard": {
             "details": {
                 "title": "Add a store",
-                "body": "Enter your store name, currency and domain. If a TXT record is shown, add it to prove the domain is yours, then select Continue."
-            },
-            "confirm": {
-                "title": "Confirm your store",
-                "body": "Check the details, then select Register my store. You may be asked to confirm in your Frak wallet; no money moves."
+                "body": "Enter your store name and domain, then choose its currency. If a TXT record is shown, add it to prove the domain is yours, then select Continue. On the next screen, check the details and select Register my store. You may be asked to confirm in your Frak wallet; no money moves."
             }
         },
         "members": {
@@ -2955,7 +2951,7 @@
             },
             "filters": {
                 "title": "Filters",
-                "body": "Use the date button to pick when customers joined. Use Filters to set a minimum or maximum number of interactions."
+                "body": "Use Date range to pick when customers joined, and Filters to set a minimum or maximum number of interactions."
             },
             "push": {
                 "title": "Push notifications",
@@ -2998,10 +2994,6 @@
             "team": {
                 "title": "Team",
                 "body": "Add admins by e-mail or by Frak wallet address."
-            },
-            "close": {
-                "title": "Back to your stores",
-                "body": "Select the close button (X) to go back to My stores. Save your changes first."
             }
         },
         "setupStatus": {
@@ -3023,11 +3015,7 @@
         "billing": {
             "info": {
                 "title": "Invoice information",
-                "body": "Add your company name, VAT number, address and invoice email. They appear on all your invoices."
-            },
-            "history": {
-                "title": "Invoices and deposits",
-                "body": "Once your invoice information is saved, your invoices and deposits are listed here in two tabs. Select the download icon to get a PDF."
+                "body": "Add your company name, VAT number, address and invoice email. They appear on all your invoices. Once saved, your invoices and deposits are listed below this card, in two tabs. Select the download icon to get a PDF."
             }
         },
         "campaignWizardBudget": {

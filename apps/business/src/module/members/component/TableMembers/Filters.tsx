@@ -70,7 +70,7 @@ export function TableMembersFilters() {
     );
 
     return (
-        <Inline space="m" align="right">
+        <Inline space="m" align="right" data-tour="members-filters">
             <DateRangePopover
                 value={dateRange}
                 onChange={(range) => {

@@ -56,7 +56,7 @@ export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
         }));
 
     return (
-        <Card radius="m">
+        <Card radius="m" data-tour="campaigns-journey">
             <Tabs defaultValue="website">
                 <Stack space="m">
                     <TabsList fullWidth>

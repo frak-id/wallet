@@ -2921,7 +2921,7 @@
             },
             "actions": {
                 "title": "Actions sur une campagne",
-                "body": "Ouvrez le menu de la ligne pour agir sur une campagne. Modifier et Supprimer concernent les brouillons, Mettre en pause les campagnes actives, Reprendre celles en pause."
+                "body": "Survolez une ligne pour faire apparaître son menu ⋯, qui ouvre aussi les résultats et les réglages. Modifier et Supprimer concernent les brouillons, Mettre en pause les campagnes actives, Reprendre celles en pause, Archiver les campagnes actives ou en pause."
             },
             "bulk": {
                 "title": "Plusieurs campagnes à la fois",
@@ -2941,11 +2941,7 @@
         "storeWizard": {
             "details": {
                 "title": "Ajouter une boutique",
-                "body": "Saisissez le nom, la devise et le domaine de votre boutique. Si un enregistrement TXT s'affiche, ajoutez-le pour prouver que le domaine est le vôtre, puis sélectionnez Continuer."
-            },
-            "confirm": {
-                "title": "Confirmez votre boutique",
-                "body": "Vérifiez les informations, puis sélectionnez Enregistrer ma boutique. Une confirmation dans votre porte-monnaie Frak peut être demandée ; aucun argent n'est déplacé."
+                "body": "Saisissez le nom et le domaine de votre boutique, puis choisissez sa devise. Si un enregistrement TXT s'affiche, ajoutez-le pour prouver que le domaine est le vôtre, puis sélectionnez Continuer. À l'écran suivant, vérifiez les informations et sélectionnez Enregistrer ma boutique. Une confirmation dans votre porte-monnaie Frak peut être demandée ; aucun argent n'est déplacé."
             }
         },
         "members": {
@@ -2955,7 +2951,7 @@
             },
             "filters": {
                 "title": "Filtres",
-                "body": "Utilisez le bouton de date pour choisir quand les clients sont arrivés. Utilisez Filtres pour fixer un minimum ou un maximum d'interactions."
+                "body": "Utilisez Période pour choisir quand les clients sont arrivés, et Filtres pour fixer un minimum ou un maximum d'interactions."
             },
             "push": {
                 "title": "Notifications push",
@@ -2998,15 +2994,11 @@
             "team": {
                 "title": "Équipe",
                 "body": "Ajoutez des administrateurs par e-mail ou par adresse de porte-monnaie Frak."
-            },
-            "close": {
-                "title": "Retour à vos boutiques",
-                "body": "Sélectionnez le bouton de fermeture (X) pour revenir à Mes boutiques. Enregistrez d'abord vos modifications."
             }
         },
         "setupStatus": {
             "checklist": {
-                "title": "Liste de configuration",
+                "title": "Étapes de configuration",
                 "body": "Chaque étape affiche une coche si elle est faite, un avertissement sinon. Sélectionnez Compléter cette étape pour la faire."
             }
         },
@@ -3023,11 +3015,7 @@
         "billing": {
             "info": {
                 "title": "Informations de facturation",
-                "body": "Ajoutez le nom de votre entreprise, votre numéro de TVA, votre adresse et l'e-mail de facturation. Ils figurent sur toutes vos factures."
-            },
-            "history": {
-                "title": "Factures et dépôts",
-                "body": "Une fois vos informations de facturation enregistrées, vos factures et vos dépôts sont listés ici dans deux onglets. L'icône de téléchargement donne un PDF."
+                "body": "Ajoutez le nom de votre entreprise, votre numéro de TVA, votre adresse et l'e-mail de facturation. Ils figurent sur toutes vos factures. Une fois enregistrées, vos factures et vos dépôts apparaissent sous cette carte, dans deux onglets. Sélectionnez l'icône de téléchargement pour obtenir un PDF."
             }
         },
         "campaignWizardBudget": {

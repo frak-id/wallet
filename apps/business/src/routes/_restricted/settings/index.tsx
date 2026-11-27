@@ -15,8 +15,10 @@ function UsageSettings() {
         <Stack space="l">
             <WalletAddressCard />
             <SecurityCard />
-            <CurrencyCard />
-            <LanguageCard />
+            <Stack space="l" data-tour="settings-preferences">
+                <CurrencyCard />
+                <LanguageCard />
+            </Stack>
             <DemoModeCard />
         </Stack>
     );

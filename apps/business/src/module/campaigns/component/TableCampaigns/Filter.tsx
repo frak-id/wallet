@@ -140,6 +140,7 @@ export function TableCampaignFilters({
                 <TabsList
                     variant="navigation"
                     aria-label={t("campaigns.filter.tabsLabel")}
+                    data-tour="campaigns-tabs"
                 >
                     {tabValues.map((tab) => (
                         <TabsTrigger key={tab} value={tab} variant="navigation">

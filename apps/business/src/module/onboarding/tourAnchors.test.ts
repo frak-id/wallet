@@ -29,7 +29,10 @@ function allSteps() {
         const { result } = renderHook(() => useTours());
         for (const [tourId, tourSteps] of Object.entries(result.current)) {
             for (const step of tourSteps) {
-                steps.push({ key: `${tourId}.${step.id}`, target: step.target });
+                steps.push({
+                    key: `${tourId}.${step.id}`,
+                    target: step.target,
+                });
             }
         }
     }

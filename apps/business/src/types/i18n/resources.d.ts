@@ -2339,12 +2339,8 @@ export default interface Resources {
         "skip": "Skip tour"
       },
       "billing": {
-        "history": {
-          "body": "Once your invoice information is saved, your invoices and deposits are listed here in two tabs. Select the download icon to get a PDF.",
-          "title": "Invoices and deposits"
-        },
         "info": {
-          "body": "Add your company name, VAT number, address and invoice email. They appear on all your invoices.",
+          "body": "Add your company name, VAT number, address and invoice email. They appear on all your invoices. Once saved, your invoices and deposits are listed below this card, in two tabs. Select the download icon to get a PDF.",
           "title": "Invoice information"
         }
       },
@@ -2374,7 +2370,7 @@ export default interface Resources {
       },
       "campaignsList": {
         "actions": {
-          "body": "Open the row menu to act on a campaign. Edit and Delete are for drafts, Pause for active campaigns, Resume for paused ones.",
+          "body": "Hover a row to show its ⋯ menu, which also opens results and settings. Edit and Delete are for drafts, Pause for active campaigns, Resume for paused ones, Archive for active or paused ones.",
           "title": "Actions on a campaign"
         },
         "bulk": {
@@ -2410,7 +2406,7 @@ export default interface Resources {
       },
       "members": {
         "filters": {
-          "body": "Use the date button to pick when customers joined. Use Filters to set a minimum or maximum number of interactions.",
+          "body": "Use Date range to pick when customers joined, and Filters to set a minimum or maximum number of interactions.",
           "title": "Filters"
         },
         "list": {
@@ -2467,10 +2463,6 @@ export default interface Resources {
         }
       },
       "storeEdit": {
-        "close": {
-          "body": "Select the close button (X) to go back to My stores. Save your changes first.",
-          "title": "Back to your stores"
-        },
         "connections": {
           "body": "Order tracking tells Frak about your orders, which it needs to pay rewards. Domains, mobile apps and the newsletter link are here too.",
           "title": "Connections"
@@ -2485,12 +2477,8 @@ export default interface Resources {
         }
       },
       "storeWizard": {
-        "confirm": {
-          "body": "Check the details, then select Register my store. You may be asked to confirm in your Frak wallet; no money moves.",
-          "title": "Confirm your store"
-        },
         "details": {
-          "body": "Enter your store name, currency and domain. If a TXT record is shown, add it to prove the domain is yours, then select Continue.",
+          "body": "Enter your store name and domain, then choose its currency. If a TXT record is shown, add it to prove the domain is yours, then select Continue. On the next screen, check the details and select Register my store. You may be asked to confirm in your Frak wallet; no money moves.",
           "title": "Add a store"
         }
       },

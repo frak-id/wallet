@@ -20,11 +20,7 @@ export function BillingTab() {
             <div data-tour="billing-info">
                 <BillingInfoCard />
             </div>
-            {hasInfo && (
-                <div data-tour="billing-history">
-                    <BillingTable />
-                </div>
-            )}
+            {hasInfo && <BillingTable />}
         </>
     );
 }

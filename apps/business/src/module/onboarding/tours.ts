@@ -184,11 +184,15 @@ export function useTours(): Record<TourId, TourStep[]> {
                 },
                 {
                     id: "journey",
+                    target: "campaigns-journey",
+                    side: "top",
                     title: t("onboarding.campaignsOverview.journey.title"),
                     body: t("onboarding.campaignsOverview.journey.body"),
                 },
                 {
                     id: "top",
+                    target: "campaigns-top",
+                    side: "top",
                     title: t("onboarding.campaignsOverview.top.title"),
                     body: t("onboarding.campaignsOverview.top.body"),
                 },
@@ -203,16 +207,22 @@ export function useTours(): Record<TourId, TourStep[]> {
             campaignsList: [
                 {
                     id: "list",
+                    target: "campaigns-tabs",
+                    side: "bottom",
                     title: t("onboarding.campaignsList.list.title"),
                     body: t("onboarding.campaignsList.list.body"),
                 },
                 {
                     id: "actions",
+                    target: "campaigns-table",
+                    side: "top",
                     title: t("onboarding.campaignsList.actions.title"),
                     body: t("onboarding.campaignsList.actions.body"),
                 },
                 {
                     id: "bulk",
+                    target: "campaigns-table",
+                    side: "top",
                     title: t("onboarding.campaignsList.bulk.title"),
                     body: t("onboarding.campaignsList.bulk.body"),
                 },
@@ -265,23 +275,24 @@ export function useTours(): Record<TourId, TourStep[]> {
             storeWizard: [
                 {
                     id: "details",
+                    target: "store-details",
+                    side: "left",
                     title: t("onboarding.storeWizard.details.title"),
                     body: t("onboarding.storeWizard.details.body"),
-                },
-                {
-                    id: "confirm",
-                    title: t("onboarding.storeWizard.confirm.title"),
-                    body: t("onboarding.storeWizard.confirm.body"),
                 },
             ],
             members: [
                 {
                     id: "list",
+                    target: "members-table",
+                    side: "top",
                     title: t("onboarding.members.list.title"),
                     body: t("onboarding.members.list.body"),
                 },
                 {
                     id: "filters",
+                    target: "members-filters",
+                    side: "bottom",
                     title: t("onboarding.members.filters.title"),
                     body: t("onboarding.members.filters.body"),
                 },
@@ -296,6 +307,8 @@ export function useTours(): Record<TourId, TourStep[]> {
             push: [
                 {
                     id: "history",
+                    target: "push-table",
+                    side: "top",
                     title: t("onboarding.push.history.title"),
                     body: t("onboarding.push.history.body"),
                 },
@@ -337,38 +350,41 @@ export function useTours(): Record<TourId, TourStep[]> {
                 },
                 {
                     id: "connections",
+                    target: "edit-tab-connections",
+                    side: "bottom",
                     title: t("onboarding.storeEdit.connections.title"),
                     body: t("onboarding.storeEdit.connections.body"),
                 },
                 {
                     id: "team",
+                    target: "edit-tab-team",
+                    side: "bottom",
                     title: t("onboarding.storeEdit.team.title"),
                     body: t("onboarding.storeEdit.team.body"),
-                },
-                {
-                    id: "close",
-                    title: t("onboarding.storeEdit.close.title"),
-                    body: t("onboarding.storeEdit.close.body"),
                 },
             ],
             setupStatus: [
                 {
                     id: "checklist",
+                    target: "setup-checklist",
+                    side: "top",
                     title: t("onboarding.setupStatus.checklist.title"),
                     body: t("onboarding.setupStatus.checklist.body"),
                 },
             ],
             settings: [
                 {
-                    id: "preferences",
-                    title: t("onboarding.settings.preferences.title"),
-                    body: t("onboarding.settings.preferences.body"),
-                },
-                {
                     id: "security",
                     target: "settings-security",
                     title: t("onboarding.settings.security.title"),
                     body: t("onboarding.settings.security.body"),
+                },
+                {
+                    id: "preferences",
+                    target: "settings-preferences",
+                    side: "top",
+                    title: t("onboarding.settings.preferences.title"),
+                    body: t("onboarding.settings.preferences.body"),
                 },
             ],
             billing: [
@@ -378,13 +394,6 @@ export function useTours(): Record<TourId, TourStep[]> {
                     side: "bottom",
                     title: t("onboarding.billing.info.title"),
                     body: t("onboarding.billing.info.body"),
-                },
-                {
-                    id: "history",
-                    target: "billing-history",
-                    side: "top",
-                    title: t("onboarding.billing.history.title"),
-                    body: t("onboarding.billing.history.body"),
                 },
             ],
         }),

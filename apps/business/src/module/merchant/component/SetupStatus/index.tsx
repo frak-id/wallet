@@ -24,7 +24,7 @@ export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
 
     return (
         <FormLayout>
-            <Card>
+            <Card data-tour="setup-checklist">
                 <CardHeader>
                     <CardTitle>{t("merchant.setupStatus.title")}</CardTitle>
                 </CardHeader>

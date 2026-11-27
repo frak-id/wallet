@@ -117,7 +117,7 @@ export function TopCampaignsCard({
     );
 
     return (
-        <Card radius="m">
+        <Card radius="m" data-tour="campaigns-top">
             <Stack space="m">
                 <Text as="h2" variant="bodySmall" color="secondary">
                     {t("campaigns.overview.top.title")}

@@ -53,7 +53,7 @@ export function MerchantDetailsStep({
     });
 
     return (
-        <Stack space="l">
+        <Stack space="l" data-tour="store-details">
             <WizardFieldCard>
                 <FormField
                     control={control}

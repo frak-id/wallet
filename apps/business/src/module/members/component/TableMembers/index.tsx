@@ -175,27 +175,29 @@ export function TableMembers() {
             </Text>
             <TableMembersFilters />
             {page && (
-                <DataTable
-                    data={page.members}
-                    columns={columns}
-                    emptyMessage={
-                        hasFilters
-                            ? t("members.empty.filtered")
-                            : t("members.empty.none")
-                    }
-                    emptyPlaceholder="–"
-                    manualPagination={true}
-                    manualSorting={true}
-                    rowCount={page.totalResult}
-                    pagination={paginationState}
-                    sorting={sortingState}
-                    onSortingChange={setSorting}
-                    postTable={
-                        page.totalResult > (filters.limit ?? 10) && (
-                            <Pagination totalResult={page.totalResult} />
-                        )
-                    }
-                />
+                <div data-tour="members-table">
+                    <DataTable
+                        data={page.members}
+                        columns={columns}
+                        emptyMessage={
+                            hasFilters
+                                ? t("members.empty.filtered")
+                                : t("members.empty.none")
+                        }
+                        emptyPlaceholder="–"
+                        manualPagination={true}
+                        manualSorting={true}
+                        rowCount={page.totalResult}
+                        pagination={paginationState}
+                        sorting={sortingState}
+                        onSortingChange={setSorting}
+                        postTable={
+                            page.totalResult > (filters.limit ?? 10) && (
+                                <Pagination totalResult={page.totalResult} />
+                            )
+                        }
+                    />
+                </div>
             )}
         </Stack>
     );

@@ -62,7 +62,7 @@ export function TableCampaigns() {
                     columnFilters={columnFilters}
                     setColumnFilters={setColumnFilters}
                 />
-                <Stack space="m">
+                <Stack space="m" data-tour="campaigns-table">
                     {selectedCampaigns.length > 0 && (
                         <CampaignsEditBar
                             merchantId={merchantId}

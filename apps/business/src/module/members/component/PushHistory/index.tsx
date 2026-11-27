@@ -121,18 +121,20 @@ export function PushHistory() {
     return (
         <Stack space="l">
             <PushHistoryFilters />
-            <DataTable
-                data={rows}
-                columns={columns}
-                emptyMessage={
-                    history?.length
-                        ? t("push.history.empty.filtered")
-                        : t("push.history.empty.none")
-                }
-                emptyPlaceholder="–"
-                enableSorting={false}
-                fixedLayout={true}
-            />
+            <div data-tour="push-table">
+                <DataTable
+                    data={rows}
+                    columns={columns}
+                    emptyMessage={
+                        history?.length
+                            ? t("push.history.empty.filtered")
+                            : t("push.history.empty.none")
+                    }
+                    emptyPlaceholder="–"
+                    enableSorting={false}
+                    fixedLayout={true}
+                />
+            </div>
         </Stack>
     );
 }

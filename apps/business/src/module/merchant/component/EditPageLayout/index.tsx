@@ -126,12 +126,14 @@ export function EditPageLayout({
                                     <TabsTrigger
                                         variant="navigation"
                                         value="integration"
+                                        data-tour="edit-tab-connections"
                                     >
                                         {t("merchantEdit.tabs.integration")}
                                     </TabsTrigger>
                                     <TabsTrigger
                                         variant="navigation"
                                         value="team"
+                                        data-tour="edit-tab-team"
                                     >
                                         {t("merchantEdit.tabs.team")}
                                     </TabsTrigger>
