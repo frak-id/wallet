@@ -1,11 +1,18 @@
 import { mockWebLocks } from "@frak-labs/test-foundation";
 import { p256 } from "@noble/curves/nist.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildProofMessage, decodeProof } from "./canonical";
+import {
+    buildProofMessage,
+    bytesToHex,
+    decodeProof,
+    hexToBytes,
+} from "./canonical";
+import { deriveClientId } from "./derive";
 import {
     clearPendingLegacyId,
     ensureIdentityKey,
     getPendingLegacyId,
+    PROBE_PUBLIC_KEY,
     signProof,
 } from "./sign";
 
@@ -110,6 +117,50 @@ describe("sign", () => {
 
             expect(second.clientId).toBe(first.clientId);
             expect(localStorage.getItem("frak-client-id")).toBe(first.clientId);
+        });
+
+        it("reuses the stored public key on a return visit instead of re-deriving it", async () => {
+            const first = await ensureIdentityKey();
+
+            vi.resetModules();
+            const getPublicKey = vi.fn(p256.getPublicKey);
+            vi.doMock("@noble/curves/nist.js", async () => {
+                const actual = await vi.importActual<
+                    typeof import("@noble/curves/nist.js")
+                >("@noble/curves/nist.js");
+                return { ...actual, p256: { ...actual.p256, getPublicKey } };
+            });
+            const returnVisit = await import("./sign");
+            vi.doUnmock("@noble/curves/nist.js");
+            const second = await returnVisit.ensureIdentityKey();
+
+            expect(second.clientId).toBe(first.clientId);
+            expect(getPublicKey).not.toHaveBeenCalled();
+            const proof = await returnVisit.signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: second.clientId,
+            });
+            const key = hexToBytes(
+                localStorage.getItem("frak-client-key") ?? ""
+            );
+            expect(proof ? decodeProof(proof)?.pk : null).toEqual(
+                p256.getPublicKey(key, false)
+            );
+        });
+
+        it("re-derives when the stored public key belongs to another key", async () => {
+            await ensureIdentityKey();
+            const otherKey = hexToBytes("11".repeat(32));
+            localStorage.setItem("frak-client-key", bytesToHex(otherKey));
+
+            const { clientId } = await ensureIdentityKey();
+
+            const otherPublicKey = p256.getPublicKey(otherKey, false);
+            expect(clientId).toBe(await deriveClientId(otherPublicKey));
+            expect(localStorage.getItem("frak-client-pub")).toMatch(
+                new RegExp(`^[0-9a-f]{16}:${bytesToHex(otherPublicKey)}$`)
+            );
         });
 
         it("derives over a legacy id and flags it for migration (§2.6)", async () => {
@@ -267,6 +318,12 @@ describe("sign", () => {
     });
 
     describe("signProof", () => {
+        it("probes WebCrypto with the probe scalar's real public key", () => {
+            expect(PROBE_PUBLIC_KEY).toEqual(
+                p256.getPublicKey(new Uint8Array(32).fill(1), false)
+            );
+        });
+
         it("returns null when no key exists (legacy id, nothing to sign with)", async () => {
             localStorage.setItem("frak-client-id", "legacy-id");
 

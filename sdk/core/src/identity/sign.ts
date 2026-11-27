@@ -13,6 +13,7 @@
 
 import { p256 as pureJsP256 } from "@noble/curves/nist.js";
 import { p256 as webCryptoP256 } from "@noble/curves/webcrypto.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { withBrowserLock } from "../utils/browser/withBrowserLock";
 import {
     buildProofMessage,
@@ -27,6 +28,8 @@ const IDENTITY_KEY_LOCK_NAME = "frak-identity-key";
 
 const CLIENT_ID_KEY = "frak-client-id";
 const CLIENT_KEY_KEY = "frak-client-key";
+/** `<key fingerprint>:<public key hex>`: reused only for the exact key it was derived from. */
+const CLIENT_PUB_KEY = "frak-client-pub";
 /**
  * Set while a legacy id is waiting to be folded into the derived id that
  * replaced it. Written in the same tick as the flip, cleared only once
@@ -74,6 +77,10 @@ type Signer = typeof pureJsP256 | typeof webCryptoP256;
 /** Throwaway scalar and digest-shaped message, for the probe below only. */
 const PROBE_SECRET_KEY = /* @__PURE__ */ new Uint8Array(SECRET_BYTES).fill(1);
 const PROBE_MESSAGE = /* @__PURE__ */ new Uint8Array(32);
+/** `PROBE_SECRET_KEY`'s point, precomputed: deriving it would cost a base-point multiplication. */
+export const PROBE_PUBLIC_KEY: Uint8Array = /* @__PURE__ */ hexToBytes(
+    "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a"
+);
 
 let signerPromise: Promise<Signer> | null = null;
 
@@ -88,10 +95,7 @@ let signerPromise: Promise<Signer> | null = null;
 async function probeSigner(): Promise<Signer> {
     try {
         if (!(await webCryptoP256.isSupported())) return pureJsP256;
-        const probeKey = toPkcs8(
-            PROBE_SECRET_KEY,
-            pureJsP256.getPublicKey(PROBE_SECRET_KEY, false)
-        );
+        const probeKey = toPkcs8(PROBE_SECRET_KEY, PROBE_PUBLIC_KEY);
         await webCryptoP256.sign(PROBE_MESSAGE, probeKey, PKCS8_FORMATS);
         return webCryptoP256;
     } catch {
@@ -138,6 +142,34 @@ function publicKeyFor(privateKey: Uint8Array): Uint8Array {
     const publicKey = pureJsP256.getPublicKey(privateKey, false);
     publicKeyCache = { keyHex, publicKey };
     return publicKey;
+}
+
+function keyFingerprint(privateKey: Uint8Array): string {
+    return bytesToHex(sha256(privateKey)).slice(0, 16);
+}
+
+/** The public key persisted for this exact private key, or `null`. Seeds the cache on a hit. */
+function loadPublicKey(privateKey: Uint8Array): Uint8Array | null {
+    const [, fingerprint, publicKeyHex] =
+        localStorage
+            .getItem(CLIENT_PUB_KEY)
+            ?.match(/^([0-9a-f]{16}):(04[0-9a-f]{128})$/) ?? [];
+    if (!publicKeyHex || fingerprint !== keyFingerprint(privateKey)) {
+        return null;
+    }
+    const publicKey = hexToBytes(publicKeyHex);
+    publicKeyCache = { keyHex: bytesToHex(privateKey), publicKey };
+    return publicKey;
+}
+
+function publicKeyEntry(
+    privateKey: Uint8Array,
+    publicKey: Uint8Array
+): [string, string] {
+    return [
+        CLIENT_PUB_KEY,
+        `${keyFingerprint(privateKey)}:${bytesToHex(publicKey)}`,
+    ];
 }
 
 export type IdentityKeyMaterial = {
@@ -236,6 +268,8 @@ async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
 
     let existingKey: Uint8Array | null;
     let privateKey: Uint8Array;
+    let storedPublicKey: Uint8Array | null;
+    let publicKey: Uint8Array;
     let derivedId: string;
     // Only key load, keygen and derivation are guarded: those are the
     // failures a stored key cannot survive. Storage writes are not, and
@@ -243,9 +277,12 @@ async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
     try {
         existingKey = loadPrivateKey();
         privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
-        derivedId = await deriveClientId(publicKeyFor(privateKey));
+        storedPublicKey = existingKey && loadPublicKey(existingKey);
+        publicKey = storedPublicKey ?? publicKeyFor(privateKey);
+        derivedId = await deriveClientId(publicKey);
     } catch (error) {
         localStorage.removeItem(CLIENT_KEY_KEY);
+        localStorage.removeItem(CLIENT_PUB_KEY);
         publicKeyCache = null;
         throw error;
     }
@@ -253,8 +290,11 @@ async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
     if (existingKey) {
         // Atomicity: the key is authoritative. A missing or mismatched
         // stored id is silently corrected, never trusted.
-        if (storedId !== derivedId) {
-            persistIdentity([[CLIENT_ID_KEY, derivedId]]);
+        if (storedId !== derivedId || !storedPublicKey) {
+            persistIdentity([
+                [CLIENT_ID_KEY, derivedId],
+                publicKeyEntry(privateKey, publicKey),
+            ]);
         }
         // Re-report a legacy id whose merge never confirmed, so the
         // caller retries it on this visit.
@@ -277,6 +317,7 @@ async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
         // Key and id together — never one without the other.
         [CLIENT_KEY_KEY, bytesToHex(privateKey)],
         [CLIENT_ID_KEY, derivedId],
+        publicKeyEntry(privateKey, publicKey),
     ]);
 
     return {
