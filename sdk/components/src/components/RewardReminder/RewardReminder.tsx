@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "preact/hooks";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLang } from "@/hooks/useLang";
-import { componentDefaults } from "@/i18n/defaults";
+import { rewardReminderCopy } from "@/i18n/rewardReminder";
 import { getCountdownLabel } from "@/rewards/countdownLabel";
 import { dismissReminder } from "@/rewards/dismissal";
 import {
@@ -110,7 +110,7 @@ export function RewardReminder({
     if (!model) return null;
     const { pending, countdown, installUrl } = model;
 
-    const copy = componentDefaults[lang].rewardReminder;
+    const copy = rewardReminderCopy[lang];
     const reward = formatFiat(pending.total, resolveRewardCurrency());
     const days = countdown?.days;
     const countdownLabel =

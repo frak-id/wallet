@@ -33,7 +33,7 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { componentDefaults } from "@/i18n/defaults";
+import { postPurchaseCopy } from "@/i18n/postPurchase";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import { ClaimButton, useRefereeClaim } from "./ClaimButton";
@@ -284,7 +284,7 @@ export function PostPurchase({
     const imageUrl = propImageUrl ?? postPurchaseConfig?.imageUrl;
 
     const texts = useMemo(() => {
-        const defaults = componentDefaults[lang].postPurchase;
+        const defaults = postPurchaseCopy[lang];
         const message =
             resolvedVariant === "referee"
                 ? rewardText

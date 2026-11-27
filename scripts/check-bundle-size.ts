@@ -55,6 +55,14 @@ export const BUDGETS: Budget[] = [
         buildCommand: BUILD_SDK,
     },
     {
+        label: "SDK ButtonShare CDN chunk",
+        dir: "sdk/components/cdn",
+        entry: { kind: "chunk", name: "ButtonShare" },
+        maxGzipBytes: 50 * 1024,
+        why: "the lightest component's eager closure; loader.js is ~37 KB of it and has less headroom here than on its own row, so check whether loader.js grew before looking for default strings drifting back into the shared chunk",
+        buildCommand: BUILD_SDK,
+    },
+    {
         label: "Listener sharing page",
         dir: "apps/listener/dist/assets",
         entry: { kind: "chunk", name: "lazy-shared" },
@@ -84,16 +92,19 @@ function resolveEntry(
     } catch {
         return { reason: "output directory does not exist" };
     }
-    const prefix = `${entry.name}-`;
+    // Vite names chunks `<name>-<hash>.js`, tsdown `<name>.<hash>.js`.
+    const prefixes = [`${entry.name}-`, `${entry.name}.`];
     const matches =
         entry.kind === "file"
             ? files.filter((f) => f === entry.name)
-            : files.filter(
-                  (f) =>
-                      f.startsWith(prefix) &&
-                      f.endsWith(".js") &&
-                      f.length ===
-                          prefix.length + CHUNK_HASH_LENGTH + ".js".length
+            : files.filter((f) =>
+                  prefixes.some(
+                      (prefix) =>
+                          f.startsWith(prefix) &&
+                          f.endsWith(".js") &&
+                          f.length ===
+                              prefix.length + CHUNK_HASH_LENGTH + ".js".length
+                  )
               );
     if (matches.length === 0) {
         return { reason: `no ${entry.kind} "${entry.name}" in the output` };

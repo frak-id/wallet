@@ -3,7 +3,7 @@ import { getEnvironment, isMobile, trackEvent } from "@frak-labs/core-sdk";
 import { useEffect, useId, useRef } from "preact/hooks";
 import { useInlineReminderRegistration } from "@/hooks/useInlineReminder";
 import { useRewardSummary } from "@/hooks/useRewardSummary";
-import { componentDefaults } from "@/i18n/defaults";
+import { type AmbassadorCopy, ambassadorCopy } from "@/i18n/ambassador";
 import { getRewardCountdown, type RewardCountdown } from "@/rewards/countdown";
 import {
     fillReminderText,
@@ -55,8 +55,6 @@ export type MyRewardsOverrides = Pick<
 >;
 
 export type MyRewardsView = "claim" | "earned";
-
-type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
 
 /** Unlinked visitors with something waiting claim it; linked ones see what this merchant paid or owes. */
 export function resolveMyRewardsView(
@@ -145,7 +143,7 @@ export function ClaimRewards({
     // Reserved from first paint so the block does not jump to two columns when the QR lands.
     const withStub = isDesktop && wide;
     const { pending } = summary;
-    const copy = componentDefaults[lang].ambassador;
+    const copy = ambassadorCopy[lang];
     const currency = resolveRewardCurrency();
     const total = formatFiat(pending.total, currency);
     const countdown = getRewardCountdown(pending.expiresAt);
@@ -306,7 +304,7 @@ export function EarnedRewards({
     isClientReady,
     onShare,
 }: EarnedRewardsProps) {
-    const copy = componentDefaults[lang].ambassador;
+    const copy = ambassadorCopy[lang];
     const currency = resolveRewardCurrency();
     const { earned, pending } = summary;
     const receivedTotal =

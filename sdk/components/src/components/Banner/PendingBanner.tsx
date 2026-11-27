@@ -15,7 +15,7 @@ import {
 } from "preact/hooks";
 import { useInlineReminderRegistration } from "@/hooks/useInlineReminder";
 import { useLang } from "@/hooks/useLang";
-import { componentDefaults } from "@/i18n/defaults";
+import { bannerCopy } from "@/i18n/banner";
 import { getRewardCountdown } from "@/rewards/countdown";
 import { getCountdownLabel } from "@/rewards/countdownLabel";
 import { dismissReminder } from "@/rewards/dismissal";
@@ -118,7 +118,7 @@ export function PendingBanner({
     }, [isPreview, isClientReady, track]);
 
     const texts = (() => {
-        const defaults = componentDefaults[lang].banner;
+        const defaults = bannerCopy[lang];
         const unlockAt = pending.nextUnlockAt
             ? new Date(pending.nextUnlockAt)
             : undefined;
@@ -227,7 +227,7 @@ export function PendingBanner({
             <button
                 type="button"
                 class={`${pendingClose} frak-banner__close`}
-                aria-label={componentDefaults[lang].banner.dismissLabel}
+                aria-label={bannerCopy[lang].dismissLabel}
                 onClick={onDismiss}
             >
                 ×

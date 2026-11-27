@@ -5,7 +5,7 @@ import { useClientReady } from "@/hooks/useClientReady";
 import { useLang } from "@/hooks/useLang";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { componentDefaults } from "@/i18n/defaults";
+import { buttonWalletCopy } from "@/i18n/buttonWallet";
 import { buildStyleContent } from "@/styles/sharedCss";
 import { safeVibrate } from "@/utils/browser/safeVibrate";
 import { WalletGiftIcon } from "./assets/WalletGiftIcon";
@@ -181,7 +181,7 @@ export function ButtonWallet({
             </style>
             <button
                 type={"button"}
-                aria-label={componentDefaults[lang].buttonWallet.ariaLabel}
+                aria-label={buttonWalletCopy[lang].ariaLabel}
                 part="button"
                 disabled={!isClientReady}
                 class={buttonClass}

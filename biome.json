@@ -152,6 +152,14 @@
             "plugins": ["./scripts/biome/no-navigator-share.grit"]
         },
         {
+            "includes": [
+                "sdk/components/src/**",
+                "!sdk/components/src/i18n/defaults.ts",
+                "!sdk/components/src/i18n/defaults.test.ts"
+            ],
+            "plugins": ["./scripts/biome/no-i18n-defaults-import.grit"]
+        },
+        {
             "includes": ["packages/test-foundation/**"],
             "linter": {
                 "rules": {

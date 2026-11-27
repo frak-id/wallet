@@ -13,7 +13,7 @@ import { subscribeSdkConfig } from "./sdkConfigSubscription";
  * or the backend `/resolve` response) → page `<html lang>` → browser
  * language → `en`. Backed by `useSyncExternalStore` with a bare-string
  * snapshot, so a `frak:config` dispatch only re-renders the component when
- * the resolved language actually changes (see `@/i18n/defaults`).
+ * the resolved language actually changes.
  */
 export function useLang(): Language {
     return useSyncExternalStore(

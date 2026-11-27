@@ -25,7 +25,7 @@ import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { componentDefaults } from "@/i18n/defaults";
+import { bannerCopy } from "@/i18n/banner";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
@@ -250,7 +250,7 @@ export function Banner({
     // Configured wording may carry the `{REWARD}` token — interpolate it the
     // same way ButtonShare and PostPurchase do.
     const texts = useMemo(() => {
-        const defaults = componentDefaults[lang].banner;
+        const defaults = bannerCopy[lang];
         if (mode === "referral") {
             const defaultTitle = reward
                 ? defaults.referralTitleReward
@@ -348,7 +348,7 @@ export function Banner({
                 title={texts.title}
                 description={texts.description}
                 cta={texts.cta}
-                dismissLabel={componentDefaults[lang].banner.dismissLabel}
+                dismissLabel={bannerCopy[lang].dismissLabel}
                 onAction={handleAction}
                 onDismiss={handleDismiss}
                 className={["frak-banner", "frak-banner--inapp", classname]

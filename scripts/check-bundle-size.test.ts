@@ -88,6 +88,21 @@ describe("measureBudget", () => {
         });
     });
 
+    it("matches a chunk whose hash is separated by a dot", () => {
+        const entry = `import{a}from"./dep.ab_d-234.js";export{a};`;
+        const dep = `export const a="${noise(5)}";`;
+        write("ButtonShare.ab-d_234.js", entry);
+        write("dep.ab_d-234.js", dep);
+        const result = measureBudget(
+            budgetFor({ kind: "chunk", name: "ButtonShare" }, 1_000_000),
+            root
+        );
+        expect(result).toMatchObject({
+            kind: "measured",
+            gzipBytes: gz(entry) + gz(dep),
+        });
+    });
+
     it("reports a missing output directory", () => {
         const result = measureBudget(
             budgetFor({ kind: "file", name: "bundle.js" }, 1000),
