@@ -12,7 +12,7 @@ The merchant's campaigns in one table, filtered by status tabs and a search box;
 
 ## How to get to it (user POV)
 
-- Sidebar `Campaigns` → `All campaigns`.
+- Sidebar `Campaigns` → `List`.
 - Header `Breadcrumb` → `Campaigns` from any campaigns page.
 - A link to `/m/$id/campaigns/list?campaign=<id>` opens the list with that sheet already open.
 

@@ -221,7 +221,8 @@
                 "nav": "Vue d'ensemble"
             },
             "campaignsList": {
-                "nav": "Toutes les campagnes"
+                "nav": "Liste",
+                "title": "Toutes les campagnes"
             },
             "campaignsAffiliateReport": {
                 "nav": "Rapport TakeAds"

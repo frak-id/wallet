@@ -2974,7 +2974,8 @@ export default interface Resources {
           "nav": "TakeAds report"
         },
         "campaignsList": {
-          "nav": "All campaigns"
+          "nav": "List",
+          "title": "All campaigns"
         },
         "campaignsOverview": {
           "nav": "Overview"
