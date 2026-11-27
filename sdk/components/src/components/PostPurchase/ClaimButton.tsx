@@ -5,7 +5,7 @@ import { applyRewardPlaceholder } from "@frak-labs/core-sdk/rewards";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useInlineReminderRegistration } from "@/hooks/useInlineReminder";
 import { useRewardSummary } from "@/hooks/useRewardSummary";
-import { componentDefaults } from "@/i18n/defaults";
+import { postPurchaseCopy } from "@/i18n/postPurchase";
 import { getRewardCountdown } from "@/rewards/countdown";
 import { formatFiat, resolveRewardCurrency } from "@/rewards/format";
 import { isClaimable, markClaimStarted } from "@/rewards/rewardSummaryStore";
@@ -54,7 +54,7 @@ export function useRefereeClaim({
         ? formatFiat(claimable.pending.total, resolveRewardCurrency())
         : rewardText;
     const show = isReferee && summary?.linked !== true;
-    const defaults = componentDefaults[lang].postPurchase;
+    const defaults = postPurchaseCopy[lang];
     const fallback = reward
         ? defaults.claimCtaText
         : defaults.claimCtaNoRewardText;

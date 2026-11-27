@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { componentDefaults } from "@/i18n/defaults";
+import { openInAppCopy } from "@/i18n/openInApp";
 import type { OpenInAppButtonProps } from "./types";
 
 /**
@@ -52,7 +52,7 @@ export function OpenInAppButton({
     const resolvedText =
         placement?.components?.openInApp?.text ??
         text ??
-        componentDefaults[lang].openInApp.text;
+        openInAppCopy[lang].text;
 
     if (!isMobile || !shouldRender || isHidden) {
         return null;
@@ -69,7 +69,7 @@ export function OpenInAppButton({
     return (
         <button
             type="button"
-            aria-label={componentDefaults[lang].openInApp.ariaLabel}
+            aria-label={openInAppCopy[lang].ariaLabel}
             disabled={!isClientReady}
             class={buttonClass}
             onClick={handleClick}

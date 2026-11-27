@@ -13,7 +13,7 @@ import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { componentDefaults } from "@/i18n/defaults";
+import { buttonShareCopy } from "@/i18n/buttonShare";
 import type { ButtonShareProps } from "./types";
 
 /**
@@ -93,9 +93,7 @@ export function ButtonShare({
             : targetInteraction;
 
     const resolvedText =
-        componentConfig?.text ??
-        text ??
-        componentDefaults[lang].buttonShare.text;
+        componentConfig?.text ?? text ?? buttonShareCopy[lang].text;
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
     const wantsReward = resolvedText.includes("{REWARD}");

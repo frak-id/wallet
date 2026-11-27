@@ -6,7 +6,10 @@ import {
 } from "@frak-labs/core-sdk";
 import type { Ref } from "preact";
 import { useId, useState } from "preact/hooks";
-import { componentDefaults } from "@/i18n/defaults";
+import {
+    type RewardReminderCopy,
+    rewardReminderCopy,
+} from "@/i18n/rewardReminder";
 import type { RewardCountdown } from "@/rewards/countdown";
 import {
     fillReminderText,
@@ -50,8 +53,6 @@ import {
 
 export const URGENT_FROM_DAYS = 3;
 
-type Copy = (typeof componentDefaults)["en"]["rewardReminder"];
-
 type ReminderCardProps = {
     id: string;
     titleId: string;
@@ -78,7 +79,7 @@ function readBrand(): string {
     );
 }
 
-function deadlineTemplate(days: number, copy: Copy): string {
+function deadlineTemplate(days: number, copy: RewardReminderCopy): string {
     if (days <= 0) return copy.deadlineToday;
     if (days === 1) return copy.deadlineOneDay;
     return copy.deadlineDays;
@@ -91,7 +92,7 @@ function parseDate(iso: string | null): Date | undefined {
 
 function unlockNoteText(
     pending: PendingRewardSummary,
-    copy: Copy,
+    copy: RewardReminderCopy,
     lang: Language
 ): string | undefined {
     const date =
@@ -106,7 +107,7 @@ function unlockNoteText(
 
 function breakdownText(
     pending: PendingRewardSummary,
-    copy: Copy
+    copy: RewardReminderCopy
 ): string | undefined {
     const currency = resolveRewardCurrency();
     if (
@@ -125,7 +126,7 @@ function breakdownText(
     ].join(" · ");
 }
 
-function DayTile({ days, copy }: { days: number; copy: Copy }) {
+function DayTile({ days, copy }: { days: number; copy: RewardReminderCopy }) {
     const urgent = days <= URGENT_FROM_DAYS;
     return (
         <p class={classes(tile, urgent && tileUrgent)}>
@@ -147,7 +148,7 @@ function DayTile({ days, copy }: { days: number; copy: Copy }) {
 }
 
 type FooterProps = {
-    copy: Copy;
+    copy: RewardReminderCopy;
     installUrl: string | undefined;
     onLater: () => void;
 };
@@ -235,7 +236,7 @@ export function ReminderCard({
     onLater,
 }: ReminderCardProps) {
     const amountId = useId();
-    const copy = componentDefaults[lang].rewardReminder;
+    const copy = rewardReminderCopy[lang];
     const days = countdown?.days;
     const values = {
         reward: formatFiat(pending.total, resolveRewardCurrency()),

@@ -15,7 +15,7 @@ import { useHostTheme } from "@/hooks/useHostTheme";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { useReward } from "@/hooks/useReward";
-import { componentDefaults } from "@/i18n/defaults";
+import { type AmbassadorCopy, ambassadorCopy } from "@/i18n/ambassador";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
     cssSource,
@@ -82,8 +82,6 @@ import {
 } from "./MyRewards";
 import { StoreSection } from "./Store";
 import type { AmbassadorProps } from "./types";
-
-type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
 
 const FRAK_URL = "https://frak.id";
 
@@ -410,7 +408,7 @@ function AmbassadorPage({
     const brand = resolveBrandName();
 
     const texts = useMemo(() => {
-        const defaults = componentDefaults[lang].ambassador;
+        const defaults = ambassadorCopy[lang];
         const brandize = (text: string) =>
             text.replaceAll("{BRAND}", () => brand);
         const resolve = (prop: string | undefined, fallback: string) =>
