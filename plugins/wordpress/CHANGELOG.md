@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **The wallet and the backend are warmed from `<head>`.** The storefront opens both connections while the page parses. On a first visit this saves about 20 ms on the wallet iframe in Firefox and Safari, and on the SDK's merchant lookup in Chrome and Firefox.
+
 ## [1.2.1] - 2026-11-23
 
 ### Added

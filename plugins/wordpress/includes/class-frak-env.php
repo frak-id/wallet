@@ -70,6 +70,13 @@ class Frak_Env {
 	}
 
 	/**
+	 * Origin of the Frak wallet, which hosts the listener iframe.
+	 */
+	public static function wallet_origin(): string {
+		return self::is_dev() ? 'https://wallet-dev.frak.id' : 'https://wallet.frak.id';
+	}
+
+	/**
 	 * Origin of the Frak business dashboard, without a trailing slash.
 	 */
 	public static function dashboard_origin(): string {

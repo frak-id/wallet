@@ -32,6 +32,9 @@ class FrakUrls
     private const SDK_POINTER_HOST = 'https://sdk.frak.id';
     private const DEV_SDK_POINTER_HOST = 'https://sdk-dev.frak.id';
 
+    private const WALLET_ORIGIN = 'https://wallet.frak.id';
+    private const DEV_WALLET_ORIGIN = 'https://wallet-dev.frak.id';
+
     private const DASHBOARD_ORIGIN = 'https://business.frak.id';
     private const DEV_DASHBOARD_ORIGIN = 'https://business-dev.frak.id';
 
@@ -71,6 +74,11 @@ class FrakUrls
     {
         $tag = FrakEnv::isDev() ? 'beta' : 'latest';
         return self::CDN_BASE . '/npm/@frak-labs/components@' . $tag . '/cdn/components.js';
+    }
+
+    public static function walletOrigin(): string
+    {
+        return FrakEnv::isDev() ? self::DEV_WALLET_ORIGIN : self::WALLET_ORIGIN;
     }
 
     public static function dashboardOrigin(): string

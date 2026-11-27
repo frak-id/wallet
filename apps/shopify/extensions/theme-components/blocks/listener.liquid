@@ -11,13 +11,18 @@
 {% comment %} frak:stage:end {% endcomment %}
 
 {% comment %}
-  The pointer's own fetch is no-cors, so its preconnect must not carry
-  crossorigin; the fallback's import() below is CORS-mode, so jsDelivr's must.
+  A preconnect serves only its own credentials mode: the pointer script and
+  the wallet navigation send credentials (no crossorigin); the fallback's
+  import() and the SDK's backend fetch do not (crossorigin).
 {% endcomment %}
 <link rel="dns-prefetch" href="{{ frak_sdk_origin }}">
 <link rel="preconnect" href="{{ frak_sdk_origin }}">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="{{ frak_wallet_origin }}">
+<link rel="preconnect" href="{{ frak_wallet_origin }}">
+<link rel="dns-prefetch" href="{{ frak_backend_origin }}">
+<link rel="preconnect" href="{{ frak_backend_origin }}" crossorigin>
 {% comment %}
   The pointer file is a single import() statement, so a failed load ran
   nothing — the jsDelivr shim can replace it without double-evaluating.

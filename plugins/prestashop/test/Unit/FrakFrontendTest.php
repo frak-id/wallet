@@ -27,6 +27,10 @@ final class FrakFrontendTest extends TestCase
         . '<link rel="preconnect" href="https://sdk.frak.id">'
         . '<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">'
         . '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
+        . '<link rel="dns-prefetch" href="https://wallet.frak.id">'
+        . '<link rel="preconnect" href="https://wallet.frak.id">'
+        . '<link rel="dns-prefetch" href="https://backend.frak.id">'
+        . '<link rel="preconnect" href="https://backend.frak.id" crossorigin>'
         . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
         . 'name:"Acme Shop",logoUrl:"https://shop.example/logo.png"}}});</script>'
         . '<link rel="modulepreload" href="https://sdk.frak.id/loader.js">'
@@ -74,6 +78,10 @@ final class FrakFrontendTest extends TestCase
 
         $this->assertStringContainsString('<script src="https://sdk-dev.frak.id/components.js" defer', $head);
         $this->assertStringContainsString('<link rel="preconnect" href="https://sdk-dev.frak.id">', $head);
+        $this->assertStringContainsString('<link rel="preconnect" href="https://wallet-dev.frak.id">', $head);
+        $this->assertStringContainsString('<link rel="preconnect" href="https://backend.gcp-dev.frak.id" crossorigin>', $head);
+        $this->assertStringNotContainsString('https://wallet.frak.id', $head);
+        $this->assertStringNotContainsString('https://backend.frak.id', $head);
         $this->assertStringContainsString('<link rel="modulepreload" href="https://sdk-dev.frak.id/loader.js">', $head);
         $this->assertStringContainsString('@frak-labs/components@beta/cdn/components.js', $head);
         $this->assertStringNotContainsString('sdk.frak.id', $head);

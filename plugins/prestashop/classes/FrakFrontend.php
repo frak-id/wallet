@@ -10,9 +10,8 @@
 class FrakFrontend
 {
     /**
-     * Front-office `<head>` fragment: resource hints for both SDK hosts,
-     * then the inline `window.FrakSetup` config, then the SDK `<script>`
-     * itself — in that order, so the config exists before the SDK reads it.
+     * Front-office `<head>` fragment; `window.FrakSetup` must come before the
+     * SDK `<script>` that reads it.
      */
     public static function head(): string
     {
@@ -37,13 +36,17 @@ class FrakFrontend
             $logo_url_js = '""';
         }
 
-        // The pointer's script fetch is no-cors, so its preconnect must NOT
-        // carry `crossorigin`; the shim's `import()` from jsDelivr is a
-        // CORS-mode module fetch, so that preconnect must.
+        // A preconnect serves only its own credentials mode: the pointer script
+        // and the wallet navigation send credentials (no `crossorigin`); the
+        // jsDelivr `import()` and the backend fetch do not (`crossorigin`).
         return '<link rel="dns-prefetch" href="' . FrakUrls::sdkPointerHost() . '">'
             . '<link rel="preconnect" href="' . FrakUrls::sdkPointerHost() . '">'
             . '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
             . '<link rel="preconnect" href="' . FrakUrls::CDN_BASE . '" crossorigin>'
+            . '<link rel="dns-prefetch" href="' . FrakUrls::walletOrigin() . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::walletOrigin() . '">'
+            . '<link rel="dns-prefetch" href="' . FrakUrls::backendBase() . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::backendBase() . '" crossorigin>'
             . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
             . 'name:' . $shop_name_js . ','
             . 'logoUrl:' . $logo_url_js

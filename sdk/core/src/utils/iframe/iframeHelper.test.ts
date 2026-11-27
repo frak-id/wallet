@@ -12,6 +12,7 @@ import {
     expect,
     it,
 } from "../../../tests/vitest-fixtures";
+import { initClientId } from "../../config/clientId";
 import { setEnvironment } from "../../config/environment";
 import type { FrakWalletSdkConfig } from "../../types";
 import { getIframeBootObservation } from "./iframeBoot";
@@ -88,6 +89,51 @@ describe("iframeHelper", () => {
             expect(mockIframe.src).toBe(
                 "https://wallet.frak.id/listener?clientId=mock-client-id-for-test"
             );
+        });
+
+        describe("preconnect hints", () => {
+            const hint = (origin: string) =>
+                document.head.querySelector(
+                    `link[rel="preconnect"][href="${origin}"]`
+                );
+
+            beforeEach(() => {
+                for (const link of document.head.querySelectorAll(
+                    "link[data-frak-preconnect]"
+                )) {
+                    link.remove();
+                }
+                createElementSpy.mockImplementation((tag: string) =>
+                    tag === "iframe"
+                        ? mockIframe
+                        : Document.prototype.createElement.call(document, tag)
+                );
+            });
+
+            it("should hint the wallet without crossorigin and the backend with it", async () => {
+                await createIframe({});
+
+                expect(
+                    hint("https://wallet.frak.id")?.hasAttribute("crossorigin")
+                ).toBe(false);
+                expect(
+                    hint("https://backend.frak.id")?.hasAttribute("crossorigin")
+                ).toBe(true);
+            });
+
+            it("should hint before the client id is derived", async () => {
+                let hintedWhenDeriving = false;
+                vi.mocked(initClientId).mockImplementationOnce(async () => {
+                    hintedWhenDeriving =
+                        !!hint("https://wallet.frak.id") &&
+                        !!hint("https://backend.frak.id");
+                    return "mock-client-id-for-test";
+                });
+
+                await createIframe({});
+
+                expect(hintedWhenDeriving).toBe(true);
+            });
         });
 
         it("should use the named dev environment's wallet URL", async () => {
