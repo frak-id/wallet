@@ -1,10 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import {
-    AuthError,
-    extractAuthErrorCode,
-    extractAuthErrorMessage,
-} from "@/module/auth/utils/authError";
+import { toAuthError } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 import { useTwoFactorStore } from "@/stores/twoFactorStore";
 
@@ -18,11 +14,7 @@ export function useRegisterAccount() {
         mutationFn: async (params: { email: string; password: string }) => {
             const { data, error } =
                 await authenticatedBackendApi.auth.register.post(params);
-            if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Registration failed")
-                );
-            }
+            if (error) throw toAuthError(error, "Registration failed");
             return data;
         },
     });
@@ -38,11 +30,7 @@ export function usePasswordLogin() {
         mutationFn: async (params: { email: string; password: string }) => {
             const { data, error } =
                 await authenticatedBackendApi.auth.login.password.post(params);
-            if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Invalid credentials")
-                );
-            }
+            if (error) throw toAuthError(error, "Invalid credentials");
 
             // Pending session: stored so the 2FA screen can call
             // `/auth/2fa/*` (which accepts pending sessions), but
@@ -75,11 +63,7 @@ export function useRequestPasswordReset() {
                 await authenticatedBackendApi.auth.password.reset.request.post(
                     params
                 );
-            if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Could not send reset code")
-                );
-            }
+            if (error) throw toAuthError(error, "Could not send reset code");
             return data;
         },
     });
@@ -102,12 +86,7 @@ export function useConfirmPasswordReset() {
                 await authenticatedBackendApi.auth.password.reset.confirm.post(
                     params
                 );
-            if (error) {
-                throw new AuthError(
-                    extractAuthErrorMessage(error, "Invalid or expired code"),
-                    extractAuthErrorCode(error)
-                );
-            }
+            if (error) throw toAuthError(error, "Invalid or expired code");
             return data;
         },
     });

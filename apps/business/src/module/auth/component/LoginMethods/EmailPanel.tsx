@@ -12,7 +12,10 @@ import {
     useRegisterAccount,
     useRequestPasswordReset,
 } from "@/module/auth/hooks/useEmailAuth";
-import { authErrorMessage } from "@/module/auth/utils/authError";
+import {
+    authErrorMessage,
+    isRejectedInput,
+} from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import {
     MIN_PASSWORD_LENGTH,
@@ -116,7 +119,15 @@ function LoginForm({
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 error={Boolean(error)}
-                hint={error ? t("auth.login.email.loginError") : undefined}
+                hint={
+                    error
+                        ? t(
+                              isRejectedInput(error)
+                                  ? "auth.login.email.loginError"
+                                  : "errors.auth.unavailable"
+                          )
+                        : undefined
+                }
             />
             <Button
                 variant="primary"
@@ -211,7 +222,11 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                     error={Boolean(requestError)}
                     hint={
                         requestError
-                            ? t("auth.login.email.resetRequestError")
+                            ? t(
+                                  isRejectedInput(requestError)
+                                      ? "auth.login.email.resetRequestError"
+                                      : "errors.auth.unavailable"
+                              )
                             : undefined
                     }
                 />
@@ -353,7 +368,11 @@ function RegisterForm({
                 label={t("auth.login.email.newPasswordPlaceholder")}
                 hint={
                     error
-                        ? t("auth.login.email.registerError")
+                        ? t(
+                              isRejectedInput(error)
+                                  ? "auth.login.email.registerError"
+                                  : "errors.auth.unavailable"
+                          )
                         : t("auth.login.email.passwordHint")
                 }
                 error={Boolean(error)}

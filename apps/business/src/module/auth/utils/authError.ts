@@ -67,14 +67,36 @@ export function extractAuthErrorCode(error: unknown): string | undefined {
     return undefined;
 }
 
-/** Error carrying the backend's typed `code` so callers can map it (§2.1). */
+/** Error carrying the backend's typed `code` and HTTP `status` so callers can map it (§2.1). */
 export class AuthError extends Error {
     readonly code?: string;
-    constructor(message: string, code?: string) {
+    readonly status?: number;
+    constructor(message: string, code?: string, status?: number) {
         super(message);
         this.name = "AuthError";
         this.code = code;
+        this.status = status;
     }
+}
+
+/** Wrap an Eden error. An unreachable backend arrives as status 503 with the fetch `TypeError` as value. */
+export function toAuthError(
+    error: { status: number; value: unknown },
+    fallback: string
+): AuthError {
+    return new AuthError(
+        extractAuthErrorMessage(error, fallback),
+        extractAuthErrorCode(error),
+        error.status
+    );
+}
+
+/** The backend answered and refused the input, so the user can fix it. Rate limits and outages are not that. */
+export function isRejectedInput(error: unknown): boolean {
+    if (!(error instanceof AuthError) || error.status === undefined) {
+        return false;
+    }
+    return error.status >= 400 && error.status < 500 && error.status !== 429;
 }
 
 /** Seconds parsed out of an `OTP_THROTTLED` "Retry in Ns" backend message. */

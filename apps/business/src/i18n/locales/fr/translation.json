@@ -196,7 +196,8 @@
             "invalidTwoFactorProof": "La vérification a échoué. Réessayez.",
             "invalidMethod": "Cette option n'est pas disponible. Choisissez un autre moyen de vérification.",
             "invalidCode": "Ce code est incorrect ou a expiré. Vérifiez-le ou demandez-en un nouveau.",
-            "otpThrottled": "Trop d'essais. Attendez {{seconds}} secondes, puis réessayez."
+            "otpThrottled": "Trop d'essais. Attendez {{seconds}} secondes, puis réessayez.",
+            "unavailable": "Un problème est survenu, de notre côté ou avec votre connexion. Réessayez dans un instant."
         }
     },
     "shell": {

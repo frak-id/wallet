@@ -1,10 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import {
-    AuthError,
-    extractAuthErrorCode,
-    extractAuthErrorMessage,
-} from "@/module/auth/utils/authError";
+import { isRejectedInput, toAuthError } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 import { invitePreviewQueryKey } from "./queryKeys";
 
@@ -27,19 +23,14 @@ export function useInvitePreview(token: string | undefined) {
         // rejection from the backend (bad/expired token) — those should
         // render the terminal "invalid invitation" state immediately.
         retry: (failureCount, error) =>
-            !(error instanceof AuthError) && failureCount < 2,
+            !isRejectedInput(error) && failureCount < 2,
         queryFn: async () => {
             const { data, error } =
                 await authenticatedBackendApi.auth.invite.preview.post({
                     // biome-ignore lint/style/noNonNullAssertion: gated by `enabled`
                     token: token!,
                 });
-            if (error) {
-                throw new AuthError(
-                    extractAuthErrorMessage(error, GENERIC_INVALID_TOKEN),
-                    extractAuthErrorCode(error)
-                );
-            }
+            if (error) throw toAuthError(error, GENERIC_INVALID_TOKEN);
             return data;
         },
     });
@@ -57,12 +48,7 @@ export function useInviteClaim() {
         mutationFn: async (params: { token: string; password: string }) => {
             const { data, error } =
                 await authenticatedBackendApi.auth.invite.claim.post(params);
-            if (error) {
-                throw new AuthError(
-                    extractAuthErrorMessage(error, GENERIC_INVALID_TOKEN),
-                    extractAuthErrorCode(error)
-                );
-            }
+            if (error) throw toAuthError(error, GENERIC_INVALID_TOKEN);
 
             useAuthStore.getState().setAuth({
                 token: data.token,

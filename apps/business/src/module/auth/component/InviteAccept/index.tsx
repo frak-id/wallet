@@ -10,7 +10,7 @@ import {
     useInviteClaim,
     useInvitePreview,
 } from "@/module/auth/hooks/useInvite";
-import { AuthError } from "@/module/auth/utils/authError";
+import { AuthError, isRejectedInput } from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import {
     MIN_PASSWORD_LENGTH,
@@ -21,13 +21,22 @@ import { useAuthStore } from "@/stores/authStore";
 /** Translated message for an invite error, never the raw backend text. */
 function inviteErrorMessage(
     error: unknown,
-    t: (key: "auth.invite.invalidToken" | "auth.invite.genericError") => string
+    t: (
+        key:
+            | "auth.invite.invalidToken"
+            | "auth.invite.genericError"
+            | "errors.auth.unavailable"
+    ) => string
 ): string | undefined {
     if (!(error instanceof Error)) return undefined;
     if (error instanceof AuthError && error.code === "INVALID_INVITATION") {
         return t("auth.invite.invalidToken");
     }
-    return t("auth.invite.genericError");
+    return t(
+        isRejectedInput(error)
+            ? "auth.invite.genericError"
+            : "errors.auth.unavailable"
+    );
 }
 
 /**

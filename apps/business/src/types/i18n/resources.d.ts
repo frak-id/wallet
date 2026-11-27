@@ -1336,7 +1336,8 @@ export default interface Resources {
         "invalidMethod": "This option isn't available. Pick another way to confirm.",
         "invalidTwoFactorCode": "This code is wrong or has expired. Check it or ask for a new one.",
         "invalidTwoFactorProof": "The verification failed. Try again.",
-        "otpThrottled": "Too many tries. Wait {{seconds}} seconds, then try again."
+        "otpThrottled": "Too many tries. Wait {{seconds}} seconds, then try again.",
+        "unavailable": "Something went wrong, on our side or with your connection. Try again in a moment."
       },
       "boundary": {
         "goBack": "Go back",
