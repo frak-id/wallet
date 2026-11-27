@@ -34,6 +34,10 @@ export const trendLine = style({
     gap: alias.spacing.xxs,
 });
 
+export const wallet = style({
+    whiteSpace: "nowrap",
+});
+
 // CPA breakdown — font/line-height/weight from <Text variant="body" weight="semiBold">.
 export const cpaAmount = style({
     fontVariantNumeric: "tabular-nums",

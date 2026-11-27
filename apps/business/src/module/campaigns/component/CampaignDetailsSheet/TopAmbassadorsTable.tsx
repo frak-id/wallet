@@ -6,6 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
+import * as styles from "./campaign-details-sheet.css";
 import { useDetailFormatters } from "./parts";
 import { truncateWallet } from "./truncateWallet";
 
@@ -35,7 +36,11 @@ export function TopAmbassadorsTable({
                 columnHelper.accessor("wallet", {
                     size: 150,
                     header: t("campaigns.details.top.wallet"),
-                    cell: ({ getValue }) => truncateWallet(getValue()),
+                    cell: ({ getValue }) => (
+                        <span className={styles.wallet}>
+                            {truncateWallet(getValue())}
+                        </span>
+                    ),
                 }),
                 columnHelper.accessor("shares", {
                     size: 71,
