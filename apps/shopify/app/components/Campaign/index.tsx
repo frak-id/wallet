@@ -190,8 +190,8 @@ function CampaignTableRow({
     const budgetUsage = firstBudget
         ? campaign.budgetUsed?.[firstBudget.label]
         : undefined;
-    const formattedBudget = useMemo(() => {
-        if (!firstBudget) return t("status.campaign.noBudget");
+    const budgetLines = useMemo(() => {
+        if (!firstBudget) return [t("status.campaign.noBudget")];
         const total = Number(firstBudget.amount);
         const used = budgetUsage?.used ?? 0;
         const remaining = Math.max(total - used, 0);
@@ -201,28 +201,26 @@ function CampaignTableRow({
         const label = firstBudget.label ? ` (${firstBudget.label})` : "";
         const base = `${formatAmount(remaining, currency)} / ${formatAmount(total, currency)}${label}`;
         return resetAt
-            ? `${base}. ${t("status.campaign.resetAt", { date: resetAt })}`
-            : base;
+            ? [base, t("status.campaign.resetAt", { date: resetAt })]
+            : [base];
     }, [firstBudget, budgetUsage, currency, t]);
 
-    const rewardSummary = useMemo(() => {
+    const rewardLines = useMemo(() => {
         const rewards = campaign.rewards;
-        if (!rewards?.length) return "-";
-        return rewards
-            .map((r) => {
-                const who =
-                    r.recipient === "referrer"
-                        ? t("status.campaign.referrer")
-                        : t("status.campaign.referee");
-                if (r.amountType === "fixed") {
-                    return `${who}: ${formatAmount(r.amount, currency)}`;
-                }
-                if (r.amountType === "percentage") {
-                    return `${who}: ${r.percent}%`;
-                }
-                return `${who}: ${t("status.campaign.tiered")}`;
-            })
-            .join(", ");
+        if (!rewards?.length) return ["-"];
+        return rewards.map((r) => {
+            const who =
+                r.recipient === "referrer"
+                    ? t("status.campaign.referrer")
+                    : t("status.campaign.referee");
+            if (r.amountType === "fixed") {
+                return `${who}: ${formatAmount(r.amount, currency)}`;
+            }
+            if (r.amountType === "percentage") {
+                return `${who}: ${r.percent}%`;
+            }
+            return `${who}: ${t("status.campaign.tiered")}`;
+        });
     }, [campaign.rewards, currency, t]);
 
     const handleSubmit = useCallback(
@@ -254,8 +252,12 @@ function CampaignTableRow({
                 />
             </s-table-cell>
             <s-table-cell>{formattedDate}</s-table-cell>
-            <s-table-cell>{formattedBudget}</s-table-cell>
-            <s-table-cell>{rewardSummary}</s-table-cell>
+            <s-table-cell>
+                <CellLines lines={budgetLines} />
+            </s-table-cell>
+            <s-table-cell>
+                <CellLines lines={rewardLines} />
+            </s-table-cell>
             <s-table-cell>
                 <s-stack>
                     {actions.map((intent) => (
@@ -287,6 +289,17 @@ function CampaignTableRow({
                 </s-stack>
             </s-table-cell>
         </s-table-row>
+    );
+}
+
+// Polaris table cells never wrap, so each part gets its own line to keep the Actions column inside the card.
+function CellLines({ lines }: { lines: string[] }) {
+    return (
+        <s-stack>
+            {lines.map((line) => (
+                <s-text key={line}>{line}</s-text>
+            ))}
+        </s-stack>
     );
 }
 
