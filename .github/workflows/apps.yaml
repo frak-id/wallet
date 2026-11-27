@@ -593,8 +593,8 @@ jobs:
   # ── App production builds ───────────────────────────────
   # `assertBundleEsVersion` (every app) and `assertEagerBundleBudget` (listener,
   # wallet standalone pages) are vite plugins, so only a production build runs
-  # them. Each app builds only when its own filter fired. No secrets needed: every
-  # build passes with all build-time values unset.
+  # them. Each app builds only when its own filter fired. No secrets needed; the
+  # listener step sets the build-time values that change its bundle.
   app-builds:
     name: "📏 Apps · Production builds & bundle gates"
     runs-on: ubuntu-latest
@@ -613,9 +613,15 @@ jobs:
       # Dockerfiles).
       - name: "🔨 Build the SDK"
         run: bun run build:sdk
-      # Fails above 32 KB gz of eager boot JS: the entry <script> plus its
+      # Fails above 29 KB gz of eager boot JS: the entry <script> plus its
       # <link rel=modulepreload> set, loaded on every merchant iframe boot.
+      # The env is the production image's: OpenPanel only joins the eager chunk
+      # when OPEN_PANEL_* is set, and STAGE=production adds PostHog.
       - name: "📏 Listener"
+        env:
+          STAGE: production
+          OPEN_PANEL_API_URL: https://op-api.gcp.frak.id
+          OPEN_PANEL_LISTENER_CLIENT_ID: 00000000-0000-4000-8000-000000000000
         run: bun run --cwd apps/listener build
       - name: "📏 Bundle size budgets"
         run: bun run check:bundle-size
