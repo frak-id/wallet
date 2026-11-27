@@ -37,7 +37,8 @@ Coverage, confirmed against the code at **sync commit `02ef48716`** (origin/dev,
 
 | Model action | Code |
 | --- | --- |
-| `Create` | `setupClient` → `loadCachedConfig` (`setCacheScope`, `reset`: publishes the cache whatever its age), then `createIFrameFrakClient`'s `isCacheFresh ? undefined : resolve(...)` |
+| `Start` | `setupClient` before `await createIframe`: `loadCachedConfig` (`setCacheScope`, `reset`: publishes the cache whatever its age), then `if (!isCacheFresh) void resolve(...)`. Page state `starting`: the iframe is loading and there is no client yet, so `Destroy` and `Request` cannot happen; the fetch, cache ageing and a reload can |
+| `Attach` | `createIFrameFrakClient` after the iframe `load`: `loadCachedConfig` again (the same object), then `isCacheFresh ? undefined : resolve(...)`. `withCache` hands back `Start`'s request while it is in flight or once it succeeded. After a failure it returns the failure inside its 1 s backoff and retries after it. From `off` it is the React provider: both steps in one |
 | `FetchOk`, `FetchFail` | `sdkConfigStore.resolve` → `fetchFromBackend`; any failure becomes `undefined` |
 | `Connect` | `postConnectionSetup` after `await lifecycleManager.isConnected`: the cached send when `sdkConfigStore.isResolved`. With a fetch running, setup awaits it only when nothing was sent (`fetchwait`); otherwise it returns and the merge runs detached (`merging`) |
 | `Merge` | `applyFresh`: `configPromise` settles, `mergeAndSetConfig` (`setConfig`: global, `writeCache` when `isResolved`, which is always true here), then the fresh send |
@@ -68,6 +69,8 @@ CSS, i18n, backup pushes, proofs' contents and OpenPanel properties do not matte
 
 `Connect` and `Merge` already include FRA-435 (`perf(sdk/core): don't block setup on the config fetch when the cached config was sent`), which the command above lists: setup no longer awaits `configPromise` once the cached config was sent.
 
+`Start` / `Attach` are FRA-436 (the fetch starts before the iframe loads). `Connect` and `Merge` did not change: the model has no clock, and the fetch could already settle before `Connect`.
+
 ## When the check fails
 
 1. **Your change was meant to change behavior.** Edit the action that stands for the code you changed. Rerun. If a rule now breaks, that is the change's effect, not a modeling detail.
@@ -85,7 +88,7 @@ All three were reproduced on the real TypeScript, and the SDK code was left unch
 
 1. **`NoTrustDowngrade` (FRA-444).** A page loads with a stale cache, so it fetches. The fetch fails. The cached backend config is sent first, then `mergeAndSetConfig(undefined)` sends a fallback with `merchantId: ""` and `allowedDomains: []`, and the listener applies it last. Replayed: the listener received `["m-1", ["merchant.example.com"]]` then `["", []]`.
 2. **`CacheOnlyBackend` (FRA-444).** A page with no cache fetches, and the fetch fails. The fallback is written to `localStorage` with `isResolved: true`. The next load within 30 s finds a fresh cache and sends only that fallback, with no fetch. Replayed: the cache held `{"isResolved":true,"merchantId":"","allowedDomains":[],...}`.
-3. **`NoWriteAfterDestroy`.** The client connects with a fetch in flight. `destroy()` runs `clearCache()` and `reset()`. When the fetch answers, `postConnectionSetup` still calls `mergeAndSetConfig`, which rewrites the cache and `window.__frakSdkConfig` and dispatches `frak:config`. Replayed: the cache was empty after `destroy()`, then held the merchant again. The harm is small today, since it writes the right merchant back. It matters when a destroy is meant to clear state, or when the next client uses another cache scope, for example another `lang`.
+3. **`NoWriteAfterDestroy`.** The client connects with a fetch in flight. `destroy()` runs `clearCache()` and `reset()`. When the fetch answers, `postConnectionSetup` still calls `mergeAndSetConfig`, which rewrites the cache and `window.__frakSdkConfig` and dispatches `frak:config`. Replayed: the cache was empty after `destroy()`, then held the merchant again. The harm is small today, since it writes the right merchant back. It matters when a destroy is meant to clear state, or when the next client uses another cache scope, for example another `lang`. Starting the fetch before the iframe loads (FRA-436) adds no ordering to this path, because `destroy` needs a client and the fetch already ran concurrently with the connect.
 
 The mutants also check fixes:
 - **`naive-fra-444-fix`:** skipping the fallback entirely stops the downgrade, but a page with no cache and a failed fetch then never gets a context (`ContextAlwaysArrives` breaks).
@@ -97,9 +100,10 @@ The mutants also check fixes:
 - **Bounds:** 3 reloads, 3 successful fetches, 2 proof repushes, one client per page. A pass covers these bounds.
 - **Assumptions:** the page origin is in the backend's `allowedDomains`, so a backend config means `verified`. Configs are compared by kind and version, not by field.
 - **Not modelled:**
+  - how long the iframe takes to load, and `setupClient` returning early when `createIframe` yields nothing: the fetch started in `Start` is then discarded (`resolve` writes nothing; only `mergeAndSetConfig` does), which the model shows as a page that stays in `starting`;
   - two clients alive on one page (React provider remount, `createIframe` replacing an iframe, a second `setupClient` with another `lang`), so a cache-scope change under a live client is not covered;
   - other tabs writing the same `localStorage` key, and `memoryEntry` going stale against them;
-  - `withCache`'s dedupe and backoff;
+  - `withCache` beyond `Attach` reusing `Start`'s request: other `resolve` callers, and a language change between `Start` and `Attach`, which gives another cache key;
   - the handshake deadline and `waitForConnection` timing out;
   - the merge token and SSO;
   - the listener's own store persistence.

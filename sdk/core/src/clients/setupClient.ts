@@ -1,5 +1,7 @@
 import { createIFrameFrakClient } from "../clients";
+import { setEnvironment } from "../config/environment";
 import { loadCachedConfig } from "../config/loadCachedConfig";
+import { sdkConfigStore } from "../config/sdkConfigStore";
 import type { FrakClient, FrakWalletSdkConfig } from "../types";
 import { createIframe, getSupportedCurrency } from "../utils";
 
@@ -26,7 +28,13 @@ export async function setupClient({
     const preparedConfig = prepareConfig(config);
 
     // Return visits paint the merchant's cached settings now, not after the iframe loads.
-    loadCachedConfig(preparedConfig);
+    const lang = loadCachedConfig(preparedConfig);
+
+    // Warms `resolve`'s cache before the iframe loads; it reads the backend URL as it starts, so the env comes first.
+    setEnvironment(preparedConfig.env);
+    if (!sdkConfigStore.isCacheFresh) {
+        void sdkConfigStore.resolve(preparedConfig.domain, lang);
+    }
 
     const iframe = await createIframe({
         config: preparedConfig,

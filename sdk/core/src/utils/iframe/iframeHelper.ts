@@ -60,9 +60,8 @@ export async function createIframe({
 
     changeIframeVisibility({ iframe, isVisible: false });
 
-    // Publish the environment before anything reads it back: this is the
-    // earliest point in the setup path, and `initClientId` below already
-    // needs the backend origin.
+    // Publish the environment before anything reads it back: `initClientId`
+    // below already needs the backend origin.
     // Set src BEFORE appending to DOM to avoid about:blank load event
     const walletUrl = setEnvironment(config?.env).wallet;
 

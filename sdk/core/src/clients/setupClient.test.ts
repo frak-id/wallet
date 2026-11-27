@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("../utils", () => ({
@@ -13,6 +13,17 @@ vi.mock("./createIFrameFrakClient", () => ({
 describe("setupClient", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => ({
+                ok: true,
+                json: async () => ({ merchantId: "merchant-default" }),
+            }))
+        );
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
     });
 
     describe("client setup", () => {
@@ -324,6 +335,127 @@ describe("setupClient", () => {
             await setupClient({ config });
 
             expect(sdkConfigStore.getConfig().isResolved).toBe(false);
+        });
+    });
+
+    describe("early merchant config fetch", () => {
+        const merchantResponse = {
+            merchantId: "merchant-fetched",
+            domain: "shop.example.com",
+            allowedDomains: [],
+        };
+        const config = {
+            domain: "shop.example.com",
+            env: {
+                wallet: "https://wallet.fra436.test",
+                backend: "https://backend.fra436.test",
+            },
+            metadata: { name: "Test App", lang: "en" as const },
+        };
+        const mockClient = {
+            waitForSetup: Promise.resolve(),
+            waitForConnection: Promise.resolve(true),
+        };
+        let fetchMock: ReturnType<typeof vi.fn>;
+
+        beforeEach(async () => {
+            const { sdkConfigStore } = await import("../config/sdkConfigStore");
+            sdkConfigStore.clearCache();
+            localStorage.clear();
+            window.__frakSdkConfig = undefined;
+            fetchMock = vi.fn(async () => ({
+                ok: true,
+                json: async () => merchantResponse,
+            }));
+            vi.stubGlobal("fetch", fetchMock);
+        });
+
+        test("starts the fetch against the configured backend before the iframe loads, and resolve reuses its answer", async () => {
+            const { setupClient } = await import("./setupClient");
+            const { createIframe } = await import("../utils");
+            const { createIFrameFrakClient } = await import(
+                "./createIFrameFrakClient"
+            );
+            let loadIframe: (iframe: HTMLIFrameElement) => void = () => {};
+            vi.mocked(createIframe).mockReturnValue(
+                new Promise((resolve) => {
+                    loadIframe = resolve;
+                })
+            );
+            vi.mocked(createIFrameFrakClient).mockReturnValue(
+                mockClient as any
+            );
+
+            const setup = setupClient({ config });
+
+            await vi.waitFor(() => expect(createIframe).toHaveBeenCalled());
+            expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+                "https://backend.fra436.test/user/merchant/resolve?domain=shop.example.com&lang=en"
+            );
+            expect(createIFrameFrakClient).not.toHaveBeenCalled();
+
+            const iframe = document.createElement("iframe");
+            loadIframe(iframe);
+            await setup;
+
+            const { sdkConfigStore } = await import("../config/sdkConfigStore");
+            await expect(
+                sdkConfigStore.resolve("shop.example.com", "en")
+            ).resolves.toEqual(merchantResponse);
+            expect(fetchMock).toHaveBeenCalledOnce();
+        });
+
+        test("fetches early with the page's <html lang> when metadata.lang is unset", async () => {
+            const { setupClient } = await import("./setupClient");
+            const { createIframe } = await import("../utils");
+            const { createIFrameFrakClient } = await import(
+                "./createIFrameFrakClient"
+            );
+            const previousLang = document.documentElement.lang;
+            document.documentElement.lang = "fr";
+            vi.mocked(createIframe).mockResolvedValue(
+                document.createElement("iframe")
+            );
+            vi.mocked(createIFrameFrakClient).mockReturnValue(
+                mockClient as any
+            );
+
+            try {
+                await setupClient({
+                    config: { ...config, metadata: { name: "Test App" } },
+                });
+            } finally {
+                document.documentElement.lang = previousLang;
+            }
+
+            expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+                "https://backend.fra436.test/user/merchant/resolve?domain=shop.example.com&lang=fr"
+            );
+        });
+
+        test("starts no fetch when the cache is fresh", async () => {
+            const { setupClient } = await import("./setupClient");
+            const { createIframe } = await import("../utils");
+            const { createIFrameFrakClient } = await import(
+                "./createIFrameFrakClient"
+            );
+            localStorage.setItem(
+                "frak-config-cache:shop.example.com:en",
+                JSON.stringify({
+                    config: { isResolved: true, merchantId: "merchant-cached" },
+                    timestamp: Date.now(),
+                })
+            );
+            vi.mocked(createIframe).mockResolvedValue(
+                document.createElement("iframe")
+            );
+            vi.mocked(createIFrameFrakClient).mockReturnValue(
+                mockClient as any
+            );
+
+            await setupClient({ config });
+
+            expect(fetchMock).not.toHaveBeenCalled();
         });
     });
 
