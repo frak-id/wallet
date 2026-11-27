@@ -16,7 +16,7 @@ export const navigation = style({
     "@media": {
         [`screen and (min-width: ${tablet}px)`]: {
             width: "240px",
-            padding: "48px 32px",
+            padding: "48px 24px",
         },
     },
 });
