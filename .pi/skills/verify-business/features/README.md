@@ -39,6 +39,7 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Campaign wizard](./campaign-wizard.md) — create a campaign, resume a draft, walk the steps.
 - [Settings](./settings.md) — currency, language, demo mode, from the header's demo badge.
 - [Merchant Explorer images](./merchant-explorer.md) — hero/slider/logo uploads, the crop dialog, in-field previews and the slider grid.
+- [Page tours](./tours.md) — the Help button's page tours, the full tour, the wizard tours.
 - Layout across all of the above: the audit in [SKILL.md](../SKILL.md#layout-audit).
 
 Not mapped yet (add a file when you first verify one): merchants dashboard and merchant edit tabs other than App listing images (`/m/$id/merchant`: Identity & SDK, Integration, Manage your team), funding (`Manage budget`), members and push notifications, campaign data overview (`/m/$id/campaigns`), billing, login (`--logged-out` reaches `/login`: `heading "Access and discover Frak Ad Manager"`, `button "Continue with Frak"`, `button "Email"`, `button "Shopify"`, none of which can complete offline).
