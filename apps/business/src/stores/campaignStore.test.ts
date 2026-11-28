@@ -9,11 +9,13 @@ import {
     applyGoalTrigger,
     buildApiPayload,
     campaignToDraft,
+    getExcludeSubscriptions,
     getMinPurchaseAmount,
     getProductScopeCondition,
     getReferralOnly,
     getStartDate,
     isNegativeProductScope,
+    setExcludeSubscriptions,
     setMinPurchaseAmount,
     setProductScope,
     setReferralOnly,
@@ -455,8 +457,9 @@ describe("product scope", () => {
 });
 
 describe("goal → trigger", () => {
-    test("only the sales goal is a purchase campaign", () => {
+    test("only the sales and subscription goals are purchase campaigns", () => {
         expect(triggerForGoal("sales")).toBe("purchase");
+        expect(triggerForGoal("subscription")).toBe("purchase");
         expect(triggerForGoal("traffic")).toBe("referral");
         expect(triggerForGoal("registration")).toBe("custom");
         // No goal yet ⇒ the draft's default trigger.
@@ -521,9 +524,144 @@ describe("goal → trigger", () => {
         expect(next.rule.rewards[0].amountType).toBe("fixed");
     });
 
+    test("leaving sales drops a subscription plan, its ranged rewards and the exclusion", () => {
+        const draft: CampaignDraft = {
+            ...mockCampaignDraft,
+            rule: setExcludeSubscriptions(
+                {
+                    ...mockCampaignDraft.rule,
+                    subscription: { inactivityDays: 30 },
+                    rewards: [
+                        {
+                            recipient: "referrer",
+                            type: "token",
+                            amountType: "fixed",
+                            amount: 5,
+                            cycles: { from: 1, to: 1 },
+                        },
+                    ],
+                },
+                true
+            ),
+        };
+
+        const next = applyGoalTrigger(draft, "traffic");
+
+        expect(next.rule).not.toHaveProperty("subscription");
+        expect(next.rule.rewards).toEqual([]);
+        expect(getExcludeSubscriptions(next.rule)).toBe(false);
+    });
+
+    test("the subscription goal opens a plan and clears one-shot rewards", () => {
+        const draft: CampaignDraft = {
+            ...mockCampaignDraft,
+            rule: setExcludeSubscriptions(mockCampaignDraft.rule, true),
+        };
+
+        const next = applyGoalTrigger(draft, "subscription");
+
+        expect(next.metadata.goal).toBe("subscription");
+        expect(next.rule.trigger).toBe("purchase");
+        expect(next.rule.subscription).toEqual({});
+        expect(next.rule.rewards).toEqual([]);
+        expect(getExcludeSubscriptions(next.rule)).toBe(false);
+    });
+
+    test("saving the subscription goal again keeps the plan as configured", () => {
+        const draft = applyGoalTrigger(mockCampaignDraft, "subscription");
+        const configured: CampaignDraft = {
+            ...draft,
+            rule: {
+                ...draft.rule,
+                subscription: { inactivityDays: 30 },
+                rewards: [
+                    {
+                        recipient: "referrer",
+                        type: "token",
+                        amountType: "fixed",
+                        amount: 5,
+                        cycles: { from: 1, to: 6 },
+                    },
+                ],
+            },
+        };
+
+        expect(applyGoalTrigger(configured, "subscription").rule).toEqual(
+            configured.rule
+        );
+    });
+
+    test("switching from subscription to sales drops the plan and its rewards", () => {
+        const draft = applyGoalTrigger(mockCampaignDraft, "subscription");
+
+        const next = applyGoalTrigger(
+            {
+                ...draft,
+                rule: {
+                    ...draft.rule,
+                    rewards: mockCampaignDraft.rule.rewards.map((reward) => ({
+                        ...reward,
+                        cycles: { from: 1, to: 3 },
+                    })),
+                },
+            },
+            "sales"
+        );
+
+        expect(next.rule).not.toHaveProperty("subscription");
+        expect(next.rule.rewards).toEqual([]);
+    });
+
     test("referral-only stays untouched across a goal change", () => {
         const next = applyGoalTrigger(mockCampaignDraft, "registration");
         expect(next.rule.trigger).toBe("custom");
         expect(getReferralOnly(next.rule)).toBe(true);
+    });
+});
+
+describe("exclude subscription orders condition", () => {
+    const rule = mockCampaignDraft.rule;
+
+    test("is stored as purchase.isSubscription neq true", () => {
+        const next = setExcludeSubscriptions(rule, true);
+        expect(next.conditions).toContainEqual({
+            field: "purchase.isSubscription",
+            operator: "neq",
+            value: true,
+        });
+        expect(getExcludeSubscriptions(next)).toBe(true);
+    });
+
+    test("is not duplicated when set twice, and removed when cleared", () => {
+        const twice = setExcludeSubscriptions(
+            setExcludeSubscriptions(rule, true),
+            true
+        );
+        const flat = Array.isArray(twice.conditions) ? twice.conditions : [];
+        expect(
+            flat.filter(
+                (c) => "field" in c && c.field === "purchase.isSubscription"
+            )
+        ).toHaveLength(1);
+        expect(
+            getExcludeSubscriptions(setExcludeSubscriptions(twice, false))
+        ).toBe(false);
+    });
+
+    test("ignores a different condition on the same field", () => {
+        const other = {
+            ...rule,
+            conditions: [
+                {
+                    field: "purchase.isSubscription",
+                    operator: "eq" as const,
+                    value: true,
+                },
+            ],
+        };
+        expect(getExcludeSubscriptions(other)).toBe(false);
+        expect(setExcludeSubscriptions(other, false).conditions).toEqual(
+            other.conditions
+        );
     });
 });

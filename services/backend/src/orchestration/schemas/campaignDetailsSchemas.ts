@@ -134,12 +134,26 @@ const EfficiencySchema = t.Object({
     topPerformerWallet: t.Hex(),
 });
 
+/** Present on a subscription campaign only; amounts are in `currency`. */
+const SubscriptionStatsSchema = t.Object({
+    currency: CurrencySchema,
+    /** Plans with at least one step still to be paid. */
+    livePlans: t.Number(),
+    /** Steps paid out, counted once whichever side they went to. */
+    stepsPaid: t.Number(),
+    /** Held for steps not paid yet, expired and cancelled steps excluded. */
+    reserved: t.Number(),
+    /** Already paid out or on its way to the recipients. */
+    paid: t.Number(),
+});
+
 export const CampaignDetailsResponseSchema = t.Object({
     economicValue: EconomicValueSchema,
     cpaBreakdown: CpaBreakdownSchema,
     ambassadorStats: AmbassadorStatsSchema,
     topAmbassadors: t.Array(TopAmbassadorSchema),
     efficiency: EfficiencySchema,
+    subscription: t.Optional(SubscriptionStatsSchema),
 });
 
 export type CampaignDetailsResponse = Static<

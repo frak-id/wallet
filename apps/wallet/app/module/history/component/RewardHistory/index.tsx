@@ -24,6 +24,10 @@ import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useHistory } from "@/module/history/hook/useHistory";
 import { formatHistoryDateTime } from "@/module/history/utils/formatHistoryDateTime";
 import { pendingReason } from "@/module/history/utils/pendingReason";
+import {
+    approximately,
+    planProgressKey,
+} from "@/module/history/utils/rewardPlan";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -90,7 +94,10 @@ function RewardHistoryEmpty() {
 export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
     const { t, i18n } = useTranslation();
     const locale = i18n.language;
-    const displayAmount = `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`;
+    const displayAmount = approximately(
+        `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`,
+        item.plan?.estimated ?? false
+    );
     const purchaseAmount = item.purchase
         ? `-${formatCurrency(item.purchase.amount, item.purchase.currency, locale)}`
         : undefined;
@@ -134,6 +141,14 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                                     t
                                 )}
                             </Text>
+                            {item.plan && (
+                                <Text variant="bodySmall" color="secondary">
+                                    {t(planProgressKey(item.plan), {
+                                        count: item.plan.stepsEarned,
+                                        total: item.plan.stepsTotal,
+                                    })}
+                                </Text>
+                            )}
                             {item.status !== "consumed" && (
                                 <Text
                                     variant="bodySmall"

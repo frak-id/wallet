@@ -26,6 +26,23 @@ export const InteractionTypeSchema = t.Union([
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
 
+/**
+ * What earns a plan step after the first payment: each paid billing cycle,
+ * each `stepAmount` paid, or each `stepDays` subscribed.
+ */
+export const SubscriptionStepBySchema = t.Union([
+    t.Literal("cycle"),
+    t.Literal("amount"),
+    t.Literal("duration"),
+]);
+export type SubscriptionStepBy = Static<typeof SubscriptionStepBySchema>;
+
+export function subscriptionStepBy(
+    rule: { subscription?: { stepBy?: SubscriptionStepBy } } | undefined
+): SubscriptionStepBy {
+    return rule?.subscription?.stepBy ?? "cycle";
+}
+
 export const AssetStatusSchema = t.Union([
     t.Literal("pending"),
     t.Literal("processing"),
@@ -114,6 +131,43 @@ const PurchaseInfoSchema = t.Object({
 });
 export type PurchaseInfo = Static<typeof PurchaseInfoSchema>;
 
+/**
+ * A subscription step as the wallet shows it: `paid` settled, `unlocking` earned
+ * and on its way (see `availableAt`), `upcoming` waiting on a future cycle,
+ * `expired` never earned in time.
+ */
+const PlanStepStatusSchema = t.Union([
+    t.Literal("paid"),
+    t.Literal("unlocking"),
+    t.Literal("upcoming"),
+    t.Literal("expired"),
+]);
+export type PlanStepStatus = Static<typeof PlanStepStatusSchema>;
+
+const PlanStepSchema = t.Object({
+    step: t.Number(),
+    amount: t.TokenAmount,
+    /** A cycle plan's percentage and tiered steps are priced on the checkout payment until their cycle is paid. */
+    estimated: t.Boolean(),
+    status: PlanStepStatusSchema,
+    availableAt: t.Optional(t.Date()),
+    settledAt: t.Optional(t.Date()),
+});
+export type PlanStep = Static<typeof PlanStepSchema>;
+
+const RewardPlanSchema = t.Object({
+    stepBy: SubscriptionStepBySchema,
+    /** `duration` plans only: days of active subscription per step. */
+    stepDays: t.Optional(t.Number()),
+    stepsEarned: t.Number(),
+    stepsTotal: t.Number(),
+    paidAmount: t.TokenAmount,
+    pendingAmount: t.TokenAmount,
+    estimated: t.Boolean(),
+    steps: t.Array(PlanStepSchema),
+});
+export type RewardPlan = Static<typeof RewardPlanSchema>;
+
 export const RewardHistoryItemSchema = t.Object({
     /** The asset log's id: one settlement batch stamps the same `txHash` on many rewards. */
     id: t.String(),
@@ -133,6 +187,8 @@ export const RewardHistoryItemSchema = t.Object({
     /** Reason a `cancelled` reward was cancelled. Undefined for non-cancelled rewards. */
     cancellationReason: t.Optional(CancellationReasonSchema),
     purchase: t.Optional(PurchaseInfoSchema),
+    /** Set when the item collapses the steps of a subscription campaign; `amount` is then the plan total. */
+    plan: t.Optional(RewardPlanSchema),
 });
 export type RewardHistoryItem = Static<typeof RewardHistoryItemSchema>;
 

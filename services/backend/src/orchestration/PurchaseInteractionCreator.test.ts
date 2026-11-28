@@ -215,3 +215,52 @@ describe("PurchaseInteractionCreator", () => {
         });
     });
 });
+
+describe("PurchaseInteractionCreator subscription", () => {
+    const create = async (
+        subscription: Parameters<
+            PurchaseInteractionCreator["create"]
+        >[0]["subscription"]
+    ) => {
+        const { creator, interactionLogRepository } = buildCreator();
+        vi.mocked(interactionLogRepository.createIdempotent).mockResolvedValue({
+            id: "interaction-1",
+        } as never);
+        await creator.create({ ...baseParams, items: [], subscription });
+        return vi.mocked(interactionLogRepository.createIdempotent).mock
+            .calls[0]?.[0].payload as PurchasePayload;
+    };
+
+    it("marks the payload pending while the provider has not answered", async () => {
+        const payload = await create({
+            state: "pending",
+            attempts: 0,
+            nextAttemptAt: null,
+        });
+
+        expect(payload.subscription).toEqual({ state: "pending" });
+    });
+
+    it("copies a resolved renewal into the payload", async () => {
+        const payload = await create({
+            state: "resolved",
+            attempts: 1,
+            nextAttemptAt: null,
+            kind: "renewal",
+            providerSubscriptionIds: ["sub-1"],
+            cyclesCovered: 1,
+            merchandiseAmount: 20,
+        });
+
+        expect(payload.subscription).toMatchObject({
+            kind: "renewal",
+            counted: true,
+        });
+    });
+
+    it("leaves an ordinary purchase without a subscription block", async () => {
+        const payload = await create(null);
+
+        expect(payload.subscription).toBeUndefined();
+    });
+});

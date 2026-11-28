@@ -10,13 +10,16 @@ import {
     BarChartIcon,
     CartIcon,
     CommunityIcon,
+    RefreshIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import {
     applyGoalTrigger,
     type CampaignDraft,
@@ -39,6 +42,13 @@ const GOALS = [
         tagsKey: "campaigns.create.goals.options.sales.tags",
     },
     {
+        id: "subscription",
+        icon: <RefreshIcon width={24} height={24} />,
+        titleKey: "campaigns.create.goals.options.subscription.title",
+        descKey: "campaigns.create.goals.options.subscription.description",
+        tagsKey: "campaigns.create.goals.options.subscription.tags",
+    },
+    {
         id: "traffic",
         icon: <CommunityIcon width={24} height={24} />,
         titleKey: "campaigns.create.goals.options.traffic.title",
@@ -54,12 +64,69 @@ const GOALS = [
     },
 ] as const;
 
+function GoalOption({
+    goal,
+    locked,
+}: {
+    goal: (typeof GOALS)[number];
+    locked: boolean;
+}) {
+    const { t } = useTranslation();
+    const hintId = `goal-${goal.id}-hint`;
+    const dimmed = locked ? styles.dimmed : undefined;
+    return (
+        <label
+            htmlFor={`goal-${goal.id}`}
+            className={
+                locked ? `${styles.row} ${styles.rowLocked}` : styles.row
+            }
+        >
+            <span className={styles.left}>
+                <RadioGroupItem
+                    id={`goal-${goal.id}`}
+                    value={goal.id}
+                    size="l"
+                    disabled={locked}
+                    aria-describedby={locked ? hintId : undefined}
+                />
+                <span className={clsx(styles.badge, dimmed)}>{goal.icon}</span>
+            </span>
+            <span className={styles.main}>
+                <Text variant="body" weight="medium" className={dimmed}>
+                    {t(goal.titleKey)}
+                </Text>
+                <span className={clsx(styles.textGroup, dimmed)}>
+                    <Text variant="bodySmall" color="secondary">
+                        {t(goal.descKey)}
+                    </Text>
+                    <Text variant="bodySmall" color="tertiary">
+                        {t(goal.tagsKey)}
+                    </Text>
+                </span>
+                {locked && (
+                    <Text id={hintId} variant="bodySmall" color="action">
+                        {t(
+                            "campaigns.create.goals.options.subscription.notConnected"
+                        )}
+                    </Text>
+                )}
+            </span>
+        </label>
+    );
+}
+
 export function GoalsCampaign() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
     const saveCampaign = useSaveCampaign();
+    const { data: merchant } = useMerchant({ merchantId });
+    // Subscription orders are only resolved through a connected provider.
+    const subscriptionLocked =
+        merchant !== undefined &&
+        !merchant.subscriptionProvider &&
+        draft.metadata.goal !== "subscription";
 
     const form = useForm<CampaignDraft>({
         values: useMemo(() => ({ ...draft, merchantId }), [draft, merchantId]),
@@ -115,60 +182,15 @@ export function GoalsCampaign() {
                                             onValueChange={field.onChange}
                                         >
                                             {GOALS.map((goal) => (
-                                                <label
+                                                <GoalOption
                                                     key={goal.id}
-                                                    htmlFor={`goal-${goal.id}`}
-                                                    className={styles.row}
-                                                >
-                                                    <span
-                                                        className={styles.left}
-                                                    >
-                                                        <RadioGroupItem
-                                                            id={`goal-${goal.id}`}
-                                                            value={goal.id}
-                                                            size="l"
-                                                        />
-                                                        <span
-                                                            className={
-                                                                styles.badge
-                                                            }
-                                                        >
-                                                            {goal.icon}
-                                                        </span>
-                                                    </span>
-                                                    <span
-                                                        className={styles.main}
-                                                    >
-                                                        <Text
-                                                            variant="body"
-                                                            weight="medium"
-                                                        >
-                                                            {t(goal.titleKey)}
-                                                        </Text>
-                                                        <span
-                                                            className={
-                                                                styles.textGroup
-                                                            }
-                                                        >
-                                                            <Text
-                                                                variant="bodySmall"
-                                                                color="secondary"
-                                                            >
-                                                                {t(
-                                                                    goal.descKey
-                                                                )}
-                                                            </Text>
-                                                            <Text
-                                                                variant="bodySmall"
-                                                                color="tertiary"
-                                                            >
-                                                                {t(
-                                                                    goal.tagsKey
-                                                                )}
-                                                            </Text>
-                                                        </span>
-                                                    </span>
-                                                </label>
+                                                    goal={goal}
+                                                    locked={
+                                                        goal.id ===
+                                                            "subscription" &&
+                                                        subscriptionLocked
+                                                    }
+                                                />
                                             ))}
                                         </RadioGroup>
                                         <FieldError>

@@ -65,8 +65,12 @@ import { PairingOrchestrator, PairingRouterOrchestrator } from "./pairing";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
-import { InteractionContextBuilder } from "./reward";
+import {
+    InteractionContextBuilder,
+    SubscriptionPlanOrchestrator,
+} from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
+import { SubscriptionResolutionOrchestrator } from "./SubscriptionResolutionOrchestrator";
 import { TakeAdsIngestionOrchestrator } from "./TakeAdsIngestionOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
@@ -125,6 +129,16 @@ const notificationOrchestrator = new NotificationOrchestrator(
     memberQueryOrchestrator
 );
 
+const subscriptionPlanOrchestrator = new SubscriptionPlanOrchestrator(
+    RewardsContext.repositories.assetLog,
+    RewardsContext.repositories.interactionLog,
+    CampaignContext.repositories.campaignRule,
+    MerchantContext.repositories.merchant,
+    CampaignContext.services.rewardCalculator,
+    identityOrchestrator,
+    pricingRepository
+);
+
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
     RewardsContext.repositories.interactionLog,
     RewardsContext.repositories.assetLog,
@@ -133,7 +147,8 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     identityOrchestrator,
     interactionContextBuilder,
     MerchantContext.repositories.merchant,
-    CampaignContext.repositories.campaignRule
+    CampaignContext.repositories.campaignRule,
+    subscriptionPlanOrchestrator
 );
 
 const purchaseInteractionCreator = new PurchaseInteractionCreator(
@@ -150,7 +165,8 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
 const rewardLifecycleOrchestrator = new RewardLifecycleOrchestrator(
     RewardsContext.repositories.assetLog,
     RewardsContext.repositories.interactionLog,
-    CampaignContext.repositories.campaignRule
+    CampaignContext.repositories.campaignRule,
+    subscriptionPlanOrchestrator
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
@@ -160,6 +176,15 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     identityOrchestrator,
     rewardLifecycleOrchestrator
 );
+
+const subscriptionResolutionOrchestrator =
+    new SubscriptionResolutionOrchestrator(
+        PurchasesContext.repositories.purchase,
+        PurchasesContext.services.subscriptionConnection,
+        RewardsContext.repositories.interactionLog,
+        purchaseInteractionCreator,
+        RewardsContext.repositories.assetLog
+    );
 
 const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
     AffiliateContext.repositories.affiliateAttribution,
@@ -193,7 +218,8 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     pricingRepository,
     RewardsContext.services.rewardHistory,
     AttributionContext.repositories.referralLink,
-    RewardsContext.repositories.interactionLog
+    RewardsContext.repositories.interactionLog,
+    CampaignContext.repositories.campaignRule
 );
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator(
@@ -378,6 +404,8 @@ export namespace OrchestrationContext {
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         rewardLifecycle: rewardLifecycleOrchestrator,
+        subscriptionPlan: subscriptionPlanOrchestrator,
+        subscriptionResolution: subscriptionResolutionOrchestrator,
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,

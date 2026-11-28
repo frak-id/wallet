@@ -26,6 +26,7 @@
             "general": "General",
             "pixel": "Application pixel",
             "webhook": "Webhook",
+            "subscriptions": "Subscriptions",
             "theme": "Theme"
         }
     },
@@ -228,6 +229,40 @@
                 "setup": "Frak purchase tracker is setup",
                 "frakSetupError": "Error connecting Frak purchase tracker"
             }
+        }
+    },
+    "subscriptions": {
+        "description": "Connect your subscription app so Frak can recognise subscription orders and reward subscribers as they keep paying. The token needs the read_orders and read_subscriptions scopes. This is optional.",
+        "unavailable": "The subscription status could not be loaded. Please refresh the page in a few seconds.",
+        "connected": "{{provider}} is connected.",
+        "connectedTokenRejected": "{{provider}} is connected but its token was rejected.",
+        "providers": {
+            "recharge": "Recharge"
+        },
+        "fields": {
+            "token": "Recharge API token",
+            "tokenDetails": "Create it in Recharge under Tools & apps > API tokens, with the read_orders and read_subscriptions scopes. Frak stores it encrypted and never shows it again."
+        },
+        "actions": {
+            "connect": "Connect",
+            "reconnect": "Reconnect",
+            "disconnect": "Disconnect"
+        },
+        "messages": {
+            "connected": "Subscription provider connected",
+            "disconnected": "Subscription provider disconnected"
+        },
+        "lastError": {
+            "heading": "Recharge rejected the token. Paste a new one.",
+            "body": "Subscription orders are not recognised until you paste a valid token.",
+            "bodyAt": "Recharge rejected the token on {{date}} (UTC). Subscription orders are not recognised until you paste a valid token."
+        },
+        "errors": {
+            "invalidToken": "Recharge rejected this token. Check that it is correct and has the read_orders and read_subscriptions scopes.",
+            "webhookMissing": "Set up the Frak purchase tracker in the Webhook section first, then connect again.",
+            "unavailable": "Recharge could not be reached. Please try again in a few seconds.",
+            "failed": "The connection failed. Please try again.",
+            "disconnect": "The disconnection failed. Please try again."
         }
     },
     "theme": {

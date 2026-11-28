@@ -25,11 +25,13 @@ import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
+import { formatDayMonth } from "@/module/history/utils/formatDayMonth";
 import {
     type PendingReason,
     pendingReason,
 } from "@/module/history/utils/pendingReason";
 import * as styles from "./index.css";
+import { PlanDetail } from "./PlanDetail";
 
 type RewardDetailModalProps = {
     item: RewardHistoryItem;
@@ -46,7 +48,11 @@ export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
             <DetailSheetBody className={styles.body}>
                 <GlassCloseButton onClick={onClose} />
                 <DetailHeader item={item} locale={locale} />
-                <DetailCard item={item} locale={locale} />
+                {item.plan ? (
+                    <PlanDetail item={item} plan={item.plan} locale={locale} />
+                ) : (
+                    <DetailCard item={item} locale={locale} />
+                )}
             </DetailSheetBody>
         </DetailSheet>
     );
@@ -394,13 +400,6 @@ function lockedExplanationKey(waitsOnFriend: boolean | undefined) {
     return waitsOnFriend
         ? "reward.detail.lockedOnFriendExplanation"
         : "reward.detail.lockedExplanation";
-}
-
-function formatDayMonth(timestamp: number, locale: string): string {
-    return new Date(timestamp).toLocaleDateString(locale, {
-        day: "numeric",
-        month: "long",
-    });
 }
 
 function formatTime(timestamp: number, locale: string): string {

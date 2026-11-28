@@ -1234,6 +1234,9 @@
                                         "ctaNoRewardText": {
                                           "type": "string"
                                         },
+                                        "claimCtaText": {
+                                          "type": "string"
+                                        },
                                         "imageUrl": {
                                           "type": "string"
                                         },
@@ -1263,7 +1266,48 @@
                                         "inappCta": {
                                           "type": "string"
                                         },
+                                        "pendingTitle": {
+                                          "type": "string"
+                                        },
+                                        "pendingDescription": {
+                                          "type": "string"
+                                        },
+                                        "pendingCta": {
+                                          "type": "string"
+                                        },
                                         "imageUrl": {
+                                          "type": "string"
+                                        },
+                                        "css": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    "rewardReminder": {
+                                      "type": "object",
+                                      "properties": {
+                                        "enabled": {
+                                          "type": "boolean"
+                                        },
+                                        "position": {
+                                          "anyOf": [
+                                            {
+                                              "const": "right",
+                                              "type": "string"
+                                            },
+                                            {
+                                              "const": "left",
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        "title": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "cta": {
                                           "type": "string"
                                         },
                                         "css": {
@@ -1431,6 +1475,9 @@
                                 "ctaNoRewardText": {
                                   "type": "string"
                                 },
+                                "claimCtaText": {
+                                  "type": "string"
+                                },
                                 "imageUrl": {
                                   "type": "string"
                                 },
@@ -1460,7 +1507,43 @@
                                 "inappCta": {
                                   "type": "string"
                                 },
+                                "pendingTitle": {
+                                  "type": "string"
+                                },
+                                "pendingDescription": {
+                                  "type": "string"
+                                },
+                                "pendingCta": {
+                                  "type": "string"
+                                },
                                 "imageUrl": {
+                                  "type": "string"
+                                },
+                                "css": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "rewardReminder": {
+                              "type": "object",
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "enum": [
+                                    "right",
+                                    "left"
+                                  ]
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "cta": {
                                   "type": "string"
                                 },
                                 "css": {
@@ -2553,6 +2636,412 @@
                               "string",
                               "null"
                             ]
+                          },
+                          "subscription": {
+                            "type": "object",
+                            "required": [
+                              "steps"
+                            ],
+                            "properties": {
+                              "steps": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "from",
+                                    "to"
+                                  ],
+                                  "properties": {
+                                    "from": {
+                                      "type": "number"
+                                    },
+                                    "to": {
+                                      "type": "number"
+                                    },
+                                    "referrer": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "amount"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "fixed",
+                                              "type": "string"
+                                            },
+                                            "amount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "percent",
+                                            "percentOf"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "percentage",
+                                              "type": "string"
+                                            },
+                                            "percent": {
+                                              "type": "number"
+                                            },
+                                            "percentOf": {
+                                              "type": "string"
+                                            },
+                                            "maxAmount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            },
+                                            "minAmount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "tierField",
+                                            "tiers"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "tiered",
+                                              "type": "string"
+                                            },
+                                            "tierField": {
+                                              "type": "string"
+                                            },
+                                            "tiers": {
+                                              "type": "array",
+                                              "items": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "required": [
+                                                      "minValue",
+                                                      "amount"
+                                                    ],
+                                                    "properties": {
+                                                      "minValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "maxValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "amount": {
+                                                        "type": "object",
+                                                        "required": [
+                                                          "amount",
+                                                          "eurAmount",
+                                                          "usdAmount",
+                                                          "gbpAmount"
+                                                        ],
+                                                        "properties": {
+                                                          "amount": {
+                                                            "type": "number"
+                                                          },
+                                                          "eurAmount": {
+                                                            "type": "number"
+                                                          },
+                                                          "usdAmount": {
+                                                            "type": "number"
+                                                          },
+                                                          "gbpAmount": {
+                                                            "type": "number"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "required": [
+                                                      "minValue",
+                                                      "percent"
+                                                    ],
+                                                    "properties": {
+                                                      "minValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "maxValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "percent": {
+                                                        "type": "number"
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "referee": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "amount"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "fixed",
+                                              "type": "string"
+                                            },
+                                            "amount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "percent",
+                                            "percentOf"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "percentage",
+                                              "type": "string"
+                                            },
+                                            "percent": {
+                                              "type": "number"
+                                            },
+                                            "percentOf": {
+                                              "type": "string"
+                                            },
+                                            "maxAmount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            },
+                                            "minAmount": {
+                                              "type": "object",
+                                              "required": [
+                                                "amount",
+                                                "eurAmount",
+                                                "usdAmount",
+                                                "gbpAmount"
+                                              ],
+                                              "properties": {
+                                                "amount": {
+                                                  "type": "number"
+                                                },
+                                                "eurAmount": {
+                                                  "type": "number"
+                                                },
+                                                "usdAmount": {
+                                                  "type": "number"
+                                                },
+                                                "gbpAmount": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "required": [
+                                            "payoutType",
+                                            "tierField",
+                                            "tiers"
+                                          ],
+                                          "properties": {
+                                            "payoutType": {
+                                              "const": "tiered",
+                                              "type": "string"
+                                            },
+                                            "tierField": {
+                                              "type": "string"
+                                            },
+                                            "tiers": {
+                                              "type": "array",
+                                              "items": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "required": [
+                                                      "minValue",
+                                                      "amount"
+                                                    ],
+                                                    "properties": {
+                                                      "minValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "maxValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "amount": {
+                                                        "type": "object",
+                                                        "required": [
+                                                          "amount",
+                                                          "eurAmount",
+                                                          "usdAmount",
+                                                          "gbpAmount"
+                                                        ],
+                                                        "properties": {
+                                                          "amount": {
+                                                            "type": "number"
+                                                          },
+                                                          "eurAmount": {
+                                                            "type": "number"
+                                                          },
+                                                          "usdAmount": {
+                                                            "type": "number"
+                                                          },
+                                                          "gbpAmount": {
+                                                            "type": "number"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "required": [
+                                                      "minValue",
+                                                      "percent"
+                                                    ],
+                                                    "properties": {
+                                                      "minValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "maxValue": {
+                                                        "type": "number"
+                                                      },
+                                                      "percent": {
+                                                        "type": "number"
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "stepBy": {
+                                "type": "string",
+                                "enum": [
+                                  "cycle",
+                                  "amount",
+                                  "duration"
+                                ]
+                              }
+                            }
                           }
                         }
                       }
@@ -2954,6 +3443,412 @@
                             }
                           ]
                         },
+                        "subscription": {
+                          "type": "object",
+                          "required": [
+                            "steps"
+                          ],
+                          "properties": {
+                            "steps": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "from",
+                                  "to"
+                                ],
+                                "properties": {
+                                  "from": {
+                                    "type": "number"
+                                  },
+                                  "to": {
+                                    "type": "number"
+                                  },
+                                  "referrer": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "amount"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "fixed",
+                                            "type": "string"
+                                          },
+                                          "amount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "percent",
+                                          "percentOf"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "percentage",
+                                            "type": "string"
+                                          },
+                                          "percent": {
+                                            "type": "number"
+                                          },
+                                          "percentOf": {
+                                            "type": "string"
+                                          },
+                                          "maxAmount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          },
+                                          "minAmount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "tierField",
+                                          "tiers"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "tiered",
+                                            "type": "string"
+                                          },
+                                          "tierField": {
+                                            "type": "string"
+                                          },
+                                          "tiers": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "object",
+                                                  "required": [
+                                                    "minValue",
+                                                    "amount"
+                                                  ],
+                                                  "properties": {
+                                                    "minValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "maxValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "amount": {
+                                                      "type": "object",
+                                                      "required": [
+                                                        "amount",
+                                                        "eurAmount",
+                                                        "usdAmount",
+                                                        "gbpAmount"
+                                                      ],
+                                                      "properties": {
+                                                        "amount": {
+                                                          "type": "number"
+                                                        },
+                                                        "eurAmount": {
+                                                          "type": "number"
+                                                        },
+                                                        "usdAmount": {
+                                                          "type": "number"
+                                                        },
+                                                        "gbpAmount": {
+                                                          "type": "number"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "required": [
+                                                    "minValue",
+                                                    "percent"
+                                                  ],
+                                                  "properties": {
+                                                    "minValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "maxValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "percent": {
+                                                      "type": "number"
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "referee": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "amount"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "fixed",
+                                            "type": "string"
+                                          },
+                                          "amount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "percent",
+                                          "percentOf"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "percentage",
+                                            "type": "string"
+                                          },
+                                          "percent": {
+                                            "type": "number"
+                                          },
+                                          "percentOf": {
+                                            "type": "string"
+                                          },
+                                          "maxAmount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          },
+                                          "minAmount": {
+                                            "type": "object",
+                                            "required": [
+                                              "amount",
+                                              "eurAmount",
+                                              "usdAmount",
+                                              "gbpAmount"
+                                            ],
+                                            "properties": {
+                                              "amount": {
+                                                "type": "number"
+                                              },
+                                              "eurAmount": {
+                                                "type": "number"
+                                              },
+                                              "usdAmount": {
+                                                "type": "number"
+                                              },
+                                              "gbpAmount": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "required": [
+                                          "payoutType",
+                                          "tierField",
+                                          "tiers"
+                                        ],
+                                        "properties": {
+                                          "payoutType": {
+                                            "const": "tiered",
+                                            "type": "string"
+                                          },
+                                          "tierField": {
+                                            "type": "string"
+                                          },
+                                          "tiers": {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "object",
+                                                  "required": [
+                                                    "minValue",
+                                                    "amount"
+                                                  ],
+                                                  "properties": {
+                                                    "minValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "maxValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "amount": {
+                                                      "type": "object",
+                                                      "required": [
+                                                        "amount",
+                                                        "eurAmount",
+                                                        "usdAmount",
+                                                        "gbpAmount"
+                                                      ],
+                                                      "properties": {
+                                                        "amount": {
+                                                          "type": "number"
+                                                        },
+                                                        "eurAmount": {
+                                                          "type": "number"
+                                                        },
+                                                        "usdAmount": {
+                                                          "type": "number"
+                                                        },
+                                                        "gbpAmount": {
+                                                          "type": "number"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "required": [
+                                                    "minValue",
+                                                    "percent"
+                                                  ],
+                                                  "properties": {
+                                                    "minValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "maxValue": {
+                                                      "type": "number"
+                                                    },
+                                                    "percent": {
+                                                      "type": "number"
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "stepBy": {
+                              "type": "string",
+                              "enum": [
+                                "cycle",
+                                "amount",
+                                "duration"
+                              ]
+                            }
+                          }
+                        },
                         "minPurchaseValue": {
                           "type": "number"
                         },
@@ -3237,6 +4132,236 @@
           }
         },
         "operationId": "getUserMerchantReferral-status"
+      }
+    },
+    "/user/merchant/rewards-summary": {
+      "get": {
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-client-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-frak-proof",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "linked",
+                    "pending",
+                    "earned"
+                  ],
+                  "properties": {
+                    "linked": {
+                      "type": "boolean"
+                    },
+                    "pending": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "total",
+                        "cashback",
+                        "fromFriends",
+                        "count",
+                        "lockedCount",
+                        "nextUnlockAt",
+                        "expiresAt"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "object",
+                          "required": [
+                            "eurAmount",
+                            "usdAmount",
+                            "gbpAmount"
+                          ],
+                          "properties": {
+                            "eurAmount": {
+                              "type": "number"
+                            },
+                            "usdAmount": {
+                              "type": "number"
+                            },
+                            "gbpAmount": {
+                              "type": "number"
+                            }
+                          }
+                        },
+                        "cashback": {
+                          "type": "object",
+                          "required": [
+                            "eurAmount",
+                            "usdAmount",
+                            "gbpAmount"
+                          ],
+                          "properties": {
+                            "eurAmount": {
+                              "type": "number"
+                            },
+                            "usdAmount": {
+                              "type": "number"
+                            },
+                            "gbpAmount": {
+                              "type": "number"
+                            }
+                          }
+                        },
+                        "fromFriends": {
+                          "type": "object",
+                          "required": [
+                            "eurAmount",
+                            "usdAmount",
+                            "gbpAmount"
+                          ],
+                          "properties": {
+                            "eurAmount": {
+                              "type": "number"
+                            },
+                            "usdAmount": {
+                              "type": "number"
+                            },
+                            "gbpAmount": {
+                              "type": "number"
+                            }
+                          }
+                        },
+                        "count": {
+                          "type": "number"
+                        },
+                        "lockedCount": {
+                          "type": "number"
+                        },
+                        "nextUnlockAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    },
+                    "earned": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "total"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "object",
+                          "required": [
+                            "eurAmount",
+                            "usdAmount",
+                            "gbpAmount"
+                          ],
+                          "properties": {
+                            "eurAmount": {
+                              "type": "number"
+                            },
+                            "usdAmount": {
+                              "type": "number"
+                            },
+                            "gbpAmount": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Response for status 403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUserMerchantRewards-summary"
       }
     },
     "/user/affiliate/{merchantId}/link": {
@@ -6907,6 +8032,7 @@
                 "promotional",
                 "reward_pending",
                 "reward_settled",
+                "reward_step_unlocked",
                 "game_won",
                 "game_candidate_drawn",
                 "game_candidate_reminder"
@@ -7362,6 +8488,168 @@
                               },
                               "currency": {
                                 "type": "string"
+                              }
+                            }
+                          },
+                          "plan": {
+                            "type": "object",
+                            "required": [
+                              "stepBy",
+                              "stepsEarned",
+                              "stepsTotal",
+                              "paidAmount",
+                              "pendingAmount",
+                              "estimated",
+                              "steps"
+                            ],
+                            "properties": {
+                              "stepBy": {
+                                "type": "string",
+                                "enum": [
+                                  "cycle",
+                                  "amount",
+                                  "duration"
+                                ]
+                              },
+                              "stepDays": {
+                                "type": "number"
+                              },
+                              "stepsEarned": {
+                                "type": "number"
+                              },
+                              "stepsTotal": {
+                                "type": "number"
+                              },
+                              "paidAmount": {
+                                "type": "object",
+                                "required": [
+                                  "amount",
+                                  "eurAmount",
+                                  "usdAmount",
+                                  "gbpAmount"
+                                ],
+                                "properties": {
+                                  "amount": {
+                                    "type": "number"
+                                  },
+                                  "eurAmount": {
+                                    "type": "number"
+                                  },
+                                  "usdAmount": {
+                                    "type": "number"
+                                  },
+                                  "gbpAmount": {
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              "pendingAmount": {
+                                "type": "object",
+                                "required": [
+                                  "amount",
+                                  "eurAmount",
+                                  "usdAmount",
+                                  "gbpAmount"
+                                ],
+                                "properties": {
+                                  "amount": {
+                                    "type": "number"
+                                  },
+                                  "eurAmount": {
+                                    "type": "number"
+                                  },
+                                  "usdAmount": {
+                                    "type": "number"
+                                  },
+                                  "gbpAmount": {
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              "estimated": {
+                                "type": "boolean"
+                              },
+                              "steps": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "step",
+                                    "amount",
+                                    "estimated",
+                                    "status"
+                                  ],
+                                  "properties": {
+                                    "step": {
+                                      "type": "number"
+                                    },
+                                    "amount": {
+                                      "type": "object",
+                                      "required": [
+                                        "amount",
+                                        "eurAmount",
+                                        "usdAmount",
+                                        "gbpAmount"
+                                      ],
+                                      "properties": {
+                                        "amount": {
+                                          "type": "number"
+                                        },
+                                        "eurAmount": {
+                                          "type": "number"
+                                        },
+                                        "usdAmount": {
+                                          "type": "number"
+                                        },
+                                        "gbpAmount": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "estimated": {
+                                      "type": "boolean"
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "paid",
+                                        "unlocking",
+                                        "upcoming",
+                                        "expired"
+                                      ]
+                                    },
+                                    "availableAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "format": "date-time"
+                                        },
+                                        {
+                                          "format": "date",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    },
+                                    "settledAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "format": "date-time"
+                                        },
+                                        {
+                                          "format": "date",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
                               }
                             }
                           }

@@ -27,6 +27,7 @@ export function RewardCard({
     const isEmpty = reward.status === "empty";
     const isTiered =
         reward.status === "ready" && reward.payoutType === "tiered";
+    const isUpTo = isTiered || (reward.status === "ready" && reward.upTo);
     const isProductScoped =
         reward.status === "ready" && reward.isProductScoped === true;
     const emptyContext = isEmpty ? noRewardContext : undefined;
@@ -37,7 +38,7 @@ export function RewardCard({
             <div className={styles.creditCardContent}>
                 <div className={styles.creditCardTop}>
                     <div className={styles.creditCardAmountColumn}>
-                        {isTiered && !isLoading && (
+                        {isUpTo && !isLoading && (
                             <span className={styles.creditCardUpTo}>
                                 {t("sdk.sharingPage.card.upTo")}
                             </span>

@@ -170,6 +170,80 @@ describe("useGetRewardHistory", () => {
         });
     });
 
+    test("turns the dates of a subscription plan's steps into timestamps", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
+        );
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        const tokenAmount = {
+            amount: 5,
+            eurAmount: 5,
+            usdAmount: 5,
+            gbpAmount: 5,
+        };
+        const settledAt = new Date("2026-02-01T10:00:00.000Z");
+        const availableAt = new Date("2026-03-01T10:00:00.000Z");
+        vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
+            createSuccessResponse({
+                items: [
+                    {
+                        ...mockItem,
+                        plan: {
+                            stepBy: "cycle",
+                            stepsEarned: 2,
+                            stepsTotal: 3,
+                            paidAmount: tokenAmount,
+                            pendingAmount: tokenAmount,
+                            estimated: false,
+                            steps: [
+                                {
+                                    step: 1,
+                                    amount: tokenAmount,
+                                    estimated: false,
+                                    status: "paid" as const,
+                                    settledAt,
+                                },
+                                {
+                                    step: 2,
+                                    amount: tokenAmount,
+                                    estimated: false,
+                                    status: "unlocking" as const,
+                                    availableAt,
+                                },
+                                {
+                                    step: 3,
+                                    amount: tokenAmount,
+                                    estimated: true,
+                                    status: "upcoming" as const,
+                                },
+                            ],
+                        },
+                    },
+                ],
+                totalCount: 1,
+            })
+        );
+
+        const { result } = renderHook(() => useGetRewardHistory(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isLoading).toBe(false);
+        });
+
+        const steps = result.current.items[0]?.plan?.steps;
+        expect(steps?.[0]?.settledAt).toBe(settledAt.getTime());
+        expect(steps?.[1]?.availableAt).toBe(availableAt.getTime());
+        expect(steps?.[2]?.availableAt).toBeUndefined();
+    });
+
     test("should return total count", async ({
         queryWrapper,
         mockWagmiHooks,

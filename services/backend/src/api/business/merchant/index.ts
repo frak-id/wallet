@@ -3,6 +3,7 @@ import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { MerchantContext, type Platform } from "../../../domain/merchant";
+import { PurchasesContext } from "../../../domain/purchases/context";
 import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
@@ -26,6 +27,7 @@ import { merchantMediaRoutes } from "./media";
 import { merchantMembersRoutes } from "./members";
 import { merchantRegistrationRoutes } from "./registration";
 import { merchantSdkConfigRoutes } from "./sdkConfig";
+import { merchantSubscriptionsRoutes } from "./subscriptions";
 import { merchantTransferRoutes } from "./transfer";
 import { merchantWebhooksRoutes } from "./webhooks";
 
@@ -80,10 +82,14 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 }
             }
 
-            const brand =
-                await AffiliateContext.repositories.affiliateBrand.findByMerchantId(
+            const [brand, webhook] = await Promise.all([
+                AffiliateContext.repositories.affiliateBrand.findByMerchantId(
                     merchantId
-                );
+                ),
+                PurchasesContext.repositories.purchase.getWebhookByMerchantId(
+                    merchantId
+                ),
+            ]);
 
             return {
                 id: merchant.id,
@@ -117,6 +123,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                           trackingLink: brand.trackingLink,
                       }
                     : null,
+                subscriptionProvider: webhook?.subscriptionProvider ?? null,
             };
         },
         {
@@ -294,6 +301,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantCampaignOverviewRoutes)
     .use(merchantMembersRoutes)
     .use(merchantWebhooksRoutes)
+    .use(merchantSubscriptionsRoutes)
     .use(merchantMediaRoutes)
     .use(merchantAllowedDomainsRoutes)
     .use(merchantAllowedPackageIdsRoutes)

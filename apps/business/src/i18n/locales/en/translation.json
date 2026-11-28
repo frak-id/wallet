@@ -541,7 +541,24 @@
                 "frak": "Frak: {{value}}",
                 "rewardLockup": "Reward lockup",
                 "lockupValue": "{{count}} days",
-                "publishError": "Couldn’t publish the campaign. Please try again."
+                "publishError": "Couldn’t publish the campaign. Please try again.",
+                "subscriptionOrders": "Subscription orders",
+                "subscriptionOrdersExcluded": "Excluded",
+                "subscription": {
+                    "inactivity": "Inactivity window",
+                    "inactivityValue_one": "{{count}} day",
+                    "inactivityValue_other": "{{count}} days",
+                    "unchanged": "Custom subscription rewards, kept as saved",
+                    "progression": {
+                        "label": "Reward progression",
+                        "cycle": "Each renewal",
+                        "amount": "Every {{amount}} paid after the first payment",
+                        "duration_one": "Every day subscribed",
+                        "duration_other": "Every {{count}} days subscribed"
+                    },
+                    "planCpa": "Plan CPA",
+                    "planCpaSplit": "Rewards {{rewards}} · Frak commission {{commission}}"
+                }
             },
             "success": {
                 "title": "Campaign launched!",
@@ -572,8 +589,14 @@
                 "options": {
                     "sales": {
                         "title": "Sales",
-                        "description": "Find people likely to subscribe or buy product on a pay-per-view basis.",
-                        "tags": "Subscription · Revenue · Conversion"
+                        "description": "Find people likely to buy your products on a pay-per-view basis.",
+                        "tags": "Revenue · Conversion"
+                    },
+                    "subscription": {
+                        "title": "Subscriptions",
+                        "description": "Reward referrals that become subscribers, on the first payment and as they keep paying.",
+                        "tags": "Retention · Recurring revenue",
+                        "notConnected": "Connect Recharge in the Frak Shopify app (Settings > Subscriptions) to use this goal."
                     },
                     "traffic": {
                         "title": "Traffic",
@@ -689,7 +712,8 @@
                     "endDateRequired": "Select an end date",
                     "endDateInvalid": "End date must be on or after the start date",
                     "invalidDate": "Enter a valid date"
-                }
+                },
+                "subscriptionReserve": "For each new subscriber, the full plan (every reward of every period, for the ambassador and the referee, Frak's commission included) is reserved from this budget upfront."
             },
             "referralChain": {
                 "enable": {
@@ -729,7 +753,8 @@
                     "rowLevel": "Level {{n}}",
                     "tableLevel": "Level",
                     "tableAmount": "Amount"
-                }
+                },
+                "subscription": "Multi-level rewards aren't available on subscription campaigns."
             },
             "products": {
                 "scope": {
@@ -901,7 +926,118 @@
                     "referral_signup": "Referred signup",
                     "game_join": "Game joined"
                 },
-                "saveError": "Could not save the reward. Check that it is compatible with the product targeting."
+                "saveError": "Could not save the reward. Check that it is compatible with the product targeting.",
+                "subscription": {
+                    "scopeNotAllowed": "Subscription rewards can't be combined with exclusion-based product targeting. Express the targeting positively or turn subscriptions off.",
+                    "unsupported": "This campaign's subscription rewards use a layout the editor can't display, so they are kept exactly as saved. Create a new campaign to change them.",
+                    "exclude": {
+                        "label": "Subscription orders",
+                        "cardDescription": "Keep subscription orders out of this campaign",
+                        "title": "Exclude subscription orders",
+                        "description": "Orders that start or renew a subscription earn no reward."
+                    },
+                    "percentHint": "% of each payment.",
+                    "inactivity": {
+                        "title": "Inactivity window",
+                        "description": "How long a subscriber can go without paying before the remaining rewards expire",
+                        "label": "Inactivity window (days)",
+                        "placeholder": "E.g. 90",
+                        "hint": "From 1 to 365 days. After this long without a payment, the unpaid rewards expire and their budget returns.",
+                        "unit": "days"
+                    },
+                    "totals": {
+                        "title": "Plan totals per subscriber",
+                        "ambassador": "Ambassador",
+                        "referee": "Referee",
+                        "cpa": "Plan CPA"
+                    },
+                    "stepBy": {
+                        "title": "Reward progression",
+                        "description": "What unlocks each reward after the first payment",
+                        "modelNotAllowed": "Not available with this reward progression",
+                        "cycle": {
+                            "title": "Each renewal",
+                            "description": "One reward per payment"
+                        },
+                        "amount": {
+                            "title": "Amount paid",
+                            "description": "One reward each time a set amount is paid"
+                        },
+                        "duration": {
+                            "title": "Time subscribed",
+                            "description": "One reward every set number of days of active subscription"
+                        },
+                        "modelFallback": "Rewards now take amounts: this progression can't pay percentages."
+                    },
+                    "percentStepHint": "% of the first payment, then of the amount paid per step.",
+                    "stepAmount": {
+                        "label": "Amount paid per reward",
+                        "placeholder": "E.g. 30",
+                        "hint": "Counted on the payments after the first one, across all of the subscriber's orders. Each time they have paid this much more, the next reward unlocks."
+                    },
+                    "stepDays": {
+                        "label": "Days per reward",
+                        "placeholder": "E.g. 30",
+                        "hint": "From 1 to 365 days. Each reward unlocks with the first payment made once this many more days of active subscription have passed. Time between two payments longer than the inactivity window does not count.",
+                        "unit": "days"
+                    },
+                    "tieredUnavailable": "Not available for subscription campaigns",
+                    "periods": {
+                        "description": "What each person receives along the plan. Add a period to change the reward along the way.",
+                        "title": {
+                            "cycle": {
+                                "all": "All payments",
+                                "one": "Payment {{from}}",
+                                "range": "Payments {{from}} to {{to}}"
+                            },
+                            "amount": {
+                                "all": "All steps",
+                                "one": "Step {{from}}",
+                                "range": "Steps {{from}} to {{to}}"
+                            },
+                            "duration": {
+                                "all": "All rewards",
+                                "one": "Reward {{from}}",
+                                "range": "Rewards {{from}} to {{to}}"
+                            }
+                        },
+                        "when": {
+                            "first": "First payment",
+                            "renewal": "Renewal {{count}}",
+                            "paid": "{{amount}} paid",
+                            "day": "Day {{count}}"
+                        },
+                        "range": {
+                            "cycle": "Payments",
+                            "amount": "Steps",
+                            "duration": "Rewards"
+                        },
+                        "toLabel": {
+                            "cycle": "Last payment of the period",
+                            "amount": "Last step of the period",
+                            "duration": "Last reward of the period"
+                        },
+                        "toPlaceholder": "E.g. 3",
+                        "lastPlaceholder": "E.g. 12",
+                        "add": "Add a period",
+                        "remove": "Remove this period",
+                        "hint": {
+                            "cycle": "The plan ends with the last period, at payment {{max}} at most. Its full cost is reserved from your budget for each new subscriber.",
+                            "amount": "The plan ends with the last period, at step {{max}} at most. Its full cost is reserved from your budget for each new subscriber.",
+                            "duration": "The plan ends with the last period, at reward {{max}} at most. Its full cost is reserved from your budget for each new subscriber."
+                        },
+                        "issues": {
+                            "range": {
+                                "cycle": "Each period must end on or after its first payment, and the plan can't go past payment {{max}}.",
+                                "amount": "Each period must end on or after its first step, and the plan can't go past step {{max}}.",
+                                "duration": "Each period must end on or after its first reward, and the plan can't go past reward {{max}}."
+                            },
+                            "bounds": "A Target CPA or a reward can't be negative, and a percentage Target CPA can't go over 100.",
+                            "edgeEmpty": "The first and last periods need a reward.",
+                            "firstMissing": "Everyone the plan rewards later needs a reward in the first period too: that's where their plan starts."
+                        }
+                    }
+                }
             }
         },
         "tabs": {
@@ -1135,6 +1271,7 @@
                         "traffic": "Traffic",
                         "registration": "Registration",
                         "sales": "Sales",
+                        "subscription": "Subscriptions",
                         "retention": "Retention"
                     },
                     "territories": "Countries",
@@ -1160,7 +1297,27 @@
                     "cancel": "Cancel",
                     "endBeforeStart": "The end date must be after the start date",
                     "error": "Could not update the schedule. The start date can only be moved forward."
+                },
+                "subscription": {
+                    "title": "Subscription rewards",
+                    "inactivity": "Inactivity window",
+                    "inactivityValue_one": "{{count}} day without a payment",
+                    "inactivityValue_other": "{{count}} days without a payment",
+                    "progression": {
+                        "label": "Reward progression"
+                    }
                 }
+            },
+            "subscription": {
+                "title": "Subscriptions",
+                "livePlans": "Live plans",
+                "livePlansSub": "Subscribers with steps still to pay",
+                "stepsPaid": "Steps paid",
+                "stepsPaidSub": "Plan steps paid out so far",
+                "reserved": "Reserved",
+                "reservedSub": "Held for steps not paid yet",
+                "paid": "Paid",
+                "paidSub": "Already paid or on its way to recipients"
             }
         },
         "overview": {

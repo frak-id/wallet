@@ -1,16 +1,40 @@
 import { pricingRepository, type TokenPrice } from "@backend-infrastructure";
 import type { Address } from "viem";
+import { roundAmount } from "../../../utils/numeric";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
-import type {
-    EstimatedReward,
-    EstimatedRewardItem,
-    EstimatedRewardsResult,
-    FixedRewardDefinition,
-    PercentageRewardDefinition,
-    RewardDefinition,
-    TieredRewardDefinition,
+import {
+    type EstimatedReward,
+    type EstimatedRewardItem,
+    type EstimatedRewardsResult,
+    type FixedRewardDefinition,
+    type PercentageRewardDefinition,
+    type RewardDefinition,
+    type SubscriptionEstimatedRewards,
+    subscriptionStepBy,
+    type TieredRewardDefinition,
 } from "../schemas";
+
+/** Ranges where no definition starts or ends, so each range pays one reward per side. */
+function stepRanges(
+    rewards: RewardDefinition[]
+): { from: number; to: number }[] {
+    const last = rewards.reduce(
+        (max, def) => Math.max(max, def.cycles?.to ?? 0),
+        0
+    );
+    const starts = new Set([1, 2]);
+    for (const def of rewards) {
+        if (!def.cycles) continue;
+        starts.add(def.cycles.from);
+        starts.add(def.cycles.to + 1);
+    }
+    const sorted = [...starts].filter((n) => n <= last).sort((a, b) => a - b);
+    return sorted.map((from, i) => ({
+        from,
+        to: (sorted[i + 1] ?? last + 1) - 1,
+    }));
+}
 
 export class EstimatedRewardService {
     constructor(readonly campaignRuleRepository: CampaignRuleRepository) {}
@@ -63,8 +87,15 @@ export class EstimatedRewardService {
     ): EstimatedRewardItem {
         const { trigger, rewards: rewardDefs } = campaign.rule;
 
-        let referrer: EstimatedReward | undefined;
-        let referee: EstimatedReward | undefined;
+        const subscription = campaign.rule.subscription
+            ? this.buildSubscriptionEstimate(campaign, priceMap)
+            : undefined;
+
+        const firstPayment = subscription?.steps.find(
+            (range) => range.from === 1
+        );
+        let referrer: EstimatedReward | undefined = firstPayment?.referrer;
+        let referee: EstimatedReward | undefined = firstPayment?.referee;
         let campaignToken: Address | undefined;
 
         for (const rewardDef of rewardDefs) {
@@ -72,6 +103,7 @@ export class EstimatedRewardService {
             if (token) {
                 campaignToken = token;
             }
+            if (subscription) continue;
             const price = token ? priceMap.get(token) : undefined;
             const estimated = this.buildEstimatedReward(rewardDef, price);
 
@@ -97,6 +129,67 @@ export class EstimatedRewardService {
             maxRewardsPerUser: campaign.rule.maxRewardsPerUser,
             merchantMaxRewardsPerUser: campaign.rule.merchantMaxRewardsPerUser,
             expiresAt: campaign.expiresAt?.toISOString() ?? null,
+            subscription,
+        };
+    }
+
+    /** A plan's rewards by step range; the first payment always gets its own range. */
+    private buildSubscriptionEstimate(
+        campaign: CampaignRuleSelect,
+        priceMap: Map<Address, TokenPrice>
+    ): SubscriptionEstimatedRewards {
+        const { rewards, subscription } = campaign.rule;
+        const stepBy = subscriptionStepBy(campaign.rule);
+        const stepAmount =
+            stepBy === "amount" ? subscription?.stepAmount : undefined;
+        const steps = stepRanges(rewards).flatMap(({ from, to }) => {
+            const side = this.sideAtStep(rewards, from, stepAmount, priceMap);
+            return side.referrer || side.referee ? [{ from, to, ...side }] : [];
+        });
+        return { steps, stepBy };
+    }
+
+    /** Each side's reward on one plan step; an amount step's percentage is its exact amount. */
+    private sideAtStep(
+        rewards: RewardDefinition[],
+        step: number,
+        stepAmount: number | undefined,
+        priceMap: Map<Address, TokenPrice>
+    ): { referrer?: EstimatedReward; referee?: EstimatedReward } {
+        const side: { referrer?: EstimatedReward; referee?: EstimatedReward } =
+            {};
+        for (const def of rewards) {
+            if (!def.cycles || def.cycles.from > step || step > def.cycles.to) {
+                continue;
+            }
+            const token = def.token as Address | undefined;
+            const price = token ? priceMap.get(token) : undefined;
+            side[def.recipient] =
+                step > 1 &&
+                stepAmount !== undefined &&
+                def.amountType === "percentage"
+                    ? this.buildAmountStepEstimate(def, stepAmount, price)
+                    : this.buildEstimatedReward(def, price);
+        }
+        return side;
+    }
+
+    /** A percentage of a known step amount is a fixed amount. */
+    private buildAmountStepEstimate(
+        rewardDef: PercentageRewardDefinition,
+        stepAmount: number,
+        price: TokenPrice | undefined
+    ): EstimatedReward {
+        let amount = (stepAmount * rewardDef.percent) / 100;
+        if (rewardDef.minAmount !== undefined) {
+            amount = Math.max(amount, rewardDef.minAmount);
+        }
+        if (rewardDef.maxAmount !== undefined) {
+            amount = Math.min(amount, rewardDef.maxAmount);
+        }
+        return {
+            payoutType: "fixed",
+            amount: this.toTokenAmount(roundAmount(amount), price),
         };
     }
 

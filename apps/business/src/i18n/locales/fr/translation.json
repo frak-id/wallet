@@ -541,7 +541,24 @@
                 "frak": "Frak : {{value}}",
                 "rewardLockup": "Blocage des récompenses",
                 "lockupValue": "{{count}} jours",
-                "publishError": "Impossible de publier la campagne. Veuillez réessayer."
+                "publishError": "Impossible de publier la campagne. Veuillez réessayer.",
+                "subscriptionOrders": "Commandes d'abonnement",
+                "subscriptionOrdersExcluded": "Exclues",
+                "subscription": {
+                    "inactivity": "Fenêtre d'inactivité",
+                    "inactivityValue_one": "{{count}} jour",
+                    "inactivityValue_other": "{{count}} jours",
+                    "unchanged": "Récompenses d'abonnement personnalisées, conservées telles qu'enregistrées",
+                    "progression": {
+                        "label": "Progression des récompenses",
+                        "cycle": "Chaque renouvellement",
+                        "amount": "Tous les {{amount}} payés après le premier paiement",
+                        "duration_one": "Chaque jour d'abonnement",
+                        "duration_other": "Tous les {{count}} jours d'abonnement"
+                    },
+                    "planCpa": "CPA du plan",
+                    "planCpaSplit": "Récompenses {{rewards}} · Commission Frak {{commission}}"
+                }
             },
             "success": {
                 "title": "Campagne lancée !",
@@ -572,8 +589,14 @@
                 "options": {
                     "sales": {
                         "title": "Ventes",
-                        "description": "Touchez les personnes susceptibles de s’abonner ou d’acheter un produit.",
-                        "tags": "Abonnement · Revenu · Conversion"
+                        "description": "Touchez les personnes susceptibles d’acheter vos produits.",
+                        "tags": "Revenu · Conversion"
+                    },
+                    "subscription": {
+                        "title": "Abonnements",
+                        "description": "Récompensez les parrainages qui deviennent abonnés, au premier paiement puis tant qu'ils continuent de payer.",
+                        "tags": "Fidélisation · Revenu récurrent",
+                        "notConnected": "Connectez Recharge dans l'application Shopify Frak (Paramètres > Abonnements) pour utiliser cet objectif."
                     },
                     "traffic": {
                         "title": "Trafic",
@@ -689,7 +712,8 @@
                     "endDateRequired": "Sélectionnez une date de fin",
                     "endDateInvalid": "La date de fin doit être égale ou postérieure à la date de début",
                     "invalidDate": "Saisissez une date valide"
-                }
+                },
+                "subscriptionReserve": "Pour chaque nouvel abonné, le plan complet (chaque récompense de chaque période, pour l'ambassadeur et le filleul, commission de Frak incluse) est réservé d'avance sur ce budget."
             },
             "referralChain": {
                 "enable": {
@@ -729,7 +753,8 @@
                     "rowLevel": "Niveau {{n}}",
                     "tableLevel": "Niveau",
                     "tableAmount": "Montant"
-                }
+                },
+                "subscription": "Les récompenses multi-niveaux ne sont pas disponibles sur les campagnes d'abonnement."
             },
             "products": {
                 "scope": {
@@ -901,7 +926,118 @@
                     "referral_signup": "Inscription parrainée",
                     "game_join": "Participation au Jeu Frak"
                 },
-                "saveError": "Impossible d’enregistrer la récompense. Vérifiez sa compatibilité avec le ciblage produit."
+                "saveError": "Impossible d’enregistrer la récompense. Vérifiez sa compatibilité avec le ciblage produit.",
+                "subscription": {
+                    "scopeNotAllowed": "Les récompenses d'abonnement ne sont pas compatibles avec un ciblage de produits par exclusion. Exprimez le ciblage de façon positive ou désactivez les abonnements.",
+                    "unsupported": "Les récompenses d'abonnement de cette campagne utilisent une structure que l'éditeur ne peut pas afficher : elles sont conservées telles qu'enregistrées. Créez une nouvelle campagne pour les modifier.",
+                    "exclude": {
+                        "label": "Commandes d'abonnement",
+                        "cardDescription": "Écarter les commandes d'abonnement de cette campagne",
+                        "title": "Exclure les commandes d'abonnement",
+                        "description": "Les commandes qui démarrent ou renouvellent un abonnement ne donnent aucune récompense."
+                    },
+                    "percentHint": "% de chaque paiement.",
+                    "inactivity": {
+                        "title": "Fenêtre d'inactivité",
+                        "description": "Durée pendant laquelle un abonné peut ne pas payer avant que les récompenses restantes n'expirent",
+                        "label": "Fenêtre d'inactivité (jours)",
+                        "placeholder": "Ex. 90",
+                        "hint": "De 1 à 365 jours. Sans paiement pendant cette durée, les récompenses restantes expirent et leur budget est restitué.",
+                        "unit": "jours"
+                    },
+                    "totals": {
+                        "title": "Totaux du plan par abonné",
+                        "ambassador": "Ambassadeur",
+                        "referee": "Filleul",
+                        "cpa": "CPA du plan"
+                    },
+                    "stepBy": {
+                        "title": "Progression des récompenses",
+                        "description": "Ce qui débloque chaque récompense après le premier paiement",
+                        "modelNotAllowed": "Indisponible avec cette progression des récompenses",
+                        "cycle": {
+                            "title": "Chaque renouvellement",
+                            "description": "Une récompense par paiement"
+                        },
+                        "amount": {
+                            "title": "Montant payé",
+                            "description": "Une récompense à chaque montant payé"
+                        },
+                        "duration": {
+                            "title": "Durée d'abonnement",
+                            "description": "Une récompense tous les N jours d'abonnement actif"
+                        },
+                        "modelFallback": "Les récompenses sont désormais en montants : cette progression ne peut pas verser de pourcentages."
+                    },
+                    "percentStepHint": "% du premier paiement, puis du montant payé par étape.",
+                    "stepAmount": {
+                        "label": "Montant payé par récompense",
+                        "placeholder": "Ex. 30",
+                        "hint": "Compté sur les paiements après le premier, toutes commandes de l'abonné confondues. Chaque fois qu'il a payé ce montant de plus, la récompense suivante se débloque."
+                    },
+                    "stepDays": {
+                        "label": "Jours par récompense",
+                        "placeholder": "Ex. 30",
+                        "hint": "De 1 à 365 jours. Chaque récompense se débloque au premier paiement effectué une fois ce nombre de jours d'abonnement actif écoulé. Un écart entre deux paiements plus long que la fenêtre d'inactivité ne compte pas.",
+                        "unit": "jours"
+                    },
+                    "tieredUnavailable": "Indisponible pour les campagnes d'abonnement",
+                    "periods": {
+                        "description": "Ce que chaque personne reçoit au fil du plan. Ajoutez une période pour faire évoluer la récompense.",
+                        "title": {
+                            "cycle": {
+                                "all": "Tous les paiements",
+                                "one": "Paiement {{from}}",
+                                "range": "Paiements {{from}} à {{to}}"
+                            },
+                            "amount": {
+                                "all": "Toutes les étapes",
+                                "one": "Étape {{from}}",
+                                "range": "Étapes {{from}} à {{to}}"
+                            },
+                            "duration": {
+                                "all": "Toutes les récompenses",
+                                "one": "Récompense {{from}}",
+                                "range": "Récompenses {{from}} à {{to}}"
+                            }
+                        },
+                        "when": {
+                            "first": "Premier paiement",
+                            "renewal": "Renouvellement {{count}}",
+                            "paid": "{{amount}} payés",
+                            "day": "Jour {{count}}"
+                        },
+                        "range": {
+                            "cycle": "Paiements",
+                            "amount": "Étapes",
+                            "duration": "Récompenses"
+                        },
+                        "toLabel": {
+                            "cycle": "Dernier paiement de la période",
+                            "amount": "Dernière étape de la période",
+                            "duration": "Dernière récompense de la période"
+                        },
+                        "toPlaceholder": "Ex. 3",
+                        "lastPlaceholder": "Ex. 12",
+                        "add": "Ajouter une période",
+                        "remove": "Supprimer cette période",
+                        "hint": {
+                            "cycle": "Le plan se termine avec la dernière période, au paiement {{max}} au plus. Son coût complet est réservé sur votre budget pour chaque nouvel abonné.",
+                            "amount": "Le plan se termine avec la dernière période, à l'étape {{max}} au plus. Son coût complet est réservé sur votre budget pour chaque nouvel abonné.",
+                            "duration": "Le plan se termine avec la dernière période, à la récompense {{max}} au plus. Son coût complet est réservé sur votre budget pour chaque nouvel abonné."
+                        },
+                        "issues": {
+                            "range": {
+                                "cycle": "Chaque période doit se terminer à son premier paiement ou après, et le plan ne peut pas dépasser le paiement {{max}}.",
+                                "amount": "Chaque période doit se terminer à sa première étape ou après, et le plan ne peut pas dépasser l'étape {{max}}.",
+                                "duration": "Chaque période doit se terminer à sa première récompense ou après, et le plan ne peut pas dépasser la récompense {{max}}."
+                            },
+                            "bounds": "Un CPA cible ou une récompense ne peut pas être négatif, et un CPA cible en pourcentage ne peut pas dépasser 100.",
+                            "edgeEmpty": "La première et la dernière période doivent avoir une récompense.",
+                            "firstMissing": "Toute personne récompensée plus tard dans le plan doit aussi l'être dans la première période : c'est là que son plan commence."
+                        }
+                    }
+                }
             }
         },
         "tabs": {
@@ -1135,6 +1271,7 @@
                         "traffic": "Trafic",
                         "registration": "Inscription",
                         "sales": "Ventes",
+                        "subscription": "Abonnements",
                         "retention": "Fidélisation"
                     },
                     "territories": "Pays",
@@ -1160,7 +1297,27 @@
                     "cancel": "Annuler",
                     "endBeforeStart": "La date de fin doit être postérieure à la date de début",
                     "error": "Impossible de mettre à jour la planification. La date de début ne peut être que repoussée."
+                },
+                "subscription": {
+                    "title": "Récompenses d'abonnement",
+                    "inactivity": "Fenêtre d'inactivité",
+                    "inactivityValue_one": "{{count}} jour sans paiement",
+                    "inactivityValue_other": "{{count}} jours sans paiement",
+                    "progression": {
+                        "label": "Progression des récompenses"
+                    }
                 }
+            },
+            "subscription": {
+                "title": "Abonnements",
+                "livePlans": "Plans en cours",
+                "livePlansSub": "Abonnés avec des étapes restant à payer",
+                "stepsPaid": "Étapes payées",
+                "stepsPaidSub": "Étapes versées à ce jour",
+                "reserved": "Réservé",
+                "reservedSub": "Retenu pour les étapes non payées",
+                "paid": "Versé",
+                "paidSub": "Déjà versé ou en cours de versement"
             }
         },
         "overview": {

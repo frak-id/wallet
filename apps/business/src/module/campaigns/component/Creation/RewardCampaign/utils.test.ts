@@ -3,12 +3,13 @@ import {
     type CampaignDraft,
     getMinPurchaseAmount,
 } from "@/stores/campaignStore";
+import { recalcCpaFromSplit } from "./cpa";
+import { fixedPeriod, percentPeriod, values } from "./subscription.fixtures";
 import {
     DEFAULT_REWARD_FORM,
     draftToRewardForm,
     isRewardFormValid,
     type RewardFormValues,
-    recalcCpaFromSplit,
     requiresMatchedBasis,
     rewardFormToDraft,
     supportsMatchedBasis,
@@ -486,5 +487,534 @@ describe("non-purchase campaign", () => {
         const draft = rewardFormToDraft(values, referralDraft);
         expect(draft.rule.defaultLockupSeconds).toBe(0);
         expect(getMinPurchaseAmount(draft.rule)).toBe(0);
+    });
+});
+
+const FIRST = { from: 1, to: 1 };
+
+// 10 € + 2 € on the first payment (CPA 15), then 5 € + 1 € on steps 2 to 5.
+const subscriptionFixed: RewardFormValues = {
+    ...DEFAULT_REWARD_FORM,
+    subscription: true,
+    model: "fixed",
+    periods: [
+        fixedPeriod(1, values(15, 10, 2)),
+        fixedPeriod(5, values(7.5, 5, 1)),
+    ],
+    inactivityDays: 60,
+};
+
+const subscriptionPercentage: RewardFormValues = {
+    ...DEFAULT_REWARD_FORM,
+    subscription: true,
+    model: "percentage",
+    periods: [
+        percentPeriod(1, values(12.5, 8, 2)),
+        percentPeriod(4, values(5, 3, 1)),
+    ],
+};
+
+const fixedDef = (
+    recipient: "referrer" | "referee",
+    amount: number,
+    cycles?: { from: number; to: number }
+) => ({
+    recipient,
+    type: "token" as const,
+    amountType: "fixed" as const,
+    amount,
+    ...(cycles ? { cycles } : {}),
+});
+
+const storedPlan = (
+    rewards: CampaignDraft["rule"]["rewards"]
+): CampaignDraft => ({
+    ...baseDraft,
+    rule: {
+        ...baseDraft.rule,
+        rewards,
+        subscription: { inactivityDays: 30 },
+    },
+});
+
+describe("subscription rewards: periods", () => {
+    it("writes one ranged definition per period and paid side", () => {
+        const { rule } = rewardFormToDraft(subscriptionFixed, baseDraft);
+
+        expect(rule.subscription).toEqual({ inactivityDays: 60 });
+        expect(rule.rewards).toEqual([
+            fixedDef("referrer", 10, FIRST),
+            fixedDef("referee", 2, FIRST),
+            fixedDef("referrer", 5, { from: 2, to: 5 }),
+            fixedDef("referee", 1, { from: 2, to: 5 }),
+        ]);
+    });
+
+    it("pays the whole plan from one definition per side when there is a single period", () => {
+        const { rule } = rewardFormToDraft(
+            {
+                ...subscriptionFixed,
+                periods: [fixedPeriod(6, values(10, 6, 2))],
+            },
+            baseDraft
+        );
+
+        expect(rule.rewards).toEqual([
+            fixedDef("referrer", 6, { from: 1, to: 6 }),
+            fixedDef("referee", 2, { from: 1, to: 6 }),
+        ]);
+    });
+
+    it("round-trips the periods with their CPA re-derived from the split", () => {
+        const form = draftToRewardForm(
+            rewardFormToDraft(subscriptionFixed, baseDraft)
+        );
+
+        expect(form).toMatchObject({
+            subscription: true,
+            unsupportedSubscription: false,
+            model: "fixed",
+            inactivityDays: 60,
+            periods: subscriptionFixed.periods,
+        });
+    });
+
+    it("writes percentage periods as a share of each payment", () => {
+        const { rule } = rewardFormToDraft(subscriptionPercentage, baseDraft);
+
+        expect(rule.rewards[2]).toEqual({
+            recipient: "referrer",
+            type: "token",
+            amountType: "percentage",
+            percent: 3,
+            percentOf: "purchase_amount",
+            cycles: { from: 2, to: 4 },
+        });
+        expect(draftToRewardForm({ ...baseDraft, rule }).periods).toMatchObject(
+            subscriptionPercentage.periods
+        );
+    });
+
+    it("skips a period without reward and keeps the steps of the periods after it", () => {
+        const withGap: RewardFormValues = {
+            ...subscriptionFixed,
+            periods: [
+                fixedPeriod(1, values(15, 10, 2)),
+                fixedPeriod(3),
+                fixedPeriod(6, values(7.5, 5, 1)),
+            ],
+        };
+        const { rule } = rewardFormToDraft(withGap, baseDraft);
+
+        expect(rule.rewards.map((r) => r.cycles)).toEqual([
+            FIRST,
+            FIRST,
+            { from: 4, to: 6 },
+            { from: 4, to: 6 },
+        ]);
+        expect(draftToRewardForm({ ...baseDraft, rule }).periods).toEqual(
+            withGap.periods
+        );
+    });
+
+    it("cuts stored ranges into periods wherever either side changes", () => {
+        const form = draftToRewardForm(
+            storedPlan([
+                fixedDef("referrer", 10, FIRST),
+                fixedDef("referrer", 5, { from: 2, to: 5 }),
+                fixedDef("referee", 2, { from: 1, to: 3 }),
+            ])
+        );
+
+        expect(form.periods.map((p) => p.to)).toEqual([1, 3, 5]);
+        expect(form.periods.map((p) => p.amount)).toEqual([
+            values(15, 10, 2),
+            values(8.75, 5, 2),
+            values(6.25, 5, 0),
+        ]);
+    });
+
+    it("starts a new plan with one empty period", () => {
+        const form = draftToRewardForm(storedPlan([]));
+
+        expect(form.model).toBe("");
+        expect(form.periods).toEqual([fixedPeriod("")]);
+    });
+
+    it("defaults the inactivity window when the rule stores none", () => {
+        const draft: CampaignDraft = {
+            ...baseDraft,
+            rule: { ...baseDraft.rule, subscription: {} },
+        };
+
+        expect(draftToRewardForm(draft).inactivityDays).toBe(90);
+    });
+
+    it("drops chaining, which a subscription plan cannot carry", () => {
+        const chained: CampaignDraft = {
+            ...baseDraft,
+            rule: {
+                ...baseDraft.rule,
+                rewards: [
+                    {
+                        ...fixedDef("referrer", 1),
+                        chaining: { deperditionPerLevel: 20 },
+                    },
+                ],
+            },
+        };
+
+        const { rule } = rewardFormToDraft(subscriptionFixed, chained);
+
+        expect(rule.rewards.some((r) => r.chaining)).toBe(false);
+    });
+
+    it("removes the subscription block and the cycles off a subscription form", () => {
+        const subscribed = rewardFormToDraft(subscriptionFixed, baseDraft);
+        const plain = rewardFormToDraft(
+            {
+                ...DEFAULT_REWARD_FORM,
+                model: "fixed",
+                targetCpa: 10,
+                ambassadorAmount: 6,
+                refereeAmount: 2,
+            },
+            subscribed
+        );
+
+        expect(plain.rule).not.toHaveProperty("subscription");
+        expect(plain.rule.rewards.some((r) => r.cycles)).toBe(false);
+    });
+
+    it("saves no plan from a subscription form on a campaign that is not a purchase", () => {
+        const { rule } = rewardFormToDraft(subscriptionFixed, {
+            ...baseDraft,
+            rule: { ...baseDraft.rule, trigger: "referral" },
+        });
+
+        expect(rule).not.toHaveProperty("subscription");
+        expect(rule.rewards.some((r) => r.cycles)).toBe(false);
+    });
+
+    it("saves no reward while the model is not chosen yet", () => {
+        const { rule } = rewardFormToDraft(
+            { ...DEFAULT_REWARD_FORM, subscription: true },
+            baseDraft
+        );
+
+        expect(rule.rewards).toEqual([]);
+        expect(rule.subscription).toEqual({ inactivityDays: 90 });
+    });
+});
+
+describe("subscription rewards: unsupported stored shapes", () => {
+    type Rewards = CampaignDraft["rule"]["rewards"];
+    const percentage = (
+        extra: Partial<{
+            percentOf: "purchase_amount" | "matched_items_amount";
+            maxAmount: number;
+        }>
+    ): Rewards[number] => ({
+        recipient: "referrer",
+        type: "token",
+        amountType: "percentage",
+        percent: 3,
+        percentOf: "purchase_amount",
+        cycles: FIRST,
+        ...extra,
+    });
+    const unsupported: [string, Rewards][] = [
+        ["a reward without cycles", [fixedDef("referrer", 5)]],
+        [
+            "overlapping ranges on one side",
+            [
+                fixedDef("referrer", 5, { from: 1, to: 4 }),
+                fixedDef("referrer", 2, { from: 3, to: 6 }),
+            ],
+        ],
+        [
+            "a plan mixing fixed and percentage definitions",
+            [fixedDef("referrer", 10, FIRST), percentage({})],
+        ],
+        [
+            "a percentage computed on the matched items",
+            [percentage({ percentOf: "matched_items_amount" })],
+        ],
+        [
+            "a fractional range bound",
+            [fixedDef("referrer", 5, { from: 1, to: 2.5 })],
+        ],
+        ["a capped percentage", [percentage({ maxAmount: 20 })]],
+        [
+            "a range past the 24th step",
+            [fixedDef("referrer", 5, { from: 1, to: 30 })],
+        ],
+        [
+            "a tiered definition",
+            [
+                {
+                    recipient: "referrer",
+                    type: "token",
+                    amountType: "tiered",
+                    tierField: "purchase.amount",
+                    tiers: [{ minValue: 0, amount: 5 }],
+                    cycles: FIRST,
+                },
+            ],
+        ],
+    ];
+
+    it.each(unsupported)("flags %s", (_, rewards) => {
+        expect(
+            draftToRewardForm(storedPlan(rewards)).unsupportedSubscription
+        ).toBe(true);
+    });
+
+    it("leaves the stored rewards and rule exactly as they were when saving", () => {
+        const draft = storedPlan([fixedDef("referrer", 5)]);
+        const form = draftToRewardForm(draft);
+
+        expect(
+            rewardFormToDraft(
+                { ...form, lockupDays: 30, referralOnly: false },
+                draft
+            )
+        ).toBe(draft);
+    });
+
+    it("keeps Continue available so the untouched plan can move on", () => {
+        const form = draftToRewardForm(storedPlan([fixedDef("referrer", 5)]));
+
+        expect(isRewardFormValid(form)).toBe(true);
+        expect(form.inactivityDays).toBe(30);
+    });
+});
+
+describe("isRewardFormValid (subscription)", () => {
+    it("passes a complete fixed or percentage plan", () => {
+        expect(isRewardFormValid(subscriptionFixed)).toBe(true);
+        expect(isRewardFormValid(subscriptionPercentage)).toBe(true);
+    });
+
+    it("fails while the periods have an issue", () => {
+        expect(
+            isRewardFormValid({
+                ...subscriptionFixed,
+                periods: [fixedPeriod("", values(10, 6, 2))],
+            })
+        ).toBe(false);
+    });
+
+    it("fails the tiered model, which subscriptions can't use", () => {
+        expect(
+            isRewardFormValid({ ...subscriptionFixed, model: "tiered" })
+        ).toBe(false);
+    });
+
+    it("fails on a negated product scope, which needs the matched basis a subscription forbids", () => {
+        expect(
+            isRewardFormValid(subscriptionPercentage, {
+                requiresMatchedBasis: true,
+            })
+        ).toBe(false);
+    });
+});
+
+describe("subscription rewards: progression", () => {
+    it("writes nothing extra for the default cycle progression", () => {
+        const { rule } = rewardFormToDraft(subscriptionFixed, baseDraft);
+
+        expect(rule.subscription).toEqual({ inactivityDays: 60 });
+    });
+
+    it("writes an amount progression with its step amount, keeping the percentages", () => {
+        const { rule } = rewardFormToDraft(
+            {
+                ...subscriptionPercentage,
+                stepBy: "amount",
+                stepAmount: 30,
+                stepDays: 45,
+            },
+            baseDraft
+        );
+
+        expect(rule.subscription).toEqual({
+            inactivityDays: 90,
+            stepBy: "amount",
+            stepAmount: 30,
+        });
+        expect(rule.rewards[2]).toMatchObject({
+            amountType: "percentage",
+            percent: 3,
+            cycles: { from: 2, to: 4 },
+        });
+    });
+
+    it("writes a duration progression with its step days only", () => {
+        const { rule } = rewardFormToDraft(
+            {
+                ...subscriptionFixed,
+                stepBy: "duration",
+                stepDays: 28,
+                stepAmount: 30,
+            },
+            baseDraft
+        );
+
+        expect(rule.subscription).toEqual({
+            inactivityDays: 60,
+            stepBy: "duration",
+            stepDays: 28,
+        });
+    });
+
+    it.each([
+        { stepBy: "amount", stepAmount: 25 },
+        { stepBy: "duration", stepDays: 14 },
+    ] as const)("round-trips the $stepBy progression", (progression) => {
+        const restored = draftToRewardForm(
+            rewardFormToDraft(
+                { ...subscriptionFixed, ...progression },
+                baseDraft
+            )
+        );
+
+        expect(restored).toMatchObject({
+            ...progression,
+            model: "fixed",
+            periods: subscriptionFixed.periods,
+            unsupportedSubscription: false,
+        });
+    });
+
+    it("reads a stored plan without a progression as counting renewals", () => {
+        const form = draftToRewardForm(
+            rewardFormToDraft(subscriptionFixed, baseDraft)
+        );
+
+        expect(form.stepBy).toBe("cycle");
+    });
+});
+
+describe("isRewardFormValid (subscription progression)", () => {
+    it("needs a positive amount per reward on an amount progression", () => {
+        const amount = { ...subscriptionFixed, stepBy: "amount" as const };
+        expect(isRewardFormValid({ ...amount, stepAmount: "" })).toBe(false);
+        expect(isRewardFormValid({ ...amount, stepAmount: 0 })).toBe(false);
+        expect(isRewardFormValid({ ...amount, stepAmount: 30 })).toBe(true);
+    });
+
+    it("needs 1 to 365 whole days per reward on a duration progression", () => {
+        const duration = { ...subscriptionFixed, stepBy: "duration" as const };
+        for (const stepDays of [0, 366, "", 1.5] as const) {
+            expect(isRewardFormValid({ ...duration, stepDays })).toBe(false);
+        }
+        expect(isRewardFormValid({ ...duration, stepDays: 30 })).toBe(true);
+    });
+
+    it("keeps each progression to the models it can pay", () => {
+        expect(
+            isRewardFormValid({
+                ...subscriptionPercentage,
+                stepBy: "amount",
+                stepAmount: 30,
+            })
+        ).toBe(true);
+        expect(
+            isRewardFormValid({
+                ...subscriptionPercentage,
+                stepBy: "duration",
+                stepDays: 30,
+            })
+        ).toBe(false);
+    });
+});
+
+describe("exclude subscription orders", () => {
+    const EXCLUDE = {
+        field: "purchase.isSubscription",
+        operator: "neq" as const,
+        value: true,
+    };
+    const fixedValues: RewardFormValues = {
+        ...DEFAULT_REWARD_FORM,
+        model: "fixed",
+        targetCpa: 10,
+        ambassadorAmount: 6,
+        refereeAmount: 2,
+    };
+
+    it("adds the purchase.isSubscription neq true condition when toggled on", () => {
+        const { rule } = rewardFormToDraft(
+            { ...fixedValues, excludeSubscriptions: true },
+            baseDraft
+        );
+
+        expect(rule.conditions).toContainEqual(EXCLUDE);
+    });
+
+    it("removes the condition when toggled off", () => {
+        const excluded = rewardFormToDraft(
+            { ...fixedValues, excludeSubscriptions: true },
+            baseDraft
+        );
+
+        const { rule } = rewardFormToDraft(
+            { ...fixedValues, excludeSubscriptions: false },
+            excluded
+        );
+
+        expect(rule.conditions).not.toContainEqual(EXCLUDE);
+    });
+
+    it("reads the stored condition back into the form", () => {
+        const draft: CampaignDraft = {
+            ...baseDraft,
+            rule: { ...baseDraft.rule, conditions: [EXCLUDE] },
+        };
+
+        expect(draftToRewardForm(draft).excludeSubscriptions).toBe(true);
+        expect(draftToRewardForm(baseDraft).excludeSubscriptions).toBe(false);
+    });
+
+    it("round-trips for the tiered model too", () => {
+        const draft = rewardFormToDraft(
+            { ...tieredValues, excludeSubscriptions: true },
+            baseDraft
+        );
+
+        expect(draftToRewardForm(draft).excludeSubscriptions).toBe(true);
+    });
+
+    it("leaves the other conditions alone", () => {
+        const { rule } = rewardFormToDraft(
+            {
+                ...fixedValues,
+                excludeSubscriptions: true,
+                minPurchaseAmount: 20,
+            },
+            baseDraft
+        );
+
+        expect(getMinPurchaseAmount(rule)).toBe(20);
+        expect(rule.conditions).toHaveLength(3);
+    });
+
+    it("is not written on a subscription campaign, which only matches subscription checkouts", () => {
+        const { rule } = rewardFormToDraft(
+            { ...subscriptionFixed, excludeSubscriptions: true },
+            baseDraft
+        );
+
+        expect(rule.conditions).not.toContainEqual(EXCLUDE);
+    });
+
+    it("is not written off a purchase trigger", () => {
+        const { rule } = rewardFormToDraft(
+            { ...fixedValues, excludeSubscriptions: true },
+            { ...baseDraft, rule: { ...baseDraft.rule, trigger: "referral" } }
+        );
+
+        expect(rule.conditions).not.toContainEqual(EXCLUDE);
     });
 });

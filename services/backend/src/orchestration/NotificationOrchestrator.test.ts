@@ -97,3 +97,44 @@ describe("NotificationOrchestrator reward events", () => {
         );
     });
 });
+
+describe("NotificationOrchestrator reward_step_unlocked", () => {
+    const send = async (role: "referrer" | "referee", eurAmount?: number) => {
+        const { handle, sendAndStore } = setup();
+        await handle({
+            type: "reward_step_unlocked",
+            notifications: [
+                {
+                    wallets: ["0xabc"],
+                    merchantId: "m-1",
+                    rewardCount: 1,
+                    role,
+                    eurAmount,
+                },
+            ],
+        });
+        return sendAndStore.mock.calls[0]?.[0];
+    };
+
+    it("tells a referrer their friend is still subscribed and what unlocked", async () => {
+        const sent = await send("referrer", 5);
+
+        expect(sent.type).toBe("reward_step_unlocked");
+        expect(sent.payload.en.body).toBe(
+            "Your friend is still subscribed: +€5 unlocked at Nike."
+        );
+    });
+
+    it("tells a referee only what unlocked", async () => {
+        const sent = await send("referee", 5);
+
+        expect(sent.payload.en.body).toBe("+€5 unlocked at Nike.");
+        expect(sent.payload.fr.body).toMatch(/^\+5\s€ débloqué chez Nike\.$/);
+    });
+
+    it("still announces an unlock whose token has no price", async () => {
+        const sent = await send("referee");
+
+        expect(sent.payload.en.body).toBe("A reward unlocked at Nike.");
+    });
+});

@@ -250,7 +250,8 @@ export default interface Resources {
               "description": "Schedule a starting date",
               "title": "Start date only"
             }
-          }
+          },
+          "subscriptionReserve": "For each new subscriber, the full plan (every reward of every period, for the ambassador and the referee, Frak's commission included) is reserved from this budget upfront."
         },
         "cancel": {
           "confirm": "Yes, close",
@@ -267,9 +268,15 @@ export default interface Resources {
               "title": "Registration"
             },
             "sales": {
-              "description": "Find people likely to subscribe or buy product on a pay-per-view basis.",
-              "tags": "Subscription · Revenue · Conversion",
+              "description": "Find people likely to buy your products on a pay-per-view basis.",
+              "tags": "Revenue · Conversion",
               "title": "Sales"
+            },
+            "subscription": {
+              "description": "Reward referrals that become subscribers, on the first payment and as they keep paying.",
+              "notConnected": "Connect Recharge in the Frak Shopify app (Settings > Subscriptions) to use this goal.",
+              "tags": "Retention · Recurring revenue",
+              "title": "Subscriptions"
             },
             "traffic": {
               "description": "Redirect to a destination, such as your website, application...",
@@ -379,7 +386,8 @@ export default interface Resources {
             "tableAmount": "Amount",
             "tableLevel": "Level",
             "title": "Reward distribution chain"
-          }
+          },
+          "subscription": "Multi-level rewards aren't available on subscription campaigns."
         },
         "reward": {
           "basis": {
@@ -462,6 +470,117 @@ export default interface Resources {
             "refereeReward": "Referee reward"
           },
           "saveError": "Could not save the reward. Check that it is compatible with the product targeting.",
+          "subscription": {
+            "exclude": {
+              "cardDescription": "Keep subscription orders out of this campaign",
+              "description": "Orders that start or renew a subscription earn no reward.",
+              "label": "Subscription orders",
+              "title": "Exclude subscription orders"
+            },
+            "inactivity": {
+              "description": "How long a subscriber can go without paying before the remaining rewards expire",
+              "hint": "From 1 to 365 days. After this long without a payment, the unpaid rewards expire and their budget returns.",
+              "label": "Inactivity window (days)",
+              "placeholder": "E.g. 90",
+              "title": "Inactivity window",
+              "unit": "days"
+            },
+            "percentHint": "% of each payment.",
+            "percentStepHint": "% of the first payment, then of the amount paid per step.",
+            "periods": {
+              "add": "Add a period",
+              "description": "What each person receives along the plan. Add a period to change the reward along the way.",
+              "hint": {
+                "amount": "The plan ends with the last period, at step {{max}} at most. Its full cost is reserved from your budget for each new subscriber.",
+                "cycle": "The plan ends with the last period, at payment {{max}} at most. Its full cost is reserved from your budget for each new subscriber.",
+                "duration": "The plan ends with the last period, at reward {{max}} at most. Its full cost is reserved from your budget for each new subscriber."
+              },
+              "issues": {
+                "bounds": "A Target CPA or a reward can't be negative, and a percentage Target CPA can't go over 100.",
+                "edgeEmpty": "The first and last periods need a reward.",
+                "firstMissing": "Everyone the plan rewards later needs a reward in the first period too: that's where their plan starts.",
+                "range": {
+                  "amount": "Each period must end on or after its first step, and the plan can't go past step {{max}}.",
+                  "cycle": "Each period must end on or after its first payment, and the plan can't go past payment {{max}}.",
+                  "duration": "Each period must end on or after its first reward, and the plan can't go past reward {{max}}."
+                }
+              },
+              "lastPlaceholder": "E.g. 12",
+              "range": {
+                "amount": "Steps",
+                "cycle": "Payments",
+                "duration": "Rewards"
+              },
+              "remove": "Remove this period",
+              "title": {
+                "amount": {
+                  "all": "All steps",
+                  "one": "Step {{from}}",
+                  "range": "Steps {{from}} to {{to}}"
+                },
+                "cycle": {
+                  "all": "All payments",
+                  "one": "Payment {{from}}",
+                  "range": "Payments {{from}} to {{to}}"
+                },
+                "duration": {
+                  "all": "All rewards",
+                  "one": "Reward {{from}}",
+                  "range": "Rewards {{from}} to {{to}}"
+                }
+              },
+              "toLabel": {
+                "amount": "Last step of the period",
+                "cycle": "Last payment of the period",
+                "duration": "Last reward of the period"
+              },
+              "toPlaceholder": "E.g. 3",
+              "when": {
+                "day": "Day {{count}}",
+                "first": "First payment",
+                "paid": "{{amount}} paid",
+                "renewal": "Renewal {{count}}"
+              }
+            },
+            "scopeNotAllowed": "Subscription rewards can't be combined with exclusion-based product targeting. Express the targeting positively or turn subscriptions off.",
+            "stepAmount": {
+              "hint": "Counted on the payments after the first one, across all of the subscriber's orders. Each time they have paid this much more, the next reward unlocks.",
+              "label": "Amount paid per reward",
+              "placeholder": "E.g. 30"
+            },
+            "stepBy": {
+              "amount": {
+                "description": "One reward each time a set amount is paid",
+                "title": "Amount paid"
+              },
+              "cycle": {
+                "description": "One reward per payment",
+                "title": "Each renewal"
+              },
+              "description": "What unlocks each reward after the first payment",
+              "duration": {
+                "description": "One reward every set number of days of active subscription",
+                "title": "Time subscribed"
+              },
+              "modelFallback": "Rewards now take amounts: this progression can't pay percentages.",
+              "modelNotAllowed": "Not available with this reward progression",
+              "title": "Reward progression"
+            },
+            "stepDays": {
+              "hint": "From 1 to 365 days. Each reward unlocks with the first payment made once this many more days of active subscription have passed. Time between two payments longer than the inactivity window does not count.",
+              "label": "Days per reward",
+              "placeholder": "E.g. 30",
+              "unit": "days"
+            },
+            "tieredUnavailable": "Not available for subscription campaigns",
+            "totals": {
+              "ambassador": "Ambassador",
+              "cpa": "Plan CPA",
+              "referee": "Referee",
+              "title": "Plan totals per subscriber"
+            },
+            "unsupported": "This campaign's subscription rewards use a layout the editor can't display, so they are kept exactly as saved. Create a new campaign to change them."
+          },
           "tiered": {
             "addTier": "Add a tier",
             "basketRange": "Basket Range ({{glyph}})",
@@ -608,6 +727,23 @@ export default interface Resources {
           "schedule": "Schedule",
           "specialCategories": "Special categories",
           "startImmediately": "Start immediately",
+          "subscription": {
+            "inactivity": "Inactivity window",
+            "inactivityValue_one": "{{count}} day",
+            "inactivityValue_other": "{{count}} days",
+            "planCpa": "Plan CPA",
+            "planCpaSplit": "Rewards {{rewards}} · Frak commission {{commission}}",
+            "progression": {
+              "amount": "Every {{amount}} paid after the first payment",
+              "cycle": "Each renewal",
+              "duration_one": "Every day subscribed",
+              "duration_other": "Every {{count}} days subscribed",
+              "label": "Reward progression"
+            },
+            "unchanged": "Custom subscription rewards, kept as saved"
+          },
+          "subscriptionOrders": "Subscription orders",
+          "subscriptionOrdersExcluded": "Excluded",
           "targetCpa": "Target CPA",
           "territories": "Territories",
           "tieredTiers": "{{count}} tiers",
@@ -704,6 +840,15 @@ export default interface Resources {
             "starts": "Starts on",
             "title": "Schedule"
           },
+          "subscription": {
+            "inactivity": "Inactivity window",
+            "inactivityValue_one": "{{count}} day without a payment",
+            "inactivityValue_other": "{{count}} days without a payment",
+            "progression": {
+              "label": "Reward progression"
+            },
+            "title": "Subscription rewards"
+          },
           "targeting": {
             "allTerritories": "All countries",
             "goal": "Campaign goal",
@@ -712,6 +857,7 @@ export default interface Resources {
               "registration": "Registration",
               "retention": "Retention",
               "sales": "Sales",
+              "subscription": "Subscriptions",
               "traffic": "Traffic"
             },
             "specialCategories": "Special ad categories",
@@ -776,6 +922,17 @@ export default interface Resources {
           "registered": "Registered",
           "sharedAtLeastOnce": "Shared at least once",
           "total": "total"
+        },
+        "subscription": {
+          "livePlans": "Live plans",
+          "livePlansSub": "Subscribers with steps still to pay",
+          "paid": "Paid",
+          "paidSub": "Already paid or on its way to recipients",
+          "reserved": "Reserved",
+          "reservedSub": "Held for steps not paid yet",
+          "stepsPaid": "Steps paid",
+          "stepsPaidSub": "Plan steps paid out so far",
+          "title": "Subscriptions"
         },
         "subtitle": {
           "ambassadors_one": "{{count}} ambassador",

@@ -101,4 +101,11 @@ describe("MissionUnlockOrchestrator.run", () => {
         );
         expect(lapse).not.toContain('"instagram_links"."follows"');
     });
+
+    it("leaves the held steps of a subscription plan to their billing cycles", async () => {
+        await orchestrator.run();
+
+        expect(whereOf(sqlAt(0))).toContain('"plan_step" IS NULL');
+        expect(whereOf(sqlAt(1))).toContain('"plan_step" IS NULL');
+    });
 });

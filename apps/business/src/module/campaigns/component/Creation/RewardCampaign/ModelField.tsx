@@ -1,9 +1,5 @@
-import {
-    RadioGroup,
-    RadioGroupItem,
-} from "@frak-labs/design-system/components/RadioGroup";
+import { RadioGroup } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
 import {
     type Control,
     Controller,
@@ -12,7 +8,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { FixedReveal, PercentageReveal } from "./CpaReveal";
+import { RadioOptionCard } from "./RevealParts";
 import * as styles from "./reward.css";
+import { SubscriptionPeriodsReveal } from "./SubscriptionReveal";
+import { allowedModels, type StepBy } from "./subscription";
 import { TieredReveal } from "./TieredReveal";
 import type { RewardFormValues, RewardModel } from "./utils";
 
@@ -44,13 +43,31 @@ export function ModelField({
     setValue,
     model,
     isPurchase,
+    isSubscription,
+    stepBy,
 }: {
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
     model: RewardModel | "";
     isPurchase: boolean;
+    isSubscription: boolean;
+    stepBy: StepBy;
 }) {
     const { t } = useTranslation();
+    const disabledReason = (value: RewardModel): string | undefined => {
+        if (!isPurchase && value !== "fixed") {
+            return t("campaigns.create.reward.model.salesOnly");
+        }
+        if (isSubscription && value === "tiered") {
+            return t("campaigns.create.reward.subscription.tieredUnavailable");
+        }
+        if (isSubscription && !allowedModels(stepBy).includes(value)) {
+            return t(
+                "campaigns.create.reward.subscription.stepBy.modelNotAllowed"
+            );
+        }
+        return undefined;
+    };
     return (
         <Stack space="m">
             <Controller
@@ -63,40 +80,21 @@ export function ModelField({
                         onValueChange={field.onChange}
                     >
                         {MODELS.map((m) => {
-                            const disabled = !isPurchase && m.value !== "fixed";
+                            const reason = disabledReason(m.value);
+                            const disabled = reason !== undefined;
                             return (
                                 <Tooltip
                                     key={m.value}
                                     hidden={!disabled}
-                                    content={t(
-                                        "campaigns.create.reward.model.salesOnly"
-                                    )}
+                                    content={reason ?? ""}
                                 >
-                                    <label
-                                        htmlFor={`model-${m.value}`}
-                                        className={`${styles.modelOption}${disabled ? ` ${styles.modelOptionDisabled}` : ""}`}
-                                    >
-                                        <RadioGroupItem
-                                            id={`model-${m.value}`}
-                                            value={m.value}
-                                            size="l"
-                                            disabled={disabled}
-                                        />
-                                        <span className={styles.modelMain}>
-                                            <Text
-                                                variant="body"
-                                                weight="medium"
-                                            >
-                                                {t(m.titleKey)}
-                                            </Text>
-                                            <Text
-                                                variant="bodySmall"
-                                                color="secondary"
-                                            >
-                                                {t(m.descKey)}
-                                            </Text>
-                                        </span>
-                                    </label>
+                                    <RadioOptionCard
+                                        id={`model-${m.value}`}
+                                        value={m.value}
+                                        title={t(m.titleKey)}
+                                        description={t(m.descKey)}
+                                        disabled={disabled}
+                                    />
                                 </Tooltip>
                             );
                         })}
@@ -105,14 +103,29 @@ export function ModelField({
             />
 
             {model && <div className={styles.divider} />}
-            {model === "fixed" && (
-                <FixedReveal control={control} setValue={setValue} />
-            )}
-            {model === "percentage" && (
-                <PercentageReveal control={control} setValue={setValue} />
-            )}
-            {model === "tiered" && (
-                <TieredReveal control={control} setValue={setValue} />
+            {isSubscription ? (
+                (model === "fixed" || model === "percentage") && (
+                    <SubscriptionPeriodsReveal
+                        control={control}
+                        setValue={setValue}
+                        model={model}
+                    />
+                )
+            ) : (
+                <>
+                    {model === "fixed" && (
+                        <FixedReveal control={control} setValue={setValue} />
+                    )}
+                    {model === "percentage" && (
+                        <PercentageReveal
+                            control={control}
+                            setValue={setValue}
+                        />
+                    )}
+                    {model === "tiered" && (
+                        <TieredReveal control={control} setValue={setValue} />
+                    )}
+                </>
             )}
         </Stack>
     );

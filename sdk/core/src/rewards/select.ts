@@ -13,6 +13,11 @@ import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 import { formatEstimatedRewardParts, formatRewardOrHide } from "./format";
 import { matchesProductScope } from "./matchesProductScope";
+import {
+    formatSubscriptionReward,
+    getLeadingReward,
+    getSubscriptionRank,
+} from "./subscription";
 import { getRewardRank } from "./value";
 
 /** Reward side a surface cares about: `referrer` (sharer) or `referee`. */
@@ -60,6 +65,9 @@ function campaignRank(
     key: keyof TokenAmountType,
     audience: RewardAudience
 ): number {
+    if (campaign.subscription) {
+        return getSubscriptionRank(campaign.subscription, audience, key);
+    }
     const reward = audienceReward(campaign, audience);
     return reward ? getRewardRank(reward, key) : 0;
 }
@@ -158,7 +166,7 @@ export function selectDisplayCampaign(
  * plus the payout type and raw campaign data behind it.
  */
 export type BestReward = {
-    /** Display-ready reward string (e.g. `"5 €"`, `"10 %"`). */
+    /** Locale-neutral reward figure (e.g. `"5 €"`, `"10 %"`), without wording. */
     formatted: string;
     /** {@link formatted} pre-split into integer / decimals / unit. */
     parts?: RewardAmountParts;
@@ -180,6 +188,8 @@ export type BestReward = {
     isProductScoped: boolean;
     /** See {@link DisplayCampaign.matchedProducts}. */
     matchedProducts?: ProductDetails[];
+    /** {@link formatted} is a plan ceiling: surfaces word it "up to …". */
+    upTo?: boolean;
 };
 
 /**
@@ -192,12 +202,19 @@ export function selectBestReward(
 ): BestReward | undefined {
     const selected = selectDisplayCampaign(rewards, options);
     if (!selected) return undefined;
-    const reward = audienceReward(
-        selected.campaign,
-        options.audience ?? "referrer"
-    );
+    const audience = options.audience ?? "referrer";
+    const { subscription } = selected.campaign;
+    const reward = subscription
+        ? getLeadingReward(subscription, audience)
+        : audienceReward(selected.campaign, audience);
     if (!reward) return undefined;
-    const formatted = formatRewardOrHide(reward, options.currency);
+
+    const plan = subscription
+        ? formatSubscriptionReward(subscription, audience, options.currency)
+        : undefined;
+    const formatted = plan
+        ? plan.formatted
+        : formatRewardOrHide(reward, options.currency);
     if (!formatted) return undefined;
 
     const minPurchase = extractMinPurchaseAmount(selected.campaign.conditions);
@@ -214,7 +231,9 @@ export function selectBestReward(
 
     return {
         formatted,
-        parts: formatEstimatedRewardParts(reward, options.currency),
+        parts: plan
+            ? plan.parts
+            : formatEstimatedRewardParts(reward, options.currency),
         payoutType: reward.payoutType,
         minPurchaseAmount,
         lockupDurationDays,
@@ -223,6 +242,7 @@ export function selectBestReward(
         minPurchaseValue: minPurchase ?? undefined,
         isProductScoped: selected.campaign.productScope != null,
         matchedProducts: selected.matchedProducts,
+        upTo: plan?.upTo,
     };
 }
 

@@ -18,6 +18,7 @@ import type {
     TieredRewardDefinition,
 } from "../types";
 import { compareValues, isConditionGroup } from "./RuleConditionEvaluator";
+import { validateSubscriptionRule } from "./subscriptionRuleValidation";
 
 // Item shape is a small closed set, so productScope gets an exact-match field
 // allowlist. Order-level `conditions` are deliberately NOT validated this way:
@@ -590,6 +591,9 @@ export class CampaignManagementService {
         if (requireRewards && rewards.length === 0) {
             return "Rule must have at least one reward";
         }
+
+        const subscriptionError = validateSubscriptionRule(rule);
+        if (subscriptionError) return subscriptionError;
 
         if (rule.productScope !== undefined) {
             if (rule.trigger !== "purchase") {

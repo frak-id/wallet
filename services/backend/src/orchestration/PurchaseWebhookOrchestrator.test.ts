@@ -131,4 +131,60 @@ describe("PurchaseWebhookOrchestrator", () => {
             expect.objectContaining({ items: mergedVariant })
         );
     });
+
+    it("carries the stored subscription state into the interaction", async () => {
+        const { orchestrator, purchaseRepository, purchaseInteractionCreator } =
+            makeOrchestrator();
+        const pending = {
+            state: "pending",
+            attempts: 0,
+            nextAttemptAt: null,
+        };
+        purchaseRepository.upsertWithItems.mockResolvedValue({
+            purchaseId: "purchase-1",
+            items: mergedVariant,
+            subscription: pending,
+        });
+
+        await orchestrator.upsertPurchase({
+            purchase,
+            purchaseItems: [] as never,
+            merchantId: MERCHANT_ID,
+            clientId: "anon-1",
+        });
+
+        expect(purchaseInteractionCreator.create).toHaveBeenCalledWith(
+            expect.objectContaining({ subscription: pending })
+        );
+    });
+
+    it("stores a renewal without claiming or attributing it", async () => {
+        const {
+            orchestrator,
+            purchaseRepository,
+            purchaseClaimRepository,
+            purchaseInteractionCreator,
+        } = makeOrchestrator();
+
+        const result = await orchestrator.upsertPurchase({
+            purchase,
+            purchaseItems: [] as never,
+            merchantId: MERCHANT_ID,
+            clientId: "anon-1",
+            skipAttribution: true,
+        });
+
+        expect(purchaseRepository.upsertWithItems).toHaveBeenCalledWith({
+            purchase,
+            items: [],
+        });
+        expect(
+            purchaseClaimRepository.findByPurchaseKey
+        ).not.toHaveBeenCalled();
+        expect(purchaseInteractionCreator.create).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+            interactionLogId: null,
+            identityGroupId: null,
+        });
+    });
 });

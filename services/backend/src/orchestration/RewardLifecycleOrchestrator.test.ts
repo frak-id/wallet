@@ -5,7 +5,10 @@ import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLog
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+
 vi.mock("@backend-infrastructure", () => ({
+    productEvents: { track },
     log: {
         debug: vi.fn(),
         info: vi.fn(),
@@ -28,17 +31,29 @@ const buildOrchestrator = () => {
         restoreBudgetsBatch: vi.fn(),
     } as unknown as CampaignRuleRepository;
 
+    const subscriptionPlan = { syncPlan: vi.fn().mockResolvedValue({}) };
+
     const orchestrator = new RewardLifecycleOrchestrator(
         assetLog,
         interactionLog,
-        campaignRule
+        campaignRule,
+        subscriptionPlan as never
     );
 
-    return { orchestrator, assetLog, interactionLog, campaignRule };
+    return {
+        orchestrator,
+        assetLog,
+        interactionLog,
+        campaignRule,
+        subscriptionPlan,
+    };
 };
 
 const purchaseInteraction = {
     id: "interaction-1",
+    merchantId: "m1",
+    identityGroupId: "group-1",
+    payload: {},
 } as InteractionLogSelect;
 
 describe("RewardLifecycleOrchestrator", () => {
@@ -160,6 +175,118 @@ describe("RewardLifecycleOrchestrator", () => {
             expect(result.budgetRestoredByCampaign).toEqual({
                 "campaign-3": 13,
             });
+        });
+    });
+});
+
+describe("RewardLifecycleOrchestrator subscription cycles", () => {
+    const refundedCycle = {
+        ...purchaseInteraction,
+        payload: {
+            subscription: {
+                state: "resolved",
+                kind: "renewal",
+                cyclesCovered: 1,
+                merchandiseAmount: 20,
+                counted: true,
+                providerSubscriptionIds: ["sub-1"],
+            },
+        },
+    } as InteractionLogSelect;
+
+    it("resyncs the plan when a refunded order was a billing cycle", async () => {
+        const { orchestrator, assetLog, interactionLog, subscriptionPlan } =
+            buildOrchestrator();
+        vi.mocked(
+            interactionLog.cancelPurchaseInteractionByExternalId
+        ).mockResolvedValue(refundedCycle);
+        vi.mocked(assetLog.cancelPendingByInteractionLogs).mockResolvedValue(
+            []
+        );
+
+        await orchestrator.cancelForRefund({
+            merchantId: "m1",
+            externalId: "order-42",
+        });
+
+        expect(subscriptionPlan.syncPlan).toHaveBeenCalledWith(
+            "m1",
+            "group-1",
+            {
+                rehold: true,
+            }
+        );
+    });
+
+    it("leaves a plain purchase refund alone", async () => {
+        const { orchestrator, assetLog, interactionLog, subscriptionPlan } =
+            buildOrchestrator();
+        vi.mocked(
+            interactionLog.cancelPurchaseInteractionByExternalId
+        ).mockResolvedValue(purchaseInteraction);
+        vi.mocked(assetLog.cancelPendingByInteractionLogs).mockResolvedValue(
+            []
+        );
+
+        await orchestrator.cancelForRefund({
+            merchantId: "m1",
+            externalId: "order-42",
+        });
+
+        expect(subscriptionPlan.syncPlan).not.toHaveBeenCalled();
+    });
+
+    it("still cancels the refund when the plan cannot be resynced", async () => {
+        const { orchestrator, assetLog, interactionLog, subscriptionPlan } =
+            buildOrchestrator();
+        vi.mocked(
+            interactionLog.cancelPurchaseInteractionByExternalId
+        ).mockResolvedValue(refundedCycle);
+        vi.mocked(assetLog.cancelPendingByInteractionLogs).mockResolvedValue(
+            []
+        );
+        subscriptionPlan.syncPlan.mockRejectedValue(new Error("boom"));
+
+        await expect(
+            orchestrator.cancelForRefund({
+                merchantId: "m1",
+                externalId: "order-42",
+            })
+        ).resolves.toMatchObject({ affectedCount: 0 });
+    });
+
+    it("tracks one expiry per plan, not one per step", async () => {
+        const { orchestrator, assetLog } = buildOrchestrator();
+        vi.mocked(assetLog.expirePendingPastDeadline).mockResolvedValue([
+            {
+                id: "a",
+                campaignRuleId: "c1",
+                amount: "5",
+                identityGroupId: "g1",
+                planStep: 2,
+            },
+            {
+                id: "b",
+                campaignRuleId: "c1",
+                amount: "5",
+                identityGroupId: "g1",
+                planStep: 3,
+            },
+            {
+                id: "c",
+                campaignRuleId: "c1",
+                amount: "5",
+                identityGroupId: "g2",
+                planStep: null,
+            },
+        ]);
+
+        await orchestrator.expireOverdueRewards();
+
+        expect(track).toHaveBeenCalledTimes(1);
+        expect(track).toHaveBeenCalledWith("subscription_plan_expired", "g1", {
+            campaign_id: "c1",
+            steps: 2,
         });
     });
 });

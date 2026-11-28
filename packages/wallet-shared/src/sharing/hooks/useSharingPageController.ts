@@ -432,6 +432,7 @@ export function useSharingPageController({
         return {
             status: "ready",
             payoutType: reward.payoutType,
+            upTo: reward.upTo,
             minPurchaseAmount: reward.minPurchaseAmount,
             isProductScoped: reward.isProductScoped,
             lockupDurationDays: reward.lockupDurationDays,

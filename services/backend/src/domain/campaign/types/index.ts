@@ -14,6 +14,8 @@ export type {
     RewardDefinition,
     RuleCondition,
     RuleConditions,
+    SubscriptionRule,
+    SubscriptionStepBy,
     TieredRewardDefinition,
 } from "../schemas";
 
@@ -32,6 +34,14 @@ export type PurchaseItem = {
     totalPrice: number;
     category?: string;
     sku?: string;
+};
+
+/** A counted subscription checkout: the first cycle of a plan. */
+type PurchaseSubscriptionContext = {
+    kind: "checkout";
+    cyclesCovered: number;
+    /** What one billing cycle paid, the basis every plan step is priced on. */
+    cycleAmount: number;
 };
 
 export type PurchaseContext = {
@@ -56,6 +66,10 @@ export type PurchaseContext = {
     matchedAmount?: number;
     /** Sum of `quantity` over the `productScope`-matched items. */
     matchedQuantity?: number;
+    /** The order belongs to a subscription, checkout or renewal. */
+    isSubscription?: boolean;
+    /** Set on a counted subscription checkout, the only order a subscription campaign matches. */
+    subscription?: PurchaseSubscriptionContext;
 };
 
 type AttributionContext = {
@@ -119,6 +133,8 @@ export type CalculatedReward = {
     lockupSeconds?: number;
     /** Copied from the rule's `holdUntilReleased`. */
     held?: boolean;
+    /** Step of a subscription plan this reward pays for. */
+    planStep?: number;
 };
 
 export type EvaluationResult = {

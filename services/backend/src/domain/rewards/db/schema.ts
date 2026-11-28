@@ -118,6 +118,8 @@ export const assetLogsTable = pgTable(
         /** Set on a held reward: not claimable until `released_at` is set. */
         heldAt: timestamp("held_at"),
         releasedAt: timestamp("released_at"),
+        /** 1-based step of a subscription plan; null on any other reward. */
+        planStep: integer("plan_step"),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
@@ -149,6 +151,17 @@ export const assetLogsTable = pgTable(
             .on(table.releasedAt)
             .where(
                 sql`"held_at" IS NOT NULL AND "status" IN ('pending', 'bank_depleted')`
+            ),
+        // One live row per step of a subscription plan: a re-arm cannot duplicate one.
+        uniqueIndex("asset_logs_plan_step_live_idx")
+            .on(
+                table.interactionLogId,
+                table.campaignRuleId,
+                table.recipientType,
+                table.planStep
+            )
+            .where(
+                sql`"plan_step" IS NOT NULL AND "status" IN ('pending', 'processing', 'settled', 'bank_depleted')`
             ),
         // One live welcome bonus per (user, merchant): the claim guard across
         // concurrent reward workers.

@@ -4,6 +4,7 @@ import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptio
 import { CpaBreakdownBar } from "./CpaBreakdownBar";
 import { EconomicValueCards } from "./EconomicValueCards";
 import { Section } from "./parts";
+import { SubscriptionStatsCards } from "./SubscriptionStatsCards";
 
 export function FunnelRoiTab({ data }: { data: CampaignDetailsStats }) {
     const { t } = useTranslation();
@@ -12,6 +13,11 @@ export function FunnelRoiTab({ data }: { data: CampaignDetailsStats }) {
             <Section title={t("campaigns.details.economic.title")}>
                 <EconomicValueCards economicValue={data.economicValue} />
             </Section>
+            {data.subscription && (
+                <Section title={t("campaigns.details.subscription.title")}>
+                    <SubscriptionStatsCards subscription={data.subscription} />
+                </Section>
+            )}
             <Section title={t("campaigns.details.cpa.title")}>
                 <CpaBreakdownBar cpaBreakdown={data.cpaBreakdown} />
             </Section>

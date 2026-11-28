@@ -36,6 +36,7 @@ export async function doSomething(
 | **paymentNotification.ts** | Paid top-up → backend `/ext/payments/shopify/purchase` (Slack), signed `timestamp.body` with the app secret | None | Shopify GraphQL + backend API |
 | **merchant.ts**         | Merchant ID resolution (cache → metafield → backend)       | LRU 5min | Shopify GraphQL + backend API      |
 | **backendMerchant.ts**  | Campaigns, bank + Frak webhook status from the backend     | LRU 5s   | backend API                        |
+| **subscriptions.ts**    | Subscription provider (Recharge) status, connect, disconnect; the token is relayed, never stored or logged | None | backend API |
 | **frakEnv.ts**          | Frak wallet/backend URLs per stage                         | None     | Pure                               |
 | **logger.ts**           | pino logger + `levelForStatus`                             | None     | Pure                               |
 | **ambassadorPage.ts**   | Ambassador proxy page record, publish/hide/switch, probe   | LRU 60s (live probes only) | Shopify GraphQL + storefront fetch |

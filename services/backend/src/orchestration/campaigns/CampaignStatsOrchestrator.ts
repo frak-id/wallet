@@ -240,7 +240,7 @@ export class CampaignStatsOrchestrator {
             this.getInteractingUsersCount(merchantId),
         ]);
 
-        return buildDetailsResponse({
+        const details = buildDetailsResponse({
             currency,
             ...rollup,
             leaderboard: leaderboard.rows,
@@ -249,6 +249,49 @@ export class CampaignStatsOrchestrator {
             convertedReferees,
             interactingUsers,
         });
+        const subscription = await this.getSubscriptionStats(
+            campaignId,
+            currency,
+            fiatRewardsExpr
+        );
+        return subscription ? { ...details, subscription } : details;
+    }
+
+    /** Plans of a subscription campaign: how many are live, what is paid, what is held back. */
+    private async getSubscriptionStats(
+        campaignId: string,
+        currency: string,
+        fiatRewardsExpr: SQL
+    ): Promise<CampaignDetailsResponse["subscription"]> {
+        const [campaign] = await db
+            .select({ rule: campaignRulesTable.rule })
+            .from(campaignRulesTable)
+            .where(eq(campaignRulesTable.id, campaignId))
+            .limit(1);
+        if (!campaign?.rule.subscription) return undefined;
+
+        const [row] = await db
+            .select({
+                livePlans: sql<string>`COUNT(DISTINCT ${assetLogsTable.interactionLogId}) FILTER (WHERE ${assetLogsTable.status} IN ('pending', 'processing', 'bank_depleted'))`,
+                stepsPaid: sql<string>`COUNT(DISTINCT (${assetLogsTable.interactionLogId}, ${assetLogsTable.planStep})) FILTER (WHERE ${assetLogsTable.status} = 'settled')`,
+                reserved: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${assetLogsTable.status} IN ('pending', 'bank_depleted')), 0)`,
+                paid: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${assetLogsTable.status} IN ('processing', 'settled')), 0)`,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.campaignRuleId, campaignId),
+                    isNotNull(assetLogsTable.planStep)
+                )
+            );
+
+        return {
+            currency,
+            livePlans: toNumber(row?.livePlans),
+            stepsPaid: toNumber(row?.stepsPaid),
+            reserved: toNumber(row?.reserved),
+            paid: toNumber(row?.paid),
+        };
     }
 
     /**

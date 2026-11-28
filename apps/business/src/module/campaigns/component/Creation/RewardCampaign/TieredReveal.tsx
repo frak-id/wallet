@@ -14,6 +14,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { useDebouncedValue } from "@/module/common/hook/useDebouncedValue";
 import { DistributionBar } from "../DistributionBar";
+import {
+    recalcCpaFromSplit,
+    recalcSplitOnCpaChange,
+    recommendedSplit,
+    splitTargetCpa,
+} from "./cpa";
 import { useCurrencyGlyph } from "./currencyGlyph";
 import { RecoBar, RevealHeader, TriggeredRow } from "./RevealParts";
 import * as styles from "./reward.css";
@@ -22,10 +28,6 @@ import { TierCard } from "./TierCard";
 import {
     type CpaTierRow,
     type RewardFormValues,
-    recalcCpaFromSplit,
-    recalcSplitOnCpaChange,
-    recommendedSplit,
-    splitTargetCpa,
     tieredRangeInverted,
     tieredRangesOverlap,
 } from "./utils";

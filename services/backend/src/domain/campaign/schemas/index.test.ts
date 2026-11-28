@@ -94,4 +94,30 @@ describe("EstimatedRewardsResultSchema", () => {
             })
         ).toBe(false);
     });
+
+    it("accepts a `best` and campaigns carrying a subscription plan", () => {
+        const fixed = (eur: number) => ({
+            payoutType: "fixed" as const,
+            amount: {
+                amount: eur,
+                eurAmount: eur,
+                usdAmount: eur,
+                gbpAmount: eur,
+            },
+        });
+        const reward: MerchantReward = {
+            ...eurReward(),
+            referrer: fixed(10),
+            subscription: {
+                steps: [
+                    { from: 1, to: 1, referrer: fixed(10) },
+                    { from: 2, to: 5, referrer: fixed(5) },
+                ],
+            },
+        };
+        const best = selectBestReward([reward], { currency: "eur" });
+
+        expect(best?.upTo).toBe(true);
+        expect(validator?.Check({ rewards: [reward], best })).toBe(true);
+    });
 });

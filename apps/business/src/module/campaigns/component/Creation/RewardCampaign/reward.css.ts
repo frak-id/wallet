@@ -166,6 +166,18 @@ export const recipientBox = style({
     borderRadius: alias.cornerRadius.m,
 });
 
+/* ---- subscription plan totals ---- */
+
+/** Plan totals surface; layout comes from `<Stack>`/`<Inline>`. */
+export const planTotals = style({
+    backgroundColor: vars.surface.secondary,
+    borderRadius: alias.cornerRadius.m,
+});
+
+export const planTotalRow = style({
+    fontVariantNumeric: "tabular-nums",
+});
+
 /* ---- "triggered on …" footer ---- */
 
 export const triggeredIcon = style({

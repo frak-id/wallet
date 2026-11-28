@@ -21,6 +21,17 @@ export { PurchaseRepository } from "./repositories/PurchaseRepository";
 export {
     type PurchaseStatus,
     PurchaseStatusSchema,
+    type SubscriptionProvider,
+    SubscriptionProviderSchema,
     type WebhookPlatform,
     WebhookPlatformSchema,
 } from "./schemas";
+export type {
+    PurchaseSubscription,
+    ResolvedSubscriptionOrder,
+} from "./subscription/types";
+export {
+    SubscriptionAuthError,
+    SubscriptionRateLimitError,
+    SubscriptionUnavailableError,
+} from "./subscription/types";

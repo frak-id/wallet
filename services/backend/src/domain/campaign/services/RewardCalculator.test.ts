@@ -7,6 +7,7 @@ import type {
     ReferralChainMember,
     RewardDefinition,
     RuleContext,
+    SubscriptionRule,
     TieredRewardDefinition,
 } from "../types";
 import { RewardCalculator } from "./RewardCalculator";
@@ -821,5 +822,212 @@ describe("RewardCalculator — matchedAmount float rounding", () => {
             expect.objectContaining({ fiatAmount: 0.03 })
         );
         expect(calculated[0].amount).toBe(10);
+    });
+});
+
+describe("RewardCalculator.calculatePlan", () => {
+    const planContext: RuleContext = {
+        ...baseContext,
+        purchase: {
+            orderId: "order-1",
+            amount: 20,
+            currency: "EUR",
+            items: [],
+        },
+    };
+    const params = (
+        rewards: RewardDefinition[],
+        subscription: SubscriptionRule = {}
+    ) => ({
+        rewards,
+        context: planContext,
+        campaignRuleId: "campaign-1",
+        inactivityDays: 45,
+        subscription,
+    });
+    const STEP_TOKEN = "0x0000000000000000000000000000000000000001";
+
+    it("pays each step of a range the same amount, held and numbered", async () => {
+        const { calculated } = await calculator.calculatePlan(
+            params([
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "fixed",
+                    amount: 4,
+                    cycles: { from: 2, to: 4 },
+                },
+            ])
+        );
+
+        expect(calculated.map((r) => [r.planStep, r.amount, r.held])).toEqual([
+            [2, 4, true],
+            [3, 4, true],
+            [4, 4, true],
+        ]);
+        expect(calculated[0]?.expirationDays).toBe(45);
+    });
+
+    it("prices a percentage once, on the cycle amount", async () => {
+        const convert = vi.mocked(pricingRepository.convertFiatToTokenAmount);
+        convert.mockResolvedValue({ converted: true, tokenAmount: 3 });
+
+        const { calculated } = await calculator.calculatePlan(
+            params([
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 15,
+                    percentOf: "purchase_amount",
+                    token: "0x0000000000000000000000000000000000000001",
+                    cycles: { from: 1, to: 2 },
+                },
+            ])
+        );
+
+        expect(convert).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 3 })
+        );
+        expect(calculated.map((r) => r.amount)).toEqual([3, 3]);
+    });
+
+    it("prices the later steps of an amount plan on the step amount, without FX", async () => {
+        const convert = vi.mocked(pricingRepository.convertFiatToTokenAmount);
+        convert.mockClear();
+        convert.mockResolvedValue({ converted: true, tokenAmount: 2 });
+
+        const { calculated } = await calculator.calculatePlan(
+            params(
+                [
+                    {
+                        recipient: "referrer",
+                        type: "token",
+                        amountType: "percentage",
+                        percent: 10,
+                        percentOf: "purchase_amount",
+                        token: STEP_TOKEN,
+                        cycles: { from: 1, to: 3 },
+                    },
+                ],
+                { stepBy: "amount", stepAmount: 30 }
+            )
+        );
+
+        expect(convert).toHaveBeenCalledTimes(1);
+        expect(calculated.map((r) => [r.planStep, r.amount])).toEqual([
+            [1, 2],
+            [2, 3],
+            [3, 3],
+        ]);
+    });
+
+    it("caps an amount step with the definition's max amount", async () => {
+        const { calculated } = await calculator.calculatePlan(
+            params(
+                [
+                    {
+                        recipient: "referrer",
+                        type: "token",
+                        amountType: "percentage",
+                        percent: 50,
+                        percentOf: "purchase_amount",
+                        maxAmount: 5,
+                        token: STEP_TOKEN,
+                        cycles: { from: 2, to: 2 },
+                    },
+                ],
+                { stepBy: "amount", stepAmount: 30 }
+            )
+        );
+
+        expect(calculated.map((r) => r.amount)).toEqual([5]);
+    });
+
+    it("pays the fixed steps of a duration plan as defined", async () => {
+        const { calculated } = await calculator.calculatePlan(
+            params(
+                [
+                    {
+                        recipient: "referee",
+                        type: "token",
+                        amountType: "fixed",
+                        amount: 2,
+                        cycles: { from: 2, to: 3 },
+                    },
+                ],
+                { stepBy: "duration", stepDays: 30 }
+            )
+        );
+
+        expect(calculated.map((r) => [r.planStep, r.amount])).toEqual([
+            [2, 2],
+            [3, 2],
+        ]);
+    });
+
+    it("refuses a percentage on the later steps of a duration plan", async () => {
+        const { calculated, errors } = await calculator.calculatePlan(
+            params(
+                [
+                    {
+                        recipient: "referee",
+                        type: "token",
+                        amountType: "percentage",
+                        percent: 10,
+                        percentOf: "purchase_amount",
+                        token: STEP_TOKEN,
+                        cycles: { from: 2, to: 3 },
+                    },
+                ],
+                { stepBy: "duration", stepDays: 30 }
+            )
+        );
+
+        expect(calculated).toEqual([]);
+        expect(errors).toEqual([
+            "referee: Duration steps only pay a fixed amount",
+        ]);
+    });
+
+    it("reports a definition without a range instead of paying it", async () => {
+        const { calculated, errors } = await calculator.calculatePlan(
+            params([
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "fixed",
+                    amount: 4,
+                },
+            ])
+        );
+
+        expect(calculated).toEqual([]);
+        expect(errors).toEqual(["referee: Missing cycle range"]);
+    });
+
+    it("skips a recipient it cannot resolve, keeping the other side", async () => {
+        const { calculated, errors } = await calculator.calculatePlan({
+            ...params([
+                {
+                    recipient: "referrer",
+                    type: "token",
+                    amountType: "fixed",
+                    amount: 4,
+                    cycles: { from: 1, to: 1 },
+                },
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "fixed",
+                    amount: 2,
+                    cycles: { from: 1, to: 1 },
+                },
+            ]),
+            context: { ...planContext, attribution: undefined },
+        });
+
+        expect(calculated.map((r) => r.recipient)).toEqual(["referee"]);
+        expect(errors).toEqual(["referrer: Could not resolve recipient"]);
     });
 });

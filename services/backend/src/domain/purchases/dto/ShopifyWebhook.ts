@@ -6,6 +6,7 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
     test?: boolean;
     created_at: string;
     updated_at?: string;
+    source_name?: string | null;
     customer: {
         id: number;
     };
@@ -22,6 +23,8 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
         sku?: string;
         discount_allocations?: { amount: string }[];
         tax_lines?: { price: string }[];
+        selling_plan_id?: number | null;
+        selling_plan_allocation?: unknown;
     }[];
     note_attributes?: { name: string; value: string }[];
 }>;

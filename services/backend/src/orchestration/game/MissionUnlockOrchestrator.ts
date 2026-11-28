@@ -34,7 +34,8 @@ import { db } from "../../infrastructure/persistence/postgres";
 const missionReward = alias(assetLogsTable, "mission_reward");
 
 // Literal statuses, so the planner proves the `asset_logs_held_idx` predicate.
-const heldPayable = sql`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.status} IN ('pending', 'bank_depleted')`;
+// A subscription plan step is held too, but only its cycles release it.
+const heldPayable = sql`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.status} IN ('pending', 'bank_depleted') AND ${assetLogsTable.planStep} IS NULL`;
 
 const subjectId = sql`CASE WHEN ${inArray(assetLogsTable.recipientType, [...REFEREE_WAITING_ROLES])} THEN ${interactionLogsTable.identityGroupId} ELSE ${assetLogsTable.identityGroupId} END`;
 

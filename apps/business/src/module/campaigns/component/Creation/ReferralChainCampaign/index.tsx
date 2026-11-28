@@ -357,6 +357,7 @@ export function ReferralChainCampaign() {
     );
 
     const hasReferrer = hasReferrerReward(draft);
+    const isSubscription = draft.rule.subscription !== undefined;
     // Both the preview base (ambassador reward) and the CAC come from the
     // reward step's form — derive them from a single parse.
     const rewardForm = draftToRewardForm(draft);
@@ -428,13 +429,19 @@ export function ReferralChainCampaign() {
                                 <Switch
                                     checked={field.value ?? false}
                                     onCheckedChange={field.onChange}
-                                    disabled={!hasReferrer}
+                                    disabled={!hasReferrer || isSubscription}
                                 />
                             )}
                         />
                     </Inline>
 
-                    {!hasReferrer && (
+                    {isSubscription && (
+                        <InfoBanner>
+                            {t("campaigns.create.referralChain.subscription")}
+                        </InfoBanner>
+                    )}
+
+                    {!hasReferrer && !isSubscription && (
                         <InfoBanner>
                             {t("campaigns.create.referralChain.noReferrer")}
                         </InfoBanner>

@@ -18,6 +18,8 @@ export type {
     PurchaseInfo,
     RecipientType,
     RewardHistoryItem,
+    RewardPlan,
+    RewardPlanStep,
     TokenAmount,
     TokenInfo,
 } from "./RewardHistoryItem";

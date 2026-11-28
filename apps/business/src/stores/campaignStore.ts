@@ -42,6 +42,7 @@ export type CampaignDraft = {
 const TIME_FIELD = "time.timestamp";
 const REFERRAL_FIELD = "attribution.referrerIdentityGroupId";
 const MIN_PURCHASE_FIELD = "purchase.amount";
+const SUBSCRIPTION_FIELD = "purchase.isSubscription";
 
 const REFERRAL_CONDITION: RuleCondition = {
     field: REFERRAL_FIELD,
@@ -147,12 +148,13 @@ function setCondition(
 }
 
 /**
- * The interaction each goal rewards. Only `sales` is a purchase campaign —
- * everything downstream (product scope, basket-based rewards, minimum
- * purchase) hangs off that, so the goal is what decides it.
+ * The interaction each goal rewards. Only `sales` and `subscription` are
+ * purchase campaigns — everything downstream (product scope, basket-based
+ * rewards, minimum purchase) hangs off that, so the goal is what decides it.
  */
 const GOAL_TRIGGERS: Record<CampaignGoal, CampaignTrigger> = {
     sales: "purchase",
+    subscription: "purchase",
     awareness: "referral",
     traffic: "referral",
     registration: "custom",
@@ -180,19 +182,51 @@ export function applyGoalTrigger(
     const trigger = triggerForGoal(goal);
     const metadata = { ...draft.metadata, goal };
     if (trigger === "purchase") {
-        return { ...draft, metadata, rule: { ...draft.rule, trigger } };
+        const rule = withPlan(
+            { ...draft.rule, trigger },
+            goal === "subscription"
+        );
+        return { ...draft, metadata, rule };
     }
-    const { productScope: _dropped, ...rest } = draft.rule;
+    const {
+        productScope: _dropped,
+        subscription: _subscription,
+        ...rest
+    } = draft.rule;
     let rule: CampaignRuleDefinition = {
         ...rest,
         trigger,
         // Only a fixed reward has no basket to compute on; a percentage or
-        // tiered reward can't be evaluated without a purchase.
-        rewards: draft.rule.rewards.filter((r) => r.amountType === "fixed"),
+        // tiered reward can't be evaluated without a purchase. A subscription
+        // plan's ranged rewards mean nothing without it, so they all go.
+        rewards: draft.rule.subscription
+            ? []
+            : draft.rule.rewards.filter((r) => r.amountType === "fixed"),
         defaultLockupSeconds: 0,
     };
     rule = setMinPurchaseAmount(rule, 0);
+    rule = setExcludeSubscriptions(rule, false);
     return { ...draft, metadata, rule };
+}
+
+/**
+ * The subscription goal opens a plan, any other purchase goal drops it. Either
+ * switch clears the rewards: one-shot rewards and a plan's step rewards don't
+ * read as each other.
+ */
+function withPlan(
+    rule: CampaignRuleDefinition,
+    isSubscription: boolean
+): CampaignRuleDefinition {
+    if (isSubscription === Boolean(rule.subscription)) return rule;
+    if (isSubscription) {
+        return setExcludeSubscriptions(
+            { ...rule, subscription: {}, rewards: [] },
+            false
+        );
+    }
+    const { subscription: _plan, ...rest } = rule;
+    return { ...rest, rewards: [] };
 }
 
 export function getReferralOnly(rule: CampaignRuleDefinition): boolean {
@@ -228,6 +262,28 @@ export function setMinPurchaseAmount(
         (c) => c.field === MIN_PURCHASE_FIELD && c.operator === "gte",
         amount > 0
             ? { field: MIN_PURCHASE_FIELD, operator: "gte", value: amount }
+            : null
+    );
+}
+
+export function getExcludeSubscriptions(rule: CampaignRuleDefinition): boolean {
+    return topLevelConditions(rule.conditions).list.some(
+        (c) =>
+            c.field === SUBSCRIPTION_FIELD &&
+            c.operator === "neq" &&
+            c.value === true
+    );
+}
+
+export function setExcludeSubscriptions(
+    rule: CampaignRuleDefinition,
+    enabled: boolean
+): CampaignRuleDefinition {
+    return setCondition(
+        rule,
+        (c) => c.field === SUBSCRIPTION_FIELD && c.operator === "neq",
+        enabled
+            ? { field: SUBSCRIPTION_FIELD, operator: "neq", value: true }
             : null
     );
 }

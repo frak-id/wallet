@@ -1397,6 +1397,30 @@
             "lockedExplanation": "Unlocks as soon as you connect your Instagram and follow @frak_fr, or with your first reward from a partner brand.",
             "lockedOnFriendExplanation": "Unlocks as soon as your friend connects their Instagram and follows @frak_fr, or with their first reward from a partner brand."
         },
+        "plan": {
+            "total": "Plan total",
+            "paid": "Paid",
+            "pending": "Still to come",
+            "progress_one": "{{count}} of {{total}} payments",
+            "progress_other": "{{count}} of {{total}} payments",
+            "progressSteps_one": "{{count}} of {{total}} rewards",
+            "progressSteps_other": "{{count}} of {{total}} rewards",
+            "step": {
+                "label": "Payment {{step}}",
+                "labelReward": "Reward {{step}}",
+                "paid": "Paid",
+                "paidOn": "Paid on {{date}}",
+                "unlockingOn": "Unlocking on {{date}}",
+                "unlockingSoon": "Unlocking soon",
+                "upcoming": "Unlocks at the next renewal",
+                "upcomingReferee": "Unlocks at your next renewal",
+                "upcomingAmount": "Unlocks as the subscription continues",
+                "upcomingAmountReferee": "Unlocks as your subscription continues",
+                "upcomingDuration_one": "Unlocks after {{count}} day of subscription",
+                "upcomingDuration_other": "Unlocks after {{count}} days of subscription",
+                "expired": "Expired"
+            }
+        },
         "frakBonus": {
             "label": "Welcome bonus",
             "detailTitle": "Your welcome bonus",

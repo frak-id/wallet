@@ -8,6 +8,7 @@ import Decimal from "decimal.js";
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
+import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
 import { missionSubjectOf } from "../domain/game";
 import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
@@ -15,6 +16,7 @@ import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLog
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import { summarizeMerchantRewards } from "../domain/rewards/rewardSummary";
 import type {
+    PlanRule,
     PurchaseAmountMap,
     ReferrerPurchaseMap,
     RewardEnrichmentData,
@@ -33,7 +35,8 @@ export class RewardHistoryOrchestrator {
         readonly pricingRepository: PricingRepository,
         readonly rewardHistoryService: RewardHistoryService,
         readonly referralLinkRepository: ReferralLinkRepository,
-        readonly interactionLogRepository: InteractionLogRepository
+        readonly interactionLogRepository: InteractionLogRepository,
+        readonly campaignRuleRepository: CampaignRuleRepository
     ) {}
 
     async getHistory(
@@ -62,9 +65,25 @@ export class RewardHistoryOrchestrator {
         }
 
         const enrichment = await this.buildEnrichmentData(assetLogs);
+        const planSteps = await this.assetLogRepository.findPlanSteps(
+            group.id,
+            [
+                ...new Set(
+                    assetLogs.flatMap((log) =>
+                        log.planStep !== null && log.interactionLogId
+                            ? [log.interactionLogId]
+                            : []
+                    )
+                ),
+            ]
+        );
         const items = this.rewardHistoryService
-            .buildRewardItems(assetLogs, enrichment)
+            .buildRewardItems([...assetLogs, ...planSteps], {
+                ...enrichment,
+                planRules: await this.fetchPlanRules(assetLogs),
+            })
             .map((item) =>
+                !item.plan &&
                 item.status === "locked" &&
                 missionSubjectOf(item.role) === "referee"
                     ? { ...item, waitsOnFriend: true }
@@ -126,6 +145,37 @@ export class RewardHistoryOrchestrator {
             linked: wallet !== null,
             now: new Date(),
         });
+    }
+
+    private async fetchPlanRules(
+        assetLogs: DetailedAssetLog[]
+    ): Promise<Map<string, PlanRule>> {
+        const campaignIds = [
+            ...new Set(
+                assetLogs.flatMap((log) =>
+                    log.planStep !== null && log.campaignRuleId
+                        ? [log.campaignRuleId]
+                        : []
+                )
+            ),
+        ];
+        const campaigns = await Promise.all(
+            campaignIds.map((id) => this.campaignRuleRepository.findById(id))
+        );
+        const missing = campaignIds.filter(
+            (id) => !campaigns.some((campaign) => campaign?.id === id)
+        );
+        if (missing.length > 0) {
+            log.warn(
+                { campaignIds: missing },
+                "Plan rows reference missing campaigns"
+            );
+        }
+        return new Map(
+            campaigns.flatMap((campaign) =>
+                campaign ? [[campaign.id, campaign.rule] as const] : []
+            )
+        );
     }
 
     private async buildEnrichmentData(

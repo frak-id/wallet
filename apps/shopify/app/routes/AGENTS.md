@@ -13,9 +13,10 @@ Four categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.
   /campaigns               → app.campaigns.tsx (campaign status)
   /funding                 → app.funding.tsx (bank + purchase status)
   /onboarding              → app.onboarding.tsx (action only: clears onchain cache)
-  /settings                → app.settings.tsx (single page: general/pixel/webhook/theme sections)
+  /settings                → app.settings.tsx (single page: general/pixel/webhook/subscriptions/theme sections)
     /pixel                 → app.settings.pixel.tsx (action only: web pixel create/delete)
     /webhook               → app.settings.webhook.tsx (action only: webhook create/delete)
+    /subscriptions         → app.settings.subscriptions.tsx (action only: connect/disconnect the subscription provider)
 /auth/*                    → auth.$.tsx (catch-all auth)
 /proxy/ambassador[/*]      → proxy.ambassador.tsx + proxy.ambassador.$.tsx (app proxy Liquid)
 /auth/login                → auth.login/route.tsx + error.server.tsx

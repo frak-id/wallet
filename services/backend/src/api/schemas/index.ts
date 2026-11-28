@@ -149,4 +149,7 @@ export {
     SaveRecoveryBlobBodySchema,
     SaveRecoveryResponseSchema,
 } from "./recoverySchemas";
-export { WebhookStatusResponseSchema } from "./webhookStatusSchemas";
+export {
+    SubscriptionStatusResponseSchema,
+    WebhookStatusResponseSchema,
+} from "./webhookStatusSchemas";

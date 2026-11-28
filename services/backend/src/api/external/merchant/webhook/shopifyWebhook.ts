@@ -8,12 +8,17 @@ import {
     sumLineAmounts,
     toPurchaseItem,
 } from "../../../../domain/purchases";
+import { PurchasesContext } from "../../../../domain/purchases/context";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
 } from "../../../../domain/purchases/dto/ShopifyWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
+import {
+    hasProviderRenewalSignal,
+    pendingSubscription,
+} from "./subscriptionSignals";
 
 // Oldest payload verified against; later versions keep every order field read here.
 const MIN_SHOPIFY_API_VERSION = "2024-10";
@@ -115,6 +120,24 @@ export const shopifyWebhook = new Elysia()
                 "Handling new shopify webhook event"
             );
 
+            const renewalSignal = hasProviderRenewalSignal(
+                resolved.webhook.subscriptionProvider,
+                webhookData
+            );
+            const subscription = await pendingSubscription({
+                provider: resolved.webhook.subscriptionProvider,
+                order: webhookData,
+                renewalSignal,
+                hasKnownSubscriber: () =>
+                    PurchasesContext.repositories.purchase.hasSubscriptionOrder(
+                        {
+                            webhookId: resolved.webhook.id,
+                            externalCustomerId:
+                                webhookData.customer.id.toString(),
+                        }
+                    ),
+            });
+
             await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
                 {
                     purchase: {
@@ -126,6 +149,7 @@ export const shopifyWebhook = new Elysia()
                         status: purchaseStatus,
                         totalPrice: webhookData.total_price,
                         currencyCode: webhookData.currency,
+                        subscription,
                     },
                     purchaseItems: webhookData.line_items.map((item) =>
                         toPurchaseItem({
@@ -143,6 +167,7 @@ export const shopifyWebhook = new Elysia()
                     ),
                     merchantId: resolved.merchantId,
                     clientId: frakClientId,
+                    skipAttribution: renewalSignal,
                 }
             );
 

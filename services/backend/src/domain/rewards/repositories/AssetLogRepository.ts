@@ -10,10 +10,12 @@ import {
     isNull,
     lt,
     lte,
+    notExists,
     or,
     type SQL,
     sql,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
 import {
     db,
@@ -39,6 +41,39 @@ import type {
 } from "../types";
 
 const DEFAULT_EXPIRATION_DAYS = 90;
+
+const liveStepOne = alias(assetLogsTable, "live_step_one");
+
+// A subscription plan is one reward as far as the per-user caps go; a re-armed
+// step 1 counts once, through its live row.
+const firstStepOnly = () =>
+    and(
+        sql`(${assetLogsTable.planStep} IS NULL OR ${assetLogsTable.planStep} = 1)`,
+        notExists(
+            db
+                .select({ id: liveStepOne.id })
+                .from(liveStepOne)
+                .where(
+                    and(
+                        eq(liveStepOne.planStep, 1),
+                        eq(
+                            liveStepOne.interactionLogId,
+                            assetLogsTable.interactionLogId
+                        ),
+                        eq(
+                            liveStepOne.campaignRuleId,
+                            assetLogsTable.campaignRuleId
+                        ),
+                        eq(
+                            liveStepOne.recipientType,
+                            assetLogsTable.recipientType
+                        ),
+                        inArray(liveStepOne.status, LIVE_ASSET_STATUSES),
+                        sql`${liveStepOne.id} <> ${assetLogsTable.id}`
+                    )
+                )
+        )
+    );
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
@@ -140,6 +175,7 @@ export class AssetLogRepository {
                 ),
                 availableAt,
                 heldAt: p.held ? new Date() : undefined,
+                planStep: p.planStep,
             };
         });
     }
@@ -426,7 +462,8 @@ export class AssetLogRepository {
      */
     async releaseHeld(
         items: { id: string; availableAt: Date | null }[],
-        graceMs: number
+        graceMs: number,
+        runner: PgRunner = db
     ): Promise<string[]> {
         if (items.length === 0) return [];
 
@@ -435,7 +472,7 @@ export class AssetLogRepository {
             items.map(({ id, availableAt }) => ({ id, ready_at: availableAt }))
         );
         const opensAt = sql`GREATEST(${assetLogsTable.availableAt}, v.ready_at)`;
-        const results = await db
+        const results = await runner
             .update(assetLogsTable)
             .set({
                 releasedAt: now,
@@ -463,10 +500,13 @@ export class AssetLogRepository {
     }
 
     /** Hold released rewards again, as long as they are not being paid. */
-    async reholdReleased(ids: string[]): Promise<number> {
+    async reholdReleased(
+        ids: string[],
+        runner: PgRunner = db
+    ): Promise<number> {
         if (ids.length === 0) return 0;
 
-        const results = await db
+        const results = await runner
             .update(assetLogsTable)
             .set({ releasedAt: null, heldAt: new Date() })
             .where(
@@ -681,7 +721,13 @@ export class AssetLogRepository {
      * `restoreBudgetsBatch`. Single SQL round-trip; no find-then-update race.
      */
     async expirePendingPastDeadline(): Promise<
-        { id: string; campaignRuleId: string | null; amount: string }[]
+        {
+            id: string;
+            campaignRuleId: string | null;
+            amount: string;
+            identityGroupId: string;
+            planStep: number | null;
+        }[]
     > {
         const now = new Date();
         return db
@@ -706,13 +752,48 @@ export class AssetLogRepository {
                 id: assetLogsTable.id,
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
+                identityGroupId: assetLogsTable.identityGroupId,
+                planStep: assetLogsTable.planStep,
             });
     }
 
+    /**
+     * One entry per reward, a subscription plan counting once: its first step
+     * stands for it, the rest come from {@link findPlanSteps}.
+     */
     async findDetailedByIdentityGroup(
         identityGroupId: string,
         options?: { limit?: number; offset?: number }
     ): Promise<DetailedAssetLog[]> {
+        return this.selectDetailed(
+            and(
+                eq(assetLogsTable.identityGroupId, identityGroupId),
+                eq(assetLogsTable.assetType, "token"),
+                isNotNull(assetLogsTable.tokenAddress),
+                firstStepOnly()
+            )
+        )
+            .orderBy(desc(assetLogsTable.createdAt))
+            .limit(options?.limit ?? 500)
+            .offset(options?.offset ?? 0);
+    }
+
+    /** Every step after the first of the plans the given first steps open. */
+    async findPlanSteps(
+        identityGroupId: string,
+        interactionLogIds: string[]
+    ): Promise<DetailedAssetLog[]> {
+        if (interactionLogIds.length === 0) return [];
+        return this.selectDetailed(
+            and(
+                eq(assetLogsTable.identityGroupId, identityGroupId),
+                inArray(assetLogsTable.interactionLogId, interactionLogIds),
+                gt(assetLogsTable.planStep, 1)
+            )
+        ).orderBy(assetLogsTable.planStep);
+    }
+
+    private selectDetailed(where: SQL | undefined) {
         return db
             .select({
                 id: assetLogsTable.id,
@@ -724,6 +805,9 @@ export class AssetLogRepository {
                 settledAt: assetLogsTable.settledAt,
                 availableAt: assetLogsTable.availableAt,
                 held: sql<boolean>`${assetLogsTable.heldAt} IS NOT NULL AND ${assetLogsTable.releasedAt} IS NULL`,
+                planStep: assetLogsTable.planStep,
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                interactionLogId: assetLogsTable.interactionLogId,
                 cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
@@ -744,16 +828,7 @@ export class AssetLogRepository {
                 merchantsTable,
                 eq(assetLogsTable.merchantId, merchantsTable.id)
             )
-            .where(
-                and(
-                    eq(assetLogsTable.identityGroupId, identityGroupId),
-                    eq(assetLogsTable.assetType, "token"),
-                    isNotNull(assetLogsTable.tokenAddress)
-                )
-            )
-            .orderBy(desc(assetLogsTable.createdAt))
-            .limit(options?.limit ?? 500)
-            .offset(options?.offset ?? 0);
+            .where(where);
     }
 
     /** Per-token totals of the group's live rewards not on-chain yet: locked, pending, being pushed or waiting on funding. */
@@ -829,7 +904,8 @@ export class AssetLogRepository {
                 and(
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     eq(assetLogsTable.assetType, "token"),
-                    isNotNull(assetLogsTable.tokenAddress)
+                    isNotNull(assetLogsTable.tokenAddress),
+                    firstStepOnly()
                 )
             );
         return result?.count ?? 0;
@@ -856,7 +932,8 @@ export class AssetLogRepository {
                     inArray(assetLogsTable.campaignRuleId, campaignRuleIds),
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     inArray(assetLogsTable.status, LIVE_ASSET_STATUSES),
-                    eq(assetLogsTable.recipientType, "referee")
+                    eq(assetLogsTable.recipientType, "referee"),
+                    firstStepOnly()
                 )
             )
             .groupBy(assetLogsTable.campaignRuleId);
@@ -890,7 +967,8 @@ export class AssetLogRepository {
                     scopeCondition,
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     inArray(assetLogsTable.status, LIVE_ASSET_STATUSES),
-                    eq(assetLogsTable.recipientType, "referee")
+                    eq(assetLogsTable.recipientType, "referee"),
+                    firstStepOnly()
                 )
             );
         return result?.count ?? 0;
@@ -1123,5 +1201,96 @@ export class AssetLogRepository {
             .groupBy(assetLogsTable.tokenAddress) as Promise<
             Array<{ tokenAddress: Address; total: string }>
         >;
+    }
+
+    /** Whether the referee already holds a plan at this merchant, whatever its state but a refund. */
+    async hasPlan(
+        merchantId: string,
+        refereeGroupId: string
+    ): Promise<boolean> {
+        const [row] = await db
+            .select({ id: assetLogsTable.id })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(interactionLogsTable.identityGroupId, refereeGroupId),
+                    isNotNull(assetLogsTable.planStep),
+                    inArray(assetLogsTable.status, [
+                        ...LIVE_ASSET_STATUSES,
+                        "expired",
+                    ])
+                )
+            )
+            .limit(1);
+        return row !== undefined;
+    }
+
+    /** Every plan row of the referee at this merchant; `lock` takes the reconciler's row locks. */
+    async findPlanRows(
+        runner: PgRunner,
+        merchantId: string,
+        refereeGroupId: string,
+        lock = false
+    ): Promise<AssetLogSelect[]> {
+        const checkouts = runner
+            .select({ id: interactionLogsTable.id })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, merchantId),
+                    eq(interactionLogsTable.identityGroupId, refereeGroupId)
+                )
+            );
+        const query = runner
+            .select()
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    isNotNull(assetLogsTable.planStep),
+                    inArray(assetLogsTable.interactionLogId, checkouts)
+                )
+            )
+            .orderBy(assetLogsTable.planStep, assetLogsTable.createdAt);
+        return lock ? query.for("update", { of: assetLogsTable }) : query;
+    }
+
+    async insertPlanRows(
+        runner: PgRunner,
+        rows: AssetLogInsert[]
+    ): Promise<AssetLogSelect[]> {
+        if (rows.length === 0) return [];
+        return runner.insert(assetLogsTable).values(rows).returning();
+    }
+
+    async updatePlanRowAmount(
+        runner: PgRunner,
+        id: string,
+        amount: string
+    ): Promise<void> {
+        await runner
+            .update(assetLogsTable)
+            .set({ amount })
+            .where(eq(assetLogsTable.id, id));
+    }
+
+    /** Pushes the expiry of held rows forward, never back. */
+    async extendHeldExpiry(
+        runner: PgRunner,
+        ids: string[],
+        expiresAt: Date
+    ): Promise<void> {
+        if (ids.length === 0) return;
+        await runner
+            .update(assetLogsTable)
+            .set({
+                expiresAt: sql`GREATEST(${assetLogsTable.expiresAt}, ${expiresAt.toISOString()}::timestamp)`,
+            })
+            .where(inArray(assetLogsTable.id, ids));
     }
 }

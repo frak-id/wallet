@@ -93,3 +93,69 @@ describe("InteractionContextBuilder", () => {
         }
     );
 });
+
+describe("InteractionContextBuilder subscription orders", () => {
+    const build = async (subscription?: PurchasePayload["subscription"]) => {
+        const interaction = {
+            type: "purchase",
+            payload: { ...purchasePayload, subscription },
+        } as InteractionLogSelect;
+        const result = await buildBuilder().build(
+            interaction,
+            "merchant-1",
+            "identity-1",
+            null
+        );
+        return result.context.purchase;
+    };
+
+    const resolved = (
+        over: Partial<
+            Extract<
+                NonNullable<PurchasePayload["subscription"]>,
+                { state: "resolved" }
+            >
+        > = {}
+    ): PurchasePayload["subscription"] => ({
+        state: "resolved",
+        kind: "checkout",
+        cyclesCovered: 3,
+        merchandiseAmount: 90,
+        counted: true,
+        providerSubscriptionIds: ["sub-1"],
+        ...over,
+    });
+
+    it("prices a plan on one billing cycle of the checkout", async () => {
+        const purchase = await build(resolved());
+
+        expect(purchase?.isSubscription).toBe(true);
+        expect(purchase?.subscription).toEqual({
+            kind: "checkout",
+            cyclesCovered: 3,
+            cycleAmount: 30,
+        });
+    });
+
+    it("marks an ordinary purchase as not a subscription", async () => {
+        const purchase = await build(undefined);
+
+        expect(purchase?.isSubscription).toBe(false);
+        expect(purchase?.subscription).toBeUndefined();
+    });
+
+    it("hides a checkout that earned nothing from subscription campaigns", async () => {
+        const purchase = await build(
+            resolved({ counted: false, merchandiseAmount: 0 })
+        );
+
+        expect(purchase?.isSubscription).toBe(true);
+        expect(purchase?.subscription).toBeUndefined();
+    });
+
+    it("keeps a renewal out of subscription campaigns", async () => {
+        const purchase = await build(resolved({ kind: "renewal" }));
+
+        expect(purchase?.subscription).toBeUndefined();
+    });
+});

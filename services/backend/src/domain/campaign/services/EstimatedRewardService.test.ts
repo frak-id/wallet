@@ -135,3 +135,163 @@ describe("EstimatedRewardService.getEstimatedRewards — productScope", () => {
         expect(referee.minAmount?.amount).toBe(0);
     });
 });
+
+describe("EstimatedRewardService.getEstimatedRewards — subscriptions", () => {
+    const planRule: CampaignRuleDefinition = {
+        trigger: "purchase",
+        conditions: [],
+        subscription: { inactivityDays: 45 },
+        rewards: [
+            {
+                recipient: "referrer",
+                type: "token",
+                amountType: "fixed",
+                amount: 10,
+                cycles: { from: 1, to: 1 },
+            },
+            {
+                recipient: "referrer",
+                type: "token",
+                amountType: "fixed",
+                amount: 5,
+                cycles: { from: 2, to: 5 },
+            },
+            {
+                recipient: "referee",
+                type: "token",
+                amountType: "percentage",
+                percent: 10,
+                percentOf: "purchase_amount",
+                cycles: { from: 1, to: 5 },
+            },
+        ],
+    };
+
+    it("splits a plan into the first payment and the later step ranges", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule(planRule),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.subscription).toMatchObject({
+            steps: [
+                {
+                    from: 1,
+                    to: 1,
+                    referrer: { payoutType: "fixed", amount: { amount: 10 } },
+                    referee: { payoutType: "percentage", percent: 10 },
+                },
+                {
+                    from: 2,
+                    to: 5,
+                    referrer: { payoutType: "fixed", amount: { amount: 5 } },
+                    referee: { payoutType: "percentage", percent: 10 },
+                },
+            ],
+        });
+    });
+
+    it("cuts a range wherever either side changes reward", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule({
+                ...planRule,
+                rewards: [
+                    ...planRule.rewards.slice(0, 2),
+                    {
+                        recipient: "referee",
+                        type: "token",
+                        amountType: "fixed",
+                        amount: 2,
+                        cycles: { from: 4, to: 8 },
+                    },
+                ],
+            }),
+        ]).getEstimatedRewards("merchant-1");
+
+        const steps = rewards[0]?.subscription?.steps ?? [];
+        expect(steps.map(({ from, to }) => [from, to])).toEqual([
+            [1, 1],
+            [2, 3],
+            [4, 5],
+            [6, 8],
+        ]);
+        expect(steps[2]?.referee).toMatchObject({ amount: { amount: 2 } });
+        expect(steps[3]?.referrer).toBeUndefined();
+    });
+
+    it("keeps the first payment on the item for readers unaware of subscriptions", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule(planRule),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.referrer).toMatchObject({
+            payoutType: "fixed",
+            amount: { amount: 10 },
+        });
+        expect(rewards[0]?.referee).toMatchObject({ payoutType: "percentage" });
+    });
+
+    it("reads a plan without a mode as counting cycles", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule(planRule),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.subscription?.stepBy).toBe("cycle");
+    });
+
+    it("turns the percentage of an amount step into its exact amount", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule({
+                ...planRule,
+                subscription: { stepBy: "amount", stepAmount: 40 },
+            }),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.subscription).toMatchObject({
+            stepBy: "amount",
+            steps: [
+                { referee: { payoutType: "percentage", percent: 10 } },
+                {
+                    referrer: { payoutType: "fixed", amount: { amount: 5 } },
+                    referee: { payoutType: "fixed", amount: { amount: 4 } },
+                },
+            ],
+        });
+    });
+
+    it("exposes a duration plan's mode", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule({
+                ...planRule,
+                rewards: planRule.rewards.slice(0, 2),
+                subscription: { stepBy: "duration", stepDays: 30 },
+            }),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.subscription).toMatchObject({
+            stepBy: "duration",
+            steps: [
+                { from: 1, to: 1 },
+                { from: 2, to: 5 },
+            ],
+        });
+    });
+
+    it("leaves a regular campaign without a subscription block", async () => {
+        const { rewards } = await serviceWith([
+            campaignWithRule({
+                trigger: "purchase",
+                conditions: [],
+                rewards: [
+                    {
+                        recipient: "referee",
+                        type: "token",
+                        amountType: "fixed",
+                        amount: 10,
+                    },
+                ],
+            }),
+        ]).getEstimatedRewards("merchant-1");
+
+        expect(rewards[0]?.subscription).toBeUndefined();
+    });
+});

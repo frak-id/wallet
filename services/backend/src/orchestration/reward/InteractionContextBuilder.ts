@@ -7,6 +7,7 @@ import type {
     GameJoinPayload,
     PurchasePayload,
 } from "../../domain/rewards/types";
+import { roundAmount } from "../../utils/numeric";
 import type {
     CustomContext,
     InteractionContextResult,
@@ -117,7 +118,27 @@ export class InteractionContextBuilder {
     }
 
     private buildPurchaseContext(payload: PurchasePayload): PurchaseContext {
+        const { subscription } = payload;
+        const resolved =
+            subscription?.state === "resolved" ? subscription : undefined;
+        const isCountedCheckout =
+            resolved?.kind === "checkout" &&
+            resolved.counted &&
+            resolved.cyclesCovered > 0;
+
         return {
+            isSubscription: resolved !== undefined,
+            subscription:
+                resolved && isCountedCheckout
+                    ? {
+                          kind: "checkout",
+                          cyclesCovered: resolved.cyclesCovered,
+                          cycleAmount: roundAmount(
+                              resolved.merchandiseAmount /
+                                  resolved.cyclesCovered
+                          ),
+                      }
+                    : undefined,
             orderId: payload.orderId,
             amount: payload.amount,
             currency: payload.currency,

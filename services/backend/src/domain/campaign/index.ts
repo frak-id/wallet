@@ -30,10 +30,12 @@ export {
     CampaignTriggerSchema,
     ConditionGroupSchema,
     ConditionOperatorSchema,
+    DEFAULT_SUBSCRIPTION_INACTIVITY_DAYS,
     RewardChainingSchema,
     RewardDefinitionSchema,
     RuleConditionSchema,
     RuleConditionsSchema,
+    subscriptionStepBy,
 } from "./schemas";
 export { CampaignManagementService } from "./services/CampaignManagementService";
 export { RewardCalculator } from "./services/RewardCalculator";
@@ -65,6 +67,8 @@ export type {
     RewardDefinition,
     RuleCondition,
     RuleContext,
+    SubscriptionRule,
+    SubscriptionStepBy,
     TieredRewardDefinition,
     TimeContext,
 } from "./types";
